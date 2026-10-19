@@ -3889,3 +3889,96 @@ summary > svg {
 .pr-review-dialog .multi-select-panel {
   position: static;
 }
+
+.pr-diff-directory {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.pr-diff-filename {
+  display: block;
+  margin-top: 3px;
+  font-weight: 600;
+}
+.pr-diff-counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pr-diff-added {
+  color: #26703b;
+}
+.pr-diff-removed {
+  color: #b53636;
+}
+.pr-commits-dialog {
+  width: min(760px, 94vw);
+}
+.pr-commits-dialog h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pr-commit-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.pr-commit-list li {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pr-commit-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+
+.pr-card-utilities {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+.pr-card-utilities > .icon-button {
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  color: var(--muted);
+  border: 1px solid #dce1e5;
+  border-radius: 7px;
+}
+.pr-health-trigger {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.pr-info-popup {
+  width: min(760px, 94vw);
+}
+.pr-info-popup dl {
+  display: grid;
+  gap: 12px;
+}
+.pr-info-popup dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pr-info-popup dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.pr-info-popup .pr-review-result {
+  margin-top: 16px;
+}

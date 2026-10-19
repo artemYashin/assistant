@@ -753,6 +753,24 @@ export function createApp(
       ),
     });
   });
+  app.get("/api/pr/commits", async (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.coerce.number().int().positive(),
+        continuationToken: z.string().max(2000).default(""),
+      })
+      .parse(req.query);
+    res.json(
+      await pullRequests.commits(
+        input.monitor,
+        input.repo,
+        input.number,
+        input.continuationToken,
+      ),
+    );
+  });
   app.get("/api/pr/diff", async (req, res) => {
     const input = z
       .object({

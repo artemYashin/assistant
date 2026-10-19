@@ -353,6 +353,7 @@ export class PullRequests {
     path: string,
     credentials: { pat: string; version: string },
     collection = false,
+    paged = false,
   ) {
     const url = `${m.source}/${collection ? "" : enc(m.azure_project) + "/"}_apis/${path}${path.includes("?") ? "&" : "?"}api-version=${enc(credentials.version)}`;
     const response = await fetch(url, {
@@ -389,7 +390,14 @@ export class PullRequests {
     } finally {
       reader.releaseLock();
     }
-    return JSON.parse(Buffer.concat(chunks).toString());
+    const body = JSON.parse(Buffer.concat(chunks).toString());
+    return paged
+      ? {
+          body,
+          continuationToken:
+            response.headers.get("x-ms-continuationtoken") || "",
+        }
+      : body;
   }
   async sync() {
     for (const m of this.monitors().filter((m) => m.enabled)) {
@@ -558,6 +566,48 @@ export class PullRequests {
           );
       }
     }
+  }
+  async commits(
+    monitor: string,
+    repo: string,
+    number: number,
+    continuationToken = "",
+  ) {
+    const m = this.monitors().find((entry) => entry.id === monitor);
+    const known = this.store.db
+      .prepare(
+        "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+      )
+      .get(monitor, repo, number);
+    if (!m || !known)
+      throw new AppError(404, "PR не найден. Синхронизируйте список.");
+    const credentials = this.credentials(m);
+    const page = await this.get(
+      m,
+      `git/repositories/${enc(repo)}/pullRequests/${number}/commits?$top=50&continuationToken=${enc(continuationToken)}`,
+      credentials,
+      false,
+      true,
+    );
+    if (!Array.isArray(page.body.value))
+      throw new AppError(502, "Azure не вернул список коммитов");
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    if (page.continuationToken && page.continuationToken === continuationToken)
+      throw new AppError(
+        502,
+        "Azure повторил страницу коммитов. Обновите историю.",
+      );
+    return {
+      commits: page.body.value.map((c: any) => ({
+        id: String(c.commitId || ""),
+        message: String(c.comment || ""),
+        truncated: !!c.commentTruncated,
+        author: String(c.author?.name || ""),
+        date: String(c.author?.date || ""),
+      })),
+      continuationToken: page.continuationToken,
+    };
   }
   async viewDiff(monitor: string, repo: string, number: number) {
     const m = this.monitors().find((entry) => entry.id === monitor);

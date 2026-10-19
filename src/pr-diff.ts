@@ -61,3 +61,17 @@ export function splitDiff(patches: string[]) {
       }),
     }));
 }
+
+export function diffFileLabel(path: string) {
+  const parts = path.split("/");
+  const name = parts.pop() || path;
+  const directory = parts
+    .map((part) => {
+      const chars = Array.from(part);
+      return chars.length > 7
+        ? chars.slice(0, 3).join("") + "…" + chars.slice(-3).join("")
+        : part;
+    })
+    .join("/");
+  return { name, directory: directory ? directory + "/" : "" };
+}

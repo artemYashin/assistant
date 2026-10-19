@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Code2, FileCode2, LoaderCircle, X } from "lucide-react";
 import { api } from "./api.js";
-import { splitDiff, type DiffLine } from "./pr-diff.js";
+import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
 
 type Loaded = {
   files: ReturnType<typeof splitDiff>;
@@ -121,15 +121,22 @@ export function PrDiffDialog({
                   <button
                     key={i}
                     aria-pressed={i === selected}
-                    title={f.after}
+                    title={f.after === "/dev/null" ? f.before : f.after}
                     onClick={() => setSelected(i)}
                   >
                     <FileCode2 size={16} />
                     <span>
-                      {f.after || f.before}
-                      <small>
-                        +{f.added} / −{f.removed}
-                      </small>
+                      <DiffFileName
+                        path={
+                          f.after === "/dev/null"
+                            ? f.before
+                            : f.after || f.before
+                        }
+                      />
+                      <span className="pr-diff-counts">
+                        <span className="pr-diff-added">+{f.added}</span>
+                        <span className="pr-diff-removed">−{f.removed}</span>
+                      </span>
                     </span>
                   </button>
                 ))}
@@ -227,5 +234,15 @@ function DiffCell({
         </div>
       )}
     </td>
+  );
+}
+
+function DiffFileName({ path }: { path: string }) {
+  const { directory, name } = diffFileLabel(path);
+  return (
+    <>
+      <span className="pr-diff-directory">{directory || "Корень"}</span>
+      <span className="pr-diff-filename">{name}</span>
+    </>
   );
 }

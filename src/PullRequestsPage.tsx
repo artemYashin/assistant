@@ -1,3 +1,5 @@
+import { PrInfoPopup } from "./PrInfoPopup.js";
+import { PrCommitsDialog } from "./PrCommitsDialog.js";
 import { PrReviewDialog } from "./PrReviewDialog.js";
 import { PrTicketLink } from "./PrTicketLink.js";
 import { PrHealth } from "./PrHealth.js";
@@ -128,34 +130,43 @@ function PrDescription({ pr }: any) {
 function ReviewHistory({ pr }: any) {
   const [items, setItems] = useState<any[]>([]),
     [open, setOpen] = useState(false),
+    [loading, setLoading] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
     if (!open) return;
     let live = true;
+    setLoading(true);
+    setError("");
     api(
       `/pr/reviews?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number) })}`,
     )
       .then((v) => {
-        if (live) setItems(v);
+        if (live) {
+          setItems(v);
+          setLoading(false);
+        }
       })
       .catch((e) => {
-        if (live) setError(e.message);
+        if (live) {
+          setError(e.message);
+          setLoading(false);
+        }
       });
     return () => {
       live = false;
     };
   }, [open, pr.review_status]);
   return (
-    <details
-      className="pr-history"
-      onToggle={(e) => setOpen(e.currentTarget.open)}
+    <PrInfoPopup
+      title="Сохранённые ревью всех версий"
+      trigger={<History size={17} aria-hidden="true" />}
+      onOpenChange={setOpen}
     >
-      <summary>
-        <History size={17} aria-hidden="true" />
-        Сохранённые ревью всех версий
-      </summary>
       {error && <p className="error">{error}</p>}
-      {!items.length && <p className="muted">Ревью ещё не запускалось.</p>}
+      {loading && <p role="status">Загружаю историю…</p>}
+      {!loading && !error && !items.length && (
+        <p className="muted">Ревью ещё не запускалось.</p>
+      )}
       {items.map((r) => (
         <section className="pr-review-result" key={r.id}>
           <h3>Ревью версии {r.head.slice(0, 10)}</h3>
@@ -168,7 +179,7 @@ function ReviewHistory({ pr }: any) {
           {r.error && <p className="error">{r.error}</p>}
         </section>
       ))}
-    </details>
+    </PrInfoPopup>
   );
 }
 export function PullRequestsPage({ context, settings }: any) {
@@ -179,6 +190,7 @@ export function PullRequestsPage({ context, settings }: any) {
     [version, setVersion] = useState(0);
   const [reviewing, setReviewing] = useState<any>(null);
   const [merging, setMerging] = useState<any>(null);
+  const [viewingCommits, setViewingCommits] = useState<any>(null);
   const [viewingDiff, setViewingDiff] = useState<any>(null);
   const [draftFilter, setDraftFilter] = useState("all");
   const [reviewFilter, setReviewFilter] = useState("all");
@@ -266,6 +278,12 @@ export function PullRequestsPage({ context, settings }: any) {
             setReviewing(null);
             setVersion((v) => v + 1);
           }}
+        />
+      )}
+      {viewingCommits && (
+        <PrCommitsDialog
+          pr={viewingCommits}
+          onClose={() => setViewingCommits(null)}
         />
       )}
       {viewingDiff && (
@@ -411,6 +429,62 @@ export function PullRequestsPage({ context, settings }: any) {
                 </span>
                 {!!p.draft && <span className="badge">Черновик</span>}
               </div>
+              <div className="pr-card-utilities">
+                <PrHealth value={p.health} inScope={!!p.in_scope} />
+                <PrInfoPopup
+                  title="Контекст PR"
+                  trigger={<FolderOpen size={17} aria-hidden="true" />}
+                >
+                  <dl>
+                    <div>
+                      <dt>Заказчик</dt>
+                      <dd>{p.client || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Проект Orbit</dt>
+                      <dd>{p.project || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Azure Project</dt>
+                      <dd>{p.azure_project || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Репозиторий</dt>
+                      <dd>
+                        {p.in_scope && p.repository
+                          ? p.repository
+                          : p.repo || "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </PrInfoPopup>
+                <PrInfoPopup
+                  title="Версия изменений"
+                  trigger={<GitCommitHorizontal size={17} aria-hidden="true" />}
+                >
+                  <dl>
+                    <div>
+                      <dt>Source commit</dt>
+                      <dd>
+                        <code>{p.head}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Target commit</dt>
+                      <dd>
+                        <code>{p.target}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>ID репозитория</dt>
+                      <dd>
+                        <code>{p.repo}</code>
+                      </dd>
+                    </div>
+                  </dl>
+                </PrInfoPopup>
+                <ReviewHistory pr={p} />
+              </div>
             </div>
             <h2 className="pr-title">
               <a href={p.url} target="_blank" rel="noreferrer">
@@ -444,6 +518,13 @@ export function PullRequestsPage({ context, settings }: any) {
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
             <div className="pr-card-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setViewingCommits(p)}
+              >
+                <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
+              </button>
               <button
                 type="button"
                 className="secondary"
@@ -502,63 +583,6 @@ export function PullRequestsPage({ context, settings }: any) {
                         : "Запустить ревью"}
               </button>
             </div>
-            <div className="pr-metadata-sections">
-              <details className="pr-technical pr-version-menu pr-context-menu">
-                <summary title="Заказчик, проекты и репозиторий">
-                  <FolderOpen size={17} aria-hidden="true" />
-                  Контекст
-                </summary>
-                <dl>
-                  <div>
-                    <dt>Заказчик</dt>
-                    <dd>{p.client || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Проект Orbit</dt>
-                    <dd>{p.project || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Azure Project</dt>
-                    <dd>{p.azure_project || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Репозиторий</dt>
-                    <dd>
-                      {p.in_scope && p.repository
-                        ? p.repository
-                        : p.repo || "—"}
-                    </dd>
-                  </div>
-                </dl>
-              </details>
-              <details className="pr-technical pr-version-menu">
-                <summary title="Версия изменений и ID репозитория">
-                  <GitCommitHorizontal size={17} aria-hidden="true" />
-                  Версия изменений
-                </summary>
-                <dl>
-                  <div>
-                    <dt>Source commit</dt>
-                    <dd>
-                      <code>{p.head}</code>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Target commit</dt>
-                    <dd>
-                      <code>{p.target}</code>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>ID репозитория</dt>
-                    <dd>
-                      <code>{p.repo}</code>
-                    </dd>
-                  </div>
-                </dl>
-              </details>
-            </div>
-            <PrHealth value={p.health} inScope={!!p.in_scope} />
             {p.review_status === "awaiting_answers" && (
               <Link className="chat-ticket-link" to="/pull-requests?tab=inbox">
                 Ответить на вопросы ревьюера →
@@ -670,7 +694,6 @@ export function PullRequestsPage({ context, settings }: any) {
                 {p.summary && <ChatMarkdown text={p.summary} />}
               </details>
             )}
-            <ReviewHistory pr={p} />
           </article>
         ))}
       </div>

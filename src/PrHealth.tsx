@@ -1,4 +1,5 @@
-import { ShieldCheck, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { PrInfoPopup } from "./PrInfoPopup.js";
+import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 export function PrHealth({
   value,
   inScope,
@@ -49,26 +50,29 @@ export function PrHealth({
     broken: "Ошибка проверки",
   };
   return (
-    <details className="pr-content-section pr-health">
-      <summary>
-        <ShieldCheck size={17} aria-hidden="true" />
-        Проверки Azure
-        <span className={`pr-review-status ${inScope ? tone : "is-idle"}`}>
-          {tone === "is-error" ? (
-            <AlertTriangle size={13} />
-          ) : tone === "is-ready" ? (
-            <CheckCircle2 size={13} />
-          ) : (
-            <Clock size={13} />
-          )}{" "}
-          {label}
-        </span>
-        <span
-          className={`pr-review-status ${!inScope || health?.error ? "is-idle" : failed ? "is-error" : pending ? "is-pending" : passed ? "is-ready" : "is-idle"}`}
-        >
-          {health ? ci : "CI: нет данных"}
-        </span>
-      </summary>
+    <PrInfoPopup
+      title="Подробности проверок Azure"
+      className="pr-health-trigger"
+      trigger={
+        <>
+          <span className={`pr-review-status ${inScope ? tone : "is-idle"}`}>
+            {tone === "is-error" ? (
+              <AlertTriangle size={13} />
+            ) : tone === "is-ready" ? (
+              <CheckCircle2 size={13} />
+            ) : (
+              <Clock size={13} />
+            )}{" "}
+            {label}
+          </span>
+          <span
+            className={`pr-review-status ${!inScope || health?.error ? "is-idle" : failed ? "is-error" : pending ? "is-pending" : passed ? "is-ready" : "is-idle"}`}
+          >
+            {health ? ci : "CI: нет данных"}
+          </span>
+        </>
+      }
+    >
       {!inScope && (
         <p className="muted">
           PR вне текущей выборки. Здесь показаны последние сохранённые данные.
@@ -96,6 +100,6 @@ export function PrHealth({
       {!checks.length && !health?.error && (
         <p>Проверки ещё не загружены или не настроены.</p>
       )}
-    </details>
+    </PrInfoPopup>
   );
 }

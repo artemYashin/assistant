@@ -801,3 +801,53 @@ test("ignoring questions completes review and explicit rerun preserves history",
   assert.match(calls[0][0], /Focus on retries/);
   assert.equal(questions.history(second).length, 0);
 });
+
+test("PR commit history paginates read-only and rejects unknown PRs", async (t) => {
+  const { service, calls } = fixture(t);
+  const cursors: string[] = [];
+  mock(t, [pr()], (url, init) => {
+    assert.ok(!init.method || init.method === "GET");
+    if (
+      url.pathname.endsWith("/commits") &&
+      url.pathname.includes("/pullRequests/")
+    ) {
+      cursors.push(url.searchParams.get("continuationToken") || "");
+      assert.equal(url.searchParams.get("$top"), "50");
+      return new Response(
+        JSON.stringify({
+          value: [
+            {
+              commitId: cursors.length === 1 ? "abc123" : "def456",
+              comment: `Fix error
+More detail`,
+              author: { name: "Developer", date: "2026-10-20T10:00:00Z" },
+            },
+          ],
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(cursors.length === 1
+              ? { "x-ms-continuationtoken": "next/page+" }
+              : {}),
+          },
+        },
+      );
+    }
+  });
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const first = await service.commits(monitor, "repo", 1);
+  assert.equal(first.commits[0].author, "Developer");
+  assert.equal(first.continuationToken, "next/page+");
+  const next = await service.commits(
+    monitor,
+    "repo",
+    1,
+    first.continuationToken,
+  );
+  assert.equal(next.continuationToken, "");
+  assert.deepEqual(cursors, ["", "next/page+"]);
+  await assert.rejects(service.commits(monitor, "repo", 999), /PR не найден/);
+  assert.equal(calls.length, 0);
+});
