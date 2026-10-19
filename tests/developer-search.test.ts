@@ -62,3 +62,50 @@ test("identity search is filtered, bounded, excludes groups and merges cached se
   });
   await assert.rejects(connectors.developers("Ann"), /изменилось/);
 });
+
+test("empty general search falls back to explicit display name or mail, without enumerating users", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-search-fallback-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://dev.azure.com/org",
+    azureProject: "P",
+  });
+  store.setSecret("azure.pat", "pat");
+  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const filters: string[] = [];
+  t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
+    const url = new URL(raw);
+    assert.equal(init.method || "GET", "GET");
+    assert.ok(url.searchParams.get("filterValue"));
+    const filter = url.searchParams.get("searchFilter")!;
+    filters.push(filter);
+    return Response.json({
+      value:
+        filter === "General"
+          ? []
+          : [
+              {
+                id: "person",
+                providerDisplayName: "Artem",
+                properties: { Mail: { $value: "artem@example.test" } },
+              },
+            ],
+    });
+  });
+  assert.equal((await connectors.developers("Artem")).users[0].name, "Artem");
+  assert.equal(
+    (await connectors.developers("artem@example.test")).users[0].email,
+    "artem@example.test",
+  );
+  assert.deepEqual(filters, [
+    "General",
+    "DisplayName",
+    "General",
+    "MailAddress",
+  ]);
+});

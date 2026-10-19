@@ -1297,7 +1297,8 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                 <th>Тикет</th>
                 <th>Тип задачи</th>
                 <th>Статус</th>
-                <th>Исполнитель</th>
+                <th>Исполнитель в Azure</th>
+                <th>Локальное поручение</th>
                 <th>Синхронизация</th>
                 <th>Просмотр</th>
               </tr>
@@ -1341,9 +1342,8 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                       colors={settings?.statusColors}
                     />
                   </td>
+                  <td>{t.assigned || "Не назначен"}</td>
                   <td>
-                    <small>В Azure</small>
-                    {t.assigned || "Не назначен"}
                     <LocalDeveloper
                       ticket={t}
                       onChange={() => run("refresh-local", async () => {})}
@@ -1803,29 +1803,36 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("prDailyLimit", Number(e.target.value))}
             />
           </Field>
-          <Field
-            label="Модель"
-            hint="Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше."
-          >
-            <select
-              value={form.model}
-              onChange={(e) => set("model", e.target.value)}
-              aria-label="Модель Copilot"
-              disabled={modelsLoading}
+          {(["model", "reviewModel"] as const).map((key) => (
+            <Field
+              key={key}
+              label={key === "model" ? "Модель чата" : "Модель PR-ревью"}
+              hint="Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше."
             >
-              <option value="">По умолчанию в Copilot</option>
-              {form.model && !models.some((m) => m.id === form.model) && (
-                <option value={form.model} disabled>
-                  {form.model} — сохранена, доступность не подтверждена
+              <select
+                value={form[key] || ""}
+                onChange={(e) => set(key, e.target.value)}
+                aria-label={key === "model" ? "Модель чата" : "Модель PR-ревью"}
+                disabled={modelsLoading}
+              >
+                <option value="">
+                  {key === "model"
+                    ? "По умолчанию в Copilot"
+                    : "Та же, что для чата"}
                 </option>
-              )}
-              {models.map((m: any) => (
-                <option key={m.id} value={m.id}>
-                  {m.name || m.id}
-                </option>
-              ))}
-            </select>
-          </Field>
+                {form[key] && !models.some((m) => m.id === form[key]) && (
+                  <option value={form[key]} disabled>
+                    {form[key]} — сохранена, доступность не подтверждена
+                  </option>
+                )}
+                {models.map((m: any) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name || m.id}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ))}
         </section>
         <section className="panel settings-card">
           <div className="section-heading">

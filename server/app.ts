@@ -32,6 +32,7 @@ const settingsSchema = z
   .object({
     githubClientId: text,
     model: text,
+    reviewModel: text.default(""),
     microsoftClientId: text,
     microsoftTenantId: text,
     azureUrl: z.string().trim().max(1000),

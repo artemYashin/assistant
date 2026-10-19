@@ -2169,6 +2169,8 @@ summary {
   font-weight: 600;
 }
 .ticket-type-badge {
+  width: fit-content;
+  white-space: nowrap;
   background: #eef0f9;
   color: #555d87;
 }
@@ -2417,15 +2419,43 @@ summary {
   width: auto;
 }
 .local-developer {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-  min-width: 170px;
-  max-width: 250px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 150px;
 }
-.local-developer select {
-  font-size: 11px;
-  padding: 8px;
+.local-developer-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.local-developer > button {
+  padding: 5px;
+  flex-shrink: 0;
+}
+.developer-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px #233a2030;
+}
+.developer-dialog[open] {
+  display: grid;
+  gap: 12px;
+}
+.developer-dialog::backdrop {
+  background: #18241f55;
+}
+.developer-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 .status-color-row {
   display: flex;

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Pencil, X } from "lucide-react";
 import { api } from "./api.js";
 export function StatusBadge({
   state,
@@ -31,6 +32,7 @@ export function LocalDeveloper({ ticket, onChange }: any) {
     [searched, setSearched] = useState(false),
     [truncated, setTruncated] = useState(false);
   const generation = useRef(0);
+  const dialog = useRef<HTMLDialogElement>(null);
   async function search() {
     const current = ++generation.current;
     setBusy(true);
@@ -59,6 +61,7 @@ export function LocalDeveloper({ ticket, onChange }: any) {
       setPeople([]);
       setQuery("");
       setSearched(false);
+      dialog.current?.close();
       onChange();
     } catch (e: any) {
       setError(e.message);
@@ -68,79 +71,121 @@ export function LocalDeveloper({ ticket, onChange }: any) {
   }
   return (
     <div className="local-developer">
-      <small>Локально поручено</small>
-      <strong>{ticket.developer_name || "Не назначен"}</strong>
-      {ticket.developer_id && (
-        <button
-          type="button"
-          className="text-button"
-          disabled={busy}
-          onClick={() => void assign("")}
-        >
-          Снять поручение
-        </button>
-      )}
-      <input
-        aria-label={`Поиск разработчика #${ticket.id}`}
-        placeholder="Имя или email · от 2 символов"
-        value={query}
-        maxLength={100}
-        disabled={busy}
-        onChange={(e) => {
-          generation.current++;
-          setQuery(e.target.value);
-          setPeople([]);
-          setSearched(false);
-          setError("");
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && query.trim().length >= 2 && !busy) {
-            e.preventDefault();
-            void search();
-          }
-        }}
-      />
+      <span
+        className="local-developer-name"
+        title={ticket.developer_name || "Не поручено"}
+      >
+        {ticket.developer_name || "N/A"}
+      </span>
       <button
         type="button"
         className="text-button"
-        disabled={busy || query.trim().length < 2}
-        onClick={() => void search()}
+        disabled={busy}
+        aria-label={`Редактировать локальное поручение #${ticket.id}`}
+        title="Редактировать локальное поручение"
+        onClick={() => {
+          setError("");
+          dialog.current?.showModal();
+        }}
       >
-        {busy ? "Загрузка…" : "Найти в Azure"}
+        <Pencil size={15} />
       </button>
-      <small>
-        Поиск по организации/коллекции. Назначение только локальное.
-      </small>
-      {!!people.length && (
-        <ul className="developer-results">
-          {people.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void assign(p.id)}
-              >
-                <span>{p.name}</span>
-                {p.email && <small>{p.email}</small>}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {searched && !people.length && (
-        <small role="status">
-          Никого не найдено. Попробуйте полное имя или email.
+      <button
+        type="button"
+        className="text-button"
+        disabled={busy || !ticket.developer_id}
+        aria-label={`Снять локальное поручение #${ticket.id}`}
+        title="Снять локальное поручение"
+        onClick={() => void assign("")}
+      >
+        <X size={15} />
+      </button>
+      <dialog
+        ref={dialog}
+        className="developer-dialog"
+        onCancel={(e) => {
+          if (busy) e.preventDefault();
+        }}
+      >
+        <div className="developer-dialog-heading">
+          <strong>Локальное поручение · #{ticket.id}</strong>
+          <button
+            type="button"
+            className="text-button"
+            disabled={busy}
+            aria-label="Закрыть поиск разработчика"
+            onClick={() => dialog.current?.close()}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <input
+          aria-label={`Поиск разработчика #${ticket.id}`}
+          placeholder="Имя или email · от 2 символов"
+          value={query}
+          maxLength={100}
+          disabled={busy}
+          onChange={(e) => {
+            generation.current++;
+            setQuery(e.target.value);
+            setPeople([]);
+            setSearched(false);
+            setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && query.trim().length >= 2 && !busy) {
+              e.preventDefault();
+              void search();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="text-button"
+          disabled={busy || query.trim().length < 2}
+          onClick={() => void search()}
+        >
+          {busy ? "Загрузка…" : "Найти в Azure"}
+        </button>
+        <small>
+          Поиск по организации/коллекции. Назначение только локальное.
         </small>
-      )}
-      {searched && truncated && (
-        <small role="status">
-          Показаны первые 20 совпадений. Уточните запрос.
-        </small>
-      )}
-      {error && (
-        <p className="error" role="alert">
+        {!!people.length && (
+          <ul className="developer-results">
+            {people.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void assign(p.id)}
+                >
+                  <span>{p.name}</span>
+                  {p.email && <small>{p.email}</small>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {searched && !people.length && (
+          <small role="status">
+            Никого не найдено. Попробуйте полное имя или email.
+          </small>
+        )}
+        {searched && truncated && (
+          <small role="status">
+            Показаны первые 20 совпадений. Уточните запрос.
+          </small>
+        )}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+      </dialog>
+      {error && !dialog.current?.open && (
+        <small role="alert" className="error">
           {error}
-        </p>
+        </small>
       )}
     </div>
   );

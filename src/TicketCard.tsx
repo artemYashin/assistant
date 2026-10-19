@@ -312,7 +312,7 @@ export function TicketTableRow({
         </td>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">
-        <td colSpan={6}>
+        <td colSpan={7}>
           {open && (
             <section aria-label={`Карточка тикета #${id}`}>
               {error ? (

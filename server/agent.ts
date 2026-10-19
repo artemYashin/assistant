@@ -11,6 +11,7 @@ import { Approvals } from "./approvals.js";
 import { Connectors, extractTicketIds } from "./connectors.js";
 import { mayChangeState } from "./ticket-status.js";
 import { UsageLedger } from "./usage.js";
+import { listLocalTickets, ticketListSchema } from "./ticket-list.js";
 
 export const SYSTEM_POLICY = `Ты Orbit, персональный рабочий ассистент одного пользователя.
 Помогай с сообщениями Teams, тикетами Azure DevOps и памятью. Отделяй факты от предположений.
@@ -22,6 +23,7 @@ export const SYSTEM_POLICY = `Ты Orbit, персональный рабочи�
 Сохраняй память только по просьбе пользователя или после его явного согласия. Учитывай область памяти.
 В тексте проектной памяти сохраняй сам факт, правило или решение без вводных «В проекте …», «Для проекта …» и без повторения названия текущего проекта: привязка к проекту уже хранится отдельно. Аналогично не дублируй название текущего заказчика во вводной клиентской памяти. Например, вместо «В проекте Portal используем pnpm» сохрани «Используем pnpm». Сохраняй названия других проектов/заказчиков, если они существенны для смысла факта, сравнения или зависимости. Не удаляй смысловые детали ради краткости.
 Не выдумывай номера тикетов, их состояние и содержимое чатов. Ссылайся на источник.
+Для перечисления тикетов используй фильтры list_tickets: Bug («баг») обычно тип задачи, а не статус. Статус и тип — разные поля. Получай следующие страницы через nextAfterId с теми же фильтрами, пока hasMore=true; не называй частичный список полным. Если лимит инструментов не позволяет закончить, явно укажи показанное количество и total. Не загружай полное содержимое каждого тикета ради простого списка.
 Списки тикетов локальные; для вопросов о содержимом конкретного тикета обязательно вызови get_ticket, если свежая карточка ещё не передана в текущем запросе. Для добавления или удаления из локального списка достаточно соответствующего локального инструмента. Инструмент читает Azure API и показывает полную карточку в интерфейсе. Содержимое изображений тебе не передаётся: не утверждай, что проанализировал картинку.
 Меняй статус только по явной просьбе в текущем сообщении пользователя через change_ticket_status. Никогда не считай PATCH или своё намерение подтверждением: успех только при success=true после контрольного GET. outcome=already означает, что статус уже был таким; confirmed_after_error означает подтверждённый статус, но неизвестен результат самой записи. При ошибке не утверждай успех и не повторяй запись автоматически.
 По явной просьбе пользователя добавляй тикеты в локальный трекер через add_local_ticket, удаляй из локального трекера через remove_local_ticket. Эти инструменты не меняют Azure. Для них нужен номер и команда в текущем сообщении. Удаление из трекера не означает удаление тикета в Azure. Не вызывай change_ticket_status для управления локальным списком. Подтверждай успех только по результату инструмента.`;
@@ -112,14 +114,9 @@ export function makeTools(
     }),
     defineTool("list_tickets", {
       description:
-        "Read tracked Azure DevOps tickets and their last sync timestamps.",
-      parameters: z.object({}),
-      handler: async () =>
-        store.db
-          .prepare(
-            "SELECT * FROM tickets WHERE source=? ORDER BY changed_at DESC LIMIT 100",
-          )
-          .all(store.source()),
+        "List LOCAL tracked tickets for the configured Azure connection, with exact type/state filters and ID pagination. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. No Azure requests.",
+      parameters: ticketListSchema,
+      handler: async (args) => listLocalTickets(store, args),
     }),
     defineTool("list_chats", {
       description:
@@ -278,7 +275,10 @@ export class Agent {
     const client = this.client();
     const ledger = new UsageLedger(this.store);
     const settings = this.store.settings();
-    const id = ledger.begin(settings.model, context);
+    const model = review
+      ? settings.reviewModel || settings.model
+      : settings.model;
+    const id = ledger.begin(model, context);
     this.busy = true;
     this.activeId = id;
     const cards: string[] = [];
@@ -443,6 +443,8 @@ export class Agent {
           review ? undefined : changeStatus,
           review ? undefined : localTicket,
         );
+        if (model) config.model = model;
+        else delete config.model;
         if (review) {
           config.tools = [];
           config.availableTools = [];

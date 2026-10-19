@@ -152,3 +152,16 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Customer, Orbit project, Azure project and repository moved from vertical card content into a collapsed «Контекст» dropdown in the top-right action group. Historical records show repository ID when the configured repository name no longer applies.
 - Build passed. Browser checks confirmed hidden-by-default details, correct context on expansion, unchanged card height, and mobile overflow checks.
+
+## Local ticket listing and separate Copilot models
+
+- Replaced the chat tool's silent 100-row limit and full-row serialization with compact ID-paginated results, exact type/state filters, total count, hasMore and nextAfterId. Each page fits below the generic 24,000-character tool guard; long display fields are explicitly marked as shortened. Listing remains scoped to the configured Azure connection and never calls Azure. Pagination is a live view, not a snapshot across simultaneous syncs.
+- Chat instructions distinguish Bug type from workflow state, request continuation pages and prohibit describing partial results as complete. Existing token, time and tool-call budgets still apply.
+- Settings expose separate chat and PR-review model selectors using the same Copilot model catalogue. Empty review selection inherits the chat model for backward compatibility. The selected model is passed to the session and usage ledger.
+- Validation: production build and all 83 Node tests passed. New tests cover 250 tickets, filters, source isolation, page size/continuation, shortened titles, empty results, separate session models and usage records. Live Copilot/Azure calls were not exercised.
+
+## Compact local assignment and identity lookup
+
+- Local assignment now has its own table column (name or N/A, edit and clear icons). Search opens a native modal dialog; it no longer increases every ticket row's height. Expanded ticket spans all seven columns.
+- Empty General identity searches retry once with DisplayName for names or MailAddress for email, using the same query. No directory enumeration or Azure writes. The root cause in the user's tenant remains unverified; Microsoft documents General as also matching display names.
+- Production build and all 84 Node tests passed, including explicit name/mail fallback coverage. Browser checks with mocked API cover the separate column, initially hidden search, edit modal, empty search, Escape dismissal and disabled removal for unassigned tickets.

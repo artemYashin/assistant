@@ -367,17 +367,34 @@ export class Connectors {
       queryMembership: "None",
       "api-version": s.azureVersion,
     });
-    const response = await requestJson(
-      `${base}/_apis/identities?${params}`,
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+    const searchIdentities = () =>
+      requestJson(
+        `${base}/_apis/identities?${params}`,
+        {
+          headers: {
+            Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+          },
         },
-      },
-      "Azure поиск пользователей (PAT: Identity Read)",
-    );
+        "Azure поиск пользователей (PAT: Identity Read)",
+      );
+    let response = await searchIdentities();
     if (!Array.isArray(response.value))
       throw new AppError(502, "Azure вернул неверный список пользователей");
+    // Some directories resolve account names via General but need an explicit
+    // display-name/mail lookup. Keep the fallback bounded; never enumerate users.
+    if (
+      !response.value.some(
+        (u: any) => u.id && !u.isContainer && u.isActive !== false,
+      )
+    ) {
+      params.set(
+        "searchFilter",
+        query.includes("@") ? "MailAddress" : "DisplayName",
+      );
+      response = await searchIdentities();
+      if (!Array.isArray(response.value))
+        throw new AppError(502, "Azure вернул неверный список пользователей");
+    }
     const matches = response.value.filter(
       (u: any) => u.id && !u.isContainer && u.isActive !== false,
     );

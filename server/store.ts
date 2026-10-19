@@ -37,6 +37,7 @@ export type Approval = {
 export const defaults = {
   githubClientId: "",
   model: "",
+  reviewModel: "",
   microsoftClientId: "",
   microsoftTenantId: "",
   azureUrl: "",
