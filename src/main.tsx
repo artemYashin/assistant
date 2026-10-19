@@ -1668,7 +1668,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <Field
             label="URL организации или коллекции"
-            hint="Поддерживается собственный домен Azure DevOps Server. Укажите путь до коллекции, без имени проекта."
+            hint="Services: https://dev.azure.com/организация. Server: HTTPS-адрес до коллекции, без проекта. Адрес браузерного прокси *.mcas.ms может возвращать страницу входа вместо API."
           >
             <input
               type="url"
@@ -1678,7 +1678,10 @@ function Settings({ settings, context, run, busy }: any) {
             />
           </Field>
           <div className="form-grid">
-            <Field label="Название проекта в Azure DevOps">
+            <Field
+              label="Название проекта в Azure DevOps"
+              hint="Именно Project, содержащий Boards и Repos, а не название Git-репозитория. В одном проекте может быть несколько репозиториев."
+            >
               <input
                 value={form.azureProject}
                 onChange={(e) => set("azureProject", e.target.value)}
