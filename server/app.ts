@@ -483,9 +483,13 @@ export function createApp(
       ),
     ),
   );
-  app.get("/api/ticket-cards/:ref", (req, res) =>
-    res.json(connectors.ticketCard(String(req.params.ref))),
-  );
+  app.get("/api/ticket-cards/:ref", (req, res) => {
+    const card = connectors.ticketCard(String(req.params.ref));
+    res.json({
+      ...card,
+      linkedPullRequests: pullRequests.linkedToTicket(card.id, card.source),
+    });
+  });
   app.get("/api/ticket-cards/:ref/attachments/:id", async (req, res) => {
     const file = await connectors.attachment(
       String(req.params.ref),
@@ -604,9 +608,24 @@ export function createApp(
         .all(input.monitor, input.repo, input.number),
     );
   });
-  app.get("/api/pr", (req, res) =>
-    res.json(pullRequests.list(contextSchema.parse(req.query))),
-  );
+  app.get("/api/pr", (req, res) => {
+    const target =
+      req.query.monitor !== undefined
+        ? z
+            .object({
+              monitor: text.min(1),
+              repo: text.min(1),
+              number: z.coerce.number().int().positive(),
+            })
+            .parse(req.query)
+        : undefined;
+    res.json(
+      pullRequests.list(
+        target ? { client: "", project: "" } : contextSchema.parse(req.query),
+        target,
+      ),
+    );
+  });
   let syncing = false;
   async function sync() {
     if (syncing) throw new AppError(409, "Синхронизация уже выполняется");

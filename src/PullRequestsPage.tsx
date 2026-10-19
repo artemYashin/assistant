@@ -1,8 +1,8 @@
 import { Copy, Check } from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ticketPath } from "./routing.js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import { StatusBadge } from "./TicketControls.js";
@@ -152,18 +152,45 @@ export function PullRequestsPage({ context, settings }: any) {
   const [draftFilter, setDraftFilter] = useState("all");
   const [reviewFilter, setReviewFilter] = useState("all");
   const [sort, setSort] = useState("created:desc");
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const target = params.get("monitor")
+    ? {
+        monitor: params.get("monitor")!,
+        repo: params.get("repo") || "",
+        number: params.get("number") || "",
+      }
+    : null;
+  const targetKey = target ? JSON.stringify(target) : "";
+  const focused = useRef("");
+  const focusRef = useRef<HTMLElement>(null);
+  const [loaded, setLoaded] = useState(false);
   const visiblePrs = filterPullRequests(prs, {
-    draft: draftFilter,
-    review: reviewFilter,
+    draft: target ? "all" : draftFilter,
+    review: target ? "all" : reviewFilter,
     sort,
   });
-  const query = new URLSearchParams(context).toString();
+  const query = new URLSearchParams(target || context).toString();
+  useEffect(() => {
+    if (!targetKey) {
+      focused.current = "";
+      return;
+    }
+    if (!loaded || !prs.length || focused.current === targetKey) return;
+    const frame = requestAnimationFrame(() => {
+      focusRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+      focusRef.current?.focus({ preventScroll: true });
+      focused.current = targetKey;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [targetKey, loaded, prs]);
   useEffect(() => {
     let live = true;
     const load = () =>
       Promise.all([api(`/pr?${query}`), api("/pr/projects")])
         .then(([p, m]) => {
           if (live) {
+            setLoaded(true);
             setPrs(p);
             setMonitors(m);
           }
@@ -171,6 +198,7 @@ export function PullRequestsPage({ context, settings }: any) {
         .catch((e) => {
           if (live) setError(e.message);
         });
+    setLoaded(false);
     setPrs([]);
     void load();
     const timer = setInterval(load, 5000);
@@ -212,6 +240,14 @@ export function PullRequestsPage({ context, settings }: any) {
       {error && (
         <p className="error" role="alert">
           {error}
+        </p>
+      )}
+      {target && (
+        <p className="pr-focus-notice" role="status">
+          {loaded && !prs.length
+            ? "Этот PR не найден в локальной базе."
+            : "Показан PR по ссылке из тикета. Фильтры временно не применяются."}{" "}
+          <Link to="/pull-requests">Показать все PR текущего проекта</Link>
         </p>
       )}
       {monitors
@@ -303,7 +339,9 @@ export function PullRequestsPage({ context, settings }: any) {
       <div className="card-list">
         {visiblePrs.map((p) => (
           <article
-            className="panel pr-review"
+            className={`panel pr-review${p.draft ? " pr-draft" : ""}${target ? " pr-focused" : ""}`}
+            ref={target ? focusRef : undefined}
+            tabIndex={target ? -1 : undefined}
             key={`${p.monitor}:${p.repo}:${p.number}`}
           >
             <div className="pr-card-toolbar">

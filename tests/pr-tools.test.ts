@@ -88,4 +88,40 @@ test("PR chat tools paginate, isolate context and enqueue only explicit review r
     call("request_pull_request_review", { ...key, number: 2 }),
     /черновики/,
   );
+  store.db
+    .prepare(
+      "UPDATE pull_requests SET description='#123456' WHERE number IN (1,2,3)",
+    )
+    .run();
+  store.db.prepare("UPDATE pull_requests SET in_scope=0 WHERE number=3").run();
+  assert.deepEqual(
+    service
+      .linkedToTicket(123456, store.source())
+      .map((p) => p.number)
+      .sort(),
+    [1, 2],
+  );
+  assert.equal(service.linkedToTicket(123456, "other-source").length, 0);
+  assert.equal(service.linkedToTicket(12345, store.source()).length, 0);
+  for (let i = 26; i <= 325; i++)
+    insert.run(
+      monitor,
+      "repo",
+      i,
+      "Title",
+      "Author",
+      "https://ado.test/pr",
+      "head",
+      "target",
+      0,
+      1,
+      "today",
+      "",
+    );
+  assert.equal(service.list(context).length, 300);
+  const focused = service.list({ client: "", project: "" }, key);
+  assert.equal(focused.length, 1);
+  assert.equal(focused[0].number, 1);
+  store.db.prepare("UPDATE pr_projects SET enabled=0 WHERE id=?").run(monitor);
+  assert.equal(service.linkedToTicket(123456, store.source()).length, 0);
 });

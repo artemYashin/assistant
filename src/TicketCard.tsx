@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { pullRequestPath } from "./routing.js";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
 import { StatusBadge } from "./TicketControls.js";
@@ -120,6 +122,53 @@ export function TicketCard({ reference }: { reference: string }) {
               />
             </details>
           ))}
+        <details
+          className="ticket-section"
+          open={!!card.linkedPullRequests?.length}
+        >
+          <summary>
+            Связанные открытые PR{" "}
+            <span className="ticket-count">
+              {card.linkedPullRequests?.length || 0}
+            </span>
+          </summary>
+          {card.linkedPullRequests?.length ? (
+            <ul className="ticket-linked-prs">
+              {card.linkedPullRequests.map((pr: any) => (
+                <li key={`${pr.monitor}:${pr.repo}:${pr.number}`}>
+                  <div className="ticket-linked-pr-heading">
+                    <span className="ticket-type-badge">PR</span>
+                    <Link to={pullRequestPath(pr)}>
+                      #{pr.number} · {pr.title}
+                    </Link>
+                    {pr.draft ? (
+                      <span className="ticket-state-badge">Черновик</span>
+                    ) : null}
+                  </div>
+                  <small>
+                    {pr.author || "Автор не указан"} · {pr.client} /{" "}
+                    {pr.project} · Синхронизация: {timestamp(pr.synced_at)}
+                  </small>
+                  {pr.syncError && (
+                    <p className="error">
+                      Последняя синхронизация не удалась: статус PR может быть
+                      устаревшим.
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ticket-empty">
+              Связанные открытые PR не найдены среди синхронизированных
+              репозиториев.
+            </p>
+          )}
+          <p className="ticket-footnote">
+            Связи по упоминаниям #номера в описании PR. Открытость — по
+            последней синхронизации с учётом настроенного фильтра ревьюеров.
+          </p>
+        </details>
         <details className="ticket-section">
           <summary>
             Комментарии{" "}

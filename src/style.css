@@ -2925,3 +2925,42 @@ td > small {
 .pr-branch > [role="status"]:empty {
   display: none;
 }
+
+.ticket-linked-prs {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 10px;
+}
+.ticket-linked-prs li {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.ticket-linked-pr-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ticket-linked-prs small {
+  color: var(--muted);
+}
+
+.pr-review.pr-draft {
+  background: #f4f5f6;
+  border: 2px dashed #aeb5bc;
+  box-shadow: 0 2px 6px #26323808;
+}
+.pr-review.pr-focused {
+  border-color: #789761;
+  box-shadow: 0 0 0 3px #78976125;
+  scroll-margin-top: calc(var(--topbar-height, 70px) + 16px);
+}
+.pr-focus-notice {
+  padding: 12px;
+  border-radius: 8px;
+  background: #edf3e9;
+}

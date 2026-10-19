@@ -19,3 +19,11 @@ export function pageForPath(pathname: string): Page | undefined {
 export function ticketPath(id: number, source?: string) {
   return `/tickets?${new URLSearchParams({ id: String(id), ...(source ? { source } : {}) })}`;
 }
+
+export function pullRequestPath(pr: {
+  monitor: string;
+  repo: string;
+  number: number;
+}) {
+  return `/pull-requests?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number) })}`;
+}

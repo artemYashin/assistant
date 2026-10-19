@@ -19,6 +19,7 @@ export type Monitor = {
   repository: string;
   mode: "required" | "all";
   enabled: number;
+  error?: string | null;
 };
 const now = () => new Date().toISOString();
 const enc = encodeURIComponent;
@@ -117,12 +118,24 @@ export class PullRequests {
       )
       .run(input.client, input.project, source, azureProject);
   }
-  list(context: Context) {
+  list(
+    context: Context,
+    target?: { monitor: string; repo: string; number: number },
+  ) {
     return this.store.db
       .prepare(
-        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
+        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND (?='' OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
       )
-      .all(context.client, context.client, context.project, context.project)
+      .all(
+        context.client,
+        context.client,
+        context.project,
+        context.project,
+        target?.monitor || "",
+        target?.monitor || "",
+        target?.repo || "",
+        target?.number || 0,
+      )
       .map((row: any) => {
         const m = this.monitors().find((m) => m.id === row.monitor)!;
         const source = this.store.source({
@@ -161,6 +174,37 @@ export class PullRequests {
           }),
         };
       });
+  }
+  linkedToTicket(id: number, source: string) {
+    const monitors = this.monitors().filter(
+      (m) =>
+        m.enabled &&
+        this.store.source({
+          ...this.store.settings(),
+          azureUrl: m.source,
+          azureProject: m.azure_project,
+        }) === source,
+    );
+    const items: any[] = [];
+    for (const monitor of monitors) {
+      const rows = this.store.db
+        .prepare(
+          "SELECT repo,number,title,author,url,draft,description,synced_at FROM pull_requests WHERE monitor=? AND in_scope=1 ORDER BY created_at DESC,number DESC",
+        )
+        .all(monitor.id) as any[];
+      for (const row of rows) {
+        if (!prTicketIds(row.description || "").includes(id)) continue;
+        const { description, ...pr } = row;
+        items.push({
+          ...pr,
+          monitor: monitor.id,
+          client: monitor.client,
+          project: monitor.project,
+          syncError: monitor.error || null,
+        });
+      }
+    }
+    return items;
   }
   async image(monitor: string, repo: string, number: number, source: string) {
     const m = this.monitors().find((m) => m.id === monitor);
