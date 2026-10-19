@@ -398,171 +398,170 @@ export function PullRequestsPage({ context, settings }: any) {
                 </span>
                 {!!p.draft && <span className="badge">Черновик</span>}
               </div>
-              <div className="pr-card-actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setViewingDiff(p)}
-                >
-                  <Code2 size={17} aria-hidden="true" /> View Diff
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                  onClick={() => setMerging({ ...p, moveTickets: false })}
-                >
-                  <GitMerge size={17} aria-hidden="true" /> Merge
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                  onClick={() => setMerging({ ...p, moveTickets: true })}
-                >
-                  <GitMerge size={17} aria-hidden="true" /> Merge и смена
-                  статусов
-                </button>
-                <button
-                  className="pr-review-launch"
-                  disabled={
-                    busy ||
-                    !p.in_scope ||
-                    !p.enabled ||
-                    !!p.draft ||
-                    [
-                      "queued",
-                      "running",
-                      "completed",
-                      "awaiting_answers",
-                    ].includes(p.review_status)
-                  }
-                  onClick={() =>
-                    void run(() =>
-                      api("/pr/review", "POST", {
-                        monitor: p.monitor,
-                        repo: p.repo,
-                        number: p.number,
-                      }),
-                    )
-                  }
-                >
-                  {p.review_status === "completed" ? (
-                    <Check size={17} aria-hidden="true" />
-                  ) : p.review_status === "running" ? (
-                    <LoaderCircle
-                      className="spin"
-                      size={17}
-                      aria-hidden="true"
-                    />
-                  ) : p.review_status === "queued" ? (
-                    <Clock size={17} aria-hidden="true" />
-                  ) : p.review_status === "awaiting_answers" ? (
-                    <MessageCircle size={17} aria-hidden="true" />
-                  ) : (
-                    <Sparkles size={17} aria-hidden="true" />
-                  )}
-                  {p.review_status === "completed"
-                    ? "Текущая версия проверена"
-                    : p.review_status === "awaiting_answers"
-                      ? "Ожидает ответов"
-                      : p.review_status === "running"
-                        ? "Ревью выполняется"
-                        : p.review_status === "queued"
-                          ? "Ревью в очереди"
-                          : "Запустить ревью"}
-                </button>
-                <details className="pr-technical pr-version-menu pr-context-menu">
-                  <summary title="Заказчик, проекты и репозиторий">
-                    <FolderOpen size={17} aria-hidden="true" />
-                    Контекст
-                  </summary>
-                  <dl>
-                    <div>
-                      <dt>Заказчик</dt>
-                      <dd>{p.client || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Проект Orbit</dt>
-                      <dd>{p.project || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Azure Project</dt>
-                      <dd>{p.azure_project || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Репозиторий</dt>
-                      <dd>
-                        {p.in_scope && p.repository
-                          ? p.repository
-                          : p.repo || "—"}
-                      </dd>
-                    </div>
-                  </dl>
-                </details>
-                <details className="pr-technical pr-version-menu">
-                  <summary title="Версия изменений и ID репозитория">
-                    <GitCommitHorizontal size={17} aria-hidden="true" />
-                    Версия изменений
-                  </summary>
-                  <dl>
-                    <div>
-                      <dt>Source commit</dt>
-                      <dd>
-                        <code>{p.head}</code>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Target commit</dt>
-                      <dd>
-                        <code>{p.target}</code>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>ID репозитория</dt>
-                      <dd>
-                        <code>{p.repo}</code>
-                      </dd>
-                    </div>
-                  </dl>
-                </details>
-              </div>
             </div>
             <h2 className="pr-title">
               <a href={p.url} target="_blank" rel="noreferrer">
                 #{p.number} · {p.title}
               </a>
             </h2>
-            <PrHealth value={p.health} inScope={!!p.in_scope} />
+            <div className="pr-author-meta">
+              <div className="pr-author">
+                <span className="pr-avatar" aria-hidden="true">
+                  {(p.author || "?").slice(0, 1).toUpperCase()}
+                </span>
+                <div>
+                  <small>Автор</small>
+                  <strong>{p.author || "Не указан"}</strong>
+                </div>
+              </div>
+              <p className="muted">
+                Создан:{" "}
+                {p.created_at ? (
+                  <time dateTime={p.created_at}>
+                    {new Date(p.created_at).toLocaleString("ru-RU")}
+                  </time>
+                ) : (
+                  "дата пока не загружена"
+                )}
+              </p>
+            </div>
             <div className="pr-branches" aria-label="Ветки pull request">
               <BranchLabel kind="source" value={p.source_branch} />
               <span aria-hidden="true">→</span>
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
+            <div className="pr-card-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setViewingDiff(p)}
+              >
+                <Code2 size={17} aria-hidden="true" /> View Diff
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                onClick={() => setMerging({ ...p, moveTickets: false })}
+              >
+                <GitMerge size={17} aria-hidden="true" /> Merge
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                onClick={() => setMerging({ ...p, moveTickets: true })}
+              >
+                <GitMerge size={17} aria-hidden="true" /> Merge и смена статусов
+              </button>
+              <button
+                className="pr-review-launch"
+                disabled={
+                  busy ||
+                  !p.in_scope ||
+                  !p.enabled ||
+                  !!p.draft ||
+                  [
+                    "queued",
+                    "running",
+                    "completed",
+                    "awaiting_answers",
+                  ].includes(p.review_status)
+                }
+                onClick={() =>
+                  void run(() =>
+                    api("/pr/review", "POST", {
+                      monitor: p.monitor,
+                      repo: p.repo,
+                      number: p.number,
+                    }),
+                  )
+                }
+              >
+                {p.review_status === "completed" ? (
+                  <Check size={17} aria-hidden="true" />
+                ) : p.review_status === "running" ? (
+                  <LoaderCircle className="spin" size={17} aria-hidden="true" />
+                ) : p.review_status === "queued" ? (
+                  <Clock size={17} aria-hidden="true" />
+                ) : p.review_status === "awaiting_answers" ? (
+                  <MessageCircle size={17} aria-hidden="true" />
+                ) : (
+                  <Sparkles size={17} aria-hidden="true" />
+                )}
+                {p.review_status === "completed"
+                  ? "Текущая версия проверена"
+                  : p.review_status === "awaiting_answers"
+                    ? "Ожидает ответов"
+                    : p.review_status === "running"
+                      ? "Ревью выполняется"
+                      : p.review_status === "queued"
+                        ? "Ревью в очереди"
+                        : "Запустить ревью"}
+              </button>
+            </div>
+            <div className="pr-metadata-sections">
+              <details className="pr-technical pr-version-menu pr-context-menu">
+                <summary title="Заказчик, проекты и репозиторий">
+                  <FolderOpen size={17} aria-hidden="true" />
+                  Контекст
+                </summary>
+                <dl>
+                  <div>
+                    <dt>Заказчик</dt>
+                    <dd>{p.client || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Проект Orbit</dt>
+                    <dd>{p.project || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Azure Project</dt>
+                    <dd>{p.azure_project || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Репозиторий</dt>
+                    <dd>
+                      {p.in_scope && p.repository
+                        ? p.repository
+                        : p.repo || "—"}
+                    </dd>
+                  </div>
+                </dl>
+              </details>
+              <details className="pr-technical pr-version-menu">
+                <summary title="Версия изменений и ID репозитория">
+                  <GitCommitHorizontal size={17} aria-hidden="true" />
+                  Версия изменений
+                </summary>
+                <dl>
+                  <div>
+                    <dt>Source commit</dt>
+                    <dd>
+                      <code>{p.head}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Target commit</dt>
+                    <dd>
+                      <code>{p.target}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>ID репозитория</dt>
+                    <dd>
+                      <code>{p.repo}</code>
+                    </dd>
+                  </div>
+                </dl>
+              </details>
+            </div>
+            <PrHealth value={p.health} inScope={!!p.in_scope} />
             {p.review_status === "awaiting_answers" && (
               <Link className="chat-ticket-link" to="/pull-requests?tab=inbox">
                 Ответить на вопросы ревьюера →
               </Link>
             )}
-            <div className="pr-author">
-              <span className="pr-avatar" aria-hidden="true">
-                {(p.author || "?").slice(0, 1).toUpperCase()}
-              </span>
-              <div>
-                <small>Автор</small>
-                <strong>{p.author || "Не указан"}</strong>
-              </div>
-            </div>
-            <p className="muted">
-              Создан:{" "}
-              {p.created_at ? (
-                <time dateTime={p.created_at}>
-                  {new Date(p.created_at).toLocaleString("ru-RU")}
-                </time>
-              ) : (
-                "дата пока не загружена"
-              )}
-            </p>
             <PrDescription pr={p} />
             <details className="pr-content-section">
               <summary>

@@ -3810,3 +3810,56 @@ summary > svg {
   border-bottom: 1px solid var(--border);
   font-size: 12px;
 }
+
+.pr-author-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 14px 0;
+}
+.pr-author-meta > .pr-author,
+.pr-author-meta > p {
+  margin: 0;
+}
+.pr-review > .pr-card-actions {
+  margin: 16px 0 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.pr-metadata-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.pr-metadata-sections > details {
+  min-width: 0;
+  background: #f8f9f6;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pr-metadata-sections > details > summary {
+  border: 0;
+  padding: 12px;
+}
+.pr-metadata-sections > details > dl {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin: 0;
+  padding: 0 12px 12px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+@media (max-width: 600px) {
+  .pr-metadata-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-review > .pr-card-actions > button {
+    flex: 1 1 180px;
+    justify-content: center;
+  }
+}

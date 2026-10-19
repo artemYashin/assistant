@@ -360,3 +360,16 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ## Pre-push validation: active PR list and CI classification
 
 - All 113 Node tests and production build passed, including active-list/history separation and approved policy status with stale metadata. Diff whitespace check passed. Vite retains the existing main-bundle size warning; live Azure and browser interactions were not exercised for this batch.
+
+## PR author placement
+
+- Moved author and creation timestamp together directly below the toolbar/status row, before the title, CI checks and branches. The metadata row wraps on narrow screens. Whitespace check passed; tests deferred until push.
+
+## PR card hierarchy and grouped actions
+
+- Updated requested hierarchy: PR/review/draft badges, then linked number/title, then author/date, then branches. Action buttons now occupy a separate bordered row. Context/version disclosures use a two-column metadata grid with inline content instead of overlapping dropdown panels; narrow screens stack these sections and wrap actions. CI, description, tickets and review sections follow below.
+- TypeScript and whitespace checks passed. Tests/browser checks deferred until push.
+
+## Pre-push validation: PR card hierarchy
+
+- All 113 Node tests and production build passed. Mocked-API Chromium checks passed for PR sorting/filtering/reset, mobile overflow and absence of mutation requests. Inspected the desktop screenshot: badges, title, author/date, branches, actions and paired metadata disclosures appear in the requested order. Vite retains the existing bundle-size warning.
