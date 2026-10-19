@@ -144,9 +144,20 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pr_ticket_links (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,ticket_id INTEGER NOT NULL,PRIMARY KEY(monitor,repo,number,ticket_id));
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS ticket_trash (source TEXT NOT NULL,id INTEGER NOT NULL,body TEXT NOT NULL,removed_at INTEGER NOT NULL,PRIMARY KEY(source,id));
-      CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 2,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
+      CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 1,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
+    if (!this.get("migration.ticketPriorityOne", false)) {
+      this.db.transaction(() => {
+        this.db.exec(`
+          INSERT OR IGNORE INTO ticket_metadata(source,id,notes,priority,tags)
+          SELECT source,id,'',2,'[]' FROM tickets;
+          INSERT OR IGNORE INTO ticket_metadata(source,id,notes,priority,tags)
+          SELECT source,id,'',2,'[]' FROM ticket_trash;
+        `);
+        this.set("migration.ticketPriorityOne", true);
+      })();
+    }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS local_developers (id TEXT PRIMARY KEY,name TEXT NOT NULL,client TEXT NOT NULL,project TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
       CREATE TABLE IF NOT EXISTS ticket_developers (source TEXT NOT NULL,ticket_id INTEGER NOT NULL,developer_id TEXT NOT NULL REFERENCES local_developers(id),PRIMARY KEY(source,ticket_id,developer_id));
@@ -183,6 +194,14 @@ export class Store {
     )
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN repository TEXT NOT NULL DEFAULT ''",
+      );
+    if (
+      !(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(
+        (c) => c.name === "review_files",
+      )
+    )
+      this.db.exec(
+        "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
     for (const column of [
       "description",

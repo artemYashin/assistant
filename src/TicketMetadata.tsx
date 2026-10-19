@@ -21,7 +21,7 @@ export function TicketMetadata({
   return (
     <div className="ticket-metadata-control">
       {field === "priority" && (
-        <span className="badge">P{ticket.priority ?? 2}</span>
+        <span className="badge">P{ticket.priority ?? 1}</span>
       )}
       {field === "tags" && (
         <span className="ticket-tag-list">
@@ -69,7 +69,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
   const [value, setValue] = useState(
     field === "tags"
       ? (ticket.tags || []).join("\n")
-      : String(ticket[field] ?? (field === "priority" ? 2 : "")),
+      : String(ticket[field] ?? (field === "priority" ? 1 : "")),
   );
   const [count, setCount] = useState(3),
     [ready, setReady] = useState(false),
@@ -257,7 +257,7 @@ export function PrioritySettings({ context }: any) {
         {context.project
           ? "Настройки текущего проекта; без переопределения наследуются от заказчика."
           : "Настройки заказчика для его проектов."}{" "}
-        По умолчанию 3 уровня, новый тикет — P2. P1 — самый высокий. Сохранённые
+        По умолчанию 3 уровня, новый тикет — P1. P1 — самый высокий. Сохранённые
         приоритеты при уменьшении диапазона не теряются.
       </p>
       <SingleSelect

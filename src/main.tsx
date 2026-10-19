@@ -1,3 +1,4 @@
+import { LastSync } from "./LastSync.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { TicketTrash } from "./TicketTrash.js";
 import { MemoryProposalList } from "./MemoryProposals.js";
@@ -56,6 +57,8 @@ import {
   Users,
   Globe,
   FolderOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
@@ -313,6 +316,18 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     if (page === "inbox")
       navigate("/pull-requests?tab=inbox", { replace: true });
   }, [page, navigate]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () =>
+      readChatPreference(
+        "orbit.sidebar.collapsed",
+        String(window.innerWidth <= 800),
+      ) === "true",
+  );
+  useEffect(
+    () =>
+      saveChatPreference("orbit.sidebar.collapsed", String(sidebarCollapsed)),
+    [sidebarCollapsed],
+  );
   const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
     [items, setItems] = useState<any[]>([]),
@@ -438,7 +453,27 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
       : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return (
     <div className={`workspace ${assistantOpen ? "with-assistant" : ""}`}>
-      <aside className="sidebar">
+      <aside
+        className={`sidebar ${sidebarCollapsed ? "sidebar-collapsed" : "sidebar-expanded"}`}
+        aria-label="Основная навигация"
+      >
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={() => setSidebarCollapsed((value) => !value)}
+          aria-expanded={!sidebarCollapsed}
+          aria-label={
+            sidebarCollapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"
+          }
+          title={sidebarCollapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeftOpen size={19} />
+          ) : (
+            <PanelLeftClose size={19} />
+          )}
+          <span className="sidebar-text">Свернуть меню</span>
+        </button>
         <div className="brand">
           <Mark />
           <b>
@@ -460,11 +495,13 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <Link
                 key={n.id}
                 to={pagePaths[n.id]}
+                title={n.label}
+                aria-label={n.label}
                 aria-current={page === n.id ? "page" : undefined}
                 className={page === n.id ? "active" : ""}
               >
                 <n.icon size={19} />
-                {n.label}
+                <span className="sidebar-text">{n.label}</span>
                 {n.id === "approvals" &&
                   pending.length +
                     memoryProposals.filter((p) => p.status === "pending")
@@ -487,23 +524,32 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
           </div>
           <Link
             to={pagePaths.settings}
+            title="Настройки"
+            aria-label="Настройки"
             aria-current={page === "settings" ? "page" : undefined}
             className={page === "settings" ? "active" : ""}
           >
             <Settings2 size={19} />
-            Настройки
+            <span className="sidebar-text">Настройки</span>
           </Link>
           <button
             className="sidebar-disabled"
             disabled
             title="Интеграция Teams временно отложена"
+            aria-label="Сообщения Teams — недоступно"
           >
             <MessageSquare size={18} />
-            Сообщения Teams<small>Позже</small>
+            <span className="sidebar-text">
+              Сообщения Teams<small>Позже</small>
+            </span>
           </button>
-          <button onClick={() => run("logout", onLogout)}>
+          <button
+            title="Выйти"
+            aria-label="Выйти"
+            onClick={() => run("logout", onLogout)}
+          >
             <LogOut size={18} />
-            Выйти
+            <span className="sidebar-text">Выйти</span>
           </button>
         </div>
       </aside>
@@ -972,6 +1018,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   settings={settings}
                   key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
                   tickets={tickets}
+                  lastSync={overview?.ticketsLastSync}
                   query={query}
                   setQuery={setQuery}
                   run={run}
@@ -1153,6 +1200,7 @@ function PageHeading({
 }
 function Tickets({
   tickets,
+  lastSync,
   query,
   setQuery,
   run,
@@ -1212,7 +1260,7 @@ function Tickets({
     return (
       matchesQuery &&
       (!priorityFilter.length ||
-        priorityFilter.includes(String(t.priority ?? 2))) &&
+        priorityFilter.includes(String(t.priority ?? 1))) &&
       (!tagFilter.length ||
         tagFilter.some((tag) =>
           tag === "" ? !t.tags?.length : t.tags?.includes(tag),
@@ -1275,6 +1323,7 @@ function Tickets({
         title="Ваши тикеты"
         subtitle="Актуальный статус из Azure DevOps. Данные обновляются в фоне."
       />
+      <LastSync at={lastSync} />
       {rawTarget && (
         <div className="ticket-target-notice" role="status">
           <p>
@@ -1344,7 +1393,7 @@ function Tickets({
           onChange={setPriorityFilter}
           disabled={!!rawTarget}
           options={[
-            ...new Set<number>(tickets.map((t: any) => t.priority ?? 2)),
+            ...new Set<number>(tickets.map((t: any) => t.priority ?? 1)),
           ]
             .sort((a, b) => a - b)
             .map((v) => ({ value: String(v), label: "P" + v }))}

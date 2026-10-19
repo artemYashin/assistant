@@ -1,3 +1,4 @@
+import { reviewFileSettings } from "./review-files.js";
 import {
   ticketMetadata,
   saveTicketMetadata,
@@ -337,6 +338,10 @@ export function createApp(
         store.db.prepare("SELECT count(*) AS n FROM memories").get() as any
       ).n,
       sync: store.get("sync.status", { state: "idle" }),
+      ticketsLastSync: store.get<string | null>(
+        "tickets.lastSync:" + source,
+        null,
+      ),
       activity: store.db
         .prepare("SELECT * FROM audit ORDER BY created_at DESC LIMIT 8")
         .all(),
@@ -703,6 +708,7 @@ export function createApp(
         repository: text.min(1),
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),
+        reviewFiles: reviewFileSettings.optional(),
       })
       .strict()
       .parse(req.body);

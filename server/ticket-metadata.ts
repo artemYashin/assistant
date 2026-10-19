@@ -36,7 +36,7 @@ export function ticketMetadata(
         priority: row.priority,
         tags: JSON.parse(row.tags) as string[],
       }
-    : { notes: "", priority: 2, tags: [] as string[] };
+    : { notes: "", priority: 1, tags: [] as string[] };
 }
 export function saveTicketMetadata(
   store: Store,

@@ -1,3 +1,4 @@
+import { LastSync } from "./LastSync.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { PrCommitsDialog } from "./PrCommitsDialog.js";
 import { PrReviewDialog } from "./PrReviewDialog.js";
@@ -8,6 +9,7 @@ import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   Code2,
+  Eye,
   GitMerge,
   Copy,
   Check,
@@ -126,6 +128,46 @@ function PrDescription({ pr }: any) {
         </div>
       )}
     </details>
+  );
+}
+function ReviewResult({ pr }: any) {
+  const result = pr.summary ? pr : pr.last_saved_review || pr;
+  let coverage: any = null;
+  try {
+    coverage = result.coverage ? JSON.parse(result.coverage) : null;
+  } catch {}
+  const previous = result.head !== pr.head || result.target !== pr.target;
+  return (
+    <PrInfoPopup
+      title="Открыть результат ревью"
+      className={`icon-button pr-open-review${result.summary ? "" : " is-preparing"}`}
+      trigger={<Eye size={16} aria-hidden="true" />}
+    >
+      <div className="pr-review-result">
+        {previous && (
+          <p className="muted">
+            Ревью предыдущей версии PR: {result.head?.slice(0, 10)} →{" "}
+            {result.target?.slice(0, 10)}.
+          </p>
+        )}
+        {coverage && (
+          <p className="muted">
+            Покрытие: {coverage.files} файлов.{" "}
+            {(coverage.notes || []).join("; ")}
+          </p>
+        )}
+        {result.finished_at && (
+          <small>{new Date(result.finished_at).toLocaleString("ru-RU")}</small>
+        )}
+        {result.summary ? (
+          <ChatMarkdown text={result.summary} />
+        ) : (
+          <p className="muted">
+            Отчёт ещё не готов. Показаны сведения о подготовленном diff.
+          </p>
+        )}
+      </div>
+    </PrInfoPopup>
   );
 }
 function ReviewHistory({ pr }: any) {
@@ -305,14 +347,39 @@ export function PullRequestsPage({ context, settings }: any) {
           }}
         />
       )}
-      <div className="page-heading">
+      <div className="page-heading pr-page-heading">
         <div>
           <h1>Pull requests</h1>
-          <p>
-            Синхронизация каждые {(settings?.syncSeconds || 600) / 60} минут.
-            Ревью запускается по вашей просьбе; после отправки всех ответов —
-            повторяется.
-          </p>
+          <div className="pr-sync-summary">
+            {monitors
+              .filter(
+                (m) =>
+                  m.enabled &&
+                  (!context.client || m.client === context.client) &&
+                  (!context.project || m.project === context.project),
+              )
+              .map((m) => (
+                <LastSync
+                  key={m.id}
+                  at={m.synced_at}
+                  label={`Синхронизация · ${m.repository}`}
+                />
+              ))}
+            {!monitors.some(
+              (m) =>
+                m.enabled &&
+                (!context.client || m.client === context.client) &&
+                (!context.project || m.project === context.project),
+            ) && (
+              <p className="last-sync">
+                Синхронизация PR не настроена для выбранного контекста.
+              </p>
+            )}
+
+            <span className="muted pr-poll-interval">
+              Опрос: {(settings?.syncSeconds || 600) / 60} мин.
+            </span>
+          </div>
         </div>
         <button
           className="secondary"
@@ -337,20 +404,18 @@ export function PullRequestsPage({ context, settings }: any) {
       )}
       {monitors
         .filter(
-          (m) => m.client === context.client && m.project === context.project,
+          (m) =>
+            m.client === context.client &&
+            m.project === context.project &&
+            (m.error || !m.enabled),
         )
         .map((m) => (
           <p className="muted" key={m.id}>
             {m.azure_project} / {m.repository || "Репозиторий не выбран"} ·{" "}
-            {m.enabled ? "Опрос включён" : "Опрос выключен"}
-            {m.error ? ` · ${m.error}` : ""}
+            {m.error || "Опрос выключен"}
           </p>
         ))}
-      <p className="muted">
-        Ревью учитывает общую память, память заказчика и проекта; до{" "}
-        {settings?.prDailyLimit || 20} запусков за 24 часа. Комментарии и голоса
-        в Azure не отправляются.
-      </p>
+
       <div className="ticket-filters">
         <SingleSelect
           label="Тип PR"
@@ -403,8 +468,7 @@ export function PullRequestsPage({ context, settings }: any) {
         </button>
       </div>
       <p className="muted" role="status">
-        Показано {visiblePrs.length} из {prs.length}. «Ревью готово» — проверена
-        текущая версия PR.
+        Показано {visiblePrs.length} из {prs.length}.
       </p>
       {!!prs.length && !visiblePrs.length && (
         <div className="empty">
@@ -433,6 +497,10 @@ export function PullRequestsPage({ context, settings }: any) {
                 >
                   {statuses[p.review_status] || "Ревью не запускалось"}
                 </span>
+                {(p.summary || p.coverage || p.last_saved_review) && (
+                  <ReviewResult pr={p} />
+                )}
+                {p.review_count > 1 && <ReviewHistory pr={p} />}
                 {!!p.draft && <span className="badge">Черновик</span>}
               </div>
               <div className="pr-card-utilities">
@@ -494,7 +562,6 @@ export function PullRequestsPage({ context, settings }: any) {
                       </div>
                     </dl>
                   </PrInfoPopup>
-                  <ReviewHistory pr={p} />
                 </div>
               </div>
             </div>
@@ -530,70 +597,79 @@ export function PullRequestsPage({ context, settings }: any) {
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
             <div className="pr-card-actions">
-              <button
-                className="pr-review-launch"
-                disabled={
-                  busy ||
-                  !p.in_scope ||
-                  !p.enabled ||
-                  !!p.draft ||
-                  ["queued", "running", "awaiting_answers"].includes(
-                    p.review_status,
-                  )
-                }
-                onClick={() => setReviewing(p)}
-              >
-                {p.review_status === "completed" ? (
-                  <Check size={17} aria-hidden="true" />
-                ) : p.review_status === "running" ? (
-                  <LoaderCircle className="spin" size={17} aria-hidden="true" />
-                ) : p.review_status === "queued" ? (
-                  <Clock size={17} aria-hidden="true" />
-                ) : p.review_status === "awaiting_answers" ? (
-                  <MessageCircle size={17} aria-hidden="true" />
-                ) : (
-                  <Sparkles size={17} aria-hidden="true" />
-                )}
-                {p.review_status === "completed"
-                  ? "Повторить ревью"
-                  : p.review_status === "awaiting_answers"
-                    ? "Ожидает ответов"
-                    : p.review_status === "running"
-                      ? "Ревью выполняется"
-                      : p.review_status === "queued"
-                        ? "Ревью в очереди"
-                        : "Запустить ревью"}
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setViewingCommits(p)}
-              >
-                <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setViewingDiff(p)}
-              >
-                <Code2 size={17} aria-hidden="true" /> View Diff
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                onClick={() => setMerging({ ...p, moveTickets: false })}
-              >
-                <GitMerge size={17} aria-hidden="true" /> Merge
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                onClick={() => setMerging({ ...p, moveTickets: true })}
-              >
-                <GitMerge size={17} aria-hidden="true" /> Merge и смена статусов
-              </button>
+              <div className="pr-action-group">
+                <button
+                  className="pr-review-launch"
+                  disabled={
+                    busy ||
+                    !p.in_scope ||
+                    !p.enabled ||
+                    !!p.draft ||
+                    ["queued", "running", "awaiting_answers"].includes(
+                      p.review_status,
+                    )
+                  }
+                  onClick={() => setReviewing(p)}
+                >
+                  {p.review_status === "completed" ? (
+                    <Check size={17} aria-hidden="true" />
+                  ) : p.review_status === "running" ? (
+                    <LoaderCircle
+                      className="spin"
+                      size={17}
+                      aria-hidden="true"
+                    />
+                  ) : p.review_status === "queued" ? (
+                    <Clock size={17} aria-hidden="true" />
+                  ) : p.review_status === "awaiting_answers" ? (
+                    <MessageCircle size={17} aria-hidden="true" />
+                  ) : (
+                    <Sparkles size={17} aria-hidden="true" />
+                  )}
+                  {p.review_status === "completed"
+                    ? "Повторить ревью"
+                    : p.review_status === "awaiting_answers"
+                      ? "Ожидает ответов"
+                      : p.review_status === "running"
+                        ? "Ревью выполняется"
+                        : p.review_status === "queued"
+                          ? "Ревью в очереди"
+                          : "Запустить ревью"}
+                </button>
+                <button
+                  type="button"
+                  className="secondary pr-diff-action"
+                  onClick={() => setViewingDiff(p)}
+                >
+                  <Code2 size={17} aria-hidden="true" /> View Diff
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setViewingCommits(p)}
+                >
+                  <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
+                </button>
+              </div>
+              <div className="pr-action-group pr-merge-actions">
+                <button
+                  type="button"
+                  className="secondary pr-merge-action"
+                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                  onClick={() => setMerging({ ...p, moveTickets: false })}
+                >
+                  <GitMerge size={17} aria-hidden="true" /> Merge
+                </button>
+                <button
+                  type="button"
+                  className="secondary pr-merge-move-action"
+                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                  onClick={() => setMerging({ ...p, moveTickets: true })}
+                >
+                  <GitMerge size={17} aria-hidden="true" /> Merge и смена
+                  статусов
+                </button>
+              </div>
             </div>
             {p.review_status === "awaiting_answers" && (
               <Link className="chat-ticket-link" to="/pull-requests?tab=inbox">
@@ -681,31 +757,11 @@ export function PullRequestsPage({ context, settings }: any) {
             </details>
             {!p.in_scope && (
               <p className="muted">
-                PR вне текущей выборки. Сохранённые результаты доступны ниже.
+                PR вне текущей выборки. Сохранённые результаты доступны вверху
+                карточки.
               </p>
             )}
             {p.error && <p className="error">{p.error}</p>}
-            {(p.summary || p.coverage) && (
-              <details className="pr-review-result pr-result-accordion">
-                <summary>
-                  <ClipboardCheck size={17} aria-hidden="true" />
-                  Результат ревью
-                </summary>
-                {p.coverage && (
-                  <p className="muted">
-                    Покрытие: {JSON.parse(p.coverage).files} файлов.{" "}
-                    {JSON.parse(p.coverage).notes.join("; ")}
-                  </p>
-                )}
-
-                {p.finished_at && (
-                  <small>
-                    {new Date(p.finished_at).toLocaleString("ru-RU")}
-                  </small>
-                )}
-                {p.summary && <ChatMarkdown text={p.summary} />}
-              </details>
-            )}
           </article>
         ))}
       </div>

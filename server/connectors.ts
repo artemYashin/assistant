@@ -791,8 +791,18 @@ export class Connectors {
         s,
         pat,
       );
-      for (const item of result.value || []) this.saveTicket(item, s);
+      if (
+        !Array.isArray(result.value) ||
+        result.value.length !== list.slice(i, i + 200).length
+      )
+        throw new AppError(502, "Azure вернул неполный список тикетов");
+      for (const item of result.value) this.saveTicket(item, s);
     }
+    if (list.length || importMine || (automatic && s.azureAutoImport))
+      this.store.set(
+        "tickets.lastSync:" + this.store.source(s),
+        new Date().toISOString(),
+      );
     return { count: list.length };
   }
 }

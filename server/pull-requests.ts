@@ -1,3 +1,4 @@
+import { ignoredReviewPath, reviewFileSettings } from "./review-files.js";
 import { policyChecks } from "./pr-health.js";
 import {
   ReviewQuestions,
@@ -28,6 +29,7 @@ export type Monitor = {
   mode: "required" | "all";
   enabled: number;
   error?: string | null;
+  review_files?: string;
 };
 const now = () => new Date().toISOString();
 const enc = encodeURIComponent;
@@ -86,6 +88,7 @@ export class PullRequests {
     repository: string;
     mode: "required" | "all";
     enabled: boolean;
+    reviewFiles?: { ignoredPaths: string[]; diffBudget: number };
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
@@ -96,6 +99,9 @@ export class PullRequests {
     const source = azureBase(settings.azureUrl);
     if (!input.repository.trim())
       throw new AppError(400, "Укажите Git-репозиторий");
+    const reviewFiles = input.reviewFiles
+      ? reviewFileSettings.parse(input.reviewFiles)
+      : undefined;
     this.store.addContext(input);
     this.store.db
       .prepare(
@@ -109,7 +115,7 @@ export class PullRequests {
       .run(input.client, input.project);
     this.store.db
       .prepare(
-        "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(client,project,source,azure_project) DO UPDATE SET mode=excluded.mode,enabled=excluded.enabled,repository=excluded.repository",
+        "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(client,project,source,azure_project) DO UPDATE SET synced_at=CASE WHEN pr_projects.repository!=excluded.repository OR pr_projects.mode!=excluded.mode THEN NULL ELSE pr_projects.synced_at END,mode=excluded.mode,enabled=excluded.enabled,repository=excluded.repository",
       )
       .run(
         randomUUID(),
@@ -121,6 +127,18 @@ export class PullRequests {
         Number(input.enabled),
         input.repository,
       );
+    if (reviewFiles)
+      this.store.db
+        .prepare(
+          "UPDATE pr_projects SET review_files=? WHERE client=? AND project=? AND source=? AND azure_project=?",
+        )
+        .run(
+          JSON.stringify(reviewFiles),
+          input.client,
+          input.project,
+          source,
+          azureProject,
+        );
     this.store.db
       .prepare(
         "UPDATE pull_requests SET in_scope=0 WHERE monitor IN (SELECT id FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=?)",
@@ -133,7 +151,7 @@ export class PullRequests {
   ) {
     return this.store.db
       .prepare(
-        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target AND r.rowid=(SELECT MAX(latest.rowid) FROM pr_reviews latest WHERE latest.monitor=p.monitor AND latest.repo=p.repo AND latest.number=p.number AND latest.head=p.head AND latest.target=p.target) WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND ((?='' AND p.in_scope=1 AND m.enabled=1) OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
+        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at,(SELECT COUNT(*) FROM pr_reviews history WHERE history.monitor=p.monitor AND history.repo=p.repo AND history.number=p.number AND COALESCE(history.summary,'')!='') review_count FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target AND r.rowid=(SELECT MAX(latest.rowid) FROM pr_reviews latest WHERE latest.monitor=p.monitor AND latest.repo=p.repo AND latest.number=p.number AND latest.head=p.head AND latest.target=p.target) WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND ((?='' AND p.in_scope=1 AND m.enabled=1) OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
       )
       .all(
         context.client,
@@ -160,6 +178,12 @@ export class PullRequests {
         const descriptionIds = prTicketIds(row.description);
         return {
           ...row,
+          last_saved_review:
+            this.store.db
+              .prepare(
+                "SELECT summary,coverage,finished_at,head,target FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1",
+              )
+              .get(row.monitor, row.repo, row.number) || null,
           ticket_source: source,
           images: descriptionImages(row.description).map((source) => ({
             source,
@@ -710,9 +734,21 @@ export class PullRequests {
       targetBranch: detail.targetRefName,
     };
   }
-  async changes(m: Monitor, repo: string, head: string, target: string) {
+  async changes(
+    m: Monitor,
+    repo: string,
+    head: string,
+    target: string,
+    forReview = false,
+  ) {
     const credentials = this.credentials(m),
       root = `git/repositories/${enc(repo)}`;
+    const settings = reviewFileSettings.parse(
+      JSON.parse(m.review_files || "{}"),
+    );
+    const budget = forReview ? settings.diffBudget : 80000;
+    const perFileBudget = forReview ? Math.floor(budget / 4) : budget;
+    const preparationStarted = Date.now();
     const diff = await this.get(
       m,
       `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(target)}&targetVersionType=commit&targetVersion=${enc(head)}&$top=101`,
@@ -723,12 +759,60 @@ export class PullRequests {
         502,
         "Azure не вернул merge base или список изменений",
       );
-    const preparationStarted = Date.now();
     const notes: string[] = [];
     const patches: string[] = [];
     let chars = 0;
-    if (diff.allChangesIncluded !== true || diff.changes.length > 100)
-      notes.push("Список файлов неполный: лимит 100 файлов");
+    let allChanges = [...diff.changes];
+    let complete = diff.allChangesIncluded === true;
+    if (forReview) {
+      while (
+        !complete &&
+        allChanges.length < 2000 &&
+        diff.changes.length &&
+        Date.now() - preparationStarted < 20000
+      ) {
+        const page = await this.get(
+          m,
+          `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(target)}&targetVersionType=commit&targetVersion=${enc(head)}&$top=101&$skip=${allChanges.length}`,
+          credentials,
+        );
+        if (
+          page.commonCommit !== diff.commonCommit ||
+          !Array.isArray(page.changes)
+        )
+          throw new AppError(
+            502,
+            "Azure изменил базу сравнения при загрузке списка файлов",
+          );
+        if (!page.changes.length) break;
+        allChanges.push(...page.changes);
+        complete = page.allChangesIncluded === true;
+      }
+    }
+    let ignored = 0;
+    const candidates = allChanges.filter((change) => {
+      if (!change.item?.path || change.item.isFolder) return false;
+      if (
+        forReview &&
+        (ignoredReviewPath(change.item.path, settings.ignoredPaths) ||
+          (change.originalPath &&
+            ignoredReviewPath(change.originalPath, settings.ignoredPaths)))
+      ) {
+        ignored++;
+        return false;
+      }
+      return true;
+    });
+    if (ignored)
+      notes.push(
+        `Исключено настройками проекта: ${ignored} файлов. Они не проверялись.`,
+      );
+    if (!complete)
+      notes.push(
+        "Список изменений загружен не полностью: достигнут лимит загрузки списка файлов.",
+      );
+    if (candidates.length > 100)
+      notes.push("Список файлов неполный: лимит 100 файлов после исключений");
     const read = async (path: string, commit: string) => {
       const item = await this.get(
         m,
@@ -743,7 +827,7 @@ export class PullRequests {
         throw new Error("Неподдерживаемый или большой файл");
       return item.content as string;
     };
-    for (const change of diff.changes.slice(0, 100)) {
+    for (const change of candidates.slice(0, 100)) {
       if (this.stopped || Date.now() - preparationStarted > 60000) {
         notes.push(
           "Подготовка diff остановлена по времени или завершению приложения",
@@ -752,8 +836,10 @@ export class PullRequests {
       }
       const path = change.item?.path;
       if (!path || change.item?.isFolder) continue;
-      if (chars >= 80000) {
-        notes.push("Достигнут лимит diff 80 000 символов");
+      if (chars >= budget) {
+        notes.push(
+          `Достигнут лимит diff ${budget} символов; оставшиеся файлы не проверены.`,
+        );
         break;
       }
       try {
@@ -780,8 +866,16 @@ export class PullRequests {
           notes.push(`${path}: diff слишком сложный`);
           continue;
         }
-        if (chars + patch.length > 80000) {
-          notes.push(`${path}: превышает оставшийся бюджет diff`);
+        if (patch.length > perFileBudget) {
+          notes.push(
+            `${path}: diff ${patch.length} символов превышает лимит одного файла ${perFileBudget}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.`,
+          );
+          continue;
+        }
+        if (chars + patch.length > budget) {
+          notes.push(
+            `${path}: требуется ${patch.length} символов, осталось ${budget - chars} из ${budget}. Файл не проверен; настройте исключения или лимит diff.`,
+          );
           continue;
         }
         chars += patch.length;
@@ -905,7 +999,13 @@ export class PullRequests {
           .run(now(), job.id);
         return;
       }
-      const changes = await this.changes(m, job.repo, job.head, job.target);
+      const changes = await this.changes(
+        m,
+        job.repo,
+        job.head,
+        job.target,
+        true,
+      );
       this.store.db.prepare("UPDATE pr_reviews SET coverage=? WHERE id=?").run(
         JSON.stringify({
           files: changes.patches.length,
@@ -921,7 +1021,8 @@ export class PullRequests {
       if (
         !current?.enabled ||
         current.mode !== m.mode ||
-        current.repository !== m.repository
+        current.repository !== m.repository ||
+        current.review_files !== m.review_files
       )
         throw new AppError(409, "Мониторинг изменён во время подготовки ревью");
       this.credentials(m);

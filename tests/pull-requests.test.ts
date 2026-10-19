@@ -889,3 +889,79 @@ test("commit diff uses first parent, checks PR membership and never invokes mode
   await assert.rejects(service.commitDiff(monitor, "repo", 1, "../bad"), /SHA/);
   assert.equal(calls.length, 0);
 });
+
+test("review exclusions precede file reads and file cap; manual diff remains available", async (t) => {
+  const { service } = fixture(t);
+  const reads: string[] = [];
+  mock(t, [pr()], (url) => {
+    if (url.pathname.endsWith("/diffs/commits"))
+      return {
+        commonCommit: "base",
+        allChangesIncluded: true,
+        changes: [
+          ...Array.from({ length: 100 }, (_, i) => ({
+            changeType: "add",
+            item: { path: "/generated/" + i + ".ts" },
+          })),
+          { changeType: "add", item: { path: "/src/app.ts" } },
+        ],
+      };
+    if (url.pathname.endsWith("/items")) {
+      reads.push(url.searchParams.get("path")!);
+      return { content: "export const value = 1;" };
+    }
+  });
+  service.save({
+    ...context,
+    repository: "repo",
+    mode: "required",
+    enabled: true,
+    reviewFiles: { ignoredPaths: ["generated/"], diffBudget: 160000 },
+  });
+  const m = service.monitors()[0];
+  const review = await service.changes(m, "repo", "head", "target", true);
+  assert.deepEqual(reads, ["/src/app.ts"]);
+  assert.equal(review.patches.length, 1);
+  assert.match(review.notes.join(" "), /Исключено.*100/);
+  reads.length = 0;
+  await service.changes(m, "repo", "head", "target");
+  assert.ok(reads.some((path) => path.startsWith("/generated/")));
+});
+test("a large patch cannot consume the review budget reserved for other files", async (t) => {
+  const { service } = fixture(t);
+  mock(t, [pr()], (url) => {
+    if (url.pathname.endsWith("/diffs/commits"))
+      return {
+        commonCommit: "base",
+        allChangesIncluded: true,
+        changes: [
+          { changeType: "add", item: { path: "/big.ts" } },
+          { changeType: "add", item: { path: "/small.ts" } },
+        ],
+      };
+    if (url.pathname.endsWith("/items"))
+      return {
+        content:
+          url.searchParams.get("path") === "/big.ts"
+            ? "x".repeat(12000)
+            : "small",
+      };
+  });
+  service.save({
+    ...context,
+    repository: "repo",
+    mode: "required",
+    enabled: true,
+    reviewFiles: { ignoredPaths: [], diffBudget: 40000 },
+  });
+  const result = await service.changes(
+    service.monitors()[0],
+    "repo",
+    "head",
+    "target",
+    true,
+  );
+  assert.equal(result.patches.length, 1);
+  assert.match(result.patches[0], /small.ts/);
+  assert.match(result.notes.join(" "), /лимит одного файла 10000/);
+});

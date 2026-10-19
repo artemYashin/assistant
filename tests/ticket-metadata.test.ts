@@ -27,7 +27,7 @@ function fixture(t: any) {
 const context = { client: "Client", project: "Project" };
 test("local metadata is independent, validates priorities, merges fields, and filters chat lists", (t) => {
   const store = fixture(t);
-  assert.equal(ticketMetadata(store, 42).priority, 2);
+  assert.equal(ticketMetadata(store, 42).priority, 1);
   assert.equal(priorityCount(store, context), 3);
   store.set('ticket-priorities:["Client",""]', 5);
   assert.equal(priorityCount(store, context), 5);
@@ -63,7 +63,7 @@ test("local metadata is independent, validates priorities, merges fields, and fi
   );
   store.db.prepare("UPDATE tickets SET state='Resolved' WHERE id=42").run();
   assert.equal(ticketMetadata(store, 42).priority, 4);
-  assert.equal(ticketMetadata(store, 42, "other").priority, 2);
+  assert.equal(ticketMetadata(store, 42, "other").priority, 1);
 });
 test("trash retains metadata until expiry and restores it", (t) => {
   const store = fixture(t);
@@ -80,7 +80,158 @@ test("trash retains metadata until expiry and restores it", (t) => {
   store.purgeTicketTrash(Date.now() + 31 * 86400000);
   assert.deepEqual(ticketMetadata(store, 42), {
     notes: "",
-    priority: 2,
+    priority: 1,
     tags: [],
   });
+});
+
+test("chat metadata edits are local, preserve other fields and deduplicate append", async (t) => {
+  const { ticketMetadataTools } =
+    await import("../server/ticket-metadata-tools.js");
+  const store = fixture(t);
+  saveTicketMetadata(store, 42, store.source(), context, {
+    notes: "Before",
+    tags: ["API"],
+    priority: 2,
+  });
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("No network allowed");
+  });
+  const tool = ticketMetadataTools(
+    store,
+    context,
+    "Добавь заметку «Ready» и тег UI тикету 42, поставь приоритет 1",
+    () => {},
+  )[0];
+  const args = {
+    id: 42,
+    notes: { mode: "append" as const, text: "Ready" },
+    tags: { mode: "add" as const, values: ["UI"] },
+    priority: 1,
+  };
+  const first: any = await tool.handler!(args, {} as any);
+  await tool.handler!(args, {} as any);
+  assert.equal(first.success, true);
+  assert.equal(first.azureChanged, false);
+  assert.deepEqual(ticketMetadata(store, 42), {
+    notes: "Before\n\nReady",
+    tags: ["API", "UI"],
+    priority: 1,
+  });
+  await assert.rejects(async () =>
+    tool.handler!(
+      { ...args, notes: { mode: "append", text: "Different" } },
+      {} as any,
+    ),
+  );
+});
+test("chat metadata rejects read-only prompts, unnamed fields and stale sources", async (t) => {
+  const { ticketMetadataTools } =
+    await import("../server/ticket-metadata-tools.js");
+  const store = fixture(t);
+  const call = async (prompt: string, args: any) =>
+    ticketMetadataTools(store, context, prompt, () => {})[0].handler!(
+      args,
+      {} as any,
+    );
+  await assert.rejects(
+    call("Какие теги у тикета 42?", {
+      id: 42,
+      tags: { mode: "add", values: ["UI"] },
+    }),
+  );
+  await assert.rejects(
+    call("Не меняй приоритет тикета 42 на 1", { id: 42, priority: 1 }),
+  );
+  await assert.rejects(
+    call("Добавь заметку тикету 42", { id: 42, priority: 1 }),
+  );
+  await assert.rejects(
+    call("Добавь тег UI тикету 42", {
+      id: 42,
+      tags: { mode: "replace", values: ["UI"] },
+    }),
+  );
+  await assert.rejects(
+    call("Поставь приоритет 4 тикету 42", { id: 42, priority: 4 }),
+  );
+  const tool = ticketMetadataTools(
+    store,
+    context,
+    "Поставь приоритет 1 тикету 42",
+    () => {},
+  )[0];
+  store.set("settings", { ...store.settings(), azureProject: "Changed" });
+  await assert.rejects(
+    async () => tool.handler!({ id: 42, priority: 1 }, {} as any),
+    /Подключение/,
+  );
+});
+test("chat tag removal and explicit notes clearing preserve unrelated metadata", async (t) => {
+  const { ticketMetadataTools } =
+    await import("../server/ticket-metadata-tools.js");
+  const store = fixture(t);
+  saveTicketMetadata(store, 42, store.source(), context, {
+    notes: "Old",
+    tags: ["UI", "API"],
+    priority: 1,
+  });
+  const tool = ticketMetadataTools(
+    store,
+    context,
+    "Удали тег UI и очисти заметки тикета 42",
+    () => {},
+  )[0];
+  await tool.handler!(
+    {
+      id: 42,
+      tags: { mode: "remove", values: ["UI"] },
+      notes: { mode: "clear" },
+    },
+    {} as any,
+  );
+  assert.deepEqual(ticketMetadata(store, 42), {
+    notes: "",
+    tags: ["API"],
+    priority: 1,
+  });
+});
+
+test("priority migration preserves old implicit P2 and explicit values while new tickets default to P1", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-priority-migration-"));
+  let store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const source = store.source();
+  store.db
+    .prepare("DELETE FROM kv WHERE key='migration.ticketPriorityOne'")
+    .run();
+  store.db
+    .prepare(
+      "INSERT INTO tickets VALUES (?,42,'Existing','Active','','Bug','','','')",
+    )
+    .run(source);
+  store.db
+    .prepare(
+      "INSERT INTO tickets VALUES (?,43,'Explicit','Active','','Bug','','','')",
+    )
+    .run(source);
+  saveTicketMetadata(store, 43, source, context, {
+    priority: 3,
+    notes: "Keep",
+  });
+  store.close();
+  store = new Store(dir);
+  assert.equal(ticketMetadata(store, 42).priority, 2);
+  assert.equal(ticketMetadata(store, 43).priority, 3);
+  assert.equal(ticketMetadata(store, 43).notes, "Keep");
+  store.db
+    .prepare(
+      "INSERT INTO tickets VALUES (?,44,'New','Active','','Bug','','','')",
+    )
+    .run(source);
+  assert.equal(ticketMetadata(store, 44).priority, 1);
+  assert.equal(listLocalTickets(store, { priority: 1 }).total, 1);
 });

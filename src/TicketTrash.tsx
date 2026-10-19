@@ -98,7 +98,7 @@ export function TicketTrash({
             .toLocaleLowerCase()
             .includes(q),
         ) &&
-        (!priorities.length || priorities.includes(String(t.priority ?? 2))) &&
+        (!priorities.length || priorities.includes(String(t.priority ?? 1))) &&
         (!tags.length ||
           tags.some((tag) =>
             tag === "" ? !t.tags?.length : t.tags?.includes(tag),
@@ -169,7 +169,7 @@ export function TicketTrash({
           placeholder="Все приоритеты"
           value={priorities}
           onChange={setPriorities}
-          options={[...new Set<number>(items.map((t) => t.priority ?? 2))]
+          options={[...new Set<number>(items.map((t) => t.priority ?? 1))]
             .sort((a, b) => a - b)
             .map((v) => ({ value: String(v), label: "P" + v }))}
         />
@@ -347,7 +347,7 @@ export function TicketTrash({
                     />
                   </td>
                   <td>
-                    <span className="badge">P{t.priority ?? 2}</span>
+                    <span className="badge">P{t.priority ?? 1}</span>
                   </td>
                   <td>
                     <div className="ticket-tag-list">

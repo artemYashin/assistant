@@ -21,7 +21,6 @@ export function ContextPicker({
     [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [saved, setSaved] = useState(false),
     [name, setName] = useState(""),
     [project, setProject] = useState(""),
     [owner, setOwner] = useState("");
@@ -52,11 +51,9 @@ export function ContextPicker({
   async function choose(next: Context) {
     setBusy(true);
     setError("");
-    setSaved(false);
     try {
       const result = await api("/context", "PUT", next);
       onChange(result);
-      setSaved(true);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -107,15 +104,8 @@ export function ContextPicker({
           onClick={() => setOpen(!open)}
           aria-expanded={open}
         >
-          Заказчики и проекты
+          {busy ? "Сохраняю…" : "Заказчики и проекты"}
         </button>
-        <small role="status">
-          {busy
-            ? "Сохраняю…"
-            : saved
-              ? "Контекст сохранён"
-              : "Переключение сохраняется сразу"}
-        </small>
       </div>
       {error && (
         <p className="error" role="alert">

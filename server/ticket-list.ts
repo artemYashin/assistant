@@ -28,7 +28,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   }
   if (priority !== undefined) {
     clauses.push(
-      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=tickets.source AND m.id=tickets.id),2)=?",
+      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=tickets.source AND m.id=tickets.id),1)=?",
     );
     params.push(priority);
   }
