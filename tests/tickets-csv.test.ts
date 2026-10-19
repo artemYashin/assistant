@@ -5,7 +5,7 @@ test("CSV preserves selected order and escapes quotes, delimiters, lines and for
   const csv = ticketsCsv([
     {
       id: 42,
-      title: 'Ошибка, "текст"\nследующая строка',
+      title: 'Ошибка; "текст"\nследующая строка',
       type: "Bug",
       state: "Active",
       priority: 2,
@@ -13,15 +13,15 @@ test("CSV preserves selected order and escapes quotes, delimiters, lines and for
     },
     { id: 7, title: '=HYPERLINK("url")', state: "Ready for Development" },
   ]);
-  assert.ok(csv.startsWith('\uFEFF"ID",'));
+  assert.ok(csv.startsWith('\uFEFF"ID";'));
   assert.ok(
     csv.includes(
-      '"42","Ошибка, ""текст""\nследующая строка","Bug","Active","2","UI; API"\r\n',
+      '"42";"Ошибка; ""текст""\nследующая строка";"Bug";"Active";"2";"UI; API"\r\n',
     ),
   );
   assert.ok(
     csv.includes(
-      '"7","\'=HYPERLINK(""url"")","","Ready for Development","1",""\r\n',
+      '"7";"\'=HYPERLINK(""url"")";"";"Ready for Development";"1";""\r\n',
     ),
   );
   assert.ok(csv.indexOf('"42"') < csv.indexOf('"7"'));

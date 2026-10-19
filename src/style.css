@@ -4855,3 +4855,15 @@ summary > svg {
   gap: 12px;
   margin: 10px 0;
 }
+
+.ticket-export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ticket-export-actions [role="alert"] {
+  flex-basis: 100%;
+  color: #9b2929;
+}

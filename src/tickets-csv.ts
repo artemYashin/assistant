@@ -32,6 +32,6 @@ export function ticketsCsv(tickets: CsvTicket[]) {
     ]),
   ];
   return (
-    "\uFEFF" + rows.map((row) => row.map(cell).join(",")).join("\r\n") + "\r\n"
+    "\uFEFF" + rows.map((row) => row.map(cell).join(";")).join("\r\n") + "\r\n"
   );
 }
