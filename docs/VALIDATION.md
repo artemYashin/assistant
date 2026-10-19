@@ -174,3 +174,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Before push: all 84 Node tests and the production build passed. Inline ticket image placement was reviewed in code; live Azure image loading was not exercised.
 - Status badges now use fit-content width and nowrap, matching task-type badges.
 - Ticket row actions use eye/eye-off and trash icons, accessible names and hover titles, with an 8px gap. Final pre-push validation: 84 tests and production build passed.
+
+## PR tools in chat
+
+- Added scoped, paginated local PR listing and reading of synchronized descriptions/current-version review results. PR identity includes monitor/repository/number to avoid ambiguous numeric IDs. PR-number prompts no longer trigger ticket prefetch.
+- Explicit review commands can enqueue the existing manual review workflow, preserving draft/scope/credential checks, idempotence, daily budget, separate review model and memory context. Chat receives actual job status; the worker starts after the active chat ends. No Azure writes or automatic polling loops are introduced.
+- Pre-push validation: all 85 tests and production build passed. New coverage checks pagination/default arguments, context isolation, explicit request guard, queue deduplication and draft rejection. Live Copilot tool selection and Azure review execution not exercised.

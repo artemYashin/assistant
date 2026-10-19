@@ -80,6 +80,7 @@ export function createApp(
   );
   const agent = new Agent(store, approvals, undefined, connectors);
   const pullRequests = new PullRequests(store, agent);
+  agent.setPullRequests(pullRequests);
   const app = express();
   app.disable("x-powered-by");
   app.use(

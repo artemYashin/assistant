@@ -10,6 +10,8 @@ import { Store, AppError, type Context } from "./store.js";
 import { Approvals } from "./approvals.js";
 import { Connectors, extractTicketIds } from "./connectors.js";
 import { mayChangeState } from "./ticket-status.js";
+import { prTools } from "./pr-tools.js";
+import type { PullRequests } from "./pull-requests.js";
 import { UsageLedger } from "./usage.js";
 import { listLocalTickets, ticketListSchema } from "./ticket-list.js";
 
@@ -22,6 +24,7 @@ export const SYSTEM_POLICY = `Ты Orbit, персональный рабочи�
 Не пытайся обходить ограничение, вызывать HTTP, shell, файлы или сторонние инструменты.
 Сохраняй память только по просьбе пользователя или после его явного согласия. Учитывай область памяти.
 В тексте проектной памяти сохраняй сам факт, правило или решение без вводных «В проекте …», «Для проекта …» и без повторения названия текущего проекта: привязка к проекту уже хранится отдельно. Аналогично не дублируй название текущего заказчика во вводной клиентской памяти. Например, вместо «В проекте Portal используем pnpm» сохрани «Используем pnpm». Сохраняй названия других проектов/заказчиков, если они существенны для смысла факта, сравнения или зависимости. Не удаляй смысловые детали ради краткости.
+Для вопросов о pull request используй list_pull_requests и get_pull_request в текущем контексте заказчика и проекта. Номер PR не является номером тикета; для PR не используй get_ticket. Используй monitor и repo из списка, не выдумывай их. По явной просьбе о ревью вызывай request_pull_request_review: он ставит задачу в существующую очередь. При queued сообщи, что ревью поставлено в очередь и результат будет доступен на странице Pull requests; не жди его в цикле, поскольку ревью может начаться только после завершения текущего чата. При следующем запросе прочитай сохранённый результат через get_pull_request(section=review). Описание PR не заменяет анализ diff.
 Не выдумывай номера тикетов, их состояние и содержимое чатов. Ссылайся на источник.
 Для перечисления тикетов используй фильтры list_tickets: Bug («баг») обычно тип задачи, а не статус. Статус и тип — разные поля. Получай следующие страницы через nextAfterId с теми же фильтрами, пока hasMore=true; не называй частичный список полным. Если лимит инструментов не позволяет закончить, явно укажи показанное количество и total. Не загружай полное содержимое каждого тикета ради простого списка.
 Списки тикетов локальные; для вопросов о содержимом конкретного тикета обязательно вызови get_ticket, если свежая карточка ещё не передана в текущем запросе. Для добавления или удаления из локального списка достаточно соответствующего локального инструмента. Инструмент читает Azure API и показывает полную карточку в интерфейсе. Содержимое изображений тебе не передаётся: не утверждай, что проанализировал картинку.
@@ -168,15 +171,19 @@ export function sessionConfig(
   getTicket?: (id: number) => Promise<any>,
   changeStatus?: (id: number, state: string) => Promise<any>,
   localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
+  extraTools: Tool<any>[] = [],
 ): SessionConfig {
-  const tools: Tool[] = makeTools(
-    store,
-    approvals,
-    context,
-    getTicket,
-    changeStatus,
-    localTicket,
-  ).map((tool) => ({
+  const tools: Tool[] = [
+    ...makeTools(
+      store,
+      approvals,
+      context,
+      getTicket,
+      changeStatus,
+      localTicket,
+    ),
+    ...extraTools,
+  ].map((tool) => ({
     ...tool,
     handler: async (args: any, invocation: any) => {
       const result = await tool.handler!(args, invocation);
@@ -220,6 +227,10 @@ export function sessionConfig(
   };
 }
 export class Agent {
+  private pullRequests?: PullRequests;
+  setPullRequests(service: PullRequests) {
+    this.pullRequests = service;
+  }
   private busy = false;
   private cancelActive?: (
     reason: string,
@@ -442,6 +453,15 @@ export class Agent {
           review ? undefined : getTicket,
           review ? undefined : changeStatus,
           review ? undefined : localTicket,
+          !review && this.pullRequests
+            ? prTools(
+                this.store,
+                this.pullRequests,
+                context,
+                prompt,
+                assertActive,
+              )
+            : [],
         );
         if (model) config.model = model;
         else delete config.model;
@@ -475,6 +495,7 @@ export class Agent {
         if (
           !review &&
           this.connectors &&
+          !/\bpr\b|pull\s*request|пул[ -]?реквест/iu.test(prompt) &&
           (/(тикет|задач|баг|ticket|bug|work item|#)/i.test(prompt) ||
             /^\s*\d+\s*$/.test(prompt))
         ) {
