@@ -324,3 +324,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Chat now receives a fresh compact workspace snapshot per request and a read-only get_workspace_context tool with pagination and optional known-context selection. It includes context registry, scoped/inherited developer names and IDs, repository, Azure project and PR selection mode; secrets are never projected. Pages are limited to 10 entries per list to stay below ordinary tool output limits.
 - Added scope, registry, repository, pagination and secret-exclusion regression coverage. All 108 Node tests and the production build passed for the full batch (merge workflows, diff viewer, trash, sidebar and chat context). Diff whitespace check passed.
 - Vite retains its main-chunk-size warning. Live Azure writes, live Copilot behavior and browser visual/interaction checks were not performed; no real PRs were merged during development.
+
+## Trash table parity
+
+- Replaced trash cards with the ticket table styling, configured type/status badges, text search including local developer names, custom multi-select filters (type, state, Azure/local assignee), sortable column headings, visible count and filter reset. Retained snapshot assignees, expiry/removal timestamps and per-row restore; default sort is newest removal first.
+- All 108 Node tests and production build passed (existing Vite bundle-size warning). Mocked-API Chromium verified search, checkbox filtering, header sorting, restore request/removal, no JS errors and mobile document width. No live Azure requests performed.

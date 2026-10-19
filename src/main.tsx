@@ -959,6 +959,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "tickets" &&
               new URLSearchParams(location.search).get("tab") === "trash" && (
                 <TicketTrash
+                  settings={settings}
                   key={`${settings?.azureUrl}|${settings?.azureProject}`}
                   onChange={() => setRefresh((n) => n + 1)}
                 />
