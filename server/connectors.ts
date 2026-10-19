@@ -285,6 +285,7 @@ export class Connectors {
       throw new AppError(502, "Azure не вернул доступные статусы");
     return {
       source: this.store.source(s),
+      title: String(item.fields["System.Title"] || ""),
       state: item.fields["System.State"],
       states: (states.value || []).map((x: any) => x.name),
     };

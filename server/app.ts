@@ -1,3 +1,4 @@
+import { PrCreate } from "./pr-create.js";
 import { reviewFileSettings } from "./review-files.js";
 import {
   ticketMetadata,
@@ -93,6 +94,7 @@ export function createApp(
   const agent = new Agent(store, approvals, undefined, connectors);
   const pullRequests = new PullRequests(store, agent);
   const prMerge = new PrMerge(store, connectors);
+  const prCreate = new PrCreate(store);
   agent.setPullRequests(pullRequests);
   const app = express();
   app.disable("x-powered-by");
@@ -699,6 +701,18 @@ export function createApp(
       .run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/pr/branches", async (req, res) => {
+    const q = z
+      .object({
+        monitor: z.string().min(1),
+        q: z.string().max(300).default(""),
+      })
+      .parse(req.query);
+    res.json(await prCreate.branches(q.monitor, q.q));
+  });
+  app.post("/api/pr/create", async (req, res) => {
+    res.json(await prCreate.create(req.body));
+  });
   app.get("/api/pr/projects", (_req, res) => res.json(pullRequests.monitors()));
   app.post("/api/pr/projects", (req, res) => {
     const input = z
@@ -731,13 +745,24 @@ export function createApp(
       .run(String(req.params.id));
     res.json({ ok: true });
   });
+  app.post("/api/pr/merge/tickets", async (req, res) => {
+    const key = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.number().int().positive(),
+      })
+      .strict()
+      .parse(req.body);
+    res.json(await prMerge.linkedTickets(key));
+  });
   app.post("/api/pr/merge/prepare", async (req, res) => {
     const key = z
       .object({
         monitor: text.min(1),
         repo: text.min(1),
         number: z.number().int().positive(),
-        moveTickets: z.boolean().default(true),
+        moveTickets: z.boolean().default(false),
       })
       .strict()
       .parse(req.body);

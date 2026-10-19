@@ -9,6 +9,12 @@ type Loaded = {
   base: string;
   head: string;
   title: string;
+  limits?: {
+    totalCharacters: number;
+    perFileCharacters: number;
+    usedCharacters: number;
+    ignoredFiles: number;
+  };
   sourceBranch?: string;
   targetBranch?: string;
 };
@@ -108,6 +114,14 @@ export function PrDiffDialog({
               </>
             )}
           </p>
+          {data.limits && (
+            <p className="muted">
+              Diff: {data.limits.usedCharacters.toLocaleString("ru-RU")} /{" "}
+              {data.limits.totalCharacters.toLocaleString("ru-RU")} символов ·
+              на файл до {data.limits.perFileCharacters.toLocaleString("ru-RU")}{" "}
+              · исключено файлов: {data.limits.ignoredFiles}.
+            </p>
+          )}
           {!!data.notes.length && (
             <div className="pr-diff-notes" role="note">
               <strong>Показана не вся информация</strong>

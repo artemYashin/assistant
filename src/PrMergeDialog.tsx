@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GitMerge, LoaderCircle, X } from "lucide-react";
+import { GitMerge, LoaderCircle, X, Ticket, ArrowRight } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 
@@ -8,18 +8,21 @@ type Plan = {
   title: string;
   head: string;
   target: string;
-  tickets: { id: number; state: string; states: string[] }[];
+  tickets: { id: number; title?: string; state: string; states: string[] }[];
 };
 export function PrMergeDialog({
   pr,
-  moveTickets,
   onClose,
 }: {
   pr: any;
-  moveTickets: boolean;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [moveTickets, setMoveTickets] = useState(false);
+  const [linkedIds, setLinkedIds] = useState<number[] | null>(null);
+  const [linksError, setLinksError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [linksRetry, setLinksRetry] = useState(0);
   const [plan, setPlan] = useState<Plan | null>(null),
     [states, setStates] = useState<Record<number, string>>({});
   const [strategy, setStrategy] = useState("noFastForward"),
@@ -29,7 +32,31 @@ export function PrMergeDialog({
     [submitted, setSubmitted] = useState(false);
   useEffect(() => {
     dialog.current?.showModal();
+  }, []);
+  useEffect(() => {
     let live = true;
+    setLinkedIds(null);
+    setLinksError("");
+    api("/pr/merge/tickets", "POST", {
+      monitor: pr.monitor,
+      repo: pr.repo,
+      number: pr.number,
+    })
+      .then((value) => {
+        if (live) setLinkedIds(value.ids);
+      })
+      .catch((e) => {
+        if (live) setLinksError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [pr.monitor, pr.repo, pr.number, linksRetry]);
+  useEffect(() => {
+    let live = true;
+    setBusy(true);
+    setPlan(null);
+    setError("");
     api("/pr/merge/prepare", "POST", {
       monitor: pr.monitor,
       repo: pr.repo,
@@ -58,9 +85,9 @@ export function PrMergeDialog({
     return () => {
       live = false;
     };
-  }, [pr.monitor, pr.repo, pr.number, moveTickets]);
+  }, [pr.monitor, pr.repo, pr.number, moveTickets, retry]);
   async function submit() {
-    if (!plan || submitted) return;
+    if (!plan || submitted || busy) return;
     setBusy(true);
     setError("");
     setSubmitted(true);
@@ -109,8 +136,7 @@ export function PrMergeDialog({
     >
       <div className="developer-dialog-heading">
         <strong id="pr-merge-title">
-          <GitMerge size={18} />{" "}
-          {moveTickets ? "Merge и смена статусов" : "Merge"} · PR #{pr.number}
+          <GitMerge size={18} /> Merge · PR #{pr.number}
         </strong>
         <button
           className="icon-button"
@@ -139,6 +165,60 @@ export function PrMergeDialog({
           {error}
         </p>
       )}
+      {!submitted && (
+        <div className="pr-merge-options">
+          <label
+            className={`pr-merge-toggle ${!linkedIds?.length ? "is-disabled" : ""}`}
+            title={
+              linkedIds?.length === 0
+                ? "Привяжите сначала тикет"
+                : linksError
+                  ? "Не удалось проверить связанные тикеты"
+                  : linkedIds === null
+                    ? "Проверяем связанные тикеты…"
+                    : ""
+            }
+          >
+            <input
+              type="checkbox"
+              checked={moveTickets}
+              disabled={busy || !linkedIds?.length}
+              onChange={(e) => {
+                setMoveTickets(e.target.checked);
+                setPlan(null);
+                setBusy(true);
+              }}
+            />
+            <span>
+              <strong>Сменить статусы связанных тикетов</strong>
+              <small>
+                {linkedIds?.length
+                  ? `Связано тикетов: ${linkedIds.length}`
+                  : linkedIds?.length === 0
+                    ? "Привяжите сначала тикет"
+                    : "Проверка связей с Azure…"}
+              </small>
+            </span>
+          </label>
+          {linksError && (
+            <p className="error" role="alert">
+              {linksError}{" "}
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setLinksRetry((v) => v + 1)}
+              >
+                Повторить проверку связей
+              </button>
+            </p>
+          )}
+        </div>
+      )}
+      {!busy && !plan && !submitted && (
+        <button className="secondary" onClick={() => setRetry((v) => v + 1)}>
+          Повторить подготовку
+        </button>
+      )}
       {plan && !submitted && (
         <>
           <SingleSelect
@@ -154,8 +234,10 @@ export function PrMergeDialog({
             ]}
           />
           {moveTickets && (
-            <>
-              <h3>Связанные тикеты · {plan.tickets.length}</h3>
+            <section className="pr-merge-tickets">
+              <h3>
+                <Ticket size={18} /> Связанные тикеты · {plan.tickets.length}
+              </h3>
               {!!common.length && (
                 <SingleSelect
                   label="Применить статус ко всем"
@@ -174,27 +256,35 @@ export function PrMergeDialog({
                   Связанных тикетов нет — будет выполнен только merge.
                 </p>
               )}
-              {plan.tickets.map((t) => (
-                <div className="pr-merge-ticket" key={t.id}>
-                  <strong>
-                    #{t.id} <small>Сейчас: {t.state}</small>
-                  </strong>
-                  <SingleSelect
-                    label={`Новый статус #${t.id}`}
-                    value={states[t.id] || ""}
-                    onChange={(s) =>
-                      setStates((old) => ({ ...old, [t.id]: s }))
-                    }
-                    disabled={busy}
-                    options={t.states.map((s) => ({ value: s, label: s }))}
-                  />
-                </div>
-              ))}
+              <ul className="pr-merge-ticket-list">
+                {plan.tickets.map((t) => (
+                  <li className="pr-merge-ticket" key={t.id}>
+                    <div className="pr-merge-ticket-heading">
+                      <span className="badge">#{t.id}</span>
+                      <strong>{t.title || "Тикет"}</strong>
+                    </div>
+                    <p className="pr-merge-current-state">
+                      <span>Сейчас:</span>
+                      <span className="badge">{t.state}</span>
+                      <ArrowRight size={15} aria-hidden="true" />
+                    </p>
+                    <SingleSelect
+                      label={`Новый статус #${t.id}`}
+                      value={states[t.id] || ""}
+                      onChange={(s) =>
+                        setStates((old) => ({ ...old, [t.id]: s }))
+                      }
+                      disabled={busy}
+                      options={t.states.map((s) => ({ value: s, label: s }))}
+                    />
+                  </li>
+                ))}
+              </ul>
               <p className="muted">
                 Resolved предлагается только там, где этот статус существует.
                 Перед слиянием проверяются коммиты и список тикетов.
               </p>
-            </>
+            </section>
           )}
           <button
             className="primary"

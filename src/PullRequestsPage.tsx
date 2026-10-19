@@ -1,3 +1,4 @@
+import { PrCreateDialog } from "./PrCreateDialog.js";
 import { LastSync } from "./LastSync.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { PrCommitsDialog } from "./PrCommitsDialog.js";
@@ -236,6 +237,7 @@ export function PullRequestsPage({ context, settings }: any) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
+  const [creating, setCreating] = useState(false);
   const [reviewing, setReviewing] = useState<any>(null);
   const [merging, setMerging] = useState<any>(null);
   const [viewingCommits, setViewingCommits] = useState<any>(null);
@@ -318,6 +320,19 @@ export function PullRequestsPage({ context, settings }: any) {
   }
   return (
     <>
+      {creating && (
+        <PrCreateDialog
+          monitors={monitors.filter(
+            (m) =>
+              (!context.client || m.client === context.client) &&
+              (!context.project || m.project === context.project),
+          )}
+          onClose={() => {
+            setCreating(false);
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
       {reviewing && (
         <PrReviewDialog
           pr={reviewing}
@@ -340,7 +355,6 @@ export function PullRequestsPage({ context, settings }: any) {
       {merging && (
         <PrMergeDialog
           pr={merging}
-          moveTickets={merging.moveTickets}
           onClose={() => {
             setMerging(null);
             setVersion((v) => v + 1);
@@ -387,6 +401,9 @@ export function PullRequestsPage({ context, settings }: any) {
           onClick={() => void run(() => api("/sync", "POST", {}))}
         >
           Синхронизировать сейчас
+        </button>
+        <button className="primary" onClick={() => setCreating(true)}>
+          ＋ Создать PR
         </button>
       </div>
       {error && (
@@ -656,18 +673,9 @@ export function PullRequestsPage({ context, settings }: any) {
                   type="button"
                   className="secondary pr-merge-action"
                   disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                  onClick={() => setMerging({ ...p, moveTickets: false })}
+                  onClick={() => setMerging(p)}
                 >
                   <GitMerge size={17} aria-hidden="true" /> Merge
-                </button>
-                <button
-                  type="button"
-                  className="secondary pr-merge-move-action"
-                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                  onClick={() => setMerging({ ...p, moveTickets: true })}
-                >
-                  <GitMerge size={17} aria-hidden="true" /> Merge и смена
-                  статусов
                 </button>
               </div>
             </div>

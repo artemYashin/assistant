@@ -22,6 +22,16 @@
 body {
   margin: 0;
 }
+html {
+  scrollbar-gutter: stable;
+}
+html:has(dialog:modal),
+body:has(dialog:modal) {
+  overflow: hidden;
+}
+dialog:modal {
+  overscroll-behavior: contain;
+}
 button,
 input,
 textarea,
@@ -4236,4 +4246,190 @@ summary > svg {
   .sidebar-expanded .brand {
     padding: 0 6px 20px;
   }
+}
+
+.pr-merge-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #cbd8d0;
+  background: #f2f7f3;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.pr-merge-toggle input {
+  width: auto;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.pr-merge-toggle span {
+  display: grid;
+  gap: 5px;
+}
+.pr-merge-toggle small {
+  color: #58665d;
+}
+.pr-merge-toggle.is-disabled {
+  background: #f3f4f5;
+  border-color: #dce0e3;
+  cursor: not-allowed;
+}
+.pr-merge-toggle.is-disabled input {
+  pointer-events: none;
+}
+.pr-merge-tickets {
+  padding: 16px;
+  border: 1px solid #dce4dd;
+  border-radius: 12px;
+  background: #f8faf8;
+}
+.pr-merge-tickets h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.pr-merge-ticket-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+  display: grid;
+  gap: 10px;
+}
+.pr-merge-ticket-list .pr-merge-ticket {
+  background: white;
+  padding: 14px;
+}
+.pr-merge-ticket-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.pr-merge-ticket-heading strong {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.pr-merge-current-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #58665d;
+  margin: 10px 0;
+}
+
+.pr-create-form {
+  display: grid;
+  gap: 16px;
+}
+.pr-create-form label:not(.checkbox) {
+  display: grid;
+  gap: 6px;
+}
+.pr-create-branches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.pr-create-branches .single-select {
+  width: 100%;
+}
+@media (max-width: 650px) {
+  .pr-create-branches {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Fixed columns shrink with the workspace as the chat grows. */
+.ticket-table-fit {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  container-type: inline-size;
+}
+.ticket-table-fit > table {
+  width: 100%;
+  table-layout: fixed;
+}
+.ticket-table-fit th,
+.ticket-table-fit td {
+  min-width: 0;
+  max-width: none;
+  padding: 10px 6px;
+  overflow-wrap: anywhere;
+}
+.ticket-table-fit th:first-child {
+  width: 23%;
+}
+.ticket-table-fit .ticket-title-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.ticket-table-fit .ticket-type-badge,
+.ticket-table-fit .ticket-state-badge,
+.ticket-table-fit .badge {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px;
+}
+.ticket-table-fit .ticket-status-control,
+.ticket-table-fit .ticket-metadata-control,
+.ticket-table-fit .local-developer {
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ticket-table-fit .ticket-status-control .ticket-state-badge {
+  flex: 0 1 auto;
+}
+.ticket-table-fit .ticket-tag-list {
+  min-width: 0;
+  max-width: 100%;
+}
+.ticket-table-fit .ticket-heading-sorts,
+.ticket-table-fit .ticket-column-sort {
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 100%;
+}
+.ticket-table-fit .ticket-row-actions {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ticket-table-fit .ticket-row-actions > button {
+  padding: 5px;
+}
+.ticket-table-fit .ticket-link {
+  flex-wrap: wrap;
+}
+@container (max-width: 650px) {
+  .ticket-table-fit th,
+  .ticket-table-fit td {
+    padding: 8px 3px;
+    font-size: 10px;
+  }
+  .ticket-table-fit .ticket-column-sort {
+    font-size: 9px;
+  }
+  .ticket-table-fit .ticket-status-control,
+  .ticket-table-fit .ticket-metadata-control,
+  .ticket-table-fit .local-developer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.ticket-trash-table th:first-child {
+  width: 7%;
+}
+.ticket-trash-table th:nth-child(2) {
+  width: 22%;
 }

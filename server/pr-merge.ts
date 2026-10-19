@@ -13,7 +13,7 @@ type Plan = Key & {
   title: string;
   created: number;
   moveTickets: boolean;
-  tickets: { id: number; state: string; states: string[] }[];
+  tickets: { id: number; title?: string; state: string; states: string[] }[];
 };
 // UI-only write workflow. No merge capability is exposed to the agent.
 export class PrMerge {
@@ -148,6 +148,13 @@ export class PrMerge {
       );
     return { m, pr, ids };
   }
+  async linkedTickets(key: Key) {
+    const source = this.store.source();
+    const { ids } = await this.snapshot(key, true);
+    if (source !== this.store.source())
+      throw new AppError(409, "Подключение изменилось");
+    return { ids };
+  }
   async prepare(key: Key, moveTickets = true) {
     const source = this.store.source();
     const { pr, ids } = await this.snapshot(key, moveTickets);
@@ -157,7 +164,12 @@ export class PrMerge {
       const states = await this.connectors.ticketStates(id);
       if (states.source !== source)
         throw new AppError(409, "Подключение изменилось");
-      tickets.push({ id, state: states.state, states: states.states });
+      tickets.push({
+        id,
+        title: states.title,
+        state: states.state,
+        states: states.states,
+      });
     }
     if (this.store.source() !== source)
       throw new AppError(409, "Подключение изменилось");

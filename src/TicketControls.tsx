@@ -15,6 +15,7 @@ export function StatusBadge({
   return (
     <span
       className={`ticket-${kind}-badge`}
+      title={state}
       style={
         color
           ? { color, background: color + "18", borderColor: color }

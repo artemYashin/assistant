@@ -271,7 +271,7 @@ export function TicketTrash({
         </div>
       )}
       {!!filtered.length && (
-        <div className="table-wrap panel">
+        <div className="panel ticket-table-fit ticket-trash-table">
           <table>
             <thead>
               <tr>
@@ -331,7 +331,9 @@ export function TicketTrash({
                     )}
                   </td>
                   <td>
-                    <strong>{t.title}</strong>
+                    <strong className="ticket-title-clamp" title={t.title}>
+                      {t.title}
+                    </strong>
                   </td>
                   <td>
                     <StatusBadge

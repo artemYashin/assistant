@@ -734,20 +734,14 @@ export class PullRequests {
       targetBranch: detail.targetRefName,
     };
   }
-  async changes(
-    m: Monitor,
-    repo: string,
-    head: string,
-    target: string,
-    forReview = false,
-  ) {
+  async changes(m: Monitor, repo: string, head: string, target: string) {
     const credentials = this.credentials(m),
       root = `git/repositories/${enc(repo)}`;
     const settings = reviewFileSettings.parse(
       JSON.parse(m.review_files || "{}"),
     );
-    const budget = forReview ? settings.diffBudget : 80000;
-    const perFileBudget = forReview ? Math.floor(budget / 4) : budget;
+    const budget = settings.diffBudget;
+    const perFileBudget = Math.floor(budget / 4);
     const preparationStarted = Date.now();
     const diff = await this.get(
       m,
@@ -764,7 +758,7 @@ export class PullRequests {
     let chars = 0;
     let allChanges = [...diff.changes];
     let complete = diff.allChangesIncluded === true;
-    if (forReview) {
+    {
       while (
         !complete &&
         allChanges.length < 2000 &&
@@ -785,7 +779,19 @@ export class PullRequests {
             "Azure изменил базу сравнения при загрузке списка файлов",
           );
         if (!page.changes.length) break;
-        allChanges.push(...page.changes);
+        const seen = new Set(
+          allChanges.map((c) =>
+            JSON.stringify([c.item?.path, c.originalPath, c.changeType]),
+          ),
+        );
+        const unseen = page.changes.filter(
+          (c: any) =>
+            !seen.has(
+              JSON.stringify([c.item?.path, c.originalPath, c.changeType]),
+            ),
+        );
+        if (!unseen.length) break;
+        allChanges.push(...unseen);
         complete = page.allChangesIncluded === true;
       }
     }
@@ -793,10 +799,9 @@ export class PullRequests {
     const candidates = allChanges.filter((change) => {
       if (!change.item?.path || change.item.isFolder) return false;
       if (
-        forReview &&
-        (ignoredReviewPath(change.item.path, settings.ignoredPaths) ||
-          (change.originalPath &&
-            ignoredReviewPath(change.originalPath, settings.ignoredPaths)))
+        ignoredReviewPath(change.item.path, settings.ignoredPaths) ||
+        (change.originalPath &&
+          ignoredReviewPath(change.originalPath, settings.ignoredPaths))
       ) {
         ignored++;
         return false;
@@ -886,7 +891,19 @@ export class PullRequests {
         );
       }
     }
-    return { patches, notes, base: diff.commonCommit, head, target };
+    return {
+      patches,
+      notes,
+      base: diff.commonCommit,
+      head,
+      target,
+      limits: {
+        totalCharacters: budget,
+        perFileCharacters: perFileBudget,
+        usedCharacters: chars,
+        ignoredFiles: ignored,
+      },
+    };
   }
   requestReview(
     monitor: string,
@@ -999,13 +1016,7 @@ export class PullRequests {
           .run(now(), job.id);
         return;
       }
-      const changes = await this.changes(
-        m,
-        job.repo,
-        job.head,
-        job.target,
-        true,
-      );
+      const changes = await this.changes(m, job.repo, job.head, job.target);
       this.store.db.prepare("UPDATE pr_reviews SET coverage=? WHERE id=?").run(
         JSON.stringify({
           files: changes.patches.length,

@@ -7,12 +7,14 @@ export function SingleSelect({
   options,
   onChange,
   disabled = false,
+  onSearch,
 }: {
   label: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  onSearch?: (query: string) => void;
 }) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState("");
@@ -85,6 +87,7 @@ export function SingleSelect({
         aria-controls={`${id}-panel`}
         onClick={() => {
           setQuery("");
+          onSearch?.("");
           setOpen(!open);
         }}
       >
@@ -109,7 +112,10 @@ export function SingleSelect({
               aria-label={`Поиск: ${label}`}
               placeholder="Найти…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                onSearch?.(e.target.value);
+              }}
             />
           </div>
           <div className="multi-select-options">

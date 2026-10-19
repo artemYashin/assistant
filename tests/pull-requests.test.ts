@@ -890,7 +890,7 @@ test("commit diff uses first parent, checks PR membership and never invokes mode
   assert.equal(calls.length, 0);
 });
 
-test("review exclusions precede file reads and file cap; manual diff remains available", async (t) => {
+test("project exclusions precede file reads and file cap in review and View Diff", async (t) => {
   const { service } = fixture(t);
   const reads: string[] = [];
   mock(t, [pr()], (url) => {
@@ -899,6 +899,7 @@ test("review exclusions precede file reads and file cap; manual diff remains ava
         commonCommit: "base",
         allChangesIncluded: true,
         changes: [
+          { changeType: "add", item: { path: "/src/api/generatedApi.ts" } },
           ...Array.from({ length: 100 }, (_, i) => ({
             changeType: "add",
             item: { path: "/generated/" + i + ".ts" },
@@ -916,16 +917,22 @@ test("review exclusions precede file reads and file cap; manual diff remains ava
     repository: "repo",
     mode: "required",
     enabled: true,
-    reviewFiles: { ignoredPaths: ["generated/"], diffBudget: 160000 },
+    reviewFiles: {
+      ignoredPaths: ["generated/", "/src/api/generatedApi.ts"],
+      diffBudget: 160000,
+    },
   });
   const m = service.monitors()[0];
-  const review = await service.changes(m, "repo", "head", "target", true);
+  const review = await service.changes(m, "repo", "head", "target");
   assert.deepEqual(reads, ["/src/app.ts"]);
   assert.equal(review.patches.length, 1);
-  assert.match(review.notes.join(" "), /Исключено.*100/);
+  assert.match(review.notes.join(" "), /Исключено.*101/);
+  await service.sync();
   reads.length = 0;
-  await service.changes(m, "repo", "head", "target");
-  assert.ok(reads.some((path) => path.startsWith("/generated/")));
+  const viewed = await service.viewDiff(m.id, "repo", 1);
+  assert.deepEqual(reads, ["/src/app.ts"]);
+  assert.equal(viewed.limits.totalCharacters, 160000);
+  assert.equal(viewed.limits.ignoredFiles, 101);
 });
 test("a large patch cannot consume the review budget reserved for other files", async (t) => {
   const { service } = fixture(t);
@@ -959,7 +966,6 @@ test("a large patch cannot consume the review budget reserved for other files", 
     "repo",
     "head",
     "target",
-    true,
   );
   assert.equal(result.patches.length, 1);
   assert.match(result.patches[0], /small.ts/);

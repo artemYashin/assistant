@@ -198,16 +198,14 @@ test("new confirmation can retry permission rejection, including persisted legac
   f.setFailMerge(401);
   await f.service.execute(p.id, selection, "squash");
   // Simulate the legacy result already present on a user's machine.
-  f.store.db
-    .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
-    .run(
-      JSON.stringify({
-        status: "unconfirmed",
-        message: "Merge не подтверждён. HTTP 401. Проверьте PAT.",
-        tickets: [],
-      }),
-      p.id,
-    );
+  f.store.db.prepare("UPDATE pr_merge_plans SET result=? WHERE id=?").run(
+    JSON.stringify({
+      status: "unconfirmed",
+      message: "Merge не подтверждён. HTTP 401. Проверьте PAT.",
+      tickets: [],
+    }),
+    p.id,
+  );
   f.allowMerge();
   const next = await f.service.prepare(f.key);
   assert.notEqual(next.id, p.id);
@@ -230,4 +228,16 @@ test("ambiguous merge stays blocked and new dialogs resolve the original result"
   assert.equal(result.operationId, p.id);
   assert.equal(f.service.result(next.id).operationId, p.id);
   assert.equal(f.writes.length, 1);
+});
+
+test("merge ticket discovery combines links read-only without preparing or merging", async (t) => {
+  const f = fixture(t);
+  const result = await f.service.linkedTickets(f.key);
+  assert.deepEqual(result.ids, [42, 43]);
+  assert.equal(f.writes.length, 0);
+  assert.equal(
+    (f.store.db.prepare("SELECT count(*) n FROM pr_merge_plans").get() as any)
+      .n,
+    0,
+  );
 });

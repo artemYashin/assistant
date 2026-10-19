@@ -1490,7 +1490,7 @@ function Tickets({
         вернуть кнопкой «Добавить по номеру».
       </p>
       {sorted.length ? (
-        <div className="table-wrap panel">
+        <div className="panel ticket-table-fit">
           <table>
             <thead>
               <tr>
@@ -1552,7 +1552,9 @@ function Tickets({
                       #{t.id}
                       <ArrowUpRight size={13} />
                     </a>
-                    <b>{t.title}</b>
+                    <b className="ticket-title-clamp" title={t.title}>
+                      {t.title}
+                    </b>
                   </td>
                   <td>
                     <StatusBadge
