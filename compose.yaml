@@ -4,6 +4,7 @@ services:
     ports:
       - "127.0.0.1:43871:43871"
     environment:
+      PORT: "43871"
       APP_ORIGINS: "http://localhost:43871,http://127.0.0.1:43871"
       VOICE_URL: "http://voice:8000"
     volumes:
