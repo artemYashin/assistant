@@ -9,5 +9,6 @@ RUN groupadd --gid 10001 orbit-voice \
     && chown orbit-voice:orbit-voice /models
 COPY app.py .
 USER orbit-voice
+RUN python -c "import app; assert app.health()['ok']"
 EXPOSE 8000
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
