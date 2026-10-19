@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
+import { chatTicketPath } from "./routing.js";
 import { useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -39,16 +42,23 @@ export function ChatMarkdown({
         remarkPlugins={[remarkGfm]}
         skipHtml
         urlTransform={(url, key) =>
-          key === "src" &&
-          images?.some((image) => image.source === url && image.preview)
-            ? url
-            : /^(https?:\/\/|mailto:)/i.test(url)
+          key === "href" && chatTicketPath(url)
+            ? chatTicketPath(url)!
+            : key === "src" &&
+                images?.some((image) => image.source === url && image.preview)
               ? url
-              : ""
+              : /^(https?:\/\/|mailto:)/i.test(url)
+                ? url
+                : ""
         }
         components={{
           a: ({ href, children }) =>
-            href ? (
+            href && chatTicketPath(href) ? (
+              <Link className="chat-ticket-link" to={chatTicketPath(href)!}>
+                {children}
+                <ArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+            ) : href ? (
               <a href={href} target="_blank" rel="noopener noreferrer">
                 {children}
               </a>

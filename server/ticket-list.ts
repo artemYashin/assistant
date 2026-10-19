@@ -43,6 +43,7 @@ export function listLocalTickets(store: Store, input: unknown) {
         return [key, value];
       }),
     );
+    ticket.localUrl = `/tickets?${new URLSearchParams({ id: String(row.id), source: store.source() })}`;
     if (shortenedFields.length) ticket.shortenedFields = shortenedFields;
     const length = JSON.stringify(ticket).length + 1;
     if (tickets.length && size + length > 18000) break;

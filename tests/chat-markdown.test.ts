@@ -40,3 +40,19 @@ test("PR images use the local preview route, including relative Markdown images"
   assert.match(html, /loading="lazy"/);
   assert.doesNotMatch(html, /src="\/org\/image.png"/);
 });
+
+test("ticket navigation is an internal router link and retains its Azure source", async () => {
+  const { MemoryRouter } = await import("react-router-dom");
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, {
+        text: "[Перейти к тикету #42](/tickets?id=42&source=https%3A%2F%2Fado.test%2Forg%7CP)",
+      }),
+    ),
+  );
+  assert.match(html, /class="chat-ticket-link"/);
+  assert.match(html, /href="\/tickets\?id=42&amp;source=/);
+  assert.doesNotMatch(html, /target="_blank"/);
+});

@@ -3221,3 +3221,25 @@ td > small {
   padding: 12px 8px;
   color: var(--muted);
 }
+
+.chat-ticket-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  margin: 2px 0;
+  border: 1px solid #c6d5bd;
+  border-radius: 6px;
+  background: #edf3e9;
+  color: #36532a;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+.chat-ticket-link:hover {
+  background: #e2ecd9;
+}
+.chat-ticket-link:focus-visible {
+  outline: 2px solid #789761;
+  outline-offset: 2px;
+}

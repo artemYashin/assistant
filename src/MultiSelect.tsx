@@ -26,11 +26,15 @@ export function MultiSelect({
   useEffect(() => {
     if (!open) return;
     search.current?.focus();
-    const outside = (event: PointerEvent) => {
+    const outside = (event: Event) => {
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     };
     document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
+    document.addEventListener("focusin", outside);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("focusin", outside);
+    };
   }, [open]);
   useEffect(() => {
     if (disabled) setOpen(false);
@@ -48,9 +52,6 @@ export function MultiSelect({
     <div
       className="multi-select"
       ref={root}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false);
-      }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
           e.stopPropagation();

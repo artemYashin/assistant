@@ -1238,6 +1238,17 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           }))}
         />
         <MultiSelect
+          label="Статус"
+          placeholder="Все статусы"
+          disabled={!!rawTarget}
+          value={stateFilter}
+          onChange={setStateFilter}
+          options={values("state").map((value) => ({
+            value,
+            label: value || "Статус не указан",
+          }))}
+        />
+        <MultiSelect
           label="Исполнитель"
           placeholder="Все исполнители"
           disabled={!!rawTarget}
@@ -1260,17 +1271,6 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
               group: "Локальное поручение",
             })),
           ]}
-        />
-        <MultiSelect
-          label="Статус"
-          placeholder="Все статусы"
-          disabled={!!rawTarget}
-          value={stateFilter}
-          onChange={setStateFilter}
-          options={values("state").map((value) => ({
-            value,
-            label: value || "Статус не указан",
-          }))}
         />
         <button
           className="secondary"

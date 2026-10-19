@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { pullRequestPath } from "./routing.js";
+import { pullRequestPath, ticketPath } from "./routing.js";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
 import { StatusBadge } from "./TicketControls.js";
@@ -97,6 +97,12 @@ export function TicketCard({ reference }: { reference: string }) {
         </dl>
         <div className="ticket-source">
           <span>Данные получены: {timestamp(card.loadedAt)}</span>
+          <Link
+            className="chat-ticket-link"
+            to={ticketPath(card.id, card.source)}
+          >
+            Перейти к тикету #{card.id}
+          </Link>
           <a href={card.url} target="_blank" rel="noreferrer">
             Открыть в Azure DevOps ↗
           </a>

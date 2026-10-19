@@ -210,3 +210,15 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Selected values are ORed within one filter, while filters and text search combine with AND. Empty selection means all values. Global reset clears all arrays; deep-linked tickets continue to bypass filters.
 - Tests/build deferred until push as requested.
 - Pre-push validation for header sorting and custom multi-selects: all 86 Node tests and the production build passed. Browser interactions were not exercised in this validation.
+
+## Ticket navigation from chat
+
+- Ticket list/detail tools now supply canonical source-scoped local URLs. The assistant policy requests a navigation link per displayed ticket; Markdown renders only validated internal ticket URLs as router links styled as compact buttons. Existing history retains links as Markdown.
+- Shared ticket cards also expose a direct navigation action, independent of model formatting. Navigation uses the existing ticket focus route; untracked tickets still require explicit local addition on that page, never an implicit Azure write.
+- Tests/build deferred until push per user request; live model link formatting not exercised.
+
+## Multi-select checkbox dismissal fix
+
+- Removed blur-based dismissal: clicking label text can blur the search input with a null relatedTarget before the browser forwards the click to the checkbox, unmounting it too early. Dismissal now uses outside pointerdown or actual focusin outside the component; internal label clicks remain open and keyboard Tab departure still closes it.
+- Tests/build deferred until push per user request.
+- Pre-push validation: all 88 Node tests and production build passed, including internal Markdown ticket navigation and invalid-link rejection. Filter order is Type → Status → Assignee. Browser checkbox interaction and live model formatting were not exercised in this validation.
