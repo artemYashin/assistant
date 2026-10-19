@@ -1,87 +1,103 @@
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
-const status: Record<string, string> = {
-  queued: "В очереди",
+import { ChatMarkdown } from "./ChatMarkdown.js";
+import { ProjectRepository } from "./ProjectRepository.js";
+const statuses: Record<string, string> = {
+  queued: "В очереди по вашему запросу",
   running: "Ревью выполняется",
   completed: "Ревью готово",
-  error: "Ошибка — автоповтор отключён",
-  interrupted: "Прервано — автоповтор отключён",
+  error: "Ошибка",
+  interrupted: "Прервано",
   outdated: "Версия устарела",
+  cancelled: "Отменено",
 };
-export function PullRequestsPage({
-  context,
-  settings,
-}: {
-  context: { client: string; project: string };
-  settings: any;
-}) {
-  const [monitors, setMonitors] = useState<any[]>([]),
-    [prs, setPrs] = useState<any[]>([]),
-    [azureProject, setAzureProject] = useState(""),
-    [all, setAll] = useState(false),
+function ReviewHistory({ pr }: any) {
+  const [items, setItems] = useState<any[]>([]),
+    [open, setOpen] = useState(false),
+    [error, setError] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    api(
+      `/pr/reviews?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number) })}`,
+    )
+      .then((v) => {
+        if (live) setItems(v);
+      })
+      .catch((e) => {
+        if (live) setError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [open, pr.review_status]);
+  return (
+    <details onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>Сохранённые ревью всех версий</summary>
+      {error && <p className="error">{error}</p>}
+      {!items.length && <p className="muted">Ревью ещё не запускалось.</p>}
+      {items.map((r) => (
+        <section className="pr-monitor" key={r.id}>
+          <small>
+            {new Date(r.created_at).toLocaleString("ru-RU")} ·{" "}
+            {r.head.slice(0, 10)} → {r.target.slice(0, 10)} ·{" "}
+            {statuses[r.status]}
+          </small>
+          {r.summary && <ChatMarkdown text={r.summary} />}
+          {r.error && <p className="error">{r.error}</p>}
+        </section>
+      ))}
+    </details>
+  );
+}
+export function PullRequestsPage({ context, settings }: any) {
+  const [prs, setPrs] = useState<any[]>([]),
+    [monitors, setMonitors] = useState<any[]>([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState("");
+    [version, setVersion] = useState(0);
   const query = new URLSearchParams(context).toString();
-  async function load() {
-    const [m, p] = await Promise.all([
-      api("/pr/projects"),
-      api(`/pr?${query}`),
-    ]);
-    setMonitors(m);
-    setPrs(p);
-  }
   useEffect(() => {
     let live = true;
+    const load = () =>
+      Promise.all([api(`/pr?${query}`), api("/pr/projects")])
+        .then(([p, m]) => {
+          if (live) {
+            setPrs(p);
+            setMonitors(m);
+          }
+        })
+        .catch((e) => {
+          if (live) setError(e.message);
+        });
     setPrs([]);
-    const tick = async () => {
-      try {
-        const [m, p] = await Promise.all([
-          api("/pr/projects"),
-          api(`/pr?${query}`),
-        ]);
-        if (live) {
-          setMonitors(m);
-          setPrs(p);
-        }
-      } catch (e: any) {
-        if (live) setError(e.message);
-      }
-    };
-    void tick();
-    const timer = setInterval(tick, 5000);
+    void load();
+    const timer = setInterval(load, 5000);
     return () => {
       live = false;
       clearInterval(timer);
     };
-  }, [query]);
+  }, [query, version]);
   async function run(fn: () => Promise<any>) {
     setBusy(true);
     setError("");
-    setNotice("");
     try {
       await fn();
-      await load();
-      setNotice("Сохранено. Список обновится при синхронизации.");
+      setVersion((v) => v + 1);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
   }
-  const selected = monitors.filter(
-    (m) =>
-      (!context.client || m.client === context.client) &&
-      (!context.project || m.project === context.project),
-  );
   return (
     <>
       <div className="page-heading">
         <div>
           <h1>Pull requests</h1>
           <p>
-            Azure DevOps · изменения и автоматическое ревью в выбранном
-            контексте.
+            Синхронизация каждые {(settings?.syncSeconds || 600) / 60} минут.
+            Ревью запускается только вашей кнопкой.
           </p>
         </div>
         <button
@@ -97,184 +113,98 @@ export function PullRequestsPage({
           {error}
         </p>
       )}
-      {notice && <p role="status">{notice}</p>}
-      <div className="panel stack">
-        <h2>Мониторинг проекта</h2>
-        <p className="muted">
-          Опрос каждые {(settings?.syncSeconds || 600) / 60} минут после
-          предыдущего прохода. Новые версии PR автоматически отправляются в
-          Copilot; до {settings?.prDailyLimit || 20} попыток ревью за 24 часа на
-          все проекты. Ответы остаются в Orbit, комментарии и голоса в Azure не
-          отправляются.
-        </p>
-        {!context.project ? (
-          <p>
-            Выберите заказчика и проект сверху, чтобы подключить мониторинг.
-          </p>
-        ) : (
-          <form
-            className="stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(() =>
-                api("/pr/projects", "POST", {
-                  ...context,
-                  azure_project: azureProject.trim(),
-                  mode: all ? "all" : "required",
-                  enabled: true,
-                }),
-              );
-            }}
-          >
-            <label>
-              Проект в Azure DevOps
-              <input
-                required
-                maxLength={200}
-                placeholder={settings?.azureProject || "Название проекта Azure"}
-                value={azureProject}
-                onChange={(e) => setAzureProject(e.target.value)}
-              />
-            </label>
-            <label className="check-option">
-              <input
-                type="checkbox"
-                checked={all}
-                onChange={(e) => setAll(e.target.checked)}
-              />{" "}
-              Показывать все активные PR проекта
-            </label>
-            <p className="muted">
-              Без галочки — только PR, где владелец PAT лично указан как
-              required reviewer. Назначение через группу пока не учитывается.
-              Используются URL коллекции и PAT из настроек; PAT нужен Code:
-              Read.
-            </p>
-            <button className="primary" disabled={busy || !azureProject.trim()}>
-              Подключить автоматическое ревью
-            </button>
-          </form>
-        )}
-        {selected.map((m) => (
-          <div key={m.id} className="pr-monitor">
-            <b>
-              {m.client} / {m.project} → {m.azure_project}
-            </b>
-            <p className="muted">
-              {m.source} ·{" "}
-              {m.synced_at
-                ? new Date(m.synced_at).toLocaleString("ru-RU")
-                : "Ещё не синхронизирован"}
-            </p>
-            <label>
-              <input
-                type="checkbox"
-                disabled={busy}
-                checked={m.mode === "all"}
-                onChange={(e) =>
-                  void run(() =>
-                    api(`/pr/projects/${m.id}`, "PUT", {
-                      mode: e.target.checked ? "all" : "required",
-                      enabled: !!m.enabled,
-                    }),
-                  )
-                }
-              />{" "}
-              Все PR
-            </label>
-            <label style={{ marginLeft: 20 }}>
-              <input
-                type="checkbox"
-                disabled={busy}
-                checked={!!m.enabled}
-                onChange={(e) =>
-                  void run(() =>
-                    api(`/pr/projects/${m.id}`, "PUT", {
-                      mode: m.mode,
-                      enabled: e.target.checked,
-                    }),
-                  )
-                }
-              />{" "}
-              Мониторинг включён
-            </label>
-            {m.error && <p className="error">{m.error}</p>}
-          </div>
-        ))}
+      <div className="panel">
+        <ProjectRepository
+          context={context}
+          onSaved={() => setVersion((v) => v + 1)}
+        />
       </div>
-      {!prs.length ? (
-        <div className="empty">
-          <h3>Pull request’ов пока нет</h3>
-          <p>
-            Подключите проект и запустите синхронизацию. При первом подключении
-            существующие активные PR тоже попадут в очередь.
+      {monitors
+        .filter(
+          (m) => m.client === context.client && m.project === context.project,
+        )
+        .map((m) => (
+          <p className="muted" key={m.id}>
+            {m.azure_project} / {m.repository || "Репозиторий не выбран"} ·{" "}
+            {m.enabled ? "Опрос включён" : "Опрос выключен"}
+            {m.error ? ` · ${m.error}` : ""}
           </p>
-        </div>
-      ) : (
-        <div className="card-list">
-          {prs.map((p) => {
-            const coverage = p.coverage ? JSON.parse(p.coverage) : null;
-            return (
-              <article
-                className="panel pr-review"
-                key={`${p.monitor}:${p.repo}:${p.number}`}
-              >
-                <div className="section-heading">
-                  <h2>
-                    <a href={p.url} target="_blank" rel="noreferrer">
-                      #{p.number} · {p.title}
-                    </a>
-                  </h2>
-                  <span className="badge">
-                    {p.draft
-                      ? "Черновик"
-                      : status[p.review_status] || "Ожидает версии коммитов"}
-                  </span>
-                </div>
-                <p className="muted">
-                  {p.client} / {p.project} · {p.azure_project} · {p.author}
-                </p>
-                <small>
-                  Версия {p.head.slice(0, 10)} → {p.target.slice(0, 10)}
-                </small>
-                {!p.in_scope && (
-                  <p className="muted">
-                    PR больше не входит в текущую выборку: закрыт, переназначен
-                    или фильтр изменён.
-                  </p>
-                )}
-                {!p.enabled && <p className="muted">Мониторинг отключён.</p>}
-                {p.error && <p className="error">{p.error}</p>}
-                {coverage && (
-                  <p className="muted">
-                    Текстовых diff: {coverage.files}.{" "}
-                    {coverage.notes.length
-                      ? `Неполная проверка: ${coverage.notes.join("; ")}`
-                      : "Все возвращённые текстовые изменения включены. Тесты не запускались."}
-                  </p>
-                )}
-                {p.summary && (
-                  <pre
-                    style={{
-                      whiteSpace: "pre-wrap",
-                      fontFamily: "inherit",
-                      lineHeight: 1.65,
-                    }}
-                  >
-                    {p.summary}
-                  </pre>
-                )}
-                {p.usage_id && (
-                  <small>
-                    ID запроса LLM: {p.usage_id} · расход в разделе
-                    «Использование LLM»
-                  </small>
-                )}
-              </article>
-            );
-          })}
+        ))}
+      <p className="muted">
+        Ревью учитывает общую память, память заказчика и проекта; до{" "}
+        {settings?.prDailyLimit || 20} запусков за 24 часа. Комментарии и голоса
+        в Azure не отправляются.
+      </p>
+      {!prs.length && (
+        <div className="empty">
+          PR пока нет. Настройте репозиторий и запустите синхронизацию.
         </div>
       )}
+      <div className="card-list">
+        {prs.map((p) => (
+          <article
+            className="panel pr-review"
+            key={`${p.monitor}:${p.repo}:${p.number}`}
+          >
+            <div className="section-heading">
+              <h2>
+                <a href={p.url} target="_blank" rel="noreferrer">
+                  #{p.number} · {p.title}
+                </a>
+              </h2>
+              <span className="badge">
+                {p.draft
+                  ? "Черновик"
+                  : statuses[p.review_status] || "Ревью не запускалось"}
+              </span>
+            </div>
+            <p className="muted">
+              {p.client} / {p.project} · {p.azure_project} · repo {p.repo} ·{" "}
+              {p.author}
+            </p>
+            <small>
+              {p.head.slice(0, 10)} → {p.target.slice(0, 10)}
+            </small>
+            {!p.in_scope && (
+              <p className="muted">
+                PR вне текущей выборки. Сохранённые результаты доступны ниже.
+              </p>
+            )}
+            <button
+              className="secondary"
+              disabled={
+                busy ||
+                !p.in_scope ||
+                !p.enabled ||
+                !!p.draft ||
+                ["queued", "running", "completed"].includes(p.review_status)
+              }
+              onClick={() =>
+                void run(() =>
+                  api("/pr/review", "POST", {
+                    monitor: p.monitor,
+                    repo: p.repo,
+                    number: p.number,
+                  }),
+                )
+              }
+            >
+              {p.review_status === "completed"
+                ? "Текущая версия проверена"
+                : "Запустить ревью"}
+            </button>
+            {p.error && <p className="error">{p.error}</p>}
+            {p.coverage && (
+              <p className="muted">
+                Покрытие: {JSON.parse(p.coverage).files} файлов.{" "}
+                {JSON.parse(p.coverage).notes.join("; ")}
+              </p>
+            )}
+            {p.summary && <ChatMarkdown text={p.summary} />}
+            <ReviewHistory pr={p} />
+          </article>
+        ))}
+      </div>
     </>
   );
 }

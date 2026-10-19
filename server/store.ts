@@ -46,6 +46,7 @@ export const defaults = {
   azureAutoImport: false,
   azureTypes: [] as string[],
   azureStates: [] as string[],
+  statusColors: {} as Record<string, string>,
   syncSeconds: 600,
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
@@ -113,6 +114,26 @@ export class Store {
       this.db.exec(
         "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
       );
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
+    `);
+    if (
+      !(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(
+        (c) => c.name === "repository",
+      )
+    )
+      this.db.exec(
+        "ALTER TABLE pr_projects ADD COLUMN repository TEXT NOT NULL DEFAULT ''",
+      );
+    if (!this.get("migration.manualReviews", false)) {
+      this.db
+        .prepare(
+          "UPDATE pr_reviews SET status='cancelled',error='Автоматическое ревью отключено. Запустите вручную.' WHERE status='queued'",
+        )
+        .run();
+      this.set("migration.manualReviews", true);
+    }
     // A crash after Graph accepted a request is ambiguous. Never automatically resend it.
     this.db
       .prepare(

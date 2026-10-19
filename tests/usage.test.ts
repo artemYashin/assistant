@@ -75,7 +75,10 @@ function fakeAgent(
     abort: async () => {
       aborts++;
     },
-    sendAndWait: async () => run(session, config),
+    sendAndWait: async (request: any) => {
+      (session as any).prompt = request.prompt;
+      return run(session, config);
+    },
   };
   const client = {
     start: async () => {},
@@ -178,10 +181,21 @@ test("watchdog stops a model that never returns usage or a response", async (t) 
   );
 });
 
-test("background PR review has no tools, history or memory and still accounts usage", async (t) => {
+test("manual PR review has no tools or chat history and still accounts usage", async (t) => {
   const store = fixture(t);
   store.say("user", "private chat history", context);
+  store.addMemory("general", "General knowledge", context);
+  store.addMemory("client", "Client knowledge", context);
+  store.addMemory("project", "Project knowledge", context);
+  store.addMemory("project", "Other project secret", {
+    ...context,
+    project: "Other",
+  });
   const { agent } = fakeAgent(store, async (s, c) => {
+    assert.match(s.prompt, /General knowledge/);
+    assert.match(s.prompt, /Client knowledge/);
+    assert.match(s.prompt, /Project knowledge/);
+    assert.doesNotMatch(s.prompt, /Other project secret|private chat history/);
     assert.deepEqual(c.tools, []);
     assert.deepEqual(c.excludedTools, ["builtin:*", "mcp:*"]);
     assert.equal(

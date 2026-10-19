@@ -236,6 +236,14 @@ export class Connectors {
     );
   }
   private saveTicket(item: any, s: Settings) {
+    if (
+      this.store.db
+        .prepare(
+          "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
+        )
+        .get(this.store.source(s), item.id)
+    )
+      return;
     const f = item.fields || {};
     const url = `${azureBase(s.azureUrl)}/${encodeURIComponent(s.azureProject)}/_workitems/edit/${item.id}`;
     this.store.db
@@ -322,6 +330,59 @@ export class Connectors {
       );
       throw e;
     }
+  }
+  async developers() {
+    const s = this.store.settings(),
+      source = this.store.source(s),
+      pat = this.store.secret("azure.pat");
+    if (!pat || !s.azureProject)
+      throw new AppError(400, "Настройте Azure DevOps");
+    const base = `${azureBase(s.azureUrl)}/_apis/projects/${encodeURIComponent(s.azureProject)}/teams`;
+    const list = async (path: string) => {
+      const values: any[] = [];
+      for (let skip = 0; skip < 10000; skip += 100) {
+        const page = await requestJson(
+          `${path}?$top=100&$skip=${skip}&api-version=${encodeURIComponent(s.azureVersion)}`,
+          {
+            headers: {
+              Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+            },
+          },
+          "Azure project members",
+        );
+        if (!Array.isArray(page.value))
+          throw new AppError(502, "Azure вернул неверный список участников");
+        values.push(...page.value);
+        if (page.value.length < 100) return values;
+      }
+      throw new AppError(
+        502,
+        "Слишком много участников/команд; список не сохранён",
+      );
+    };
+    const users = new Map<string, { id: string; name: string }>();
+    for (const team of await list(base)) {
+      for (const member of await list(
+        `${base}/${encodeURIComponent(team.id)}/members`,
+      )) {
+        const user = member.identity;
+        if (user?.id && !user.isContainer)
+          users.set(user.id, {
+            id: user.id,
+            name: user.displayName || user.uniqueName || user.id,
+          });
+      }
+    }
+    const result = [...users.values()].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    if (source !== this.store.source())
+      throw new AppError(
+        409,
+        "Подключение изменилось; загрузите участников заново",
+      );
+    this.store.set("developers:" + source, result);
+    return result;
   }
   async ticketOptions() {
     const s = this.store.settings(),
@@ -531,6 +592,9 @@ export class Connectors {
     );
     if (item.fields?.["System.TeamProject"] !== s.azureProject)
       throw new AppError(400, "Тикет относится к другому проекту Azure DevOps");
+    this.store.db
+      .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
+      .run(this.store.source(s), id);
     this.saveTicket(item, s);
     this.store.db
       .prepare(
@@ -575,7 +639,14 @@ export class Connectors {
       );
       for (const item of result.workItems || []) ids.add(item.id);
     }
-    const list = [...ids];
+    const list = [...ids].filter(
+      (id) =>
+        !this.store.db
+          .prepare(
+            "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
+          )
+          .get(this.store.source(s), id),
+    );
     for (let i = 0; i < list.length; i += 200) {
       const result = await this.azure(
         "workitemsbatch",

@@ -1,3 +1,4 @@
+import { ProjectRepository } from "./ProjectRepository.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 type Context = { client: string; project: string };
@@ -189,6 +190,7 @@ export function ContextPicker({
               </button>
             </form>
           </div>
+          <ProjectRepository context={context} />
           {!clients.length ? (
             <p className="muted">Заказчиков пока нет. Добавьте первого выше.</p>
           ) : (

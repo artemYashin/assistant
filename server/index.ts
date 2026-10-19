@@ -3,9 +3,9 @@ import { createApp } from "./app.js";
 const store = new Store(process.env.DATA_DIR || "./data");
 const { app, sync, agent, pullRequests } = createApp(store);
 const server = app.listen(
-  Number(process.env.PORT || 3000),
+  Number(process.env.PORT || 43871),
   process.env.BIND_HOST || "127.0.0.1",
-  () => console.log(`Orbit: http://localhost:${process.env.PORT || 3000}`),
+  () => console.log(`Orbit: http://localhost:${process.env.PORT || 43871}`),
 );
 let stopped = false;
 let syncWork: Promise<unknown> = Promise.resolve();

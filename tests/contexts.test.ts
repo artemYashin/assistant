@@ -16,8 +16,8 @@ test("context registry migrates existing history, isolates projects and persists
   store.say("user", "old", { client: "Legacy", project: "Old" });
   const { app } = createApp(store);
   const headers = {
-    Host: "localhost:3000",
-    Origin: "http://localhost:3000",
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
     "X-Orbit-Request": "1",
   };
   await request(app).get("/api/contexts").set(headers).expect(401);
@@ -112,8 +112,8 @@ test("Teams stays disabled and new Azure APIs enforce authentication and filter 
   assert.equal((await sync()).state, "ok");
   assert.equal(store.settings().syncSeconds, 600);
   const headers = {
-    Host: "localhost:3000",
-    Origin: "http://localhost:3000",
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
     "X-Orbit-Request": "1",
   };
   for (const path of [

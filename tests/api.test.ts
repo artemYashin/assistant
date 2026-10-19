@@ -27,8 +27,8 @@ test("sending API enforces login, Origin, CSRF, immutable payload and one-shot a
     .prepare("INSERT INTO chats(id,name) VALUES (?,?)")
     .run("chat-1", "Team");
   const headers = {
-    Host: "localhost:3000",
-    Origin: "http://localhost:3000",
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
     "X-Orbit-Request": "1",
   };
   await request(app)

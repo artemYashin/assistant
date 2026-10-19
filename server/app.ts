@@ -42,6 +42,9 @@ const settingsSchema = z
     azureAutoImport: z.boolean().default(false),
     azureTypes: z.array(text.min(1)).max(50).default([]),
     azureStates: z.array(text.min(1)).max(100).default([]),
+    statusColors: z
+      .record(z.string().min(1).max(200), z.string().regex(/^#[0-9a-fA-F]{6}$/))
+      .default({}),
     prDailyLimit: z.number().int().min(1).max(100).default(20),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
     llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
@@ -95,7 +98,7 @@ export function createApp(
     options.origins ||
     (
       process.env.APP_ORIGINS ||
-      "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+      "http://localhost:43871,http://127.0.0.1:43871,http://localhost:5173,http://127.0.0.1:5173"
     ).split(",");
   const hosts = new Set(origins.map((o) => new URL(o).host));
   app.use("/api", (req, res, next) => {
@@ -415,11 +418,57 @@ export function createApp(
     res.json(
       store.db
         .prepare(
-          "SELECT * FROM tickets WHERE source=? ORDER BY changed_at DESC",
+          "SELECT t.*,l.developer_id,l.developer_name FROM tickets t LEFT JOIN ticket_local l ON t.source=l.source AND t.id=l.id WHERE t.source=? ORDER BY t.changed_at DESC",
         )
         .all(store.source()),
     ),
   );
+  app.get("/api/developers", (_req, res) =>
+    res.json(store.get("developers:" + store.source(), [])),
+  );
+  app.post("/api/developers/refresh", async (_req, res) =>
+    res.json(await connectors.developers()),
+  );
+  app.delete("/api/tickets/:id", (req, res) => {
+    const id = z.coerce.number().int().positive().parse(req.params.id),
+      source = store.source();
+    store.db.transaction(() => {
+      store.db
+        .prepare(
+          "INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1) ON CONFLICT(source,id) DO UPDATE SET removed=1",
+        )
+        .run(source, id);
+      store.db
+        .prepare("DELETE FROM tickets WHERE source=? AND id=?")
+        .run(source, id);
+    })();
+    res.json({ ok: true });
+  });
+  app.put("/api/tickets/:id/developer", (req, res) => {
+    const id = z.coerce.number().int().positive().parse(req.params.id),
+      source = store.source();
+    const { developerId } = z
+      .object({ developerId: text })
+      .strict()
+      .parse(req.body);
+    if (
+      !store.db
+        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+        .get(source, id)
+    )
+      throw new AppError(404, "Тикет не найден");
+    const developer = store
+      .get<{ id: string; name: string }[]>("developers:" + source, [])
+      .find((d) => d.id === developerId);
+    if (developerId && !developer)
+      throw new AppError(400, "Загрузите список разработчиков из Azure");
+    store.db
+      .prepare(
+        "INSERT INTO ticket_local(source,id,developer_id,developer_name) VALUES (?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET developer_id=excluded.developer_id,developer_name=excluded.developer_name",
+      )
+      .run(source, id, developerId, developer?.name || "");
+    res.json({ ok: true });
+  });
   app.get("/api/tickets/options", async (_req, res) =>
     res.json(await connectors.ticketOptions()),
   );
@@ -477,6 +526,7 @@ export function createApp(
         client: text.min(1),
         project: text.min(1),
         azure_project: text.min(1),
+        repository: text.min(1),
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),
       })
@@ -500,6 +550,35 @@ export function createApp(
       .prepare("UPDATE pull_requests SET in_scope=0 WHERE monitor=?")
       .run(String(req.params.id));
     res.json({ ok: true });
+  });
+  app.post("/api/pr/review", (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.number().int().positive(),
+      })
+      .strict()
+      .parse(req.body);
+    res.json({
+      id: pullRequests.requestReview(input.monitor, input.repo, input.number),
+    });
+  });
+  app.get("/api/pr/reviews", (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.coerce.number().int().positive(),
+      })
+      .parse(req.query);
+    res.json(
+      store.db
+        .prepare(
+          "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? ORDER BY created_at DESC,rowid DESC",
+        )
+        .all(input.monitor, input.repo, input.number),
+    );
   });
   app.get("/api/pr", (req, res) =>
     res.json(pullRequests.list(contextSchema.parse(req.query))),
@@ -581,11 +660,39 @@ export function createApp(
           "Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.",
         );
       }
-      if (!result.ok)
-        throw new AppError(
-          502,
-          "Не удалось распознать запись. Проверьте voice-контейнер.",
+      if (!result.ok) {
+        const detail = (await result.json().catch(() => ({})))?.detail;
+        const messages: Record<string, string> = {
+          model_load:
+            "Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.",
+          transcribe:
+            "Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.",
+          audio_too_long: "Запись слишком длинная: максимум 150 секунд.",
+        };
+        const reference =
+          typeof detail?.reference === "string" &&
+          /^[0-9a-f-]{36}$/.test(detail.reference)
+            ? detail.reference
+            : "";
+        console.error(
+          "[voice]",
+          JSON.stringify({
+            status: result.status,
+            code: Object.hasOwn(messages, detail?.code)
+              ? detail.code
+              : "unknown",
+            reference,
+          }),
         );
+        throw new AppError(
+          result.status === 422 ? 422 : 503,
+          ((Object.hasOwn(messages, detail?.code)
+            ? messages[detail.code]
+            : "") ||
+            "Не удалось распознать запись. Проверьте логи voice-контейнера.") +
+            (reference ? ` Код диагностики: ${reference}` : ""),
+        );
+      }
       res.json(await result.json());
     },
   );

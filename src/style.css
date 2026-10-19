@@ -365,7 +365,7 @@ main {
   flex: 1;
   min-width: 0;
   max-width: 1500px;
-  margin: auto;
+  margin: 0;
 }
 .context-bar {
   display: flex;
@@ -2119,4 +2119,331 @@ summary {
   display: inline;
   margin: 0;
   font-size: inherit;
+}
+
+/* Ticket content shares the same hierarchy in lookup, table and chat. */
+.ticket-detail .ticket-card-title {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.ticket-number {
+  color: var(--muted);
+  margin-right: 8px;
+  font-size: 12px;
+}
+.ticket-detail .ticket-card-body {
+  display: grid;
+  gap: 20px;
+  margin-top: 16px;
+}
+.ticket-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ticket-type-badge,
+.ticket-state-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.ticket-type-badge {
+  background: #eef0f9;
+  color: #555d87;
+}
+.ticket-state-badge {
+  background: #edf3e9;
+  color: #466540;
+  border: 1px solid #dce7d6;
+}
+.ticket-project {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ticket-metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 16px;
+  background: #f7f9f5;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
+}
+.ticket-metadata dt {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.ticket-metadata dd {
+  margin: 0;
+  color: #304a3c;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ticket-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.ticket-section {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  min-width: 0;
+}
+.ticket-detail .ticket-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.ticket-count {
+  border-radius: 20px;
+  background: #eef2eb;
+  padding: 2px 7px;
+  font-size: 10px;
+  color: #64745b;
+}
+.ticket-detail .ticket-prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  line-height: 1.8;
+  font-size: 12px;
+}
+.ticket-comments,
+.ticket-attachments {
+  display: grid;
+  gap: 12px;
+}
+.ticket-comment {
+  border: 1px solid var(--border);
+  background: #fafbf8;
+  border-radius: 8px;
+  padding: 14px;
+}
+.ticket-comment header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+.ticket-comment time {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ticket-empty,
+.ticket-footnote {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.ticket-footnote {
+  margin-top: 12px;
+}
+.ticket-attachment {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.ticket-attachment img {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  margin-top: 12px;
+  border-radius: 6px;
+}
+.ticket-all-fields {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.ticket-all-fields summary {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ticket-all-fields dl {
+  margin: 12px 0 0;
+}
+.ticket-all-fields dl > div {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+}
+.ticket-all-fields dt {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+.ticket-all-fields dd {
+  margin: 0;
+}
+
+.chat-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.chat-markdown > * {
+  margin: 0;
+}
+.chat-markdown > * + * {
+  margin-top: 10px;
+}
+.bubble .chat-markdown p {
+  white-space: normal;
+  line-height: 1.7;
+}
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5,
+.chat-markdown h6 {
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  font-weight: 650;
+}
+.chat-markdown ul,
+.chat-markdown ol {
+  padding-left: 22px;
+}
+.chat-markdown li + li {
+  margin-top: 4px;
+}
+.chat-markdown li > p + p {
+  margin-top: 8px;
+}
+.chat-markdown blockquote {
+  border-left: 3px solid #afc2a6;
+  padding: 4px 0 4px 12px;
+  color: #64745b;
+}
+.chat-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  background: #edf1e9;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.chat-markdown pre {
+  overflow-x: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: #f7f9f5;
+  border-radius: 7px;
+  white-space: pre;
+}
+.chat-markdown pre code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+.chat-markdown a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chat-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+.chat-markdown-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.chat-markdown table {
+  width: 100%;
+  font-size: 11px;
+  margin: 0;
+}
+.chat-markdown th,
+.chat-markdown td {
+  padding: 6px 8px;
+  min-width: 80px;
+  border: 1px solid var(--border);
+  white-space: normal;
+}
+.chat-markdown .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+.ticket-section > summary {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ticket-section[open] > summary {
+  margin-bottom: 14px;
+}
+.ticket-detail .ticket-section > div {
+  border: 0;
+  padding: 0;
+}
+.ticket-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+.ticket-sort select {
+  width: auto;
+}
+.local-developer {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  min-width: 170px;
+  max-width: 250px;
+}
+.local-developer select {
+  font-size: 11px;
+  padding: 8px;
+}
+.status-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.status-color-row > span {
+  flex: 1;
+}
+.status-color-row input[type="color"] {
+  width: 48px;
+  height: 36px;
+  padding: 3px;
+}
+.ticket-preview-row > td {
+  white-space: normal;
+}
+.context-manager .stack .form-grid label {
+  display: grid;
+  gap: 8px;
+}
+.pr-review > small {
+  display: block;
+}
+.pr-review > .secondary {
+  display: flex;
+}
+.form-grid > label:not(.field) {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+.local-developer > small {
+  display: block;
+}
+td > small {
+  display: block;
+  margin-bottom: 4px;
 }

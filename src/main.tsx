@@ -1,3 +1,9 @@
+import {
+  LocalDeveloper,
+  StatusBadge,
+  StatusColorsEditor,
+} from "./TicketControls.js";
+import { ChatMarkdown } from "./ChatMarkdown.js";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -834,6 +840,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "tickets" && <TicketLookup />}
             {page === "tickets" && (
               <Tickets
+                settings={settings}
                 tickets={filtered(tickets, [
                   "id",
                   "title",
@@ -1025,8 +1032,19 @@ function PageHeading({
     </div>
   );
 }
-function Tickets({ tickets, query, setQuery, run, busy }: any) {
+function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
   const [id, setId] = useState("");
+  const [sort, setSort] = useState("id-desc");
+  const sorted = [...tickets].sort((a, b) => {
+    const [key, direction] = sort.split("-");
+    const cmp =
+      key === "id"
+        ? a.id - b.id
+        : String(a[key] || "").localeCompare(String(b[key] || ""), "ru", {
+            numeric: true,
+          });
+    return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
+  });
   return (
     <>
       <PageHeading
@@ -1081,6 +1099,21 @@ function Tickets({ tickets, query, setQuery, run, busy }: any) {
           Добавить по номеру
         </button>
       </form>
+      <label className="ticket-sort">
+        Сортировка{" "}
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="id-desc">ID: сначала новые</option>
+          <option value="id-asc">ID: по возрастанию</option>
+          <option value="title-asc">Название: А–Я</option>
+          <option value="title-desc">Название: Я–А</option>
+          <option value="state-asc">Статус: А–Я</option>
+          <option value="state-desc">Статус: Я–А</option>
+        </select>
+      </label>
+      <p className="muted">
+        Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
+        вернуть кнопкой «Добавить по номеру».
+      </p>
       {tickets.length ? (
         <div className="table-wrap panel">
           <table>
@@ -1094,8 +1127,18 @@ function Tickets({ tickets, query, setQuery, run, busy }: any) {
               </tr>
             </thead>
             <tbody>
-              {tickets.map((t: any) => (
-                <TicketTableRow key={t.id} id={t.id}>
+              {sorted.map((t: any) => (
+                <TicketTableRow
+                  key={t.id}
+                  id={t.id}
+                  onRemove={() =>
+                    run(
+                      "remove",
+                      () => api(`/tickets/${t.id}`, "DELETE"),
+                      "Тикет удалён из локального списка",
+                    )
+                  }
+                >
                   <td>
                     <a
                       className="ticket-link"
@@ -1110,17 +1153,19 @@ function Tickets({ tickets, query, setQuery, run, busy }: any) {
                     <small>{t.type}</small>
                   </td>
                   <td>
-                    <Badge
-                      tone={
-                        /closed|done|resolved/i.test(t.state)
-                          ? "green"
-                          : "violet"
-                      }
-                    >
-                      {t.state}
-                    </Badge>
+                    <StatusBadge
+                      state={t.state}
+                      colors={settings?.statusColors}
+                    />
                   </td>
-                  <td>{t.assigned || "Не назначен"}</td>
+                  <td>
+                    <small>В Azure</small>
+                    {t.assigned || "Не назначен"}
+                    <LocalDeveloper
+                      ticket={t}
+                      onChange={() => run("refresh-local", async () => {})}
+                    />
+                  </td>
                   <td className="muted">{date(t.synced_at)}</td>
                 </TicketTableRow>
               ))}
@@ -1560,7 +1605,7 @@ function Settings({ settings, context, run, busy }: any) {
           <LoginCode flow={githubFlow} />
           {modelsLoading && <p role="status">Загружаем доступные модели…</p>}
           <Field
-            label="Автоматических PR-ревью за 24 часа"
+            label="Лимит ручных PR-ревью за 24 часа"
             hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
           >
             <input
@@ -1712,6 +1757,7 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
+          <StatusColorsEditor form={form} set={set} />
           <TicketImportSettings form={form} set={set} save={save} />
         </section>
         <section className="panel settings-card">
@@ -2059,7 +2105,11 @@ function Assistant({
                 <Sparkles size={13} /> Orbit
               </span>
             )}
-            <p>{m.body}</p>
+            {m.role === "error" ? (
+              <p>{m.body}</p>
+            ) : (
+              <ChatMarkdown text={m.body} />
+            )}
             {(typeof m.cards === "string"
               ? JSON.parse(m.cards)
               : m.cards || []

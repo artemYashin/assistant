@@ -1,17 +1,28 @@
+import { StatusBadge } from "./TicketControls.js";
 import { useEffect, useState, useId, type ReactNode } from "react";
 import { api } from "./api.js";
 // Render external content as text, never inject work item HTML into the page.
 function text(value: any) {
-  const raw = typeof value === "string" ? value : JSON.stringify(value);
+  const raw = typeof value === "string" ? value : (JSON.stringify(value) ?? "");
   const textarea = document.createElement("textarea");
-  textarea.innerHTML = raw.replace(/<[^>]*>/g, " ");
+  textarea.innerHTML = raw
+    .replace(/<br\s*\/?\s*>|<\/(p|div|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]*>/g, " ");
   return textarea.value;
 }
 export function TicketCard({ reference }: { reference: string }) {
+  const [colors, setColors] = useState<Record<string, string>>({});
+  useEffect(() => {
+    api("/settings")
+      .then((s) => setColors(s.statusColors || {}))
+      .catch(() => {});
+  }, []);
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
   useEffect(() => {
     let live = true;
+    setCard(null);
+    setError("");
     api(`/ticket-cards/${encodeURIComponent(reference)}`)
       .then((v) => {
         if (live) setCard(v);
@@ -28,108 +39,161 @@ export function TicketCard({ reference }: { reference: string }) {
   const f = card.fields;
   const attachmentUrl = (a: any) =>
     `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${encodeURIComponent(a.id)}`;
+  const person = (value: any) =>
+    typeof value === "string"
+      ? value
+      : value?.displayName || value?.uniqueName || "Не указан";
+  const timestamp = (value: any) => {
+    if (!value || Number.isNaN(new Date(value).getTime())) return "Не указана";
+    return new Date(value).toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
   return (
-    <details className="ticket-detail" open>
-      <summary>
-        <b>
-          #{card.id} · {f["System.Title"]}
-        </b>
-      </summary>
-      <p>
-        {f["System.WorkItemType"]} · {f["System.State"]} ·{" "}
-        {f["System.AssignedTo"]?.displayName ||
-          f["System.AssignedTo"]?.uniqueName ||
-          ""}
-      </p>
-      <small>
-        Получено {new Date(card.loadedAt).toLocaleString("ru-RU")} ·{" "}
-        {card.project}
-      </small>
-      <p>
-        <a href={card.url} target="_blank" rel="noreferrer">
-          Открыть в Azure DevOps
-        </a>
-      </p>
-      {card.warnings.map((w: string) => (
-        <p className="error" key={w}>
-          {w}
-        </p>
-      ))}
-      {[
-        "System.Description",
-        "Microsoft.VSTS.TCM.ReproSteps",
-        "Microsoft.VSTS.Common.AcceptanceCriteria",
-      ]
-        .filter((k) => f[k])
-        .map((k) => (
-          <section key={k}>
-            <h4>
-              {k === "System.Description"
-                ? "Описание"
-                : k.endsWith("ReproSteps")
-                  ? "Шаги воспроизведения"
-                  : "Критерии приёмки"}
-            </h4>
-            <p style={{ whiteSpace: "pre-wrap" }}>{text(f[k])}</p>
-          </section>
-        ))}
-      <details>
-        <summary>Все поля тикета</summary>
-        {Object.entries(f).map(([k, v]) => (
-          <div key={k}>
-            <b>{k}</b>
-            <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-              {text(v)}
-            </p>
-          </div>
-        ))}
-      </details>
-      <h4>Комментарии ({card.comments.length})</h4>
-      {card.comments.map((c: any) => (
-        <section
-          key={c.id}
-          style={{ borderTop: "1px solid var(--border)", padding: "10px 0" }}
-        >
-          <b>{c.author}</b>{" "}
-          <small>
-            {c.date ? new Date(c.date).toLocaleString("ru-RU") : ""}
-          </small>
-          <p style={{ whiteSpace: "pre-wrap" }}>{c.text}</p>
-        </section>
-      ))}
-      <h4>Вложения и изображения ({card.attachments.length})</h4>
-      {card.attachments.map((a: any) => (
-        <div key={a.id}>
-          <a href={attachmentUrl(a)} target="_blank" rel="noreferrer">
-            {a.name}
-          </a>
-          {a.image && (
-            <img
-              src={attachmentUrl(a)}
-              loading="lazy"
-              alt={a.name}
-              style={{
-                display: "block",
-                maxWidth: "100%",
-                maxHeight: 500,
-                objectFit: "contain",
-                margin: "10px 0",
-              }}
-              onError={(e) => {
-                e.currentTarget.alt =
-                  "Предпросмотр недоступен — откройте вложение по ссылке";
-              }}
-            />
-          )}
+    <article className="ticket-detail">
+      <header className="ticket-card-title">
+        <span className="ticket-number">#{card.id}</span>
+        <strong>{f["System.Title"]}</strong>
+      </header>
+      <div className="ticket-card-body">
+        <div className="ticket-badges">
+          <span className="ticket-type-badge" aria-label="Тип тикета">
+            {f["System.WorkItemType"] || "Тип не указан"}
+          </span>
+          <StatusBadge
+            state={f["System.State"] || "Статус не указан"}
+            colors={colors}
+          />
+          <span className="ticket-project">{card.project}</span>
         </div>
-      ))}
-      <small>
-        Картинки показаны вам; в текущем режиме модель получает текст и список
-        вложений, а не пиксели изображения.
-      </small>
-    </details>
+        <dl className="ticket-metadata">
+          <div>
+            <dt>Автор</dt>
+            <dd>{person(f["System.CreatedBy"])}</dd>
+          </div>
+          <div>
+            <dt>Исполнитель</dt>
+            <dd>
+              {f["System.AssignedTo"]
+                ? person(f["System.AssignedTo"])
+                : "Не назначен"}
+            </dd>
+          </div>
+          <div>
+            <dt>Создан</dt>
+            <dd>{timestamp(f["System.CreatedDate"])}</dd>
+          </div>
+          <div>
+            <dt>Изменён</dt>
+            <dd>{timestamp(f["System.ChangedDate"])}</dd>
+          </div>
+        </dl>
+        <div className="ticket-source">
+          <span>Данные получены: {timestamp(card.loadedAt)}</span>
+          <a href={card.url} target="_blank" rel="noreferrer">
+            Открыть в Azure DevOps ↗
+          </a>
+        </div>
+        {card.warnings.map((w: string) => (
+          <p className="error" key={w}>
+            {w}
+          </p>
+        ))}
+        {[
+          ["System.Description", "Описание"],
+          ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
+          ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
+        ]
+          .filter(([key]) => f[key])
+          .map(([key, label]) => (
+            <details className="ticket-section" key={key} open>
+              <summary>{label}</summary>
+              <p className="ticket-prose">{text(f[key])}</p>
+            </details>
+          ))}
+        <details className="ticket-section">
+          <summary>
+            Комментарии{" "}
+            <span className="ticket-count">{card.comments.length}</span>
+          </summary>
+          {card.comments.length ? (
+            <div className="ticket-comments">
+              {card.comments.map((c: any) => (
+                <article className="ticket-comment" key={c.id}>
+                  <header>
+                    <strong>{c.author || "Автор не указан"}</strong>
+                    <time dateTime={c.date || undefined}>
+                      {timestamp(c.date)}
+                    </time>
+                  </header>
+                  <p className="ticket-prose">{c.text}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="ticket-empty">
+              Комментарии отсутствуют в загруженных данных.
+            </p>
+          )}
+        </details>
+        <details className="ticket-section">
+          <summary>
+            Вложения и изображения{" "}
+            <span className="ticket-count">{card.attachments.length}</span>
+          </summary>
+          {card.attachments.length ? (
+            <div className="ticket-attachments">
+              {card.attachments.map((a: any) => (
+                <div className="ticket-attachment" key={a.id}>
+                  <a href={attachmentUrl(a)} target="_blank" rel="noreferrer">
+                    {a.name} ↗
+                  </a>
+                  {a.image && (
+                    <img
+                      src={attachmentUrl(a)}
+                      loading="lazy"
+                      alt={a.name}
+                      onError={(e) => {
+                        e.currentTarget.alt =
+                          "Предпросмотр недоступен — откройте вложение по ссылке";
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="ticket-empty">
+              Вложения отсутствуют в загруженных данных.
+            </p>
+          )}
+          {!!card.attachments.length && (
+            <p className="ticket-footnote">
+              Картинки показаны вам; модель получает текст и список вложений, а
+              не пиксели изображения.
+            </p>
+          )}
+        </details>
+        <details className="ticket-all-fields">
+          <summary>Все поля тикета · {Object.keys(f).length}</summary>
+          <dl>
+            {Object.entries(f).map(([key, value]) => (
+              <div key={key}>
+                <dt>{key}</dt>
+                <dd className="ticket-prose">{text(value)}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      </div>
+    </article>
   );
 }
+
 export function TicketLookup() {
   const [id, setId] = useState(""),
     [ref, setRef] = useState(""),
@@ -177,7 +241,9 @@ export function TicketLookup() {
 export function TicketTableRow({
   id,
   children,
+  onRemove,
 }: {
+  onRemove?: () => void;
   id: number;
   children: ReactNode;
 }) {
@@ -217,6 +283,16 @@ export function TicketTableRow({
           >
             {open ? "Скрыть" : "Посмотреть"}
           </button>
+          {onRemove && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={onRemove}
+              title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+            >
+              Убрать из списка
+            </button>
+          )}
         </td>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">

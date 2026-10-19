@@ -45,6 +45,7 @@ function fixture(t: any) {
   service.save({
     ...context,
     azure_project: "Project One",
+    repository: "repo",
     mode: "required",
     enabled: true,
   });
@@ -118,6 +119,13 @@ test("PR sync scopes by project, deduplicates versions, waits for drafts, and bu
   mock(t, items);
   await service.sync();
   await service.sync();
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
+    0,
+  );
+  await service.reviewNext();
+  assert.equal(calls.length, 0);
+  service.requestReview(service.monitors()[0].id, "repo", 1);
   assert.equal(service.list(context).length, 2);
   assert.equal(service.list({ client: "Other", project: "" }).length, 0);
   assert.equal(
@@ -136,15 +144,20 @@ test("PR sync scopes by project, deduplicates versions, waits for drafts, and bu
   assert.equal(calls.length, 1);
   items[0] = pr(1, "new-head");
   await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1);
   await service.reviewNext();
   assert.equal(calls.length, 2);
-  assert.equal((service.list(context)[0] as any).head, "new-head");
+  assert.equal(
+    (service.list(context) as any[]).find((p) => p.number === 1).head,
+    "new-head",
+  );
 });
 test("all mode includes optional and unassigned PRs; failed scans preserve prior membership", async (t) => {
   const { store, service } = fixture(t);
   service.save({
     ...context,
     azure_project: "Project One",
+    repository: "repo",
     mode: "all",
     enabled: true,
   });
@@ -166,6 +179,8 @@ test("daily cap and foreground chat defer reviews; errors are not retried automa
   const { store, service, agent } = fixture(t);
   mock(t, [pr(), pr(2)]);
   await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1);
+  service.requestReview(service.monitors()[0].id, "repo", 2);
   let busy = true;
   agent.active = () => (busy ? "user-request" : (null as any));
   await service.reviewNext();
@@ -187,6 +202,15 @@ test("daily cap and foreground chat defer reviews; errors are not retried automa
   await service.reviewNext();
   await service.reviewNext();
   assert.equal(tries, 1);
+  const failed = store.db
+    .prepare("SELECT * FROM pr_reviews WHERE status='error'")
+    .get() as any;
+  service.requestReview(failed.monitor, failed.repo, failed.number);
+  await service.reviewNext();
+  assert.equal(tries, 1, "manual retry must not reset the daily attempt cap");
+  store.db
+    .prepare("UPDATE pr_reviews SET status='error' WHERE id=?")
+    .run(failed.id);
   assert.equal(
     (
       store.db
@@ -226,6 +250,7 @@ test("closed or updated PR is not sent to LLM from an old queued version", async
   const items = [pr()];
   mock(t, items);
   await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1);
   items[0] = { ...pr(), status: "completed" };
   await service.reviewNext();
   assert.equal(calls.length, 0);
@@ -235,6 +260,7 @@ test("interrupted review is retained without auto-resubmission on restart", asyn
   const { store, service, dir } = fixture(t);
   mock(t, [pr()]);
   await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1);
   store.db.prepare("UPDATE pr_reviews SET status='running'").run();
   const other = new Store(dir);
   try {
@@ -245,4 +271,34 @@ test("interrupted review is retained without auto-resubmission on restart", asyn
   } finally {
     other.close();
   }
+});
+
+test("legacy automatic queue is cancelled once and manual requests deduplicate", async (t) => {
+  const { store, service, dir } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1);
+  assert.equal(service.requestReview(service.monitors()[0].id, "repo", 1), id);
+  store.set("migration.manualReviews", false);
+  const reopened = new Store(dir);
+  reopened.close();
+  assert.equal(
+    (
+      store.db
+        .prepare("SELECT status FROM pr_reviews WHERE id=?")
+        .get(id) as any
+    ).status,
+    "cancelled",
+  );
+  service.requestReview(service.monitors()[0].id, "repo", 1);
+  const again = new Store(dir);
+  again.close();
+  assert.equal(
+    (
+      store.db
+        .prepare("SELECT status FROM pr_reviews WHERE id=?")
+        .get(id) as any
+    ).status,
+    "queued",
+  );
 });

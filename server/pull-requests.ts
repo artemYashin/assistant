@@ -9,6 +9,7 @@ export type Monitor = {
   project: string;
   source: string;
   azure_project: string;
+  repository: string;
   mode: "required" | "all";
   enabled: number;
 };
@@ -53,16 +54,29 @@ export class PullRequests {
     client: string;
     project: string;
     azure_project: string;
+    repository: string;
     mode: "required" | "all";
     enabled: boolean;
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
     const source = azureBase(this.store.settings().azureUrl);
+    if (!input.repository.trim())
+      throw new AppError(400, "Укажите Git-репозиторий");
     this.store.addContext(input);
     this.store.db
       .prepare(
-        "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES (?,?,?,?,?,?,?) ON CONFLICT(client,project,source,azure_project) DO UPDATE SET mode=excluded.mode,enabled=excluded.enabled",
+        "UPDATE pr_projects SET enabled=0 WHERE client=? AND project=? AND (source!=? OR azure_project!=?)",
+      )
+      .run(input.client, input.project, source, input.azure_project);
+    this.store.db
+      .prepare(
+        "UPDATE pull_requests SET in_scope=0 WHERE monitor IN (SELECT id FROM pr_projects WHERE client=? AND project=?)",
+      )
+      .run(input.client, input.project);
+    this.store.db
+      .prepare(
+        "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(client,project,source,azure_project) DO UPDATE SET mode=excluded.mode,enabled=excluded.enabled,repository=excluded.repository",
       )
       .run(
         randomUUID(),
@@ -72,6 +86,7 @@ export class PullRequests {
         input.azure_project,
         input.mode,
         Number(input.enabled),
+        input.repository,
       );
     this.store.db
       .prepare(
@@ -82,7 +97,7 @@ export class PullRequests {
   list(context: Context) {
     return this.store.db
       .prepare(
-        `SELECT p.*,m.client,m.project,m.azure_project,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) ORDER BY p.in_scope DESC,p.synced_at DESC LIMIT 300`,
+        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) ORDER BY p.in_scope DESC,p.synced_at DESC LIMIT 300`,
       )
       .all(context.client, context.client, context.project, context.project);
   }
@@ -143,6 +158,8 @@ export class PullRequests {
   async sync() {
     for (const m of this.monitors().filter((m) => m.enabled)) {
       try {
+        if (!m.repository)
+          throw new AppError(400, "Выберите Git-репозиторий проекта");
         const credentials = this.credentials(m);
         const identity =
           m.mode === "required"
@@ -160,7 +177,7 @@ export class PullRequests {
             );
           const page = await this.get(
             m,
-            `git/pullrequests?searchCriteria.status=active&$top=100&$skip=${skip}`,
+            `git/repositories/${enc(m.repository)}/pullrequests?searchCriteria.status=active&$top=100&$skip=${skip}`,
             credentials,
           );
           if (!Array.isArray(page.value))
@@ -173,7 +190,11 @@ export class PullRequests {
           if (page.value.length < 100) break;
         }
         const currentMonitor = this.monitors().find((x) => x.id === m.id);
-        if (!currentMonitor?.enabled || currentMonitor.mode !== m.mode)
+        if (
+          !currentMonitor?.enabled ||
+          currentMonitor.mode !== m.mode ||
+          currentMonitor.repository !== m.repository
+        )
           continue;
         this.credentials(m);
         // Commit only a complete scan; a failed page must not hide existing PRs.
@@ -203,20 +224,6 @@ export class PullRequests {
                 1,
                 now(),
               );
-            if (head && target && !p.isDraft)
-              this.store.db
-                .prepare(
-                  "INSERT OR IGNORE INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES (?,?,?,?,?,?,'queued',?)",
-                )
-                .run(
-                  randomUUID(),
-                  m.id,
-                  repo,
-                  p.pullRequestId,
-                  head,
-                  target,
-                  now(),
-                );
           }
           this.store.db
             .prepare("UPDATE pr_projects SET error=NULL,synced_at=? WHERE id=?")
@@ -318,6 +325,43 @@ export class PullRequests {
     }
     return { patches, notes, base: diff.commonCommit, head, target };
   }
+  requestReview(monitor: string, repo: string, number: number) {
+    const m = this.monitors().find((m) => m.id === monitor);
+    const p = this.store.db
+      .prepare(
+        "SELECT * FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+      )
+      .get(monitor, repo, number) as any;
+    if (
+      !m?.enabled ||
+      !m.repository ||
+      !p?.in_scope ||
+      p.draft ||
+      !p.head ||
+      !p.target
+    )
+      throw new AppError(
+        400,
+        "Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся",
+      );
+    this.credentials(m);
+    if (!this.store.secret("github.token"))
+      throw new AppError(400, "Подключите GitHub Copilot");
+    const old = this.store.db
+      .prepare(
+        "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND head=? AND target=?",
+      )
+      .get(monitor, repo, number, p.head, p.target) as any;
+    if (old && ["queued", "running", "completed"].includes(old.status))
+      return old.id;
+    const id = old?.id || randomUUID();
+    this.store.db
+      .prepare(
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES (?,?,?,?,?,?,'queued',?) ON CONFLICT(monitor,repo,number,head,target) DO UPDATE SET status='queued',error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at",
+      )
+      .run(id, monitor, repo, number, p.head, p.target, now());
+    return id;
+  }
   async reviewNext() {
     if (this.stopped) return;
     if (
@@ -327,7 +371,7 @@ export class PullRequests {
     )
       return;
     const used = this.store.db
-      .prepare("SELECT count(*) n FROM pr_reviews WHERE started_at>=?")
+      .prepare("SELECT count(*) n FROM pr_review_attempts WHERE started_at>=?")
       .get(new Date(Date.now() - 86400000).toISOString()) as { n: number };
     if (used.n >= this.store.settings().prDailyLimit) return;
     const job = this.store.db
@@ -344,6 +388,9 @@ export class PullRequests {
           "UPDATE pr_reviews SET status='running',started_at=? WHERE id=?",
         )
         .run(now(), job.id);
+      this.store.db
+        .prepare("INSERT INTO pr_review_attempts VALUES (?,?,?)")
+        .run(randomUUID(), job.id, now());
       const credentials = this.credentials(m);
       const detail = await this.get(
         m,
@@ -382,7 +429,11 @@ export class PullRequests {
         throw new AppError(400, "Нет доступного текстового diff для ревью");
       if (this.stopped) throw new AppError(409, "Приложение завершает работу");
       const current = this.monitors().find((x) => x.id === m.id);
-      if (!current?.enabled || current.mode !== m.mode)
+      if (
+        !current?.enabled ||
+        current.mode !== m.mode ||
+        current.repository !== m.repository
+      )
         throw new AppError(409, "Мониторинг изменён во время подготовки ревью");
       this.credentials(m);
       if (this.agent.active()) {
