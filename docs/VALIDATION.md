@@ -329,3 +329,20 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Replaced trash cards with the ticket table styling, configured type/status badges, text search including local developer names, custom multi-select filters (type, state, Azure/local assignee), sortable column headings, visible count and filter reset. Retained snapshot assignees, expiry/removal timestamps and per-row restore; default sort is newest removal first.
 - All 108 Node tests and production build passed (existing Vite bundle-size warning). Mocked-API Chromium verified search, checkbox filtering, header sorting, restore request/removal, no JS errors and mobile document width. No live Azure requests performed.
+
+## PR conflict and CI health
+
+- Synchronization stores mergeStatus and bounded policy evaluations per PR, including Build Validation, required flags and stale-build markers. Policy fetch errors are isolated from normal PR synchronization and displayed as unavailable. Evaluations use the preview API version and up to 500 records; incomplete scans are not presented as passing.
+- Cards display conflict and build-policy CI badges with an expandable list of all enabled policies, timestamp and stale/out-of-scope warnings. Non-policy external statuses are not included. No new model calls or writes to Azure.
+- Added policy classification/rendering regression coverage for failed builds, stale success and unavailable data. TypeScript/whitespace checks passed. Tests/build deferred until push; live Azure policy responses and browser interactions not verified.
+
+## Retry rejected merge after PAT permissions change
+
+- Upstream HTTP errors retain a structured status internally. Explicit 401/403 rejection plus a verified still-active PR becomes a retryable rejected result. Preparing a new confirmation rechecks live PR state and safely releases only a prior permission-denied claim, including legacy persisted unconfirmed results containing the known HTTP 401/403 diagnostic. No automatic PATCH retry; old confirmations remain idempotent.
+- Duplicate claims now persist a reference to the original operation, and result checks follow that reference instead of incorrectly returning prepared. Timeouts, HTTP 5xx, running, successful and partial operations retain their protection.
+- Added regression cases for legacy permission-error recovery and ambiguous-result blocking/reference resolution. TypeScript/whitespace checks passed. Tests deferred until push; no real Azure mutation performed.
+
+## Pre-push validation: PR health and permission-denied retry
+
+- All 111 Node tests and production build passed, including recovery of persisted permission errors, duplicate-operation result resolution, ambiguous merge protection and policy health rendering. Whitespace check passed.
+- Vite retains the existing main-bundle size warning. No live Azure merge or browser interaction performed for this batch.

@@ -3793,3 +3793,20 @@ summary > svg {
     padding: 14px;
   }
 }
+
+.pr-health > summary .pr-review-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0 3px 8px;
+  vertical-align: middle;
+}
+.pr-health-check {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}

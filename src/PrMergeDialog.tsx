@@ -213,13 +213,15 @@ export function PrMergeDialog({
               ? moveTickets && plan?.tickets.length
                 ? "Готово: merge и статусы подтверждены"
                 : "Готово: merge подтверждён"
-              : result.status === "partial"
-                ? "PR смержен, часть статусов не обновлена"
-                : result.status === "prepared"
-                  ? "Запрос не был выполнен. Закройте диалог и откройте заново."
-                  : result.merged
-                    ? "Merge подтверждён, обработка тикетов"
-                    : "Merge пока не подтверждён"}
+              : result.status === "rejected"
+                ? "Merge отклонён: после исправления прав можно повторить"
+                : result.status === "partial"
+                  ? "PR смержен, часть статусов не обновлена"
+                  : result.status === "prepared"
+                    ? "Запрос не был выполнен. Закройте диалог и откройте заново."
+                    : result.merged
+                      ? "Merge подтверждён, обработка тикетов"
+                      : "Merge пока не подтверждён"}
           </h3>
           {result.message && <p>{result.message}</p>}
           {result.tickets?.map((t: any) => (
@@ -228,6 +230,11 @@ export function PrMergeDialog({
               {t.success ? "подтверждено" : t.error || "не подтверждено"}
             </p>
           ))}
+          {result.status === "rejected" && result.retryable && (
+            <button className="secondary" onClick={onClose}>
+              Закрыть диалог
+            </button>
+          )}
           {result.status === "partial" && (
             <p>
               Повторный merge не нужен. Исправьте оставшиеся статусы через

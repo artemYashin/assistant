@@ -30,6 +30,7 @@ function fixture(t: any) {
       "INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at) VALUES ('monitor','repo',1,'Test','Author','https://ado.test','head','target',0,1,'now')",
     )
     .run();
+  let denialStatus = 403;
   let merged = false,
     failMerge = false,
     failTicket = false,
@@ -65,7 +66,7 @@ function fixture(t: any) {
       assert.equal(body.lastMergeSourceCommit.commitId, "head");
       if (failMerge)
         return new Response("{}", {
-          status: 403,
+          status: denialStatus,
           headers: { "Content-Type": "application/json" },
         });
       merged = true;
@@ -92,8 +93,12 @@ function fixture(t: any) {
     store,
     writes,
     key: { monitor: "monitor", repo: "repo", number: 1 },
-    setFailMerge: () => {
+    setFailMerge: (status = 403) => {
       failMerge = true;
+      denialStatus = status;
+    },
+    allowMerge: () => {
+      failMerge = false;
     },
     setFailTicket: () => {
       failTicket = true;
@@ -139,12 +144,12 @@ test("merge rejects stale commits and invalid per-type states without any writes
   await assert.rejects(() => f.service.execute(p.id, selection, "squash"));
   assert.equal(f.writes.length, 0);
 });
-test("unconfirmed merge never transitions tickets or retries the PATCH", async (t) => {
+test("denied merge never transitions tickets or retries the same plan", async (t) => {
   const f = fixture(t),
     p = await f.service.prepare(f.key);
   f.setFailMerge();
   const result = await f.service.execute(p.id, selection, "squash");
-  assert.equal(result.status, "unconfirmed");
+  assert.equal(result.status, "rejected");
   assert.equal(f.writes.length, 1);
   await f.service.execute(p.id, selection, "squash");
   assert.equal(f.writes.length, 1);
@@ -184,5 +189,45 @@ test("merge-only skips work item access and rejects ticket changes in confirmati
   const result = await f.service.execute(p.id, [], "squash");
   assert.equal(result.status, "completed");
   assert.deepEqual(result.tickets, []);
+  assert.equal(f.writes.length, 1);
+});
+
+test("new confirmation can retry permission rejection, including persisted legacy results", async (t) => {
+  const f = fixture(t),
+    p = await f.service.prepare(f.key);
+  f.setFailMerge(401);
+  await f.service.execute(p.id, selection, "squash");
+  // Simulate the legacy result already present on a user's machine.
+  f.store.db
+    .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
+    .run(
+      JSON.stringify({
+        status: "unconfirmed",
+        message: "Merge не подтверждён. HTTP 401. Проверьте PAT.",
+        tickets: [],
+      }),
+      p.id,
+    );
+  f.allowMerge();
+  const next = await f.service.prepare(f.key);
+  assert.notEqual(next.id, p.id);
+  assert.equal(
+    (await f.service.execute(next.id, selection, "squash")).status,
+    "completed",
+  );
+  assert.equal(f.writes.length, 4);
+});
+test("ambiguous merge stays blocked and new dialogs resolve the original result", async (t) => {
+  const f = fixture(t),
+    p = await f.service.prepare(f.key);
+  f.setFailMerge(500);
+  const first = await f.service.execute(p.id, selection, "squash");
+  assert.equal(first.status, "unconfirmed");
+  f.allowMerge();
+  const next = await f.service.prepare(f.key);
+  const result = await f.service.execute(next.id, selection, "squash");
+  assert.equal(result.status, "unconfirmed");
+  assert.equal(result.operationId, p.id);
+  assert.equal(f.service.result(next.id).operationId, p.id);
   assert.equal(f.writes.length, 1);
 });

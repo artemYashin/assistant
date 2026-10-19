@@ -46,6 +46,49 @@ export class PrMerge {
   private path(key: Key) {
     return `git/repositories/${encodeURIComponent(key.repo)}/pullrequests/${key.number}`;
   }
+  private identity(plan: Key & { head: string }) {
+    return JSON.stringify([plan.monitor, plan.repo, plan.number, plan.head]);
+  }
+  private recoverDeniedAttempt(key: Key, pr: any) {
+    // Called only after a fresh GET confirmed this PR is still active.
+    if (pr.autoCompleteSetBy) return;
+    const identity = this.identity({
+      ...key,
+      head: pr.lastMergeSourceCommit.commitId,
+    });
+    this.store.db.transaction(() => {
+      const previous = this.store.db
+        .prepare(
+          "SELECT a.plan,p.result FROM pr_merge_attempts a JOIN pr_merge_plans p ON p.id=a.plan WHERE a.identity=?",
+        )
+        .get(identity) as any;
+      if (!previous?.result) return;
+      const result = JSON.parse(previous.result);
+      const denied = result.status === "rejected" && result.retryable === true;
+      // Compatibility with already persisted permission failures from older versions.
+      const legacyDenied =
+        result.status === "unconfirmed" &&
+        !result.merged &&
+        !result.tickets?.length &&
+        /HTTP (401|403)\./.test(result.message || "");
+      if (!denied && !legacyDenied) return;
+      this.store.db
+        .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
+        .run(
+          JSON.stringify({
+            ...result,
+            status: "rejected",
+            retryable: true,
+            message:
+              "Azure отклонил предыдущий запрос по правам. PR всё ещё активен. После исправления PAT можно открыть новый диалог и подтвердить merge.",
+          }),
+          previous.plan,
+        );
+      this.store.db
+        .prepare("DELETE FROM pr_merge_attempts WHERE identity=? AND plan=?")
+        .run(identity, previous.plan);
+    })();
+  }
   private async request(m: Monitor, path: string, init: RequestInit = {}) {
     const pat = this.store.secret("azure.pat");
     if (!pat) throw new AppError(400, "Настройте Azure PAT");
@@ -101,6 +144,7 @@ export class PrMerge {
   async prepare(key: Key, moveTickets = true) {
     const source = this.store.source();
     const { pr, ids } = await this.snapshot(key, moveTickets);
+    this.recoverDeniedAttempt(key, pr);
     const tickets: Plan["tickets"] = [];
     for (const id of ids) {
       const states = await this.connectors.ticketStates(id);
@@ -131,7 +175,16 @@ export class PrMerge {
       .prepare("SELECT result FROM pr_merge_plans WHERE id=?")
       .get(id) as any;
     if (!row) throw new AppError(404, "Операция не найдена");
-    return row.result ? JSON.parse(row.result) : { status: "prepared" };
+    const result = row.result ? JSON.parse(row.result) : { status: "prepared" };
+    if (result.status === "blocked" && result.operationId) {
+      const previous = this.store.db
+        .prepare("SELECT result FROM pr_merge_plans WHERE id=?")
+        .get(result.operationId) as any;
+      return previous?.result
+        ? { ...JSON.parse(previous.result), operationId: result.operationId }
+        : result;
+    }
+    return result;
   }
   async execute(
     id: string,
@@ -142,7 +195,7 @@ export class PrMerge {
       .prepare("SELECT * FROM pr_merge_plans WHERE id=?")
       .get(id) as any;
     if (!row) throw new AppError(404, "Подтверждение не найдено");
-    if (row.result) return JSON.parse(row.result);
+    if (row.result) return this.result(id);
     const plan: Plan = JSON.parse(row.body);
     if (Date.now() - plan.created > 15 * 60_000)
       throw new AppError(409, "Диалог устарел. Откройте его заново.");
@@ -178,22 +231,29 @@ export class PrMerge {
         throw new AppError(400, `Недоступный статус для #${s.id}`);
     }
     guard();
-    const identity = JSON.stringify([
-      plan.monitor,
-      plan.repo,
-      plan.number,
-      plan.head,
-    ]);
+    const identity = this.identity(plan);
     const claimed = this.store.db
       .prepare(
         "INSERT OR IGNORE INTO pr_merge_attempts(identity,plan) VALUES (?,?)",
       )
       .run(identity, id);
-    if (!claimed.changes)
-      throw new AppError(
-        409,
-        "Merge этой версии уже запрашивался. Проверьте результат в Azure; повторная отправка заблокирована.",
-      );
+    if (!claimed.changes) {
+      const previous = this.store.db
+        .prepare("SELECT plan FROM pr_merge_attempts WHERE identity=?")
+        .get(identity) as any;
+      this.store.db
+        .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
+        .run(
+          JSON.stringify({
+            status: "blocked",
+            operationId: previous.plan,
+            message:
+              "Эта версия уже отправлена на merge. Показан результат исходной операции.",
+          }),
+          id,
+        );
+      return this.result(id);
+    }
     const save = (result: any) => {
       this.store.db
         .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
@@ -206,6 +266,7 @@ export class PrMerge {
         "Операция начата. При перезапуске сервера проверьте результат в Azure; автоматического повтора нет.",
     });
     let writeError = "";
+    let denied = false;
     try {
       await this.request(m, this.path(plan), {
         method: "PATCH",
@@ -221,16 +282,22 @@ export class PrMerge {
         }),
       });
     } catch (e) {
+      denied = [401, 403].includes((e as any)?.upstreamStatus);
       writeError =
         e instanceof AppError
           ? e.message
           : "Не получено подтверждение запроса merge";
     }
     let confirmed = false;
+    let stillActive = false;
     try {
       for (let attempt = 0; attempt < 5; attempt++) {
         guard();
         const current = await this.request(m, this.path(plan));
+        stillActive =
+          current.status === "active" &&
+          current.lastMergeSourceCommit?.commitId === plan.head &&
+          !current.autoCompleteSetBy;
         if (
           current.status === "completed" &&
           current.lastMergeSourceCommit?.commitId === plan.head
@@ -251,6 +318,14 @@ export class PrMerge {
       }
     } catch {
       /* Ambiguous merge: never transition tickets without confirmation. */
+    }
+    if (!confirmed && denied && stillActive) {
+      return save({
+        status: "rejected",
+        retryable: true,
+        message: `Azure отклонил merge по правам. Статусы тикетов не менялись. Исправьте PAT, затем откройте новый диалог и подтвердите операцию. ${writeError}`,
+        tickets: [],
+      });
     }
     if (!confirmed)
       return save({

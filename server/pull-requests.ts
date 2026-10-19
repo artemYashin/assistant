@@ -1,3 +1,4 @@
+import { policyChecks } from "./pr-health.js";
 import {
   ReviewQuestions,
   type ReviewActions,
@@ -346,6 +347,41 @@ export class PullRequests {
             p.description = detail.description || "";
           }
         }
+        // Health failures must not discard an otherwise successful PR scan.
+        for (const p of found) {
+          const health: any = {
+            merge: p.mergeStatus || "notSet",
+            checks: [],
+            checkedAt: now(),
+            error: "",
+          };
+          try {
+            const projectId = p.repository?.project?.id;
+            if (!projectId) throw new Error("Project ID missing");
+            const artifact = `vstfs:///CodeReview/CodeReviewId/${projectId}/${p.pullRequestId}`;
+            const evaluations = [];
+            for (let skip = 0; ; skip += 100) {
+              if (skip >= 500) throw new Error("Too many policy evaluations");
+              const page = await this.get(
+                m,
+                `policy/evaluations?artifactId=${enc(artifact)}&$top=100&$skip=${skip}`,
+                {
+                  ...credentials,
+                  version: `${credentials.version.split("-")[0]}-preview.1`,
+                },
+              );
+              if (!Array.isArray(page.value))
+                throw new Error("Invalid policy response");
+              evaluations.push(...page.value);
+              if (page.value.length < 100) break;
+            }
+            health.checks = policyChecks(evaluations);
+          } catch {
+            health.error =
+              "Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.";
+          }
+          p.health = JSON.stringify(health);
+        }
         const currentMonitor = this.monitors().find((x) => x.id === m.id);
         if (
           !currentMonitor?.enabled ||
@@ -388,6 +424,11 @@ export class PullRequests {
                 typeof p.sourceRefName === "string" ? p.sourceRefName : "",
                 typeof p.targetRefName === "string" ? p.targetRefName : "",
               );
+            this.store.db
+              .prepare(
+                "UPDATE pull_requests SET health=? WHERE monitor=? AND repo=? AND number=?",
+              )
+              .run(p.health || "", m.id, repo, p.pullRequestId);
           }
           this.store.db
             .prepare("UPDATE pr_projects SET error=NULL,synced_at=? WHERE id=?")

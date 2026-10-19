@@ -167,6 +167,7 @@ export class Store {
       "created_at",
       "source_branch",
       "target_branch",
+      "health",
     ]) {
       if (
         !(

@@ -103,9 +103,9 @@ export async function requestJson(
         code: code && /^[A-Z_0-9]{1,60}$/.test(code) ? code : undefined,
       }),
     );
-    throw new AppError(
-      502,
-      `${service}: ${message} Код диагностики: ${reference}`,
+    throw Object.assign(
+      new AppError(502, `${service}: ${message} Код диагностики: ${reference}`),
+      { upstreamStatus: kind === "http" ? response?.status : undefined },
     );
   };
   let response: Response;

@@ -1,3 +1,4 @@
+import { PrHealth } from "./PrHealth.js";
 import { PrDiffDialog } from "./PrDiffDialog.js";
 import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
@@ -532,6 +533,7 @@ export function PullRequestsPage({ context, settings }: any) {
                 #{p.number} · {p.title}
               </a>
             </h2>
+            <PrHealth value={p.health} inScope={!!p.in_scope} />
             <div className="pr-branches" aria-label="Ветки pull request">
               <BranchLabel kind="source" value={p.source_branch} />
               <span aria-hidden="true">→</span>
