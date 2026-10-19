@@ -1,3 +1,8 @@
+import {
+  descriptionImages,
+  azureImageUrl,
+  readAzureImage,
+} from "./pr-images.js";
 import { Connectors } from "./connectors.js";
 import { IntegrationsAuth } from "./auth.js";
 import { randomUUID } from "node:crypto";
@@ -127,6 +132,19 @@ export class PullRequests {
         });
         return {
           ...row,
+          images: descriptionImages(row.description).map((source) => ({
+            source,
+            preview: azureImageUrl(
+              source,
+              m.source,
+              row.url,
+              row.repo,
+              row.number,
+              this.store.settings().azureVersion,
+            )
+              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
+              : null,
+          })),
           tickets: prTicketIds(row.description).map((id) => {
             const ticket = this.store.db
               .prepare(
@@ -142,6 +160,31 @@ export class PullRequests {
           }),
         };
       });
+  }
+  async image(monitor: string, repo: string, number: number, source: string) {
+    const m = this.monitors().find((m) => m.id === monitor);
+    const row = this.store.db
+      .prepare(
+        "SELECT description,url FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+      )
+      .get(monitor, repo, number) as any;
+    if (!m || !row || !descriptionImages(row.description).includes(source))
+      throw new AppError(404, "Изображение не найдено в описании PR");
+    const credentials = this.credentials(m);
+    const url = azureImageUrl(
+      source,
+      m.source,
+      row.url,
+      repo,
+      number,
+      credentials.version,
+    );
+    if (!url)
+      throw new AppError(400, "Это не вложение Azure текущего подключения");
+    const result = await readAzureImage(url, credentials.pat);
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    return result;
   }
   private credentials(m: Monitor) {
     if (this.store.settings().azureProject !== m.azure_project)

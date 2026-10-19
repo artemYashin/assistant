@@ -855,12 +855,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "tickets" && (
               <Tickets
                 settings={settings}
-                tickets={filtered(tickets, [
-                  "id",
-                  "title",
-                  "state",
-                  "assigned",
-                ])}
+                key={`${settings?.azureUrl}|${settings?.azureProject}`}
+                tickets={tickets}
                 query={query}
                 setQuery={setQuery}
                 run={run}
@@ -1052,7 +1048,45 @@ function PageHeading({
 function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
   const [id, setId] = useState("");
   const [sort, setSort] = useState("id-desc");
-  const sorted = [...tickets].sort((a, b) => {
+  const [typeFilter, setTypeFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const values = (key: string) =>
+    [...new Set<string>(tickets.map((t: any) => t[key] || ""))].sort((a, b) =>
+      a.localeCompare(b, "ru"),
+    );
+  const localDevelopers = [
+    ...new Map<string, string>(
+      tickets
+        .filter((t: any) => t.developer_id)
+        .map((t: any) => [t.developer_id, t.developer_name || t.developer_id]),
+    ).entries(),
+  ].sort((a, b) => a[1].localeCompare(b[1], "ru"));
+  const filteredTickets = tickets.filter((t: any) => {
+    const matchesQuery = [
+      "id",
+      "title",
+      "type",
+      "state",
+      "assigned",
+      "developer_name",
+    ].some((key) =>
+      String(t[key] || "")
+        .toLocaleLowerCase()
+        .includes(query.trim().toLocaleLowerCase()),
+    );
+    const person = assigneeFilter ? JSON.parse(assigneeFilter) : null;
+    return (
+      matchesQuery &&
+      (!typeFilter || (t.type || "") === JSON.parse(typeFilter)) &&
+      (!stateFilter || (t.state || "") === JSON.parse(stateFilter)) &&
+      (!person ||
+        (person[0] === "azure"
+          ? (t.assigned || "") === person[1]
+          : t.developer_id === person[1]))
+    );
+  });
+  const sorted = [...filteredTickets].sort((a, b) => {
     const [key, direction] = sort.split("-");
     const cmp =
       key === "id"
@@ -1116,9 +1150,86 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           Добавить по номеру
         </button>
       </form>
+      <div className="ticket-filters">
+        <label>
+          Тип задачи
+          <select
+            aria-label="Тип задачи"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="">Все типы</option>
+            {values("type").map((type) => (
+              <option key={type} value={JSON.stringify(type)}>
+                {type || "Тип не указан"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Исполнитель
+          <select
+            aria-label="Исполнитель"
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
+          >
+            <option value="">Все исполнители</option>
+            <optgroup label="Назначен в Azure">
+              {values("assigned").map((name) => (
+                <option key={name} value={JSON.stringify(["azure", name])}>
+                  {name || "Не назначен в Azure"}
+                </option>
+              ))}
+            </optgroup>
+            {!!localDevelopers.length && (
+              <optgroup label="Локальное поручение">
+                {localDevelopers.map(([id, name]) => (
+                  <option key={id} value={JSON.stringify(["local", id])}>
+                    {name} (локально)
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </label>
+        <label>
+          Статус
+          <select
+            aria-label="Статус"
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+          >
+            <option value="">Все статусы</option>
+            {values("state").map((state) => (
+              <option key={state} value={JSON.stringify(state)}>
+                {state || "Статус не указан"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="secondary"
+          disabled={!typeFilter && !stateFilter && !assigneeFilter && !query}
+          onClick={() => {
+            setTypeFilter("");
+            setStateFilter("");
+            setAssigneeFilter("");
+            setQuery("");
+          }}
+        >
+          Сбросить фильтры
+        </button>
+      </div>
+      <p className="muted" role="status">
+        Показано {sorted.length} из {tickets.length}
+      </p>
       <label className="ticket-sort">
         Сортировка{" "}
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+        <select
+          aria-label="Сортировка"
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+        >
           <option value="id-desc">ID: сначала новые</option>
           <option value="id-asc">ID: по возрастанию</option>
           <option value="title-asc">Название: А–Я</option>
@@ -1131,12 +1242,13 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
         вернуть кнопкой «Добавить по номеру».
       </p>
-      {tickets.length ? (
+      {sorted.length ? (
         <div className="table-wrap panel">
           <table>
             <thead>
               <tr>
                 <th>Тикет</th>
+                <th>Тип задачи</th>
                 <th>Статус</th>
                 <th>Исполнитель</th>
                 <th>Синхронизация</th>
@@ -1167,8 +1279,10 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                       <ArrowUpRight size={13} />
                     </a>
                     <b>{t.title}</b>
+                  </td>
+                  <td>
                     <StatusBadge
-                      state={t.type}
+                      state={t.type || "Тип не указан"}
                       colors={settings?.typeColors}
                       kind="type"
                     />
@@ -1196,8 +1310,12 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
       ) : (
         <Empty
           icon={Ticket}
-          title={query ? "Ничего не найдено" : "Трекер пока пуст"}
-          description="Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
+          title={tickets.length ? "Ничего не найдено" : "Трекер пока пуст"}
+          description={
+            tickets.length
+              ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить фильтры»."
+              : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
+          }
         />
       )}
     </>

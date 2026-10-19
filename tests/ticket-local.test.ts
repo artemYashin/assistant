@@ -35,6 +35,7 @@ test("local assignment and removal never write Azure and survive import", async 
     Cookie: setup.headers["set-cookie"][0].split(";")[0],
     "X-CSRF-Token": setup.body.csrf,
   };
+  await request(app).get("/api/pr/image").set(headers).expect(401);
   const calls: string[] = [];
   const item = {
     id: 42,

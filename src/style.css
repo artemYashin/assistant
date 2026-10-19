@@ -1987,6 +1987,10 @@ summary {
 .ticket-detail {
   margin-top: 16px;
   padding: 16px;
+  background: #fff;
+  box-shadow:
+    0 2px 6px #233a2008,
+    0 8px 24px #233a2010;
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow-wrap: anywhere;
@@ -2650,4 +2654,50 @@ td > small {
   border-radius: 8px;
   padding: 12px;
   overflow-wrap: anywhere;
+}
+
+.pr-image-link {
+  display: inline-block;
+  max-width: 100%;
+  margin-block: 10px;
+}
+.pr-image-link img {
+  display: block;
+  max-width: 100%;
+  max-height: 520px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pr-image-error {
+  display: inline-block;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.ticket-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin: 18px 0 10px;
+}
+.ticket-filters label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 160px;
+  min-width: 0;
+  font-size: 12px;
+}
+.ticket-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.ticket-type-label {
+  color: var(--muted);
+  font-size: 12px;
 }

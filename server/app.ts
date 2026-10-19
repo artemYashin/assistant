@@ -567,6 +567,27 @@ export function createApp(
       id: pullRequests.requestReview(input.monitor, input.repo, input.number),
     });
   });
+  app.get("/api/pr/image", async (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.coerce.number().int().positive(),
+        source: z.string().min(1).max(8192),
+      })
+      .parse(req.query);
+    const image = await pullRequests.image(
+      input.monitor,
+      input.repo,
+      input.number,
+      input.source,
+    );
+    res
+      .set("Content-Type", image.type)
+      .set("Content-Disposition", "inline")
+      .set("X-Content-Type-Options", "nosniff")
+      .send(image.body);
+  });
   app.get("/api/pr/reviews", (req, res) => {
     const input = z
       .object({

@@ -27,3 +27,16 @@ test("chat ignores raw HTML, blocks executable links and does not auto-fetch ima
   assert.match(html, /href="https:\/\/example.com"/);
   assert.match(html, /noopener noreferrer/);
 });
+
+test("PR images use the local preview route, including relative Markdown images", () => {
+  const html = renderToStaticMarkup(
+    createElement(ChatMarkdown, {
+      text: "![Screenshot](/org/image.png)",
+      images: [{ source: "/org/image.png", preview: "/api/pr/image?number=1" }],
+    }),
+  );
+  assert.match(html, /<img/);
+  assert.match(html, /src="\/api\/pr\/image\?number=1"/);
+  assert.match(html, /loading="lazy"/);
+  assert.doesNotMatch(html, /src="\/org\/image.png"/);
+});

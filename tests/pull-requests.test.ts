@@ -457,3 +457,37 @@ test("PR ticket import only reads Azure and writes the local tracker", async (t)
     "Import must not invoke the agent or its mutation tools",
   );
 });
+
+test("image proxy requires a saved description reference and current connection", async (t) => {
+  const { service, store } = fixture(t);
+  const url =
+    "https://ado.test/tfs/Collection/Project%20One/_apis/wit/attachments/12345678-1234-1234-1234-123456789abc";
+  mock(t, [{ ...pr(), description: `![Screenshot](${url})` }]);
+  await service.sync();
+  const row: any = service.list(context)[0];
+  assert.ok(row.images[0].preview.startsWith("/api/pr/image?"));
+  let reads = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    reads++;
+    return new Response(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  });
+  await assert.rejects(
+    service.image(row.monitor, row.repo, row.number, "https://evil.test/x"),
+    /не найдено/,
+  );
+  assert.equal(reads, 0);
+  assert.equal(
+    (await service.image(row.monitor, row.repo, row.number, url)).type,
+    "image/png",
+  );
+  assert.equal(reads, 1);
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://different.test/org",
+  });
+  await assert.rejects(
+    service.image(row.monitor, row.repo, row.number, url),
+    /URL Azure изменён/,
+  );
+  assert.equal(reads, 1);
+});

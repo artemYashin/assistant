@@ -82,3 +82,20 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Inspected the PR sync → importPrTickets → saveTicket path: only Azure reads and local SQLite persistence.
 - Added a regression test recording every outbound request across two syncs. The only non-GET request is the documented read-only POST /wit/workitemsbatch with IDs/errorPolicy; no mutation endpoints or agent calls occur. The original Active state is retained locally, and an existing ticket is not imported twice.
 - `npm test`: 66 passed. Azure API semantics verified against Microsoft Get Work Items Batch documentation; no live Azure writes performed.
+
+### Inline PR description images (2026-10-19)
+
+- Authenticated same-origin image route only accepts Markdown image references present in the saved PR description and recognized attachment download endpoints on the configured Azure collection. Current connection is checked before/after fetch. PAT remains on server; only GET is used, redirects rejected, binary signatures checked, body limited to 20 MB.
+- Tests cover inline/reference Markdown images, relative paths, foreign hosts/collections, wrong PR/repository, unsupported endpoints, credential URLs, executable schemes, HTML/SVG response rejection, oversize payloads, stored-reference requirement, connection changes, and unauthenticated route access.
+- Build passed; 72 tests passed. Playwright with mocked APIs confirmed zero image requests while collapsed, inline rendering after expansion, error fallback, size constraint and mobile overflow. Live corporate Azure attachments were not available for verification.
+
+### Repository settings location (2026-10-19)
+
+- Removed the duplicate Git repository form from the PR page. It remains in the customer/project manager opened from the top context selector; the empty-state hint points there.
+- Build passed. Playwright verified the form is absent on the PR page and appears once after opening «Заказчики и проекты».
+
+### Ticket filters and visible work item types (2026-10-19)
+
+- Added combined type, assignee and state filters with reset/count. Assignee choices distinguish Azure assignment from local developer delegation. Search also matches type and local developer; options use the entire loaded ticket list so filtering does not hide other choices.
+- Added a dedicated type column with configured badge color and an explicit type label in the full card; expanded table detail spans all six columns.
+- Playwright with mocked tickets verified combined filters, zero results/reset, Azure/local/unassigned selection, search, sorting, detail expansion and mobile overflow. Desktop screenshot inspected. Build passed.

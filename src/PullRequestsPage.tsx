@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import { StatusBadge } from "./TicketControls.js";
-import { ProjectRepository } from "./ProjectRepository.js";
 const statuses: Record<string, string> = {
   queued: "В очереди по вашему запросу",
   running: "Ревью выполняется",
@@ -12,6 +11,23 @@ const statuses: Record<string, string> = {
   outdated: "Версия устарела",
   cancelled: "Отменено",
 };
+function PrDescription({ pr }: any) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className="pr-content-section"
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
+      <summary>Описание pull request</summary>
+      {open &&
+        (pr.description ? (
+          <ChatMarkdown text={pr.description} images={pr.images} />
+        ) : (
+          <p className="muted">Описание не указано.</p>
+        ))}
+    </details>
+  );
+}
 function ReviewHistory({ pr }: any) {
   const [items, setItems] = useState<any[]>([]),
     [open, setOpen] = useState(false),
@@ -118,12 +134,6 @@ export function PullRequestsPage({ context, settings }: any) {
           {error}
         </p>
       )}
-      <div className="panel">
-        <ProjectRepository
-          context={context}
-          onSaved={() => setVersion((v) => v + 1)}
-        />
-      </div>
       {monitors
         .filter(
           (m) => m.client === context.client && m.project === context.project,
@@ -142,7 +152,8 @@ export function PullRequestsPage({ context, settings }: any) {
       </p>
       {!prs.length && (
         <div className="empty">
-          PR пока нет. Настройте репозиторий и запустите синхронизацию.
+          PR пока нет. Укажите Git-репозиторий через «Заказчики и проекты»
+          сверху и запустите синхронизацию.
         </div>
       )}
       <div className="card-list">
@@ -193,14 +204,7 @@ export function PullRequestsPage({ context, settings }: any) {
                 </span>
               )}
             </div>
-            <details className="pr-content-section">
-              <summary>Описание pull request</summary>
-              {p.description ? (
-                <ChatMarkdown text={p.description} />
-              ) : (
-                <p className="muted">Описание не указано.</p>
-              )}
-            </details>
+            <PrDescription pr={p} />
             <details className="pr-content-section">
               <summary>Тикеты из описания · {p.tickets?.length || 0}</summary>
               <p className="muted">

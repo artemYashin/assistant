@@ -65,6 +65,7 @@ export function TicketCard({ reference }: { reference: string }) {
       </header>
       <div className="ticket-card-body">
         <div className="ticket-badges">
+          <span className="ticket-type-label">Тип задачи</span>
           <StatusBadge
             state={f["System.WorkItemType"] || "Тип не указан"}
             colors={typeColors}
@@ -302,7 +303,7 @@ export function TicketTableRow({
         </td>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">
-        <td colSpan={5}>
+        <td colSpan={6}>
           {open && (
             <section aria-label={`Карточка тикета #${id}`}>
               {error ? (
