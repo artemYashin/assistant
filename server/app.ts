@@ -20,6 +20,7 @@ import { IntegrationsAuth } from "./auth.js";
 import { Connectors } from "./connectors.js";
 import { Agent } from "./agent.js";
 import { azureBase } from "./http.js";
+import { UsageLedger } from "./usage.js";
 
 const text = z.string().trim().max(200);
 const contextSchema = z.object({
@@ -36,6 +37,9 @@ const settingsSchema = z
     azureProject: text,
     azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
     syncSeconds: z.number().int().min(60).max(3600),
+    llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
+    llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
+    llmMaxToolCalls: z.number().int().min(1).max(100).default(20),
     instructions: z.string().max(12000),
     client: text,
     project: text,
@@ -295,6 +299,17 @@ export function createApp(
   app.get("/api/conversation", (req, res) =>
     res.json(store.history(contextSchema.parse(req.query))),
   );
+  app.get("/api/usage", (req, res) => {
+    const days = z.coerce
+      .number()
+      .refine((value) => [0, 1, 7, 30].includes(value))
+      .parse(req.query.days ?? 0);
+    res.json({
+      ...new UsageLedger(store).report(days),
+      activeRequestId: agent.active(),
+    });
+  });
+  app.post("/api/conversation/stop", (_req, res) => res.json(agent.stop()));
   app.post(
     "/api/conversation",
     rateLimit({

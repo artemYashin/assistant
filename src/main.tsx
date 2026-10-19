@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
   ArrowUp,
+  Activity,
   AudioLines,
   Bell,
   BookOpen,
@@ -39,6 +40,7 @@ import {
 } from "lucide-react";
 import { api, setCsrf } from "./api.js";
 import "./style.css";
+import { Usage } from "./Usage.js";
 
 type Context = { client: string; project: string };
 type Page =
@@ -48,7 +50,8 @@ type Page =
   | "approvals"
   | "memory"
   | "teams"
-  | "settings";
+  | "settings"
+  | "usage";
 const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
@@ -56,6 +59,7 @@ const navigation = [
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
   { id: "teams", label: "Сообщения Teams", icon: MessageSquare },
+  { id: "usage", label: "Использование LLM", icon: Activity },
 ] as const;
 const date = (s?: string) =>
   s
@@ -974,6 +978,9 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               />
             )}
             {page === "teams" && <Teams chats={chats} run={run} busy={busy} />}
+            {page === "usage" && (
+              <Usage onSettings={() => setPage("settings")} />
+            )}
             {page === "settings" && settings && (
               <Settings
                 settings={settings}
@@ -1661,6 +1668,46 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("instructions", e.target.value)}
             />
           </Field>
+          <div className="form-grid">
+            <Field
+              label="Лимит времени ответа, секунд"
+              hint="От 15 до 600 секунд. При превышении приложение отменяет запрос и завершает runtime."
+            >
+              <input
+                type="number"
+                min="15"
+                max="600"
+                value={form.llmTimeoutSeconds}
+                onChange={(e) =>
+                  set("llmTimeoutSeconds", Number(e.target.value))
+                }
+              />
+            </Field>
+            <Field
+              label="Максимум вызовов инструментов на запрос"
+              hint="Прерывает повторяющиеся циклы чтения данных или создания черновиков."
+            >
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={form.llmMaxToolCalls}
+                onChange={(e) => set("llmMaxToolCalls", Number(e.target.value))}
+              />
+            </Field>
+          </div>
+          <Field
+            label="Порог входных + выходных токенов на запрос"
+            hint="От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит."
+          >
+            <input
+              type="number"
+              min="1000"
+              max="1000000"
+              value={form.llmMaxTokens}
+              onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
+            />
+          </Field>
           <Field
             label="Обновлять Teams и тикеты каждые, минут"
             hint="По умолчанию — 5 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
@@ -1952,6 +1999,19 @@ function Assistant({
           <ShieldCheck size={16} />
           {pending} сообщ. ждут подтверждения
           <ChevronRight size={15} />
+        </button>
+      )}
+      {working && (
+        <button
+          className="pending-bar"
+          onClick={() =>
+            api("/conversation/stop", "POST", {}).catch((e) =>
+              setError(e.message),
+            )
+          }
+        >
+          <Square size={15} />
+          Остановить ответ
         </button>
       )}
       <div className="composer-wrap">

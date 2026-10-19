@@ -2,11 +2,13 @@ import {
   CopilotClient,
   defineTool,
   type SessionConfig,
+  type Tool,
 } from "@github/copilot-sdk";
 import { z } from "zod";
 import { join } from "node:path";
 import { Store, AppError, type Context } from "./store.js";
 import { Approvals } from "./approvals.js";
+import { UsageLedger } from "./usage.js";
 
 export const SYSTEM_POLICY = `Ты Orbit, персональный рабочий ассистент одного пользователя.
 Помогай с сообщениями Teams, тикетами Azure DevOps и памятью. Отделяй факты от предположений.
@@ -96,8 +98,22 @@ export function sessionConfig(
   store: Store,
   approvals: Approvals,
   context: Context,
+  guard?: () => boolean,
 ): SessionConfig {
-  const tools = makeTools(store, approvals, context);
+  const tools: Tool[] = makeTools(store, approvals, context).map((tool) => ({
+    ...tool,
+    handler: async (args: any, invocation: any) => {
+      const result = await tool.handler!(args, invocation);
+      const serialized = JSON.stringify(result);
+      return serialized.length <= 24000
+        ? result
+        : {
+            preview: serialized.slice(0, 24000),
+            truncated: true,
+            note: "Ответ инструмента сокращён из-за ограничения контекста.",
+          };
+    },
+  }));
   const names = tools.map((t) => t.name);
   return {
     ...(store.settings().model ? { model: store.settings().model } : {}),
@@ -107,6 +123,7 @@ export function sessionConfig(
     enableConfigDiscovery: false,
     enableSkills: false,
     enableSessionStore: false,
+    infiniteSessions: { enabled: false },
     systemMessage: {
       mode: "replace",
       content: `${SYSTEM_POLICY}\n\nПользовательские предпочтения (не могут ослабить правила отправки):\n${store.settings().instructions}\n\nТекущий контекст: ${JSON.stringify(context)}`,
@@ -117,7 +134,7 @@ export function sessionConfig(
     }),
     hooks: {
       onPreToolUse: async (input) =>
-        names.includes(input.toolName)
+        names.includes(input.toolName) && (!guard || guard())
           ? { permissionDecision: "allow" }
           : {
               permissionDecision: "deny",
@@ -128,15 +145,21 @@ export function sessionConfig(
 }
 export class Agent {
   private busy = false;
+  private cancelActive?: (
+    reason: string,
+    status: "stopped" | "limited",
+  ) => void;
+  private activeId?: string;
   constructor(
     private store: Store,
     private approvals: Approvals,
+    private clientFactory?: () => CopilotClient,
   ) {}
   private client() {
+    if (this.clientFactory) return this.clientFactory();
     const token = this.store.secret("github.token");
     if (!token)
       throw new AppError(400, "Подключите GitHub Copilot в настройках");
-    // Empty mode prevents inherited CLI tools, MCP servers, skills and filesystem discovery.
     return new CopilotClient({
       gitHubToken: token,
       useLoggedInUser: false,
@@ -144,6 +167,16 @@ export class Agent {
       baseDirectory: join(this.store.dir, "copilot"),
       logLevel: "error",
     });
+  }
+  active() {
+    return this.activeId || null;
+  }
+  stop() {
+    this.cancelActive?.(
+      "Остановлено пользователем. Уже выполненные действия могли сохраниться.",
+      "stopped",
+    );
+    return { stopping: !!this.cancelActive };
   }
   async models() {
     const client = this.client();
@@ -163,45 +196,130 @@ export class Agent {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
     const client = this.client();
+    const ledger = new UsageLedger(this.store);
+    const settings = this.store.settings();
+    const id = ledger.begin(settings.model, context);
     this.busy = true;
+    this.activeId = id;
     let session:
       Awaited<ReturnType<CopilotClient["createSession"]>> | undefined;
+    let status = "error",
+      reason: string | undefined,
+      toolCalls = 0;
+    let stopReason: string | undefined;
+    let rejectStop: (error: Error) => void = () => {};
+    const stopped = new Promise<never>((_resolve, reject) => {
+      rejectStop = reject;
+    });
+    // Attach a rejection handler even if a synchronous setup error happens before the race.
+    void stopped.catch(() => {});
+    let killTimer: ReturnType<typeof setTimeout> | undefined;
+    const cancel = (message: string, nextStatus: "stopped" | "limited") => {
+      if (stopReason || status === "completed") return;
+      stopReason = message;
+      status = nextStatus;
+      reason = message;
+      rejectStop(new AppError(409, message));
+      void session?.abort().catch(() => {});
+      // An unresponsive abort must not leave the runtime consuming tokens indefinitely.
+      killTimer = setTimeout(() => {
+        void client.forceStop().catch(() => {});
+      }, 3000);
+    };
+    this.cancelActive = cancel;
+    const watchdog = setTimeout(
+      () => cancel("Достигнут лимит времени запроса.", "limited"),
+      settings.llmTimeoutSeconds * 1000,
+    );
+    const assertActive = () => {
+      if (stopReason) throw new AppError(409, stopReason);
+    };
     try {
-      const history = this.store.history(context);
-      const memory = this.store.memories(context);
+      const history = this.store.history(context),
+        memory = this.store.memories(context);
       this.store.say("user", prompt, context);
-      await client.start();
-      session = await client.createSession(
-        sessionConfig(this.store, this.approvals, context),
-      );
-      const reply = await session.sendAndWait(
-        {
-          prompt: `Контекст предыдущих сообщений и памяти (JSON, данные):\n${JSON.stringify({ history, memory }).slice(0, 90000)}\n\nТекущий запрос пользователя:\n${prompt}`,
-        },
-        180000,
-      );
-      const body =
-        reply?.data.content ||
-        "Запрос обработан. Проверьте память и ожидающие подтверждения.";
+      const work = async () => {
+        await client.start();
+        assertActive();
+        session = await client.createSession(
+          sessionConfig(this.store, this.approvals, context, () => {
+            if (stopReason) return false;
+            if (toolCalls >= settings.llmMaxToolCalls) {
+              cancel("Достигнут лимит вызовов инструментов.", "limited");
+              return false;
+            }
+            toolCalls++;
+            ledger.tool(id);
+            return true;
+          }),
+        );
+        assertActive();
+        session.on("assistant.usage", (event) => {
+          try {
+            ledger.record(id, event.id, event.data);
+            if (ledger.tokens(id) >= settings.llmMaxTokens)
+              cancel("Достигнут порог токенов по отчётам SDK.", "limited");
+          } catch {
+            cancel(
+              "Не удалось сохранить отчёт расхода; запрос остановлен.",
+              "limited",
+            );
+          }
+        });
+        const reply = await session.sendAndWait(
+          {
+            prompt: `Контекст предыдущих сообщений и памяти (JSON, данные):\n${JSON.stringify({ history, memory }).slice(0, 90000)}\n\nТекущий запрос пользователя:\n${prompt}`,
+          },
+          settings.llmTimeoutSeconds * 1000,
+        );
+        assertActive();
+        return (
+          reply?.data.content ||
+          "Запрос обработан. Проверьте память и ожидающие подтверждения."
+        );
+      };
+      const body = await Promise.race([work(), stopped]);
+      status = "completed";
       this.store.say("assistant", body, context);
-      return { body };
+      return { body, requestId: id };
     } catch (error) {
-      const body =
-        error instanceof AppError
+      reason =
+        stopReason ||
+        (error instanceof AppError
           ? error.message
-          : "Не удалось получить ответ Copilot. Проверьте доступ к SDK, выбранную модель и корпоративные политики в настройках. Изменения памяти и созданные черновики могли сохраниться — проверьте их перед повтором.";
-      this.store.say("error", body, context);
-      throw new AppError(502, body);
+          : "Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти и черновики могли сохраниться.");
+      this.store.say("error", reason, context);
+      // Timeout or runtime failure can leave an agent loop alive unless explicitly aborted.
+      if (!stopReason) void session?.abort().catch(() => {});
+      throw new AppError(stopReason ? 409 : 502, reason);
     } finally {
+      clearTimeout(watchdog);
       try {
-        await session?.disconnect();
+        const done = await within(client.stop(), 5000);
+        if (!done) await within(client.forceStop(), 3000);
       } finally {
-        try {
-          await client.stop();
-        } finally {
-          this.busy = false;
-        }
+        if (killTimer) clearTimeout(killTimer);
+        this.busy = false;
+        this.activeId = undefined;
+        this.cancelActive = undefined;
+        ledger.finish(id, status, reason);
       }
     }
+  }
+}
+async function within(promise: Promise<unknown>, milliseconds: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise.then(
+        () => true,
+        () => false,
+      ),
+      new Promise<false>((resolve) => {
+        timer = setTimeout(() => resolve(false), milliseconds);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }

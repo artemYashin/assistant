@@ -43,6 +43,9 @@ export const defaults = {
   azureProject: "",
   azureVersion: "7.1",
   syncSeconds: 300,
+  llmTimeoutSeconds: 180,
+  llmMaxTokens: 100000,
+  llmMaxToolCalls: 20,
   instructions:
     "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. Сохраняй факты в память, когда я явно прошу.",
   client: "",
@@ -75,6 +78,9 @@ export class Store {
       CREATE TABLE IF NOT EXISTS suggestions (id TEXT PRIMARY KEY, source TEXT NOT NULL, ticket_id INTEGER NOT NULL, chat_id TEXT NOT NULL, message_id TEXT NOT NULL, excerpt TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', created_at TEXT NOT NULL, UNIQUE(source,ticket_id,chat_id,message_id));
       CREATE TABLE IF NOT EXISTS approvals (id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, chat_name TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL, expires_at TEXT NOT NULL, remote_id TEXT, error TEXT);
       CREATE TABLE IF NOT EXISTS audit (id TEXT PRIMARY KEY, action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS llm_requests (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, finished_at TEXT, model TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, status TEXT NOT NULL, reason TEXT, tool_calls INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS llm_usage (request_id TEXT NOT NULL REFERENCES llm_requests(id), receipt_id TEXT NOT NULL, model TEXT NOT NULL, input_tokens INTEGER, output_tokens INTEGER, cache_read_tokens INTEGER, cache_write_tokens INTEGER, PRIMARY KEY(request_id,receipt_id));
+      CREATE INDEX IF NOT EXISTS llm_request_time ON llm_requests(created_at);
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
@@ -84,6 +90,11 @@ export class Store {
         "UPDATE approvals SET status='unknown',error='Приложение перезапустилось во время отправки. Проверьте Teams.' WHERE status='sending'",
       )
       .run();
+    this.db
+      .prepare(
+        "UPDATE llm_requests SET status='interrupted', reason='Перезапуск приложения; отчёт может быть неполным.', finished_at=? WHERE status='running'",
+      )
+      .run(new Date().toISOString());
   }
   get<T>(key: string, fallback: T): T {
     const row = this.db.prepare("SELECT value FROM kv WHERE key=?").get(key) as

@@ -57,6 +57,23 @@ test("sending API enforces login, Origin, CSRF, immutable payload and one-shot a
     .set(headers)
     .send({ password: "another-password-long" })
     .expect(409);
+  await request(app).get("/api/usage").set(headers).expect(401);
+  const usage = await request(app)
+    .get("/api/usage?days=7")
+    .set(authHeaders)
+    .expect(200);
+  assert.equal(usage.body.summary.requests, 0);
+  await request(app).get("/api/usage?days=-1").set(authHeaders).expect(400);
+  await request(app)
+    .post("/api/conversation/stop")
+    .set({ ...headers, Cookie: cookie })
+    .send({})
+    .expect(403);
+  await request(app)
+    .post("/api/conversation/stop")
+    .set(authHeaders)
+    .send({})
+    .expect(200);
   const draft = await request(app)
     .post("/api/approvals")
     .set(authHeaders)
