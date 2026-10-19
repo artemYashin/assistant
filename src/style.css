@@ -2851,20 +2851,18 @@ td > small {
 
 .pr-branches {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   min-width: 0;
   color: #6c7868;
 }
 .pr-branch {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   min-width: 0;
   max-width: calc(50% - 14px);
-  padding: 4px 8px;
-  background: #f1f4ef;
-  border-radius: 6px;
 }
 .pr-branch small {
   flex-shrink: 0;
@@ -2872,6 +2870,12 @@ td > small {
   color: #788471;
 }
 .pr-branch code {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 4px 8px;
+  background: #f1f4ef;
+  border-radius: 6px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2904,4 +2908,20 @@ td > small {
   justify-content: center;
   padding: 8px;
   flex-shrink: 0;
+}
+
+.pr-branch-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+.pr-branch-value > button {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 5px;
+}
+.pr-branch > [role="status"]:empty {
+  display: none;
 }

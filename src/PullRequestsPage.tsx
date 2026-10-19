@@ -1,3 +1,4 @@
+import { Copy, Check } from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
 import { Link } from "react-router-dom";
 import { ticketPath } from "./routing.js";
@@ -14,6 +15,62 @@ const statuses: Record<string, string> = {
   outdated: "Версия устарела",
   cancelled: "Отменено",
 };
+function BranchLabel({
+  kind,
+  value,
+}: {
+  kind: "source" | "target";
+  value?: string;
+}) {
+  const name = value?.replace(/^refs\/heads\//, "") || "";
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+  useEffect(() => {
+    setStatus("idle");
+  }, [value]);
+  useEffect(() => {
+    if (status === "idle") return;
+    const timer = setTimeout(() => setStatus("idle"), 2500);
+    return () => clearTimeout(timer);
+  }, [status]);
+  return (
+    <span
+      className="pr-branch"
+      title={`${kind} branch: ${value || "пока не загружена"}`}
+    >
+      <small>{kind}</small>
+      <span className="pr-branch-value">
+        <code>{name || "—"}</code>
+        <button
+          type="button"
+          className="text-button"
+          disabled={!name}
+          aria-label={`Скопировать ${kind} ветку ${name}`}
+          title={
+            status === "copied" ? "Скопировано" : "Скопировать название ветки"
+          }
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(name);
+              setStatus("copied");
+            } catch {
+              setStatus("error");
+            }
+          }}
+        >
+          {status === "copied" ? <Check size={14} /> : <Copy size={14} />}
+        </button>
+      </span>
+      <small role="status">
+        {status === "copied"
+          ? "Скопировано"
+          : status === "error"
+            ? "Не удалось скопировать"
+            : ""}
+      </small>
+    </span>
+  );
+}
+
 function PrDescription({ pr }: any) {
   const [open, setOpen] = useState(false);
   return (
@@ -343,25 +400,9 @@ export function PullRequestsPage({ context, settings }: any) {
               </a>
             </h2>
             <div className="pr-branches" aria-label="Ветки pull request">
-              <span
-                className="pr-branch"
-                title={`Source branch: ${p.source_branch || "пока не загружена"}`}
-              >
-                <small>source</small>
-                <code>
-                  {p.source_branch?.replace(/^refs\/heads\//, "") || "—"}
-                </code>
-              </span>
+              <BranchLabel kind="source" value={p.source_branch} />
               <span aria-hidden="true">→</span>
-              <span
-                className="pr-branch"
-                title={`Target branch: ${p.target_branch || "пока не загружена"}`}
-              >
-                <small>target</small>
-                <code>
-                  {p.target_branch?.replace(/^refs\/heads\//, "") || "—"}
-                </code>
-              </span>
+              <BranchLabel kind="target" value={p.target_branch} />
             </div>
             <div className="pr-author">
               <span className="pr-avatar" aria-hidden="true">
