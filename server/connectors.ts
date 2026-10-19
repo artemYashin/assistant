@@ -1,3 +1,4 @@
+import { changeTicketState } from "./ticket-status.js";
 import { randomUUID } from "node:crypto";
 import { Store, AppError, type Settings } from "./store.js";
 import { IntegrationsAuth } from "./auth.js";
@@ -255,6 +256,271 @@ export class Connectors {
         new Date().toISOString(),
       );
   }
+  async changeTicketStatus(
+    id: number,
+    state: string,
+    guard: () => void = () => {},
+  ) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    try {
+      const result = await changeTicketState(id, state, s.azureProject, {
+        read: () => this.azure(`workitems/${id}`, {}, s, pat),
+        states: async (type) => {
+          const r = await this.azure(
+            `workitemtypes/${encodeURIComponent(type)}/states`,
+            {},
+            s,
+            pat,
+          );
+          return (r.value || []).map((x: any) => x.name);
+        },
+        beforeWrite: () => {
+          guard();
+          if (this.store.source() !== this.store.source(s))
+            throw new AppError(
+              409,
+              "Подключение Azure изменилось, запись отменена",
+            );
+        },
+        patch: (revision, target) =>
+          this.azure(
+            `workitems/${id}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json-patch+json" },
+              body: JSON.stringify([
+                { op: "test", path: "/rev", value: revision },
+                { op: "add", path: "/fields/System.State", value: target },
+              ]),
+            },
+            s,
+            pat,
+          ),
+      });
+      if (
+        this.store.db
+          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+          .get(this.store.source(s), id)
+      )
+        this.saveTicket(result.item, s);
+      this.store.audit(
+        "ticket.state.verified",
+        JSON.stringify({
+          id,
+          state: result.state,
+          outcome: result.outcome,
+          source: this.store.source(s),
+        }),
+      );
+      const { item, ...receipt } = result;
+      return receipt;
+    } catch (e) {
+      this.store.audit(
+        "ticket.state.unconfirmed",
+        JSON.stringify({ id, requested: state, source: this.store.source(s) }),
+      );
+      throw e;
+    }
+  }
+  async ticketOptions() {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const result = await this.azure("workitemtypes", {}, s, pat);
+    const options = [];
+    for (const type of result.value || []) {
+      const states =
+        type.states ||
+        (
+          await this.azure(
+            `workitemtypes/${encodeURIComponent(type.name)}/states`,
+            {},
+            s,
+            pat,
+          )
+        ).value;
+      options.push({
+        name: type.name,
+        states: (states || []).map((v: any) => v.name),
+      });
+    }
+    return options;
+  }
+  async ticketDetails(id: number) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const item = await this.azure(`workitems/${id}?$expand=all`, {}, s, pat);
+    if (item.fields?.["System.TeamProject"] !== s.azureProject)
+      throw new AppError(400, "Тикет относится к другому проекту Azure DevOps");
+    const comments: any[] = [];
+    const warnings: string[] = [];
+    let continuation = "";
+    const seen = new Set<string>();
+    try {
+      do {
+        const page = await this.azure(
+          `workitems/${id}/comments?$top=200&$expand=renderedText&continuationToken=${encodeURIComponent(continuation)}`,
+          {},
+          {
+            ...s,
+            azureVersion: s.azureVersion.startsWith("7.0")
+              ? "7.0-preview.3"
+              : "7.1-preview.4",
+          },
+          pat,
+        );
+        if (!Array.isArray(page.comments))
+          throw new AppError(502, "Некорректный ответ Comments API");
+        comments.push(...page.comments);
+        continuation = page.continuationToken || "";
+        if (
+          continuation &&
+          (seen.has(continuation) || comments.length >= 10000)
+        ) {
+          warnings.push(
+            "Комментарии загружены не полностью: достигнут защитный лимит",
+          );
+          break;
+        }
+        seen.add(continuation);
+      } while (continuation);
+    } catch {
+      warnings.push(
+        "Комментарии недоступны: проверьте разрешения и поддержку Comments API на вашем Azure Server",
+      );
+    }
+    const base = azureBase(s.azureUrl);
+    const attachments: { id: string; name: string; image: boolean }[] = [];
+    const add = (url: string, name = "Вложение", image = false) => {
+      try {
+        const u = new URL(url, base + "/");
+        const b = new URL(base);
+        const match =
+          /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(
+            u.pathname,
+          );
+        if (
+          u.origin !== b.origin ||
+          !u.pathname.startsWith(b.pathname.replace(/\/$/, "") + "/") ||
+          !match
+        )
+          return;
+        if (!attachments.some((a) => a.id === match[1]))
+          attachments.push({
+            id: match[1],
+            name,
+            image: image || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name),
+          });
+        else if (image)
+          attachments.find((a) => a.id === match[1])!.image = true;
+      } catch {}
+    };
+    for (const relation of item.relations || [])
+      if (relation.rel === "AttachedFile")
+        add(relation.url, relation.attributes?.name || "Вложение");
+    const content = [
+      ...Object.values(item.fields || {}).filter((v) => typeof v === "string"),
+      ...comments.map((c) => c.renderedText || c.text || ""),
+    ].join("\n");
+    for (const match of content.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi))
+      add(match[1].replace(/&amp;/g, "&"), "Изображение в тексте", true);
+    for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
+      add(match[1], "Изображение в комментарии", true);
+    const cardId = randomUUID();
+    const card = {
+      id,
+      source: this.store.source(s),
+      base,
+      project: s.azureProject,
+      fields: item.fields,
+      comments: comments.map((c) => ({
+        id: c.id,
+        author: c.createdBy?.displayName || "",
+        date: c.createdDate,
+        text: plainText(c.renderedText || c.text || ""),
+      })),
+      attachments,
+      warnings,
+      loadedAt: new Date().toISOString(),
+      url: `${base}/${encodeURIComponent(s.azureProject)}/_workitems/edit/${id}`,
+    };
+    this.store.db
+      .prepare("INSERT INTO ticket_cards VALUES (?,?)")
+      .run(cardId, JSON.stringify(card));
+    return { cardId, ...card };
+  }
+  ticketCard(ref: string) {
+    const row = this.store.db
+      .prepare("SELECT data FROM ticket_cards WHERE id=?")
+      .get(ref) as { data: string } | undefined;
+    if (!row) throw new AppError(404, "Карточка не найдена");
+    return JSON.parse(row.data);
+  }
+  async attachment(ref: string, id: string) {
+    const card = this.ticketCard(ref);
+    const attachment = card.attachments.find((a: any) => a.id === id);
+    if (!attachment) throw new AppError(404, "Вложение не найдено в тикете");
+    const s = this.store.settings();
+    if (card.source !== this.store.source(s))
+      throw new AppError(
+        409,
+        "Подключение Azure изменилось: загрузите тикет заново",
+      );
+    const pat = this.store.secret("azure.pat");
+    if (!pat) throw new AppError(400, "Подключите Azure DevOps");
+    const response = await fetch(
+      `${card.base}/${encodeURIComponent(card.project)}/_apis/wit/attachments/${encodeURIComponent(id)}?api-version=${encodeURIComponent(s.azureVersion)}`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+        },
+        redirect: "error",
+        signal: AbortSignal.timeout(30000),
+      },
+    );
+    if (!response.ok || !response.body)
+      throw new AppError(502, "Не удалось загрузить вложение");
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.length;
+        if (size > 20 * 1024 * 1024) {
+          await reader.cancel();
+          throw new AppError(413, "Вложение больше 20 МБ");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const body = Buffer.concat(chunks);
+    const raw = body
+      .subarray(0, 8)
+      .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+      ? "image/png"
+      : body[0] === 255 && body[1] === 216 && body[2] === 255
+        ? "image/jpeg"
+        : body.subarray(0, 3).toString() === "GIF"
+          ? "image/gif"
+          : body.subarray(0, 4).toString() === "RIFF" &&
+              body.subarray(8, 12).toString() === "WEBP"
+            ? "image/webp"
+            : "application/octet-stream";
+    const type = [
+      "image/png",
+      "image/jpeg",
+      "image/gif",
+      "image/webp",
+      "image/bmp",
+    ].includes(raw)
+      ? raw
+      : "application/octet-stream";
+    return { body, type, name: attachment.name };
+  }
   async trackTicket(id: number) {
     const s = this.store.settings();
     const item = await this.azure(
@@ -274,7 +540,7 @@ export class Connectors {
     this.store.audit("ticket.tracked", String(id));
     return item.id;
   }
-  async syncTickets(importMine = false) {
+  async syncTickets(importMine = false, automatic = false) {
     const s = this.store.settings();
     const pat = this.store.secret("azure.pat");
     const ids = new Set(
@@ -284,14 +550,24 @@ export class Connectors {
           .all(this.store.source(s)) as { id: number }[]
       ).map((x) => x.id),
     );
-    if (importMine) {
+    if (importMine || (automatic && s.azureAutoImport)) {
+      if (automatic && (!s.azureTypes.length || !s.azureStates.length))
+        throw new AppError(
+          400,
+          "Для автоимпорта выберите типы и статусы задач",
+        );
+      const quote = (v: string) => "'" + v.replace(/'/g, "''") + "'";
       const result = await this.azure(
         "wiql",
         {
           method: "POST",
           body: JSON.stringify({
             query:
-              "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.AssignedTo] = @Me ORDER BY [System.ChangedDate] DESC",
+              "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.AssignedTo] = @Me" +
+              (automatic
+                ? ` AND [System.WorkItemType] IN (${s.azureTypes.map(quote).join(",")}) AND [System.State] IN (${s.azureStates.map(quote).join(",")})`
+                : "") +
+              " ORDER BY [System.ChangedDate] DESC",
           }),
         },
         s,

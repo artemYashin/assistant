@@ -177,3 +177,127 @@ test("watchdog stops a model that never returns usage or a response", async (t) 
     "limited",
   );
 });
+
+test("background PR review has no tools, history or memory and still accounts usage", async (t) => {
+  const store = fixture(t);
+  store.say("user", "private chat history", context);
+  const { agent } = fakeAgent(store, async (s, c) => {
+    assert.deepEqual(c.tools, []);
+    assert.deepEqual(c.excludedTools, ["builtin:*", "mcp:*"]);
+    assert.equal(
+      (await c.hooks.onPreToolUse({ toolName: "propose_teams_message" }))
+        .permissionDecision,
+      "deny",
+    );
+    s.emit({ inputTokens: 500, outputTokens: 100 });
+    return { data: { content: "Review" } };
+  });
+  await agent.chat("Review this diff", context, true);
+  assert.equal(store.history(context).length, 1);
+  assert.equal(
+    (new UsageLedger(store).report() as any).summary.input_tokens,
+    500,
+  );
+});
+
+test("chat fetches a mentioned ticket live and persists its UI card reference", async (t) => {
+  const store = fixture(t);
+  let fetched = 0,
+    prompt = "";
+  const session = {
+    on: () => {},
+    sendAndWait: async (request: any) => {
+      prompt = request.prompt;
+      return { data: { content: "Ticket details" } };
+    },
+    abort: async () => {},
+  };
+  const client = {
+    start: async () => {},
+    createSession: async () => session,
+    stop: async () => {},
+    forceStop: async () => {},
+  };
+  const connectors = {
+    ticketDetails: async (id: number) => {
+      fetched++;
+      assert.equal(id, 123456);
+      return {
+        cardId: "card-reference",
+        fields: { "System.Title": "Current Azure title" },
+        comments: [{ text: "Latest comment" }],
+      };
+    },
+  };
+  const agent = new Agent(
+    store,
+    new Approvals(store, async () => ({ id: "unused" })),
+    () => client as any,
+    connectors as any,
+  );
+  const result = await agent.chat("Покажи тикет 123456", context);
+  assert.equal(fetched, 1);
+  assert.deepEqual(result.cards, ["card-reference"]);
+  assert.match(prompt, /Current Azure title/);
+  assert.match(prompt, /Latest comment/);
+  assert.equal(
+    (store.history(context).at(-1) as any).cards,
+    '["card-reference"]',
+  );
+});
+
+test("status tool requires current user instruction and deduplicates repeated writes", async (t) => {
+  const store = fixture(t);
+  let config: any,
+    writes = 0,
+    allow = true;
+  const session = {
+    on: () => {},
+    abort: async () => {},
+    sendAndWait: async () => {
+      const tool = config.tools.find(
+        (x: any) => x.name === "change_ticket_status",
+      );
+      if (allow) {
+        const first = await tool.handler({ id: 123456, state: "RFT" }, {});
+        const again = await tool.handler(
+          { id: 123456, state: "Ready for Testing" },
+          {},
+        );
+        assert.equal(first.state, again.state);
+      } else
+        await assert.rejects(
+          tool.handler({ id: 123456, state: "RFT" }, {}),
+          /явная команда/,
+        );
+      return { data: { content: "Result" } };
+    },
+  };
+  const client = {
+    start: async () => {},
+    createSession: async (c: any) => {
+      config = c;
+      return session;
+    },
+    stop: async () => {},
+    forceStop: async () => {},
+  };
+  const connectors = {
+    ticketDetails: async () => ({ cardId: "card", fields: {} }),
+    changeTicketStatus: async () => {
+      writes++;
+      return { success: true, state: "RFT", outcome: "changed" };
+    },
+  };
+  const agent = new Agent(
+    store,
+    new Approvals(store, async () => ({ id: "unused" })),
+    () => client as any,
+    connectors as any,
+  );
+  await agent.chat("Переведи тикет 123456 в RFT", context);
+  assert.equal(writes, 1);
+  allow = false;
+  await agent.chat("Покажи тикет 123456. Статус RFT?", context);
+  assert.equal(writes, 1);
+});

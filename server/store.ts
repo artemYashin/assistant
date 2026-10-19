@@ -42,7 +42,12 @@ export const defaults = {
   azureUrl: "",
   azureProject: "",
   azureVersion: "7.1",
-  syncSeconds: 300,
+  teamsEnabled: false,
+  azureAutoImport: false,
+  azureTypes: [] as string[],
+  azureStates: [] as string[],
+  syncSeconds: 600,
+  prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
   llmMaxToolCalls: 20,
@@ -72,6 +77,11 @@ export class Store {
       CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS memories (id TEXT PRIMARY KEY, scope TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS pr_projects (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, source TEXT NOT NULL, azure_project TEXT NOT NULL, mode TEXT NOT NULL, enabled INTEGER NOT NULL, error TEXT, synced_at TEXT, UNIQUE(client,project,source,azure_project));
+      CREATE TABLE IF NOT EXISTS pull_requests (monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, title TEXT NOT NULL, author TEXT NOT NULL, url TEXT NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, draft INTEGER NOT NULL, in_scope INTEGER NOT NULL DEFAULT 1, synced_at TEXT NOT NULL, PRIMARY KEY(monitor,repo,number));
+      CREATE TABLE IF NOT EXISTS pr_reviews (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL, summary TEXT, coverage TEXT, error TEXT, usage_id TEXT, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, UNIQUE(monitor,repo,number,head,target));
+      CREATE TABLE IF NOT EXISTS ticket_cards (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
       CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, name TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
       CREATE TABLE IF NOT EXISTS messages (id TEXT NOT NULL, chat_id TEXT NOT NULL, sender TEXT NOT NULL, body TEXT NOT NULL, url TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(chat_id,id));
       CREATE TABLE IF NOT EXISTS tickets (source TEXT NOT NULL, id INTEGER NOT NULL, title TEXT NOT NULL, state TEXT NOT NULL, assigned TEXT NOT NULL, type TEXT NOT NULL, url TEXT NOT NULL, changed_at TEXT, synced_at TEXT NOT NULL, PRIMARY KEY(source,id));
@@ -84,6 +94,25 @@ export class Store {
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
+    this.db
+      .prepare(
+        "UPDATE pr_reviews SET status='interrupted', error='Перезапуск во время ревью. Автоповтор отключён.', finished_at=? WHERE status='running'",
+      )
+      .run(new Date().toISOString());
+    if (!this.get("migration.sync600", false)) {
+      const saved = this.get<any>("settings", {});
+      if (saved.syncSeconds === 300)
+        this.set("settings", { ...saved, syncSeconds: 600 });
+      this.set("migration.sync600", true);
+    }
+    if (
+      !(
+        this.db.prepare("PRAGMA table_info(conversations)").all() as any[]
+      ).some((c) => c.name === "cards")
+    )
+      this.db.exec(
+        "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
+      );
     // A crash after Graph accepted a request is ambiguous. Never automatically resend it.
     this.db
       .prepare(
@@ -142,6 +171,24 @@ export class Store {
       .prepare("INSERT INTO audit VALUES (?,?,?,?)")
       .run(randomUUID(), action, detail, new Date().toISOString());
   }
+  contexts(): Context[] {
+    const current = this.settings();
+    return this.db
+      .prepare(
+        `SELECT client,project FROM contexts UNION SELECT client,project FROM memories WHERE client!='' UNION SELECT client,project FROM conversations WHERE client!='' UNION SELECT ? AS client, ? AS project WHERE ?!='' ORDER BY client,project`,
+      )
+      .all(current.client, current.project, current.client) as Context[];
+  }
+  addContext(context: Context) {
+    if (!context.client || (context.project && !context.client))
+      throw new AppError(400, "Укажите заказчика");
+    this.db
+      .prepare("INSERT OR IGNORE INTO contexts VALUES (?,?)")
+      .run(context.client, "");
+    this.db
+      .prepare("INSERT OR IGNORE INTO contexts VALUES (?,?)")
+      .run(context.client, context.project);
+  }
   source(s = this.settings()) {
     return `${s.azureUrl.replace(/\/$/, "")}|${s.azureProject}`;
   }
@@ -190,9 +237,11 @@ export class Store {
       )
       .all(context.client, context.project);
   }
-  say(role: string, body: string, context: Context) {
+  say(role: string, body: string, context: Context, cards: string[] = []) {
     this.db
-      .prepare("INSERT INTO conversations VALUES (?,?,?,?,?,?)")
+      .prepare(
+        "INSERT INTO conversations(id,client,project,role,body,created_at,cards) VALUES (?,?,?,?,?,?,?)",
+      )
       .run(
         randomUUID(),
         context.client,
@@ -200,6 +249,7 @@ export class Store {
         role,
         body,
         new Date().toISOString(),
+        JSON.stringify(cards),
       );
   }
   close() {

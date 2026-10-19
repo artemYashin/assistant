@@ -18,6 +18,7 @@ import { Store, AppError, type Context, defaults } from "./store.js";
 import { Approvals } from "./approvals.js";
 import { IntegrationsAuth } from "./auth.js";
 import { Connectors } from "./connectors.js";
+import { PullRequests } from "./pull-requests.js";
 import { Agent } from "./agent.js";
 import { azureBase } from "./http.js";
 import { UsageLedger } from "./usage.js";
@@ -37,6 +38,11 @@ const settingsSchema = z
     azureProject: text,
     azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
     syncSeconds: z.number().int().min(60).max(3600),
+    teamsEnabled: z.boolean().default(false),
+    azureAutoImport: z.boolean().default(false),
+    azureTypes: z.array(text.min(1)).max(50).default([]),
+    azureStates: z.array(text.min(1)).max(100).default([]),
+    prDailyLimit: z.number().int().min(1).max(100).default(20),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
     llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
     llmMaxToolCalls: z.number().int().min(1).max(100).default(20),
@@ -65,7 +71,8 @@ export function createApp(
     store,
     options.sendMessage || ((id, body) => connectors.sendMessage(id, body)),
   );
-  const agent = new Agent(store, approvals);
+  const agent = new Agent(store, approvals, undefined, connectors);
+  const pullRequests = new PullRequests(store, agent);
   const app = express();
   app.disable("x-powered-by");
   app.use(
@@ -190,6 +197,33 @@ export function createApp(
     res.clearCookie("orbit_session");
     res.json({ ok: true });
   });
+  app.get("/api/contexts", (_req, res) => res.json(store.contexts()));
+  app.post("/api/contexts", (req, res) => {
+    const context = contextSchema.strict().parse(req.body);
+    store.addContext(context);
+    res.json(store.contexts());
+  });
+  app.put("/api/context", (req, res) => {
+    const context = contextSchema.strict().parse(req.body);
+    if (context.project && !context.client)
+      throw new AppError(400, "Проект должен принадлежать заказчику");
+    const known = store.contexts();
+    if (
+      context.client &&
+      !known.some(
+        (c) =>
+          c.client === context.client &&
+          (!context.project || c.project === context.project),
+      )
+    )
+      throw new AppError(400, "Сначала добавьте заказчика и проект");
+    const previous = store.settings();
+    if (previous.client)
+      store.addContext({ client: previous.client, project: previous.project });
+    if (context.client) store.addContext(context);
+    store.set("settings", { ...previous, ...context });
+    res.json(context);
+  });
   app.get("/api/settings", (_req, res) =>
     res.json({
       ...store.settings(),
@@ -204,6 +238,11 @@ export function createApp(
     if (settings.azureUrl) settings.azureUrl = azureBase(settings.azureUrl);
     if (settings.project && !settings.client)
       throw new AppError(400, "Проект должен принадлежать заказчику");
+    if (
+      settings.azureAutoImport &&
+      (!settings.azureTypes.length || !settings.azureStates.length)
+    )
+      throw new AppError(400, "Выберите типы и статусы для автоимпорта");
     const old = store.settings();
     const microsoftChanged =
       old.microsoftClientId !== settings.microsoftClientId ||
@@ -220,7 +259,11 @@ export function createApp(
         409,
         "Сначала обработайте ожидающие сообщения перед сменой аккаунта Teams",
       );
-    store.set("settings", settings);
+    store.set("settings", {
+      ...settings,
+      client: old.client,
+      project: old.project,
+    });
     if (microsoftChanged) {
       store.set("microsoft.connected", false);
       store.db.exec(
@@ -377,6 +420,32 @@ export function createApp(
         .all(store.source()),
     ),
   );
+  app.get("/api/tickets/options", async (_req, res) =>
+    res.json(await connectors.ticketOptions()),
+  );
+  app.get("/api/tickets/:id/details", async (req, res) =>
+    res.json(
+      await connectors.ticketDetails(
+        z.coerce.number().int().positive().parse(req.params.id),
+      ),
+    ),
+  );
+  app.get("/api/ticket-cards/:ref", (req, res) =>
+    res.json(connectors.ticketCard(String(req.params.ref))),
+  );
+  app.get("/api/ticket-cards/:ref/attachments/:id", async (req, res) => {
+    const file = await connectors.attachment(
+      String(req.params.ref),
+      String(req.params.id),
+    );
+    res.setHeader("Cache-Control", "private, no-store");
+    res.type(file.type);
+    res.setHeader(
+      "Content-Disposition",
+      `${file.type.startsWith("image/") ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+    );
+    res.send(file.body);
+  });
   app.post("/api/tickets", async (req, res) => {
     const { id } = z
       .object({ id: z.number().int().positive().max(999999999) })
@@ -401,6 +470,40 @@ export function createApp(
       .run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/pr/projects", (_req, res) => res.json(pullRequests.monitors()));
+  app.post("/api/pr/projects", (req, res) => {
+    const input = z
+      .object({
+        client: text.min(1),
+        project: text.min(1),
+        azure_project: text.min(1),
+        mode: z.enum(["required", "all"]),
+        enabled: z.boolean(),
+      })
+      .strict()
+      .parse(req.body);
+    pullRequests.save(input);
+    res.json({ ok: true });
+  });
+  app.put("/api/pr/projects/:id", (req, res) => {
+    const input = z
+      .object({ mode: z.enum(["required", "all"]), enabled: z.boolean() })
+      .strict()
+      .parse(req.body);
+    const changed = store.db
+      .prepare("UPDATE pr_projects SET mode=?,enabled=?,error=NULL WHERE id=?")
+      .run(input.mode, Number(input.enabled), String(req.params.id));
+    if (!changed.changes)
+      throw new AppError(404, "Проект мониторинга не найден");
+    // Invalidate membership until a fresh scan applies the new filter.
+    store.db
+      .prepare("UPDATE pull_requests SET in_scope=0 WHERE monitor=?")
+      .run(String(req.params.id));
+    res.json({ ok: true });
+  });
+  app.get("/api/pr", (req, res) =>
+    res.json(pullRequests.list(contextSchema.parse(req.query))),
+  );
   let syncing = false;
   async function sync() {
     if (syncing) throw new AppError(409, "Синхронизация уже выполняется");
@@ -411,7 +514,10 @@ export function createApp(
       at: new Date().toISOString(),
     });
     try {
-      if (store.get("microsoft.connected", false))
+      if (
+        store.settings().teamsEnabled &&
+        store.get("microsoft.connected", false)
+      )
         try {
           await connectors.syncTeams();
         } catch (e) {
@@ -421,7 +527,7 @@ export function createApp(
         }
       if (store.secret("azure.pat"))
         try {
-          await connectors.syncTickets();
+          await connectors.syncTickets(false, true);
         } catch (e) {
           errors.push(
             e instanceof AppError
@@ -429,6 +535,9 @@ export function createApp(
               : "Ошибка синхронизации Azure DevOps",
           );
         }
+      if (store.secret("azure.pat")) await pullRequests.sync();
+      for (const m of pullRequests.monitors() as any[])
+        if (m.enabled && m.error) errors.push(`${m.azure_project}: ${m.error}`);
       const result = {
         state: errors.length ? "error" : "ok",
         at: new Date().toISOString(),
@@ -508,5 +617,5 @@ export function createApp(
       });
     },
   );
-  return { app, sync, agent, approvals, connectors };
+  return { app, sync, agent, approvals, connectors, pullRequests };
 }

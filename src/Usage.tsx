@@ -94,7 +94,7 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
                 value: s.output_tokens,
                 icon: ArrowUp,
               },
-              { label: "Ваши запросы", value: s.requests, icon: Activity },
+              { label: "Запросы к LLM", value: s.requests, icon: Activity },
               {
                 label: "Вызовы с отчётом SDK",
                 value: s.model_calls,
@@ -163,8 +163,8 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
           <Activity size={28} />
           <h3>В этом периоде ещё нет запросов</h3>
           <p>
-            Отправьте сообщение ассистенту. Синхронизация Teams и Azure сюда не
-            попадает: она не вызывает LLM.
+            Здесь учитываются ответы ассистента и автоматические PR-ревью. Опрос
+            задач и Teams сам по себе не вызывает LLM.
           </p>
         </div>
       ) : (

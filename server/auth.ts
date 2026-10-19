@@ -2,6 +2,8 @@ import { PublicClientApplication, type ICachePlugin } from "@azure/msal-node";
 import { Store, AppError } from "./store.js";
 import { requestJson } from "./http.js";
 
+import { githubLogin } from "./github-login.js";
+
 type Login = {
   status: string;
   userCode?: string;
@@ -21,12 +23,39 @@ export class IntegrationsAuth {
   private microsoft: Login = { status: "idle" };
   private msalInstance?: PublicClientApplication;
   private msalKey = "";
-  constructor(private store: Store) {}
+  private cliLogin?: Login;
+  constructor(
+    private store: Store,
+    private loginWithCli = githubLogin,
+  ) {}
   private microsoftKey() {
     const s = this.store.settings();
     return `${s.microsoftTenantId}|${s.microsoftClientId}`;
   }
   async startGitHub() {
+    if (this.cliLogin?.status === "pending") return this.cliLogin;
+    if (!this.store.settings().githubClientId) {
+      const flow: Login = { status: "pending", expiresAt: Date.now() + 600000 };
+      this.cliLogin = flow;
+      void this.loginWithCli((code) => {
+        flow.userCode = code;
+        flow.verificationUri = "https://github.com/login/device";
+      })
+        .then((token) => {
+          if (this.store.settings().githubClientId)
+            throw new Error("Настройки входа изменились. Начните вход снова.");
+          this.store.setSecret("github.token", token);
+          flow.status = "connected";
+          this.store.audit("github.connected", "GitHub CLI device flow");
+        })
+        .catch((error) => {
+          flow.status = "error";
+          flow.error =
+            error instanceof Error ? error.message : "Ошибка входа GitHub";
+        });
+      return flow;
+    }
+    this.cliLogin = undefined;
     if (this.github && Date.now() < this.github.expires)
       return this.github.display;
     const clientId = this.store.settings().githubClientId;
@@ -70,6 +99,7 @@ export class IntegrationsAuth {
     return display;
   }
   async pollGitHub() {
+    if (this.cliLogin) return this.cliLogin;
     const flow = this.github;
     if (!flow)
       return {

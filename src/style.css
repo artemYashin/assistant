@@ -1862,3 +1862,44 @@ td small {
     transition: none !important;
   }
 }
+.context-picker {
+  margin-bottom: 24px;
+}
+.context-picker .context-bar {
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  align-items: end;
+}
+.context-picker label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 12px;
+}
+.context-picker select {
+  min-width: 170px;
+  max-width: 280px;
+}
+.context-manager {
+  padding: 20px;
+}
+.context-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 20px 0;
+}
+.context-forms form {
+  display: grid;
+  gap: 10px;
+  flex: 1;
+  min-width: 210px;
+  align-content: start;
+}
+.context-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}

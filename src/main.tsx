@@ -40,6 +40,10 @@ import {
 } from "lucide-react";
 import { api, setCsrf } from "./api.js";
 import "./style.css";
+import { ContextPicker } from "./ContextPicker.js";
+import { PullRequestsPage } from "./PullRequestsPage.js";
+import { TicketCard, TicketLookup } from "./TicketCard.js";
+import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
 type Context = { client: string; project: string };
@@ -51,7 +55,8 @@ type Page =
   | "memory"
   | "teams"
   | "settings"
-  | "usage";
+  | "usage"
+  | "pullrequests";
 const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
@@ -59,6 +64,7 @@ const navigation = [
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
   { id: "teams", label: "Сообщения Teams", icon: MessageSquare },
+  { id: "pullrequests", label: "Pull requests", icon: FolderOpen },
   { id: "usage", label: "Использование LLM", icon: Activity },
 ] as const;
 const date = (s?: string) =>
@@ -476,29 +482,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         </header>
         <div className="work-area">
           <main>
-            <div className="context-bar">
-              <FolderOpen size={16} />
-              <span>Контекст</span>
-              <input
-                aria-label="Текущий заказчик"
-                placeholder="Заказчик"
-                value={context.client}
-                onChange={(e) =>
-                  setContext({ client: e.target.value, project: "" })
-                }
-              />
-              <span>/</span>
-              <input
-                aria-label="Текущий проект"
-                placeholder="Все проекты"
-                disabled={!context.client}
-                value={context.project}
-                onChange={(e) =>
-                  setContext({ ...context, project: e.target.value })
-                }
-              />
-              <Badge>Общая память включена</Badge>
-            </div>
+            <ContextPicker context={context} onChange={setContext} />
             {error && (
               <div className="error dismissible" role="alert">
                 {error}
@@ -742,6 +726,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                                   "Подготовлен черновик Teams",
                                 "message.approved": "Отправка подтверждена",
                                 "message.sent": "Сообщение отправлено",
+                                "ticket.state.verified":
+                                  "Статус тикета подтверждён",
+                                "ticket.state.unconfirmed":
+                                  "Смена статуса не подтверждена",
                                 "ticket.tracked": "Тикет добавлен в трекер",
                                 "github.connected": "GitHub подключён",
                                 "teams.connected": "Teams подключён",
@@ -762,6 +750,9 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   )}
                 </section>
               </>
+            )}
+            {page === "pullrequests" && (
+              <PullRequestsPage context={context} settings={settings} />
             )}
             {page === "inbox" && (
               <>
@@ -840,6 +831,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 )}
               </>
             )}
+            {page === "tickets" && <TicketLookup />}
             {page === "tickets" && (
               <Tickets
                 tickets={filtered(tickets, [
@@ -1263,6 +1255,12 @@ function Memory({ memories, context, run, busy }: any) {
               </button>
             </div>
             <p>{m.body}</p>
+            {(typeof m.cards === "string"
+              ? JSON.parse(m.cards)
+              : m.cards || []
+            ).map((ref: string) => (
+              <TicketCard key={ref} reference={ref} />
+            ))}
             <small>{date(m.created_at)}</small>
           </article>
         ))}
@@ -1430,7 +1428,29 @@ function Settings({ settings, context, run, busy }: any) {
     [githubFlow, setGithubFlow] = useState<any>(null),
     [msFlow, setMsFlow] = useState<any>(null),
     [models, setModels] = useState<any[]>([]),
+    [modelsLoading, setModelsLoading] = useState(false),
     [connectionError, setConnectionError] = useState("");
+  useEffect(() => {
+    if (!settings.githubConnected && githubFlow?.status !== "connected") return;
+    let active = true;
+    setModelsLoading(true);
+    api("/copilot/models")
+      .then((value) => {
+        if (active) {
+          setModels(value);
+          setConnectionError("");
+        }
+      })
+      .catch((e) => {
+        if (active) setConnectionError(e.message);
+      })
+      .finally(() => {
+        if (active) setModelsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [settings.githubConnected, githubFlow?.status]);
   const set = (key: string, value: any) =>
     setForm((f: any) => ({ ...f, [key]: value }));
   async function save() {
@@ -1486,17 +1506,24 @@ function Settings({ settings, context, run, busy }: any) {
             Модель работает через официальный Copilot SDK с вашей подпиской.
             Доступ зависит от политики вашей организации.
           </p>
-          <Field
-            label="Client ID GitHub OAuth App"
-            hint="В настройках OAuth App включите Enable Device Flow. Client Secret не требуется."
-          >
-            <input
-              value={form.githubClientId}
-              onChange={(e) => set("githubClientId", e.target.value)}
-              placeholder="Ov23li…"
-              autoComplete="off"
-            />
-          </Field>
+          <p>
+            Нажмите «Войти через GitHub», откройте ссылку и введите одноразовый
+            код. На странице GitHub подтвердите вход GitHub CLI. Создавать OAuth
+            App не нужно.
+          </p>
+          <details>
+            <summary>Дополнительно: собственное OAuth-приложение</summary>
+            <Field
+              label="Client ID (необязательно)"
+              hint="Оставьте пустым для входа через GitHub CLI. Для собственного приложения включите Device Flow."
+            >
+              <input
+                value={form.githubClientId}
+                onChange={(e) => set("githubClientId", e.target.value)}
+                autoComplete="off"
+              />
+            </Field>
+          </details>
           <div className="card-actions">
             <button
               className="secondary"
@@ -1520,6 +1547,7 @@ function Settings({ settings, context, run, busy }: any) {
                   async () => {
                     await save();
                     setModels(await api("/copilot/models"));
+                    setConnectionError("");
                   },
                   "Copilot доступен; список моделей получен",
                 )
@@ -1529,23 +1557,41 @@ function Settings({ settings, context, run, busy }: any) {
             </button>
           </div>
           <LoginCode flow={githubFlow} />
+          {modelsLoading && <p role="status">Загружаем доступные модели…</p>}
           <Field
-            label="Модель"
-            hint="Пустое поле — модель по умолчанию в Copilot. Список доступных моделей можно загрузить после входа."
+            label="Автоматических PR-ревью за 24 часа"
+            hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
           >
             <input
-              list="models"
+              type="number"
+              min={1}
+              max={100}
+              value={form.prDailyLimit}
+              onChange={(e) => set("prDailyLimit", Number(e.target.value))}
+            />
+          </Field>
+          <Field
+            label="Модель"
+            hint="Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше."
+          >
+            <select
               value={form.model}
               onChange={(e) => set("model", e.target.value)}
-              placeholder="По умолчанию"
-            />
-            <datalist id="models">
+              aria-label="Модель Copilot"
+              disabled={modelsLoading}
+            >
+              <option value="">По умолчанию в Copilot</option>
+              {form.model && !models.some((m) => m.id === form.model) && (
+                <option value={form.model} disabled>
+                  {form.model} — сохранена, доступность не подтверждена
+                </option>
+              )}
               {models.map((m: any) => (
                 <option key={m.id} value={m.id}>
-                  {m.name}
+                  {m.name || m.id}
                 </option>
               ))}
-            </datalist>
+            </select>
           </Field>
         </section>
         <section className="panel settings-card">
@@ -1593,6 +1639,17 @@ function Settings({ settings, context, run, busy }: any) {
             <MessageSquare size={16} />
             Войти через Microsoft
           </button>
+          <label>
+            <input
+              type="checkbox"
+              checked={form.teamsEnabled}
+              onChange={(e) => set("teamsEnabled", e.target.checked)}
+            />{" "}
+            Читать Teams в фоне (по умолчанию выключено)
+          </label>
+          <p className="muted">
+            Teams необязателен: задачи и PR работают напрямую с Azure DevOps.
+          </p>
           <LoginCode flow={msFlow} />
           <div className="inline-note">
             <ShieldCheck size={17} />
@@ -1637,7 +1694,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <Field
             label="Personal Access Token"
-            hint="Достаточно Work Items (Read). Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
+            hint="Для чтения задач — Work Items (Read), для смены статусов — Work Items (Read & write). Для PR также Code (Read). Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
           >
             <input
               type="password"
@@ -1651,6 +1708,7 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
+          <TicketImportSettings form={form} set={set} save={save} />
         </section>
         <section className="panel settings-card">
           <h2>
@@ -1709,8 +1767,8 @@ function Settings({ settings, context, run, busy }: any) {
             />
           </Field>
           <Field
-            label="Обновлять Teams и тикеты каждые, минут"
-            hint="По умолчанию — 5 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
+            label="Обновлять Teams, тикеты и PR каждые, минут"
+            hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
           >
             <input
               type="number"
@@ -1760,6 +1818,8 @@ function Settings({ settings, context, run, busy }: any) {
 }
 function LoginCode({ flow }: any) {
   if (!flow) return null;
+  if (flow.status === "pending" && !flow.userCode)
+    return <p role="status">Запрашиваем код входа…</p>;
   if (flow.status === "pending")
     return (
       <div className="device-code">
@@ -1849,7 +1909,12 @@ function Assistant({
       if (contextKey.current === captured)
         setHistory((h) => [
           ...h,
-          { role: "assistant", body: r.body, id: Date.now() },
+          {
+            role: "assistant",
+            body: r.body,
+            id: Date.now(),
+            cards: r.cards || [],
+          },
         ]);
       onChange();
     } catch (e: any) {
@@ -1954,7 +2019,7 @@ function Assistant({
               {[
                 "Какие тикеты требуют моего внимания?",
                 "Покажи, что ты помнишь о текущем проекте",
-                "Помоги подготовить ответ в Teams",
+                "Покажи тикет по номеру",
               ].map((p, i) => (
                 <button key={p} onClick={() => setPrompt(p)}>
                   {i === 0 ? (
@@ -1984,6 +2049,12 @@ function Assistant({
               </span>
             )}
             <p>{m.body}</p>
+            {(typeof m.cards === "string"
+              ? JSON.parse(m.cards)
+              : m.cards || []
+            ).map((ref: string) => (
+              <TicketCard key={ref} reference={ref} />
+            ))}
           </div>
         ))}
         {working && (
