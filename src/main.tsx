@@ -1,8 +1,9 @@
 import {
-  LocalDeveloper,
-  StatusBadge,
-  StatusColorsEditor,
-} from "./TicketControls.js";
+  useAssistantResize,
+  readChatPreference,
+  saveChatPreference,
+} from "./AssistantResize.js";
+import { LocalDeveloper, StatusBadge } from "./TicketControls.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -309,9 +310,19 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(""),
-    [assistantOpen, setAssistantOpen] = useState(window.innerWidth > 800),
+    [assistantOpen, setAssistantOpen] = useState(
+      () =>
+        readChatPreference(
+          "orbit.chat.open",
+          String(window.innerWidth > 800),
+        ) === "true",
+    ),
     [refresh, setRefresh] = useState(0),
     [query, setQuery] = useState("");
+  useEffect(
+    () => saveChatPreference("orbit.chat.open", String(assistantOpen)),
+    [assistantOpen],
+  );
   const initialized = useRef(false);
   const loadGeneration = useRef(0);
   async function reload() {
@@ -474,8 +485,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             </button>
             <button
               className="icon-button"
-              title="Показать или скрыть ассистента"
-              aria-label="Показать или скрыть ассистента"
+              id="assistant-toggle"
+              title={assistantOpen ? "Свернуть чат" : "Развернуть чат"}
+              aria-label={assistantOpen ? "Свернуть чат" : "Развернуть чат"}
+              aria-expanded={assistantOpen}
+              aria-controls="assistant-panel"
               onClick={() => setAssistantOpen(!assistantOpen)}
             >
               {assistantOpen ? (
@@ -998,16 +1012,19 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               </span>
             </footer>
           </main>
-          {assistantOpen && (
-            <Assistant
-              context={context}
-              connected={settings?.githubConnected}
-              onChange={() => setRefresh((n) => n + 1)}
-              onSettings={() => setPage("settings")}
-              onApprovals={() => setPage("approvals")}
-              pending={pending.length}
-            />
-          )}
+          <Assistant
+            open={assistantOpen}
+            onCollapse={() => {
+              setAssistantOpen(false);
+              document.getElementById("assistant-toggle")?.focus();
+            }}
+            context={context}
+            connected={settings?.githubConnected}
+            onChange={() => setRefresh((n) => n + 1)}
+            onSettings={() => setPage("settings")}
+            onApprovals={() => setPage("approvals")}
+            pending={pending.length}
+          />
         </div>
       </div>
     </div>
@@ -1129,7 +1146,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
             <tbody>
               {sorted.map((t: any) => (
                 <TicketTableRow
-                  key={t.id}
+                  key={`${t.source}:${t.id}`}
                   id={t.id}
                   onRemove={() =>
                     run(
@@ -1150,7 +1167,11 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                       <ArrowUpRight size={13} />
                     </a>
                     <b>{t.title}</b>
-                    <small>{t.type}</small>
+                    <StatusBadge
+                      state={t.type}
+                      colors={settings?.typeColors}
+                      kind="type"
+                    />
                   </td>
                   <td>
                     <StatusBadge
@@ -1757,7 +1778,6 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
-          <StatusColorsEditor form={form} set={set} />
           <TicketImportSettings form={form} set={set} save={save} />
         </section>
         <section className="panel settings-card">
@@ -1901,6 +1921,8 @@ function LoginCode({ flow }: any) {
   );
 }
 function Assistant({
+  open,
+  onCollapse,
   context,
   connected,
   onChange,
@@ -1908,6 +1930,7 @@ function Assistant({
   onApprovals,
   pending,
 }: any) {
+  const resize = useAssistantResize();
   const [history, setHistory] = useState<any[]>([]),
     [prompt, setPrompt] = useState(""),
     [working, setWorking] = useState(false),
@@ -2033,7 +2056,13 @@ function Assistant({
     }
   }
   return (
-    <aside className="assistant-panel">
+    <aside
+      id="assistant-panel"
+      className="assistant-panel"
+      hidden={!open}
+      style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
+    >
+      {resize.handle}
       <div className="assistant-heading">
         <div className="assistant-symbol">
           <Sparkles size={20} />
@@ -2046,6 +2075,15 @@ function Assistant({
           </small>
         </div>
         <Badge>AI</Badge>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Свернуть панель чата"
+          title="Свернуть чат"
+          onClick={onCollapse}
+        >
+          <PanelRightClose size={18} />
+        </button>
       </div>
       <div className="assistant-context">
         <FolderOpen size={13} />

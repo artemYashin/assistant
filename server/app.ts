@@ -42,6 +42,9 @@ const settingsSchema = z
     azureAutoImport: z.boolean().default(false),
     azureTypes: z.array(text.min(1)).max(50).default([]),
     azureStates: z.array(text.min(1)).max(100).default([]),
+    typeColors: z
+      .record(z.string().min(1).max(200), z.string().regex(/^#[0-9a-fA-F]{6}$/))
+      .default({}),
     statusColors: z
       .record(z.string().min(1).max(200), z.string().regex(/^#[0-9a-fA-F]{6}$/))
       .default({}),
@@ -423,12 +426,13 @@ export function createApp(
         .all(store.source()),
     ),
   );
-  app.get("/api/developers", (_req, res) =>
-    res.json(store.get("developers:" + store.source(), [])),
-  );
-  app.post("/api/developers/refresh", async (_req, res) =>
-    res.json(await connectors.developers()),
-  );
+  app.post("/api/developers/search", async (req, res) => {
+    const { query } = z
+      .object({ query: z.string().trim().min(2).max(100) })
+      .strict()
+      .parse(req.body);
+    res.json(await connectors.developers(query));
+  });
   app.delete("/api/tickets/:id", (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id),
       source = store.source();
@@ -461,7 +465,7 @@ export function createApp(
       .get<{ id: string; name: string }[]>("developers:" + source, [])
       .find((d) => d.id === developerId);
     if (developerId && !developer)
-      throw new AppError(400, "Загрузите список разработчиков из Azure");
+      throw new AppError(400, "Найдите разработчика через поиск Azure");
     store.db
       .prepare(
         "INSERT INTO ticket_local(source,id,developer_id,developer_name) VALUES (?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET developer_id=excluded.developer_id,developer_name=excluded.developer_name",

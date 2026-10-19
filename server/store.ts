@@ -47,6 +47,7 @@ export const defaults = {
   azureTypes: [] as string[],
   azureStates: [] as string[],
   statusColors: {} as Record<string, string>,
+  typeColors: {} as Record<string, string>,
   syncSeconds: 600,
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
@@ -126,6 +127,16 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN repository TEXT NOT NULL DEFAULT ''",
       );
+    for (const column of ["description", "ticket_error"]) {
+      if (
+        !(
+          this.db.prepare("PRAGMA table_info(pull_requests)").all() as any[]
+        ).some((c) => c.name === column)
+      )
+        this.db.exec(
+          `ALTER TABLE pull_requests ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`,
+        );
+    }
     if (!this.get("migration.manualReviews", false)) {
       this.db
         .prepare(

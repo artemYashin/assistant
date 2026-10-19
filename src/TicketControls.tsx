@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "./api.js";
 export function StatusBadge({
   state,
   colors = {},
+  kind = "state",
 }: {
+  kind?: "state" | "type";
   state: string;
   colors?: Record<string, string>;
 }) {
   const color = colors[state];
   return (
     <span
-      className="ticket-state-badge"
+      className={`ticket-${kind}-badge`}
       style={
         color
           ? { color, background: color + "18", borderColor: color }
@@ -21,83 +23,43 @@ export function StatusBadge({
     </span>
   );
 }
-export function StatusColorsEditor({ form, set }: any) {
-  const [name, setName] = useState("");
-  const colors = form.statusColors || {};
-  return (
-    <section className="stack import-settings">
-      <h3>Цвета статусов</h3>
-      <p className="muted">
-        Точные названия статусов Azure. Цвета сохраняются только в Orbit.
-      </p>
-      {Object.entries(colors).map(([state, color]) => (
-        <div className="status-color-row" key={state}>
-          <span>{state}</span>
-          <input
-            type="color"
-            aria-label={`Цвет ${state}`}
-            value={String(color)}
-            onChange={(e) =>
-              set("statusColors", { ...colors, [state]: e.target.value })
-            }
-          />
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => {
-              const next = { ...colors };
-              delete next[state];
-              set("statusColors", next);
-            }}
-          >
-            Сбросить
-          </button>
-        </div>
-      ))}
-      <div className="inline-form">
-        <input
-          aria-label="Статус для цвета"
-          placeholder="Например, Ready for Testing"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={200}
-        />
-        <button
-          type="button"
-          className="secondary"
-          disabled={!name.trim()}
-          onClick={() => {
-            set("statusColors", { ...colors, [name.trim()]: "#466540" });
-            setName("");
-          }}
-        >
-          Добавить цвет
-        </button>
-      </div>
-      <small>Нажмите «Сохранить настройки», чтобы применить цвета.</small>
-    </section>
-  );
-}
 export function LocalDeveloper({ ticket, onChange }: any) {
-  const [people, setPeople] = useState<any[]>([]),
+  const [query, setQuery] = useState(""),
+    [people, setPeople] = useState<any[]>([]),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    api("/developers")
-      .then((v) => {
-        if (active) setPeople(v);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [ticket.source]);
-  async function act(fn: () => Promise<void>) {
+    [error, setError] = useState(""),
+    [searched, setSearched] = useState(false),
+    [truncated, setTruncated] = useState(false);
+  const generation = useRef(0);
+  async function search() {
+    const current = ++generation.current;
+    setBusy(true);
+    setError("");
+    setPeople([]);
+    setSearched(false);
+    try {
+      const result = await api("/developers/search", "POST", {
+        query: query.trim(),
+      });
+      if (current !== generation.current) return;
+      setPeople(result.users);
+      setTruncated(result.truncated);
+      setSearched(true);
+    } catch (e: any) {
+      if (current === generation.current) setError(e.message);
+    } finally {
+      if (current === generation.current) setBusy(false);
+    }
+  }
+  async function assign(developerId: string) {
     setBusy(true);
     setError("");
     try {
-      await fn();
+      await api(`/tickets/${ticket.id}/developer`, "PUT", { developerId });
+      setPeople([]);
+      setQuery("");
+      setSearched(false);
+      onChange();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -107,42 +69,74 @@ export function LocalDeveloper({ ticket, onChange }: any) {
   return (
     <div className="local-developer">
       <small>Локально поручено</small>
-      <select
-        aria-label={`Локальный разработчик #${ticket.id}`}
+      <strong>{ticket.developer_name || "Не назначен"}</strong>
+      {ticket.developer_id && (
+        <button
+          type="button"
+          className="text-button"
+          disabled={busy}
+          onClick={() => void assign("")}
+        >
+          Снять поручение
+        </button>
+      )}
+      <input
+        aria-label={`Поиск разработчика #${ticket.id}`}
+        placeholder="Имя или email · от 2 символов"
+        value={query}
+        maxLength={100}
         disabled={busy}
-        value={ticket.developer_id || ""}
-        onChange={(e) =>
-          void act(async () => {
-            await api(`/tickets/${ticket.id}/developer`, "PUT", {
-              developerId: e.target.value,
-            });
-            onChange();
-          })
-        }
-      >
-        <option value="">Не назначен</option>
-        {ticket.developer_id &&
-          !people.some((p) => p.id === ticket.developer_id) && (
-            <option value={ticket.developer_id}>{ticket.developer_name}</option>
-          )}
-        {people.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+        onChange={(e) => {
+          generation.current++;
+          setQuery(e.target.value);
+          setPeople([]);
+          setSearched(false);
+          setError("");
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && query.trim().length >= 2 && !busy) {
+            e.preventDefault();
+            void search();
+          }
+        }}
+      />
       <button
         type="button"
         className="text-button"
-        disabled={busy}
-        onClick={() =>
-          void act(async () =>
-            setPeople(await api("/developers/refresh", "POST", {})),
-          )
-        }
+        disabled={busy || query.trim().length < 2}
+        onClick={() => void search()}
       >
-        {busy ? "Загрузка…" : "Загрузить участников Azure"}
+        {busy ? "Загрузка…" : "Найти в Azure"}
       </button>
+      <small>
+        Поиск по организации/коллекции. Назначение только локальное.
+      </small>
+      {!!people.length && (
+        <ul className="developer-results">
+          {people.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void assign(p.id)}
+              >
+                <span>{p.name}</span>
+                {p.email && <small>{p.email}</small>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {searched && !people.length && (
+        <small role="status">
+          Никого не найдено. Попробуйте полное имя или email.
+        </small>
+      )}
+      {searched && truncated && (
+        <small role="status">
+          Показаны первые 20 совпадений. Уточните запрос.
+        </small>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}

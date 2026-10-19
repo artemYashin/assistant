@@ -11,10 +11,14 @@ function text(value: any) {
   return textarea.value;
 }
 export function TicketCard({ reference }: { reference: string }) {
+  const [typeColors, setTypeColors] = useState<Record<string, string>>({});
   const [colors, setColors] = useState<Record<string, string>>({});
   useEffect(() => {
     api("/settings")
-      .then((s) => setColors(s.statusColors || {}))
+      .then((s) => {
+        setColors(s.statusColors || {});
+        setTypeColors(s.typeColors || {});
+      })
       .catch(() => {});
   }, []);
   const [card, setCard] = useState<any>(null),
@@ -61,9 +65,11 @@ export function TicketCard({ reference }: { reference: string }) {
       </header>
       <div className="ticket-card-body">
         <div className="ticket-badges">
-          <span className="ticket-type-badge" aria-label="Тип тикета">
-            {f["System.WorkItemType"] || "Тип не указан"}
-          </span>
+          <StatusBadge
+            state={f["System.WorkItemType"] || "Тип не указан"}
+            colors={typeColors}
+            kind="type"
+          />
           <StatusBadge
             state={f["System.State"] || "Статус не указан"}
             colors={colors}

@@ -54,3 +54,31 @@ Markdown чата: сообщения пользователя и ассисте
 PR используют Azure Project только из общих настроек: поле убрано из формы и POST-схемы, сервер подставляет настроенный проект. Старое подключение к другому проекту блокируется до повторного сохранения репозитория; история ревью остаётся. Тест проверяет наследование проекта, смену подключения и пустую настройку. 62 теста и production-сборка прошли.
 
 Compose явно задаёт PORT=43871, не полагаясь на ENV образа. Проверена результирующая JSON-конфигурация: PORT, опубликованный порт, target и healthcheck используют 43871. Для обновления существующего контейнера: `docker compose up --build --force-recreate -d orbit`.
+
+Размер чата: перетаскиваемая левая граница, клавиатурные стрелки/Home/End и двойной щелчок для сброса; ширина ограничена размером окна. Кнопка в шапке сворачивает панель, верхняя кнопка разворачивает. Состояние и ширина хранятся в localStorage; скрытие не размонтирует чат и сохраняет черновик. Chromium с подменой API: проверены drag, клавиатура, сохранение черновика, ширины и свёрнутого состояния после reload. Production-сборка прошла.
+
+Локальный разработчик: массовая загрузка команд заменена поиском Azure Identities General по явному запросу (имя/email), минимум 2 символа, без wildcard. Cloud endpoint vssps.dev.azure.com, custom server — URL коллекции. Результаты: до 20 активных людей, без групп, с email; UI не запрашивает каталог при загрузке или каждом символе. Проверены фильтр/кодирование, cloud host, лимит/усечение, сохранение предыдущих выборов, смена подключения во время запроса; локальное назначение не пишет Azure. 63 теста и сборка прошли. Chromium с mock API подтвердил отсутствие запросов до Enter и выбор разработчика. Реальный корпоративный Identity API требует проверки с PAT Identity Read.
+
+### Type/status colors and PR presentation (2026-10-19)
+
+- Added validated `typeColors` settings alongside existing `statusColors`; API tests cover rejecting invalid CSS colors and saving/reading both maps together.
+- Native color selectors and reset controls sit beside auto-import type/status checkboxes. Colors affect table and detail badges independently of import filters.
+- PR cards show author first, labeled context badges, and collapsed commit/repository identifiers.
+- `npm run build` passed; `npm test` passed (63 tests). Playwright with mocked APIs verified changing/resetting type colors without changing the import checkbox, mobile overflow, manual PR review action, and saved Markdown history. Desktop screenshots inspected. Live Azure integration was not exercised.
+
+### PR descriptions, referenced tickets, and review layout (2026-10-19)
+
+- Added backward-compatible description/error columns. PR sync fetches full descriptions when list text reaches Azure's 400-character truncation threshold.
+- Regression tests cover full descriptions, deduplication, malformed references, cross-project rejection, missing items, preserving local deletion, changed references, and independent import failures.
+- `npm test`: 65 passed. Build passed. Playwright with mocked APIs verified description/ticket accordions, review blocks/history, explicit review action, and mobile overflow; desktop screenshot inspected. Real Azure credentials were not used.
+
+### Sticky page header and chat alignment (2026-10-19)
+
+- Header now stays at the viewport top. Header height and assistant offset share one CSS variable (70px desktop, 60px mobile); assistant uses remaining dynamic viewport height.
+- Build passed. Playwright with mocked APIs checked header/chat coordinates at page top, mid-scroll and bottom at widths 1440 and 390, plus collapse/reopen while scrolled. Chat remained directly below the header and flush with the viewport bottom.
+
+### PR import is read-only in Azure (2026-10-19)
+
+- Inspected the PR sync → importPrTickets → saveTicket path: only Azure reads and local SQLite persistence.
+- Added a regression test recording every outbound request across two syncs. The only non-GET request is the documented read-only POST /wit/workitemsbatch with IDs/errorPolicy; no mutation endpoints or agent calls occur. The original Active state is retained locally, and an existing ticket is not imported twice.
+- `npm test`: 66 passed. Azure API semantics verified against Microsoft Get Work Items Batch documentation; no live Azure writes performed.

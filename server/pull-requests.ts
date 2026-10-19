@@ -1,3 +1,5 @@
+import { Connectors } from "./connectors.js";
+import { IntegrationsAuth } from "./auth.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
 import { Store, AppError, type Context } from "./store.js";
@@ -25,6 +27,19 @@ export function requiredReviewer(pr: any, id: string) {
         !r.isContainer,
     )
   );
+}
+export function prTicketIds(description: string): number[] {
+  return [
+    ...new Set(
+      [
+        ...description.matchAll(
+          /(?<![\p{L}\p{N}_&#])#([0-9]+)(?![\p{L}\p{N}_])/gu,
+        ),
+      ]
+        .map((m) => Number(m[1]))
+        .filter((id) => Number.isSafeInteger(id) && id > 0),
+    ),
+  ];
 }
 export class PullRequests {
   private working = false;
@@ -102,7 +117,31 @@ export class PullRequests {
       .prepare(
         `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) ORDER BY p.in_scope DESC,p.synced_at DESC LIMIT 300`,
       )
-      .all(context.client, context.client, context.project, context.project);
+      .all(context.client, context.client, context.project, context.project)
+      .map((row: any) => {
+        const m = this.monitors().find((m) => m.id === row.monitor)!;
+        const source = this.store.source({
+          ...this.store.settings(),
+          azureUrl: m.source,
+          azureProject: m.azure_project,
+        });
+        return {
+          ...row,
+          tickets: prTicketIds(row.description).map((id) => {
+            const ticket = this.store.db
+              .prepare(
+                "SELECT id,title,state,type FROM tickets WHERE source=? AND id=?",
+              )
+              .get(source, id);
+            const removed = !!this.store.db
+              .prepare(
+                "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
+              )
+              .get(source, id);
+            return ticket || { id, unavailable: true, removed };
+          }),
+        };
+      });
   }
   private credentials(m: Monitor) {
     if (this.store.settings().azureProject !== m.azure_project)
@@ -197,6 +236,22 @@ export class PullRequests {
           );
           if (page.value.length < 100) break;
         }
+        // Azure list responses truncate descriptions to 400 characters.
+        for (const p of found) {
+          if (
+            typeof p.description === "string" &&
+            p.description.length >= 400
+          ) {
+            const detail = await this.get(
+              m,
+              `git/repositories/${enc(p.repository.id)}/pullrequests/${p.pullRequestId}`,
+              credentials,
+            );
+            if (detail.pullRequestId !== p.pullRequestId)
+              throw new AppError(502, "Azure вернул неверное описание PR");
+            p.description = detail.description || "";
+          }
+        }
         const currentMonitor = this.monitors().find((x) => x.id === m.id);
         if (
           !currentMonitor?.enabled ||
@@ -217,7 +272,7 @@ export class PullRequests {
             if (!repo || !Number.isSafeInteger(p.pullRequestId)) continue;
             this.store.db
               .prepare(
-                "INSERT INTO pull_requests VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,author=excluded.author,head=excluded.head,target=excluded.target,draft=excluded.draft,in_scope=1,synced_at=excluded.synced_at",
+                "INSERT INTO pull_requests (monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,author=excluded.author,head=excluded.head,target=excluded.target,draft=excluded.draft,description=excluded.description,in_scope=1,synced_at=excluded.synced_at",
               )
               .run(
                 m.id,
@@ -231,12 +286,32 @@ export class PullRequests {
                 Number(!!p.isDraft),
                 1,
                 now(),
+                p.description || "",
               );
           }
           this.store.db
             .prepare("UPDATE pr_projects SET error=NULL,synced_at=? WHERE id=?")
             .run(now(), m.id);
         })();
+        let ticketError = "";
+        try {
+          await new Connectors(
+            this.store,
+            new IntegrationsAuth(this.store),
+          ).importPrTickets(
+            found.flatMap((p) => prTicketIds(p.description || "")),
+          );
+        } catch (e) {
+          ticketError =
+            e instanceof AppError
+              ? e.message
+              : "Не удалось импортировать тикеты из PR. Проверьте Work Items: Read и подключение Azure.";
+        }
+        this.store.db
+          .prepare(
+            "UPDATE pull_requests SET ticket_error=? WHERE monitor=? AND in_scope=1",
+          )
+          .run(ticketError, m.id);
       } catch (e) {
         this.store.db
           .prepare("UPDATE pr_projects SET error=? WHERE id=?")

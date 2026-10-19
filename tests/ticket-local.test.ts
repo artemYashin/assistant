@@ -48,15 +48,15 @@ test("local assignment and removal never write Azure and survive import", async 
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
     const url = new URL(raw);
     calls.push(`${init.method || "GET"} ${url.pathname}`);
-    if (url.pathname.endsWith("/teams"))
-      return Response.json({ value: [{ id: "team" }] });
-    if (url.pathname.endsWith("/members"))
+    if (url.pathname.endsWith("/identities")) {
+      assert.equal(url.searchParams.get("filterValue"), "Dev");
       return Response.json({
         value: [
-          { identity: { id: "developer", displayName: "Dev" } },
-          { identity: { id: "group", isContainer: true } },
+          { id: "developer", providerDisplayName: "Dev" },
+          { id: "group", isContainer: true },
         ],
       });
+    }
     if (url.pathname.endsWith("/wiql"))
       return Response.json({ workItems: [{ id: 42 }] });
     if (url.pathname.endsWith("workitemsbatch"))
@@ -65,9 +65,9 @@ test("local assignment and removal never write Azure and survive import", async 
   });
   await connectors.trackTicket(42);
   await request(app)
-    .post("/api/developers/refresh")
+    .post("/api/developers/search")
     .set(auth)
-    .send({})
+    .send({ query: "Dev" })
     .expect(200);
   const before = calls.length;
   await request(app)
@@ -109,4 +109,18 @@ test("local assignment and removal never write Azure and survive import", async 
     .send({ ...settings, statusColors: { Active: "#123456" } })
     .expect(200);
   assert.deepEqual(store.settings().statusColors, { Active: "#123456" });
+  await request(app)
+    .put("/api/settings")
+    .set(auth)
+    .send({ ...store.settings(), typeColors: { Bug: "red; bad" } })
+    .expect(400);
+  await request(app)
+    .put("/api/settings")
+    .set(auth)
+    .send({ ...store.settings(), typeColors: { Bug: "#ab1234" } })
+    .expect(200);
+  const saved = (await request(app).get("/api/settings").set(auth).expect(200))
+    .body;
+  assert.deepEqual(saved.typeColors, { Bug: "#ab1234" });
+  assert.deepEqual(saved.statusColors, { Active: "#123456" });
 });

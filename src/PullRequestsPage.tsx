@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
+import { StatusBadge } from "./TicketControls.js";
 import { ProjectRepository } from "./ProjectRepository.js";
 const statuses: Record<string, string> = {
   queued: "В очереди по вашему запросу",
@@ -32,12 +33,16 @@ function ReviewHistory({ pr }: any) {
     };
   }, [open, pr.review_status]);
   return (
-    <details onToggle={(e) => setOpen(e.currentTarget.open)}>
+    <details
+      className="pr-history"
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
       <summary>Сохранённые ревью всех версий</summary>
       {error && <p className="error">{error}</p>}
       {!items.length && <p className="muted">Ревью ещё не запускалось.</p>}
       {items.map((r) => (
-        <section className="pr-monitor" key={r.id}>
+        <section className="pr-review-result" key={r.id}>
+          <h3>Ревью версии {r.head.slice(0, 10)}</h3>
           <small>
             {new Date(r.created_at).toLocaleString("ru-RU")} ·{" "}
             {r.head.slice(0, 10)} → {r.target.slice(0, 10)} ·{" "}
@@ -147,7 +152,8 @@ export function PullRequestsPage({ context, settings }: any) {
             key={`${p.monitor}:${p.repo}:${p.number}`}
           >
             <div className="section-heading">
-              <h2>
+              <h2 className="pr-title">
+                <span className="pr-kind-badge">PR</span>
                 <a href={p.url} target="_blank" rel="noreferrer">
                   #{p.number} · {p.title}
                 </a>
@@ -158,13 +164,106 @@ export function PullRequestsPage({ context, settings }: any) {
                   : statuses[p.review_status] || "Ревью не запускалось"}
               </span>
             </div>
-            <p className="muted">
-              {p.client} / {p.project} · {p.azure_project} · repo {p.repo} ·{" "}
-              {p.author}
-            </p>
-            <small>
-              {p.head.slice(0, 10)} → {p.target.slice(0, 10)}
-            </small>
+            <div className="pr-author">
+              <span className="pr-avatar" aria-hidden="true">
+                {(p.author || "?").slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <small>Автор</small>
+                <strong>{p.author || "Не указан"}</strong>
+              </div>
+            </div>
+            <div className="pr-context-badges">
+              <span className="pr-context-badge">
+                <small>Заказчик</small>
+                {p.client || "—"}
+              </span>
+              <span className="pr-context-badge">
+                <small>Проект Orbit</small>
+                {p.project || "—"}
+              </span>
+              <span className="pr-context-badge">
+                <small>Azure Project</small>
+                {p.azure_project}
+              </span>
+              {p.in_scope && p.repository && (
+                <span className="pr-context-badge">
+                  <small>Репозиторий</small>
+                  {p.repository}
+                </span>
+              )}
+            </div>
+            <details className="pr-content-section">
+              <summary>Описание pull request</summary>
+              {p.description ? (
+                <ChatMarkdown text={p.description} />
+              ) : (
+                <p className="muted">Описание не указано.</p>
+              )}
+            </details>
+            <details className="pr-content-section">
+              <summary>Тикеты из описания · {p.tickets?.length || 0}</summary>
+              <p className="muted">
+                Упоминание в PR не означает закрытие тикета. Здесь показан
+                последний синхронизированный статус Azure.
+              </p>
+              {p.ticket_error && <p className="error">{p.ticket_error}</p>}
+              {!p.tickets?.length && (
+                <p className="muted">Номеров вида #123456 в описании нет.</p>
+              )}
+              <div className="pr-ticket-list">
+                {(p.tickets || []).map((t: any) => (
+                  <div className="pr-ticket-row" key={t.id}>
+                    <strong>
+                      #{t.id}
+                      {t.title ? ` · ${t.title}` : ""}
+                    </strong>
+                    {t.unavailable ? (
+                      <span className="muted">
+                        {t.removed
+                          ? "Удалён из локального списка"
+                          : "Не загружен: проверьте доступ, существование и проект тикета"}
+                      </span>
+                    ) : (
+                      <div className="pr-context-badges">
+                        <StatusBadge
+                          state={t.type}
+                          kind="type"
+                          colors={settings?.typeColors}
+                        />
+                        <StatusBadge
+                          state={t.state}
+                          colors={settings?.statusColors}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </details>
+            <details className="pr-technical">
+              <summary>Версия изменений и ID репозитория</summary>
+              <dl>
+                <div>
+                  <dt>Source commit</dt>
+                  <dd>
+                    <code>{p.head}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Target commit</dt>
+                  <dd>
+                    <code>{p.target}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>ID репозитория</dt>
+                  <dd>
+                    <code>{p.repo}</code>
+                  </dd>
+                </div>
+              </dl>
+            </details>
             {!p.in_scope && (
               <p className="muted">
                 PR вне текущей выборки. Сохранённые результаты доступны ниже.
@@ -200,7 +299,22 @@ export function PullRequestsPage({ context, settings }: any) {
                 {JSON.parse(p.coverage).notes.join("; ")}
               </p>
             )}
-            {p.summary && <ChatMarkdown text={p.summary} />}
+            {p.summary && (
+              <section className="pr-review-result">
+                <div className="section-heading">
+                  <h3>Результат ревью</h3>
+                  <span className="badge">
+                    {statuses[p.review_status] || "Сохранено"}
+                  </span>
+                </div>
+                {p.finished_at && (
+                  <small>
+                    {new Date(p.finished_at).toLocaleString("ru-RU")}
+                  </small>
+                )}
+                <ChatMarkdown text={p.summary} />
+              </section>
+            )}
             <ReviewHistory pr={p} />
           </article>
         ))}

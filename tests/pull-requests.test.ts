@@ -50,7 +50,7 @@ function fixture(t: any) {
   });
   return { store, service, calls, agent, dir };
 }
-function mock(t: any, items: any[], extra?: (url: URL) => any) {
+function mock(t: any, items: any[], extra?: (url: URL, init: any) => any) {
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
     const url = new URL(String(raw));
     assert.equal(url.origin, "https://ado.test");
@@ -58,7 +58,7 @@ function mock(t: any, items: any[], extra?: (url: URL) => any) {
       init.headers.Authorization,
       `Basic ${Buffer.from(":test-pat").toString("base64")}`,
     );
-    let data: any = extra?.(url);
+    let data: any = extra?.(url, init);
     if (data instanceof Response) return data;
     if (data === undefined) {
       if (url.pathname.endsWith("connectionData"))
@@ -327,5 +327,133 @@ test("PR project comes from shared settings and old connection cannot keep using
         enabled: true,
       }),
     /общих настройках/,
+  );
+});
+
+test("PR descriptions are complete, references deduplicated and valid tickets imported locally", async (t) => {
+  const { store, service } = fixture(t);
+  const description =
+    "Text ".repeat(90) +
+    " #123456 #123456 #765432 #999999 #888888 &#123; ##456 #0";
+  let batches = 0;
+  const item = pr();
+  store.db
+    .prepare("INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1)")
+    .run(store.source(), 888888);
+  mock(t, [{ ...item, description: description.slice(0, 400) }], (url) => {
+    if (/\/pullrequests\/1$/.test(url.pathname))
+      return { ...item, description };
+    if (url.pathname.endsWith("/workitemsbatch")) {
+      batches++;
+      return {
+        value: [
+          {
+            id: 123456,
+            fields: {
+              "System.TeamProject": "Project One",
+              "System.Title": "Fix login",
+              "System.State": "Closed",
+              "System.WorkItemType": "Bug",
+            },
+          },
+          {
+            id: 765432,
+            fields: {
+              "System.TeamProject": "Other",
+              "System.Title": "Wrong project",
+            },
+          },
+          { id: 888888, fields: { "System.TeamProject": "Project One" } },
+        ],
+      };
+    }
+  });
+  await service.sync();
+  let saved: any = service.list(context)[0];
+  assert.equal(saved.description, description);
+  assert.deepEqual(
+    saved.tickets.map((t: any) => t.id),
+    [123456, 765432, 999999, 888888],
+  );
+  assert.equal(saved.tickets[0].title, "Fix login");
+  assert.equal(saved.tickets[0].state, "Closed");
+  assert.equal(saved.tickets[1].unavailable, true);
+  assert.equal(saved.tickets[3].removed, true);
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
+    1,
+  );
+  assert.equal(batches, 1);
+  assert.equal(saved.ticket_error, "");
+  // Removing references updates the saved association without deleting tracked work.
+  mock(t, [{ ...item, description: "Updated without references" }]);
+  await service.sync();
+  saved = service.list(context)[0];
+  assert.deepEqual(saved.tickets, []);
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
+    1,
+  );
+});
+
+test("ticket import failure preserves PR and exposes an independent error", async (t) => {
+  const { service } = fixture(t);
+  mock(t, [{ ...pr(), description: "Fix #42" }], (url) =>
+    url.pathname.endsWith("/workitemsbatch")
+      ? new Response("Forbidden", { status: 403 })
+      : undefined,
+  );
+  await service.sync();
+  const saved: any = service.list(context)[0];
+  assert.equal(saved.description, "Fix #42");
+  assert.ok(saved.ticket_error);
+  assert.equal(saved.tickets[0].unavailable, true);
+  assert.equal(service.monitors().length, 1);
+});
+
+test("PR ticket import only reads Azure and writes the local tracker", async (t) => {
+  const { store, service, calls } = fixture(t);
+  const requests: { method: string; path: string; body: any }[] = [];
+  mock(t, [{ ...pr(), description: "Fix #42" }], (url, init) => {
+    requests.push({
+      method: init.method || "GET",
+      path: url.pathname,
+      body: init.body ? JSON.parse(init.body) : null,
+    });
+    if (url.pathname.endsWith("/wit/workitemsbatch"))
+      return {
+        value: [
+          {
+            id: 42,
+            fields: {
+              "System.TeamProject": "Project One",
+              "System.Title": "Existing Azure ticket",
+              "System.State": "Active",
+              "System.WorkItemType": "Bug",
+            },
+          },
+        ],
+      };
+  });
+  await service.sync();
+  await service.sync();
+  assert.deepEqual(
+    requests.filter((r) => r.method !== "GET"),
+    [
+      {
+        method: "POST",
+        path: "/tfs/Collection/Project%20One/_apis/wit/workitemsbatch",
+        body: { ids: [42], errorPolicy: "Omit" },
+      },
+    ],
+  );
+  const ticket = store.db
+    .prepare("SELECT title,state FROM tickets WHERE source=? AND id=42")
+    .get(store.source());
+  assert.deepEqual(ticket, { title: "Existing Azure ticket", state: "Active" });
+  assert.equal(
+    calls.length,
+    0,
+    "Import must not invoke the agent or its mutation tools",
   );
 });

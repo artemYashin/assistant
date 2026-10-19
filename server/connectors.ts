@@ -331,58 +331,82 @@ export class Connectors {
       throw e;
     }
   }
-  async developers() {
+  async developers(query: string) {
+    query = query.trim();
+    if (
+      query.length < 2 ||
+      query.length > 100 ||
+      !/[\p{L}\p{N}]{2}/u.test(query) ||
+      /[*?]/.test(query)
+    )
+      throw new AppError(
+        400,
+        "Введите минимум два символа имени или email без * и ?",
+      );
     const s = this.store.settings(),
       source = this.store.source(s),
       pat = this.store.secret("azure.pat");
     if (!pat || !s.azureProject)
       throw new AppError(400, "Настройте Azure DevOps");
-    const base = `${azureBase(s.azureUrl)}/_apis/projects/${encodeURIComponent(s.azureProject)}/teams`;
-    const list = async (path: string) => {
-      const values: any[] = [];
-      for (let skip = 0; skip < 10000; skip += 100) {
-        const page = await requestJson(
-          `${path}?$top=100&$skip=${skip}&api-version=${encodeURIComponent(s.azureVersion)}`,
-          {
-            headers: {
-              Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
-            },
-          },
-          "Azure project members",
+    let base = azureBase(s.azureUrl);
+    const url = new URL(base);
+    if (url.hostname === "dev.azure.com") {
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (parts.length !== 1)
+        throw new AppError(
+          400,
+          "Для Azure Services укажите URL организации без проекта",
         );
-        if (!Array.isArray(page.value))
-          throw new AppError(502, "Azure вернул неверный список участников");
-        values.push(...page.value);
-        if (page.value.length < 100) return values;
-      }
-      throw new AppError(
-        502,
-        "Слишком много участников/команд; список не сохранён",
-      );
-    };
-    const users = new Map<string, { id: string; name: string }>();
-    for (const team of await list(base)) {
-      for (const member of await list(
-        `${base}/${encodeURIComponent(team.id)}/members`,
-      )) {
-        const user = member.identity;
-        if (user?.id && !user.isContainer)
-          users.set(user.id, {
-            id: user.id,
-            name: user.displayName || user.uniqueName || user.id,
-          });
-      }
+      base = `https://vssps.dev.azure.com/${parts[0]}`;
+    } else if (/^[a-z0-9-]+\.visualstudio\.com$/i.test(url.hostname)) {
+      base = `https://vssps.dev.azure.com/${url.hostname.split(".")[0]}`;
     }
-    const result = [...users.values()].sort((a, b) =>
-      a.name.localeCompare(b.name),
+    const params = new URLSearchParams({
+      searchFilter: "General",
+      filterValue: query,
+      queryMembership: "None",
+      "api-version": s.azureVersion,
+    });
+    const response = await requestJson(
+      `${base}/_apis/identities?${params}`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+        },
+      },
+      "Azure поиск пользователей (PAT: Identity Read)",
     );
-    if (source !== this.store.source())
-      throw new AppError(
-        409,
-        "Подключение изменилось; загрузите участников заново",
-      );
-    this.store.set("developers:" + source, result);
-    return result;
+    if (!Array.isArray(response.value))
+      throw new AppError(502, "Azure вернул неверный список пользователей");
+    const matches = response.value.filter(
+      (u: any) => u.id && !u.isContainer && u.isActive !== false,
+    );
+    const users = matches.slice(0, 20).map((u: any) => ({
+      id: String(u.id),
+      name: String(
+        u.customDisplayName ||
+          u.providerDisplayName ||
+          u.properties?.Account?.$value ||
+          u.id,
+      ),
+      email: String(
+        u.properties?.Mail?.$value || u.properties?.Account?.$value || "",
+      ),
+    }));
+    if (
+      source !== this.store.source() ||
+      pat !== this.store.secret("azure.pat")
+    )
+      throw new AppError(409, "Подключение изменилось; повторите поиск");
+    const old = this.store.get<{ id: string; name: string }[]>(
+      "developers:" + source,
+      [],
+    );
+    const merged = new Map<string, { id: string; name: string }>();
+    for (const user of [...users, ...old])
+      if (!merged.has(user.id)) merged.set(user.id, user);
+    this.store.set("developers:" + source, [...merged.values()].slice(0, 1000));
+    return { users, truncated: matches.length > 20 };
   }
   async ticketOptions() {
     const s = this.store.settings(),
@@ -581,6 +605,53 @@ export class Connectors {
       ? raw
       : "application/octet-stream";
     return { body, type, name: attachment.name };
+  }
+  // Read-only Azure batch API (POST is its read protocol); persistence is local SQLite only.
+  async importPrTickets(ids: number[]) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const missing = [...new Set(ids)].filter(
+      (id) =>
+        !this.store.db
+          .prepare(
+            "SELECT 1 FROM tickets WHERE source=? AND id=? UNION SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
+          )
+          .get(this.store.source(s), id, this.store.source(s), id),
+    );
+    if (missing.length > 500)
+      throw new AppError(
+        400,
+        "В описаниях PR более 500 новых тикетов: сузьте выборку PR.",
+      );
+    for (let i = 0; i < missing.length; i += 200) {
+      const batch = missing.slice(i, i + 200);
+      const result = await this.azure(
+        "workitemsbatch",
+        {
+          method: "POST",
+          body: JSON.stringify({ ids: batch, errorPolicy: "Omit" }),
+        },
+        s,
+        pat,
+      );
+      if (
+        this.store.source() !== this.store.source(s) ||
+        this.store.secret("azure.pat") !== pat
+      )
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось во время импорта",
+        );
+      if (!Array.isArray(result.value))
+        throw new AppError(502, "Azure вернул неверный список тикетов");
+      for (const item of result.value) {
+        if (
+          batch.includes(item.id) &&
+          item.fields?.["System.TeamProject"] === s.azureProject
+        )
+          this.saveTicket(item, s);
+      }
+    }
   }
   async trackTicket(id: number) {
     const s = this.store.settings();
