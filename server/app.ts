@@ -525,7 +525,6 @@ export function createApp(
       .object({
         client: text.min(1),
         project: text.min(1),
-        azure_project: text.min(1),
         repository: text.min(1),
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),

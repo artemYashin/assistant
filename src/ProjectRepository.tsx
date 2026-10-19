@@ -7,15 +7,13 @@ export function ProjectRepository({
   context: { client: string; project: string };
   onSaved?: () => void;
 }) {
-  const [project, setProject] = useState(""),
-    [repo, setRepo] = useState(""),
+  const [repo, setRepo] = useState(""),
     [all, setAll] = useState(false),
     [enabled, setEnabled] = useState(true),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   useEffect(() => {
     let live = true;
-    setProject("");
     setRepo("");
     setMessage("");
     api("/pr/projects")
@@ -32,7 +30,6 @@ export function ProjectRepository({
             (m) => m.client === context.client && m.project === context.project,
           );
         if (m) {
-          setProject(m.azure_project);
           setRepo(m.repository || "");
           setAll(m.mode === "all");
           setEnabled(!!m.enabled);
@@ -61,7 +58,6 @@ export function ProjectRepository({
         try {
           await api("/pr/projects", "POST", {
             ...context,
-            azure_project: project.trim(),
             repository: repo.trim(),
             mode: all ? "all" : "required",
             enabled,
@@ -80,32 +76,20 @@ export function ProjectRepository({
       <h3>
         Git-репозиторий · {context.client} / {context.project}
       </h3>
-      <div className="form-grid">
-        <label>
-          Azure DevOps Project
-          <input
-            required
-            value={project}
-            onChange={(e) => setProject(e.target.value)}
-            placeholder="Название проекта Azure"
-            maxLength={200}
-          />
-        </label>
-        <label>
-          Git-репозиторий
-          <input
-            required
-            value={repo}
-            onChange={(e) => setRepo(e.target.value)}
-            placeholder="Точное имя или ID репозитория"
-            maxLength={200}
-          />
-        </label>
-      </div>
+      <label>
+        Git-репозиторий
+        <input
+          required
+          value={repo}
+          onChange={(e) => setRepo(e.target.value)}
+          placeholder="Точное имя или ID репозитория"
+          maxLength={200}
+        />
+      </label>
       <p className="muted">
-        Организация/коллекция и PAT берутся из настроек Azure. Синхронизируются
-        только активные PR этого репозитория. Смена репозитория сохраняет старые
-        результаты ревью.
+        Проект Azure DevOps, организация/коллекция и PAT берутся из общих
+        настроек Azure. Синхронизируются только активные PR этого репозитория.
+        Смена репозитория сохраняет старые результаты ревью.
       </p>
       <label className="check-option">
         <input

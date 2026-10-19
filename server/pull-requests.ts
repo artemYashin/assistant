@@ -53,14 +53,17 @@ export class PullRequests {
   save(input: {
     client: string;
     project: string;
-    azure_project: string;
     repository: string;
     mode: "required" | "all";
     enabled: boolean;
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
-    const source = azureBase(this.store.settings().azureUrl);
+    const settings = this.store.settings();
+    const azureProject = settings.azureProject.trim();
+    if (!azureProject)
+      throw new AppError(400, "Укажите проект Azure DevOps в общих настройках");
+    const source = azureBase(settings.azureUrl);
     if (!input.repository.trim())
       throw new AppError(400, "Укажите Git-репозиторий");
     this.store.addContext(input);
@@ -68,7 +71,7 @@ export class PullRequests {
       .prepare(
         "UPDATE pr_projects SET enabled=0 WHERE client=? AND project=? AND (source!=? OR azure_project!=?)",
       )
-      .run(input.client, input.project, source, input.azure_project);
+      .run(input.client, input.project, source, azureProject);
     this.store.db
       .prepare(
         "UPDATE pull_requests SET in_scope=0 WHERE monitor IN (SELECT id FROM pr_projects WHERE client=? AND project=?)",
@@ -83,7 +86,7 @@ export class PullRequests {
         input.client,
         input.project,
         source,
-        input.azure_project,
+        azureProject,
         input.mode,
         Number(input.enabled),
         input.repository,
@@ -92,7 +95,7 @@ export class PullRequests {
       .prepare(
         "UPDATE pull_requests SET in_scope=0 WHERE monitor IN (SELECT id FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=?)",
       )
-      .run(input.client, input.project, source, input.azure_project);
+      .run(input.client, input.project, source, azureProject);
   }
   list(context: Context) {
     return this.store.db
@@ -102,6 +105,11 @@ export class PullRequests {
       .all(context.client, context.client, context.project, context.project);
   }
   private credentials(m: Monitor) {
+    if (this.store.settings().azureProject !== m.azure_project)
+      throw new AppError(
+        400,
+        "Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.",
+      );
     if (azureBase(this.store.settings().azureUrl) !== m.source)
       throw new AppError(
         400,

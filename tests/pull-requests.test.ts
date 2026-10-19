@@ -26,7 +26,7 @@ function fixture(t: any) {
   store.set("settings", {
     ...store.settings(),
     azureUrl: "https://ado.test/tfs/Collection",
-    azureProject: "Default",
+    azureProject: "Project One",
   });
   store.setSecret("azure.pat", "test-pat");
   store.setSecret("github.token", "test-token");
@@ -44,7 +44,6 @@ function fixture(t: any) {
   const service = new PullRequests(store, agent);
   service.save({
     ...context,
-    azure_project: "Project One",
     repository: "repo",
     mode: "required",
     enabled: true,
@@ -156,7 +155,6 @@ test("all mode includes optional and unassigned PRs; failed scans preserve prior
   const { store, service } = fixture(t);
   service.save({
     ...context,
-    azure_project: "Project One",
     repository: "repo",
     mode: "all",
     enabled: true,
@@ -300,5 +298,34 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
         .get(id) as any
     ).status,
     "queued",
+  );
+});
+
+test("PR project comes from shared settings and old connection cannot keep using another project", (t) => {
+  const { store, service } = fixture(t);
+  assert.equal(service.monitors()[0].azure_project, "Project One");
+  store.set("settings", {
+    ...store.settings(),
+    azureProject: "Another Project",
+  });
+  service.save({
+    ...context,
+    repository: "another-repo",
+    mode: "all",
+    enabled: true,
+  });
+  const active = service.monitors().filter((m) => m.enabled);
+  assert.equal(active.length, 1);
+  assert.equal(active[0].azure_project, "Another Project");
+  store.set("settings", { ...store.settings(), azureProject: "" });
+  assert.throws(
+    () =>
+      service.save({
+        ...context,
+        repository: "repo",
+        mode: "all",
+        enabled: true,
+      }),
+    /общих настройках/,
   );
 });
