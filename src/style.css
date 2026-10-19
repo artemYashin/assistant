@@ -2082,6 +2082,11 @@ summary {
 .pr-review > * + * {
   margin-top: 12px;
 }
+.pr-review {
+  box-shadow:
+    0 2px 6px #233a2008,
+    0 8px 24px #233a2010;
+}
 .pr-review .section-heading {
   flex-wrap: wrap;
   margin-bottom: 0;
