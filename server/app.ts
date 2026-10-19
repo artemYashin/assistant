@@ -1,7 +1,7 @@
 import { PrMerge } from "./pr-merge.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { MemoryProposals } from "./memory-proposals.js";
-import { ReviewQuestions } from "./review-questions.js";
+import { ReviewQuestions, reviewOptionsSchema } from "./review-questions.js";
 import express, {
   type Request,
   type Response,
@@ -738,11 +738,19 @@ export function createApp(
         monitor: text.min(1),
         repo: text.min(1),
         number: z.number().int().positive(),
+        options: reviewOptionsSchema.optional(),
+        restart: z.boolean().default(false),
       })
       .strict()
       .parse(req.body);
     res.json({
-      id: pullRequests.requestReview(input.monitor, input.repo, input.number),
+      id: pullRequests.requestReview(
+        input.monitor,
+        input.repo,
+        input.number,
+        input.options,
+        input.restart,
+      ),
     });
   });
   app.get("/api/pr/diff", async (req, res) => {

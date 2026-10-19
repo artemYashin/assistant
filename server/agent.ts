@@ -3,6 +3,7 @@ import { localDeveloperTools } from "./local-developers.js";
 import { memoryProposalTool } from "./memory-proposals.js";
 import {
   REVIEW_POLICY,
+  questionPolicy,
   reviewQuestionsSchema,
   type ReviewActions,
 } from "./review-questions.js";
@@ -535,7 +536,13 @@ export class Agent {
                 ? originalHook(input, invocation)
                 : { permissionDecision: "deny" },
           };
-          config.systemMessage = { mode: "replace", content: REVIEW_POLICY };
+          config.systemMessage = {
+            mode: "replace",
+            content:
+              REVIEW_POLICY +
+              "\n" +
+              questionPolicy(reviewActions?.questionFrequency),
+          };
         } else {
           const saveTool = config.tools?.find(
             (tool) => tool.name === "save_memory",

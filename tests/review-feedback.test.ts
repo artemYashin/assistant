@@ -120,6 +120,6 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
         .prepare("SELECT status FROM pr_reviews WHERE id=?")
         .get(review) as any
     ).status,
-    "cancelled",
+    "completed",
   );
 });

@@ -100,6 +100,26 @@ export class Store {
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
+    if (
+      !(this.db.prepare("PRAGMA table_info(pr_reviews)").all() as any[]).some(
+        (c) => c.name === "options",
+      )
+    )
+      this.db.exec(
+        "ALTER TABLE pr_reviews ADD COLUMN options TEXT NOT NULL DEFAULT '{}'",
+      );
+    if (!this.get("migration.reviewRuns", false)) {
+      this.db.transaction(() => {
+        this.db.exec(`
+          CREATE TABLE pr_review_runs (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL, summary TEXT, coverage TEXT, error TEXT, usage_id TEXT, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, options TEXT NOT NULL DEFAULT '{}');
+          INSERT INTO pr_review_runs SELECT id,monitor,repo,number,head,target,status,summary,coverage,error,usage_id,created_at,started_at,finished_at,options FROM pr_reviews ORDER BY rowid;
+          DROP TABLE pr_reviews;
+          ALTER TABLE pr_review_runs RENAME TO pr_reviews;
+          CREATE INDEX pr_review_version ON pr_reviews(monitor,repo,number,head,target);
+        `);
+        this.set("migration.reviewRuns", true);
+      })();
+    }
     this.db
       .prepare(
         "UPDATE pr_reviews SET status='interrupted', error='Перезапуск во время ревью. Автоповтор отключён.', finished_at=? WHERE status='running'",

@@ -63,6 +63,8 @@ function mock(t: any, items: any[], extra?: (url: URL, init: any) => any) {
     if (data === undefined) {
       if (url.pathname.endsWith("connectionData"))
         data = { authenticatedUser: { id: "me" } };
+      else if (/\/pullrequests\/\d+\/workitems$/i.test(url.pathname))
+        data = { value: [] };
       else if (url.pathname.endsWith("/pullrequests")) data = { value: items };
       else if (/\/pullrequests\/\d+$/.test(url.pathname))
         data = items.find(
@@ -665,4 +667,137 @@ test("manual ticket links survive sync, appear in reverse lookup and unlink with
   assert.equal((service.list(context)[0] as any).tickets.length, 0);
   assert.equal(service.linkedToTicket(42, store.source()).length, 0);
   assert.ok(store.db.prepare("SELECT 1 FROM tickets WHERE id=42").get());
+});
+
+test("review options persist and disable questions without fetching tickets", async (t) => {
+  const { store, service, calls } = fixture(t);
+  mock(t, [pr()], (url) => {
+    if (url.pathname.endsWith("/workitems"))
+      throw new Error("Must not load ticket context");
+  });
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const id = service.requestReview(monitor, "repo", 1, {
+    questionFrequency: "none",
+    readTickets: false,
+  });
+  const row = store.db
+    .prepare("SELECT options FROM pr_reviews WHERE id=?")
+    .get(id) as any;
+  assert.deepEqual(JSON.parse(row.options), {
+    reviewerComment: "",
+    questionFrequency: "none",
+    readTickets: false,
+  });
+  await service.reviewNext();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][3].askQuestions, undefined);
+  assert.equal(calls[0][3].questionFrequency, "none");
+});
+
+test("review receives requirements and every comment page before calling model", async (t) => {
+  const { service, calls } = fixture(t);
+  mock(t, [pr()], (url) => {
+    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname))
+      return { value: [{ id: "42" }] };
+    if (/\/workitems\/42$/.test(url.pathname))
+      return {
+        id: 42,
+        fields: {
+          "System.TeamProject": "Project One",
+          "System.Title": "Requirements",
+          "System.Description": "<p>Keep existing behaviour</p>",
+          "Microsoft.VSTS.Common.AcceptanceCriteria": "<p>Allow retries</p>",
+        },
+      };
+    if (url.pathname.endsWith("/workitems/42/comments"))
+      return url.searchParams.get("continuationToken")
+        ? { comments: [{ id: 2, text: "Second comment" }] }
+        : {
+            comments: [{ id: 1, text: "First comment" }],
+            continuationToken: "next",
+          };
+  });
+  await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1);
+  await service.reviewNext();
+  assert.equal(calls.length, 1);
+  assert.match(calls[0][0], /Keep existing behaviour/);
+  assert.match(calls[0][0], /Allow retries/);
+  assert.match(calls[0][0], /First comment/);
+  assert.match(calls[0][0], /Second comment/);
+  assert.equal(calls[0][3].questionFrequency, "medium");
+  assert.throws(() =>
+    calls[0][3].askQuestions(Array(4).fill({ question: "?", reason: "risk" })),
+  );
+});
+
+test("missing ticket comments stop review before spending model tokens", async (t) => {
+  const { store, service, calls } = fixture(t);
+  mock(t, [pr()], (url) => {
+    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname))
+      return { value: [{ id: "42" }] };
+    if (/\/workitems\/42$/.test(url.pathname))
+      return { id: 42, fields: { "System.TeamProject": "Project One" } };
+    if (url.pathname.endsWith("/workitems/42/comments"))
+      return new Response("Forbidden", { status: 403 });
+  });
+  await service.sync();
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1);
+  await service.reviewNext();
+  assert.equal(calls.length, 0);
+  const row = store.db
+    .prepare("SELECT status,error FROM pr_reviews WHERE id=?")
+    .get(id) as any;
+  assert.equal(row.status, "error");
+  assert.match(row.error, /Комментарии/);
+});
+
+test("ignoring questions completes review and explicit rerun preserves history", async (t) => {
+  const { ReviewQuestions } = await import("../server/review-questions.js");
+  const { store, service, calls } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const first = service.requestReview(monitor, "repo", 1, {
+    readTickets: false,
+  });
+  store.db
+    .prepare(
+      "UPDATE pr_reviews SET status='awaiting_answers',summary='Original report' WHERE id=?",
+    )
+    .run(first);
+  const questions = new ReviewQuestions(store);
+  questions.create(first, [
+    { question: "Expected behaviour?", reason: "Risk" },
+  ]);
+  const batch = questions.list()[0];
+  questions.dismiss(batch.id);
+  const saved = store.db
+    .prepare("SELECT * FROM pr_reviews WHERE id=?")
+    .get(first) as any;
+  assert.equal(saved.status, "completed");
+  assert.match(saved.summary, /Original report/);
+  assert.match(saved.summary, /без ответов/);
+  assert.equal(calls.length, 0);
+  assert.throws(() => questions.answer(batch.id, ["Yes"]));
+  assert.equal(service.requestReview(monitor, "repo", 1), first);
+  const second = service.requestReview(
+    monitor,
+    "repo",
+    1,
+    { readTickets: false, reviewerComment: "Focus on retries" },
+    true,
+  );
+  assert.notEqual(second, first);
+  assert.equal(service.requestReview(monitor, "repo", 1, {}, true), second);
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
+    2,
+  );
+  assert.equal(service.list(context)[0].review_id, second);
+  await service.reviewNext();
+  assert.equal(calls.length, 1);
+  assert.match(calls[0][0], /Focus on retries/);
+  assert.equal(questions.history(second).length, 0);
 });

@@ -3863,3 +3863,29 @@ summary > svg {
     justify-content: center;
   }
 }
+
+.pr-review-dialog form {
+  display: grid;
+  gap: 16px;
+}
+.pr-review-dialog form p {
+  margin: 0;
+}
+.pr-review-ticket-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.pr-review-ticket-option input {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+.pr-review-dialog .dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.pr-review-dialog .multi-select-panel {
+  position: static;
+}

@@ -80,7 +80,7 @@ export function prTools(
         const p = find(args);
         const review = store.db
           .prepare(
-            "SELECT id,status,summary,error FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND head=? AND target=?",
+            "SELECT id,status,summary,error FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND head=? AND target=? ORDER BY rowid DESC LIMIT 1",
           )
           .get(p.monitor, p.repo, p.number, p.head, p.target) as any;
         const content = String(

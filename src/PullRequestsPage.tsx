@@ -1,3 +1,4 @@
+import { PrReviewDialog } from "./PrReviewDialog.js";
 import { PrTicketLink } from "./PrTicketLink.js";
 import { PrHealth } from "./PrHealth.js";
 import { PrDiffDialog } from "./PrDiffDialog.js";
@@ -176,6 +177,7 @@ export function PullRequestsPage({ context, settings }: any) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
+  const [reviewing, setReviewing] = useState<any>(null);
   const [merging, setMerging] = useState<any>(null);
   const [viewingDiff, setViewingDiff] = useState<any>(null);
   const [draftFilter, setDraftFilter] = useState("all");
@@ -256,6 +258,16 @@ export function PullRequestsPage({ context, settings }: any) {
   }
   return (
     <>
+      {reviewing && (
+        <PrReviewDialog
+          pr={reviewing}
+          onClose={() => setReviewing(null)}
+          onStarted={() => {
+            setReviewing(null);
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
       {viewingDiff && (
         <PrDiffDialog pr={viewingDiff} onClose={() => setViewingDiff(null)} />
       )}
@@ -462,22 +474,11 @@ export function PullRequestsPage({ context, settings }: any) {
                   !p.in_scope ||
                   !p.enabled ||
                   !!p.draft ||
-                  [
-                    "queued",
-                    "running",
-                    "completed",
-                    "awaiting_answers",
-                  ].includes(p.review_status)
-                }
-                onClick={() =>
-                  void run(() =>
-                    api("/pr/review", "POST", {
-                      monitor: p.monitor,
-                      repo: p.repo,
-                      number: p.number,
-                    }),
+                  ["queued", "running", "awaiting_answers"].includes(
+                    p.review_status,
                   )
                 }
+                onClick={() => setReviewing(p)}
               >
                 {p.review_status === "completed" ? (
                   <Check size={17} aria-hidden="true" />
@@ -491,7 +492,7 @@ export function PullRequestsPage({ context, settings }: any) {
                   <Sparkles size={17} aria-hidden="true" />
                 )}
                 {p.review_status === "completed"
-                  ? "Текущая версия проверена"
+                  ? "Повторить ревью"
                   : p.review_status === "awaiting_answers"
                     ? "Ожидает ответов"
                     : p.review_status === "running"
