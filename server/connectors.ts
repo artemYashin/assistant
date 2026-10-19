@@ -297,10 +297,34 @@ export class Connectors {
   ) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
+    const reference = randomUUID();
+    let stage = "read_initial";
+    let reads = 0;
+    const log = (outcome: string, error?: unknown) =>
+      console.error(
+        "[ticket-state]",
+        JSON.stringify({
+          reference,
+          id,
+          stage,
+          outcome,
+          code: error instanceof AppError ? error.status : undefined,
+          message:
+            error instanceof AppError
+              ? error.message
+              : error
+                ? "Unexpected error"
+                : undefined,
+        }),
+      );
     try {
       const result = await changeTicketState(id, state, s.azureProject, {
-        read: () => this.azure(`workitems/${id}`, {}, s, pat),
+        read: () => {
+          stage = ++reads === 1 ? "read_initial" : "verify";
+          return this.azure(`workitems/${id}`, {}, s, pat);
+        },
         states: async (type) => {
+          stage = "load_states";
           const r = await this.azure(
             `workitemtypes/${encodeURIComponent(type)}/states`,
             {},
@@ -310,6 +334,7 @@ export class Connectors {
           return (r.value || []).map((x: any) => x.name);
         },
         beforeWrite: () => {
+          stage = "before_write";
           guard();
           if (this.store.source() !== this.store.source(s))
             throw new AppError(
@@ -317,20 +342,27 @@ export class Connectors {
               "Подключение Azure изменилось, запись отменена",
             );
         },
-        patch: (revision, target) =>
-          this.azure(
-            `workitems/${id}`,
-            {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json-patch+json" },
-              body: JSON.stringify([
-                { op: "test", path: "/rev", value: revision },
-                { op: "add", path: "/fields/System.State", value: target },
-              ]),
-            },
-            s,
-            pat,
-          ),
+        patch: async (revision, target) => {
+          stage = "patch";
+          try {
+            return await this.azure(
+              `workitems/${id}`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json-patch+json" },
+                body: JSON.stringify([
+                  { op: "test", path: "/rev", value: revision },
+                  { op: "add", path: "/fields/System.State", value: target },
+                ]),
+              },
+              s,
+              pat,
+            );
+          } catch (error) {
+            log("patch_failed", error);
+            throw error;
+          }
+        },
       });
       if (
         this.store.db
@@ -348,8 +380,10 @@ export class Connectors {
         }),
       );
       const { item, ...receipt } = result;
+      log(result.outcome);
       return receipt;
     } catch (e) {
+      log("unconfirmed", e);
       this.store.audit(
         "ticket.state.unconfirmed",
         JSON.stringify({ id, requested: state, source: this.store.source(s) }),

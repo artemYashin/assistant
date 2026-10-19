@@ -17,16 +17,21 @@ export function resolveState(requested: string, states: string[]) {
     `Статус «${requested}» не найден однозначно. Доступные статусы: ${states.join(", ")}`,
   );
 }
-export function mayChangeState(prompt: string, id: number, state: string) {
+export function mayChangeState(
+  prompt: string,
+  id: number,
+  state: string,
+  knownTicket = false,
+) {
   const p = normalize(prompt);
   if (
-    /(?:не\s+(?:перевод|переведи|меня|измен|устанав|установ|выстав)|do not|don't|не надо|не нужно)/i.test(
+    /(?:не\s+(?:перевод|переведи|перевести|смен|смени|помен|меня|измен|устанав|установ|выстав)|do not|don't|не надо|не нужно)/i.test(
       p,
     )
   )
     return false;
   const intent =
-    /(?:переведи(?:те)?|поменяй(?:те)?|измени(?:те)?|установи(?:те)?|выстави(?:те)?|(?:можешь|можете|прошу)\s+перевести|\b(?:move|set|change|transition|update)\s+(?:the\s+)?(?:ticket|bug|work item|status|#?\d))/i.test(
+    /(?:переведи(?:те)?|смени(?:те)?|(?:давай|нужно|хочу|прошу)\s+(?:перевести|сменить|поменять|изменить)|поменяй(?:те)?|измени(?:те)?|установи(?:те)?|выстави(?:те)?|(?:можешь|можете|прошу)\s+перевести|\b(?:move|set|change|transition|update)\s+(?:the\s+)?(?:selected|these|those|them|all|ticket|bug|work item|status|#?\d))/i.test(
       p,
     );
   const number = new RegExp(`(?<![0-9])${id}(?![0-9])`).test(p);
@@ -47,7 +52,7 @@ export function mayChangeState(prompt: string, id: number, state: string) {
       "u",
     ).test(p);
   });
-  return intent && number && mentioned;
+  return intent && (number || knownTicket) && mentioned;
 }
 export type StateAccess = {
   read: () => Promise<any>;

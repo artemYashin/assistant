@@ -190,3 +190,31 @@ test("connector PATCH uses revision guard, updates tracked state and preserves c
     "RFT",
   );
 });
+
+test("context tickets allow explicit bulk commands but not unknown IDs or read requests", () => {
+  assert.ok(
+    mayChangeState(
+      "Переведи все найденные тикеты в RFT",
+      42,
+      "Ready for Testing",
+      true,
+    ),
+  );
+  assert.ok(
+    mayChangeState("Давай поменять им статус на Active", 42, "Active", true),
+  );
+  assert.ok(!mayChangeState("Переведи найденные в RFT", 42, "RFT"));
+  assert.ok(!mayChangeState("Покажи все тикеты в RFT", 42, "RFT", true));
+  assert.ok(!mayChangeState("Не переводи их в RFT", 42, "RFT", true));
+  assert.ok(!mayChangeState("Как перевести их в RFT?", 42, "RFT", true));
+  assert.ok(!mayChangeState("Переведи их в Active", 42, "Closed", true));
+});
+
+test("negative contextual commands cannot change states", () => {
+  for (const prompt of [
+    "Не смени им статус на RFT",
+    "Не поменяй их на RFT",
+    "Прошу не перевести их в RFT",
+  ])
+    assert.ok(!mayChangeState(prompt, 42, "RFT", true));
+});

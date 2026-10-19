@@ -361,3 +361,131 @@ test("review feedback tools are limited to questions and memory proposals with o
     1,
   );
 });
+
+test("failed status change invalidates cached ticket without retrying the write", async (t) => {
+  const store = fixture(t);
+  let config: any,
+    reads = 0,
+    writes = 0;
+  const session = {
+    on: () => {},
+    abort: async () => {},
+    sendAndWait: async () => {
+      const get = config.tools.find((x: any) => x.name === "get_ticket");
+      const change = config.tools.find(
+        (x: any) => x.name === "change_ticket_status",
+      );
+      await get.handler({ id: 123456 }, {});
+      const initialReads = reads;
+      await assert.rejects(
+        change.handler({ id: 123456, state: "RFT" }, {}),
+        /unconfirmed/,
+      );
+      await get.handler({ id: 123456 }, {});
+      assert.equal(reads, initialReads + 1);
+      await assert.rejects(
+        change.handler({ id: 123456, state: "RFT" }, {}),
+        /unconfirmed/,
+      );
+      assert.equal(writes, 1);
+      return { data: { content: "Not confirmed" } };
+    },
+  };
+  const client = {
+    start: async () => {},
+    createSession: async (c: any) => {
+      config = c;
+      return session;
+    },
+    stop: async () => {},
+    forceStop: async () => {},
+  };
+  const connectors = {
+    ticketDetails: async () => ({
+      cardId: `card-${++reads}`,
+      source: store.source(),
+      fields: {},
+    }),
+    changeTicketStatus: async () => {
+      writes++;
+      throw new Error("unconfirmed");
+    },
+  };
+  const agent = new Agent(
+    store,
+    new Approvals(store, async () => ({ id: "unused" })),
+    () => client as any,
+    connectors as any,
+  );
+  await agent.chat("Переведи тикет 123456 в RFT", context);
+});
+
+test("chat status changes accept IDs returned by a filtered ticket search", async (t) => {
+  const store = fixture(t);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(
+      store.source(),
+      42,
+      "Bug",
+      "Resolved",
+      "",
+      "Example",
+      "https://ado.test/42",
+      null,
+      new Date().toISOString(),
+    );
+  let config: any;
+  const writes: number[] = [];
+  const session = {
+    on: () => {},
+    abort: async () => {},
+    sendAndWait: async () => {
+      const change = config.tools.find(
+        (tool: any) => tool.name === "change_ticket_status",
+      );
+      await assert.rejects(
+        change.handler({ id: 42, state: "RFT" }, {}),
+        /явная команда/,
+      );
+      const list = config.tools.find(
+        (tool: any) => tool.name === "list_tickets",
+      );
+      await list.handler({ state: "Resolved" }, {});
+      await change.handler({ id: 42, state: "RFT" }, {});
+      await assert.rejects(
+        change.handler({ id: 99, state: "RFT" }, {}),
+        /явная команда/,
+      );
+      return { data: { content: "Done" } };
+    },
+  };
+  const client = {
+    start: async () => {},
+    createSession: async (c: any) => {
+      config = c;
+      return session;
+    },
+    stop: async () => {},
+    forceStop: async () => {},
+  };
+  const connectors = {
+    ticketDetails: async () => ({
+      cardId: "card",
+      source: store.source(),
+      fields: {},
+    }),
+    changeTicketStatus: async (id: number) => {
+      writes.push(id);
+      return { success: true, state: "RFT" };
+    },
+  };
+  const agent = new Agent(
+    store,
+    new Approvals(store, async () => ({ id: "unused" })),
+    () => client as any,
+    connectors as any,
+  );
+  await agent.chat("Найди тикеты в Resolved и переведи их в RFT", context);
+  assert.deepEqual(writes, [42]);
+});
