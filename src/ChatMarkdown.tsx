@@ -59,7 +59,13 @@ export function ChatMarkdown({
             const preview = images?.find(
               (image) => image.source === src,
             )?.preview;
-            if (preview?.startsWith("/api/pr/image?"))
+            if (
+              preview &&
+              (preview.startsWith("/api/pr/image?") ||
+                /^\/api\/ticket-cards\/[^/]+\/attachments\/[^/]+$/.test(
+                  preview,
+                ))
+            )
               return <PreviewImage key={preview} src={preview} alt={alt} />;
             return typeof src === "string" && /^https?:\/\//i.test(src) ? (
               <a href={src} target="_blank" rel="noopener noreferrer">

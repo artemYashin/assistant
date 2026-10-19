@@ -2175,6 +2175,8 @@ summary {
   color: #555d87;
 }
 .ticket-state-badge {
+  width: fit-content;
+  white-space: nowrap;
   background: #edf3e9;
   color: #466540;
   border: 1px solid #dce7d6;
@@ -2875,4 +2877,31 @@ td > small {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
+}
+
+.ticket-inline-image {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.ticket-inline-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 560px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.ticket-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-row-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  flex-shrink: 0;
 }

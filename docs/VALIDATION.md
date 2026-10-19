@@ -165,3 +165,12 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Local assignment now has its own table column (name or N/A, edit and clear icons). Search opens a native modal dialog; it no longer increases every ticket row's height. Expanded ticket spans all seven columns.
 - Empty General identity searches retry once with DisplayName for names or MailAddress for email, using the same query. No directory enumeration or Azure writes. The root cause in the user's tenant remains unverified; Microsoft documents General as also matching display names.
 - Production build and all 84 Node tests passed, including explicit name/mail fallback coverage. Browser checks with mocked API cover the separate column, initially hidden search, edit modal, empty search, Escape dismissal and disabled removal for unassigned tickets.
+
+## Inline ticket images
+
+- Ticket rich text now preserves HTML image positions in description, reproduction steps, acceptance criteria and newly fetched comments. Only same-collection image attachments already listed in the card are mapped to the authenticated local attachment endpoint; arbitrary remote image URLs are not loaded. HTML is still parsed inertly and never inserted as executable markup.
+- Comments retain rich source alongside plain text. Previously cached comments need a fresh ticket fetch to recover formatting. Markdown image comments use the shared Markdown renderer with local attachment previews.
+- Existing PR description Markdown previews remain inline. The attachment accordion remains available as a separate index.
+- Before push: all 84 Node tests and the production build passed. Inline ticket image placement was reviewed in code; live Azure image loading was not exercised.
+- Status badges now use fit-content width and nowrap, matching task-type badges.
+- Ticket row actions use eye/eye-off and trash icons, accessible names and hover titles, with an 8px gap. Final pre-push validation: 84 tests and production build passed.

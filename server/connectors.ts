@@ -540,6 +540,7 @@ export class Connectors {
         author: c.createdBy?.displayName || "",
         date: c.createdDate,
         text: plainText(c.renderedText || c.text || ""),
+        richText: c.renderedText || c.text || "",
       })),
       attachments,
       warnings,

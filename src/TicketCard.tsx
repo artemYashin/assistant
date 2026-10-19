@@ -1,3 +1,5 @@
+import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { TicketRichText } from "./TicketRichText.js";
 import { StatusBadge } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
@@ -111,7 +113,11 @@ export function TicketCard({ reference }: { reference: string }) {
           .map(([key, label]) => (
             <details className="ticket-section" key={key} open>
               <summary>{label}</summary>
-              <p className="ticket-prose">{text(f[key])}</p>
+              <TicketRichText
+                value={f[key]}
+                card={card}
+                reference={reference}
+              />
             </details>
           ))}
         <details className="ticket-section">
@@ -129,7 +135,11 @@ export function TicketCard({ reference }: { reference: string }) {
                       {timestamp(c.date)}
                     </time>
                   </header>
-                  <p className="ticket-prose">{c.text}</p>
+                  <TicketRichText
+                    value={c.richText || c.text}
+                    card={card}
+                    reference={reference}
+                  />
                 </article>
               ))}
             </div>
@@ -289,26 +299,30 @@ export function TicketTableRow({
       >
         {children}
         <td>
-          <button
-            type="button"
-            className="secondary"
-            aria-expanded={open}
-            aria-controls={panelId}
-            aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
-            onClick={() => setOpen(!open)}
-          >
-            {open ? "Скрыть" : "Посмотреть"}
-          </button>
-          {onRemove && (
+          <div className="ticket-row-actions">
             <button
               type="button"
-              className="text-button"
-              onClick={onRemove}
-              title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+              className="secondary"
+              aria-expanded={open}
+              aria-controls={panelId}
+              aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
+              title={open ? "Скрыть тикет" : "Посмотреть тикет"}
+              onClick={() => setOpen(!open)}
             >
-              Убрать из списка
+              {open ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
-          )}
+            {onRemove && (
+              <button
+                type="button"
+                className="text-button"
+                aria-label={`Убрать тикет #${id} из локального списка`}
+                onClick={onRemove}
+                title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+              >
+                <Trash2 size={17} />
+              </button>
+            )}
+          </div>
         </td>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">

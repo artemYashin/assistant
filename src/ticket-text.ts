@@ -1,6 +1,9 @@
 // Azure rich text is displayed as text only. Parse in an inert template so source
 // indentation, empty editor blocks and NBSP padding do not become visual gaps.
-export function ticketText(value: unknown): string {
+export function ticketText(
+  value: unknown,
+  image?: (src: string, alt: string) => string,
+): string {
   const raw = typeof value === "string" ? value : (JSON.stringify(value) ?? "");
   const template = document.createElement("template");
   template.innerHTML = raw;
@@ -23,6 +26,14 @@ export function ticketText(value: unknown): string {
       )
     )
       return;
+    if (tag === "img") {
+      output +=
+        image?.(
+          node.getAttribute("src") || "",
+          node.getAttribute("alt") || "Изображение",
+        ) || "";
+      return;
+    }
     if (tag === "br") {
       output += "\n";
       return;
