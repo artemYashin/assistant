@@ -1,3 +1,4 @@
+import { TicketTrash } from "./TicketTrash.js";
 import { MemoryProposalList } from "./MemoryProposals.js";
 import { ReviewQuestionInbox } from "./ReviewQuestions.js";
 import { MultiSelect } from "./MultiSelect.js";
@@ -71,10 +72,10 @@ const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
   { id: "tickets", label: "Тикеты", icon: Ticket },
+  { id: "pullrequests", label: "Pull requests", icon: FolderOpen },
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
   { id: "teams", label: "Сообщения Teams", icon: MessageSquare },
-  { id: "pullrequests", label: "Pull requests", icon: FolderOpen },
   { id: "usage", label: "Использование LLM", icon: Activity },
 ] as const;
 const date = (s?: string) =>
@@ -930,17 +931,51 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               </>
             )}
             {page === "tickets" && (
-              <Tickets
-                context={context}
-                settings={settings}
-                key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
-                tickets={tickets}
-                query={query}
-                setQuery={setQuery}
-                run={run}
-                busy={busy}
-              />
+              <nav className="pr-page-tabs" aria-label="Разделы тикетов">
+                <Link
+                  to="/tickets"
+                  aria-current={
+                    new URLSearchParams(location.search).get("tab") !== "trash"
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Ticket size={16} />
+                  Тикеты
+                </Link>
+                <Link
+                  to="/tickets?tab=trash"
+                  aria-current={
+                    new URLSearchParams(location.search).get("tab") === "trash"
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Trash2 size={16} />
+                  Корзина
+                </Link>
+              </nav>
             )}
+            {page === "tickets" &&
+              new URLSearchParams(location.search).get("tab") === "trash" && (
+                <TicketTrash
+                  key={`${settings?.azureUrl}|${settings?.azureProject}`}
+                  onChange={() => setRefresh((n) => n + 1)}
+                />
+              )}
+            {page === "tickets" &&
+              new URLSearchParams(location.search).get("tab") !== "trash" && (
+                <Tickets
+                  context={context}
+                  settings={settings}
+                  key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
+                  tickets={tickets}
+                  query={query}
+                  setQuery={setQuery}
+                  run={run}
+                  busy={busy}
+                />
+              )}
             {page === "approvals" && (
               <>
                 <PageHeading
@@ -1401,7 +1436,7 @@ function Tickets({
                     run(
                       "remove",
                       () => api(`/tickets/${t.id}`, "DELETE"),
-                      "Тикет удалён из локального списка",
+                      "Тикет перемещён в корзину на 30 дней",
                     )
                   }
                 >

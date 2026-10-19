@@ -697,6 +697,7 @@ export class Connectors {
     }
   }
   async trackTicket(id: number, guard: () => void = () => {}) {
+    this.store.purgeTicketTrash();
     const s = this.store.settings();
     const item = await this.azure(
       `workitems/${id}`,
@@ -715,6 +716,9 @@ export class Connectors {
       .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
       .run(this.store.source(s), id);
     this.saveTicket(item, s);
+    this.store.db
+      .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
+      .run(this.store.source(s), id);
     this.store.db
       .prepare(
         "UPDATE suggestions SET status='tracked' WHERE source=? AND ticket_id=?",

@@ -1,5 +1,9 @@
+import { PrDiffDialog } from "./PrDiffDialog.js";
+import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
+  Code2,
+  GitMerge,
   Copy,
   Check,
   FileText,
@@ -170,6 +174,8 @@ export function PullRequestsPage({ context, settings }: any) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
+  const [merging, setMerging] = useState<any>(null);
+  const [viewingDiff, setViewingDiff] = useState<any>(null);
   const [draftFilter, setDraftFilter] = useState("all");
   const [reviewFilter, setReviewFilter] = useState("all");
   const [sort, setSort] = useState("created:desc");
@@ -248,6 +254,19 @@ export function PullRequestsPage({ context, settings }: any) {
   }
   return (
     <>
+      {viewingDiff && (
+        <PrDiffDialog pr={viewingDiff} onClose={() => setViewingDiff(null)} />
+      )}
+      {merging && (
+        <PrMergeDialog
+          pr={merging}
+          moveTickets={merging.moveTickets}
+          onClose={() => {
+            setMerging(null);
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
       <div className="page-heading">
         <div>
           <h1>Pull requests</h1>
@@ -380,6 +399,30 @@ export function PullRequestsPage({ context, settings }: any) {
               </div>
               <div className="pr-card-actions">
                 <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setViewingDiff(p)}
+                >
+                  <Code2 size={17} aria-hidden="true" /> View Diff
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                  onClick={() => setMerging({ ...p, moveTickets: false })}
+                >
+                  <GitMerge size={17} aria-hidden="true" /> Merge
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                  onClick={() => setMerging({ ...p, moveTickets: true })}
+                >
+                  <GitMerge size={17} aria-hidden="true" /> Merge и смена
+                  статусов
+                </button>
+                <button
                   className="pr-review-launch"
                   disabled={
                     busy ||
@@ -406,7 +449,11 @@ export function PullRequestsPage({ context, settings }: any) {
                   {p.review_status === "completed" ? (
                     <Check size={17} aria-hidden="true" />
                   ) : p.review_status === "running" ? (
-                    <LoaderCircle className="spin" size={17} aria-hidden="true" />
+                    <LoaderCircle
+                      className="spin"
+                      size={17}
+                      aria-hidden="true"
+                    />
                   ) : p.review_status === "queued" ? (
                     <Clock size={17} aria-hidden="true" />
                   ) : p.review_status === "awaiting_answers" ? (

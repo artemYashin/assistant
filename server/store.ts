@@ -121,6 +121,7 @@ export class Store {
       );
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS ticket_trash (source TEXT NOT NULL,id INTEGER NOT NULL,body TEXT NOT NULL,removed_at INTEGER NOT NULL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
     this.db.exec(`
@@ -195,6 +196,7 @@ export class Store {
         "UPDATE llm_requests SET status='interrupted', reason='Перезапуск приложения; отчёт может быть неполным.', finished_at=? WHERE status='running'",
       )
       .run(new Date().toISOString());
+    this.purgeTicketTrash();
   }
   get<T>(key: string, fallback: T): T {
     const row = this.db.prepare("SELECT value FROM kv WHERE key=?").get(key) as
@@ -301,9 +303,108 @@ export class Store {
     this.audit("memory.saved", `${scope}: ${id}`);
     return { id, scope, body };
   }
+  purgeTicketTrash(now = Date.now()) {
+    return this.db.transaction(() => {
+      const expired = this.db
+        .prepare("SELECT source,id FROM ticket_trash WHERE removed_at<=?")
+        .all(now - 30 * 86400000) as any[];
+      for (const row of expired) {
+        this.db
+          .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
+          .run(row.source, row.id);
+        this.db
+          .prepare(
+            "DELETE FROM ticket_developers WHERE source=? AND ticket_id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
+          )
+          .run(row.source, row.id, row.source, row.id);
+        this.db
+          .prepare(
+            "UPDATE ticket_local SET developer_id='',developer_name='' WHERE source=? AND id=? AND removed=1",
+          )
+          .run(row.source, row.id);
+      }
+      return expired.length;
+    })();
+  }
+  ticketTrash() {
+    this.purgeTicketTrash();
+    return (
+      this.db
+        .prepare(
+          "SELECT * FROM ticket_trash WHERE source=? ORDER BY removed_at DESC",
+        )
+        .all(this.source()) as any[]
+    ).map((row) => ({
+      ...JSON.parse(row.body),
+      removedAt: row.removed_at,
+      expiresAt: row.removed_at + 30 * 86400000,
+    }));
+  }
+  restoreLocalTicket(id: number, source = this.source()) {
+    if (source !== this.source())
+      throw new AppError(409, "Подключение изменилось. Обновите корзину.");
+    this.purgeTicketTrash();
+    this.db.transaction(() => {
+      const row = this.db
+        .prepare("SELECT body FROM ticket_trash WHERE source=? AND id=?")
+        .get(source, id) as any;
+      if (!row)
+        throw new AppError(
+          404,
+          "Тикет отсутствует в корзине или срок хранения истёк",
+        );
+      const t = JSON.parse(row.body);
+      this.db
+        .prepare(
+          "INSERT INTO tickets(source,id,title,state,assigned,type,url,changed_at,synced_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(source,id) DO NOTHING",
+        )
+        .run(
+          source,
+          id,
+          t.title,
+          t.state,
+          t.assigned,
+          t.type,
+          t.url,
+          t.changed_at,
+          t.synced_at,
+        );
+      this.db
+        .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
+        .run(source, id);
+      this.db
+        .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
+        .run(source, id);
+    })();
+    this.audit("ticket.restored_locally", String(id));
+    return { success: true, id, azureChanged: false };
+  }
   removeLocalTicket(id: number) {
     const source = this.source();
+    this.purgeTicketTrash();
     this.db.transaction(() => {
+      const ticket = this.db
+        .prepare(
+          "SELECT t.*,l.developer_name FROM tickets t LEFT JOIN ticket_local l ON t.source=l.source AND t.id=l.id WHERE t.source=? AND t.id=?",
+        )
+        .get(source, id) as any;
+      if (ticket) {
+        const developers = this.db
+          .prepare(
+            "SELECT d.id,d.name FROM ticket_developers a JOIN local_developers d ON d.id=a.developer_id WHERE a.source=? AND a.ticket_id=?",
+          )
+          .all(source, id);
+        this.db
+          .prepare(
+            "INSERT INTO ticket_trash(source,id,body,removed_at) VALUES (?,?,?,?) ON CONFLICT(source,id) DO NOTHING",
+          )
+          .run(
+            source,
+            id,
+            JSON.stringify({ ...ticket, developers }),
+            Date.now(),
+          );
+      }
       this.db
         .prepare(
           "INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1) ON CONFLICT(source,id) DO UPDATE SET removed=1",
@@ -318,6 +419,7 @@ export class Store {
       success: true,
       id,
       tracked: false,
+      retentionDays: 30,
       scope: "local",
       azureChanged: false,
     };

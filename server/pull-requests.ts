@@ -424,6 +424,44 @@ export class PullRequests {
       }
     }
   }
+  async viewDiff(monitor: string, repo: string, number: number) {
+    const m = this.monitors().find((entry) => entry.id === monitor);
+    const known = this.store.db
+      .prepare(
+        "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+      )
+      .get(monitor, repo, number);
+    if (!m || !known)
+      throw new AppError(404, "PR не найден. Синхронизируйте список.");
+    const credentials = this.credentials(m);
+    const detail = await this.get(
+      m,
+      `git/repositories/${enc(repo)}/pullrequests/${number}`,
+      credentials,
+    );
+    if (
+      detail.pullRequestId !== number ||
+      detail.repository?.id !== repo ||
+      !detail.lastMergeSourceCommit?.commitId ||
+      !detail.lastMergeTargetCommit?.commitId
+    ) {
+      throw new AppError(502, "Azure не вернул коммиты выбранного PR");
+    }
+    const result = await this.changes(
+      m,
+      repo,
+      detail.lastMergeSourceCommit.commitId,
+      detail.lastMergeTargetCommit.commitId,
+    );
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    return {
+      ...result,
+      title: detail.title,
+      sourceBranch: detail.sourceRefName,
+      targetBranch: detail.targetRefName,
+    };
+  }
   async changes(m: Monitor, repo: string, head: string, target: string) {
     const credentials = this.credentials(m),
       root = `git/repositories/${enc(repo)}`;

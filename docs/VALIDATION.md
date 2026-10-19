@@ -293,3 +293,34 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ## Pre-push validation of PR refresh fixes
 
 - All 96 Node tests and production build passed. Whitespace check passed. Vite retains the existing main-bundle size warning. Browser scroll/animation behavior was not exercised in this validation.
+
+## Explicit PR merge and linked-ticket transitions
+
+- Added a UI-only prepare/confirm workflow with durable plans and one-shot claims per PR source version. Live commits, source, membership, linked/description ticket IDs and selected per-ticket states are checked before mutation. Prepared plans expire after 15 minutes. Existing auth/Origin/CSRF middleware protects endpoints.
+- Merge PATCH explicitly disables policy bypass, branch deletion and automatic work-item transitions. A separate bounded GET loop must confirm completed status and the expected source commit before any ticket writes. Existing revision-guarded state transitions verify each ticket with GET. Partial and ambiguous results are persisted; no merge retry or rollback is attempted. Agent tools remain unchanged.
+- Dialog offers actual type-specific states, an intersection for apply-to-all, Resolved only when present, merge strategy selection and explicit confirmation. Errors and per-ticket outcomes remain visible; operation status can be reread after a network error.
+- Added regression tests for linked/mentioned IDs, duplicate submissions, stale commits, incompatible states, merge failure preventing ticket writes and partial results. TypeScript passed; tests/build deferred until push per user preference. No live Azure merge or browser interaction performed.
+
+## Separate merge-only action
+
+- PR cards expose Merge and Merge with status changes separately. Merge-only plans skip work-item links and state reads entirely, persist their mode and reject ticket selections on confirmation. Both modes disable automatic Azure work-item transitions and preserve the one-shot merge guard.
+- Added a regression case asserting merge-only performs no work-item reads/writes and rejects injected ticket selections. TypeScript passed; tests deferred until push. No live merge performed.
+
+## Side-by-side PR diff viewer
+
+- Added a read-only diff endpoint using live PR commit IDs and the existing bounded merge-base diff loader. Validates known PR/repository and current Azure credentials; no agent/model call or Azure mutation.
+- Added View Diff per card and a large modal with file navigation, side-by-side change rows, line numbers, additions/deletions, rename paths, missing-newline notices, loading/error/retry and explicit coverage warnings. Code is escaped React text. Mobile retains side-by-side via horizontal scrolling.
+- Added parser cases for replacements, unequal line counts, new/deleted/renamed files and missing final newline, plus a service read-only/no-LLM test. TypeScript passed; tests/build deferred until push per user preference. Live Azure/browser checks not performed.
+
+## Ticket trash and navigation order
+
+- Reordered primary navigation as requested. Ticket tabs use `/tickets` and `/tickets?tab=trash`; direct ticket focus URLs continue to show the active table.
+- Removal atomically saves a separate local snapshot and removes the active-list row while retaining local developer associations and the auto-import exclusion marker. Repeated removal does not reset the 30-day retention clock. Restore is source-guarded and local-only. Explicit track removes its trash snapshot after successful import.
+- Expiry purges trash snapshots and inactive assignment records at startup, sync, trash reads/restores and explicit track/removal. Exclusion markers remain; old pre-feature removals have no recoverable snapshot.
+- Added regression tests for snapshots, assignments, restoration, repeated removal, source mismatch and exact expiry boundary. TypeScript/whitespace checks passed; tests/build deferred until push. Browser interaction not exercised.
+
+## Workspace registry available to chat and pre-push validation
+
+- Chat now receives a fresh compact workspace snapshot per request and a read-only get_workspace_context tool with pagination and optional known-context selection. It includes context registry, scoped/inherited developer names and IDs, repository, Azure project and PR selection mode; secrets are never projected. Pages are limited to 10 entries per list to stay below ordinary tool output limits.
+- Added scope, registry, repository, pagination and secret-exclusion regression coverage. All 108 Node tests and the production build passed for the full batch (merge workflows, diff viewer, trash, sidebar and chat context). Diff whitespace check passed.
+- Vite retains its main-chunk-size warning. Live Azure writes, live Copilot behavior and browser visual/interaction checks were not performed; no real PRs were merged during development.

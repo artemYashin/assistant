@@ -595,3 +595,20 @@ test("review clarification pauses work until all answers arrive and passes them 
     "completed",
   );
 });
+
+test("view diff uses live commits and does not invoke LLM or Azure mutations", async (t) => {
+  const f = fixture(t);
+  mock(t, [pr()], (_url, init) => {
+    assert.ok(!init.method || init.method === "GET");
+    return undefined;
+  });
+  await f.service.sync();
+  const monitor = f.service.monitors()[0];
+  const result = await f.service.viewDiff(monitor.id, "repo", 1);
+  assert.equal(result.head, "head");
+  assert.equal(result.target, "target");
+  assert.equal(result.base, "base");
+  assert.ok(result.patches.length);
+  assert.equal(f.calls.length, 0);
+  await assert.rejects(() => f.service.viewDiff(monitor.id, "other-repo", 1));
+});

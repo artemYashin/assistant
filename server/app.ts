@@ -1,3 +1,4 @@
+import { PrMerge } from "./pr-merge.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { MemoryProposals } from "./memory-proposals.js";
 import { ReviewQuestions } from "./review-questions.js";
@@ -83,6 +84,7 @@ export function createApp(
   );
   const agent = new Agent(store, approvals, undefined, connectors);
   const pullRequests = new PullRequests(store, agent);
+  const prMerge = new PrMerge(store, connectors);
   agent.setPullRequests(pullRequests);
   const app = express();
   app.disable("x-powered-by");
@@ -542,6 +544,18 @@ export function createApp(
       .parse(req.body);
     res.json(await connectors.developers(query));
   });
+  app.get("/api/tickets/trash", (_req, res) => res.json(store.ticketTrash()));
+  app.post("/api/tickets/:id/restore", (req, res) => {
+    const { source } = z
+      .object({ source: z.string().min(1).max(2000) })
+      .parse(req.body);
+    res.json(
+      store.restoreLocalTicket(
+        z.coerce.number().int().positive().parse(req.params.id),
+        source,
+      ),
+    );
+  });
   app.delete("/api/tickets/:id", (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id);
     res.json(store.removeLocalTicket(id));
@@ -668,6 +682,42 @@ export function createApp(
       .run(String(req.params.id));
     res.json({ ok: true });
   });
+  app.post("/api/pr/merge/prepare", async (req, res) => {
+    const key = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.number().int().positive(),
+        moveTickets: z.boolean().default(true),
+      })
+      .strict()
+      .parse(req.body);
+    const { moveTickets, ...identity } = key;
+    res.json(await prMerge.prepare(identity, moveTickets));
+  });
+  app.post("/api/pr/merge/:id", async (req, res) => {
+    const input = z
+      .object({
+        tickets: z
+          .array(
+            z.object({ id: z.number().int().positive(), state: text.min(1) }),
+          )
+          .max(100),
+        strategy: z.enum(["noFastForward", "squash", "rebase", "rebaseMerge"]),
+      })
+      .strict()
+      .parse(req.body);
+    res.json(
+      await prMerge.execute(
+        String(req.params.id),
+        input.tickets,
+        input.strategy,
+      ),
+    );
+  });
+  app.get("/api/pr/merge/:id", (req, res) =>
+    res.json(prMerge.result(String(req.params.id))),
+  );
   app.post("/api/pr/review", (req, res) => {
     const input = z
       .object({
@@ -680,6 +730,18 @@ export function createApp(
     res.json({
       id: pullRequests.requestReview(input.monitor, input.repo, input.number),
     });
+  });
+  app.get("/api/pr/diff", async (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.coerce.number().int().positive(),
+      })
+      .parse(req.query);
+    res.json(
+      await pullRequests.viewDiff(input.monitor, input.repo, input.number),
+    );
   });
   app.get("/api/pr/image", async (req, res) => {
     const input = z
@@ -738,6 +800,7 @@ export function createApp(
   });
   let syncing = false;
   async function sync() {
+    store.purgeTicketTrash();
     if (syncing) throw new AppError(409, "Синхронизация уже выполняется");
     syncing = true;
     const errors: string[] = [];
