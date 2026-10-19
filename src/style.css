@@ -4756,3 +4756,39 @@ summary > svg {
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(9) {
   width: 7%;
 }
+
+/* Priority stays compact, including inside expanded table cards. */
+.badge.ticket-priority-badge,
+.ticket-table-fit .badge.ticket-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  border: 1px solid #c5a155;
+  border-radius: 6px;
+  background: #fff0c2;
+  color: #704600;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Give expanded ticket cards their own space within the table. */
+.ticket-table-fit > table > tbody > .ticket-preview-row > td {
+  padding: 24px clamp(12px, 4cqw, 36px);
+  background: #edf1ed;
+  border-top: 1px solid #d7dfd8;
+  border-bottom: 1px solid #d7dfd8;
+}
+.ticket-preview-row .ticket-detail {
+  padding: clamp(16px, 3cqw, 28px);
+  border: 1px solid #cbd6cd;
+  border-radius: 12px;
+  box-shadow:
+    0 3px 8px #233a2014,
+    0 10px 28px #233a2024;
+}

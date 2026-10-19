@@ -349,7 +349,9 @@ export function TicketTrash({
                     />
                   </td>
                   <td>
-                    <span className="badge">P{t.priority ?? 1}</span>
+                    <span className="badge ticket-priority-badge">
+                      P{t.priority ?? 1}
+                    </span>
                   </td>
                   <td>
                     <div className="ticket-tag-list">

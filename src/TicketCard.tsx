@@ -137,7 +137,9 @@ export function TicketCard({ reference }: { reference: string }) {
             <div>
               <dt>Локальный приоритет</dt>
               <dd>
-                <span className="badge">P{card.localMetadata.priority}</span>
+                <span className="badge ticket-priority-badge">
+                  P{card.localMetadata.priority}
+                </span>
               </dd>
             </div>
           )}

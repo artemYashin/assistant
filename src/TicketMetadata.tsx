@@ -21,7 +21,9 @@ export function TicketMetadata({
   return (
     <div className="ticket-metadata-control">
       {field === "priority" && (
-        <span className="badge">P{ticket.priority ?? 1}</span>
+        <span className="badge ticket-priority-badge">
+          P{ticket.priority ?? 1}
+        </span>
       )}
       {field === "tags" && (
         <span
