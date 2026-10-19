@@ -1,3 +1,4 @@
+import { DeveloperDirectory } from "./DeveloperDirectory.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { Users, FolderPlus, GitBranch, Plus, X } from "lucide-react";
 import { ProjectRepository } from "./ProjectRepository.js";
@@ -11,9 +12,9 @@ export function ContextPicker({
   context: Context;
   onChange: (c: Context) => void;
 }) {
-  const [section, setSection] = useState<"browse" | "create" | "repository">(
-    "browse",
-  );
+  const [section, setSection] = useState<
+    "browse" | "create" | "repository" | "developers"
+  >("browse");
   const [createKind, setCreateKind] = useState<"client" | "project">("client");
   const [items, setItems] = useState<Context[]>([]),
     [open, setOpen] = useState(false),
@@ -170,7 +171,23 @@ export function ContextPicker({
               <GitBranch size={16} />
               Репозиторий
             </button>
+            <button
+              type="button"
+              aria-pressed={section === "developers"}
+              onClick={() => setSection("developers")}
+            >
+              <Users size={16} />
+              Разработчики
+            </button>
           </div>
+          {section === "developers" && (
+            <div className="context-manager-section">
+              <DeveloperDirectory
+                key={`${context.client}:${context.project}`}
+                context={context}
+              />
+            </div>
+          )}
           {section === "browse" && (
             <div className="context-manager-section">
               <p className="muted">

@@ -78,6 +78,9 @@ export class Store {
       CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS secrets (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS memory_proposals (id TEXT PRIMARY KEY,scope TEXT NOT NULL,client TEXT NOT NULL,project TEXT NOT NULL,body TEXT NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS pr_question_batches (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,questions TEXT NOT NULL,answers TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS pr_question_review ON pr_question_batches(review_id);
       CREATE TABLE IF NOT EXISTS memories (id TEXT PRIMARY KEY, scope TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS pr_projects (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, source TEXT NOT NULL, azure_project TEXT NOT NULL, mode TEXT NOT NULL, enabled INTEGER NOT NULL, error TEXT, synced_at TEXT, UNIQUE(client,project,source,azure_project));
@@ -120,6 +123,35 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS local_developers (id TEXT PRIMARY KEY,name TEXT NOT NULL,client TEXT NOT NULL,project TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
+      CREATE TABLE IF NOT EXISTS ticket_developers (source TEXT NOT NULL,ticket_id INTEGER NOT NULL,developer_id TEXT NOT NULL REFERENCES local_developers(id),PRIMARY KEY(source,ticket_id,developer_id));
+    `);
+    if (!this.get("migration.localDevelopers", false)) {
+      this.db.transaction(() => {
+        const rows = this.db
+          .prepare(
+            "SELECT source,id,developer_id,developer_name FROM ticket_local WHERE developer_id<>''",
+          )
+          .all() as any[];
+        const migrated = new Map<string, string>();
+        for (const row of rows) {
+          const key = `${row.source}|${row.developer_id}`;
+          let developer = migrated.get(key);
+          if (!developer) {
+            developer = randomUUID();
+            migrated.set(key, developer);
+            this.db
+              .prepare("INSERT INTO local_developers VALUES (?,?,'','',1)")
+              .run(developer, row.developer_name || row.developer_id);
+          }
+          this.db
+            .prepare("INSERT OR IGNORE INTO ticket_developers VALUES (?,?,?)")
+            .run(row.source, row.id, developer);
+        }
+        this.set("migration.localDevelopers", true);
+      })();
+    }
     if (
       !(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(
         (c) => c.name === "repository",

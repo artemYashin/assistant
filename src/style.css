@@ -3399,3 +3399,94 @@ td > small {
 .ticket-filters > .single-select {
   flex: 1 1 190px;
 }
+
+.sidebar-bottom .sidebar-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.sidebar-disabled small {
+  margin-left: auto;
+  font-size: 10px;
+}
+.review-questions > p,
+.memory-proposals > p {
+  margin: 12px 0;
+}
+.review-question-field {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+.review-question-field small {
+  color: var(--muted);
+}
+.review-question-field textarea {
+  width: 100%;
+  resize: vertical;
+}
+.memory-proposals {
+  margin-bottom: 24px;
+}
+.memory-proposal-body {
+  white-space: pre-wrap;
+  margin: 14px 0;
+}
+
+.ticket-status-control,
+.ticket-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-status-row {
+  margin: 14px 0;
+}
+.ticket-status-control > button {
+  display: inline-flex;
+  padding: 5px;
+}
+.local-developer-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.local-developer-option:hover {
+  background: #edf3e9;
+}
+.local-developer-option input {
+  width: auto;
+}
+.developer-directory {
+  display: grid;
+  gap: 14px;
+}
+.developer-directory form {
+  display: grid;
+  gap: 10px;
+}
+.developer-directory textarea {
+  width: 100%;
+  resize: vertical;
+}
+.developer-directory-list {
+  display: grid;
+  gap: 8px;
+}
+.developer-directory-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.developer-directory-row input {
+  flex: 1 1 180px;
+  width: auto;
+  min-width: 0;
+}
+.ticket-status-dialog .single-select .multi-select-panel {
+  position: static;
+  margin-top: 6px;
+}

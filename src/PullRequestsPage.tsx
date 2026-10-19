@@ -8,6 +8,7 @@ import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import { StatusBadge } from "./TicketControls.js";
 const statuses: Record<string, string> = {
+  awaiting_answers: "Нужны ответы",
   queued: "В очереди по вашему запросу",
   running: "Ревью выполняется",
   completed: "Ревью готово",
@@ -227,7 +228,8 @@ export function PullRequestsPage({ context, settings }: any) {
           <h1>Pull requests</h1>
           <p>
             Синхронизация каждые {(settings?.syncSeconds || 600) / 60} минут.
-            Ревью запускается только вашей кнопкой.
+            Ревью запускается по вашей просьбе; после отправки всех ответов —
+            повторяется.
           </p>
         </div>
         <button
@@ -345,7 +347,7 @@ export function PullRequestsPage({ context, settings }: any) {
               <div className="pr-card-labels">
                 <span className="pr-kind-badge">PR</span>
                 <span
-                  className={`pr-review-status ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
+                  className={`pr-review-status ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
                 >
                   {statuses[p.review_status] || "Ревью не запускалось"}
                 </span>
@@ -359,7 +361,12 @@ export function PullRequestsPage({ context, settings }: any) {
                     !p.in_scope ||
                     !p.enabled ||
                     !!p.draft ||
-                    ["queued", "running", "completed"].includes(p.review_status)
+                    [
+                      "queued",
+                      "running",
+                      "completed",
+                      "awaiting_answers",
+                    ].includes(p.review_status)
                   }
                   onClick={() =>
                     void run(() =>
@@ -373,7 +380,9 @@ export function PullRequestsPage({ context, settings }: any) {
                 >
                   {p.review_status === "completed"
                     ? "Текущая версия проверена"
-                    : "Запустить ревью"}
+                    : p.review_status === "awaiting_answers"
+                      ? "Ожидает ответов"
+                      : "Запустить ревью"}
                 </button>
                 <details className="pr-technical pr-version-menu pr-context-menu">
                   <summary title="Заказчик, проекты и репозиторий">
@@ -439,6 +448,11 @@ export function PullRequestsPage({ context, settings }: any) {
               <span aria-hidden="true">→</span>
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
+            {p.review_status === "awaiting_answers" && (
+              <Link className="chat-ticket-link" to="/inbox">
+                Ответить на вопросы ревьюера →
+              </Link>
+            )}
             <div className="pr-author">
               <span className="pr-avatar" aria-hidden="true">
                 {(p.author || "?").slice(0, 1).toUpperCase()}

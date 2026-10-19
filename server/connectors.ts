@@ -264,6 +264,31 @@ export class Connectors {
         new Date().toISOString(),
       );
   }
+  async ticketStates(id: number) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const item = await this.azure(`workitems/${id}`, {}, s, pat);
+    if (
+      item.id !== id ||
+      item.fields?.["System.TeamProject"] !== s.azureProject
+    )
+      throw new AppError(400, "Тикет относится к другому проекту");
+    const states = await this.azure(
+      `workitemtypes/${encodeURIComponent(item.fields["System.WorkItemType"])}/states`,
+      {},
+      s,
+      pat,
+    );
+    if (this.store.source() !== this.store.source(s))
+      throw new AppError(409, "Подключение изменилось");
+    if (!Array.isArray(states.value) || !states.value.length)
+      throw new AppError(502, "Azure не вернул доступные статусы");
+    return {
+      source: this.store.source(s),
+      state: item.fields["System.State"],
+      states: (states.value || []).map((x: any) => x.name),
+    };
+  }
   async changeTicketStatus(
     id: number,
     state: string,

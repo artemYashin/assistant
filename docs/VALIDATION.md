@@ -233,3 +233,28 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - PR type, review readiness and sort controls now reuse the searchable SingleSelect used for customer/project selection. Existing options, defaults, reset and filtering semantics remain. Filters are disabled when showing a directly linked PR because the target view bypasses them.
 - Validation: all 88 Node tests and production build passed. Mocked-API Chromium checks passed for date sorting, combined filters, empty/reset states, mobile overflow and absence of mutation requests during filtering.
+
+## Review clarification and proposed memory
+
+- Added durable review-question batches and an awaiting_answers review state. All nonempty answers must be submitted atomically; only then is the same version requeued, once. Prior answers are included in the next review. Existing daily/tool/token/time budgets apply; at most three clarification rounds per version. Changed/out-of-scope/draft/disabled PRs cannot be requeued with old answers. Questions can be dismissed without a rerun.
+- Actual PR reviews now expose only ask_review_questions and propose_memory, under the same tool budget. No Teams sends, state changes, arbitrary tools, or direct memory writes are available during review. The review prompt focuses on concrete defects, evidence and uncertainty. Legacy tool-less review calls remain supported.
+- Memory proposals retain their original scope/context, require explicit UI approval, deduplicate pending/existing exact records and are atomically accepted/rejected. Chat direct saves require explicit current-message memory intent; system instructions request clear paraphrases without changing meaning. Pending proposals are not included in memory context.
+- Inbox and Approvals moved to the sidebar bottom and remain active with counts. Teams is disabled in navigation; stored connection settings are unchanged. Added question forms and memory approval cards; PR cards link to Inbox when waiting.
+- TypeScript check passed. Added lifecycle, approval and tool-boundary regression tests, but did not run tests/build per user's request to reserve tests for push. Live LLM behavior and browser flows are not verified yet.
+
+## Status editors and local developer directory
+
+- Added status editors to table and full ticket cards, using live type-specific Azure states and the existing revision-guarded PATCH + verification GET workflow. Source checks prevent writes after an Azure connection change. Card status is on its own labelled row; local browser events update visible cards/table. Chat retains its explicit-intent verified status tool.
+- Added local developer directory scoped to general/client/project, bulk name entry, rename and retirement, plus multi-person local assignments. Existing Azure-derived assignments migrate once into local records. Retirement does not erase current assignments. Legacy one-person API remains compatible, but new UI and chat tools use only local directory data.
+- Chat can read local developers and replace local assignments with explicit ticket/name intent; add/remove instructions must preserve other assignees. Source scoping, membership checks and per-turn duplicate guards apply. No Azure assignment writes.
+- TypeScript check passed. Added regression tests for directory scope, multiple assignees, retirement, migration, chat intent and status API CSRF/source checks. Tests/build and browser interaction deferred until push per user preference.
+
+## Memory proposals from clarification answers
+
+- Review policy explicitly evaluates previousQuestionsAndAnswers for durable knowledge, asks for a standalone paraphrase preserving conditions, the narrowest appropriate scope and a reason identifying the supporting answer. It excludes uncertain/temporary/secret content and asks to avoid existing knowledge. Existing propose_memory approval and exact-record deduplication apply; no extra model invocation was added.
+- Inspected answer injection and review tool availability. Prompt-only change; tests/build deferred until push. Live model proposal quality remains unverified.
+
+## Pre-push validation of review feedback and local assignments
+
+- All 96 Node tests passed, including review clarification/re-review lifecycle, memory proposal approvals, local developer migration and multi-person assignments, and status API protection. Production build passed (TypeScript, Vite and server compilation).
+- Vite reports the existing bundle-size warning (main chunk above 500 kB). Browser interaction and live Azure/Copilot behavior were not exercised for this batch.

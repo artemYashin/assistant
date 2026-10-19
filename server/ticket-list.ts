@@ -1,3 +1,4 @@
+import { LocalDevelopers } from "./local-developers.js";
 import { z } from "zod";
 import { Store } from "./store.js";
 
@@ -43,6 +44,9 @@ export function listLocalTickets(store: Store, input: unknown) {
         return [key, value];
       }),
     );
+    ticket.localDevelopers = new LocalDevelopers(store)
+      .assigned(row.id)
+      .map(({ id, name }) => ({ id, name }));
     ticket.localUrl = `/tickets?${new URLSearchParams({ id: String(row.id), source: store.source() })}`;
     if (shortenedFields.length) ticket.shortenedFields = shortenedFields;
     const length = JSON.stringify(ticket).length + 1;

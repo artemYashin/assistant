@@ -1,3 +1,5 @@
+import { MemoryProposalList } from "./MemoryProposals.js";
+import { ReviewQuestionInbox } from "./ReviewQuestions.js";
 import { MultiSelect } from "./MultiSelect.js";
 import {
   BrowserRouter,
@@ -11,7 +13,7 @@ import {
   readChatPreference,
   saveChatPreference,
 } from "./AssistantResize.js";
-import { LocalDeveloper, StatusBadge } from "./TicketControls.js";
+import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -306,6 +308,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
     [items, setItems] = useState<any[]>([]),
+    [reviewQuestions, setReviewQuestions] = useState<any[]>([]),
+    [memoryProposals, setMemoryProposals] = useState<any[]>([]),
     [tickets, setTickets] = useState<any[]>([]),
     [approvals, setApprovals] = useState<any[]>([]),
     [memories, setMemories] = useState<any[]>([]),
@@ -331,17 +335,24 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     setQuery("");
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname, location.search]);
+  useEffect(() => {
+    const changed = () => setRefresh((n) => n + 1);
+    window.addEventListener("orbit:ticket-state", changed);
+    return () => window.removeEventListener("orbit:ticket-state", changed);
+  }, []);
   const initialized = useRef(false);
   const loadGeneration = useRef(0);
   async function reload() {
     const generation = ++loadGeneration.current;
-    const [o, i, t, a, m, c] = await Promise.all([
+    const [o, i, t, a, m, c, rq, mp] = await Promise.all([
       api("/overview"),
       api("/inbox"),
       api("/tickets"),
       api("/approvals"),
       api(`/memories?${new URLSearchParams(context)}`),
       api("/chats"),
+      api("/review-questions"),
+      api("/memory-proposals"),
     ]);
     if (generation !== loadGeneration.current) return;
     setOverview(o);
@@ -350,6 +361,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     setApprovals(a);
     setMemories(m);
     setChats(c);
+    setReviewQuestions(rq);
+    setMemoryProposals(mp);
   }
   useEffect(() => {
     api("/settings")
@@ -433,29 +446,25 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         </div>
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
-          {navigation.map((n) => (
-            <Link
-              key={n.id}
-              to={pagePaths[n.id]}
-              aria-current={page === n.id ? "page" : undefined}
-              className={page === n.id ? "active" : ""}
-            >
-              <n.icon size={19} />
-              {n.label}
-              {((n.id === "inbox" && items.length > 0) ||
-                (n.id === "approvals" && pending.length > 0)) && (
-                <span className="nav-count">
-                  {n.id === "inbox" ? items.length : pending.length}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navigation
+            .filter((n) => !["teams", "inbox", "approvals"].includes(n.id))
+            .map((n) => (
+              <Link
+                key={n.id}
+                to={pagePaths[n.id]}
+                aria-current={page === n.id ? "page" : undefined}
+                className={page === n.id ? "active" : ""}
+              >
+                <n.icon size={19} />
+                {n.label}
+              </Link>
+            ))}
         </nav>
         <div className="sidebar-bottom">
           <div className="privacy-note">
             <ShieldCheck size={20} />
             <strong>Последнее слово за вами</strong>
-            <p>Любое сообщение в Teams ждёт вашего подтверждения.</p>
+            <p>Предложения в память сохраняются после вашего подтверждения.</p>
           </div>
           <Link
             to={pagePaths.settings}
@@ -465,6 +474,45 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <Settings2 size={19} />
             Настройки
           </Link>
+          <div className="nav-title">ОТ АССИСТЕНТА</div>
+          <Link
+            to={pagePaths.inbox}
+            className={page === "inbox" ? "active" : ""}
+            aria-current={page === "inbox" ? "page" : undefined}
+          >
+            <Inbox size={18} />
+            Входящие
+            {(items.length > 0 ||
+              reviewQuestions.some((q) => q.status === "pending")) && (
+              <span className="nav-count">
+                {items.length +
+                  reviewQuestions.filter((q) => q.status === "pending").length}
+              </span>
+            )}
+          </Link>
+          <Link
+            to={pagePaths.approvals}
+            className={page === "approvals" ? "active" : ""}
+            aria-current={page === "approvals" ? "page" : undefined}
+          >
+            <ShieldCheck size={18} />
+            Подтверждения
+            {(pending.length > 0 ||
+              memoryProposals.some((p) => p.status === "pending")) && (
+              <span className="nav-count">
+                {pending.length +
+                  memoryProposals.filter((p) => p.status === "pending").length}
+              </span>
+            )}
+          </Link>
+          <button
+            className="sidebar-disabled"
+            disabled
+            title="Интеграция Teams временно отложена"
+          >
+            <MessageSquare size={18} />
+            Сообщения Teams<small>Позже</small>
+          </button>
           <button onClick={() => run("logout", onLogout)}>
             <LogOut size={18} />
             Выйти
@@ -491,7 +539,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               onClick={() => setPage("approvals")}
             >
               <Bell size={18} />
-              {pending.length > 0 && <i className="notification-dot" />}
+              {(pending.length > 0 ||
+                memoryProposals.some((p) => p.status === "pending")) && (
+                <i className="notification-dot" />
+              )}
             </button>
             <button
               className="icon-button"
@@ -794,7 +845,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <>
                 <PageHeading
                   title="Не упустите важное"
-                  subtitle="Числа и ссылки из наблюдаемых чатов — возможные номера тикетов. При добавлении проверим номер и проект через Azure DevOps. Даты и другие числа можно отклонить."
+                  subtitle="Вопросы ревьюера и задачи, требующие вашего внимания."
+                />
+                <ReviewQuestionInbox
+                  items={reviewQuestions}
+                  onChange={() => setRefresh((n) => n + 1)}
                 />
                 {items.length ? (
                   <div className="card-list">
@@ -852,23 +907,19 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                     ))}
                   </div>
                 ) : (
-                  <Empty
-                    icon={Inbox}
-                    title="Входящие разобраны"
-                    description="Подключите Teams, выберите чаты для наблюдения — Orbit подсветит номера новых тикетов."
-                  >
-                    <button
-                      className="secondary"
-                      onClick={() => setPage("teams")}
-                    >
-                      Выбрать чаты
-                    </button>
-                  </Empty>
+                  !reviewQuestions.length && (
+                    <Empty
+                      icon={Inbox}
+                      title="Входящие разобраны"
+                      description="Если для ревью потребуется уточнение, здесь появится полный набор вопросов."
+                    />
+                  )
                 )}
               </>
             )}
             {page === "tickets" && (
               <Tickets
+                context={context}
                 settings={settings}
                 key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
                 tickets={tickets}
@@ -881,16 +932,13 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "approvals" && (
               <>
                 <PageHeading
-                  title="Вы решаете. Orbit отправляет."
-                  subtitle="Проверьте полный текст и получателя. Подтверждение действует только для этого черновика."
+                  title="Подтверждения"
+                  subtitle="Проверьте предложения ассистента перед сохранением в память или отправкой сообщения."
                 />
-                <div className="safety-strip">
-                  <ShieldCheck size={20} />
-                  <span>
-                    Ни системный промпт, ни сообщение в чате не могут разрешить
-                    отправку без этой кнопки.
-                  </span>
-                </div>
+                <MemoryProposalList
+                  items={memoryProposals}
+                  onChange={() => setRefresh((n) => n + 1)}
+                />
                 {approvals.length ? (
                   <div className="card-list">
                     {approvals.map((a) => (
@@ -984,13 +1032,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                       </article>
                     ))}
                   </div>
-                ) : (
-                  <Empty
-                    icon={ShieldCheck}
-                    title="Нет сообщений на проверке"
-                    description="Попросите ассистента подготовить сообщение или создайте черновик в разделе Teams."
-                  />
-                )}
+                ) : null}
               </>
             )}
             {page === "memory" && (
@@ -1060,7 +1102,15 @@ function PageHeading({
     </div>
   );
 }
-function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
+function Tickets({
+  tickets,
+  query,
+  setQuery,
+  run,
+  busy,
+  settings,
+  context,
+}: any) {
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
@@ -1086,9 +1136,9 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
     );
   const localDevelopers = [
     ...new Map<string, string>(
-      tickets
-        .filter((t: any) => t.developer_id)
-        .map((t: any) => [t.developer_id, t.developer_name || t.developer_id]),
+      tickets.flatMap((t: any) =>
+        (t.developers || []).map((d: any) => [d.id, d.name]),
+      ),
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], "ru"));
   const filteredTickets = tickets.filter((t: any) => {
@@ -1114,7 +1164,9 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         people.some((person) =>
           person[0] === "azure"
             ? (t.assigned || "") === person[1]
-            : (t.developer_id || "") === person[1],
+            : person[1]
+              ? (t.developers || []).some((d: any) => d.id === person[1])
+              : !(t.developers || []).length,
         ))
     );
   });
@@ -1361,15 +1413,19 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                     />
                   </td>
                   <td>
-                    <StatusBadge
+                    <TicketStatus
+                      id={t.id}
+                      source={t.source}
                       state={t.state}
                       colors={settings?.statusColors}
+                      onChange={() => run("refresh-state", async () => {})}
                     />
                   </td>
                   <td>{t.assigned || "Не назначен"}</td>
                   <td>
                     <LocalDeveloper
                       ticket={t}
+                      context={context}
                       onChange={() => run("refresh-local", async () => {})}
                     />
                   </td>

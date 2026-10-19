@@ -539,3 +539,59 @@ test("sync stores and refreshes source and target branch names", async (t) => {
   saved = service.list(context)[0];
   assert.equal(saved.target_branch, "refs/heads/release");
 });
+
+test("review clarification pauses work until all answers arrive and passes them to the next review", async (t) => {
+  const { ReviewQuestions } = await import("../server/review-questions.js");
+  const { store, service, agent } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const review = service.requestReview(monitor, "repo", 1);
+  let runs = 0;
+  t.mock.method(agent, "chat", async (...args: any[]) => {
+    runs++;
+    if (runs === 1)
+      args[3].askQuestions([
+        {
+          question: "Expected timeout?",
+          reason: "Contract is not in the diff",
+        },
+        { question: "Retry allowed?", reason: "Potential duplicate writes" },
+      ]);
+    else {
+      assert.match(args[0], /30 seconds/);
+      assert.match(args[0], /No retries/);
+    }
+    return {
+      body: "Review summary",
+      requestId: "00000000-0000-0000-0000-000000000000" as const,
+    };
+  });
+  await service.reviewNext();
+  assert.equal(
+    (
+      store.db
+        .prepare("SELECT status FROM pr_reviews WHERE id=?")
+        .get(review) as any
+    ).status,
+    "awaiting_answers",
+  );
+  await service.reviewNext();
+  assert.equal(runs, 1);
+  const questions = new ReviewQuestions(store),
+    batch = questions.list()[0];
+  assert.throws(() => questions.answer(batch.id, ["30 seconds"]));
+  await service.reviewNext();
+  assert.equal(runs, 1);
+  questions.answer(batch.id, ["30 seconds", "No retries"]);
+  await service.reviewNext();
+  assert.equal(runs, 2);
+  assert.equal(
+    (
+      store.db
+        .prepare("SELECT status FROM pr_reviews WHERE id=?")
+        .get(review) as any
+    ).status,
+    "completed",
+  );
+});

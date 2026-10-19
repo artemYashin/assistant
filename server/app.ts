@@ -1,3 +1,6 @@
+import { LocalDevelopers } from "./local-developers.js";
+import { MemoryProposals } from "./memory-proposals.js";
+import { ReviewQuestions } from "./review-questions.js";
 import express, {
   type Request,
   type Response,
@@ -411,6 +414,27 @@ export function createApp(
         .all(req.params.id),
     ),
   );
+  const memoryProposals = new MemoryProposals(store);
+  const reviewQuestions = new ReviewQuestions(store);
+  app.get("/api/memory-proposals", (_req, res) =>
+    res.json(memoryProposals.list()),
+  );
+  app.post("/api/memory-proposals/:id/approve", (req, res) =>
+    res.json(memoryProposals.decide(String(req.params.id), true)),
+  );
+  app.post("/api/memory-proposals/:id/reject", (req, res) =>
+    res.json(memoryProposals.decide(String(req.params.id), false)),
+  );
+  app.get("/api/review-questions", (_req, res) =>
+    res.json(reviewQuestions.list()),
+  );
+  app.post("/api/review-questions/:id/answers", (req, res) =>
+    res.json(reviewQuestions.answer(String(req.params.id), req.body.answers)),
+  );
+  app.post("/api/review-questions/:id/dismiss", (req, res) => {
+    reviewQuestions.dismiss(String(req.params.id));
+    res.json({ ok: true });
+  });
   app.get("/api/approvals", (_req, res) => res.json(approvals.list()));
   app.post("/api/approvals", (req, res) => {
     const v = z
@@ -428,13 +452,87 @@ export function createApp(
     approvals.reject(String(req.params.id));
     res.json({ ok: true });
   });
+  const localDevelopers = new LocalDevelopers(store);
+  app.get("/api/local-developers", (req, res) =>
+    res.json(localDevelopers.list(contextSchema.parse(req.query))),
+  );
+  app.post("/api/local-developers", (req, res) =>
+    res.json(
+      localDevelopers.add(
+        req.body.names,
+        contextSchema.parse(req.body.context),
+      ),
+    ),
+  );
+  app.put("/api/local-developers/:id", (req, res) => {
+    localDevelopers.edit(String(req.params.id), req.body.name);
+    res.json({ ok: true });
+  });
+  app.delete("/api/local-developers/:id", (req, res) => {
+    localDevelopers.remove(String(req.params.id));
+    res.json({ ok: true });
+  });
+  app.put("/api/tickets/:id/developers", (req, res) => {
+    const v = z
+      .object({
+        developerIds: z.array(z.string()).max(50),
+        context: contextSchema,
+        source: z.string().min(1).max(2000),
+      })
+      .parse(req.body);
+    res.json(
+      localDevelopers.assign(
+        z.coerce.number().int().positive().parse(req.params.id),
+        v.developerIds,
+        v.context,
+        v.source,
+      ),
+    );
+  });
+  app.get("/api/tickets/:id/states", async (req, res) =>
+    res.json(
+      await connectors.ticketStates(
+        z.coerce.number().int().positive().parse(req.params.id),
+      ),
+    ),
+  );
+  app.put("/api/tickets/:id/state", async (req, res) => {
+    const input = z
+      .object({ state: text.min(1), source: z.string().min(1).max(2000) })
+      .parse(req.body);
+    const guard = () => {
+      if (input.source !== store.source())
+        throw new AppError(
+          409,
+          "Подключение изменилось. Обновите карточку тикета.",
+        );
+    };
+    guard();
+    res.json(
+      await connectors.changeTicketStatus(
+        z.coerce.number().int().positive().parse(req.params.id),
+        input.state,
+        guard,
+      ),
+    );
+  });
   app.get("/api/tickets", (_req, res) =>
     res.json(
       store.db
         .prepare(
           "SELECT t.*,l.developer_id,l.developer_name FROM tickets t LEFT JOIN ticket_local l ON t.source=l.source AND t.id=l.id WHERE t.source=? ORDER BY t.changed_at DESC",
         )
-        .all(store.source()),
+        .all(store.source())
+        .map((ticket: any) => {
+          const developers = localDevelopers.assigned(ticket.id, ticket.source);
+          return {
+            ...ticket,
+            developers,
+            developer_name: developers.length
+              ? developers.map((d) => d.name).join(", ")
+              : ticket.developer_name,
+          };
+        }),
     ),
   );
   app.post("/api/developers/search", async (req, res) => {
@@ -471,6 +569,18 @@ export function createApp(
         "INSERT INTO ticket_local(source,id,developer_id,developer_name) VALUES (?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET developer_id=excluded.developer_id,developer_name=excluded.developer_name",
       )
       .run(source, id, developerId, developer?.name || "");
+    // Compatibility for older UI clients: mirror their one-person assignment locally.
+    store.db
+      .prepare("DELETE FROM ticket_developers WHERE source=? AND ticket_id=?")
+      .run(source, id);
+    if (developer) {
+      const added = localDevelopers
+        .add([developer.name], { client: "", project: "" })
+        .find((d) => d.name === developer.name)!;
+      store.db
+        .prepare("INSERT INTO ticket_developers VALUES (?,?,?)")
+        .run(source, id, added.id);
+    }
     res.json({ ok: true });
   });
   app.get("/api/tickets/options", async (_req, res) =>

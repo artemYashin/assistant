@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
-import { StatusBadge } from "./TicketControls.js";
+import { StatusBadge, TicketStatus } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 import { ticketText as text } from "./ticket-text.js";
@@ -34,6 +34,18 @@ export function TicketCard({ reference }: { reference: string }) {
       live = false;
     };
   }, [reference]);
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old && old.id === detail.id && old.source === detail.source
+          ? { ...old, fields: { ...old.fields, "System.State": detail.state } }
+          : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-state", changed);
+    return () => window.removeEventListener("orbit:ticket-state", changed);
+  }, []);
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
   const f = card.fields;
@@ -67,11 +79,16 @@ export function TicketCard({ reference }: { reference: string }) {
             colors={typeColors}
             kind="type"
           />
-          <StatusBadge
-            state={f["System.State"] || "Статус не указан"}
+          <span className="ticket-project">{card.project}</span>
+        </div>
+        <div className="ticket-status-row">
+          <span className="ticket-type-label">Статус</span>
+          <TicketStatus
+            id={card.id}
+            source={card.source}
+            state={f["System.State"] || ""}
             colors={colors}
           />
-          <span className="ticket-project">{card.project}</span>
         </div>
         <dl className="ticket-metadata">
           <div>

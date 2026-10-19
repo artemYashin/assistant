@@ -315,3 +315,49 @@ test("status tool requires current user instruction and deduplicates repeated wr
   await agent.chat("Покажи тикет 123456. Статус RFT?", context);
   assert.equal(writes, 1);
 });
+
+test("review feedback tools are limited to questions and memory proposals with ordinary usage guard", async (t) => {
+  const store = fixture(t);
+  let questions: any[] = [];
+  const { agent } = fakeAgent(store, async (_s, c) => {
+    assert.deepEqual(c.tools.map((tool: any) => tool.name).sort(), [
+      "ask_review_questions",
+      "propose_memory",
+    ]);
+    assert.equal(
+      (await c.hooks.onPreToolUse({ toolName: "save_memory" }))
+        .permissionDecision,
+      "deny",
+    );
+    assert.equal(
+      (await c.hooks.onPreToolUse({ toolName: "ask_review_questions" }))
+        .permissionDecision,
+      "allow",
+    );
+    await c.tools
+      .find((tool: any) => tool.name === "ask_review_questions")
+      .handler(
+        { questions: [{ question: "Contract?", reason: "Unknown input" }] },
+        {},
+      );
+    await c.tools
+      .find((tool: any) => tool.name === "propose_memory")
+      .handler(
+        { scope: "project", body: "A durable fact", reason: "Useful later" },
+        {},
+      );
+    return { data: { content: "Needs clarification" } };
+  });
+  await agent.chat("Review", context, true, {
+    askQuestions: (batch) => {
+      questions = batch;
+    },
+  });
+  assert.equal(questions.length, 1);
+  assert.equal(store.memories(context).length, 0);
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM memory_proposals").get() as any)
+      .n,
+    1,
+  );
+});
