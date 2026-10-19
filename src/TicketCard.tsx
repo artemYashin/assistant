@@ -1,15 +1,7 @@
 import { StatusBadge } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
-// Render external content as text, never inject work item HTML into the page.
-function text(value: any) {
-  const raw = typeof value === "string" ? value : (JSON.stringify(value) ?? "");
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = raw
-    .replace(/<br\s*\/?\s*>|<\/(p|div|li|h[1-6])>/gi, "\n")
-    .replace(/<[^>]*>/g, " ");
-  return textarea.value;
-}
+import { ticketText as text } from "./ticket-text.js";
 export function TicketCard({ reference }: { reference: string }) {
   const [typeColors, setTypeColors] = useState<Record<string, string>>({});
   const [colors, setColors] = useState<Record<string, string>>({});

@@ -316,7 +316,7 @@ export class PullRequests {
             if (!repo || !Number.isSafeInteger(p.pullRequestId)) continue;
             this.store.db
               .prepare(
-                "INSERT INTO pull_requests (monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,author=excluded.author,head=excluded.head,target=excluded.target,draft=excluded.draft,description=excluded.description,created_at=CASE WHEN excluded.created_at != '' THEN excluded.created_at ELSE pull_requests.created_at END,in_scope=1,synced_at=excluded.synced_at",
+                "INSERT INTO pull_requests (monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at,source_branch,target_branch) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,author=excluded.author,head=excluded.head,target=excluded.target,draft=excluded.draft,source_branch=excluded.source_branch,target_branch=excluded.target_branch,description=excluded.description,created_at=CASE WHEN excluded.created_at != '' THEN excluded.created_at ELSE pull_requests.created_at END,in_scope=1,synced_at=excluded.synced_at",
               )
               .run(
                 m.id,
@@ -335,6 +335,8 @@ export class PullRequests {
                   Number.isFinite(Date.parse(p.creationDate))
                   ? new Date(p.creationDate).toISOString()
                   : "",
+                typeof p.sourceRefName === "string" ? p.sourceRefName : "",
+                typeof p.targetRefName === "string" ? p.targetRefName : "",
               );
           }
           this.store.db

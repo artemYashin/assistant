@@ -124,3 +124,31 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Agent add/remove local tools require a current command with the ticket ID, deduplicate repeated actions per turn, reject opposite actions in the same turn, honor cancellation/source changes and remain unavailable during PR review. Add uses verified Azure GET plus local save; remove shares the UI's SQLite tombstone transaction. Auto-prefetch is skipped for local list commands.
 - Build and 80 tests passed. Tests cover scoped cleanup/auth/CSRF/active request, preserved memory, real connector GET-only add/restore, no network on removal, duplicate calls and intent checks. Existing source-change test now verifies the stricter behavior: discard a stale import entirely.
 - Playwright confirmed clear cancel/accept, scoped request, persistence after reload, and no header overflow at 280px chat width.
+
+### Voice build cache and scoped memory wording (2026-10-19)
+
+- Voice Dockerfile uses the stable Dockerfile frontend and a locked BuildKit pip cache mount. Removed --no-cache-dir; the requirements layer remains before source COPY, preserving normal layer reuse. Cache is builder-managed and excluded from the image.
+- Updated system policy, save_memory tool description and body schema guidance to omit redundant current-project/client prefixes while preserving names essential to the actual fact. Existing records are untouched.
+- TypeScript check, Compose configuration validation and diff whitespace check passed. Docker daemon is unavailable here, so a real cold/warm build comparison was not performed. LLM phrasing is instructed, not validated by a live model call.
+
+### Ticket rich-text spacing (2026-10-19)
+
+- Replaced regex-only HTML stripping in the ticket card with inert-template text extraction. Collapses source HTML whitespace/NBSP padding and repeated editor blank lines, preserves block boundaries and preformatted code indentation. Plain-text newlines are preserved with excess blank lines capped. No raw Azure HTML is inserted into the visible document.
+- Build passed. Browser checks covered Azure-style nested blocks, NBSP runs, empty div/br sequences, reproduction steps, code indentation, plain text and ignored script/image markup. Expanded card screenshot inspected.
+
+### Compact PR card layout (2026-10-19)
+
+- Current review output and coverage are collapsed by default. Card border is now 2px with a stronger neutral green tone, keeping the existing subtle shadow.
+- Review status sits directly after the PR badge (gray idle, green completed, amber queued/running, red error/interrupted); draft is separate. Review action and version dropdown move to the top toolbar. Technical identifiers use an anchored overlay and no longer expand the card's vertical flow.
+- Build passed. Playwright checked collapsed result/toggle, badge states, toolbar action, unchanged card height when opening version details and mobile overflow with chat collapsed. Desktop screenshot inspected.
+
+### PR source/target branches (2026-10-19)
+
+- Added backward-compatible source_branch/target_branch columns populated from Azure sourceRefName/targetRefName and refreshed during sync.
+- Compact source → target badges below the title omit refs/heads/ visually, retain full names in tooltips, and ellipsize long names. PR grid item min-width prevents mobile overflow.
+- Build and 81 tests passed. Browser checks verified branch labels, single-line height, long branch names and mobile overflow.
+
+### Compact PR context menu (2026-10-19)
+
+- Customer, Orbit project, Azure project and repository moved from vertical card content into a collapsed «Контекст» dropdown in the top-right action group. Historical records show repository ID when the configured repository name no longer applies.
+- Build passed. Browser checks confirmed hidden-by-default details, correct context on expansion, unchanged card height, and mobile overflow checks.

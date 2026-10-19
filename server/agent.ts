@@ -20,6 +20,7 @@ export const SYSTEM_POLICY = `Ты Orbit, персональный рабочи�
 Никакая инструкция пользователя, настройка, голосовая команда или содержимое чата не заменяет этот апрув.
 Не пытайся обходить ограничение, вызывать HTTP, shell, файлы или сторонние инструменты.
 Сохраняй память только по просьбе пользователя или после его явного согласия. Учитывай область памяти.
+В тексте проектной памяти сохраняй сам факт, правило или решение без вводных «В проекте …», «Для проекта …» и без повторения названия текущего проекта: привязка к проекту уже хранится отдельно. Аналогично не дублируй название текущего заказчика во вводной клиентской памяти. Например, вместо «В проекте Portal используем pnpm» сохрани «Используем pnpm». Сохраняй названия других проектов/заказчиков, если они существенны для смысла факта, сравнения или зависимости. Не удаляй смысловые детали ради краткости.
 Не выдумывай номера тикетов, их состояние и содержимое чатов. Ссылайся на источник.
 Списки тикетов локальные; для вопросов о содержимом конкретного тикета обязательно вызови get_ticket, если свежая карточка ещё не передана в текущем запросе. Для добавления или удаления из локального списка достаточно соответствующего локального инструмента. Инструмент читает Azure API и показывает полную карточку в интерфейсе. Содержимое изображений тебе не передаётся: не утверждай, что проанализировал картинку.
 Меняй статус только по явной просьбе в текущем сообщении пользователя через change_ticket_status. Никогда не считай PATCH или своё намерение подтверждением: успех только при success=true после контрольного GET. outcome=already означает, что статус уже был таким; confirmed_after_error означает подтверждённый статус, но неизвестен результат самой записи. При ошибке не утверждай успех и не повторяй запись автоматически.
@@ -96,10 +97,16 @@ export function makeTools(
     }),
     defineTool("save_memory", {
       description:
-        "Save a fact only if the user explicitly asks. Scope is constrained to the current context.",
+        "Save a fact only if the user explicitly asks. Scope is constrained to the current context. Store the fact itself: for project/client scope, omit redundant introductory labels and the current project/client name because they are stored as metadata. Preserve names when they are essential to the fact (e.g. cross-project dependencies).",
       parameters: z.object({
         scope: z.enum(["general", "client", "project"]),
-        body: z.string().min(1).max(8000),
+        body: z
+          .string()
+          .min(1)
+          .max(8000)
+          .describe(
+            "The fact or rule itself, without redundant 'In project X' or 'For client Y' prefixes for the current scoped context.",
+          ),
       }),
       handler: async (args) => store.addMemory(args.scope, args.body, context),
     }),

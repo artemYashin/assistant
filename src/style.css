@@ -2083,6 +2083,8 @@ summary {
   margin-top: 12px;
 }
 .pr-review {
+  min-width: 0;
+  border: 2px solid #cbd7c5;
   box-shadow:
     0 2px 6px #233a2008,
     0 8px 24px #233a2010;
@@ -2743,4 +2745,104 @@ td > small {
 .assistant-heading > .icon-button,
 .assistant-heading > .assistant-symbol {
   flex-shrink: 0;
+}
+
+.pr-card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pr-card-labels,
+.pr-card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pr-card-actions {
+  margin-left: auto;
+}
+.pr-review-status {
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pr-review-status.is-idle {
+  background: #eef0ed;
+  color: #626a60;
+}
+.pr-review-status.is-ready {
+  background: #e4f2e2;
+  color: #326038;
+}
+.pr-review-status.is-pending {
+  background: #fff1d5;
+  color: #825d16;
+}
+.pr-review-status.is-error {
+  background: #fbe6e3;
+  color: #9a3932;
+}
+.pr-version-menu {
+  position: relative;
+}
+.pr-version-menu > summary {
+  cursor: pointer;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.pr-version-menu > dl {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  right: 0;
+  width: min(360px, calc(100vw - 110px));
+  max-height: 320px;
+  overflow: auto;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #cbd7c5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #233a201a;
+}
+.pr-result-accordion > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.pr-result-accordion[open] > summary {
+  margin-bottom: 16px;
+}
+
+.pr-branches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #6c7868;
+}
+.pr-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: calc(50% - 14px);
+  padding: 4px 8px;
+  background: #f1f4ef;
+  border-radius: 6px;
+}
+.pr-branch small {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #788471;
+}
+.pr-branch code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
 }

@@ -514,3 +514,28 @@ test("sync persists creation date and list defaults to newest creation, not ID o
     0,
   );
 });
+
+test("sync stores and refreshes source and target branch names", async (t) => {
+  const { service } = fixture(t);
+  mock(t, [
+    {
+      ...pr(),
+      sourceRefName: "refs/heads/feature/login",
+      targetRefName: "refs/heads/main",
+    },
+  ]);
+  await service.sync();
+  let saved: any = service.list(context)[0];
+  assert.equal(saved.source_branch, "refs/heads/feature/login");
+  assert.equal(saved.target_branch, "refs/heads/main");
+  mock(t, [
+    {
+      ...pr(),
+      sourceRefName: "refs/heads/feature/login",
+      targetRefName: "refs/heads/release",
+    },
+  ]);
+  await service.sync();
+  saved = service.list(context)[0];
+  assert.equal(saved.target_branch, "refs/heads/release");
+});

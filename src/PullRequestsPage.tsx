@@ -249,17 +249,118 @@ export function PullRequestsPage({ context, settings }: any) {
             className="panel pr-review"
             key={`${p.monitor}:${p.repo}:${p.number}`}
           >
-            <div className="section-heading">
-              <h2 className="pr-title">
+            <div className="pr-card-toolbar">
+              <div className="pr-card-labels">
                 <span className="pr-kind-badge">PR</span>
-                <a href={p.url} target="_blank" rel="noreferrer">
-                  #{p.number} · {p.title}
-                </a>
-              </h2>
-              <span className="badge">
-                {p.draft
-                  ? "Черновик"
-                  : statuses[p.review_status] || "Ревью не запускалось"}
+                <span
+                  className={`pr-review-status ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
+                >
+                  {statuses[p.review_status] || "Ревью не запускалось"}
+                </span>
+                {!!p.draft && <span className="badge">Черновик</span>}
+              </div>
+              <div className="pr-card-actions">
+                <button
+                  className="secondary"
+                  disabled={
+                    busy ||
+                    !p.in_scope ||
+                    !p.enabled ||
+                    !!p.draft ||
+                    ["queued", "running", "completed"].includes(p.review_status)
+                  }
+                  onClick={() =>
+                    void run(() =>
+                      api("/pr/review", "POST", {
+                        monitor: p.monitor,
+                        repo: p.repo,
+                        number: p.number,
+                      }),
+                    )
+                  }
+                >
+                  {p.review_status === "completed"
+                    ? "Текущая версия проверена"
+                    : "Запустить ревью"}
+                </button>
+                <details className="pr-technical pr-version-menu pr-context-menu">
+                  <summary title="Заказчик, проекты и репозиторий">
+                    Контекст
+                  </summary>
+                  <dl>
+                    <div>
+                      <dt>Заказчик</dt>
+                      <dd>{p.client || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Проект Orbit</dt>
+                      <dd>{p.project || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Azure Project</dt>
+                      <dd>{p.azure_project || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Репозиторий</dt>
+                      <dd>
+                        {p.in_scope && p.repository
+                          ? p.repository
+                          : p.repo || "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </details>
+                <details className="pr-technical pr-version-menu">
+                  <summary title="Версия изменений и ID репозитория">
+                    Версия изменений
+                  </summary>
+                  <dl>
+                    <div>
+                      <dt>Source commit</dt>
+                      <dd>
+                        <code>{p.head}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Target commit</dt>
+                      <dd>
+                        <code>{p.target}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>ID репозитория</dt>
+                      <dd>
+                        <code>{p.repo}</code>
+                      </dd>
+                    </div>
+                  </dl>
+                </details>
+              </div>
+            </div>
+            <h2 className="pr-title">
+              <a href={p.url} target="_blank" rel="noreferrer">
+                #{p.number} · {p.title}
+              </a>
+            </h2>
+            <div className="pr-branches" aria-label="Ветки pull request">
+              <span
+                className="pr-branch"
+                title={`Source branch: ${p.source_branch || "пока не загружена"}`}
+              >
+                <small>source</small>
+                <code>
+                  {p.source_branch?.replace(/^refs\/heads\//, "") || "—"}
+                </code>
+              </span>
+              <span aria-hidden="true">→</span>
+              <span
+                className="pr-branch"
+                title={`Target branch: ${p.target_branch || "пока не загружена"}`}
+              >
+                <small>target</small>
+                <code>
+                  {p.target_branch?.replace(/^refs\/heads\//, "") || "—"}
+                </code>
               </span>
             </div>
             <div className="pr-author">
@@ -281,26 +382,6 @@ export function PullRequestsPage({ context, settings }: any) {
                 "дата пока не загружена"
               )}
             </p>
-            <div className="pr-context-badges">
-              <span className="pr-context-badge">
-                <small>Заказчик</small>
-                {p.client || "—"}
-              </span>
-              <span className="pr-context-badge">
-                <small>Проект Orbit</small>
-                {p.project || "—"}
-              </span>
-              <span className="pr-context-badge">
-                <small>Azure Project</small>
-                {p.azure_project}
-              </span>
-              {p.in_scope && p.repository && (
-                <span className="pr-context-badge">
-                  <small>Репозиторий</small>
-                  {p.repository}
-                </span>
-              )}
-            </div>
             <PrDescription pr={p} />
             <details className="pr-content-section">
               <summary>Тикеты из описания · {p.tickets?.length || 0}</summary>
@@ -348,79 +429,29 @@ export function PullRequestsPage({ context, settings }: any) {
                 ))}
               </div>
             </details>
-            <details className="pr-technical">
-              <summary>Версия изменений и ID репозитория</summary>
-              <dl>
-                <div>
-                  <dt>Source commit</dt>
-                  <dd>
-                    <code>{p.head}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Target commit</dt>
-                  <dd>
-                    <code>{p.target}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>ID репозитория</dt>
-                  <dd>
-                    <code>{p.repo}</code>
-                  </dd>
-                </div>
-              </dl>
-            </details>
             {!p.in_scope && (
               <p className="muted">
                 PR вне текущей выборки. Сохранённые результаты доступны ниже.
               </p>
             )}
-            <button
-              className="secondary"
-              disabled={
-                busy ||
-                !p.in_scope ||
-                !p.enabled ||
-                !!p.draft ||
-                ["queued", "running", "completed"].includes(p.review_status)
-              }
-              onClick={() =>
-                void run(() =>
-                  api("/pr/review", "POST", {
-                    monitor: p.monitor,
-                    repo: p.repo,
-                    number: p.number,
-                  }),
-                )
-              }
-            >
-              {p.review_status === "completed"
-                ? "Текущая версия проверена"
-                : "Запустить ревью"}
-            </button>
             {p.error && <p className="error">{p.error}</p>}
-            {p.coverage && (
-              <p className="muted">
-                Покрытие: {JSON.parse(p.coverage).files} файлов.{" "}
-                {JSON.parse(p.coverage).notes.join("; ")}
-              </p>
-            )}
-            {p.summary && (
-              <section className="pr-review-result">
-                <div className="section-heading">
-                  <h3>Результат ревью</h3>
-                  <span className="badge">
-                    {statuses[p.review_status] || "Сохранено"}
-                  </span>
-                </div>
+            {(p.summary || p.coverage) && (
+              <details className="pr-review-result pr-result-accordion">
+                <summary>Результат ревью</summary>
+                {p.coverage && (
+                  <p className="muted">
+                    Покрытие: {JSON.parse(p.coverage).files} файлов.{" "}
+                    {JSON.parse(p.coverage).notes.join("; ")}
+                  </p>
+                )}
+
                 {p.finished_at && (
                   <small>
                     {new Date(p.finished_at).toLocaleString("ru-RU")}
                   </small>
                 )}
-                <ChatMarkdown text={p.summary} />
-              </section>
+                {p.summary && <ChatMarkdown text={p.summary} />}
+              </details>
             )}
             <ReviewHistory pr={p} />
           </article>

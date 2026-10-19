@@ -127,7 +127,13 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN repository TEXT NOT NULL DEFAULT ''",
       );
-    for (const column of ["description", "ticket_error", "created_at"]) {
+    for (const column of [
+      "description",
+      "ticket_error",
+      "created_at",
+      "source_branch",
+      "target_branch",
+    ]) {
       if (
         !(
           this.db.prepare("PRAGMA table_info(pull_requests)").all() as any[]
