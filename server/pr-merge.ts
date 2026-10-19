@@ -128,6 +128,13 @@ export class PrMerge {
     const ids = [
       ...new Set([
         ...prTicketIds(pr.description || ""),
+        ...(
+          this.store.db
+            .prepare(
+              "SELECT ticket_id FROM pr_ticket_links WHERE monitor=? AND repo=? AND number=?",
+            )
+            .all(key.monitor, key.repo, key.number) as { ticket_id: number }[]
+        ).map((r) => r.ticket_id),
         ...links.value.map((v: any) => Number(v.id)),
       ]),
     ].sort((a, b) => a - b);

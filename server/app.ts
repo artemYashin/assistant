@@ -718,6 +718,20 @@ export function createApp(
   app.get("/api/pr/merge/:id", (req, res) =>
     res.json(prMerge.result(String(req.params.id))),
   );
+  app.post("/api/pr/tickets", async (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.number().int().positive(),
+        ticketId: z.number().int().positive(),
+        source: z.string().min(1).max(2000),
+        action: z.enum(["link", "unlink"]),
+      })
+      .strict()
+      .parse(req.body);
+    res.json(await pullRequests.linkTicket(input));
+  });
   app.post("/api/pr/review", (req, res) => {
     const input = z
       .object({

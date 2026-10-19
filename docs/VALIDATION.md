@@ -373,3 +373,13 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ## Pre-push validation: PR card hierarchy
 
 - All 113 Node tests and production build passed. Mocked-API Chromium checks passed for PR sorting/filtering/reset, mobile overflow and absence of mutation requests. Inspected the desktop screenshot: badges, title, author/date, branches, actions and paired metadata disclosures appear in the requested order. Vite retains the existing bundle-size warning.
+
+## Manual local PR-ticket links
+
+- Added source-validated, idempotent local PR-ticket associations with link/unlink UI. Missing tickets are loaded through the existing read-only Azure track path; removed tickets require explicit restore first. Manual links are unioned with description mentions and included in reverse active-PR lookup; synchronization does not overwrite them.
+- Merge-and-transition preparation includes manual links and revalidates the union on confirmation. Plain merge still skips work-item operations. Linking/unlinking itself never writes to Azure; removal preserves the ticket and any description-derived association.
+- Added regression coverage for local link deduplication, sync persistence, reverse lookup, source guard and unlink. TypeScript/whitespace checks passed. Tests/build deferred until push; browser/live Azure checks not run.
+
+## Pre-push validation: manual PR-ticket links
+
+- All 114 Node tests and production build passed, including manual association persistence, reverse lookup, deduplication, unlink and source checks. Whitespace check passed. Vite retains the existing bundle-size warning. Browser/live Azure interactions were not exercised for this batch.

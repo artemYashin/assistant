@@ -1,3 +1,4 @@
+import { PrTicketLink } from "./PrTicketLink.js";
 import { PrHealth } from "./PrHealth.js";
 import { PrDiffDialog } from "./PrDiffDialog.js";
 import { PrMergeDialog } from "./PrMergeDialog.js";
@@ -566,15 +567,20 @@ export function PullRequestsPage({ context, settings }: any) {
             <details className="pr-content-section">
               <summary>
                 <Ticket size={17} aria-hidden="true" />
-                Тикеты из описания · {p.tickets?.length || 0}
+                Связанные тикеты · {p.tickets?.length || 0}
               </summary>
               <p className="muted">
                 Упоминание в PR не означает закрытие тикета. Здесь показан
                 последний синхронизированный статус Azure.
               </p>
+              <PrTicketLink pr={p} onChange={() => setVersion((v) => v + 1)} />
+              <p className="muted">
+                Ручные связи сохраняются только в Orbit. При «Merge и смена
+                статусов» они также появятся в диалоге подтверждения.
+              </p>
               {p.ticket_error && <p className="error">{p.ticket_error}</p>}
               {!p.tickets?.length && (
-                <p className="muted">Номеров вида #123456 в описании нет.</p>
+                <p className="muted">Связанных тикетов пока нет.</p>
               )}
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
@@ -589,6 +595,30 @@ export function PullRequestsPage({ context, settings }: any) {
                       #{t.id}
                       {t.title ? ` · ${t.title}` : ""}
                     </strong>
+                    {t.manual && (
+                      <button
+                        type="button"
+                        className="text-button"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(() =>
+                            api("/pr/tickets", "POST", {
+                              monitor: p.monitor,
+                              repo: p.repo,
+                              number: p.number,
+                              ticketId: t.id,
+                              source: p.ticket_source,
+                              action: "unlink",
+                            }),
+                          )
+                        }
+                      >
+                        Отвязать локально
+                        {t.fromDescription
+                          ? " (останется упоминание в описании)"
+                          : ""}
+                      </button>
+                    )}
                     {t.unavailable ? (
                       <span className="muted">
                         {t.removed

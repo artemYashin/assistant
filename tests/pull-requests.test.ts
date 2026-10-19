@@ -631,3 +631,38 @@ test("default PR list hides records removed from the active scan while retaining
     1,
   );
 });
+
+test("manual ticket links survive sync, appear in reverse lookup and unlink without Azure writes", async (t) => {
+  const { service, store } = fixture(t);
+  mock(t, [pr()], (_url, init) => {
+    assert.ok(!init.method || init.method === "GET");
+  });
+  await service.sync();
+  const row: any = service.list(context)[0];
+  store.db
+    .prepare(
+      "INSERT INTO tickets(source,id,title,state,assigned,type,url,synced_at) VALUES (?,42,'Local bug','Active','Dev','Bug','https://ado.test/42','now')",
+    )
+    .run(store.source());
+  const key = {
+    monitor: row.monitor,
+    repo: row.repo,
+    number: row.number,
+    ticketId: 42,
+    source: store.source(),
+    action: "link" as const,
+  };
+  await service.linkTicket(key);
+  await service.linkTicket(key);
+  assert.equal((service.list(context)[0] as any).tickets.length, 1);
+  assert.equal(service.linkedToTicket(42, store.source()).length, 1);
+  await service.sync();
+  assert.equal((service.list(context)[0] as any).tickets[0].manual, true);
+  await assert.rejects(() =>
+    service.linkTicket({ ...key, source: "different" }),
+  );
+  await service.linkTicket({ ...key, action: "unlink" });
+  assert.equal((service.list(context)[0] as any).tickets.length, 0);
+  assert.equal(service.linkedToTicket(42, store.source()).length, 0);
+  assert.ok(store.db.prepare("SELECT 1 FROM tickets WHERE id=42").get());
+});

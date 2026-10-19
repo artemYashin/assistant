@@ -120,6 +120,7 @@ export class Store {
         "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
       );
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS pr_ticket_links (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,ticket_id INTEGER NOT NULL,PRIMARY KEY(monitor,repo,number,ticket_id));
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS ticket_trash (source TEXT NOT NULL,id INTEGER NOT NULL,body TEXT NOT NULL,removed_at INTEGER NOT NULL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));

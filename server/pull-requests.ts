@@ -150,6 +150,12 @@ export class PullRequests {
           azureUrl: m.source,
           azureProject: m.azure_project,
         });
+        const manualIds = this.manualTicketIds(
+          row.monitor,
+          row.repo,
+          row.number,
+        );
+        const descriptionIds = prTicketIds(row.description);
         return {
           ...row,
           ticket_source: source,
@@ -166,7 +172,7 @@ export class PullRequests {
               ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
               : null,
           })),
-          tickets: prTicketIds(row.description).map((id) => {
+          tickets: [...new Set([...descriptionIds, ...manualIds])].map((id) => {
             const ticket = this.store.db
               .prepare(
                 "SELECT id,title,state,type FROM tickets WHERE source=? AND id=?",
@@ -177,10 +183,92 @@ export class PullRequests {
                 "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
               )
               .get(source, id);
-            return ticket || { id, unavailable: true, removed };
+            return {
+              ...(ticket || { id, unavailable: true, removed }),
+              manual: manualIds.includes(id),
+              fromDescription: descriptionIds.includes(id),
+            };
           }),
         };
       });
+  }
+  manualTicketIds(monitor: string, repo: string, number: number) {
+    return (
+      this.store.db
+        .prepare(
+          "SELECT ticket_id FROM pr_ticket_links WHERE monitor=? AND repo=? AND number=? ORDER BY ticket_id",
+        )
+        .all(monitor, repo, number) as { ticket_id: number }[]
+    ).map((r) => r.ticket_id);
+  }
+  async linkTicket(key: {
+    monitor: string;
+    repo: string;
+    number: number;
+    ticketId: number;
+    source: string;
+    action: "link" | "unlink";
+  }) {
+    const guard = () => {
+      const m = this.monitors().find((m) => m.id === key.monitor);
+      const p = this.store.db
+        .prepare(
+          "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+        )
+        .get(key.monitor, key.repo, key.number);
+      if (
+        !m ||
+        !p ||
+        this.store.source() !== key.source ||
+        this.store.source({
+          ...this.store.settings(),
+          azureUrl: m.source,
+          azureProject: m.azure_project,
+        }) !== key.source
+      )
+        throw new AppError(
+          409,
+          "PR или подключение изменились. Обновите список.",
+        );
+    };
+    guard();
+    if (key.action === "unlink") {
+      this.store.db
+        .prepare(
+          "DELETE FROM pr_ticket_links WHERE monitor=? AND repo=? AND number=? AND ticket_id=?",
+        )
+        .run(key.monitor, key.repo, key.number, key.ticketId);
+    } else {
+      if (
+        this.store.db
+          .prepare(
+            "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
+          )
+          .get(key.source, key.ticketId)
+      )
+        throw new AppError(
+          409,
+          "Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.",
+        );
+      if (
+        !this.store.db
+          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+          .get(key.source, key.ticketId)
+      )
+        await new Connectors(
+          this.store,
+          new IntegrationsAuth(this.store),
+        ).trackTicket(key.ticketId, guard);
+      guard();
+      this.store.db
+        .prepare("INSERT OR IGNORE INTO pr_ticket_links VALUES (?,?,?,?)")
+        .run(key.monitor, key.repo, key.number, key.ticketId);
+    }
+    this.store.audit(
+      `pr.ticket.${key.action}`,
+      `PR #${key.number}: #${key.ticketId} (local)`,
+    );
+    return { success: true, azureChanged: false };
   }
   linkedToTicket(id: number, source: string) {
     const monitors = this.monitors().filter(
@@ -200,7 +288,11 @@ export class PullRequests {
         )
         .all(monitor.id) as any[];
       for (const row of rows) {
-        if (!prTicketIds(row.description || "").includes(id)) continue;
+        if (
+          !prTicketIds(row.description || "").includes(id) &&
+          !this.manualTicketIds(monitor.id, row.repo, row.number).includes(id)
+        )
+          continue;
         const { description, ...pr } = row;
         items.push({
           ...pr,
