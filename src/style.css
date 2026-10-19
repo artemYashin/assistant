@@ -418,7 +418,9 @@ main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 100%;
+  line-height: 1.5;
   border-radius: 7px;
   padding: 10px 14px;
   font-size: 11px;
@@ -756,7 +758,7 @@ main {
   border-radius: 7px;
   color: #aaa17b;
 }
-.assistant {
+.assistant-panel {
   width: 355px;
   flex-shrink: 0;
   border-left: 1px solid var(--border);
@@ -1256,7 +1258,14 @@ td small {
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
+  min-width: 0;
+}
+.form-grid > * {
+  min-width: 0;
+}
+.form-grid > .field {
+  margin: 0;
 }
 .settings-stack {
   max-width: 850px;
@@ -1590,7 +1599,7 @@ td small {
   main {
     padding: 28px 40px 0;
   }
-  .assistant {
+  .assistant-panel {
     width: 380px;
   }
   .page-heading h1 {
@@ -1621,7 +1630,7 @@ td small {
     padding-left: 12px;
     padding-right: 12px;
   }
-  .assistant {
+  .assistant-panel {
     width: 310px;
   }
   main {
@@ -1690,7 +1699,7 @@ td small {
   .topbar {
     padding: 0 20px;
   }
-  .assistant {
+  .assistant-panel {
     width: 285px;
   }
   .page-heading {
@@ -1794,7 +1803,7 @@ td small {
   main {
     padding: 20px 18px 0;
   }
-  .assistant {
+  .assistant-panel {
     position: fixed;
     right: 0;
     top: 60px;
@@ -1902,4 +1911,212 @@ td small {
   gap: 10px;
   padding: 10px 0;
   border-top: 1px solid var(--border);
+}
+
+/* Shared spacing for settings, ticket details and project controls. */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+.settings-card .form-grid {
+  margin: 16px 0;
+}
+.settings-card > details {
+  margin: 16px 0;
+}
+summary {
+  cursor: pointer;
+  line-height: 1.6;
+}
+.muted {
+  line-height: 1.65;
+}
+.stack {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+.stack > .error {
+  margin: 0;
+}
+.import-settings {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+.import-settings .form-grid {
+  margin: 0;
+  align-items: start;
+}
+.import-settings fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.import-settings legend {
+  padding: 0 4px;
+  font-size: 12px;
+}
+.check-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  line-height: 1.6;
+  font-size: 12px;
+}
+.check-option input {
+  margin: 0;
+}
+.ticket-detail {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.ticket-detail > * + * {
+  margin-top: 12px;
+}
+.ticket-detail h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+.ticket-detail small {
+  display: block;
+}
+.ticket-detail details > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ticket-detail .error {
+  margin-bottom: 0;
+}
+.ticket-lookup form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ticket-lookup label {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 180px;
+}
+.ticket-lookup .error {
+  margin-top: 12px;
+}
+.context-manager > .muted {
+  margin-top: 8px;
+}
+.context-bar > label {
+  min-width: 0;
+}
+.assistant-context {
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.assistant-context > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.assistant-context small {
+  display: block;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.assistant-panel {
+  min-width: 0;
+}
+.assistant-heading,
+.composer-wrap {
+  flex-shrink: 0;
+}
+.conversation {
+  overflow-x: hidden;
+}
+.bubble {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.bubble:first-child {
+  margin-top: 0;
+}
+.bubble:last-child {
+  margin-bottom: 0;
+}
+.bubble .ticket-detail {
+  padding: 12px;
+}
+.pr-monitor {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.pr-monitor > * + *,
+.pr-review > * + * {
+  margin-top: 12px;
+}
+.pr-review .section-heading {
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+.pr-review pre {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .context-picker select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .context-picker .context-bar > label {
+    flex: 1 1 160px;
+  }
+  .context-forms form {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+}
+.stack > button {
+  justify-self: start;
+}
+.stack > label:not(.check-option) {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-card > .check-option {
+  margin-top: 16px;
+}
+
+.ticket-preview-row > td {
+  padding: 16px;
+  background: #f8faf6;
+}
+.ticket-preview-row .ticket-detail {
+  margin-top: 0;
+  background: white;
+}
+.ticket-preview-row .ticket-detail p {
+  white-space: pre-wrap;
+}
+.ticket-detail summary b {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
 }

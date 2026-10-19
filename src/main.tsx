@@ -42,7 +42,7 @@ import { api, setCsrf } from "./api.js";
 import "./style.css";
 import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
-import { TicketCard, TicketLookup } from "./TicketCard.js";
+import { TicketCard, TicketLookup, TicketTableRow } from "./TicketCard.js";
 import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
@@ -1090,11 +1090,12 @@ function Tickets({ tickets, query, setQuery, run, busy }: any) {
                 <th>Статус</th>
                 <th>Исполнитель</th>
                 <th>Синхронизация</th>
+                <th>Просмотр</th>
               </tr>
             </thead>
             <tbody>
               {tickets.map((t: any) => (
-                <tr key={t.id}>
+                <TicketTableRow key={t.id} id={t.id}>
                   <td>
                     <a
                       className="ticket-link"
@@ -1121,7 +1122,7 @@ function Tickets({ tickets, query, setQuery, run, busy }: any) {
                   </td>
                   <td>{t.assigned || "Не назначен"}</td>
                   <td className="muted">{date(t.synced_at)}</td>
-                </tr>
+                </TicketTableRow>
               ))}
             </tbody>
           </table>
@@ -1639,7 +1640,7 @@ function Settings({ settings, context, run, busy }: any) {
             <MessageSquare size={16} />
             Войти через Microsoft
           </button>
-          <label>
+          <label className="check-option">
             <input
               type="checkbox"
               checked={form.teamsEnabled}
@@ -1986,7 +1987,7 @@ function Assistant({
     }
   }
   return (
-    <aside className="assistant">
+    <aside className="assistant-panel">
       <div className="assistant-heading">
         <div className="assistant-symbol">
           <Sparkles size={20} />
@@ -2002,7 +2003,14 @@ function Assistant({
       </div>
       <div className="assistant-context">
         <FolderOpen size={13} />
-        {context.project || context.client || "Общий контекст"}
+        <div>
+          {[context.client, context.project].filter(Boolean).join(" / ") ||
+            "Общий контекст"}
+          <small>
+            Память: общая{context.client ? " + заказчика" : ""}
+            {context.project ? " + проекта" : ""}. История — текущего контекста.
+          </small>
+        </div>
       </div>
       <div className="conversation">
         {!history.length && (

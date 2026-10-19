@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId, type ReactNode } from "react";
 import { api } from "./api.js";
 // Render external content as text, never inject work item HTML into the page.
 function text(value: any) {
@@ -136,7 +136,7 @@ export function TicketLookup() {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   return (
-    <section className="panel" style={{ padding: 16, marginBottom: 20 }}>
+    <section className="panel ticket-lookup">
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -171,5 +171,80 @@ export function TicketLookup() {
       {error && <p className="error">{error}</p>}
       {ref && <TicketCard reference={ref} />}
     </section>
+  );
+}
+
+export function TicketTableRow({
+  id,
+  children,
+}: {
+  id: number;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reference, setReference] = useState("");
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const panelId = useId();
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setReference("");
+    setError("");
+    api(`/tickets/${encodeURIComponent(id)}/details`)
+      .then((result) => {
+        if (active) setReference(result.cardId);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open, id, attempt]);
+  return (
+    <>
+      <tr>
+        {children}
+        <td>
+          <button
+            type="button"
+            className="secondary"
+            aria-expanded={open}
+            aria-controls={panelId}
+            aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? "Скрыть" : "Посмотреть"}
+          </button>
+        </td>
+      </tr>
+      <tr id={panelId} hidden={!open} className="ticket-preview-row">
+        <td colSpan={5}>
+          {open && (
+            <section aria-label={`Карточка тикета #${id}`}>
+              {error ? (
+                <div className="stack">
+                  <p className="error" role="alert">
+                    {error}
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setAttempt(attempt + 1)}
+                  >
+                    Повторить загрузку
+                  </button>
+                </div>
+              ) : reference ? (
+                <TicketCard reference={reference} />
+              ) : (
+                <p role="status">Загрузка тикета #{id}…</p>
+              )}
+            </section>
+          )}
+        </td>
+      </tr>
+    </>
   );
 }

@@ -98,7 +98,7 @@ export function PullRequestsPage({
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
-      <div className="panel" style={{ padding: 20, marginBottom: 20 }}>
+      <div className="panel stack">
         <h2>Мониторинг проекта</h2>
         <p className="muted">
           Опрос каждые {(settings?.syncSeconds || 600) / 60} минут после
@@ -113,6 +113,7 @@ export function PullRequestsPage({
           </p>
         ) : (
           <form
+            className="stack"
             onSubmit={(e) => {
               e.preventDefault();
               void run(() =>
@@ -135,7 +136,7 @@ export function PullRequestsPage({
                 onChange={(e) => setAzureProject(e.target.value)}
               />
             </label>
-            <label style={{ display: "block", margin: "12px 0" }}>
+            <label className="check-option">
               <input
                 type="checkbox"
                 checked={all}
@@ -155,14 +156,7 @@ export function PullRequestsPage({
           </form>
         )}
         {selected.map((m) => (
-          <div
-            key={m.id}
-            style={{
-              borderTop: "1px solid var(--border)",
-              paddingTop: 12,
-              marginTop: 12,
-            }}
-          >
+          <div key={m.id} className="pr-monitor">
             <b>
               {m.client} / {m.project} → {m.azure_project}
             </b>
@@ -222,8 +216,7 @@ export function PullRequestsPage({
             const coverage = p.coverage ? JSON.parse(p.coverage) : null;
             return (
               <article
-                className="panel"
-                style={{ padding: 20 }}
+                className="panel pr-review"
                 key={`${p.monitor}:${p.repo}:${p.number}`}
               >
                 <div className="section-heading">

@@ -31,7 +31,7 @@ export function TicketImportSettings({
         : form[key].filter((x: string) => x !== value),
     );
   return (
-    <div style={{ marginTop: 20 }}>
+    <div className="stack import-settings">
       <h3>Автоматически импортировать мои задачи</h3>
       <p className="muted">
         Запрашивает Azure API каждые {form.syncSeconds / 60} минут: Assigned To
@@ -65,7 +65,7 @@ export function TicketImportSettings({
         <fieldset>
           <legend>Типы задач</legend>
           {types.map((t) => (
-            <label style={{ display: "block" }} key={t}>
+            <label className="check-option" key={t}>
               <input
                 type="checkbox"
                 checked={form.azureTypes.includes(t)}
@@ -78,7 +78,7 @@ export function TicketImportSettings({
         <fieldset>
           <legend>Статусы выбранных типов</legend>
           {states.map((s) => (
-            <label style={{ display: "block" }} key={s}>
+            <label className="check-option" key={s}>
               <input
                 type="checkbox"
                 checked={form.azureStates.includes(s)}
@@ -89,7 +89,7 @@ export function TicketImportSettings({
           ))}
         </fieldset>
       </div>
-      <label>
+      <label className="check-option">
         <input
           type="checkbox"
           checked={form.azureAutoImport}
