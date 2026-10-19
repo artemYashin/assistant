@@ -228,3 +228,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Replaced client/project native selects (including project owner creation) with searchable custom single-select menus. They support arrow-key navigation, Enter, Escape, outside pointer/focus dismissal and selected-state indicators.
 - Context manager now separates Overview, Add and Repository. Overview groups projects under customer accordions; Add shows one creation form at a time; Repository shows only the selected project's settings. Context switching still persists immediately and creation selects the new context.
 - Validation: all 88 Node tests and production build passed. Headless Chromium with mocked API verified client/project switching, search, arrow-key selection, single-form creation layout, repository section, no remaining native selects in context UI, and mobile document width. Screenshot inspected; checkbox alignment adjusted. Live Azure/Copilot not exercised.
+
+## Custom PR filters and sorting
+
+- PR type, review readiness and sort controls now reuse the searchable SingleSelect used for customer/project selection. Existing options, defaults, reset and filtering semantics remain. Filters are disabled when showing a directly linked PR because the target view bypasses them.
+- Validation: all 88 Node tests and production build passed. Mocked-API Chromium checks passed for date sorting, combined filters, empty/reset states, mobile overflow and absence of mutation requests during filtering.

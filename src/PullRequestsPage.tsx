@@ -1,3 +1,4 @@
+import { SingleSelect } from "./SingleSelect.js";
 import { Copy, Check } from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
 import { Link, useLocation } from "react-router-dom";
@@ -267,44 +268,40 @@ export function PullRequestsPage({ context, settings }: any) {
         в Azure не отправляются.
       </p>
       <div className="ticket-filters">
-        <label>
-          Тип PR
-          <select
-            aria-label="Тип PR"
-            value={draftFilter}
-            onChange={(e) => setDraftFilter(e.target.value)}
-          >
-            <option value="all">Все PR</option>
-            <option value="draft">Черновики</option>
-            <option value="published">Не черновики</option>
-          </select>
-        </label>
-        <label>
-          Готовность ревью
-          <select
-            aria-label="Готовность ревью"
-            value={reviewFilter}
-            onChange={(e) => setReviewFilter(e.target.value)}
-          >
-            <option value="all">Все состояния</option>
-            <option value="ready">Ревью готово</option>
-            <option value="pending">Ревью не готово</option>
-          </select>
-        </label>
-        <label>
-          Сортировка
-          <select
-            aria-label="Сортировка PR"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="created:desc">Созданы: сначала новые</option>
-            <option value="created:asc">Созданы: сначала старые</option>
-            <option value="number:desc">Номер: по убыванию</option>
-            <option value="number:asc">Номер: по возрастанию</option>
-            <option value="title:asc">Название: А–Я</option>
-          </select>
-        </label>
+        <SingleSelect
+          label="Тип PR"
+          value={draftFilter}
+          onChange={setDraftFilter}
+          disabled={!!target}
+          options={[
+            { value: "all", label: "Все PR" },
+            { value: "draft", label: "Черновики" },
+            { value: "published", label: "Не черновики" },
+          ]}
+        />
+        <SingleSelect
+          label="Готовность ревью"
+          value={reviewFilter}
+          onChange={setReviewFilter}
+          disabled={!!target}
+          options={[
+            { value: "all", label: "Все состояния" },
+            { value: "ready", label: "Ревью готово" },
+            { value: "pending", label: "Ревью не готово" },
+          ]}
+        />
+        <SingleSelect
+          label="Сортировка PR"
+          value={sort}
+          onChange={setSort}
+          options={[
+            { value: "created:desc", label: "Созданы: сначала новые" },
+            { value: "created:asc", label: "Созданы: сначала старые" },
+            { value: "number:desc", label: "Номер: по убыванию" },
+            { value: "number:asc", label: "Номер: по возрастанию" },
+            { value: "title:asc", label: "Название: А–Я" },
+          ]}
+        />
         <button
           className="secondary"
           disabled={
