@@ -222,3 +222,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Removed blur-based dismissal: clicking label text can blur the search input with a null relatedTarget before the browser forwards the click to the checkbox, unmounting it too early. Dismissal now uses outside pointerdown or actual focusin outside the component; internal label clicks remain open and keyboard Tab departure still closes it.
 - Tests/build deferred until push per user request.
 - Pre-push validation: all 88 Node tests and production build passed, including internal Markdown ticket navigation and invalid-link rejection. Filter order is Type → Status → Assignee. Browser checkbox interaction and live model formatting were not exercised in this validation.
+
+## Context selector and manager redesign
+
+- Replaced client/project native selects (including project owner creation) with searchable custom single-select menus. They support arrow-key navigation, Enter, Escape, outside pointer/focus dismissal and selected-state indicators.
+- Context manager now separates Overview, Add and Repository. Overview groups projects under customer accordions; Add shows one creation form at a time; Repository shows only the selected project's settings. Context switching still persists immediately and creation selects the new context.
+- Validation: all 88 Node tests and production build passed. Headless Chromium with mocked API verified client/project switching, search, arrow-key selection, single-form creation layout, repository section, no remaining native selects in context UI, and mobile document width. Screenshot inspected; checkbox alignment adjusted. Live Azure/Copilot not exercised.

@@ -3243,3 +3243,155 @@ td > small {
   outline: 2px solid #789761;
   outline-offset: 2px;
 }
+
+.single-select {
+  position: relative;
+  min-width: 0;
+}
+.context-bar > .single-select {
+  flex: 1 1 200px;
+  max-width: 320px;
+  color: var(--text);
+  font-size: 12px;
+}
+.context-bar .multi-select-search input {
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+}
+.single-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.single-select-option svg {
+  flex-shrink: 0;
+}
+.single-select-option:hover,
+.single-select-option.is-selected {
+  background: #edf3e9;
+  color: #36532a;
+}
+.single-select-option:focus-visible {
+  outline: 2px solid #789761;
+  outline-offset: -2px;
+}
+.context-manager-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.context-manager-heading h2 {
+  margin: 0 0 6px;
+}
+.context-manager-nav,
+.context-create-kind {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  background: #f1f4ef;
+  border-radius: 9px;
+  margin: 16px 0;
+}
+.context-manager-nav button,
+.context-create-kind button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #667160;
+}
+.context-manager-nav button[aria-pressed="true"],
+.context-create-kind button[aria-pressed="true"] {
+  background: white;
+  color: #36532a;
+  border-color: #dce5d6;
+  box-shadow: 0 1px 3px #233a2010;
+}
+.context-manager-section {
+  display: grid;
+  gap: 14px;
+}
+.context-manager-section > p {
+  margin: 0;
+}
+.context-create-kind {
+  margin: 0;
+  max-width: 500px;
+}
+.context-create-form {
+  display: grid;
+  gap: 14px;
+  max-width: 500px;
+}
+.context-create-form > button {
+  justify-self: start;
+}
+.context-catalog {
+  display: grid;
+  gap: 10px;
+}
+.context-catalog details {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.context-catalog summary {
+  font-weight: 600;
+}
+.context-catalog .ticket-count {
+  margin-left: 10px;
+  font-size: 11px;
+}
+.context-project-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+}
+.context-project-list button[aria-pressed="true"] {
+  border-color: #789761;
+  background: #edf3e9;
+}
+.context-empty {
+  padding: 16px;
+  border: 1px dashed #cbd7c5;
+  border-radius: 8px;
+}
+.context-empty p {
+  margin: 0 0 12px;
+}
+@media (max-width: 700px) {
+  .context-bar > .single-select {
+    max-width: none;
+  }
+}
+.context-manager label.check-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.context-manager .check-option input {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 2px;
+}

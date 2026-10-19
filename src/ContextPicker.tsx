@@ -1,3 +1,5 @@
+import { SingleSelect } from "./SingleSelect.js";
+import { Users, FolderPlus, GitBranch, Plus, X } from "lucide-react";
 import { ProjectRepository } from "./ProjectRepository.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
@@ -9,6 +11,10 @@ export function ContextPicker({
   context: Context;
   onChange: (c: Context) => void;
 }) {
+  const [section, setSection] = useState<"browse" | "create" | "repository">(
+    "browse",
+  );
+  const [createKind, setCreateKind] = useState<"client" | "project">("client");
   const [items, setItems] = useState<Context[]>([]),
     [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
@@ -74,38 +80,26 @@ export function ContextPicker({
   return (
     <section className="context-picker">
       <div className="context-bar">
-        <label>
-          Заказчик
-          <select
-            aria-label="Текущий заказчик"
-            disabled={busy}
-            value={context.client}
-            onChange={(e) =>
-              void choose({ client: e.target.value, project: "" })
-            }
-          >
-            <option value="">Общий контекст</option>
-            {clients.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Проект
-          <select
-            aria-label="Текущий проект"
-            disabled={busy || !context.client}
-            value={context.project}
-            onChange={(e) =>
-              void choose({ ...context, project: e.target.value })
-            }
-          >
-            <option value="">Без проекта · память заказчика</option>
-            {projects(context.client).map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-        </label>
+        <SingleSelect
+          label="Текущий заказчик"
+          value={context.client}
+          disabled={busy}
+          options={[
+            { value: "", label: "Общий контекст" },
+            ...clients.map((c) => ({ value: c, label: c })),
+          ]}
+          onChange={(client) => void choose({ client, project: "" })}
+        />
+        <SingleSelect
+          label="Текущий проект"
+          value={context.project}
+          disabled={busy || !context.client}
+          options={[
+            { value: "", label: "Без проекта · память заказчика" },
+            ...projects(context.client).map((p) => ({ value: p, label: p })),
+          ]}
+          onChange={(project) => void choose({ ...context, project })}
+        />
         <button
           className="secondary"
           onClick={() => setOpen(!open)}
@@ -128,100 +122,234 @@ export function ContextPicker({
       )}
       {open && (
         <div className="panel context-manager">
-          <h2>Заказчики и проекты</h2>
-          <p className="muted">
-            Контекст выбирает историю диалога и память ассистента. Общая память
-            доступна всегда. Подключение и проект Azure DevOps задаются отдельно
-            в настройках.
-          </p>
-          <div className="context-forms">
-            <form
-              onSubmit={(e) =>
-                void add(e, { client: name.trim(), project: "" })
-              }
+          <div className="context-manager-heading">
+            <div>
+              <h2>Заказчики и проекты</h2>
+              <p className="muted">
+                {context.client || "Общий контекст"}
+                {context.project ? ` / ${context.project}` : ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Закрыть управление контекстом"
+              onClick={() => setOpen(false)}
             >
-              <label>
-                Новый заказчик
-                <input
-                  maxLength={200}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Например, Acme"
-                  required
-                />
-              </label>
-              <button className="secondary" disabled={busy || !name.trim()}>
-                Добавить и выбрать
-              </button>
-            </form>
-            <form
-              onSubmit={(e) =>
-                void add(e, { client: owner, project: project.trim() })
-              }
-            >
-              <label>
-                Заказчик проекта
-                <select
-                  required
-                  value={owner}
-                  onChange={(e) => setOwner(e.target.value)}
-                >
-                  <option value="">Выберите заказчика</option>
-                  {clients.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Новый проект
-                <input
-                  maxLength={200}
-                  value={project}
-                  onChange={(e) => setProject(e.target.value)}
-                  placeholder="Например, Портал"
-                  required
-                />
-              </label>
-              <button
-                className="secondary"
-                disabled={busy || !owner || !project.trim()}
-              >
-                Добавить и выбрать
-              </button>
-            </form>
+              <X size={18} />
+            </button>
           </div>
-          <ProjectRepository context={context} />
-          {!clients.length ? (
-            <p className="muted">Заказчиков пока нет. Добавьте первого выше.</p>
-          ) : (
-            <div className="context-list">
-              {clients.map((c) => (
-                <div key={c}>
+          <div
+            className="context-manager-nav"
+            aria-label="Разделы управления контекстом"
+          >
+            <button
+              type="button"
+              aria-pressed={section === "browse"}
+              onClick={() => setSection("browse")}
+            >
+              <Users size={16} />
+              Обзор
+            </button>
+            <button
+              type="button"
+              aria-pressed={section === "create"}
+              onClick={() => {
+                setSection("create");
+                setOwner(context.client);
+              }}
+            >
+              <FolderPlus size={16} />
+              Добавить
+            </button>
+            <button
+              type="button"
+              aria-pressed={section === "repository"}
+              onClick={() => setSection("repository")}
+            >
+              <GitBranch size={16} />
+              Репозиторий
+            </button>
+          </div>
+          {section === "browse" && (
+            <div className="context-manager-section">
+              <p className="muted">
+                Выбор переключает историю чата и память проекта. Общая память
+                доступна всегда.
+              </p>
+              {!clients.length ? (
+                <div className="context-empty">
+                  <p>
+                    Начните с первого заказчика, затем добавьте его проекты.
+                  </p>
                   <button
+                    type="button"
                     className="secondary"
-                    disabled={busy}
-                    onClick={() => void choose({ client: c, project: "" })}
+                    onClick={() => {
+                      setCreateKind("client");
+                      setSection("create");
+                    }}
                   >
-                    {c}
-                    {context.client === c && !context.project
-                      ? " · выбран"
-                      : ""}
+                    <Plus size={16} />
+                    Добавить заказчика
                   </button>
-                  {projects(c).map((p) => (
-                    <button
-                      className="text-button"
-                      disabled={busy}
-                      key={p}
-                      onClick={() => void choose({ client: c, project: p })}
-                    >
-                      {p}
-                      {context.client === c && context.project === p
-                        ? " · выбран"
-                        : ""}
-                    </button>
+                </div>
+              ) : (
+                <div className="context-catalog">
+                  {clients.map((c) => (
+                    <details key={c} open={context.client === c}>
+                      <summary>
+                        {c}
+                        <span className="ticket-count">
+                          {projects(c).length} проектов
+                        </span>
+                      </summary>
+                      <div className="context-project-list">
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={busy}
+                          aria-pressed={
+                            context.client === c && !context.project
+                          }
+                          onClick={() =>
+                            void choose({ client: c, project: "" })
+                          }
+                        >
+                          Без проекта · память заказчика
+                        </button>
+                        {projects(c).map((p) => (
+                          <button
+                            type="button"
+                            key={p}
+                            className="secondary"
+                            disabled={busy}
+                            aria-pressed={
+                              context.client === c && context.project === p
+                            }
+                            onClick={() =>
+                              void choose({ client: c, project: p })
+                            }
+                          >
+                            {p}
+                            {context.client === c && context.project === p
+                              ? " · выбран"
+                              : ""}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            setOwner(c);
+                            setCreateKind("project");
+                            setSection("create");
+                          }}
+                        >
+                          <Plus size={14} />
+                          Новый проект
+                        </button>
+                      </div>
+                    </details>
                   ))}
                 </div>
-              ))}
+              )}
+            </div>
+          )}
+          {section === "create" && (
+            <div className="context-manager-section">
+              <div className="context-create-kind">
+                <button
+                  type="button"
+                  aria-pressed={createKind === "client"}
+                  onClick={() => setCreateKind("client")}
+                >
+                  Новый заказчик
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={createKind === "project"}
+                  onClick={() => setCreateKind("project")}
+                >
+                  Новый проект
+                </button>
+              </div>
+              <p className="muted">
+                После создания контекст будет выбран и сохранён автоматически.
+              </p>
+              {createKind === "client" ? (
+                <form
+                  className="context-create-form"
+                  onSubmit={(e) =>
+                    void add(e, { client: name.trim(), project: "" })
+                  }
+                >
+                  <label>
+                    Название заказчика
+                    <input
+                      disabled={busy}
+                      maxLength={200}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Например, Acme"
+                      required
+                    />
+                  </label>
+                  <button className="primary" disabled={busy || !name.trim()}>
+                    Добавить и выбрать
+                  </button>
+                </form>
+              ) : (
+                <form
+                  className="context-create-form"
+                  onSubmit={(e) =>
+                    void add(e, { client: owner, project: project.trim() })
+                  }
+                >
+                  <SingleSelect
+                    label="Заказчик проекта"
+                    disabled={busy}
+                    value={owner}
+                    onChange={setOwner}
+                    options={[
+                      { value: "", label: "Выберите заказчика" },
+                      ...clients.map((c) => ({ value: c, label: c })),
+                    ]}
+                  />
+                  {!clients.length && (
+                    <p className="muted">Сначала добавьте заказчика.</p>
+                  )}
+                  <label>
+                    Название проекта
+                    <input
+                      disabled={busy}
+                      maxLength={200}
+                      value={project}
+                      onChange={(e) => setProject(e.target.value)}
+                      placeholder="Например, Портал"
+                      required
+                    />
+                  </label>
+                  <button
+                    className="primary"
+                    disabled={busy || !owner || !project.trim()}
+                  >
+                    Добавить и выбрать
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+          {section === "repository" && (
+            <div className="context-manager-section">
+              <p className="muted">
+                Настройки PR для выбранного проекта. Подключение Azure DevOps
+                задаётся в настройках приложения.
+              </p>
+              <ProjectRepository
+                key={`${context.client}:${context.project}`}
+                context={context}
+              />
             </div>
           )}
         </div>
