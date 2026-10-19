@@ -280,3 +280,16 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - All 96 Node tests and production build passed. Diff whitespace check passed. Vite retains the bundle-size warning (main chunk above 500 kB).
 - This batch includes the PR Inbox tab, primary-sidebar Approvals, larger accordion hit areas, semantic icons and the accented review action. Browser visual/interaction checks were not performed for this batch.
+
+## Preserve PR scroll when launching review
+
+- Review launch and manual sync no longer empty the PR list while refetching the same query. Existing keyed cards stay mounted, avoiding page-height collapse and retaining accordion state. Scope/target changes still clear the old list.
+- TypeScript and whitespace checks passed. Tests/browser checks deferred until push per user preference.
+
+## Running review spinner
+
+- Running review button now uses the existing spin animation class. The application's reduced-motion preference continues to disable animation. Whitespace check passed; tests deferred until push.
+
+## Pre-push validation of PR refresh fixes
+
+- All 96 Node tests and production build passed. Whitespace check passed. Vite retains the existing main-bundle size warning. Browser scroll/animation behavior was not exercised in this validation.

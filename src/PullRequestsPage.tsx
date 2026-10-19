@@ -192,6 +192,7 @@ export function PullRequestsPage({ context, settings }: any) {
     sort,
   });
   const query = new URLSearchParams(target || context).toString();
+  const previousQuery = useRef<string | null>(null);
   useEffect(() => {
     if (!targetKey) {
       focused.current = "";
@@ -219,8 +220,13 @@ export function PullRequestsPage({ context, settings }: any) {
         .catch((e) => {
           if (live) setError(e.message);
         });
-    setLoaded(false);
-    setPrs([]);
+    // Keep mounted cards during refreshes so the page height, scroll and
+    // accordion state survive a review launch. Clear only on scope changes.
+    if (previousQuery.current !== query) {
+      previousQuery.current = query;
+      setLoaded(false);
+      setPrs([]);
+    }
     void load();
     const timer = setInterval(load, 5000);
     return () => {
@@ -400,7 +406,7 @@ export function PullRequestsPage({ context, settings }: any) {
                   {p.review_status === "completed" ? (
                     <Check size={17} aria-hidden="true" />
                   ) : p.review_status === "running" ? (
-                    <LoaderCircle size={17} aria-hidden="true" />
+                    <LoaderCircle className="spin" size={17} aria-hidden="true" />
                   ) : p.review_status === "queued" ? (
                     <Clock size={17} aria-hidden="true" />
                   ) : p.review_status === "awaiting_answers" ? (
