@@ -2268,7 +2268,9 @@ summary:focus-visible {
   color: var(--muted);
 }
 .ticket-section {
-  border-top: 1px solid var(--border);
+  border: 1px solid #cbd3ce;
+  border-radius: 9px;
+  background: #fff;
   min-width: 0;
 }
 .ticket-detail .ticket-section h4 {
@@ -2452,16 +2454,32 @@ summary:focus-visible {
   padding-left: 0;
 }
 .ticket-section > summary {
-  padding-top: 20px;
+  padding: 11px 14px;
   font-size: 13px;
   font-weight: 600;
+  color: #304339;
+  background: #f3f5f3;
+  border-radius: 8px;
 }
 .ticket-section[open] > summary {
-  margin-bottom: 14px;
+  margin-bottom: 0;
+  background: #dfe5e1;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #c4cec7;
+}
+.ticket-section > summary:hover {
+  background: #d5ded8;
+}
+.ticket-detail .ticket-section > :not(summary) {
+  margin: 14px;
 }
 .ticket-detail .ticket-section > div {
   border: 0;
   padding: 0;
+}
+.ticket-section > summary .ticket-count {
+  background: #fff;
+  color: #405347;
 }
 .ticket-sort {
   display: flex;
