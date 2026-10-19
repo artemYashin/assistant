@@ -1,3 +1,4 @@
+import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { NotebookPen } from "lucide-react";
@@ -127,6 +128,10 @@ export function TicketTrash({
           });
       return (sort.descending ? -cmp : cmp) || a.id - b.id;
     });
+  const selection = useTicketSelection(
+    filtered,
+    JSON.stringify([settings?.azureUrl, settings?.azureProject]),
+  );
   const columns = [
     ["id", "ID"],
     ["title", "Тикет"],
@@ -265,7 +270,24 @@ export function TicketTrash({
           <p className="muted" role="status">
             Показано {filtered.length} из {items.length}
           </p>
-          <ExportTickets tickets={filtered} trash />
+          <div className="ticket-bulk-actions">
+            <span role="status">Выбрано: {selection.selected.length}</span>
+            {!!selection.selected.length && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={selection.clear}
+              >
+                Снять выбор
+              </button>
+            )}
+            <ExportTickets
+              tickets={
+                selection.selected.length ? selection.selected : filtered
+              }
+              trash
+            />
+          </div>
         </div>
       )}
       {loaded && !filtered.length && !error && (
@@ -291,28 +313,37 @@ export function TicketTrash({
                         : "none"
                     }
                   >
-                    <button
-                      type="button"
-                      className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
-                      aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
-                      onClick={() =>
-                        setSort({
-                          key,
-                          descending: sort.key === key && !sort.descending,
-                        })
-                      }
-                    >
-                      <span>{label}</span>
-                      {sort.key === key ? (
-                        sort.descending ? (
-                          <ArrowDown size={13} />
-                        ) : (
-                          <ArrowUp size={13} />
-                        )
-                      ) : (
-                        <ArrowUpDown size={13} />
+                    <div className="ticket-heading-sorts">
+                      {key === "id" && (
+                        <SelectAllTickets
+                          count={selection.selected.length}
+                          total={filtered.length}
+                          onChange={selection.toggleAll}
+                        />
                       )}
-                    </button>
+                      <button
+                        type="button"
+                        className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
+                        aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
+                        onClick={() =>
+                          setSort({
+                            key,
+                            descending: sort.key === key && !sort.descending,
+                          })
+                        }
+                      >
+                        <span>{label}</span>
+                        {sort.key === key ? (
+                          sort.descending ? (
+                            <ArrowDown size={13} />
+                          ) : (
+                            <ArrowUp size={13} />
+                          )
+                        ) : (
+                          <ArrowUpDown size={13} />
+                        )}
+                      </button>
+                    </div>
                   </th>
                 ))}
                 <th>Действия</th>
@@ -322,6 +353,13 @@ export function TicketTrash({
               {filtered.map((t) => (
                 <tr key={`${t.source}:${t.id}`}>
                   <td>
+                    <input
+                      className="ticket-checkbox"
+                      type="checkbox"
+                      aria-label={`Выбрать тикет #${t.id}`}
+                      checked={selection.checked(t)}
+                      onChange={() => selection.toggle(t)}
+                    />
                     {t.url?.startsWith("https://") ? (
                       <a
                         className="ticket-link"

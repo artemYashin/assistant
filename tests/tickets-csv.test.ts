@@ -26,3 +26,23 @@ test("CSV preserves selected order and escapes quotes, delimiters, lines and for
   );
   assert.ok(csv.indexOf('"42"') < csv.indexOf('"7"'));
 });
+
+test("CSV exports only chosen columns with English headers and all local owners", () => {
+  const csv = ticketsCsv(
+    [
+      {
+        id: 5,
+        title: "Hidden",
+        notes: "Private",
+        developers: [{ name: "Ann; Smith" }, { name: "Bob" }],
+      },
+    ],
+    ["developers", "id"],
+  );
+  assert.equal(
+    csv,
+    '\uFEFF"ID";"Development Owners"\r\n"5";"Ann; Smith; Bob"\r\n',
+  );
+  assert.ok(!csv.includes("Private"));
+  assert.throws(() => ticketsCsv([], []));
+});

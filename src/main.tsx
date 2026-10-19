@@ -1,3 +1,5 @@
+import { BulkTicketStatus } from "./BulkTicketStatus.js";
+import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
 import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
@@ -1340,6 +1342,10 @@ function Tickets({
           });
     return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
   });
+  const selection = useTicketSelection<any>(
+    sorted,
+    JSON.stringify([currentSource, context]),
+  );
   return (
     <>
       <PageHeading
@@ -1509,7 +1515,25 @@ function Tickets({
         <p className="muted" role="status">
           Показано {sorted.length} из {tickets.length}
         </p>
-        <ExportTickets tickets={sorted} />
+        <div className="ticket-bulk-actions">
+          <span role="status">Выбрано: {selection.selected.length}</span>
+          {!!selection.selected.length && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={selection.clear}
+            >
+              Снять выбор
+            </button>
+          )}
+          <BulkTicketStatus
+            tickets={selection.selected}
+            onChange={() => run("refresh-bulk-state", async () => {})}
+          />
+          <ExportTickets
+            tickets={selection.selected.length ? selection.selected : sorted}
+          />
+        </div>
       </div>
       <p className="muted">
         Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
@@ -1522,6 +1546,11 @@ function Tickets({
               <tr>
                 <th aria-sort={columnSort(["id", "title"])}>
                   <div className="ticket-heading-sorts">
+                    <SelectAllTickets
+                      count={selection.selected.length}
+                      total={sorted.length}
+                      onChange={selection.toggleAll}
+                    />
                     {sortButton("id", "ID")}
                     <span aria-hidden="true">/</span>
                     {sortButton("title", "Тикет")}
@@ -1569,6 +1598,13 @@ function Tickets({
                   }
                 >
                   <td>
+                    <input
+                      className="ticket-checkbox"
+                      type="checkbox"
+                      aria-label={`Выбрать тикет #${t.id}`}
+                      checked={selection.checked(t)}
+                      onChange={() => selection.toggle(t)}
+                    />
                     <a
                       className="ticket-link"
                       href={t.url}

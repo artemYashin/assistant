@@ -1,11 +1,21 @@
 import ExcelJS from "exceljs";
-import type { CsvTicket } from "./tickets-csv.js";
+import {
+  defaultExportColumns,
+  selectedExportColumns,
+  type ExportColumnKey,
+  type CsvTicket,
+} from "./ticket-export-columns.js";
 
-export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
+export async function ticketsXlsx(
+  tickets: CsvTicket[],
+  trash = false,
+  keys: ExportColumnKey[] = defaultExportColumns,
+) {
+  const columns = selectedExportColumns(keys);
   const book = new ExcelJS.Workbook();
   book.creator = "Orbit";
   book.created = new Date();
-  const sheet = book.addWorksheet(trash ? "Корзина" : "Тикеты", {
+  const sheet = book.addWorksheet(trash ? "Trash" : "Tickets", {
     views: [{ state: "frozen", ySplit: 1, showGridLines: false }],
     pageSetup: {
       orientation: "landscape",
@@ -14,14 +24,7 @@ export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
       fitToHeight: 0,
     },
   });
-  sheet.columns = [
-    { header: "ID", width: 13 },
-    { header: "Название тикета", width: 72 },
-    { header: "Тип задачи", width: 23 },
-    { header: "Статус Azure DevOps", width: 30 },
-    { header: "Локальный приоритет", width: 23 },
-    { header: "Теги", width: 36 },
-  ];
+  sheet.columns = columns.map(({ header, width }) => ({ header, width }));
   const header = sheet.getRow(1);
   header.height = 34;
   header.eachCell((cell) => {
@@ -40,16 +43,10 @@ export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
   });
   for (const ticket of tickets) {
     // Plain string values stay text, including strings beginning with '='.
-    const row = sheet.addRow([
-      ticket.id,
-      ticket.title || "",
-      ticket.type || "",
-      ticket.state || "",
-      ticket.priority ?? 1,
-      (ticket.tags || []).join("; "),
-    ]);
+    const row = sheet.addRow(columns.map((column) => column.value(ticket)));
     let lines = 1;
     row.eachCell({ includeEmpty: true }, (cell, column) => {
+      const key = columns[column - 1].key;
       const width = (sheet.getColumn(column).width || 20) - 3;
       lines = Math.max(
         lines,
@@ -64,12 +61,12 @@ export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
         name: "Calibri",
         size: 11,
         color: { argb: "FF243D36" },
-        bold: column === 1 || column === 5,
+        bold: key === "id" || key === "priority",
       };
       cell.alignment = {
         vertical: "middle",
         wrapText: true,
-        horizontal: column === 1 || column === 5 ? "center" : "left",
+        horizontal: key === "id" || key === "priority" ? "center" : "left",
       };
       cell.fill = {
         type: "pattern",
@@ -77,7 +74,7 @@ export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
         fgColor: { argb: row.number % 2 === 0 ? "FFF0F5F3" : "FFFFFFFF" },
       };
       cell.border = { bottom: { style: "hair", color: { argb: "FFD9E4DF" } } };
-      if (column === 5) {
+      if (key === "priority") {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
@@ -93,7 +90,10 @@ export async function ticketsXlsx(tickets: CsvTicket[], trash = false) {
     });
     row.height = Math.min(409, Math.max(32, lines * 16 + 12));
   }
-  sheet.autoFilter = { from: "A1", to: `F${tickets.length + 1}` };
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: tickets.length + 1, column: columns.length },
+  };
   sheet.pageSetup.printTitlesRow = "1:1";
   return new Uint8Array(await book.xlsx.writeBuffer());
 }

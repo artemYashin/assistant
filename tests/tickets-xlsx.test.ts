@@ -22,7 +22,7 @@ test("Excel export round-trips ordered tickets as values with formatting", async
   await book.xlsx.load(
     bytes as unknown as Parameters<typeof book.xlsx.load>[0],
   );
-  const sheet = book.getWorksheet("Корзина")!;
+  const sheet = book.getWorksheet("Trash")!;
   assert.equal(sheet.rowCount, 3);
   assert.equal(sheet.getCell("A2").value, 42);
   assert.equal(sheet.getCell("A3").value, 7);
@@ -36,4 +36,33 @@ test("Excel export round-trips ordered tickets as values with formatting", async
   assert.equal(sheet.views[0].state, "frozen");
   assert.ok(sheet.autoFilter);
   assert.ok(sheet.getColumn(2).width! > sheet.getColumn(1).width!);
+});
+
+test("Excel selected columns retain styling by field and omit unselected data", async () => {
+  const bytes = await ticketsXlsx(
+    [
+      {
+        id: 1,
+        title: "Hidden",
+        notes: "Private",
+        priority: 3,
+        developers: [{ name: "Ann" }, { name: "Bob" }],
+      },
+    ],
+    false,
+    ["priority", "developers"],
+  );
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(
+    bytes as unknown as Parameters<typeof book.xlsx.load>[0],
+  );
+  const sheet = book.getWorksheet("Tickets")!;
+  assert.equal(sheet.columnCount, 2);
+  assert.equal(sheet.getCell("A1").value, "Local Priority");
+  assert.equal(sheet.getCell("B1").value, "Development Owners");
+  assert.equal(sheet.getCell("A2").value, 3);
+  assert.equal(sheet.getCell("A2").font.bold, true);
+  assert.equal(sheet.getCell("B2").value, "Ann; Bob");
+  assert.equal(!!sheet.getCell("B2").font.bold, false);
+  assert.equal(sheet.autoFilter, "A1:B2");
 });
