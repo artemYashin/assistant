@@ -5023,3 +5023,35 @@ summary > svg {
 .pr-page-actions > button {
   white-space: nowrap;
 }
+
+.local-assignee-names {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.local-assignee-avatars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.local-assignee-avatars .initials-avatar {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.local-assignee-more {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.local-assignee-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

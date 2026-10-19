@@ -1,3 +1,4 @@
+import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
@@ -1655,7 +1656,12 @@ function Tickets({
                       onChange={() => run("refresh-tags", async () => {})}
                     />
                   </td>
-                  <td>{t.assigned || "Не назначен"}</td>
+                  <td>
+                    <LocalAssigneeNames
+                      names={t.assigned ? [t.assigned] : []}
+                      emptyLabel="Не назначен"
+                    />
+                  </td>
                   <td>
                     <LocalDeveloper
                       ticket={t}

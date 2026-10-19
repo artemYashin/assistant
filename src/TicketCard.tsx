@@ -219,10 +219,15 @@ export function TicketCard({ reference }: { reference: string }) {
           </div>
           <div>
             <dt>Исполнитель</dt>
-            <dd>
-              {f["System.AssignedTo"]
-                ? person(f["System.AssignedTo"])
-                : "Не назначен"}
+            <dd className="ticket-author-identity">
+              {f["System.AssignedTo"] && (
+                <InitialsAvatar name={person(f["System.AssignedTo"])} />
+              )}
+              <span>
+                {f["System.AssignedTo"]
+                  ? person(f["System.AssignedTo"])
+                  : "Не назначен"}
+              </span>
             </dd>
           </div>
           <div>

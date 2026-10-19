@@ -1,3 +1,4 @@
+import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
@@ -407,8 +408,23 @@ export function TicketTrash({
                       ))}
                     </div>
                   </td>
-                  <td>{t.assigned || "N/A"}</td>
-                  <td>{localName(t) || "N/A"}</td>
+                  <td>
+                    <LocalAssigneeNames
+                      names={t.assigned ? [t.assigned] : []}
+                      emptyLabel="Не назначен"
+                    />
+                  </td>
+                  <td>
+                    <LocalAssigneeNames
+                      names={
+                        t.developers?.length
+                          ? t.developers.map((d: any) => d.name)
+                          : t.developer_name
+                            ? [t.developer_name]
+                            : []
+                      }
+                    />
+                  </td>
                   <td>
                     <time dateTime={new Date(t.removedAt).toISOString()}>
                       {date(t.removedAt)}

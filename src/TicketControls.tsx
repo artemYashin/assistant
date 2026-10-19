@@ -1,3 +1,4 @@
+import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, X } from "lucide-react";
@@ -73,11 +74,10 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       setBusy(false);
     }
   }
-  const names = assigned.map((d: any) => d.name).join(", ");
   return (
     <div className="local-developer">
-      <span className="local-developer-name" title={names || "Не поручено"}>
-        {names || "N/A"}
+      <span className="local-developer-name">
+        <LocalAssigneeNames names={assigned.map((d: any) => d.name)} />
       </span>
       <button
         type="button"
