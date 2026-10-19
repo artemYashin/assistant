@@ -258,3 +258,25 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - All 96 Node tests passed, including review clarification/re-review lifecycle, memory proposal approvals, local developer migration and multi-person assignments, and status API protection. Production build passed (TypeScript, Vite and server compilation).
 - Vite reports the existing bundle-size warning (main chunk above 500 kB). Browser interaction and live Azure/Copilot behavior were not exercised for this batch.
+
+## Inbox within Pull Requests
+
+- Moved Inbox to a URL-backed tab at `/pull-requests?tab=inbox`, retaining pending counts and existing question/suggestion actions. Legacy `/inbox` redirects with history replacement; overview actions and review cards open the tab. Direct PR focus links continue to open the list.
+- Approvals is back in the main sidebar navigation with its pending count; Teams remains disabled at the bottom.
+- TypeScript check and diff whitespace check passed. Tests/build deferred until push as requested; browser interaction not exercised.
+
+## Accordion header hit areas
+
+- Shared summary headers now span the available width with padding and a 44px minimum height. PR description/history/review and customer accordion headers include their container padding in the native click target; ticket section top spacing is part of the summary. Expanded content remains separate, preserving normal text selection and controls.
+- Diff whitespace check passed. Tests and browser checks deferred until push per user preference.
+
+## Accordion icons and review action
+
+- Added decorative semantic Lucide icons to every summary header: descriptions, reproduction steps, acceptance criteria, comments, attachments, linked PRs, raw fields, review history/results, context/version menus, customers/developers and OAuth settings. Existing disclosure chevrons and full header hit areas remain.
+- PR review launch has a purple accent, focus/hover/disabled styles and state-specific icons and labels for queued, running, awaiting answers and completed reviews.
+- TypeScript and whitespace checks passed. Tests and visual browser checks deferred until push.
+
+## Pre-push validation of navigation and accordion polish
+
+- All 96 Node tests and production build passed. Diff whitespace check passed. Vite retains the bundle-size warning (main chunk above 500 kB).
+- This batch includes the PR Inbox tab, primary-sidebar Approvals, larger accordion hit areas, semantic icons and the accented review action. Browser visual/interaction checks were not performed for this batch.

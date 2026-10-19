@@ -304,7 +304,13 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const location = useLocation();
   const navigate = useNavigate();
   const page = pageForPath(location.pathname);
-  const setPage = (next: Page) => navigate(pagePaths[next]);
+  const setPage = (next: Page) =>
+    navigate(next === "inbox" ? "/pull-requests?tab=inbox" : pagePaths[next]);
+  const inboxTab = new URLSearchParams(location.search).get("tab") === "inbox";
+  useEffect(() => {
+    if (page === "inbox")
+      navigate("/pull-requests?tab=inbox", { replace: true });
+  }, [page, navigate]);
   const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
     [items, setItems] = useState<any[]>([]),
@@ -447,7 +453,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
           {navigation
-            .filter((n) => !["teams", "inbox", "approvals"].includes(n.id))
+            .filter((n) => !["teams", "inbox"].includes(n.id))
             .map((n) => (
               <Link
                 key={n.id}
@@ -457,6 +463,17 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               >
                 <n.icon size={19} />
                 {n.label}
+                {n.id === "approvals" &&
+                  pending.length +
+                    memoryProposals.filter((p) => p.status === "pending")
+                      .length >
+                    0 && (
+                    <span className="nav-count">
+                      {pending.length +
+                        memoryProposals.filter((p) => p.status === "pending")
+                          .length}
+                    </span>
+                  )}
               </Link>
             ))}
         </nav>
@@ -473,37 +490,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
           >
             <Settings2 size={19} />
             Настройки
-          </Link>
-          <div className="nav-title">ОТ АССИСТЕНТА</div>
-          <Link
-            to={pagePaths.inbox}
-            className={page === "inbox" ? "active" : ""}
-            aria-current={page === "inbox" ? "page" : undefined}
-          >
-            <Inbox size={18} />
-            Входящие
-            {(items.length > 0 ||
-              reviewQuestions.some((q) => q.status === "pending")) && (
-              <span className="nav-count">
-                {items.length +
-                  reviewQuestions.filter((q) => q.status === "pending").length}
-              </span>
-            )}
-          </Link>
-          <Link
-            to={pagePaths.approvals}
-            className={page === "approvals" ? "active" : ""}
-            aria-current={page === "approvals" ? "page" : undefined}
-          >
-            <ShieldCheck size={18} />
-            Подтверждения
-            {(pending.length > 0 ||
-              memoryProposals.some((p) => p.status === "pending")) && (
-              <span className="nav-count">
-                {pending.length +
-                  memoryProposals.filter((p) => p.status === "pending").length}
-              </span>
-            )}
           </Link>
           <button
             className="sidebar-disabled"
@@ -839,9 +825,35 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               </>
             )}
             {page === "pullrequests" && (
+              <nav className="pr-page-tabs" aria-label="Разделы Pull Requests">
+                <Link
+                  to="/pull-requests"
+                  aria-current={!inboxTab ? "page" : undefined}
+                >
+                  Pull requests
+                </Link>
+                <Link
+                  to="/pull-requests?tab=inbox"
+                  aria-current={inboxTab ? "page" : undefined}
+                >
+                  <Inbox size={16} /> Входящие
+                  {items.length +
+                    reviewQuestions.filter((q) => q.status === "pending")
+                      .length >
+                    0 && (
+                    <span className="nav-count">
+                      {items.length +
+                        reviewQuestions.filter((q) => q.status === "pending")
+                          .length}
+                    </span>
+                  )}
+                </Link>
+              </nav>
+            )}
+            {page === "pullrequests" && !inboxTab && (
               <PullRequestsPage context={context} settings={settings} />
             )}
-            {page === "inbox" && (
+            {page === "pullrequests" && inboxTab && (
               <>
                 <PageHeading
                   title="Не упустите важное"
@@ -1825,7 +1837,10 @@ function Settings({ settings, context, run, busy }: any) {
             App не нужно.
           </p>
           <details>
-            <summary>Дополнительно: собственное OAuth-приложение</summary>
+            <summary>
+              <LockKeyhole size={17} aria-hidden="true" />
+              Дополнительно: собственное OAuth-приложение
+            </summary>
             <Field
               label="Client ID (необязательно)"
               hint="Оставьте пустым для входа через GitHub CLI. Для собственного приложения включите Device Flow."

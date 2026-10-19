@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
@@ -119,6 +120,7 @@ export function DeveloperDirectory({
       {!!inherited.length && (
         <details>
           <summary>
+            <Users size={17} aria-hidden="true" />
             Доступны из общей области и заказчика · {inherited.length}
           </summary>
           <p>{inherited.map((p) => p.name).join(", ")}</p>

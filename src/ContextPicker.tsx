@@ -216,6 +216,7 @@ export function ContextPicker({
                   {clients.map((c) => (
                     <details key={c} open={context.client === c}>
                       <summary>
+                        <Users size={17} aria-hidden="true" />
                         {c}
                         <span className="ticket-count">
                           {projects(c).length} проектов

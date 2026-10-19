@@ -1,6 +1,17 @@
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Trash2,
+  FileText,
+  ListChecks,
+  Bug,
+  GitPullRequest,
+  MessageSquare,
+  Paperclip,
+  Database,
+} from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
 import { StatusBadge, TicketStatus } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
@@ -137,7 +148,16 @@ export function TicketCard({ reference }: { reference: string }) {
           .filter(([key]) => f[key])
           .map(([key, label]) => (
             <details className="ticket-section" key={key} open>
-              <summary>{label}</summary>
+              <summary>
+                {key === "System.Description" ? (
+                  <FileText size={17} aria-hidden="true" />
+                ) : key === "Microsoft.VSTS.TCM.ReproSteps" ? (
+                  <Bug size={17} aria-hidden="true" />
+                ) : (
+                  <ListChecks size={17} aria-hidden="true" />
+                )}
+                {label}
+              </summary>
               <TicketRichText
                 value={f[key]}
                 card={card}
@@ -150,6 +170,7 @@ export function TicketCard({ reference }: { reference: string }) {
           open={!!card.linkedPullRequests?.length}
         >
           <summary>
+            <GitPullRequest size={17} aria-hidden="true" />
             Связанные открытые PR{" "}
             <span className="ticket-count">
               {card.linkedPullRequests?.length || 0}
@@ -194,6 +215,7 @@ export function TicketCard({ reference }: { reference: string }) {
         </details>
         <details className="ticket-section">
           <summary>
+            <MessageSquare size={17} aria-hidden="true" />
             Комментарии{" "}
             <span className="ticket-count">{card.comments.length}</span>
           </summary>
@@ -223,6 +245,7 @@ export function TicketCard({ reference }: { reference: string }) {
         </details>
         <details className="ticket-section">
           <summary>
+            <Paperclip size={17} aria-hidden="true" />
             Вложения и изображения{" "}
             <span className="ticket-count">{card.attachments.length}</span>
           </summary>
@@ -260,7 +283,10 @@ export function TicketCard({ reference }: { reference: string }) {
           )}
         </details>
         <details className="ticket-all-fields">
-          <summary>Все поля тикета · {Object.keys(f).length}</summary>
+          <summary>
+            <Database size={17} aria-hidden="true" />
+            Все поля тикета · {Object.keys(f).length}
+          </summary>
           <dl>
             {Object.entries(f).map(([key, value]) => (
               <div key={key}>

@@ -1,5 +1,18 @@
 import { SingleSelect } from "./SingleSelect.js";
-import { Copy, Check } from "lucide-react";
+import {
+  Copy,
+  Check,
+  FileText,
+  History,
+  FolderOpen,
+  GitCommitHorizontal,
+  Ticket,
+  ClipboardCheck,
+  Sparkles,
+  Clock,
+  MessageCircle,
+  LoaderCircle,
+} from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
 import { Link, useLocation } from "react-router-dom";
 import { ticketPath } from "./routing.js";
@@ -80,7 +93,10 @@ function PrDescription({ pr }: any) {
       className="pr-content-section"
       onToggle={(e) => setOpen(e.currentTarget.open)}
     >
-      <summary>Описание pull request</summary>
+      <summary>
+        <FileText size={17} aria-hidden="true" />
+        Описание pull request
+      </summary>
       {open &&
         (pr.description ? (
           <ChatMarkdown text={pr.description} images={pr.images} />
@@ -127,7 +143,10 @@ function ReviewHistory({ pr }: any) {
       className="pr-history"
       onToggle={(e) => setOpen(e.currentTarget.open)}
     >
-      <summary>Сохранённые ревью всех версий</summary>
+      <summary>
+        <History size={17} aria-hidden="true" />
+        Сохранённые ревью всех версий
+      </summary>
       {error && <p className="error">{error}</p>}
       {!items.length && <p className="muted">Ревью ещё не запускалось.</p>}
       {items.map((r) => (
@@ -355,7 +374,7 @@ export function PullRequestsPage({ context, settings }: any) {
               </div>
               <div className="pr-card-actions">
                 <button
-                  className="secondary"
+                  className="pr-review-launch"
                   disabled={
                     busy ||
                     !p.in_scope ||
@@ -378,14 +397,30 @@ export function PullRequestsPage({ context, settings }: any) {
                     )
                   }
                 >
+                  {p.review_status === "completed" ? (
+                    <Check size={17} aria-hidden="true" />
+                  ) : p.review_status === "running" ? (
+                    <LoaderCircle size={17} aria-hidden="true" />
+                  ) : p.review_status === "queued" ? (
+                    <Clock size={17} aria-hidden="true" />
+                  ) : p.review_status === "awaiting_answers" ? (
+                    <MessageCircle size={17} aria-hidden="true" />
+                  ) : (
+                    <Sparkles size={17} aria-hidden="true" />
+                  )}
                   {p.review_status === "completed"
                     ? "Текущая версия проверена"
                     : p.review_status === "awaiting_answers"
                       ? "Ожидает ответов"
-                      : "Запустить ревью"}
+                      : p.review_status === "running"
+                        ? "Ревью выполняется"
+                        : p.review_status === "queued"
+                          ? "Ревью в очереди"
+                          : "Запустить ревью"}
                 </button>
                 <details className="pr-technical pr-version-menu pr-context-menu">
                   <summary title="Заказчик, проекты и репозиторий">
+                    <FolderOpen size={17} aria-hidden="true" />
                     Контекст
                   </summary>
                   <dl>
@@ -413,6 +448,7 @@ export function PullRequestsPage({ context, settings }: any) {
                 </details>
                 <details className="pr-technical pr-version-menu">
                   <summary title="Версия изменений и ID репозитория">
+                    <GitCommitHorizontal size={17} aria-hidden="true" />
                     Версия изменений
                   </summary>
                   <dl>
@@ -449,7 +485,7 @@ export function PullRequestsPage({ context, settings }: any) {
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
             {p.review_status === "awaiting_answers" && (
-              <Link className="chat-ticket-link" to="/inbox">
+              <Link className="chat-ticket-link" to="/pull-requests?tab=inbox">
                 Ответить на вопросы ревьюера →
               </Link>
             )}
@@ -474,7 +510,10 @@ export function PullRequestsPage({ context, settings }: any) {
             </p>
             <PrDescription pr={p} />
             <details className="pr-content-section">
-              <summary>Тикеты из описания · {p.tickets?.length || 0}</summary>
+              <summary>
+                <Ticket size={17} aria-hidden="true" />
+                Тикеты из описания · {p.tickets?.length || 0}
+              </summary>
               <p className="muted">
                 Упоминание в PR не означает закрытие тикета. Здесь показан
                 последний синхронизированный статус Azure.
@@ -527,7 +566,10 @@ export function PullRequestsPage({ context, settings }: any) {
             {p.error && <p className="error">{p.error}</p>}
             {(p.summary || p.coverage) && (
               <details className="pr-review-result pr-result-accordion">
-                <summary>Результат ревью</summary>
+                <summary>
+                  <ClipboardCheck size={17} aria-hidden="true" />
+                  Результат ревью
+                </summary>
                 {p.coverage && (
                   <p className="muted">
                     Покрытие: {JSON.parse(p.coverage).files} файлов.{" "}
