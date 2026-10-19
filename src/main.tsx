@@ -669,7 +669,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                               <Ticket size={18} />
                             </span>
                             <div>
-                              <b>Упомянут тикет #{i.ticket_id}</b>
+                              <b>Возможный тикет #{i.ticket_id}</b>
                               <p>{i.excerpt}</p>
                               <small>{i.chat_name}</small>
                             </div>
@@ -767,7 +767,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <>
                 <PageHeading
                   title="Не упустите важное"
-                  subtitle="Упоминания тикетов из наблюдаемых чатов. Решение добавить их в трекер — за вами."
+                  subtitle="Числа и ссылки из наблюдаемых чатов — возможные номера тикетов. При добавлении проверим номер и проект через Azure DevOps. Даты и другие числа можно отклонить."
                 />
                 {items.length ? (
                   <div className="card-list">

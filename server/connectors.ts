@@ -3,17 +3,35 @@ import { Store, AppError, type Settings } from "./store.js";
 import { IntegrationsAuth } from "./auth.js";
 import { requestJson, azureBase } from "./http.js";
 
-export function extractTicketIds(text: string): number[] {
+// Candidates only: Azure checks existence and project when the user adds one.
+export function extractTicketIds(content: string): number[] {
   const ids = new Set<number>();
-  for (const pattern of [
-    /(?:\bAB#|(?<![\w&])#)(\d{1,9})\b/gi,
-    /(?<![\p{L}\d])(?:ticket|work\s*item|bug|тикет|задач[аиу]?|баг)\s*(?:№|#|:|-)?\s*(\d{1,9})\b/giu,
-    /\/_workitems\/edit\/(\d{1,9})\b/gi,
-  ]) {
-    for (const m of text.matchAll(pattern)) {
-      const id = Number(m[1]);
-      if (id > 0) ids.add(id);
+  const add = (value: string) => {
+    const id = Number(value);
+    if (Number.isSafeInteger(id) && id > 0) ids.add(id);
+  };
+  const text = plainText(content);
+  // No length restriction: small IDs are valid candidates too.
+  for (const match of text.matchAll(
+    /(?<![\p{L}\p{N}_])([0-9]+)(?![\p{L}\p{N}_])/gu,
+  ))
+    add(match[1]);
+  // Inspect visible URLs and anchor destinations, but not unrelated HTML attributes.
+  const links = [...text.matchAll(/https?:\/\/[^\s<>"']+/gi)].map((m) => m[0]);
+  for (const anchor of content.matchAll(/<a\b[^>]*>/gi)) {
+    const href = /\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(
+      anchor[0],
+    );
+    if (href) links.push(plainText(href[1] ?? href[2] ?? href[3]));
+  }
+  for (const link of links) {
+    let decoded = link;
+    try {
+      decoded = decodeURIComponent(link);
+    } catch {
+      /* Keep malformed URLs searchable. */
     }
+    for (const match of decoded.matchAll(/[0-9]+/g)) add(match[0]);
   }
   return [...ids];
 }
@@ -22,6 +40,13 @@ export function plainText(value: string) {
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/p>/gi, "\n")
     .replace(/<[^>]*>/g, "")
+    .replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (entity, value: string) => {
+      const code =
+        value[0].toLowerCase() === "x"
+          ? parseInt(value.slice(1), 16)
+          : Number(value);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+    })
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -112,7 +137,7 @@ export class Connectors {
       );
     const ids = message.deletedDateTime
       ? []
-      : extractTicketIds(`${text} ${message.body?.content || ""}`);
+      : extractTicketIds(message.body?.content || "");
     const previous = this.store.db
       .prepare(
         "SELECT id,ticket_id FROM suggestions WHERE source=? AND chat_id=? AND message_id=? AND status='new'",

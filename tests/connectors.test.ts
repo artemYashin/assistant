@@ -21,7 +21,7 @@ test("ticket recognition handles Azure links, Russian, AB# and deduplication", (
   );
   assert.deepEqual(
     extractTicketIds("2026-10-19 meeting at 12345, release 2026, &#123;"),
-    [],
+    [2026, 10, 19, 12345],
   );
   assert.equal(plainText("<p>Hello &amp; <b>world</b></p>"), "Hello & world");
 });
@@ -296,4 +296,81 @@ test("changing Azure settings during a request does not relabel the response as 
   const ticket = store.db.prepare("SELECT * FROM tickets").get() as any;
   assert.equal(ticket.source, store.source(original));
   assert.match(ticket.url, /\/One\/Project%20A\//);
+});
+
+test("bare IDs of any length and numbers anywhere in URLs are candidates", () => {
+  assert.deepEqual(
+    extractTicketIds(
+      "Проверь 123456 и 1234567, ещё 42, 00042, 0, 9007199254740992",
+    ),
+    [123456, 1234567, 42],
+  );
+  assert.deepEqual(
+    extractTicketIds(
+      "https://ado/custom/item123456/details https://ado/view?id=7654321 https://ado/issue/234567#details",
+    ),
+    [7654321, 234567, 123456],
+  );
+  assert.deepEqual(
+    extractTicketIds(
+      "<p data-id='999999'>Смотри <a href='https://ado/view?id=%31%32%33%34%35%36&amp;view=full'>открыть</a></p>",
+    ),
+    [123456],
+  );
+  assert.deepEqual(
+    extractTicketIds(
+      '&#123; &#x7b; <span style="font-size:123456px">текст</span>',
+    ),
+    [],
+  );
+  assert.deepEqual(extractTicketIds("https://ado/123456/%broken"), [123456]);
+});
+
+test("bare candidates are not tracked until Azure validates existence and project", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-candidate-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://ado.test/Collection",
+    azureProject: "Project",
+  });
+  store.setSecret("azure.pat", "test");
+  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  connectors.ingest("chat", { id: "m", body: { content: "Проверь 123456" } });
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM suggestions").get() as any).n,
+    1,
+  );
+  let mode = "missing";
+  t.mock.method(globalThis, "fetch", async () =>
+    mode === "missing"
+      ? new Response("", { status: 404 })
+      : new Response(
+          JSON.stringify({
+            id: 123456,
+            fields: {
+              "System.TeamProject": mode === "wrong" ? "Other" : "Project",
+              "System.Title": "Task",
+            },
+          }),
+          { status: 200 },
+        ),
+  );
+  await assert.rejects(connectors.trackTicket(123456), /404/);
+  mode = "wrong";
+  await assert.rejects(connectors.trackTicket(123456), /другому проекту/);
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
+    0,
+  );
+  mode = "valid";
+  await connectors.trackTicket(123456);
+  assert.equal(
+    (store.db.prepare("SELECT status FROM suggestions").get() as any).status,
+    "tracked",
+  );
 });
