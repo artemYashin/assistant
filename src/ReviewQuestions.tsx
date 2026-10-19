@@ -1,3 +1,4 @@
+import { LockKeyhole } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "./api.js";
@@ -30,6 +31,20 @@ function QuestionBatch({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = item.status === "pending";
+  const closedReason =
+    item.status === "answered"
+      ? "Ответы уже отправлены. Дополнительный ответ не требуется."
+      : item.status === "dismissed"
+        ? "Вопросы проигнорированы, ревью завершено."
+        : item.review_status && item.review_status !== "awaiting_answers"
+          ? "Это ревью больше не ожидает ответов."
+          : !item.enabled
+            ? "Синхронизация репозитория отключена."
+            : !item.in_scope
+              ? "PR закрыт или больше не входит в текущую выборку."
+              : item.draft
+                ? "PR переведён в черновик."
+                : "Версия PR изменилась. Вопросы относятся к предыдущим изменениям.";
   async function submit(dismiss = false) {
     setBusy(true);
     setError("");
@@ -47,7 +62,13 @@ function QuestionBatch({
     }
   }
   return (
-    <article className="panel review-questions">
+    <article className={`panel review-questions${pending ? "" : " is-closed"}`}>
+      {!pending && (
+        <div className="review-questions-closed-label">
+          <LockKeyhole size={14} />
+          Закрыто · ответ не требуется
+        </div>
+      )}
       <div className="section-heading">
         <h2>Вопросы к PR #{item.number}</h2>
         <span className="ticket-state-badge">
@@ -56,8 +77,10 @@ function QuestionBatch({
             : item.status === "answered"
               ? "Ответы отправлены"
               : item.status === "outdated"
-                ? "Версия PR изменилась"
-                : "Вопросы проигнорированы"}
+                ? "Неактуально"
+                : item.status === "dismissed"
+                  ? "Вопросы проигнорированы"
+                  : "Неактуально"}
         </span>
       </div>
       <p>
@@ -67,10 +90,9 @@ function QuestionBatch({
         Перейти к PR #{item.number}
       </Link>
       <p className="muted">
-        Ответьте на все вопросы, затем отправьте весь набор. Только после этого
-        начнётся повторное ревью. Если ответа нет, напишите «Не знаю». Ответы
-        сохраняются для этого ревью. Можно проигнорировать вопросы и завершить
-        ревью без нового вызова модели.
+        {pending
+          ? "Ответьте на все вопросы, затем отправьте весь набор для повторного ревью. Если ответа нет, напишите «Не знаю». Можно проигнорировать вопросы и завершить ревью."
+          : closedReason}
       </p>
       <form
         onSubmit={(e) => {
@@ -84,18 +106,24 @@ function QuestionBatch({
               {i + 1}. {q.question}
             </strong>
             <small>{q.reason}</small>
-            <textarea
-              required
-              maxLength={2000}
-              rows={3}
-              value={pending ? answers[i] : item.answers[i] || ""}
-              disabled={busy || !pending}
-              onChange={(e) =>
-                setAnswers((old) =>
-                  old.map((v, j) => (i === j ? e.target.value : v)),
-                )
-              }
-            />
+            {pending ? (
+              <textarea
+                required
+                maxLength={2000}
+                rows={3}
+                value={pending ? answers[i] : item.answers[i] || ""}
+                disabled={busy || !pending}
+                onChange={(e) =>
+                  setAnswers((old) =>
+                    old.map((v, j) => (i === j ? e.target.value : v)),
+                  )
+                }
+              />
+            ) : (
+              <p className="review-question-saved-answer">
+                {item.answers[i] || "Ответ не был дан"}
+              </p>
+            )}
           </label>
         ))}
         {error && (

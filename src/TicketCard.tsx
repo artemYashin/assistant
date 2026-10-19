@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
+  ArrowUpRight,
+  ExternalLink,
   Eye,
   EyeOff,
   Trash2,
@@ -91,51 +93,74 @@ export function TicketCard({ reference }: { reference: string }) {
   };
   return (
     <article className="ticket-detail">
-      <header className="ticket-card-title">
-        <span className="ticket-number">#{card.id}</span>
-        <strong>{f["System.Title"]}</strong>
+      <header className="ticket-card-header">
+        <div className="ticket-card-title">
+          <span className="ticket-number">#{card.id}</span>
+          <strong>{f["System.Title"]}</strong>
+        </div>
+        <nav className="ticket-card-actions" aria-label="Ссылки тикета">
+          <Link to={ticketPath(card.id, card.source)}>
+            <ArrowUpRight size={15} />
+            Перейти к тикету
+          </Link>
+          <a href={card.url} target="_blank" rel="noreferrer">
+            <ExternalLink size={15} />
+            Открыть в Azure DevOps
+          </a>
+        </nav>
       </header>
       <div className="ticket-card-body">
-        <div className="ticket-badges">
-          <span className="ticket-type-label">Тип задачи</span>
-          <StatusBadge
-            state={f["System.WorkItemType"] || "Тип не указан"}
-            colors={typeColors}
-            kind="type"
-          />
-          <span className="ticket-project">{card.project}</span>
-        </div>
-        <div className="ticket-status-row">
-          <span className="ticket-type-label">Статус</span>
-          <TicketStatus
-            id={card.id}
-            source={card.source}
-            state={f["System.State"] || ""}
-            colors={colors}
-          />
-        </div>
-        {card.localMetadata && (
-          <div className="ticket-local-summary">
-            <span className="badge">
-              Локальный приоритет: P{card.localMetadata.priority}
-            </span>
-            {(card.localMetadata.tags || []).map((tag: string) => (
-              <span className="badge" key={tag}>
-                {tag}
-              </span>
-            ))}
-            {card.localMetadata.notes && (
-              <details>
-                <summary>
-                  <FileText size={17} />
-                  Локальные заметки
-                </summary>
-                <p style={{ whiteSpace: "pre-wrap" }}>
-                  {card.localMetadata.notes}
-                </p>
-              </details>
-            )}
+        <dl className="ticket-overview">
+          <div>
+            <dt>Тип задачи</dt>
+            <dd>
+              <StatusBadge
+                state={f["System.WorkItemType"] || "Тип не указан"}
+                colors={typeColors}
+                kind="type"
+              />
+            </dd>
           </div>
+          <div>
+            <dt>Статус</dt>
+            <dd>
+              <TicketStatus
+                id={card.id}
+                source={card.source}
+                state={f["System.State"] || ""}
+                colors={colors}
+              />
+            </dd>
+          </div>
+          {card.localMetadata && (
+            <div>
+              <dt>Локальный приоритет</dt>
+              <dd>
+                <span className="badge">P{card.localMetadata.priority}</span>
+              </dd>
+            </div>
+          )}
+          {!!card.localMetadata?.tags?.length && (
+            <div className="ticket-overview-tags">
+              <dt>Теги</dt>
+              <dd>
+                {card.localMetadata.tags.map((tag: string) => (
+                  <span className="badge" key={tag}>
+                    {tag}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )}
+        </dl>
+        {card.localMetadata?.notes && (
+          <details className="ticket-section">
+            <summary>
+              <FileText size={17} />
+              Локальные заметки
+            </summary>
+            <p style={{ whiteSpace: "pre-wrap" }}>{card.localMetadata.notes}</p>
+          </details>
         )}
         <dl className="ticket-metadata">
           <div>
@@ -161,15 +186,6 @@ export function TicketCard({ reference }: { reference: string }) {
         </dl>
         <div className="ticket-source">
           <span>Данные получены: {timestamp(card.loadedAt)}</span>
-          <Link
-            className="chat-ticket-link"
-            to={ticketPath(card.id, card.source)}
-          >
-            Перейти к тикету #{card.id}
-          </Link>
-          <a href={card.url} target="_blank" rel="noreferrer">
-            Открыть в Azure DevOps ↗
-          </a>
         </div>
         {card.warnings.map((w: string) => (
           <p className="error" key={w}>

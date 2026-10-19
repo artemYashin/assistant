@@ -42,14 +42,15 @@ export class ReviewQuestions {
   list() {
     return this.store.db
       .prepare(
-        `SELECT q.*,r.monitor,r.repo,r.number,m.client,m.project,m.enabled,p.title,p.head current_head,p.target current_target,p.in_scope,p.draft,r.head reviewed_head,r.target reviewed_target FROM pr_question_batches q JOIN pr_reviews r ON r.id=q.review_id JOIN pr_projects m ON m.id=r.monitor LEFT JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number ORDER BY q.created_at DESC,q.rowid DESC LIMIT 100`,
+        `SELECT q.*,r.status review_status,r.monitor,r.repo,r.number,m.client,m.project,m.enabled,p.title,p.head current_head,p.target current_target,p.in_scope,p.draft,r.head reviewed_head,r.target reviewed_target FROM pr_question_batches q JOIN pr_reviews r ON r.id=q.review_id JOIN pr_projects m ON m.id=r.monitor LEFT JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number ORDER BY q.created_at DESC,q.rowid DESC LIMIT 100`,
       )
       .all()
       .map((q: any) => ({
         ...q,
         status:
           q.status === "pending" &&
-          (!q.enabled ||
+          (q.review_status !== "awaiting_answers" ||
+            !q.enabled ||
             !q.in_scope ||
             q.draft ||
             q.current_head !== q.reviewed_head ||
