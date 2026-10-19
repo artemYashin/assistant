@@ -104,6 +104,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
       aria-label={label + " тикета #" + ticket.id}
       onCancel={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (!busy) onClose();
       }}
     >

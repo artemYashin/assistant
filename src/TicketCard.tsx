@@ -1,3 +1,4 @@
+import { TicketMetadata } from "./TicketMetadata.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
@@ -137,9 +138,22 @@ export function TicketCard({ reference }: { reference: string }) {
             <div>
               <dt>Локальный приоритет</dt>
               <dd>
-                <span className="badge ticket-priority-badge">
-                  P{card.localMetadata.priority}
-                </span>
+                {card.locallyTracked ? (
+                  <TicketMetadata
+                    ticket={{
+                      id: card.id,
+                      source: card.source,
+                      ...card.localMetadata,
+                    }}
+                    context={card.localContext}
+                    field="priority"
+                    onChange={() => {}}
+                  />
+                ) : (
+                  <span className="badge ticket-priority-badge">
+                    P{card.localMetadata.priority}
+                  </span>
+                )}
               </dd>
             </div>
           )}
@@ -156,15 +170,41 @@ export function TicketCard({ reference }: { reference: string }) {
             </div>
           )}
         </dl>
-        {card.localMetadata?.notes && (
-          <details className="ticket-section">
-            <summary>
-              <FileText size={17} />
-              Локальные заметки
-            </summary>
-            <p style={{ whiteSpace: "pre-wrap" }}>{card.localMetadata.notes}</p>
-          </details>
-        )}
+        <details className="ticket-section">
+          <summary>
+            <FileText size={17} />
+            Локальные заметки
+          </summary>
+          <div className="ticket-local-notes">
+            <div className="ticket-local-notes-heading">
+              <span className="muted">Сохраняются только в Orbit</span>
+              {card.locallyTracked && (
+                <TicketMetadata
+                  ticket={{
+                    id: card.id,
+                    source: card.source,
+                    ...card.localMetadata,
+                  }}
+                  context={card.localContext}
+                  field="notes"
+                  onChange={() => {}}
+                />
+              )}
+            </div>
+            <p
+              className={!card.localMetadata?.notes ? "muted" : undefined}
+              style={{ whiteSpace: "pre-wrap" }}
+            >
+              {card.localMetadata?.notes || "Локальных заметок пока нет."}
+            </p>
+            {!card.locallyTracked && (
+              <p className="muted">
+                Для редактирования заметок и приоритета сначала добавьте тикет в
+                локальный список на странице «Тикеты».
+              </p>
+            )}
+          </div>
+        </details>
         <dl className="ticket-metadata">
           <div>
             <dt>Автор</dt>

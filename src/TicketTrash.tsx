@@ -3,6 +3,7 @@ import { NotebookPen } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   ArchiveRestore,
+  LoaderCircle,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
@@ -375,24 +376,35 @@ export function TicketTrash({
                     </time>
                   </td>
                   <td>
-                    <PrInfoPopup
-                      title={`Заметки тикета #${t.id}`}
-                      trigger={<NotebookPen size={17} />}
-                    >
-                      <p style={{ whiteSpace: "pre-wrap" }}>
-                        {t.notes || "Заметок нет"}
-                      </p>
-                    </PrInfoPopup>
-                    <button
-                      type="button"
-                      className="secondary"
-                      disabled={busy !== null}
-                      onClick={() => void restore(t)}
-                      aria-label={`Восстановить тикет #${t.id}`}
-                    >
-                      <ArchiveRestore size={17} />
-                      {busy === t.id ? "Восстанавливаю…" : "Восстановить"}
-                    </button>
+                    <div className="ticket-trash-actions">
+                      <PrInfoPopup
+                        title={`Заметки тикета #${t.id}`}
+                        trigger={<NotebookPen size={17} />}
+                      >
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                          {t.notes || "Заметок нет"}
+                        </p>
+                      </PrInfoPopup>
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy !== null}
+                        onClick={() => void restore(t)}
+                        aria-label={`Восстановить тикет #${t.id}`}
+                        title={
+                          busy === t.id
+                            ? "Восстанавливаю…"
+                            : "Восстановить тикет"
+                        }
+                        aria-busy={busy === t.id}
+                      >
+                        {busy === t.id ? (
+                          <LoaderCircle className="spin" size={17} />
+                        ) : (
+                          <ArchiveRestore size={17} />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

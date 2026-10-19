@@ -366,7 +366,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   useEffect(() => {
     const changed = () => setRefresh((n) => n + 1);
     window.addEventListener("orbit:ticket-state", changed);
-    return () => window.removeEventListener("orbit:ticket-state", changed);
+    window.addEventListener("orbit:ticket-metadata", changed);
+    return () => {
+      window.removeEventListener("orbit:ticket-state", changed);
+      window.removeEventListener("orbit:ticket-metadata", changed);
+    };
   }, []);
   const initialized = useRef(false);
   const loadGeneration = useRef(0);

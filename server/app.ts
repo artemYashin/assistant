@@ -661,6 +661,13 @@ export function createApp(
     res.json({
       ...card,
       localMetadata: ticketMetadata(store, card.id, card.source),
+      localContext: {
+        client: store.settings().client,
+        project: store.settings().project,
+      },
+      locallyTracked: !!store.db
+        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+        .get(card.source, card.id),
       linkedPullRequests: pullRequests.linkedToTicket(card.id, card.source),
     });
   });

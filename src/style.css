@@ -4792,3 +4792,41 @@ summary > svg {
     0 3px 8px #233a2014,
     0 10px 28px #233a2024;
 }
+
+.ticket-local-notes-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.ticket-detail .ticket-overview .ticket-metadata-control {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 6px;
+}
+.ticket-detail .ticket-overview .ticket-metadata-control > button {
+  flex-shrink: 0;
+}
+
+.ticket-trash-table th:last-child {
+  width: 70px;
+}
+.ticket-trash-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+.ticket-trash-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
+  height: 28px;
+  padding: 2px;
+  white-space: nowrap;
+}
