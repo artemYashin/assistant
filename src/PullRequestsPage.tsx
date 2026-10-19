@@ -1,3 +1,6 @@
+import { filterPullRequests } from "./pr-filters.js";
+import { Link } from "react-router-dom";
+import { ticketPath } from "./routing.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
@@ -25,6 +28,18 @@ function PrDescription({ pr }: any) {
         ) : (
           <p className="muted">Описание не указано.</p>
         ))}
+      {open && !!pr.tickets?.length && (
+        <div
+          className="pr-ticket-navigation"
+          aria-label="Переходы к тикетам из описания"
+        >
+          {pr.tickets.map((t: any) => (
+            <Link key={t.id} to={ticketPath(t.id, pr.ticket_source)}>
+              Перейти к тикету #{t.id}
+            </Link>
+          ))}
+        </div>
+      )}
     </details>
   );
 }
@@ -77,6 +92,14 @@ export function PullRequestsPage({ context, settings }: any) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
+  const [draftFilter, setDraftFilter] = useState("all");
+  const [reviewFilter, setReviewFilter] = useState("all");
+  const [sort, setSort] = useState("created:desc");
+  const visiblePrs = filterPullRequests(prs, {
+    draft: draftFilter,
+    review: reviewFilter,
+    sort,
+  });
   const query = new URLSearchParams(context).toString();
   useEffect(() => {
     let live = true;
@@ -150,6 +173,70 @@ export function PullRequestsPage({ context, settings }: any) {
         {settings?.prDailyLimit || 20} запусков за 24 часа. Комментарии и голоса
         в Azure не отправляются.
       </p>
+      <div className="ticket-filters">
+        <label>
+          Тип PR
+          <select
+            aria-label="Тип PR"
+            value={draftFilter}
+            onChange={(e) => setDraftFilter(e.target.value)}
+          >
+            <option value="all">Все PR</option>
+            <option value="draft">Черновики</option>
+            <option value="published">Не черновики</option>
+          </select>
+        </label>
+        <label>
+          Готовность ревью
+          <select
+            aria-label="Готовность ревью"
+            value={reviewFilter}
+            onChange={(e) => setReviewFilter(e.target.value)}
+          >
+            <option value="all">Все состояния</option>
+            <option value="ready">Ревью готово</option>
+            <option value="pending">Ревью не готово</option>
+          </select>
+        </label>
+        <label>
+          Сортировка
+          <select
+            aria-label="Сортировка PR"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="created:desc">Созданы: сначала новые</option>
+            <option value="created:asc">Созданы: сначала старые</option>
+            <option value="number:desc">Номер: по убыванию</option>
+            <option value="number:asc">Номер: по возрастанию</option>
+            <option value="title:asc">Название: А–Я</option>
+          </select>
+        </label>
+        <button
+          className="secondary"
+          disabled={
+            draftFilter === "all" &&
+            reviewFilter === "all" &&
+            sort === "created:desc"
+          }
+          onClick={() => {
+            setDraftFilter("all");
+            setReviewFilter("all");
+            setSort("created:desc");
+          }}
+        >
+          Сбросить фильтры
+        </button>
+      </div>
+      <p className="muted" role="status">
+        Показано {visiblePrs.length} из {prs.length}. «Ревью готово» — проверена
+        текущая версия PR.
+      </p>
+      {!!prs.length && !visiblePrs.length && (
+        <div className="empty">
+          Нет PR по выбранным фильтрам. Измените условия или сбросьте фильтры.
+        </div>
+      )}
       {!prs.length && (
         <div className="empty">
           PR пока нет. Укажите Git-репозиторий через «Заказчики и проекты»
@@ -157,7 +244,7 @@ export function PullRequestsPage({ context, settings }: any) {
         </div>
       )}
       <div className="card-list">
-        {prs.map((p) => (
+        {visiblePrs.map((p) => (
           <article
             className="panel pr-review"
             key={`${p.monitor}:${p.repo}:${p.number}`}
@@ -184,6 +271,16 @@ export function PullRequestsPage({ context, settings }: any) {
                 <strong>{p.author || "Не указан"}</strong>
               </div>
             </div>
+            <p className="muted">
+              Создан:{" "}
+              {p.created_at ? (
+                <time dateTime={p.created_at}>
+                  {new Date(p.created_at).toLocaleString("ru-RU")}
+                </time>
+              ) : (
+                "дата пока не загружена"
+              )}
+            </p>
             <div className="pr-context-badges">
               <span className="pr-context-badge">
                 <small>Заказчик</small>
@@ -218,6 +315,12 @@ export function PullRequestsPage({ context, settings }: any) {
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
                   <div className="pr-ticket-row" key={t.id}>
+                    <Link
+                      className="pr-ticket-jump"
+                      to={ticketPath(t.id, p.ticket_source)}
+                    >
+                      Перейти к тикету #{t.id}
+                    </Link>
                     <strong>
                       #{t.id}
                       {t.title ? ` · ${t.title}` : ""}

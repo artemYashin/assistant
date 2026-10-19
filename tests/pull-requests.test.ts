@@ -491,3 +491,26 @@ test("image proxy requires a saved description reference and current connection"
   );
   assert.equal(reads, 1);
 });
+
+test("sync persists creation date and list defaults to newest creation, not ID or sync time", async (t) => {
+  const { service, store } = fixture(t);
+  mock(t, [
+    { ...pr(10), creationDate: "2026-10-01T10:00:00Z" },
+    { ...pr(1), creationDate: "2026-10-19T11:00:00+01:00" },
+  ]);
+  await service.sync();
+  let rows: any[] = service.list(context);
+  assert.deepEqual(
+    rows.map((p) => p.number),
+    [1, 10],
+  );
+  assert.equal(rows[0].created_at, "2026-10-19T10:00:00.000Z");
+  mock(t, [pr(1), pr(10)]);
+  await service.sync();
+  rows = service.list(context);
+  assert.equal(rows[0].created_at, "2026-10-19T10:00:00.000Z");
+  assert.equal(
+    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
+    0,
+  );
+});

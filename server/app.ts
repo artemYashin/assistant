@@ -348,6 +348,15 @@ export function createApp(
   app.get("/api/conversation", (req, res) =>
     res.json(store.history(contextSchema.parse(req.query))),
   );
+  app.delete("/api/conversation", (req, res) => {
+    const context = contextSchema.parse(req.body);
+    if (agent.active())
+      throw new AppError(
+        409,
+        "Дождитесь завершения ответа или остановите его, затем очистите историю.",
+      );
+    res.json(store.clearHistory(context));
+  });
   app.get("/api/usage", (req, res) => {
     const days = z.coerce
       .number()
@@ -434,19 +443,8 @@ export function createApp(
     res.json(await connectors.developers(query));
   });
   app.delete("/api/tickets/:id", (req, res) => {
-    const id = z.coerce.number().int().positive().parse(req.params.id),
-      source = store.source();
-    store.db.transaction(() => {
-      store.db
-        .prepare(
-          "INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1) ON CONFLICT(source,id) DO UPDATE SET removed=1",
-        )
-        .run(source, id);
-      store.db
-        .prepare("DELETE FROM tickets WHERE source=? AND id=?")
-        .run(source, id);
-    })();
-    res.json({ ok: true });
+    const id = z.coerce.number().int().positive().parse(req.params.id);
+    res.json(store.removeLocalTicket(id));
   });
   app.put("/api/tickets/:id/developer", (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id),

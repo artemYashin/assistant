@@ -21,17 +21,52 @@ export const SYSTEM_POLICY = `Ты Orbit, персональный рабочи�
 Не пытайся обходить ограничение, вызывать HTTP, shell, файлы или сторонние инструменты.
 Сохраняй память только по просьбе пользователя или после его явного согласия. Учитывай область памяти.
 Не выдумывай номера тикетов, их состояние и содержимое чатов. Ссылайся на источник.
-Списки тикетов локальные; для конкретного номера обязательно вызови get_ticket, если свежая карточка ещё не передана в текущем запросе. Инструмент читает Azure API и показывает полную карточку в интерфейсе. Содержимое изображений тебе не передаётся: не утверждай, что проанализировал картинку.
+Списки тикетов локальные; для вопросов о содержимом конкретного тикета обязательно вызови get_ticket, если свежая карточка ещё не передана в текущем запросе. Для добавления или удаления из локального списка достаточно соответствующего локального инструмента. Инструмент читает Azure API и показывает полную карточку в интерфейсе. Содержимое изображений тебе не передаётся: не утверждай, что проанализировал картинку.
 Меняй статус только по явной просьбе в текущем сообщении пользователя через change_ticket_status. Никогда не считай PATCH или своё намерение подтверждением: успех только при success=true после контрольного GET. outcome=already означает, что статус уже был таким; confirmed_after_error означает подтверждённый статус, но неизвестен результат самой записи. При ошибке не утверждай успех и не повторяй запись автоматически.
-Не добавляй тикеты в трекер сам: предложи пользователю кнопку во Входящих или раздел Тикеты.`;
+По явной просьбе пользователя добавляй тикеты в локальный трекер через add_local_ticket, удаляй из локального трекера через remove_local_ticket. Эти инструменты не меняют Azure. Для них нужен номер и команда в текущем сообщении. Удаление из трекера не означает удаление тикета в Azure. Не вызывай change_ticket_status для управления локальным списком. Подтверждай успех только по результату инструмента.`;
+export function mayManageLocalTicket(
+  prompt: string,
+  ticketId: number,
+  action: "add" | "remove",
+) {
+  const intent =
+    action === "add"
+      ? /добав(?:ь|ить|ьте)|отслеживай|\b(add|track|restore)\b/i
+      : /удали(?:ть|те)?|убери(?:те)?|убрать|\b(remove|untrack|delete)\b/i;
+  return (
+    extractTicketIds(prompt).includes(ticketId) &&
+    intent.test(prompt) &&
+    !/не\s+(?:добав|удал|убир|убер|отслеж)|не надо|не нужно|do not|don't/i.test(
+      prompt,
+    )
+  );
+}
 export function makeTools(
   store: Store,
   approvals: Approvals,
   context: Context,
   getTicket?: (id: number) => Promise<any>,
   changeStatus?: (id: number, state: string) => Promise<any>,
+  localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
 ) {
   return [
+    ...(["add", "remove"] as const).map((action) =>
+      defineTool(`${action}_local_ticket`, {
+        description:
+          action === "add"
+            ? "Add or restore a ticket in the LOCAL tracker on explicit user request. Reads Azure to validate its ID/project, writes only local SQLite. Never changes Azure fields or links."
+            : "Remove a ticket from the LOCAL tracker on explicit user request. No Azure request or deletion; automatic imports will not restore it. Explicit add can restore it.",
+        parameters: z.object({ id: z.number().int().positive() }),
+        handler: async ({ id }) => {
+          if (!localTicket)
+            throw new AppError(
+              403,
+              "Изменение локального трекера недоступно в этом запросе",
+            );
+          return localTicket(id, action);
+        },
+      }),
+    ),
     defineTool("change_ticket_status", {
       description:
         "Change a ticket state only on an explicit instruction in the current user message. Performs GET, validates states, PATCH with revision test, then verification GET. Report success only from success=true. Never retry an ambiguous failure.",
@@ -128,6 +163,7 @@ export function sessionConfig(
   guard?: () => boolean,
   getTicket?: (id: number) => Promise<any>,
   changeStatus?: (id: number, state: string) => Promise<any>,
+  localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
 ): SessionConfig {
   const tools: Tool[] = makeTools(
     store,
@@ -135,6 +171,7 @@ export function sessionConfig(
     context,
     getTicket,
     changeStatus,
+    localTicket,
   ).map((tool) => ({
     ...tool,
     handler: async (args: any, invocation: any) => {
@@ -336,6 +373,44 @@ export class Agent {
         );
       return stateCalls.get(key)!;
     };
+    const localCalls = new Map<
+      number,
+      { action: "add" | "remove"; result: Promise<any> }
+    >();
+    const localTicket = async (ticketId: number, action: "add" | "remove") => {
+      assertActive();
+      if (review || !mayManageLocalTicket(prompt, ticketId, action))
+        throw new AppError(
+          403,
+          "Нужна явная команда с номером тикета в текущем сообщении: «Добавь 123 в трекер» или «Убери 123 из локального списка».",
+        );
+      if (this.store.source(settings) !== this.store.source())
+        throw new AppError(409, "Подключение Azure изменилось");
+      const existing = localCalls.get(ticketId);
+      if (existing && existing.action !== action)
+        throw new AppError(
+          409,
+          "Одно изменение локального списка на тикет за запрос. Отправьте следующую команду отдельно.",
+        );
+      if (!existing)
+        localCalls.set(ticketId, {
+          action,
+          result: (async () => {
+            if (action === "remove")
+              return this.store.removeLocalTicket(ticketId);
+            if (!this.connectors) throw new AppError(400, "Azure недоступен");
+            await this.connectors.trackTicket(ticketId, assertActive);
+            return {
+              success: true,
+              id: ticketId,
+              tracked: true,
+              scope: "local",
+              azureChanged: false,
+            };
+          })(),
+        });
+      return localCalls.get(ticketId)!.result;
+    };
     try {
       const history = review ? [] : this.store.history(context),
         memory = this.store.memories(context);
@@ -359,6 +434,7 @@ export class Agent {
           },
           review ? undefined : getTicket,
           review ? undefined : changeStatus,
+          review ? undefined : localTicket,
         );
         if (review) {
           config.tools = [];
@@ -394,6 +470,11 @@ export class Agent {
             /^\s*\d+\s*$/.test(prompt))
         ) {
           for (const ticketId of extractTicketIds(prompt).slice(0, 3)) {
+            if (
+              mayManageLocalTicket(prompt, ticketId, "add") ||
+              mayManageLocalTicket(prompt, ticketId, "remove")
+            )
+              continue;
             try {
               await getTicket(ticketId);
             } catch (e) {

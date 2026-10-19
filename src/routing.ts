@@ -1,0 +1,21 @@
+export const pagePaths = {
+  overview: "/",
+  inbox: "/inbox",
+  tickets: "/tickets",
+  approvals: "/approvals",
+  memory: "/memory",
+  teams: "/teams",
+  settings: "/settings",
+  usage: "/usage",
+  pullrequests: "/pull-requests",
+} as const;
+export type Page = keyof typeof pagePaths;
+export function pageForPath(pathname: string): Page | undefined {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return (Object.keys(pagePaths) as Page[]).find(
+    (page) => pagePaths[page] === path,
+  );
+}
+export function ticketPath(id: number, source?: string) {
+  return `/tickets?${new URLSearchParams({ id: String(id), ...(source ? { source } : {}) })}`;
+}

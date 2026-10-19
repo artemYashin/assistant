@@ -292,10 +292,11 @@ test("changing Azure settings during a request does not relabel the response as 
       }),
     );
   });
-  await new Connectors(store, new IntegrationsAuth(store)).trackTicket(1);
-  const ticket = store.db.prepare("SELECT * FROM tickets").get() as any;
-  assert.equal(ticket.source, store.source(original));
-  assert.match(ticket.url, /\/One\/Project%20A\//);
+  await assert.rejects(
+    new Connectors(store, new IntegrationsAuth(store)).trackTicket(1),
+    /Подключение Azure изменилось/,
+  );
+  assert.equal(store.db.prepare("SELECT * FROM tickets").get(), undefined);
 });
 
 test("bare IDs of any length and numbers anywhere in URLs are candidates", () => {

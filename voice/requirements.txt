@@ -2,5 +2,7 @@ fastapi==0.119.0
 uvicorn==0.37.0
 python-multipart==0.0.20
 faster-whisper==1.2.0
+# Pin the PyAV API expected by faster-whisper (metadata_errors in av.open).
+av==16.1.0
 # faster-whisper imports requests directly; newer huggingface-hub no longer installs it.
 requests>=2.32.5,<3

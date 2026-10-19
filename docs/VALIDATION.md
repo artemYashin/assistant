@@ -99,3 +99,28 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added combined type, assignee and state filters with reset/count. Assignee choices distinguish Azure assignment from local developer delegation. Search also matches type and local developer; options use the entire loaded ticket list so filtering does not hide other choices.
 - Added a dedicated type column with configured badge color and an explicit type label in the full card; expanded table detail spans all six columns.
 - Playwright with mocked tickets verified combined filters, zero results/reset, Azure/local/unassigned selection, search, sorting, detail expansion and mobile overflow. Desktop screenshot inspected. Build passed.
+
+### Page routing and PR-to-ticket navigation (2026-10-19)
+
+- React Router browser history with stable paths for all sections, sidebar links, unknown-page state, direct ticket ID/source URLs. The persistent workspace retains the chat across navigation. Existing Express SPA fallback serves deep links.
+- PR description and ticket accordions expose local ticket links; focused ticket bypasses stale text/field filters, highlights and expands the exact row, scrolls below the sticky header. Different Azure sources cannot open a same-number ticket. Missing tickets remain explicit and can be added manually.
+- Build and 74 tests passed. Playwright with mocked APIs verified direct load, reload, back/forward, both PR links, exact ID expansion/highlight/scroll, return to all tickets, sidebar paths, mismatched source and unknown URL.
+
+### Voice PyAV metadata_errors compatibility (2026-10-19)
+
+- Reproduced the reported TypeError with installed PyAV 19.0.1 and faster-whisper 1.2.0 using a generated WAV, without a model or network calls.
+- Pinned `av==16.1.0`; the same real decoder test now passes. Added WebM/Opus encode/decode regression using the browser audio container/codec. Docker image build executes both real decoder tests as the unprivileged service user.
+- Six Python voice tests passed with the pinned dependencies. Full model inference and a Docker runtime build were not exercised in this environment.
+
+### PR sorting and filters (2026-10-19)
+
+- Added a backward-compatible creation date column, populated from Azure creationDate, normalized to UTC, preserved when a later response omits it. API selection orders by creation date before the 300-item limit.
+- UI defaults to newest creation; supports oldest, number, title ordering, combined draft/current-review-readiness filters, result count/reset and empty state. Unknown dates sort last.
+- Build and 77 tests passed, including date persistence/order and combined filter cases. Playwright verified date sorting, draft/readiness combination, empty/reset states, mobile overflow and no mutation/LLM requests from filtering.
+
+### Chat cleanup and local tracker tools (2026-10-19)
+
+- Added authenticated, CSRF-protected DELETE conversation scoped to the current customer/project; rejects active agent work to avoid repopulating a cleared conversation. UI confirmation preserves memory and draft text; stale history loads cannot undo cleanup.
+- Agent add/remove local tools require a current command with the ticket ID, deduplicate repeated actions per turn, reject opposite actions in the same turn, honor cancellation/source changes and remain unavailable during PR review. Add uses verified Azure GET plus local save; remove shares the UI's SQLite tombstone transaction. Auto-prefetch is skipped for local list commands.
+- Build and 80 tests passed. Tests cover scoped cleanup/auth/CSRF/active request, preserved memory, real connector GET-only add/restore, no network on removal, duplicate calls and intent checks. Existing source-change test now verifies the stricter behavior: discard a stale import entirely.
+- Playwright confirmed clear cancel/accept, scoped request, persistence after reload, and no header overflow at 280px chat width.

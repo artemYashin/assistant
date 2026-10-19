@@ -653,7 +653,7 @@ export class Connectors {
       }
     }
   }
-  async trackTicket(id: number) {
+  async trackTicket(id: number, guard: () => void = () => {}) {
     const s = this.store.settings();
     const item = await this.azure(
       `workitems/${id}`,
@@ -661,6 +661,11 @@ export class Connectors {
       s,
       this.store.secret("azure.pat"),
     );
+    guard();
+    if (this.store.source(s) !== this.store.source())
+      throw new AppError(409, "Подключение Azure изменилось во время запроса");
+    if (item.id !== id)
+      throw new AppError(502, "Azure вернул неверный номер тикета");
     if (item.fields?.["System.TeamProject"] !== s.azureProject)
       throw new AppError(400, "Тикет относится к другому проекту Azure DevOps");
     this.store.db

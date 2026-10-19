@@ -1,5 +1,5 @@
 import { StatusBadge } from "./TicketControls.js";
-import { useEffect, useState, useId, type ReactNode } from "react";
+import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 // Render external content as text, never inject work item HTML into the page.
 function text(value: any) {
@@ -249,12 +249,24 @@ export function TicketTableRow({
   id,
   children,
   onRemove,
+  highlighted = false,
 }: {
+  highlighted?: boolean;
   onRemove?: () => void;
   id: number;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(highlighted);
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  useEffect(() => {
+    if (!highlighted) return;
+    setOpen(true);
+    const frame = requestAnimationFrame(() => {
+      rowRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+      rowRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [highlighted]);
   const [reference, setReference] = useState("");
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -277,7 +289,12 @@ export function TicketTableRow({
   }, [open, id, attempt]);
   return (
     <>
-      <tr>
+      <tr
+        ref={rowRef}
+        id={`ticket-${id}`}
+        tabIndex={-1}
+        className={highlighted ? "ticket-row-highlighted" : undefined}
+      >
         {children}
         <td>
           <button

@@ -1,4 +1,11 @@
 import {
+  BrowserRouter,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { pagePaths, pageForPath, type Page } from "./routing.js";
+import {
   useAssistantResize,
   readChatPreference,
   saveChatPreference,
@@ -54,16 +61,6 @@ import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
 type Context = { client: string; project: string };
-type Page =
-  | "overview"
-  | "inbox"
-  | "tickets"
-  | "approvals"
-  | "memory"
-  | "teams"
-  | "settings"
-  | "usage"
-  | "pullrequests";
 const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
@@ -298,8 +295,11 @@ function App() {
   );
 }
 function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
-  const [page, setPage] = useState<Page>("overview"),
-    [settings, setSettings] = useState<any>(null),
+  const location = useLocation();
+  const navigate = useNavigate();
+  const page = pageForPath(location.pathname);
+  const setPage = (next: Page) => navigate(pagePaths[next]);
+  const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
     [items, setItems] = useState<any[]>([]),
     [tickets, setTickets] = useState<any[]>([]),
@@ -323,6 +323,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     () => saveChatPreference("orbit.chat.open", String(assistantOpen)),
     [assistantOpen],
   );
+  useEffect(() => {
+    setQuery("");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location.pathname, location.search]);
   const initialized = useRef(false);
   const loadGeneration = useRef(0);
   async function reload() {
@@ -406,7 +410,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const heading =
     page === "settings"
       ? "Настройки"
-      : navigation.find((n) => n.id === page)?.label;
+      : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return (
     <div className={`workspace ${assistantOpen ? "with-assistant" : ""}`}>
       <aside className="sidebar">
@@ -426,13 +430,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
           {navigation.map((n) => (
-            <button
+            <Link
               key={n.id}
+              to={pagePaths[n.id]}
+              aria-current={page === n.id ? "page" : undefined}
               className={page === n.id ? "active" : ""}
-              onClick={() => {
-                setPage(n.id);
-                setQuery("");
-              }}
             >
               <n.icon size={19} />
               {n.label}
@@ -442,7 +444,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   {n.id === "inbox" ? items.length : pending.length}
                 </span>
               )}
-            </button>
+            </Link>
           ))}
         </nav>
         <div className="sidebar-bottom">
@@ -451,13 +453,14 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <strong>Последнее слово за вами</strong>
             <p>Любое сообщение в Teams ждёт вашего подтверждения.</p>
           </div>
-          <button
+          <Link
+            to={pagePaths.settings}
+            aria-current={page === "settings" ? "page" : undefined}
             className={page === "settings" ? "active" : ""}
-            onClick={() => setPage("settings")}
           >
             <Settings2 size={19} />
             Настройки
-          </button>
+          </Link>
           <button onClick={() => run("logout", onLogout)}>
             <LogOut size={18} />
             Выйти
@@ -502,6 +505,12 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         </header>
         <div className="work-area">
           <main>
+            {!page && (
+              <div className="empty">
+                <h1>Страница не найдена</h1>
+                <Link to="/">Перейти к обзору</Link>
+              </div>
+            )}
             <ContextPicker context={context} onChange={setContext} />
             {error && (
               <div className="error dismissible" role="alert">
@@ -855,7 +864,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "tickets" && (
               <Tickets
                 settings={settings}
-                key={`${settings?.azureUrl}|${settings?.azureProject}`}
+                key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
                 tickets={tickets}
                 query={query}
                 setQuery={setQuery}
@@ -1046,7 +1055,21 @@ function PageHeading({
   );
 }
 function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
-  const [id, setId] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const rawTarget = params.get("id");
+  const targetId =
+    rawTarget &&
+    /^[1-9][0-9]*$/.test(rawTarget) &&
+    Number.isSafeInteger(Number(rawTarget))
+      ? Number(rawTarget)
+      : null;
+  const targetSource = params.get("source");
+  const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
+  const sourceMismatch =
+    !!targetSource && !!settings && targetSource !== currentSource;
+  const [id, setId] = useState(targetId ? String(targetId) : "");
   const [sort, setSort] = useState("id-desc");
   const [typeFilter, setTypeFilter] = useState("");
   const [stateFilter, setStateFilter] = useState("");
@@ -1063,6 +1086,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], "ru"));
   const filteredTickets = tickets.filter((t: any) => {
+    if (rawTarget) return !sourceMismatch && t.id === targetId;
     const matchesQuery = [
       "id",
       "title",
@@ -1102,11 +1126,24 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         title="Ваши тикеты"
         subtitle="Актуальный статус из Azure DevOps. Данные обновляются в фоне."
       />
+      {rawTarget && (
+        <div className="ticket-target-notice" role="status">
+          <p>
+            {!targetId
+              ? "Некорректный номер тикета в ссылке."
+              : sourceMismatch
+                ? "Этот тикет относится к другому подключению Azure. Выберите соответствующее подключение в настройках."
+                : `Показан тикет #${targetId} из ссылки. Если его ещё нет в локальном списке, добавьте по номеру ниже.`}
+          </p>
+          <Link to="/tickets">Показать все тикеты</Link>
+        </div>
+      )}
       <div className="toolbar">
         <label className="search">
           <Search size={17} />
           <input
             placeholder="Номер, название, исполнитель…"
+            disabled={!!rawTarget}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -1145,7 +1182,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           value={id}
           onChange={(e) => setId(e.target.value)}
         />
-        <button className="primary" disabled={!!busy}>
+        <button className="primary" disabled={!!busy || sourceMismatch}>
           <Plus size={16} />
           Добавить по номеру
         </button>
@@ -1155,6 +1192,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           Тип задачи
           <select
             aria-label="Тип задачи"
+            disabled={!!rawTarget}
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -1170,6 +1208,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           Исполнитель
           <select
             aria-label="Исполнитель"
+            disabled={!!rawTarget}
             value={assigneeFilter}
             onChange={(e) => setAssigneeFilter(e.target.value)}
           >
@@ -1196,6 +1235,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           Статус
           <select
             aria-label="Статус"
+            disabled={!!rawTarget}
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
           >
@@ -1209,8 +1249,15 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         </label>
         <button
           className="secondary"
-          disabled={!typeFilter && !stateFilter && !assigneeFilter && !query}
+          disabled={
+            !rawTarget &&
+            !typeFilter &&
+            !stateFilter &&
+            !assigneeFilter &&
+            !query
+          }
           onClick={() => {
+            if (rawTarget) navigate("/tickets");
             setTypeFilter("");
             setStateFilter("");
             setAssigneeFilter("");
@@ -1260,6 +1307,7 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
                 <TicketTableRow
                   key={`${t.source}:${t.id}`}
                   id={t.id}
+                  highlighted={targetId === t.id && !sourceMismatch}
                   onRemove={() =>
                     run(
                       "remove",
@@ -2052,6 +2100,7 @@ function Assistant({
   const [history, setHistory] = useState<any[]>([]),
     [prompt, setPrompt] = useState(""),
     [working, setWorking] = useState(false),
+    [clearing, setClearing] = useState(false),
     [error, setError] = useState(""),
     [recording, setRecording] = useState(false),
     [transcribing, setTranscribing] = useState(false);
@@ -2059,15 +2108,19 @@ function Assistant({
     stream = useRef<MediaStream | null>(null),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null),
     bottom = useRef<HTMLDivElement>(null),
+    historyGeneration = useRef(0),
     contextKey = useRef(""),
     mounted = useRef(true);
   const key = JSON.stringify(context);
   contextKey.current = key;
   useEffect(() => {
     let active = true;
+    const generation = ++historyGeneration.current;
+    setHistory([]);
+    setError("");
     api(`/conversation?${new URLSearchParams(context)}`)
       .then((h) => {
-        if (active) setHistory(h);
+        if (active && generation === historyGeneration.current) setHistory(h);
       })
       .catch((e) => setError(e.message));
     return () => {
@@ -2086,9 +2139,32 @@ function Assistant({
     },
     [],
   );
+  async function clearHistory() {
+    if (working || clearing || recording || transcribing) return;
+    if (
+      !window.confirm(
+        "Очистить историю чата текущего заказчика и проекта? Сохранённая память и тикеты останутся.",
+      )
+    )
+      return;
+    const captured = key;
+    setClearing(true);
+    setError("");
+    try {
+      await api("/conversation", "DELETE", context);
+      if (contextKey.current === captured) {
+        historyGeneration.current++;
+        setHistory([]);
+      }
+    } catch (e: any) {
+      if (contextKey.current === captured) setError(e.message);
+    } finally {
+      setClearing(false);
+    }
+  }
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!prompt.trim() || working) return;
+    if (!prompt.trim() || working || clearing) return;
     const text = prompt;
     const captured = key;
     setWorking(true);
@@ -2192,7 +2268,18 @@ function Assistant({
             {connected ? "GitHub Copilot" : "Ожидает подключения"}
           </small>
         </div>
-        <Badge>AI</Badge>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Очистить историю чата"
+          title="Очистить историю текущего чата"
+          disabled={
+            working || clearing || recording || transcribing || !history.length
+          }
+          onClick={() => void clearHistory()}
+        >
+          <Trash2 size={17} />
+        </button>
         <button
           type="button"
           className="icon-button"
@@ -2376,4 +2463,8 @@ function Assistant({
     </aside>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+);

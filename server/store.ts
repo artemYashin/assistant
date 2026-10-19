@@ -127,7 +127,7 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN repository TEXT NOT NULL DEFAULT ''",
       );
-    for (const column of ["description", "ticket_error"]) {
+    for (const column of ["description", "ticket_error", "created_at"]) {
       if (
         !(
           this.db.prepare("PRAGMA table_info(pull_requests)").all() as any[]
@@ -261,6 +261,33 @@ export class Store {
       );
     this.audit("memory.saved", `${scope}: ${id}`);
     return { id, scope, body };
+  }
+  removeLocalTicket(id: number) {
+    const source = this.source();
+    this.db.transaction(() => {
+      this.db
+        .prepare(
+          "INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1) ON CONFLICT(source,id) DO UPDATE SET removed=1",
+        )
+        .run(source, id);
+      this.db
+        .prepare("DELETE FROM tickets WHERE source=? AND id=?")
+        .run(source, id);
+    })();
+    this.audit("ticket.removed_locally", String(id));
+    return {
+      success: true,
+      id,
+      tracked: false,
+      scope: "local",
+      azureChanged: false,
+    };
+  }
+  clearHistory(context: Context) {
+    const result = this.db
+      .prepare("DELETE FROM conversations WHERE client=? AND project=?")
+      .run(context.client, context.project);
+    return { deleted: result.changes };
   }
   history(context: Context) {
     return this.db

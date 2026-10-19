@@ -7,8 +7,9 @@ RUN groupadd --gid 10001 orbit-voice \
     && useradd --create-home --uid 10001 --gid orbit-voice orbit-voice \
     && mkdir -p /models \
     && chown orbit-voice:orbit-voice /models
-COPY app.py .
+COPY app.py test_app.py ./
 USER orbit-voice
-RUN python -c "import app; assert app.health()['ok']"
+RUN python -c "import app; assert app.health()['ok']" \
+    && python -m unittest test_app.AudioDecodeTests -v
 EXPOSE 8000
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
