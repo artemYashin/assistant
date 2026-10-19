@@ -83,7 +83,7 @@ const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
   { id: "tickets", label: "Тикеты", icon: Ticket },
-  { id: "pullrequests", label: "Pull requests", icon: FolderOpen },
+  { id: "pullrequests", label: "Pull requests", icon: GitPullRequest },
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
   { id: "teams", label: "Сообщения Teams", icon: MessageSquare },
