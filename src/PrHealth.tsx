@@ -24,16 +24,11 @@ export function PrHealth({
     "is-idle",
   ];
   const checks: any[] = Array.isArray(health?.checks) ? health.checks : [];
-  const builds = checks.filter((c) => c.build);
-  const failed = builds.some(
-    (c) => ["rejected", "broken"].includes(c.state) && !c.stale,
-  );
-  const pending = builds.some(
-    (c) => c.stale || ["queued", "running"].includes(c.state),
-  );
+  const builds = checks.filter((c) => c.build && c.state !== "notApplicable");
+  const failed = builds.some((c) => ["rejected", "broken"].includes(c.state));
+  const pending = builds.some((c) => ["queued", "running"].includes(c.state));
   const passed =
-    builds.length > 0 &&
-    builds.every((c) => c.state === "approved" && !c.stale);
+    builds.length > 0 && builds.every((c) => c.state === "approved");
   const ci = health?.error
     ? "CI: нет данных"
     : failed
@@ -93,7 +88,7 @@ export function PrHealth({
         <div className="pr-health-check" key={i}>
           <strong>{c.name}</strong>
           <span>
-            {c.stale ? "Результат устарел" : status[c.state] || "Неизвестно"}
+            {status[c.state] || "Неизвестно"}
             {c.required ? " · обязательная" : " · необязательная"}
           </span>
         </div>

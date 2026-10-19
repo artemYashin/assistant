@@ -131,7 +131,7 @@ export class PullRequests {
   ) {
     return this.store.db
       .prepare(
-        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND (?='' OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
+        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND ((?='' AND p.in_scope=1 AND m.enabled=1) OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
       )
       .all(
         context.client,

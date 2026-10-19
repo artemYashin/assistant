@@ -346,3 +346,17 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - All 111 Node tests and production build passed, including recovery of persisted permission errors, duplicate-operation result resolution, ambiguous merge protection and policy health rendering. Whitespace check passed.
 - Vite retains the existing main-bundle size warning. No live Azure merge or browser interaction performed for this batch.
+
+## Hide completed PRs from the main list
+
+- Default PR list now requires current active-scan membership and an enabled monitor. Confirmed local merges already clear membership; externally completed PRs disappear after the next successful active-only Azure scan. Historical reviews remain stored and available through explicit PR links. Failed scans still preserve previous membership.
+- Added regression coverage for disappearance after a successful scan and direct history access. TypeScript/whitespace checks passed; tests deferred until push.
+
+## Correct CI success classification
+
+- Fixed a false pending result caused by treating internal policy context.isExpired/buildIsNotCurrent flags as authoritative over evaluation.status. Azure documents approved as fulfilled and context as internal data. Rendering now uses evaluation status directly, including already persisted health records; only queued/running mean pending. notApplicable builds and deleted/disabled policies do not block success.
+- Updated regression coverage for approved with internal/cached stale flags, actual queued checks, unknown/rejected states and notApplicable. TypeScript/whitespace checks passed; tests deferred until push. User's actual Azure response was not available; existing sync interval still determines freshness.
+
+## Pre-push validation: active PR list and CI classification
+
+- All 113 Node tests and production build passed, including active-list/history separation and approved policy status with stale metadata. Diff whitespace check passed. Vite retains the existing main-bundle size warning; live Azure and browser interactions were not exercised for this batch.

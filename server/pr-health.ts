@@ -1,6 +1,10 @@
 export function policyChecks(values: any[]) {
   return values
-    .filter((p) => p.configuration?.isEnabled !== false)
+    .filter(
+      (p) =>
+        p.configuration?.isEnabled !== false &&
+        p.configuration?.isDeleted !== true,
+    )
     .map((p) => ({
       name: String(
         p.configuration?.settings?.displayName ||
@@ -10,7 +14,5 @@ export function policyChecks(values: any[]) {
       state: String(p.status || "unknown"),
       required: p.configuration?.isBlocking === true,
       build: p.configuration?.settings?.buildDefinitionId != null,
-      stale:
-        p.context?.isExpired === true || p.context?.buildIsNotCurrent === true,
     }));
 }

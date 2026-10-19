@@ -612,3 +612,22 @@ test("view diff uses live commits and does not invoke LLM or Azure mutations", a
   assert.equal(f.calls.length, 0);
   await assert.rejects(() => f.service.viewDiff(monitor.id, "other-repo", 1));
 });
+
+test("default PR list hides records removed from the active scan while retaining direct history", async (t) => {
+  const { service } = fixture(t);
+  mock(t, [pr(1), pr(2)]);
+  await service.sync();
+  const old: any = service.list(context).find((p: any) => p.number === 1);
+  // Azure's active-only scan no longer returns a completed PR.
+  mock(t, [pr(2)]);
+  await service.sync();
+  assert.deepEqual(
+    service.list(context).map((p: any) => p.number),
+    [2],
+  );
+  assert.equal(
+    service.list(context, { monitor: old.monitor, repo: old.repo, number: 1 })
+      .length,
+    1,
+  );
+});
