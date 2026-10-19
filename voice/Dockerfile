@@ -3,8 +3,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN useradd --create-home --uid 10001 voice && mkdir -p /models && chown voice:voice /models
+RUN groupadd --gid 10001 orbit-voice \
+    && useradd --create-home --uid 10001 --gid orbit-voice orbit-voice \
+    && mkdir -p /models \
+    && chown orbit-voice:orbit-voice /models
 COPY app.py .
-USER voice
+USER orbit-voice
 EXPOSE 8000
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
