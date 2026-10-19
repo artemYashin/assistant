@@ -1,3 +1,4 @@
+import { ExportTickets } from "./ExportTickets.js";
 import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
 import { TicketMetadata } from "./TicketMetadata.js";
@@ -1504,9 +1505,12 @@ function Tickets({
           Сбросить фильтры
         </button>
       </div>
-      <p className="muted" role="status">
-        Показано {sorted.length} из {tickets.length}
-      </p>
+      <div className="ticket-export-bar">
+        <p className="muted" role="status">
+          Показано {sorted.length} из {tickets.length}
+        </p>
+        <ExportTickets tickets={sorted} />
+      </div>
       <p className="muted">
         Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
         вернуть кнопкой «Добавить по номеру».

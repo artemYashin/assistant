@@ -1,3 +1,4 @@
+import { ExportTickets } from "./ExportTickets.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { NotebookPen } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -260,9 +261,12 @@ export function TicketTrash({
       {!loaded ? (
         <p role="status">Загрузка корзины…</p>
       ) : (
-        <p className="muted" role="status">
-          Показано {filtered.length} из {items.length}
-        </p>
+        <div className="ticket-export-bar">
+          <p className="muted" role="status">
+            Показано {filtered.length} из {items.length}
+          </p>
+          <ExportTickets tickets={filtered} trash />
+        </div>
       )}
       {loaded && !filtered.length && !error && (
         <div className="panel">

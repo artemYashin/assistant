@@ -15,6 +15,15 @@ type Loaded = {
     usedCharacters: number;
     ignoredFiles: number;
   };
+  diagnostics?: {
+    client: string;
+    project: string;
+    repository: string;
+    rules: string[];
+    unmatchedRules: string[];
+    excludedPaths: string[];
+    includedFiles: { path: string; characters: number }[];
+  };
   sourceBranch?: string;
   targetBranch?: string;
 };
@@ -119,12 +128,68 @@ export function PrDiffDialog({
               Diff: {data.limits.usedCharacters.toLocaleString("ru-RU")} /{" "}
               {data.limits.totalCharacters.toLocaleString("ru-RU")} символов ·
               на файл до {data.limits.perFileCharacters.toLocaleString("ru-RU")}{" "}
-              · исключено файлов: {data.limits.ignoredFiles}.
+              · остаток общего бюджета:{" "}
+              {(
+                data.limits.totalCharacters - data.limits.usedCharacters
+              ).toLocaleString("ru-RU")}{" "}
+              · исключено файлов: {data.limits.ignoredFiles} (расход 0).
             </p>
+          )}
+          {data.diagnostics && (
+            <details className="pr-diff-accounting">
+              <summary>
+                <FileCode2 size={16} />
+                Исключения и расход бюджета
+              </summary>
+              <p>
+                {data.diagnostics.client} / {data.diagnostics.project} ·{" "}
+                {data.diagnostics.repository}
+              </p>
+              <p className="muted">
+                Бюджет расходуют только включённые diff, вместе с заголовками и
+                строками контекста. Пропущенные файлы его не расходуют. Лимит
+                одного файла проверяется отдельно.
+              </p>
+              <h3>Применённые правила</h3>
+              {data.diagnostics.rules.length ? (
+                <ul>
+                  {data.diagnostics.rules.map((rule) => (
+                    <li key={rule}>
+                      <code>{rule}</code>
+                      {data.diagnostics!.unmatchedRules.includes(rule) &&
+                        " — нет совпадений в загруженном списке изменений"}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Для этого проекта исключения не заданы.</p>
+              )}
+              <h3>Исключённые файлы · {data.limits?.ignoredFiles}</h3>
+              <ul>
+                {data.diagnostics.excludedPaths.map((path, i) => (
+                  <li key={i}>
+                    <code>{path}</code> — 0 символов
+                  </li>
+                ))}
+              </ul>
+              {(data.limits?.ignoredFiles || 0) >
+                data.diagnostics.excludedPaths.length && (
+                <p>Показаны первые 100 исключённых путей.</p>
+              )}
+              <h3>Включено в бюджет</h3>
+              <ul>
+                {data.diagnostics.includedFiles.map((file, i) => (
+                  <li key={i}>
+                    <code>{file.path}</code> —{" "}
+                    {file.characters.toLocaleString("ru-RU")} символов
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
           {!!data.notes.length && (
             <div className="pr-diff-notes" role="note">
-              <strong>Показана не вся информация</strong>
+              <strong>Покрытие diff и причины пропусков</strong>
               <ul>
                 {data.notes.map((note, i) => (
                   <li key={i}>{note}</li>

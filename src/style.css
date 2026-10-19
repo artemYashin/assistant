@@ -4830,3 +4830,28 @@ summary > svg {
   padding: 2px;
   white-space: nowrap;
 }
+
+.pr-diff-accounting {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f7f9f5;
+}
+.pr-diff-accounting h3 {
+  margin-top: 12px;
+}
+.pr-diff-accounting ul {
+  max-height: 220px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.ticket-export-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0;
+}

@@ -1057,21 +1057,28 @@ export class PullRequests {
       }
     }
     let ignored = 0;
+    const excludedPaths: string[] = [];
+    const includedFiles: { path: string; characters: number }[] = [];
+    const matchedRules = new Set<string>();
     const candidates = allChanges.filter((change) => {
       if (!change.item?.path || change.item.isFolder) return false;
-      if (
-        ignoredReviewPath(change.item.path, settings.ignoredPaths) ||
-        (change.originalPath &&
-          ignoredReviewPath(change.originalPath, settings.ignoredPaths))
-      ) {
+      const matching = settings.ignoredPaths.filter(
+        (pattern) =>
+          ignoredReviewPath(change.item.path, [pattern]) ||
+          (change.originalPath &&
+            ignoredReviewPath(change.originalPath, [pattern])),
+      );
+      if (matching.length) {
+        matching.forEach((pattern) => matchedRules.add(pattern));
         ignored++;
+        if (excludedPaths.length < 100) excludedPaths.push(change.item.path);
         return false;
       }
       return true;
     });
     if (ignored)
       notes.push(
-        `Исключено настройками проекта: ${ignored} файлов. Они не проверялись.`,
+        `Исключено настройками проекта: ${ignored} файлов. Содержимое не загружалось; расход бюджета — 0 символов.`,
       );
     if (!complete)
       notes.push(
@@ -1145,6 +1152,7 @@ export class PullRequests {
           continue;
         }
         chars += patch.length;
+        includedFiles.push({ path, characters: patch.length });
         patches.push(patch);
       } catch {
         notes.push(
@@ -1158,6 +1166,17 @@ export class PullRequests {
       base: diff.commonCommit,
       head,
       target,
+      diagnostics: {
+        client: m.client,
+        project: m.project,
+        repository: m.repository,
+        rules: settings.ignoredPaths,
+        unmatchedRules: settings.ignoredPaths.filter(
+          (rule) => !matchedRules.has(rule),
+        ),
+        excludedPaths,
+        includedFiles,
+      },
       limits: {
         totalCharacters: budget,
         perFileCharacters: perFileBudget,
@@ -1395,6 +1414,7 @@ export class PullRequests {
               note: "Изображения и файлы вложений не анализировались",
             },
             ...changes,
+            diagnostics: undefined,
           },
         )}`,
         { client: m.client, project: m.project },

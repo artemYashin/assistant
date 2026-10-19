@@ -933,6 +933,19 @@ test("project exclusions precede file reads and file cap in review and View Diff
   assert.deepEqual(reads, ["/src/app.ts"]);
   assert.equal(viewed.limits.totalCharacters, 160000);
   assert.equal(viewed.limits.ignoredFiles, 101);
+  assert.equal(
+    viewed.limits.usedCharacters,
+    viewed.patches.reduce((n: number, patch: string) => n + patch.length, 0),
+  );
+  assert.equal(viewed.limits.usedCharacters, review.limits.usedCharacters);
+  assert.deepEqual(
+    viewed.diagnostics.includedFiles.map((f) => f.path),
+    ["/src/app.ts"],
+  );
+  assert.ok(
+    viewed.diagnostics.excludedPaths.includes("/src/api/generatedApi.ts"),
+  );
+  assert.deepEqual(viewed.diagnostics.unmatchedRules, []);
 });
 test("a large patch cannot consume the review budget reserved for other files", async (t) => {
   const { service } = fixture(t);
