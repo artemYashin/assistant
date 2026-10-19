@@ -264,6 +264,7 @@ export function TicketLookup() {
           e.preventDefault();
           setBusy(true);
           setError("");
+          setRef("");
           try {
             const result = await api(
               `/tickets/${encodeURIComponent(id)}/details`,
@@ -280,6 +281,7 @@ export function TicketLookup() {
           Открыть полную карточку по номеру
           <input
             type="number"
+            autoFocus
             min={1}
             required
             value={id}

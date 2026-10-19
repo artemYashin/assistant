@@ -56,7 +56,8 @@ import { api, setCsrf } from "./api.js";
 import "./style.css";
 import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
-import { TicketCard, TicketLookup, TicketTableRow } from "./TicketCard.js";
+import { TicketLookupDialog } from "./TicketLookupDialog.js";
+import { TicketCard, TicketTableRow } from "./TicketCard.js";
 import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
@@ -474,6 +475,9 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <b>{heading}</b>
           </div>
           <div className="topbar-actions">
+            <TicketLookupDialog
+              key={`${settings?.azureUrl}:${settings?.azureProject}`}
+            />
             <span className="local-label">
               <span className="dot" /> Локально
             </span>
@@ -860,7 +864,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 )}
               </>
             )}
-            {page === "tickets" && <TicketLookup />}
             {page === "tickets" && (
               <Tickets
                 settings={settings}

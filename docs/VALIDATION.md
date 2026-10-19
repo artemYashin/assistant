@@ -188,3 +188,14 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Tests/build deferred until push as requested.
 - Reverse PR links navigate internally using monitor/repository/number URL parameters. The PR page loads the exact target independently of list limits and context filters, highlights it and scrolls/focuses it once; polling does not repeatedly move focus. Missing targets have an explicit message and a link back to the current project's full list. Global chat/project selection is unchanged. Tests/build remain deferred until push.
 - Pre-push validation: all 86 tests and production build passed. Added assertions for reverse links, source isolation, exact ticket IDs, inactive monitors/out-of-scope exclusion, draft inclusion, exact PR lookup beyond the 300-row list limit, and encoded internal links. Draft cards have a gray background and dashed border; focused drafts retain focus highlighting. Live browser focus behavior and Azure sync were not exercised in this validation.
+
+## Global ticket lookup dialog
+
+- Moved full ticket lookup from the Tickets page to a header button available across sections. A native modal contains the number field and shared full card, supports Escape/close and restores focus; its close button remains visible while scrolling.
+- Following internal PR links closes the dialog to reveal the target. Changing Azure connection remounts lookup to avoid showing a previous source. A new lookup clears the previous result; closing discards the dialog's local lookup state.
+- Tests/build deferred until push per user request.
+
+## Accordion headers
+
+- All native summary headers share a custom rotating chevron, subtle hover and keyboard focus styles. Header text selection is disabled (including WebKit); content selection is unchanged. Reduced-motion preferences disable animation. Tests/build deferred until push.
+- Pre-push validation for global ticket lookup and accordion styling: all 86 Node tests and production build passed. Browser interaction was not exercised in this validation.
