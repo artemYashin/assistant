@@ -302,6 +302,13 @@ export function TicketTrash({
           <table>
             <thead>
               <tr>
+                <th className="ticket-selection-column">
+                  <SelectAllTickets
+                    count={selection.selected.length}
+                    total={filtered.length}
+                    onChange={selection.toggleAll}
+                  />
+                </th>
                 {columns.map(([key, label]) => (
                   <th
                     key={key}
@@ -314,13 +321,6 @@ export function TicketTrash({
                     }
                   >
                     <div className="ticket-heading-sorts">
-                      {key === "id" && (
-                        <SelectAllTickets
-                          count={selection.selected.length}
-                          total={filtered.length}
-                          onChange={selection.toggleAll}
-                        />
-                      )}
                       <button
                         type="button"
                         className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
@@ -352,7 +352,7 @@ export function TicketTrash({
             <tbody>
               {filtered.map((t) => (
                 <tr key={`${t.source}:${t.id}`}>
-                  <td>
+                  <td className="ticket-selection-column">
                     <input
                       className="ticket-checkbox"
                       type="checkbox"
@@ -360,6 +360,8 @@ export function TicketTrash({
                       checked={selection.checked(t)}
                       onChange={() => selection.toggle(t)}
                     />
+                  </td>
+                  <td>
                     {t.url?.startsWith("https://") ? (
                       <a
                         className="ticket-link"

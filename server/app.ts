@@ -401,9 +401,27 @@ export function createApp(
         .object({
           prompt: z.string().trim().min(1).max(16000),
           context: contextSchema,
+          selectedTickets: z
+            .array(
+              z.object({
+                id: z.number().int().positive().safe(),
+                source: z.string().min(1).max(2000),
+              }),
+            )
+            .max(1000)
+            .default([]),
         })
         .parse(req.body);
-      res.json(await agent.chat(v.prompt, v.context));
+      if (v.selectedTickets.some((ticket) => ticket.source !== store.source()))
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось. Выберите тикеты заново.",
+        );
+      const ids = [...new Set(v.selectedTickets.map((ticket) => ticket.id))];
+      const prompt = ids.length
+        ? `${v.prompt}\n\nВыбранные пользователем тикеты в таблице: ${ids.map((id) => `#${id}`).join(", ")}. Это номера, а не содержимое тикетов. При необходимости прочитай данные доступными инструментами; сам выбор не является просьбой изменить тикеты.`
+        : v.prompt;
+      res.json(await agent.chat(prompt, v.context));
     },
   );
   app.get("/api/chats", (_req, res) =>

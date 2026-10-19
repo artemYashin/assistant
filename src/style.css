@@ -378,7 +378,6 @@ main {
   padding: 20px 28px 0;
   flex: 1;
   min-width: 0;
-  max-width: 1500px;
   margin: 0;
 }
 .context-bar {
@@ -4439,10 +4438,10 @@ summary > svg {
   }
 }
 
-.ticket-trash-table th:first-child {
+.ticket-trash-table th:nth-child(2) {
   width: 7%;
 }
-.ticket-trash-table th:nth-child(2) {
+.ticket-trash-table th:nth-child(3) {
   width: 22%;
 }
 
@@ -4729,32 +4728,32 @@ summary > svg {
   flex: 0 0 auto;
   max-width: 100%;
 }
-.ticket-table-fit:not(.ticket-trash-table) th:nth-child(1) {
-  width: 20%;
-}
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(2) {
-  width: 9%;
+  width: calc((100% - 34px) * 0.2);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(3) {
-  width: 12%;
+  width: calc((100% - 34px) * 0.09);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(4) {
-  width: 9%;
+  width: calc((100% - 34px) * 0.12);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(5) {
-  width: 10%;
+  width: calc((100% - 34px) * 0.09);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(6) {
-  width: 9%;
+  width: calc((100% - 34px) * 0.1);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(7) {
-  width: 15%;
+  width: calc((100% - 34px) * 0.09);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(8) {
-  width: 9%;
+  width: calc((100% - 34px) * 0.15);
 }
 .ticket-table-fit:not(.ticket-trash-table) th:nth-child(9) {
-  width: 7%;
+  width: calc((100% - 34px) * 0.09);
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(10) {
+  width: calc((100% - 34px) * 0.07);
 }
 
 /* Priority stays compact, including inside expanded table cards. */
@@ -4947,4 +4946,80 @@ summary > svg {
   .export-column-options {
     grid-template-columns: 1fr;
   }
+}
+
+.ticket-table-fit th.ticket-selection-column,
+.ticket-table-fit td.ticket-selection-column {
+  width: 34px;
+  padding: 10px 5px;
+  text-align: center;
+  vertical-align: top;
+}
+.ticket-table-fit .ticket-selection-column input.ticket-checkbox {
+  margin: 2px 0 0;
+}
+.chat-ticket-context {
+  padding: 8px 0;
+  color: #52665c;
+}
+.chat-ticket-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 90px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+
+.card-list:has(.pr-review) {
+  container-type: inline-size;
+}
+.pr-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px 20px;
+}
+.pr-card-heading {
+  min-width: 0;
+}
+.pr-card-heading .pr-title {
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.pr-card-header > .pr-card-utilities {
+  max-width: 300px;
+}
+@container (max-width: 650px) {
+  .pr-card-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-card-header > .pr-card-utilities {
+    max-width: 100%;
+    margin-left: 0;
+    align-items: flex-start;
+  }
+  .pr-card-header .pr-health-trigger {
+    justify-content: flex-start;
+  }
+}
+
+.pr-page-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.pr-page-heading > div:first-child {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.pr-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+.pr-page-actions > button {
+  white-space: nowrap;
 }

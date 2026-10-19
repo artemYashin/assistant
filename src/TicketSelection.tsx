@@ -1,8 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 export type SelectableTicket = { id: number; source: string; title?: string };
 export const ticketKey = (ticket: SelectableTicket) =>
   JSON.stringify([ticket.source, ticket.id]);
+
+let chatTickets: SelectableTicket[] = [];
+const listeners = new Set<() => void>();
+function publishTickets(tickets: SelectableTicket[]) {
+  chatTickets = tickets;
+  listeners.forEach((listener) => listener());
+}
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+export function useSelectedChatTickets() {
+  return useSyncExternalStore(subscribe, () => chatTickets);
+}
 
 export function useTicketSelection<T extends SelectableTicket>(
   tickets: T[],
@@ -16,6 +32,13 @@ export function useTicketSelection<T extends SelectableTicket>(
   }, [visibleKey]);
   useEffect(() => setKeys(new Set()), [context]);
   const selected = tickets.filter((ticket) => keys.has(ticketKey(ticket)));
+  const selectionJson = JSON.stringify(
+    selected.map(({ id, source, title }) => ({ id, source, title })),
+  );
+  useEffect(() => {
+    publishTickets(JSON.parse(selectionJson));
+  }, [selectionJson]);
+  useEffect(() => () => publishTickets([]), []);
   return {
     selected,
     checked: (ticket: T) => keys.has(ticketKey(ticket)),

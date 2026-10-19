@@ -404,16 +404,18 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 </span>
               </div>
             </div>
-            <button
-              className="secondary"
-              disabled={busy}
-              onClick={() => void run(() => api("/sync", "POST", {}))}
-            >
-              Синхронизировать сейчас
-            </button>
-            <button className="primary" onClick={() => setCreating(true)}>
-              ＋ Создать PR
-            </button>
+            <div className="pr-page-actions">
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => void run(() => api("/sync", "POST", {}))}
+              >
+                Синхронизировать сейчас
+              </button>
+              <button className="primary" onClick={() => setCreating(true)}>
+                ＋ Создать PR
+              </button>
+            </div>
           </div>
           {error && (
             <p className="error" role="alert">
@@ -518,25 +520,53 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
             tabIndex={target ? -1 : undefined}
             key={`${p.monitor}:${p.repo}:${p.number}`}
           >
-            <div className="pr-card-toolbar">
-              <div className="pr-card-labels">
-                <span className="pr-kind-badge">PR</span>
-                {readOnly && (
-                  <span className="pr-completed-label">
-                    <LockKeyhole size={14} />
-                    Completed PR
+            <div className="pr-card-header">
+              <div className="pr-card-heading">
+                <div className="pr-card-labels">
+                  <span className="pr-kind-badge">PR</span>
+                  {readOnly && (
+                    <span className="pr-completed-label">
+                      <LockKeyhole size={14} />
+                      Completed PR
+                    </span>
+                  )}
+                  <span
+                    className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
+                  >
+                    {statuses[p.review_status] || "Ревью не запускалось"}
                   </span>
-                )}
-                <span
-                  className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
-                >
-                  {statuses[p.review_status] || "Ревью не запускалось"}
-                </span>
-                {(p.summary || p.coverage || p.last_saved_review) && (
-                  <ReviewResult pr={p} />
-                )}
-                {p.review_count > 1 && <ReviewHistory pr={p} />}
-                {!!p.draft && <span className="badge">Черновик</span>}
+                  {(p.summary || p.coverage || p.last_saved_review) && (
+                    <ReviewResult pr={p} />
+                  )}
+                  {p.review_count > 1 && <ReviewHistory pr={p} />}
+                  {!!p.draft && <span className="badge">Черновик</span>}
+                </div>
+                <h2 className="pr-title">
+                  <a href={p.url} target="_blank" rel="noreferrer">
+                    #{p.number} · {p.title}
+                  </a>
+                </h2>
+                <p className="muted pr-created-at">
+                  Создан:{" "}
+                  {p.created_at ? (
+                    <time dateTime={p.created_at}>
+                      {new Date(p.created_at).toLocaleString("ru-RU")}
+                    </time>
+                  ) : (
+                    "дата пока не загружена"
+                  )}
+                </p>
+                <div className="pr-author-meta">
+                  <div className="pr-author">
+                    <span className="pr-avatar" aria-hidden="true">
+                      {(p.author || "?").slice(0, 1).toUpperCase()}
+                    </span>
+                    <div>
+                      <small>Автор</small>
+                      <strong>{p.author || "Не указан"}</strong>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="pr-card-utilities">
                 {!readOnly && (
@@ -599,32 +629,6 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                       </div>
                     </dl>
                   </PrInfoPopup>
-                </div>
-              </div>
-            </div>
-            <h2 className="pr-title">
-              <a href={p.url} target="_blank" rel="noreferrer">
-                #{p.number} · {p.title}
-              </a>
-            </h2>
-            <p className="muted pr-created-at">
-              Создан:{" "}
-              {p.created_at ? (
-                <time dateTime={p.created_at}>
-                  {new Date(p.created_at).toLocaleString("ru-RU")}
-                </time>
-              ) : (
-                "дата пока не загружена"
-              )}
-            </p>
-            <div className="pr-author-meta">
-              <div className="pr-author">
-                <span className="pr-avatar" aria-hidden="true">
-                  {(p.author || "?").slice(0, 1).toUpperCase()}
-                </span>
-                <div>
-                  <small>Автор</small>
-                  <strong>{p.author || "Не указан"}</strong>
                 </div>
               </div>
             </div>

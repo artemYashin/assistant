@@ -169,3 +169,43 @@ test("local mutation intent rejects negative requests and missing ID/action", ()
     true,
   );
 });
+
+test("chat receives selected ticket IDs and rejects stale Azure selection", async (t) => {
+  const store = fixture(t);
+  const { app, agent } = createApp(store);
+  const headers = {
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
+    "X-Orbit-Request": "1",
+  };
+  const setup = await request(app)
+    .post("/api/auth/setup")
+    .set(headers)
+    .send({ password: "long-enough-password" })
+    .expect(200);
+  const auth = {
+    ...headers,
+    Cookie: setup.headers["set-cookie"][0].split(";")[0],
+    "X-CSRF-Token": setup.body.csrf,
+  };
+  const prompts: string[] = [];
+  t.mock.method(agent, "chat", async (prompt: string) => {
+    prompts.push(prompt);
+    return { body: "OK", cards: [] };
+  });
+  const post = (selectedTickets?: unknown) =>
+    request(app)
+      .post("/api/conversation")
+      .set(auth)
+      .send({ prompt: "Расскажи о выбранных", context, selectedTickets });
+  await post([
+    { id: 42, source: store.source() },
+    { id: 42, source: store.source() },
+  ]).expect(200);
+  assert.equal((prompts[0].match(/#42/g) || []).length, 1);
+  assert.match(prompts[0], /сам выбор не является просьбой изменить/);
+  await post([{ id: 42, source: "other-organization" }]).expect(409);
+  assert.equal(prompts.length, 1);
+  await post().expect(200);
+  assert.equal(prompts[1], "Расскажи о выбранных");
+});

@@ -1,3 +1,4 @@
+import { useSelectedChatTickets } from "./TicketSelection.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
@@ -1544,13 +1545,15 @@ function Tickets({
           <table>
             <thead>
               <tr>
+                <th className="ticket-selection-column">
+                  <SelectAllTickets
+                    count={selection.selected.length}
+                    total={sorted.length}
+                    onChange={selection.toggleAll}
+                  />
+                </th>
                 <th aria-sort={columnSort(["id", "title"])}>
                   <div className="ticket-heading-sorts">
-                    <SelectAllTickets
-                      count={selection.selected.length}
-                      total={sorted.length}
-                      onChange={selection.toggleAll}
-                    />
                     {sortButton("id", "ID")}
                     <span aria-hidden="true">/</span>
                     {sortButton("title", "Тикет")}
@@ -1579,7 +1582,7 @@ function Tickets({
                 <TicketTableRow
                   key={`${t.source}:${t.id}`}
                   id={t.id}
-                  columns={9}
+                  columns={10}
                   actions={
                     <TicketMetadata
                       ticket={t}
@@ -1597,7 +1600,7 @@ function Tickets({
                     )
                   }
                 >
-                  <td>
+                  <td className="ticket-selection-column">
                     <input
                       className="ticket-checkbox"
                       type="checkbox"
@@ -1605,6 +1608,8 @@ function Tickets({
                       checked={selection.checked(t)}
                       onChange={() => selection.toggle(t)}
                     />
+                  </td>
+                  <td>
                     <a
                       className="ticket-link"
                       href={t.url}
@@ -2416,6 +2421,7 @@ function Assistant({
   pending,
 }: any) {
   const resize = useAssistantResize();
+  const selectedTickets = useSelectedChatTickets();
   const [history, setHistory] = useState<any[]>([]),
     [prompt, setPrompt] = useState(""),
     [working, setWorking] = useState(false),
@@ -2491,7 +2497,14 @@ function Assistant({
     setPrompt("");
     setHistory((h) => [...h, { role: "user", body: text, id: Date.now() }]);
     try {
-      const r = await api("/conversation", "POST", { prompt: text, context });
+      const r = await api("/conversation", "POST", {
+        prompt: text,
+        context,
+        selectedTickets: selectedTickets.map(({ id, source }) => ({
+          id,
+          source,
+        })),
+      });
       if (contextKey.current === captured)
         setHistory((h) => [
           ...h,
@@ -2715,6 +2728,25 @@ function Assistant({
             <button className="text-button" onClick={() => setError("")}>
               Закрыть
             </button>
+          </div>
+        )}
+        {!!selectedTickets.length && (
+          <div className="chat-ticket-context">
+            <small>
+              Номера тикетов в контексте следующего сообщения ·{" "}
+              {selectedTickets.length}
+            </small>
+            <div className="chat-ticket-badges">
+              {selectedTickets.map((ticket) => (
+                <span
+                  className="badge"
+                  key={`${ticket.source}:${ticket.id}`}
+                  title={ticket.title}
+                >
+                  #{ticket.id}
+                </span>
+              ))}
+            </div>
           </div>
         )}
         <form className="composer" onSubmit={send}>
