@@ -1,3 +1,4 @@
+import { MultiSelect } from "./MultiSelect.js";
 import {
   BrowserRouter,
   Link,
@@ -16,6 +17,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
+  ArrowDown,
+  ArrowUpDown,
   ArrowUp,
   Activity,
   AudioLines,
@@ -1074,9 +1077,9 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
     !!targetSource && !!settings && targetSource !== currentSource;
   const [id, setId] = useState(targetId ? String(targetId) : "");
   const [sort, setSort] = useState("id-desc");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
-  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [stateFilter, setStateFilter] = useState<string[]>([]);
+  const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
   const values = (key: string) =>
     [...new Set<string>(tickets.map((t: any) => t[key] || ""))].sort((a, b) =>
       a.localeCompare(b, "ru"),
@@ -1102,17 +1105,49 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         .toLocaleLowerCase()
         .includes(query.trim().toLocaleLowerCase()),
     );
-    const person = assigneeFilter ? JSON.parse(assigneeFilter) : null;
+    const people = assigneeFilter.map((value) => JSON.parse(value));
     return (
       matchesQuery &&
-      (!typeFilter || (t.type || "") === JSON.parse(typeFilter)) &&
-      (!stateFilter || (t.state || "") === JSON.parse(stateFilter)) &&
-      (!person ||
-        (person[0] === "azure"
-          ? (t.assigned || "") === person[1]
-          : t.developer_id === person[1]))
+      (!typeFilter.length || typeFilter.includes(t.type || "")) &&
+      (!stateFilter.length || stateFilter.includes(t.state || "")) &&
+      (!people.length ||
+        people.some((person) =>
+          person[0] === "azure"
+            ? (t.assigned || "") === person[1]
+            : (t.developer_id || "") === person[1],
+        ))
     );
   });
+  const [sortKey, sortDirection] = sort.split("-");
+  const sortButton = (key: string, label: string) => (
+    <button
+      type="button"
+      className={`ticket-column-sort${sortKey === key ? " is-active" : ""}`}
+      aria-label={`Сортировать: ${label}, ${sortKey === key && sortDirection === "asc" ? "по убыванию" : "по возрастанию"}`}
+      onClick={() =>
+        setSort(
+          `${key}-${sortKey === key && sortDirection === "asc" ? "desc" : "asc"}`,
+        )
+      }
+    >
+      {label}
+      {sortKey === key ? (
+        sortDirection === "asc" ? (
+          <ArrowUp size={13} />
+        ) : (
+          <ArrowDown size={13} />
+        )
+      ) : (
+        <ArrowUpDown size={13} />
+      )}
+    </button>
+  );
+  const columnSort = (keys: string[]): "ascending" | "descending" | "none" =>
+    keys.includes(sortKey)
+      ? sortDirection === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
   const sorted = [...filteredTickets].sort((a, b) => {
     const [key, direction] = sort.split("-");
     const cmp =
@@ -1191,79 +1226,66 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
         </button>
       </form>
       <div className="ticket-filters">
-        <label>
-          Тип задачи
-          <select
-            aria-label="Тип задачи"
-            disabled={!!rawTarget}
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="">Все типы</option>
-            {values("type").map((type) => (
-              <option key={type} value={JSON.stringify(type)}>
-                {type || "Тип не указан"}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Исполнитель
-          <select
-            aria-label="Исполнитель"
-            disabled={!!rawTarget}
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-          >
-            <option value="">Все исполнители</option>
-            <optgroup label="Назначен в Azure">
-              {values("assigned").map((name) => (
-                <option key={name} value={JSON.stringify(["azure", name])}>
-                  {name || "Не назначен в Azure"}
-                </option>
-              ))}
-            </optgroup>
-            {!!localDevelopers.length && (
-              <optgroup label="Локальное поручение">
-                {localDevelopers.map(([id, name]) => (
-                  <option key={id} value={JSON.stringify(["local", id])}>
-                    {name} (локально)
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
-        </label>
-        <label>
-          Статус
-          <select
-            aria-label="Статус"
-            disabled={!!rawTarget}
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-          >
-            <option value="">Все статусы</option>
-            {values("state").map((state) => (
-              <option key={state} value={JSON.stringify(state)}>
-                {state || "Статус не указан"}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MultiSelect
+          label="Тип задачи"
+          placeholder="Все типы"
+          disabled={!!rawTarget}
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={values("type").map((value) => ({
+            value,
+            label: value || "Тип не указан",
+          }))}
+        />
+        <MultiSelect
+          label="Исполнитель"
+          placeholder="Все исполнители"
+          disabled={!!rawTarget}
+          value={assigneeFilter}
+          onChange={setAssigneeFilter}
+          options={[
+            ...values("assigned").map((name) => ({
+              value: JSON.stringify(["azure", name]),
+              label: name || "Не назначен в Azure",
+              group: "Назначен в Azure",
+            })),
+            {
+              value: JSON.stringify(["local", ""]),
+              label: "Нет локального поручения",
+              group: "Локальное поручение",
+            },
+            ...localDevelopers.map(([id, name]) => ({
+              value: JSON.stringify(["local", id]),
+              label: name,
+              group: "Локальное поручение",
+            })),
+          ]}
+        />
+        <MultiSelect
+          label="Статус"
+          placeholder="Все статусы"
+          disabled={!!rawTarget}
+          value={stateFilter}
+          onChange={setStateFilter}
+          options={values("state").map((value) => ({
+            value,
+            label: value || "Статус не указан",
+          }))}
+        />
         <button
           className="secondary"
           disabled={
             !rawTarget &&
-            !typeFilter &&
-            !stateFilter &&
-            !assigneeFilter &&
+            !typeFilter.length &&
+            !stateFilter.length &&
+            !assigneeFilter.length &&
             !query
           }
           onClick={() => {
             if (rawTarget) navigate("/tickets");
-            setTypeFilter("");
-            setStateFilter("");
-            setAssigneeFilter("");
+            setTypeFilter([]);
+            setStateFilter([]);
+            setAssigneeFilter([]);
             setQuery("");
           }}
         >
@@ -1273,21 +1295,6 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
       <p className="muted" role="status">
         Показано {sorted.length} из {tickets.length}
       </p>
-      <label className="ticket-sort">
-        Сортировка{" "}
-        <select
-          aria-label="Сортировка"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          <option value="id-desc">ID: сначала новые</option>
-          <option value="id-asc">ID: по возрастанию</option>
-          <option value="title-asc">Название: А–Я</option>
-          <option value="title-desc">Название: Я–А</option>
-          <option value="state-asc">Статус: А–Я</option>
-          <option value="state-desc">Статус: Я–А</option>
-        </select>
-      </label>
       <p className="muted">
         Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
         вернуть кнопкой «Добавить по номеру».
@@ -1297,12 +1304,26 @@ function Tickets({ tickets, query, setQuery, run, busy, settings }: any) {
           <table>
             <thead>
               <tr>
-                <th>Тикет</th>
-                <th>Тип задачи</th>
-                <th>Статус</th>
-                <th>Исполнитель в Azure</th>
-                <th>Локальное поручение</th>
-                <th>Синхронизация</th>
+                <th aria-sort={columnSort(["id", "title"])}>
+                  <div className="ticket-heading-sorts">
+                    {sortButton("id", "ID")}
+                    <span aria-hidden="true">/</span>
+                    {sortButton("title", "Тикет")}
+                  </div>
+                </th>
+                {(
+                  [
+                    ["type", "Тип задачи"],
+                    ["state", "Статус"],
+                    ["assigned", "Исполнитель в Azure"],
+                    ["developer_name", "Локальное поручение"],
+                    ["synced_at", "Синхронизация"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <th key={key} aria-sort={columnSort([key])}>
+                    {sortButton(key, label)}
+                  </th>
+                ))}
                 <th>Просмотр</th>
               </tr>
             </thead>

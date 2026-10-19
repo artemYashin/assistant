@@ -199,3 +199,14 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - All native summary headers share a custom rotating chevron, subtle hover and keyboard focus styles. Header text selection is disabled (including WebKit); content selection is unchanged. Reduced-motion preferences disable animation. Tests/build deferred until push.
 - Pre-push validation for global ticket lookup and accordion styling: all 86 Node tests and production build passed. Browser interaction was not exercised in this validation.
+
+## Ticket header sorting
+
+- Replaced the separate sort dropdown with keyboard-accessible table header buttons and direction indicators/aria-sort. The ticket column offers ID and title separately; type, status, Azure assignee, local assignee and sync date are also sortable. Default remains newest IDs first. Tests/build deferred until push.
+
+## Ticket multi-select filters
+
+- Replaced native single selects for type, status and assignee with custom searchable checkbox menus, selection counts, per-filter reset and Done controls. Escape/outside click/Tab departure close the menu. Azure and local assignees remain separate groups; unassigned local tickets can be selected explicitly.
+- Selected values are ORed within one filter, while filters and text search combine with AND. Empty selection means all values. Global reset clears all arrays; deep-linked tickets continue to bypass filters.
+- Tests/build deferred until push as requested.
+- Pre-push validation for header sorting and custom multi-selects: all 86 Node tests and the production build passed. Browser interactions were not exercised in this validation.
