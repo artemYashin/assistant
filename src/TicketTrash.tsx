@@ -297,7 +297,7 @@ export function TicketTrash({
                         })
                       }
                     >
-                      {label}
+                      <span>{label}</span>
                       {sort.key === key ? (
                         sort.descending ? (
                           <ArrowDown size={13} />

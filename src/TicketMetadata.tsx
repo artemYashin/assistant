@@ -24,7 +24,10 @@ export function TicketMetadata({
         <span className="badge">P{ticket.priority ?? 1}</span>
       )}
       {field === "tags" && (
-        <span className="ticket-tag-list">
+        <span
+          className="ticket-tag-list"
+          title={(ticket.tags || []).join(", ")}
+        >
           {ticket.tags?.length ? (
             ticket.tags.map((tag: string) => (
               <span className="badge" key={tag}>

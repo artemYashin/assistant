@@ -1307,7 +1307,7 @@ function Tickets({
         )
       }
     >
-      {label}
+      <span>{label}</span>
       {sortKey === key ? (
         sortDirection === "asc" ? (
           <ArrowUp size={13} />

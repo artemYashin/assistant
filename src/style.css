@@ -4414,7 +4414,7 @@ summary > svg {
 }
 .ticket-table-fit .ticket-heading-sorts,
 .ticket-table-fit .ticket-column-sort {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 3px;
   max-width: 100%;
 }
@@ -4436,12 +4436,6 @@ summary > svg {
   }
   .ticket-table-fit .ticket-column-sort {
     font-size: 9px;
-  }
-  .ticket-table-fit .ticket-status-control,
-  .ticket-table-fit .ticket-metadata-control,
-  .ticket-table-fit .local-developer {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 
@@ -4686,4 +4680,79 @@ summary > svg {
 }
 .ticket-overview dd {
   min-width: 0;
+}
+
+/* Labels may wrap, but sort icons stay to their right. */
+.ticket-table-fit .ticket-column-sort {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+}
+.ticket-table-fit .ticket-column-sort > span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ticket-table-fit .ticket-column-sort > svg {
+  flex: 0 0 13px;
+}
+.ticket-table-fit .ticket-heading-sorts > button {
+  min-width: 0;
+}
+.ticket-table-fit .ticket-metadata-control,
+.ticket-table-fit .local-developer {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px;
+}
+.ticket-table-fit .local-developer-name {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.ticket-table-fit .local-developer > button,
+.ticket-table-fit .ticket-metadata-control > button {
+  flex: 0 0 auto;
+  padding: 4px 2px;
+}
+.ticket-table-fit .ticket-metadata-control > .badge {
+  flex: 0 1 auto;
+}
+.ticket-table-fit .ticket-metadata-control > .ticket-tag-list {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.ticket-table-fit .ticket-metadata-control > .ticket-tag-list > .badge {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(1) {
+  width: 20%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(2) {
+  width: 9%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(3) {
+  width: 12%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(4) {
+  width: 9%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(5) {
+  width: 10%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(6) {
+  width: 9%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(7) {
+  width: 15%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(8) {
+  width: 9%;
+}
+.ticket-table-fit:not(.ticket-trash-table) th:nth-child(9) {
+  width: 7%;
 }
