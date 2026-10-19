@@ -1,3 +1,10 @@
+import {
+  ticketMetadata,
+  saveTicketMetadata,
+  priorityCount,
+  metadataContext,
+  metadataPatch,
+} from "./ticket-metadata.js";
 import { PrMerge } from "./pr-merge.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { MemoryProposals } from "./memory-proposals.js";
@@ -518,6 +525,40 @@ export function createApp(
       ),
     );
   });
+  app.get("/api/ticket-priorities", (req, res) => {
+    const context = metadataContext.parse(req.query);
+    res.json({ count: priorityCount(store, context) });
+  });
+  app.put("/api/ticket-priorities", (req, res) => {
+    const { context, count } = z
+      .object({
+        context: metadataContext,
+        count: z.number().int().min(2).max(20).nullable(),
+      })
+      .parse(req.body);
+    const key = `ticket-priorities:${JSON.stringify([context.client, context.project])}`;
+    if (count === null) store.db.prepare("DELETE FROM kv WHERE key=?").run(key);
+    else store.set(key, count);
+    res.json({ count: priorityCount(store, context) });
+  });
+  app.get("/api/tickets/:id/metadata", (req, res) => {
+    const id = z.coerce.number().int().positive().parse(req.params.id);
+    res.json(ticketMetadata(store, id));
+  });
+  app.put("/api/tickets/:id/metadata", (req, res) => {
+    const id = z.coerce.number().int().positive().parse(req.params.id);
+    const input = z
+      .object({
+        source: z.string(),
+        context: metadataContext,
+        patch: metadataPatch,
+      })
+      .strict()
+      .parse(req.body);
+    res.json(
+      saveTicketMetadata(store, id, input.source, input.context, input.patch),
+    );
+  });
   app.get("/api/tickets", (_req, res) =>
     res.json(
       store.db
@@ -529,6 +570,7 @@ export function createApp(
           const developers = localDevelopers.assigned(ticket.id, ticket.source);
           return {
             ...ticket,
+            ...ticketMetadata(store, ticket.id, ticket.source),
             developers,
             developer_name: developers.length
               ? developers.map((d) => d.name).join(", ")
@@ -611,6 +653,7 @@ export function createApp(
     const card = connectors.ticketCard(String(req.params.ref));
     res.json({
       ...card,
+      localMetadata: ticketMetadata(store, card.id, card.source),
       linkedPullRequests: pullRequests.linkedToTicket(card.id, card.source),
     });
   });
@@ -768,6 +811,24 @@ export function createApp(
         input.repo,
         input.number,
         input.continuationToken,
+      ),
+    );
+  });
+  app.get("/api/pr/commit-diff", async (req, res) => {
+    const input = z
+      .object({
+        monitor: text.min(1),
+        repo: text.min(1),
+        number: z.coerce.number().int().positive(),
+        commit: z.string().regex(/^[0-9a-f]{40}$/i),
+      })
+      .parse(req.query);
+    res.json(
+      await pullRequests.commitDiff(
+        input.monitor,
+        input.repo,
+        input.number,
+        input.commit,
       ),
     );
   });

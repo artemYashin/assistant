@@ -13,7 +13,8 @@ import {
   Check,
   FileText,
   History,
-  FolderOpen,
+  Info,
+  Layers3,
   GitCommitHorizontal,
   Ticket,
   ClipboardCheck,
@@ -159,7 +160,12 @@ function ReviewHistory({ pr }: any) {
   return (
     <PrInfoPopup
       title="Сохранённые ревью всех версий"
-      trigger={<History size={17} aria-hidden="true" />}
+      trigger={
+        <span className="pr-review-history-icon">
+          <History size={16} aria-hidden="true" />
+          <ClipboardCheck size={16} aria-hidden="true" />
+        </span>
+      }
       onOpenChange={setOpen}
     >
       {error && <p className="error">{error}</p>}
@@ -423,7 +429,7 @@ export function PullRequestsPage({ context, settings }: any) {
               <div className="pr-card-labels">
                 <span className="pr-kind-badge">PR</span>
                 <span
-                  className={`pr-review-status ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
+                  className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
                 >
                   {statuses[p.review_status] || "Ревью не запускалось"}
                 </span>
@@ -431,59 +437,65 @@ export function PullRequestsPage({ context, settings }: any) {
               </div>
               <div className="pr-card-utilities">
                 <PrHealth value={p.health} inScope={!!p.in_scope} />
-                <PrInfoPopup
-                  title="Контекст PR"
-                  trigger={<FolderOpen size={17} aria-hidden="true" />}
+                <div
+                  className="pr-card-info-actions"
+                  role="group"
+                  aria-label="Информация о PR"
                 >
-                  <dl>
-                    <div>
-                      <dt>Заказчик</dt>
-                      <dd>{p.client || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Проект Orbit</dt>
-                      <dd>{p.project || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Azure Project</dt>
-                      <dd>{p.azure_project || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt>Репозиторий</dt>
-                      <dd>
-                        {p.in_scope && p.repository
-                          ? p.repository
-                          : p.repo || "—"}
-                      </dd>
-                    </div>
-                  </dl>
-                </PrInfoPopup>
-                <PrInfoPopup
-                  title="Версия изменений"
-                  trigger={<GitCommitHorizontal size={17} aria-hidden="true" />}
-                >
-                  <dl>
-                    <div>
-                      <dt>Source commit</dt>
-                      <dd>
-                        <code>{p.head}</code>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Target commit</dt>
-                      <dd>
-                        <code>{p.target}</code>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>ID репозитория</dt>
-                      <dd>
-                        <code>{p.repo}</code>
-                      </dd>
-                    </div>
-                  </dl>
-                </PrInfoPopup>
-                <ReviewHistory pr={p} />
+                  <PrInfoPopup
+                    title="Контекст PR"
+                    trigger={<Layers3 size={17} aria-hidden="true" />}
+                  >
+                    <dl>
+                      <div>
+                        <dt>Заказчик</dt>
+                        <dd>{p.client || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Проект Orbit</dt>
+                        <dd>{p.project || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Azure Project</dt>
+                        <dd>{p.azure_project || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Репозиторий</dt>
+                        <dd>
+                          {p.in_scope && p.repository
+                            ? p.repository
+                            : p.repo || "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </PrInfoPopup>
+                  <PrInfoPopup
+                    title="Версия изменений"
+                    trigger={<Info size={17} aria-hidden="true" />}
+                  >
+                    <dl>
+                      <div>
+                        <dt>Source commit</dt>
+                        <dd>
+                          <code>{p.head}</code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Target commit</dt>
+                        <dd>
+                          <code>{p.target}</code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>ID репозитория</dt>
+                        <dd>
+                          <code>{p.repo}</code>
+                        </dd>
+                      </div>
+                    </dl>
+                  </PrInfoPopup>
+                  <ReviewHistory pr={p} />
+                </div>
               </div>
             </div>
             <h2 className="pr-title">
@@ -491,6 +503,16 @@ export function PullRequestsPage({ context, settings }: any) {
                 #{p.number} · {p.title}
               </a>
             </h2>
+            <p className="muted pr-created-at">
+              Создан:{" "}
+              {p.created_at ? (
+                <time dateTime={p.created_at}>
+                  {new Date(p.created_at).toLocaleString("ru-RU")}
+                </time>
+              ) : (
+                "дата пока не загружена"
+              )}
+            </p>
             <div className="pr-author-meta">
               <div className="pr-author">
                 <span className="pr-avatar" aria-hidden="true">
@@ -501,16 +523,6 @@ export function PullRequestsPage({ context, settings }: any) {
                   <strong>{p.author || "Не указан"}</strong>
                 </div>
               </div>
-              <p className="muted">
-                Создан:{" "}
-                {p.created_at ? (
-                  <time dateTime={p.created_at}>
-                    {new Date(p.created_at).toLocaleString("ru-RU")}
-                  </time>
-                ) : (
-                  "дата пока не загружена"
-                )}
-              </p>
             </div>
             <div className="pr-branches" aria-label="Ветки pull request">
               <BranchLabel kind="source" value={p.source_branch} />
@@ -518,36 +530,6 @@ export function PullRequestsPage({ context, settings }: any) {
               <BranchLabel kind="target" value={p.target_branch} />
             </div>
             <div className="pr-card-actions">
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setViewingCommits(p)}
-              >
-                <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setViewingDiff(p)}
-              >
-                <Code2 size={17} aria-hidden="true" /> View Diff
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                onClick={() => setMerging({ ...p, moveTickets: false })}
-              >
-                <GitMerge size={17} aria-hidden="true" /> Merge
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
-                onClick={() => setMerging({ ...p, moveTickets: true })}
-              >
-                <GitMerge size={17} aria-hidden="true" /> Merge и смена статусов
-              </button>
               <button
                 className="pr-review-launch"
                 disabled={
@@ -581,6 +563,36 @@ export function PullRequestsPage({ context, settings }: any) {
                       : p.review_status === "queued"
                         ? "Ревью в очереди"
                         : "Запустить ревью"}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setViewingCommits(p)}
+              >
+                <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setViewingDiff(p)}
+              >
+                <Code2 size={17} aria-hidden="true" /> View Diff
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                onClick={() => setMerging({ ...p, moveTickets: false })}
+              >
+                <GitMerge size={17} aria-hidden="true" /> Merge
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                onClick={() => setMerging({ ...p, moveTickets: true })}
+              >
+                <GitMerge size={17} aria-hidden="true" /> Merge и смена статусов
               </button>
             </div>
             {p.review_status === "awaiting_answers" && (

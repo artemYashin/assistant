@@ -15,8 +15,10 @@ type Loaded = {
 export function PrDiffDialog({
   pr,
   onClose,
+  commit,
 }: {
   pr: any;
+  commit?: string;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -33,7 +35,7 @@ export function PrDiffDialog({
     setError("");
     setSelected(0);
     api(
-      `/pr/diff?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number) })}`,
+      `/pr/${commit ? "commit-diff" : "diff"}?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number), ...(commit ? { commit } : {}) })}`,
     )
       .then((result) => {
         const parsed = { ...result, files: splitDiff(result.patches) };
@@ -45,7 +47,7 @@ export function PrDiffDialog({
     return () => {
       live = false;
     };
-  }, [pr.monitor, pr.repo, pr.number, revision]);
+  }, [pr.monitor, pr.repo, pr.number, commit, revision]);
   const file = data?.files[selected];
   return (
     <dialog
@@ -54,13 +56,15 @@ export function PrDiffDialog({
       aria-labelledby="pr-diff-title"
       onCancel={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
       }}
     >
       <header className="pr-diff-heading">
         <div>
           <h2 id="pr-diff-title">
-            <Code2 size={20} /> Diff · PR #{pr.number}
+            <Code2 size={20} /> Diff ·{" "}
+            {commit ? `коммит ${commit.slice(0, 12)}` : `PR #${pr.number}`}
           </h2>
           <p>{data?.title || pr.title}</p>
         </div>
@@ -92,10 +96,17 @@ export function PrDiffDialog({
       {data && (
         <>
           <p className="pr-diff-meta">
-            Merge base <code>{data.base.slice(0, 12)}</code> → PR head{" "}
-            <code>{data.head.slice(0, 12)}</code> ·{" "}
-            {data.sourceBranch?.replace(/^refs\/heads\//, "")} →{" "}
-            {data.targetBranch?.replace(/^refs\/heads\//, "")}
+            {commit ? "Родитель" : "Merge base"}{" "}
+            <code>{data.base.slice(0, 12)}</code> →{" "}
+            {commit ? "Коммит" : "PR head"}{" "}
+            <code>{data.head.slice(0, 12)}</code>
+            {!commit && (
+              <>
+                {" "}
+                · {data.sourceBranch?.replace(/^refs\/heads\//, "")} →{" "}
+                {data.targetBranch?.replace(/^refs\/heads\//, "")}
+              </>
+            )}
           </p>
           {!!data.notes.length && (
             <div className="pr-diff-notes" role="note">

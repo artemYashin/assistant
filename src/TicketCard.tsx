@@ -31,6 +31,19 @@ export function TicketCard({ reference }: { reference: string }) {
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
   useEffect(() => {
+    const update = (event: Event) => {
+      const { id, source, value } = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old?.id === id && old?.source === source
+          ? { ...old, localMetadata: value }
+          : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-metadata", update);
+    return () => window.removeEventListener("orbit:ticket-metadata", update);
+  }, []);
+
+  useEffect(() => {
     let live = true;
     setCard(null);
     setError("");
@@ -101,6 +114,29 @@ export function TicketCard({ reference }: { reference: string }) {
             colors={colors}
           />
         </div>
+        {card.localMetadata && (
+          <div className="ticket-local-summary">
+            <span className="badge">
+              Локальный приоритет: P{card.localMetadata.priority}
+            </span>
+            {(card.localMetadata.tags || []).map((tag: string) => (
+              <span className="badge" key={tag}>
+                {tag}
+              </span>
+            ))}
+            {card.localMetadata.notes && (
+              <details>
+                <summary>
+                  <FileText size={17} />
+                  Локальные заметки
+                </summary>
+                <p style={{ whiteSpace: "pre-wrap" }}>
+                  {card.localMetadata.notes}
+                </p>
+              </details>
+            )}
+          </div>
+        )}
         <dl className="ticket-metadata">
           <div>
             <dt>Автор</dt>
@@ -353,7 +389,11 @@ export function TicketTableRow({
   children,
   onRemove,
   highlighted = false,
+  actions,
+  columns = 7,
 }: {
+  actions?: ReactNode;
+  columns?: number;
   highlighted?: boolean;
   onRemove?: () => void;
   id: number;
@@ -401,6 +441,7 @@ export function TicketTableRow({
         {children}
         <td>
           <div className="ticket-row-actions">
+            {actions}
             <button
               type="button"
               className="secondary"
@@ -427,7 +468,7 @@ export function TicketTableRow({
         </td>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">
-        <td colSpan={7}>
+        <td colSpan={columns}>
           {open && (
             <section aria-label={`Карточка тикета #${id}`}>
               {error ? (

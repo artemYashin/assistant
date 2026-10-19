@@ -3941,14 +3941,14 @@ summary > svg {
 
 .pr-card-utilities {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
   margin-left: auto;
 }
-.pr-card-utilities > .icon-button {
-  width: 30px;
+.pr-card-info-actions > .icon-button {
+  min-width: 30px;
+  width: auto;
   height: 30px;
   padding: 5px;
   color: var(--muted);
@@ -3981,4 +3981,80 @@ summary > svg {
 }
 .pr-info-popup .pr-review-result {
   margin-top: 16px;
+}
+
+.pr-card-actions > .pr-review-launch {
+  min-height: 44px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 3px 9px #546c8624;
+}
+.pr-commit-message a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+.pr-commit-message a:hover {
+  text-decoration: underline;
+}
+.pr-commit-list .secondary {
+  margin-bottom: 10px;
+}
+
+.pr-card-info-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.pr-review-history-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pr-card-utilities .pr-health-trigger {
+  justify-content: flex-end;
+}
+
+.ticket-metadata-control,
+.ticket-tag-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ticket-metadata-dialog {
+  width: min(720px, 94vw);
+}
+.ticket-metadata-dialog form,
+.ticket-metadata-dialog label {
+  display: grid;
+  gap: 12px;
+}
+.ticket-metadata-dialog textarea {
+  width: 100%;
+  resize: vertical;
+}
+.ticket-metadata-dialog .multi-select-panel {
+  position: static;
+}
+
+.pr-created-at {
+  margin: 4px 0 12px;
+  font-size: 12px;
+}
+.pr-title:has(+ .pr-created-at) {
+  margin-bottom: 0;
+}
+.pr-review-outcome.is-idle {
+  color: #994449;
+  background: #fcebec;
+  border: 1px solid #edbfc3;
+}
+.pr-review-outcome.is-ready {
+  color: #146534;
+  background: #d5f3df;
+  border: 1px solid #79bf90;
+  font-weight: 700;
 }

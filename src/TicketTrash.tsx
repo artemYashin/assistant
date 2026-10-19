@@ -1,3 +1,5 @@
+import { PrInfoPopup } from "./PrInfoPopup.js";
+import { NotebookPen } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   ArchiveRestore,
@@ -56,6 +58,8 @@ export function TicketTrash({
     }
   }
   const [query, setQuery] = useState("");
+  const [priorities, setPriorities] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
@@ -80,11 +84,25 @@ export function TicketTrash({
     .filter((t) => {
       const q = query.trim().toLocaleLowerCase();
       return (
-        [t.id, t.title, t.type, t.state, t.assigned, localName(t)].some((v) =>
+        [
+          t.id,
+          t.title,
+          t.type,
+          t.state,
+          t.assigned,
+          localName(t),
+          t.notes,
+          t.tags,
+        ].some((v) =>
           String(v ?? "")
             .toLocaleLowerCase()
             .includes(q),
         ) &&
+        (!priorities.length || priorities.includes(String(t.priority ?? 2))) &&
+        (!tags.length ||
+          tags.some((tag) =>
+            tag === "" ? !t.tags?.length : t.tags?.includes(tag),
+          )) &&
         (!types.length || types.includes(t.type || "")) &&
         (!states.length || states.includes(t.state || "")) &&
         (!people.length ||
@@ -112,6 +130,8 @@ export function TicketTrash({
     ["title", "Тикет"],
     ["type", "Тип задачи"],
     ["state", "Статус"],
+    ["priority", "Приоритет"],
+    ["tags", "Теги"],
     ["assigned", "Исполнитель в Azure"],
     ["developer_name", "Локальное поручение"],
     ["removedAt", "Удалён"],
@@ -144,6 +164,28 @@ export function TicketTrash({
         </label>
       </div>
       <div className="ticket-filters">
+        <MultiSelect
+          label="Приоритет"
+          placeholder="Все приоритеты"
+          value={priorities}
+          onChange={setPriorities}
+          options={[...new Set<number>(items.map((t) => t.priority ?? 2))]
+            .sort((a, b) => a - b)
+            .map((v) => ({ value: String(v), label: "P" + v }))}
+        />
+        <MultiSelect
+          label="Теги"
+          placeholder="Все теги"
+          value={tags}
+          onChange={setTags}
+          options={[
+            { value: "", label: "Без тегов" },
+            ...[...new Set<string>(items.flatMap((t) => t.tags || []))]
+              .sort()
+              .map((v) => ({ value: v, label: v })),
+          ]}
+        />
+
         <MultiSelect
           label="Тип задачи"
           placeholder="Все типы"
@@ -189,8 +231,17 @@ export function TicketTrash({
         />
         <button
           className="secondary"
-          disabled={!query && !types.length && !states.length && !people.length}
+          disabled={
+            !query &&
+            !types.length &&
+            !states.length &&
+            !people.length &&
+            !priorities.length &&
+            !tags.length
+          }
           onClick={() => {
+            setPriorities([]);
+            setTags([]);
             setQuery("");
             setTypes([]);
             setStates([]);
@@ -295,6 +346,18 @@ export function TicketTrash({
                       colors={settings?.statusColors}
                     />
                   </td>
+                  <td>
+                    <span className="badge">P{t.priority ?? 2}</span>
+                  </td>
+                  <td>
+                    <div className="ticket-tag-list">
+                      {(t.tags || []).map((tag: string) => (
+                        <span className="badge" key={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
                   <td>{t.assigned || "N/A"}</td>
                   <td>{localName(t) || "N/A"}</td>
                   <td>
@@ -308,6 +371,14 @@ export function TicketTrash({
                     </time>
                   </td>
                   <td>
+                    <PrInfoPopup
+                      title={`Заметки тикета #${t.id}`}
+                      trigger={<NotebookPen size={17} />}
+                    >
+                      <p style={{ whiteSpace: "pre-wrap" }}>
+                        {t.notes || "Заметок нет"}
+                      </p>
+                    </PrInfoPopup>
                     <button
                       type="button"
                       className="secondary"

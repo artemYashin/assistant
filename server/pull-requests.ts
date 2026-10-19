@@ -601,6 +601,7 @@ export class PullRequests {
     return {
       commits: page.body.value.map((c: any) => ({
         id: String(c.commitId || ""),
+        url: `${m.source}/${enc(m.azure_project)}/_git/${enc(repo)}/commit/${enc(String(c.commitId || ""))}`,
         message: String(c.comment || ""),
         truncated: !!c.commentTruncated,
         author: String(c.author?.name || ""),
@@ -608,6 +609,68 @@ export class PullRequests {
       })),
       continuationToken: page.continuationToken,
     };
+  }
+  async commitDiff(
+    monitor: string,
+    repo: string,
+    number: number,
+    commit: string,
+  ) {
+    if (!/^[0-9a-f]{40}$/i.test(commit))
+      throw new AppError(400, "Некорректный SHA коммита");
+    let cursor = "",
+      found = false;
+    const seen = new Set<string>();
+    for (let page = 0; page < 20; page++) {
+      const result = await this.commits(monitor, repo, number, cursor);
+      if (
+        result.commits.some(
+          (c: any) => c.id.toLowerCase() === commit.toLowerCase(),
+        )
+      ) {
+        found = true;
+        break;
+      }
+      cursor = result.continuationToken;
+      if (!cursor || seen.has(cursor)) break;
+      seen.add(cursor);
+    }
+    if (!found)
+      throw new AppError(
+        404,
+        "Коммит не найден среди первых 1000 коммитов текущего PR",
+      );
+    const m = this.monitors().find((entry) => entry.id === monitor)!;
+    const credentials = this.credentials(m);
+    const detail = await this.get(
+      m,
+      `git/repositories/${enc(repo)}/commits/${enc(commit)}`,
+      credentials,
+    );
+    if (
+      String(detail.commitId).toLowerCase() !== commit.toLowerCase() ||
+      !Array.isArray(detail.parents)
+    )
+      throw new AppError(502, "Azure не вернул данные коммита");
+    const parent = detail.parents[0];
+    if (!parent)
+      return {
+        patches: [],
+        notes: [
+          "Начальный коммит без родителя: сравнение с пустым деревом пока не поддерживается.",
+        ],
+        base: "",
+        head: commit,
+        title: detail.comment || commit,
+      };
+    if (!/^[0-9a-f]{40}$/i.test(parent))
+      throw new AppError(502, "Azure вернул некорректный родительский коммит");
+    const result = await this.changes(m, repo, commit, parent);
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    if (detail.parents.length > 1)
+      result.notes.push("Merge-коммит: показано сравнение с первым родителем.");
+    return { ...result, title: detail.comment || commit };
   }
   async viewDiff(monitor: string, repo: string, number: number) {
     const m = this.monitors().find((entry) => entry.id === monitor);

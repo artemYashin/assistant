@@ -1,9 +1,11 @@
+import { PrDiffDialog } from "./PrDiffDialog.js";
 import { useEffect, useRef, useState } from "react";
-import { GitCommitHorizontal, LoaderCircle, X } from "lucide-react";
+import { GitCommitHorizontal, LoaderCircle, X, Code2 } from "lucide-react";
 import { api } from "./api.js";
 
 type Commit = {
   id: string;
+  url: string;
   message: string;
   truncated: boolean;
   author: string;
@@ -17,6 +19,7 @@ export function PrCommitsDialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [selectedCommit, setSelectedCommit] = useState("");
   const [commits, setCommits] = useState<Commit[]>([]);
   const [cursor, setCursor] = useState("");
   const [requested, setRequested] = useState("");
@@ -67,7 +70,8 @@ export function PrCommitsDialog({
       aria-labelledby="pr-commits-title"
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        e.stopPropagation();
+        if (!selectedCommit) onClose();
       }}
     >
       <div className="developer-dialog-heading">
@@ -87,7 +91,18 @@ export function PrCommitsDialog({
         {commits.map((c) => (
           <li key={c.id}>
             <code title={c.id}>{c.id.slice(0, 12)}</code>
-            <p className="pr-commit-message">{c.message || "Без сообщения"}</p>
+            <p className="pr-commit-message">
+              <a href={c.url} target="_blank" rel="noreferrer">
+                {c.message || "Без сообщения"}
+              </a>
+            </p>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setSelectedCommit(c.id)}
+            >
+              <Code2 size={16} /> View Diff
+            </button>
             {c.truncated && (
               <small className="muted">
                 Azure вернул сокращённое сообщение коммита.
@@ -129,6 +144,13 @@ export function PrCommitsDialog({
         <button className="secondary" onClick={() => setRequested(cursor)}>
           Загрузить ещё
         </button>
+      )}
+      {selectedCommit && (
+        <PrDiffDialog
+          pr={pr}
+          commit={selectedCommit}
+          onClose={() => setSelectedCommit("")}
+        />
       )}
     </dialog>
   );

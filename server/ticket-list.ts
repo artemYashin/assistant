@@ -1,3 +1,4 @@
+import { ticketMetadata } from "./ticket-metadata.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { z } from "zod";
 import { Store } from "./store.js";
@@ -5,12 +6,15 @@ import { Store } from "./store.js";
 export const ticketListSchema = z.object({
   type: z.string().trim().max(200).optional(),
   state: z.string().trim().max(200).optional(),
+  priority: z.number().int().min(1).max(20).optional(),
+  tag: z.string().trim().max(60).optional(),
   afterId: z.number().int().nonnegative().default(0),
   limit: z.number().int().min(1).max(100).default(100),
 });
 
 export function listLocalTickets(store: Store, input: unknown) {
-  const { type, state, afterId, limit } = ticketListSchema.parse(input);
+  const { type, state, priority, tag, afterId, limit } =
+    ticketListSchema.parse(input);
   const clauses = ["source = ?"];
   const params: (string | number)[] = [store.source()];
   for (const [field, value] of [
@@ -21,6 +25,18 @@ export function listLocalTickets(store: Store, input: unknown) {
       clauses.push(`${field} = ? COLLATE NOCASE`);
       params.push(value);
     }
+  }
+  if (priority !== undefined) {
+    clauses.push(
+      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=tickets.source AND m.id=tickets.id),2)=?",
+    );
+    params.push(priority);
+  }
+  if (tag) {
+    clauses.push(
+      "EXISTS (SELECT 1 FROM ticket_metadata m,json_each(m.tags) tag WHERE m.source=tickets.source AND m.id=tickets.id AND tag.value=? COLLATE NOCASE)",
+    );
+    params.push(tag);
   }
   const where = clauses.join(" AND ");
   const { total } = store.db
@@ -44,6 +60,11 @@ export function listLocalTickets(store: Store, input: unknown) {
         return [key, value];
       }),
     );
+    const metadata = ticketMetadata(store, row.id);
+    Object.assign(ticket, metadata, {
+      notes: metadata.notes.slice(0, 300),
+      notesTruncated: metadata.notes.length > 300,
+    });
     ticket.localDevelopers = new LocalDevelopers(store)
       .assigned(row.id)
       .map(({ id, name }) => ({ id, name }));
@@ -57,7 +78,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const hasMore = rows.length > tickets.length;
   return {
     scope: "local",
-    filters: { type, state },
+    filters: { type, state, priority, tag },
     total,
     tickets,
     hasMore,

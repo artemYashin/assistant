@@ -851,3 +851,41 @@ More detail`,
   await assert.rejects(service.commits(monitor, "repo", 999), /PR не найден/);
   assert.equal(calls.length, 0);
 });
+
+test("commit diff uses first parent, checks PR membership and never invokes model", async (t) => {
+  const { service, calls } = fixture(t);
+  const head = "a".repeat(40),
+    parent = "b".repeat(40);
+  mock(t, [pr()], (url, init) => {
+    assert.ok(!init.method || init.method === "GET");
+    if (url.pathname.endsWith("/pullRequests/1/commits"))
+      return { value: [{ commitId: head, comment: "Fix" }] };
+    if (url.pathname.endsWith("/commits/" + head))
+      return {
+        commitId: head,
+        parents: [parent, "c".repeat(40)],
+        comment: "Merge fix",
+      };
+    if (url.pathname.endsWith("/diffs/commits")) {
+      assert.equal(url.searchParams.get("baseVersion"), parent);
+      assert.equal(url.searchParams.get("targetVersion"), head);
+      return { commonCommit: parent, allChangesIncluded: true, changes: [] };
+    }
+  });
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const page = await service.commits(monitor, "repo", 1);
+  assert.equal(
+    page.commits[0].url,
+    "https://ado.test/tfs/Collection/Project%20One/_git/repo/commit/" + head,
+  );
+  const diff = await service.commitDiff(monitor, "repo", 1, head);
+  assert.equal(diff.base, parent);
+  assert.match(diff.notes.join(" "), /первым родителем/);
+  await assert.rejects(
+    service.commitDiff(monitor, "repo", 1, "d".repeat(40)),
+    /не найден/,
+  );
+  await assert.rejects(service.commitDiff(monitor, "repo", 1, "../bad"), /SHA/);
+  assert.equal(calls.length, 0);
+});

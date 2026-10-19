@@ -1,0 +1,73 @@
+import { z } from "zod";
+import { Store, AppError, type Context } from "./store.js";
+export const metadataContext = z.object({
+  client: z.string().max(200),
+  project: z.string().max(200),
+});
+export const metadataPatch = z
+  .object({
+    notes: z.string().max(20000).optional(),
+    priority: z.number().int().min(1).max(20).optional(),
+    tags: z.array(z.string().trim().min(1).max(60)).max(30).optional(),
+  })
+  .strict();
+export function priorityCount(store: Store, context: Context) {
+  return store.get<number>(
+    `ticket-priorities:${JSON.stringify([context.client, context.project])}`,
+    store.get<number>(
+      `ticket-priorities:${JSON.stringify([context.client, ""])}`,
+      3,
+    ),
+  );
+}
+export function ticketMetadata(
+  store: Store,
+  id: number,
+  source = store.source(),
+) {
+  const row = store.db
+    .prepare(
+      "SELECT notes,priority,tags FROM ticket_metadata WHERE source=? AND id=?",
+    )
+    .get(source, id) as any;
+  return row
+    ? {
+        notes: row.notes,
+        priority: row.priority,
+        tags: JSON.parse(row.tags) as string[],
+      }
+    : { notes: "", priority: 2, tags: [] as string[] };
+}
+export function saveTicketMetadata(
+  store: Store,
+  id: number,
+  source: string,
+  context: Context,
+  input: unknown,
+) {
+  if (source !== store.source())
+    throw new AppError(409, "Подключение изменилось. Обновите список.");
+  if (
+    !store.db
+      .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+      .get(source, id)
+  )
+    throw new AppError(404, "Тикет отсутствует в локальном списке");
+  const patch = metadataPatch.parse(input);
+  if (
+    patch.priority !== undefined &&
+    patch.priority > priorityCount(store, context)
+  )
+    throw new AppError(
+      400,
+      "Приоритет превышает количество уровней в настройках проекта",
+    );
+  const value = { ...ticketMetadata(store, id, source), ...patch };
+  value.tags = [...new Set(value.tags)];
+  store.db
+    .prepare(
+      "INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET notes=excluded.notes,priority=excluded.priority,tags=excluded.tags",
+    )
+    .run(source, id, value.notes, value.priority, JSON.stringify(value.tags));
+  return value;
+}

@@ -1,3 +1,4 @@
+import { TicketMetadata } from "./TicketMetadata.js";
 import { TicketTrash } from "./TicketTrash.js";
 import { MemoryProposalList } from "./MemoryProposals.js";
 import { ReviewQuestionInbox } from "./ReviewQuestions.js";
@@ -1175,6 +1176,8 @@ function Tickets({
     !!targetSource && !!settings && targetSource !== currentSource;
   const [id, setId] = useState(targetId ? String(targetId) : "");
   const [sort, setSort] = useState("id-desc");
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [stateFilter, setStateFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
@@ -1198,6 +1201,8 @@ function Tickets({
       "state",
       "assigned",
       "developer_name",
+      "notes",
+      "tags",
     ].some((key) =>
       String(t[key] || "")
         .toLocaleLowerCase()
@@ -1206,6 +1211,12 @@ function Tickets({
     const people = assigneeFilter.map((value) => JSON.parse(value));
     return (
       matchesQuery &&
+      (!priorityFilter.length ||
+        priorityFilter.includes(String(t.priority ?? 2))) &&
+      (!tagFilter.length ||
+        tagFilter.some((tag) =>
+          tag === "" ? !t.tags?.length : t.tags?.includes(tag),
+        )) &&
       (!typeFilter.length || typeFilter.includes(t.type || "")) &&
       (!stateFilter.length || stateFilter.includes(t.state || "")) &&
       (!people.length ||
@@ -1327,6 +1338,32 @@ function Tickets({
       </form>
       <div className="ticket-filters">
         <MultiSelect
+          label="Приоритет"
+          placeholder="Все приоритеты"
+          value={priorityFilter}
+          onChange={setPriorityFilter}
+          disabled={!!rawTarget}
+          options={[
+            ...new Set<number>(tickets.map((t: any) => t.priority ?? 2)),
+          ]
+            .sort((a, b) => a - b)
+            .map((v) => ({ value: String(v), label: "P" + v }))}
+        />
+        <MultiSelect
+          label="Теги"
+          placeholder="Все теги"
+          value={tagFilter}
+          onChange={setTagFilter}
+          disabled={!!rawTarget}
+          options={[
+            { value: "", label: "Без тегов" },
+            ...[...new Set<string>(tickets.flatMap((t: any) => t.tags || []))]
+              .sort()
+              .map((v) => ({ value: v, label: v })),
+          ]}
+        />
+
+        <MultiSelect
           label="Тип задачи"
           placeholder="Все типы"
           disabled={!!rawTarget}
@@ -1376,6 +1413,8 @@ function Tickets({
           className="secondary"
           disabled={
             !rawTarget &&
+            !priorityFilter.length &&
+            !tagFilter.length &&
             !typeFilter.length &&
             !stateFilter.length &&
             !assigneeFilter.length &&
@@ -1383,6 +1422,8 @@ function Tickets({
           }
           onClick={() => {
             if (rawTarget) navigate("/tickets");
+            setPriorityFilter([]);
+            setTagFilter([]);
             setTypeFilter([]);
             setStateFilter([]);
             setAssigneeFilter([]);
@@ -1415,6 +1456,8 @@ function Tickets({
                   [
                     ["type", "Тип задачи"],
                     ["state", "Статус"],
+                    ["priority", "Приоритет"],
+                    ["tags", "Теги"],
                     ["assigned", "Исполнитель в Azure"],
                     ["developer_name", "Локальное поручение"],
                     ["synced_at", "Синхронизация"],
@@ -1432,6 +1475,15 @@ function Tickets({
                 <TicketTableRow
                   key={`${t.source}:${t.id}`}
                   id={t.id}
+                  columns={9}
+                  actions={
+                    <TicketMetadata
+                      ticket={t}
+                      context={context}
+                      field="notes"
+                      onChange={() => run("refresh-notes", async () => {})}
+                    />
+                  }
                   highlighted={targetId === t.id && !sourceMismatch}
                   onRemove={() =>
                     run(
@@ -1467,6 +1519,22 @@ function Tickets({
                       state={t.state}
                       colors={settings?.statusColors}
                       onChange={() => run("refresh-state", async () => {})}
+                    />
+                  </td>
+                  <td>
+                    <TicketMetadata
+                      ticket={t}
+                      context={context}
+                      field="priority"
+                      onChange={() => run("refresh-priority", async () => {})}
+                    />
+                  </td>
+                  <td>
+                    <TicketMetadata
+                      ticket={t}
+                      context={context}
+                      field="tags"
+                      onChange={() => run("refresh-tags", async () => {})}
                     />
                   </td>
                   <td>{t.assigned || "Не назначен"}</td>

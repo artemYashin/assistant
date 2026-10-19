@@ -1,3 +1,4 @@
+import { ticketMetadata } from "./ticket-metadata.js";
 import Database from "better-sqlite3";
 import {
   mkdirSync,
@@ -143,6 +144,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pr_ticket_links (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,ticket_id INTEGER NOT NULL,PRIMARY KEY(monitor,repo,number,ticket_id));
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS ticket_trash (source TEXT NOT NULL,id INTEGER NOT NULL,body TEXT NOT NULL,removed_at INTEGER NOT NULL,PRIMARY KEY(source,id));
+      CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 2,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
     this.db.exec(`
@@ -332,6 +334,11 @@ export class Store {
         .all(now - 30 * 86400000) as any[];
       for (const row of expired) {
         this.db
+          .prepare(
+            "DELETE FROM ticket_metadata WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
+          )
+          .run(row.source, row.id, row.source, row.id);
+        this.db
           .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
           .run(row.source, row.id);
         this.db
@@ -358,6 +365,7 @@ export class Store {
         .all(this.source()) as any[]
     ).map((row) => ({
       ...JSON.parse(row.body),
+      ...ticketMetadata(this, row.id, row.source),
       removedAt: row.removed_at,
       expiresAt: row.removed_at + 30 * 86400000,
     }));

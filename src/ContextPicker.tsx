@@ -1,3 +1,4 @@
+import { PrioritySettings } from "./TicketMetadata.js";
 import { DeveloperDirectory } from "./DeveloperDirectory.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { Users, FolderPlus, GitBranch, Plus, X } from "lucide-react";
@@ -13,7 +14,7 @@ export function ContextPicker({
   onChange: (c: Context) => void;
 }) {
   const [section, setSection] = useState<
-    "browse" | "create" | "repository" | "developers"
+    "browse" | "create" | "repository" | "developers" | "priorities"
   >("browse");
   const [createKind, setCreateKind] = useState<"client" | "project">("client");
   const [items, setItems] = useState<Context[]>([]),
@@ -179,7 +180,17 @@ export function ContextPicker({
               <Users size={16} />
               Разработчики
             </button>
+            <button
+              type="button"
+              aria-pressed={section === "priorities"}
+              onClick={() => setSection("priorities")}
+            >
+              Приоритеты
+            </button>
           </div>
+          {section === "priorities" && (
+            <PrioritySettings key={JSON.stringify(context)} context={context} />
+          )}
           {section === "developers" && (
             <div className="context-manager-section">
               <DeveloperDirectory

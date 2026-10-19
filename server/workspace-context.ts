@@ -1,3 +1,4 @@
+import { priorityCount } from "./ticket-metadata.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
 import { Store, AppError, type Context } from "./store.js";
@@ -13,6 +14,7 @@ export function workspaceContext(store: Store, context: Context, offset = 0) {
     .all(context.client, context.project);
   return {
     currentContext: context,
+    localTicketPriorityLevels: priorityCount(store, context),
     azureProject: store.settings().azureProject,
     contexts: registry.slice(offset, offset + 10),
     contextTotal: registry.length,
