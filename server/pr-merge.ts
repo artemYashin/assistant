@@ -1,3 +1,4 @@
+import { prLinksKey } from "./pr-ticket-sources.js";
 import { randomUUID } from "node:crypto";
 import { Store, AppError } from "./store.js";
 import { azureBase, requestJson } from "./http.js";
@@ -127,7 +128,7 @@ export class PrMerge {
       throw new AppError(502, "Не удалось загрузить связи PR");
     const ids = [
       ...new Set([
-        ...prTicketIds(pr.description || ""),
+        ...prTicketIds((pr.title || "") + "\n" + (pr.description || "")),
         ...(
           this.store.db
             .prepare(
@@ -146,6 +147,10 @@ export class PrMerge {
         400,
         "Некорректный или слишком большой список связанных тикетов (максимум 100)",
       );
+    this.store.set(prLinksKey(key.monitor, key.repo, key.number), {
+      ids: links.value.map((v: any) => Number(v.id)),
+      error: "",
+    });
     return { m, pr, ids };
   }
   async linkedTickets(key: Key) {
@@ -207,7 +212,7 @@ export class PrMerge {
   }
   async execute(
     id: string,
-    selections: { id: number; state: string }[],
+    selections: { id: number; state: string | null }[],
     strategy: string,
   ) {
     const row = this.store.db
@@ -245,6 +250,7 @@ export class PrMerge {
     )
       throw new AppError(400, "Выберите статус для каждого связанного тикета");
     for (const s of selections) {
+      if (s.state === null) continue;
       const current = await this.connectors.ticketStates(s.id);
       if (!current.states.includes(s.state))
         throw new AppError(400, `Недоступный статус для #${s.id}`);
@@ -322,6 +328,20 @@ export class PrMerge {
           current.lastMergeSourceCommit?.commitId === plan.head
         ) {
           confirmed = true;
+          const closed = Number.isFinite(Date.parse(current.closedDate))
+            ? Date.parse(current.closedDate)
+            : Date.now();
+          this.store.db
+            .prepare(
+              "INSERT OR IGNORE INTO pr_completed(monitor,repo,number,closed_at,expires_at,hydrated) VALUES (?,?,?,?,?,0)",
+            )
+            .run(
+              plan.monitor,
+              plan.repo,
+              plan.number,
+              new Date(closed).toISOString(),
+              closed + 30 * 86400000,
+            );
           break;
         }
         if (
@@ -354,6 +374,10 @@ export class PrMerge {
       });
     const results = [];
     for (const s of selections) {
+      if (s.state === null) {
+        results.push({ id: s.id, state: null, skipped: true, success: true });
+        continue;
+      }
       try {
         guard();
         const result = await this.connectors.changeTicketStatus(

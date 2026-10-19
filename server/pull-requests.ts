@@ -1,3 +1,4 @@
+import { cachedPrLinks, prLinksKey } from "./pr-ticket-sources.js";
 import { ignoredReviewPath, reviewFileSettings } from "./review-files.js";
 import { policyChecks } from "./pr-health.js";
 import {
@@ -58,6 +59,150 @@ export function prTicketIds(description: string): number[] {
   ];
 }
 export class PullRequests {
+  private completedCache = new Map<string, { until: number; data: any }>();
+  private completedPending = new Map<string, Promise<any>>();
+  async completed(monitor: string, page: number) {
+    this.purgeCompleted();
+    if (!Number.isSafeInteger(page) || page < 0 || page > 10000)
+      throw new AppError(400, "Некорректная страница");
+    const m = this.monitors().find((m) => m.id === monitor);
+    if (!m) throw new AppError(404, "Репозиторий не настроен");
+    const credentials = this.credentials(m);
+    const key = JSON.stringify([
+      m.id,
+      m.source,
+      m.azure_project,
+      m.repository,
+      credentials.version,
+      credentials.pat,
+      page,
+    ]);
+    const cached = this.completedCache.get(key);
+    if (cached && cached.until > Date.now()) return cached.data;
+    const pending = this.completedPending.get(key);
+    if (pending) return pending;
+    if (this.completedPending.size >= 4)
+      throw new AppError(429, "Подождите завершения загрузки истории PR");
+    const task = (async () => {
+      const data = await this.get(
+        m,
+        `git/repositories/${enc(m.repository)}/pullrequests?searchCriteria.status=completed&searchCriteria.queryTimeRangeType=closed&searchCriteria.minTime=${enc(new Date(Date.now() - 30 * 86400000).toISOString())}&$top=21&$skip=${page * 20}`,
+        credentials,
+      );
+      if (!Array.isArray(data.value))
+        throw new AppError(502, "Azure не вернул завершённые PR");
+      if (
+        this.credentials(m).pat !== credentials.pat ||
+        this.monitors().find((x) => x.id === m.id)?.repository !== m.repository
+      )
+        throw new AppError(409, "Настройки подключения изменились");
+      const items = [];
+      for (const short of data.value.slice(0, 20)) {
+        const closed = Date.parse(short.closedDate);
+        if (!Number.isFinite(closed) || closed + 30 * 86400000 <= Date.now())
+          continue;
+        const repo = short.repository?.id || m.repository;
+        const previous = this.store.db
+          .prepare(
+            "SELECT * FROM pr_completed WHERE monitor=? AND repo=? AND number=?",
+          )
+          .get(m.id, repo, short.pullRequestId) as any;
+        if (!previous?.hydrated) {
+          const detail =
+            typeof short.description === "string" &&
+            short.description.length >= 400
+              ? await this.get(
+                  m,
+                  `git/repositories/${enc(repo)}/pullrequests/${short.pullRequestId}`,
+                  credentials,
+                )
+              : short;
+          if (
+            detail.pullRequestId !== short.pullRequestId ||
+            detail.status !== "completed" ||
+            detail.repository?.id !== repo
+          )
+            throw new AppError(409, "PR изменился при загрузке истории");
+          const links = await this.get(
+            m,
+            `git/repositories/${enc(repo)}/pullrequests/${short.pullRequestId}/workitems`,
+            credentials,
+          );
+          if (!Array.isArray(links.value))
+            throw new AppError(
+              502,
+              "Не удалось загрузить связи завершённого PR",
+            );
+          if (this.credentials(m).pat !== credentials.pat)
+            throw new AppError(409, "Подключение изменилось");
+          this.store.db.transaction(() => {
+            this.store.db
+              .prepare(
+                `INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at,source_branch,target_branch) VALUES (?,?,?,?,?,?,?,?,0,0,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,description=excluded.description,head=excluded.head,target=excluded.target,in_scope=0,source_branch=excluded.source_branch,target_branch=excluded.target_branch`,
+              )
+              .run(
+                m.id,
+                repo,
+                detail.pullRequestId,
+                detail.title || "",
+                detail.createdBy?.displayName || "",
+                `${m.source}/${enc(m.azure_project)}/_git/${enc(repo)}/pullrequest/${detail.pullRequestId}`,
+                detail.lastMergeSourceCommit?.commitId || "",
+                detail.lastMergeTargetCommit?.commitId || "",
+                now(),
+                detail.description || "",
+                detail.creationDate || "",
+                detail.sourceRefName || "",
+                detail.targetRefName || "",
+              );
+            this.store.set(prLinksKey(m.id, repo, detail.pullRequestId), {
+              ids: links.value
+                .map((v: any) => Number(v.id))
+                .filter((v: number) => Number.isSafeInteger(v) && v > 0),
+              error: "",
+            });
+            this.store.db
+              .prepare(
+                "INSERT OR REPLACE INTO pr_completed(monitor,repo,number,closed_at,expires_at,hydrated) VALUES (?,?,?,?,?,1)",
+              )
+              .run(
+                m.id,
+                repo,
+                detail.pullRequestId,
+                short.closedDate,
+                closed + 30 * 86400000,
+              );
+          })();
+        }
+        const card = this.list(
+          { client: m.client, project: m.project },
+          { monitor: m.id, repo, number: short.pullRequestId },
+        )[0];
+        if (card)
+          items.push({
+            ...card,
+            closedAt: short.closedDate,
+            expiresAt: new Date(closed + 30 * 86400000).toISOString(),
+          });
+      }
+      const result = {
+        page,
+        hasNext: data.value.length > 20,
+        loadedAt: now(),
+        items,
+      };
+      if (this.completedCache.size >= 50)
+        this.completedCache.delete(this.completedCache.keys().next().value!);
+      this.completedCache.set(key, { until: Date.now() + 60000, data: result });
+      return result;
+    })();
+    this.completedPending.set(key, task);
+    try {
+      return await task;
+    } finally {
+      this.completedPending.delete(key);
+    }
+  }
   private working = false;
   private stopped = false;
   shutdown() {
@@ -74,7 +219,62 @@ export class PullRequests {
         reviewActions?: ReviewActions,
       ) => Promise<{ body: string; requestId: string }>;
     },
-  ) {}
+  ) {
+    this.store.db.exec(
+      "CREATE TABLE IF NOT EXISTS pr_completed(monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,closed_at TEXT NOT NULL,expires_at INTEGER NOT NULL,hydrated INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(monitor,repo,number))",
+    );
+    this.purgeCompleted();
+  }
+  purgeCompleted(time = Date.now()) {
+    const expired = this.store.db
+      .prepare("SELECT * FROM pr_completed WHERE expires_at<=?")
+      .all(time) as any[];
+    this.store.db.transaction(() => {
+      for (const p of expired) {
+        this.store.db
+          .prepare(
+            "DELETE FROM pr_question_batches WHERE review_id IN (SELECT id FROM pr_reviews WHERE monitor=? AND repo=? AND number=?)",
+          )
+          .run(p.monitor, p.repo, p.number);
+        if (
+          this.store.db
+            .prepare(
+              "SELECT 1 FROM sqlite_master WHERE type='table' AND name='pr_merge_plans'",
+            )
+            .get()
+        ) {
+          const plans = this.store.db
+            .prepare(
+              "SELECT id FROM pr_merge_plans WHERE json_extract(body,'$.monitor')=? AND json_extract(body,'$.repo')=? AND json_extract(body,'$.number')=?",
+            )
+            .all(p.monitor, p.repo, p.number) as { id: string }[];
+          for (const plan of plans) {
+            this.store.db
+              .prepare("DELETE FROM pr_merge_attempts WHERE plan=?")
+              .run(plan.id);
+            this.store.db
+              .prepare("DELETE FROM pr_merge_plans WHERE id=?")
+              .run(plan.id);
+          }
+        }
+        for (const table of [
+          "pr_reviews",
+          "pr_ticket_links",
+          "pull_requests",
+          "pr_completed",
+        ])
+          this.store.db
+            .prepare(
+              `DELETE FROM ${table} WHERE monitor=? AND repo=? AND number=?`,
+            )
+            .run(p.monitor, p.repo, p.number);
+        this.store.db
+          .prepare("DELETE FROM kv WHERE key=?")
+          .run(prLinksKey(p.monitor, p.repo, p.number));
+      }
+    })();
+    if (expired.length) this.completedCache.clear();
+  }
   monitors() {
     return this.store.db
       .prepare(
@@ -176,6 +376,13 @@ export class PullRequests {
           row.number,
         );
         const descriptionIds = prTicketIds(row.description);
+        const titleIds = prTicketIds(row.title || "");
+        const azureLinks = cachedPrLinks(
+          this.store,
+          row.monitor,
+          row.repo,
+          row.number,
+        );
         return {
           ...row,
           last_saved_review:
@@ -185,6 +392,7 @@ export class PullRequests {
               )
               .get(row.monitor, row.repo, row.number) || null,
           ticket_source: source,
+          ticket_links_error: azureLinks.error,
           images: descriptionImages(row.description).map((source) => ({
             source,
             preview: azureImageUrl(
@@ -198,7 +406,14 @@ export class PullRequests {
               ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
               : null,
           })),
-          tickets: [...new Set([...descriptionIds, ...manualIds])].map((id) => {
+          tickets: [
+            ...new Set([
+              ...descriptionIds,
+              ...titleIds,
+              ...azureLinks.ids,
+              ...manualIds,
+            ]),
+          ].map((id) => {
             const ticket = this.store.db
               .prepare(
                 "SELECT id,title,state,type FROM tickets WHERE source=? AND id=?",
@@ -213,6 +428,8 @@ export class PullRequests {
               ...(ticket || { id, unavailable: true, removed }),
               manual: manualIds.includes(id),
               fromDescription: descriptionIds.includes(id),
+              fromTitle: titleIds.includes(id),
+              fromAzure: azureLinks.ids.includes(id),
             };
           }),
         };
@@ -315,7 +532,15 @@ export class PullRequests {
         .all(monitor.id) as any[];
       for (const row of rows) {
         if (
-          !prTicketIds(row.description || "").includes(id) &&
+          !prTicketIds(
+            (row.title || "") + "\n" + (row.description || ""),
+          ).includes(id) &&
+          !cachedPrLinks(
+            this.store,
+            monitor.id,
+            row.repo,
+            row.number,
+          ).ids.includes(id) &&
           !this.manualTicketIds(monitor.id, row.repo, row.number).includes(id)
         )
           continue;
@@ -424,6 +649,7 @@ export class PullRequests {
       : body;
   }
   async sync() {
+    this.purgeCompleted();
     for (const m of this.monitors().filter((m) => m.enabled)) {
       try {
         if (!m.repository)
@@ -471,6 +697,34 @@ export class PullRequests {
             if (detail.pullRequestId !== p.pullRequestId)
               throw new AppError(502, "Azure вернул неверное описание PR");
             p.description = detail.description || "";
+          }
+        }
+        for (const p of found) {
+          try {
+            const links = await this.get(
+              m,
+              `git/repositories/${enc(p.repository.id)}/pullrequests/${p.pullRequestId}/workitems`,
+              credentials,
+            );
+            if (!Array.isArray(links.value))
+              throw new AppError(502, "Azure не вернул связи PR");
+            const ids = [
+              ...new Set<number>(links.value.map((v: any) => Number(v.id))),
+            ];
+            if (ids.some((id) => !Number.isSafeInteger(id) || id < 1))
+              throw new AppError(502, "Azure вернул некорректные связи PR");
+            p.ticketLinks = { ids, error: "" };
+          } catch {
+            p.ticketLinks = {
+              ...cachedPrLinks(
+                this.store,
+                m.id,
+                p.repository.id,
+                p.pullRequestId,
+              ),
+              error:
+                "Не удалось обновить связи Azure. Список может быть неполным или устаревшим.",
+            };
           }
         }
         // Health failures must not discard an otherwise successful PR scan.
@@ -550,6 +804,10 @@ export class PullRequests {
                 typeof p.sourceRefName === "string" ? p.sourceRefName : "",
                 typeof p.targetRefName === "string" ? p.targetRefName : "",
               );
+            this.store.set(
+              prLinksKey(m.id, repo, p.pullRequestId),
+              p.ticketLinks,
+            );
             this.store.db
               .prepare(
                 "UPDATE pull_requests SET health=? WHERE monitor=? AND repo=? AND number=?",
@@ -566,7 +824,10 @@ export class PullRequests {
             this.store,
             new IntegrationsAuth(this.store),
           ).importPrTickets(
-            found.flatMap((p) => prTicketIds(p.description || "")),
+            found.flatMap((p) => [
+              ...prTicketIds((p.title || "") + "\n" + (p.description || "")),
+              ...p.ticketLinks.ids,
+            ]),
           );
         } catch (e) {
           ticketError =
@@ -1059,7 +1320,9 @@ export class PullRequests {
           throw new AppError(502, "Не удалось прочитать связи тикетов PR");
         const ids = [
           ...new Set([
-            ...prTicketIds(detail.description || ""),
+            ...prTicketIds(
+              (detail.title || "") + "\n" + (detail.description || ""),
+            ),
             ...this.manualTicketIds(job.monitor, job.repo, job.number),
             ...links.value.map((v: any) => Number(v.id)),
           ]),

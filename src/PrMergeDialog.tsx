@@ -66,15 +66,7 @@ export function PrMergeDialog({
       .then((p) => {
         if (!live) return;
         setPlan(p);
-        setStates(
-          Object.fromEntries(
-            p.tickets.map((t: any) => [
-              t.id,
-              t.states.find((s: string) => s.toLowerCase() === "resolved") ||
-                "",
-            ]),
-          ),
-        );
+        setStates(Object.fromEntries(p.tickets.map((t: any) => [t.id, ""])));
       })
       .catch((e) => {
         if (live) setError(e.message);
@@ -95,7 +87,10 @@ export function PrMergeDialog({
       setResult(
         await api(`/pr/merge/${plan.id}`, "POST", {
           strategy,
-          tickets: plan.tickets.map((t) => ({ id: t.id, state: states[t.id] })),
+          tickets: plan.tickets.map((t) => ({
+            id: t.id,
+            state: states[t.id] || null,
+          })),
         }),
       );
     } catch (e: any) {
@@ -248,7 +243,10 @@ export function PrMergeDialog({
                     )
                   }
                   disabled={busy}
-                  options={common.map((s) => ({ value: s, label: s }))}
+                  options={[
+                    { value: "", label: "Не менять статус" },
+                    ...common.map((s) => ({ value: s, label: s })),
+                  ]}
                 />
               )}
               {!plan.tickets.length && (
@@ -275,24 +273,30 @@ export function PrMergeDialog({
                         setStates((old) => ({ ...old, [t.id]: s }))
                       }
                       disabled={busy}
-                      options={t.states.map((s) => ({ value: s, label: s }))}
+                      options={[
+                        { value: "", label: "Не менять статус" },
+                        ...t.states.map((s) => ({ value: s, label: s })),
+                      ]}
                     />
                   </li>
                 ))}
               </ul>
               <p className="muted">
-                Resolved предлагается только там, где этот статус существует.
-                Перед слиянием проверяются коммиты и список тикетов.
+                По умолчанию статусы не меняются. Выберите новый статус только
+                для нужных тикетов. Перед слиянием проверяются коммиты и список
+                тикетов.
               </p>
             </section>
           )}
           <button
             className="primary"
-            disabled={busy || plan.tickets.some((t) => !states[t.id])}
+            disabled={busy}
             onClick={() => void submit()}
           >
             <GitMerge size={17} /> Подтвердить merge
-            {plan.tickets.length ? " и смену статусов" : ""}
+            {plan.tickets.some((t) => !!states[t.id])
+              ? " и смену выбранных статусов"
+              : ""}
           </button>
         </>
       )}
@@ -300,7 +304,7 @@ export function PrMergeDialog({
         <section role="status" className="pr-merge-result">
           <h3>
             {result.status === "completed"
-              ? moveTickets && plan?.tickets.length
+              ? moveTickets && plan?.tickets.some((t) => !!states[t.id])
                 ? "Готово: merge и статусы подтверждены"
                 : "Готово: merge подтверждён"
               : result.status === "rejected"
@@ -316,8 +320,10 @@ export function PrMergeDialog({
           {result.message && <p>{result.message}</p>}
           {result.tickets?.map((t: any) => (
             <p key={t.id}>
-              #{t.id} → {t.state}:{" "}
-              {t.success ? "подтверждено" : t.error || "не подтверждено"}
+              #{t.id} ·{" "}
+              {t.skipped
+                ? "Статус не менялся"
+                : `${t.state}: ${t.success ? "подтверждено" : t.error || "не подтверждено"}`}
             </p>
           ))}
           {result.status === "rejected" && result.retryable && (

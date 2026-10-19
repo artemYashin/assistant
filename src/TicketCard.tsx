@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "./InitialsAvatar.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
@@ -165,7 +166,14 @@ export function TicketCard({ reference }: { reference: string }) {
         <dl className="ticket-metadata">
           <div>
             <dt>Автор</dt>
-            <dd>{person(f["System.CreatedBy"])}</dd>
+            <dd className="ticket-author-identity">
+              <InitialsAvatar
+                name={
+                  f["System.CreatedBy"] ? person(f["System.CreatedBy"]) : ""
+                }
+              />
+              <span>{person(f["System.CreatedBy"])}</span>
+            </dd>
           </div>
           <div>
             <dt>Исполнитель</dt>

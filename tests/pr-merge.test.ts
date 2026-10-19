@@ -241,3 +241,22 @@ test("merge ticket discovery combines links read-only without preparing or mergi
     0,
   );
 });
+
+test("merge explicitly skips unselected ticket statuses", async (t) => {
+  const f = fixture(t);
+  const p = await f.service.prepare(f.key);
+  const result = await f.service.execute(
+    p.id,
+    [
+      { id: 42, state: null },
+      { id: 43, state: "Done" },
+    ],
+    "squash",
+  );
+  assert.equal(result.status, "completed");
+  assert.deepEqual(
+    f.writes.filter((w) => w.id),
+    [{ id: 43, state: "Done" }],
+  );
+  assert.equal(result.tickets.find((v: any) => v.id === 42).skipped, true);
+});

@@ -971,3 +971,67 @@ test("a large patch cannot consume the review budget reserved for other files", 
   assert.match(result.patches[0], /small.ts/);
   assert.match(result.notes.join(" "), /лимит одного файла 10000/);
 });
+
+test("PR cards retain Azure links after removing local links and include title references", async (t) => {
+  const { service, store } = fixture(t);
+  mock(t, [{ ...pr(), title: "Fix #42", description: "Details #43" }], (url) =>
+    /\/pullrequests\/1\/workitems$/i.test(url.pathname)
+      ? { value: [{ id: "44" }] }
+      : undefined,
+  );
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  store.db
+    .prepare(
+      "INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?, 'repo',1,44)",
+    )
+    .run(monitor);
+  store.db.prepare("DELETE FROM pr_ticket_links WHERE monitor=?").run(monitor);
+  const row = service.list(context)[0];
+  assert.deepEqual(row.tickets.map((v: any) => v.id).sort(), [42, 43, 44]);
+  assert.equal(row.tickets.find((v: any) => v.id === 44).fromAzure, true);
+  assert.equal(row.tickets.find((v: any) => v.id === 44).manual, false);
+  assert.equal(row.tickets.find((v: any) => v.id === 42).fromTitle, true);
+});
+
+test("completed PR pages are bounded, cached and coalesce concurrent requests", async (t) => {
+  const { service } = fixture(t);
+  let requests = 0;
+  mock(t, [], (url) => {
+    if (url.pathname.endsWith("/workitems")) return { value: [] };
+    if (url.searchParams.get("searchCriteria.status") !== "completed")
+      throw new Error("Unexpected request");
+    requests++;
+    assert.equal(url.searchParams.get("$top"), "21");
+    const offset = Number(url.searchParams.get("$skip"));
+    return {
+      value: Array.from({ length: 21 }, (_, i) => ({
+        ...pr(offset + i + 1),
+        status: "completed",
+        closedDate: new Date().toISOString(),
+        description: "Full archived description",
+      })),
+    };
+  });
+  const monitor = service.monitors()[0].id;
+  const [first, duplicate] = await Promise.all([
+    service.completed(monitor, 0),
+    service.completed(monitor, 0),
+  ]);
+  assert.equal(requests, 1);
+  assert.deepEqual(first, duplicate);
+  assert.equal(first.items.length, 20);
+  assert.equal(first.hasNext, true);
+  await service.completed(monitor, 0);
+  assert.equal(requests, 1);
+  const next = await service.completed(monitor, 1);
+  assert.equal(requests, 2);
+  assert.equal(next.items[0].number, 21);
+  assert.equal(first.items[0].description, "Full archived description");
+  assert.equal(first.items[0].in_scope, 0);
+  service.purgeCompleted(Date.now() + 31 * 86400000);
+  assert.equal(
+    service.list(context, { monitor, repo: "repo", number: 1 }).length,
+    0,
+  );
+});

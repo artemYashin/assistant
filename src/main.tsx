@@ -1,3 +1,4 @@
+import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { TicketTrash } from "./TicketTrash.js";
@@ -35,6 +36,8 @@ import {
   Circle,
   Command,
   ExternalLink,
+  GitPullRequest,
+  GitMerge,
   Github,
   Inbox,
   LayoutDashboard,
@@ -311,6 +314,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const page = pageForPath(location.pathname);
   const setPage = (next: Page) =>
     navigate(next === "inbox" ? "/pull-requests?tab=inbox" : pagePaths[next]);
+  const completedTab =
+    new URLSearchParams(location.search).get("tab") === "completed";
   const inboxTab = new URLSearchParams(location.search).get("tab") === "inbox";
   useEffect(() => {
     if (page === "inbox")
@@ -876,9 +881,15 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <nav className="pr-page-tabs" aria-label="Разделы Pull Requests">
                 <Link
                   to="/pull-requests"
-                  aria-current={!inboxTab ? "page" : undefined}
+                  aria-current={!inboxTab && !completedTab ? "page" : undefined}
                 >
-                  Pull requests
+                  <GitPullRequest size={16} /> Активные
+                </Link>
+                <Link
+                  to="/pull-requests?tab=completed"
+                  aria-current={completedTab ? "page" : undefined}
+                >
+                  <GitMerge size={16} /> Завершённые
                 </Link>
                 <Link
                   to="/pull-requests?tab=inbox"
@@ -898,7 +909,14 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 </Link>
               </nav>
             )}
-            {page === "pullrequests" && !inboxTab && (
+            {page === "pullrequests" && completedTab && (
+              <CompletedPullRequests
+                settings={settings}
+                key={JSON.stringify(context)}
+                context={context}
+              />
+            )}
+            {page === "pullrequests" && !inboxTab && !completedTab && (
               <PullRequestsPage context={context} settings={settings} />
             )}
             {page === "pullrequests" && inboxTab && (

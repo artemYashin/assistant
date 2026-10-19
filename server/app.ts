@@ -701,6 +701,15 @@ export function createApp(
       .run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/pr/completed", async (req, res) => {
+    const input = z
+      .object({
+        monitor: z.string().min(1),
+        page: z.coerce.number().int().min(0).max(10000).default(0),
+      })
+      .parse(req.query);
+    res.json(await pullRequests.completed(input.monitor, input.page));
+  });
   app.get("/api/pr/branches", async (req, res) => {
     const q = z
       .object({
@@ -774,7 +783,10 @@ export function createApp(
       .object({
         tickets: z
           .array(
-            z.object({ id: z.number().int().positive(), state: text.min(1) }),
+            z.object({
+              id: z.number().int().positive(),
+              state: text.min(1).nullable(),
+            }),
           )
           .max(100),
         strategy: z.enum(["noFastForward", "squash", "rebase", "rebaseMerge"]),
