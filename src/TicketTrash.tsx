@@ -469,7 +469,7 @@ export function TicketTrash({
                               })
                             }
                           >
-                            <span>Тип задачи</span>
+                            <span>Тип</span>
                             {sort.key === "type" ? (
                               sort.descending ? (
                                 <ArrowDown size={13} />

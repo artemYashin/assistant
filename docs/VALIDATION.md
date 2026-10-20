@@ -1043,3 +1043,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Trash identity cells use the same vertical ID/type layout and width bounds as active/Azure rows.
 - Resize indicators are 1px wide; pointer hit area remains 8px.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.
+
+### Overview history, token chart and identity minimum (2026-10-21)
+
+- Synchronization completions/errors are recorded in the activity feed. A history popup loads up to 100 merged audit/LLM events on demand. PR audit entries retain title and identity; legacy entries resolve local PR metadata where available.
+- Overview usage is now an input/output line chart with day (24 hourly buckets), week (7 daily buckets) and month (30 daily buckets) controls in UTC. A log10(1 + tokens) Y scale supports zero values, with a bordered chart background and point readouts. Current buckets can be incomplete.
+- Ticket ID/type has a 90px minimum in automatic and manual sizing calculations, including narrowing and divider movement. Long type labels truncate with a native title tooltip. Trash header now says ID / Тип.
+- TypeScript and whitespace checks passed. Added/updated regression tests for hourly summaries, PR history metadata and identity sizing; tests were not run at the user's explicit request. Production build, live integrations and browser visuals were not exercised.

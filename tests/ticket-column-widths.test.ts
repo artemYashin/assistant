@@ -57,3 +57,24 @@ test("resizing redistributes an adjacent pair without expanding the table", () =
   const narrow = resizeColumnPair({ title: 60, tags: 30 }, "title", "tags", 50);
   assert.deepEqual(narrow, { title: 60, tags: 30 });
 });
+
+test("identity keeps its minimum when the workspace narrows or a divider moves", () => {
+  const fitted = fitColumnWidths(
+    ["selection", "id", "title", "tags"],
+    { id: 60, title: 500, tags: 300 },
+    444,
+  );
+  assert.equal(fitted.id, 90);
+  assert.equal(
+    Object.values(fitted).reduce((sum, width) => sum + width, 0),
+    444,
+  );
+  assert.equal(
+    resizeColumnPair({ id: 140, title: 200 }, "id", "title", -200).id,
+    90,
+  );
+  assert.equal(
+    resizeColumnPair({ tags: 120, id: 140 }, "tags", "id", 200).id,
+    90,
+  );
+});

@@ -770,14 +770,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <section className="panel activity-panel">
                   <div className="section-heading">
                     <h2>Последняя активность</h2>
-                    <small>Синхронизация: {date(overview.sync?.at)}</small>
+
                   </div>
-                  {overview.sync?.errors?.map((e: string) => (
-                    <div key={e} className="error">
-                      {e}
-                    </div>
-                  ))}
                   <OverviewActivity
+                    context={context}
                     audit={overview.activity || []}
                     requests={overview.usage?.recent || []}
                     tickets={tickets}

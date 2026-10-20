@@ -510,6 +510,7 @@ export class PullRequests {
     this.store.audit(
       `pr.ticket.${key.action}`,
       `PR #${key.number}: #${key.ticketId} (local)`,
+      key,
     );
     return { success: true, azureChanged: false };
   }
@@ -1463,7 +1464,7 @@ export class PullRequests {
             job.id,
           );
       })();
-      this.store.audit("pr.reviewed", `${m.azure_project} PR #${job.number}`);
+      this.store.audit("pr.reviewed", `${m.azure_project} PR #${job.number}`, job);
     } catch (e) {
       this.store.db
         .prepare(

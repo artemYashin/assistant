@@ -60,6 +60,17 @@ test("overview tokens use scoped rolling windows, zero-fill days and retain PR o
     incomplete: 1,
   });
   assert.equal(result.daily.length, 49);
+  assert.equal(result.hourly.length, 24);
+  assert.equal(result.hourly.at(-1)?.hour, "2026-10-20T12");
+  assert.equal(
+    result.hourly.reduce((sum, hour) => sum + hour.input, 0),
+    100,
+  );
+  assert.equal(
+    result.hourly.reduce((sum, hour) => sum + hour.output, 0),
+    20,
+  );
+
   assert.equal(
     result.daily.reduce((n, row) => n + row.input, 0),
     400,
@@ -69,8 +80,5 @@ test("overview tokens use scoped rolling windows, zero-fill days and retain PR o
     result.recent.find((row) => row.id === older)?.pull_request.number,
     42,
   );
-  assert.equal(
-    result.recent.length,
-    4,
-  );
+  assert.equal(result.recent.length, 4);
 });

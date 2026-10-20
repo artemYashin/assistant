@@ -382,7 +382,11 @@ export class Store {
   deleteSecret(key: string) {
     this.db.prepare("DELETE FROM secrets WHERE key=?").run(key);
   }
-  audit(action: string, detail: string) {
+  audit(action: string, detail: string, pr?: { monitor: string; repo: string; number: number }) {
+    if (pr) {
+      const row = this.db.prepare("SELECT title FROM pull_requests WHERE monitor=? AND repo=? AND number=?").get(pr.monitor, pr.repo, pr.number) as { title: string } | undefined;
+      detail = JSON.stringify({ detail, pull_request: { monitor: pr.monitor, repo: pr.repo, number: pr.number, title: row?.title || "" } });
+    }
     this.db
       .prepare("INSERT INTO audit VALUES (?,?,?,?)")
       .run(randomUUID(), action, detail, new Date().toISOString());

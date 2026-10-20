@@ -307,6 +307,7 @@ export class PrMerge {
         bypassPolicy: bypass.enabled,
         bypassReason: bypass.enabled ? bypassReason : undefined,
       }),
+      plan,
     );
     let writeError = "";
     let denied = false;
@@ -424,6 +425,7 @@ export class PrMerge {
     this.store.audit(
       "pr.merged",
       `PR #${plan.number}; ${results.filter((r) => r.success).length}/${results.length} статусов подтверждено`,
+      plan,
     );
     return save({
       status: results.every((r) => r.success) ? "completed" : "partial",

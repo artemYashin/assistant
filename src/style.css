@@ -7981,3 +7981,60 @@ summary > svg {
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+.overview-usage-periods {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.overview-usage-periods button {
+  border: 1px solid #d9e2df;
+  background: #f4f7f6;
+  color: #53665d;
+  border-radius: 7px;
+  padding: 6px 12px;
+}
+.overview-usage-periods button[aria-pressed="true"] {
+  color: #fff;
+  background: #356d5a;
+  border-color: #356d5a;
+}
+.overview-usage-periods small { color: var(--muted); margin-left: 6px; }
+.overview-line-chart {
+  margin: 14px 0 10px;
+  padding: 14px 12px 8px;
+  background: #f5f8fb;
+  border: 1px solid #d8e1e8;
+  border-radius: 10px;
+}
+.overview-line-chart svg { display: block; width: 100%; overflow: visible; }
+.overview-line-chart .token-input { background: #377a68; }
+.overview-line-chart .token-output { background: #6784c4; }
+.overview-axis-label { fill: #687987; font-size: 11px; }
+.overview-chart-readout {
+  min-height: 22px;
+  text-align: center;
+  font-size: 11px;
+  color: #536573;
+}
+.overview-line-chart rect:focus-visible { outline: 1px solid #6784c4; }
+.overview-history-button { margin-bottom: 12px; display: inline-flex; gap: 6px; align-items: center; }
+.pr-info-popup:has(.overview-activity-list) { width: min(850px, calc(100vw - 32px)); }
+
+/* Protect identity at every viewport size, including saved manual proportions. */
+.ticket-table-fit > table > :is(thead, tbody) > tr > :is(th, td).ticket-identity-column {
+  min-width: 90px;
+}
+.ticket-table-fit .ticket-id-type {
+  width: 100%;
+  max-width: none;
+}
+.ticket-table-fit .ticket-id-type > .ticket-type-badge {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

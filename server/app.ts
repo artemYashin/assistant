@@ -3,7 +3,8 @@ import {
   ticketAnalysisAttachment,
   attachmentPreview,
 } from "./chat-ticket-attachment.js";
-import { overviewUsage } from "./overview-usage.js";
+import { overviewAudit } from "./overview-activity.js";
+import { overviewUsage, recentUsage } from "./overview-usage.js";
 import { PrCreate } from "./pr-create.js";
 import { reviewFileSettings } from "./review-files.js";
 import {
@@ -413,10 +414,12 @@ export function createApp(
         "tickets.lastSync:" + source,
         null,
       ),
-      activity: store.db
-        .prepare("SELECT * FROM audit ORDER BY created_at DESC LIMIT 8")
-        .all(),
+      activity: overviewAudit(store),
     });
+  });
+  app.get("/api/overview/activity", (req, res) => {
+    const context = contextSchema.parse(req.query);
+    res.json({ audit: overviewAudit(store, 100), requests: recentUsage(store, context, 100) });
   });
   app.get("/api/memories", (req, res) =>
     res.json(store.memories(contextSchema.parse(req.query))),
@@ -1321,7 +1324,13 @@ export function createApp(
         errors,
       };
       store.set("sync.status", result);
+      store.audit(errors.length ? "sync.error" : "sync.completed", errors.length ? errors.join("; ") : "Фоновое обновление данных завершено");
       return result;
+    } catch (error) {
+      const message = error instanceof AppError ? error.message : "Ошибка синхронизации";
+      store.set("sync.status", { state: "error", at: new Date().toISOString(), errors: [...errors, message] });
+      store.audit("sync.error", [...errors, message].join("; "));
+      throw error;
     } finally {
       syncing = false;
     }

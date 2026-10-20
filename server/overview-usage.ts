@@ -43,23 +43,60 @@ export function overviewUsage(
       .slice(0, 10);
     return byDate.get(day) || { day, input: 0, output: 0 };
   });
-  const recent = store.db
+  const hourStart = Math.floor(now / 3600000) * 3600000 - 23 * 3600000;
+  const hourlyRows = store.db
     .prepare(
-      `SELECT id,created_at,finished_at,origin,status,pull_request FROM llm_requests WHERE (?='' OR client=?) AND (?='' OR project=?) ORDER BY COALESCE(finished_at,created_at) DESC LIMIT 8`,
+      cte +
+        ` SELECT substr(created_at,1,13) hour,SUM(input) input,SUM(output) output FROM scoped GROUP BY hour`,
     )
-    .all(...scope) as any[];
+    .all(...scope, new Date(hourStart).toISOString(), until) as {
+    hour: string;
+    input: number;
+    output: number;
+  }[];
+  const hours = new Map(hourlyRows.map((row) => [row.hour, row]));
+  const hourly = Array.from({ length: 24 }, (_, index) => {
+    const hour = new Date(hourStart + index * 3600000)
+      .toISOString()
+      .slice(0, 13);
+    return hours.get(hour) || { hour, input: 0, output: 0 };
+  });
   return {
     day: summary(new Date(now - 86400000).toISOString()),
     weeks: summary(since),
     daily,
-    recent: recent.map((row) => {
-      let pr = null;
-      try {
-        pr = row.pull_request ? JSON.parse(row.pull_request) : null;
-      } catch {
-        /* Old rows may lack PR metadata. */
-      }
-      return { ...row, pull_request: pr };
-    }),
+    hourly,
+    recent: recentUsage(store, context),
   };
+}
+
+export function recentUsage(store: Store, context: Context, limit = 8) {
+  const scope = [
+    context.client,
+    context.client,
+    context.project,
+    context.project,
+  ];
+  const recent = store.db
+    .prepare(
+      `SELECT id,created_at,finished_at,origin,status,pull_request FROM llm_requests WHERE (?='' OR client=?) AND (?='' OR project=?) ORDER BY COALESCE(finished_at,created_at) DESC LIMIT ?`,
+    )
+    .all(...scope, limit) as any[];
+  return recent.map((row) => {
+    let pr = null;
+    try {
+      pr = row.pull_request ? JSON.parse(row.pull_request) : null;
+    } catch {
+      /* Old rows may lack PR metadata. */
+    }
+    if (pr && !pr.title) {
+      const known = store.db
+        .prepare(
+          "SELECT title FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+        )
+        .get(pr.monitor, pr.repo, pr.number) as any;
+      pr = { ...pr, title: known?.title || "Название недоступно" };
+    }
+    return { ...row, pull_request: pr };
+  });
 }

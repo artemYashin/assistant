@@ -1,5 +1,15 @@
+import { useState } from "react";
+import { PrInfoPopup } from "./PrInfoPopup.js";
+import { api } from "./api.js";
 import { Link } from "react-router-dom";
-import { MessageSquare, GitPullRequest, Ticket, Activity } from "lucide-react";
+import {
+  MessageSquare,
+  GitPullRequest,
+  Ticket,
+  Activity,
+  RefreshCw,
+  History,
+} from "lucide-react";
 import { pullRequestPath, ticketPath } from "./routing.js";
 const actions: Record<string, string> = {
   "ticket.tracked": "Добавлен тикет",
@@ -11,6 +21,14 @@ const actions: Record<string, string> = {
   "ticket.assigned_locally": "Обновлено локальное поручение",
   "settings.updated": "Настройки сохранены",
   "memory.saved": "Добавлена запись в память",
+  "sync.completed": "Синхронизация завершена",
+  "sync.error": "Ошибка синхронизации",
+  "pr.merge.requested": "Запущено слияние PR",
+  "pr.merged": "PR объединён",
+  "pr.ticket.link": "Тикет привязан к PR",
+  "pr.ticket.unlink": "Связь тикета с PR удалена",
+  "pr.answers_submitted": "Ответы для ревью отправлены",
+  "pr.questions_ignored": "Ревью завершено без ответов",
   "pr.reviewed": "Выполнено ревью PR",
   "github.connected": "GitHub подключён",
   "teams.connected": "Teams подключён",
@@ -27,30 +45,82 @@ export function OverviewActivity({
   audit,
   requests,
   tickets,
+  context,
+  limit = 8,
+  history = true,
 }: {
   audit: any[];
   requests: any[];
   tickets: any[];
+  context: { client: string; project: string };
+  limit?: number;
+  history?: boolean;
 }) {
+  const [expanded, setExpanded] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const loadHistory = async () => {
+    setLoading(true);
+    setError("");
+    setExpanded(null);
+    try {
+      setExpanded(
+        await api("/overview/activity?" + new URLSearchParams(context)),
+      );
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   const events = [
     ...audit
-      .filter((a) => a.action !== "pr.reviewed" || !requests.length)
+      .filter(
+        (a) =>
+          a.action !== "pr.reviewed" ||
+          !requests.some(
+            (r) =>
+              r.pull_request &&
+              a.pull_request &&
+              r.pull_request.monitor === a.pull_request.monitor &&
+              r.pull_request.repo === a.pull_request.repo &&
+              r.pull_request.number === a.pull_request.number &&
+              Math.abs(
+                Date.parse(r.finished_at || r.created_at) -
+                  Date.parse(a.created_at),
+              ) < 60000,
+          ),
+      )
       .map((a) => {
         const id = a.action.startsWith("ticket.")
           ? /^#?(\d+)(?:\D|$)/.exec(a.detail)?.[1]
           : null;
         const ticket = tickets.find((t) => String(t.id) === id);
         return {
-          id: a.id,
+          id: "audit:" + a.id,
           at: a.created_at,
           title: actions[a.action] || a.action,
-          detail: ticket ? `#${id} · ${ticket.title}` : a.detail,
-          href: ticket ? ticketPath(ticket.id, ticket.source) : undefined,
-          icon: id ? Ticket : Activity,
+          detail: a.pull_request
+            ? `#${a.pull_request.number} · ${a.pull_request.title || "Название недоступно"}`
+            : ticket
+              ? `#${id} · ${ticket.title}`
+              : a.detail,
+          href: a.pull_request
+            ? pullRequestPath(a.pull_request)
+            : ticket
+              ? ticketPath(ticket.id, ticket.source)
+              : undefined,
+          icon: a.action.startsWith("sync.")
+            ? RefreshCw
+            : a.action.startsWith("pr.")
+              ? GitPullRequest
+              : id
+                ? Ticket
+                : Activity,
         };
       }),
     ...requests.map((r) => ({
-      id: r.id,
+      id: "request:" + r.id,
       at: r.finished_at || r.created_at,
       title:
         r.origin === "pr_review"
@@ -60,43 +130,82 @@ export function OverviewActivity({
             : "Запрос LLM",
       detail: r.pull_request
         ? `#${r.pull_request.number} · ${r.pull_request.title}`
-        : "Чат ассистента",
+        : r.origin === "pr_review"
+          ? "Pull request · сведения не сохранены"
+          : "Чат ассистента",
       status: statuses[r.status] || r.status,
       href: r.pull_request ? pullRequestPath(r.pull_request) : "/usage",
       icon: r.origin === "pr_review" ? GitPullRequest : MessageSquare,
     })),
   ]
     .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 8);
-  return events.length ? (
-    <div className="overview-activity-list">
-      {events.map((event: any) => (
-        <div className="overview-activity-item" key={event.id}>
-          <event.icon size={17} />
-          <div>
-            <strong>
-              {event.title}
-              {event.status ? ` · ${event.status}` : ""}
-            </strong>
-            {event.detail &&
-              (event.href ? (
-                <Link to={event.href}>{event.detail}</Link>
-              ) : (
-                <span>{event.detail}</span>
-              ))}
-          </div>
-          <time dateTime={event.at}>
-            {new Date(event.at).toLocaleString("ru-RU", {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </time>
+    .slice(0, limit);
+  return (
+    <>
+      {history && (
+        <PrInfoPopup
+          title="История активности · последние 100 событий"
+          className="secondary overview-history-button"
+          trigger={
+            <>
+              <History size={15} /> История
+            </>
+          }
+          onOpenChange={(open) => {
+            if (open) void loadHistory();
+          }}
+        >
+          {loading ? (
+            <p role="status">Загрузка истории…</p>
+          ) : error ? (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          ) : (
+            expanded && (
+              <OverviewActivity
+                audit={expanded.audit}
+                requests={expanded.requests}
+                tickets={tickets}
+                context={context}
+                limit={100}
+                history={false}
+              />
+            )
+          )}
+        </PrInfoPopup>
+      )}
+      {events.length ? (
+        <div className="overview-activity-list">
+          {events.map((event: any) => (
+            <div className="overview-activity-item" key={event.id}>
+              <event.icon size={17} />
+              <div>
+                <strong>
+                  {event.title}
+                  {event.status ? ` · ${event.status}` : ""}
+                </strong>
+                {event.detail &&
+                  (event.href ? (
+                    <Link to={event.href}>{event.detail}</Link>
+                  ) : (
+                    <span>{event.detail}</span>
+                  ))}
+              </div>
+              <time dateTime={event.at}>
+                {new Date(event.at).toLocaleString("ru-RU", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </time>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  ) : (
-    <p className="muted">История действий появится здесь.</p>
+      ) : (
+        <p className="muted">История действий появится здесь.</p>
+      )}
+    </>
   );
 }
