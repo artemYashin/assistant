@@ -13,6 +13,7 @@ test("Excel export round-trips ordered tickets as values with formatting", async
         state: "Active",
         priority: 2,
         tags: ["UI", "API"],
+        azureTags: ["Customer", "Backend"],
       },
       { id: 7, title: 'Ошибка; "текст"\nследующая строка' },
     ],
@@ -29,6 +30,9 @@ test("Excel export round-trips ordered tickets as values with formatting", async
   assert.equal(sheet.getCell("B2").value, '=HYPERLINK("url")');
   assert.equal(sheet.getCell("B2").type, ExcelJS.ValueType.String);
   assert.equal(sheet.getCell("F2").value, "UI; API");
+  assert.equal(sheet.getCell("G1").value, "Azure Tags");
+  assert.equal(sheet.getCell("G2").value, "Customer; Backend");
+  assert.equal(sheet.getCell("G3").value, "");
   assert.equal(sheet.getCell("E3").value, 1);
   assert.equal(sheet.getCell("A2").font.bold, true);
   assert.equal(sheet.getCell("B1").font.bold, true);

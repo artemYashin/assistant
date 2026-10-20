@@ -5,6 +5,7 @@ export type CsvTicket = {
   state?: string;
   priority?: number;
   tags?: string[];
+  azureTags?: string[];
   assigned?: string;
   developers?: { name: string }[];
   developer_name?: string;
@@ -55,6 +56,13 @@ export const exportColumns = [
     value: (t: CsvTicket) => (t.tags || []).join("; "),
   },
   {
+    key: "azureTags",
+    header: "Azure Tags",
+    label: "Azure теги",
+    width: 36,
+    value: (t: CsvTicket) => (t.azureTags || []).join("; "),
+  },
+  {
     key: "developers",
     header: "Development Owners",
     label: "Локальное поручение",
@@ -92,6 +100,7 @@ export const defaultExportColumns: ExportColumnKey[] = [
   "state",
   "priority",
   "tags",
+  "azureTags",
 ];
 export function selectedExportColumns(keys: ExportColumnKey[]) {
   const columns = exportColumns.filter((column) => keys.includes(column.key));

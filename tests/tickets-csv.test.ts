@@ -10,18 +10,19 @@ test("CSV preserves selected order and escapes quotes, delimiters, lines and for
       state: "Active",
       priority: 2,
       tags: ["UI", "API"],
+      azureTags: ["Customer", "Backend"],
     },
     { id: 7, title: '=HYPERLINK("url")', state: "Ready for Development" },
   ]);
   assert.ok(csv.startsWith('\uFEFF"ID";'));
   assert.ok(
     csv.includes(
-      '"42";"Ошибка; ""текст""\nследующая строка";"Bug";"Active";"2";"UI; API"\r\n',
+      '"42";"Ошибка; ""текст""\nследующая строка";"Bug";"Active";"2";"UI; API";"Customer; Backend"\r\n',
     ),
   );
   assert.ok(
     csv.includes(
-      '"7";"\'=HYPERLINK(""url"")";"";"Ready for Development";"1";""\r\n',
+      '"7";"\'=HYPERLINK(""url"")";"";"Ready for Development";"1";"";""\r\n',
     ),
   );
   assert.ok(csv.indexOf('"42"') < csv.indexOf('"7"'));

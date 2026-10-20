@@ -787,3 +787,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Header uses balanced outer grid tracks and compact searchable customer/project dropdowns; the gear retains the management dialog. Narrow layouts place selectors on a centered second row with matching sticky offsets. Selection errors are shown outside the dialog as well.
 - Removed hardcoded initial developer grouping rules: unconfigured statuses resolve to active. Existing explicitly saved mappings remain. The grouping editor lists the source-scoped Azure type/state catalog cached after successful loading in settings (or the same explicit reload action), rather than ticket states or mapping keys. Until the first catalog reload, previously saved import-status selections are used.
 - Pre-push validation: all 192 tests and production build passed, including catalog persistence and empty default mappings. Vite retains its large-chunk warning. Live Azure and browser visual behavior were not exercised.
+
+### Ticket detail order and Azure tag exports (2026-10-20)
+
+- Ticket identity/date metadata now follows the title, before type/status/local priority. Local notes are the last detail section, below attachments and raw fields.
+- Added selectable Azure Tags to Excel/CSV export immediately after local Tags, enabled by default. Missing tags export as empty values; existing filtered/selected row ordering and formatting remain shared by both formats.
+- Pre-push validation: all 192 tests and production build passed. Excel round-trip and CSV tests cover separate Azure tag values and missing-tag rows. Vite retains its large-chunk warning. Browser visuals were not exercised.

@@ -143,6 +143,40 @@ export function TicketCard({ reference }: { reference: string }) {
         </nav>
       </header>
       <div className="ticket-card-body">
+        <dl className="ticket-metadata">
+          <div>
+            <dt>Автор</dt>
+            <dd className="ticket-author-identity">
+              <InitialsAvatar
+                name={
+                  f["System.CreatedBy"] ? person(f["System.CreatedBy"]) : ""
+                }
+              />
+              <span>{person(f["System.CreatedBy"])}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Исполнитель</dt>
+            <dd className="ticket-author-identity">
+              {f["System.AssignedTo"] && (
+                <InitialsAvatar name={person(f["System.AssignedTo"])} />
+              )}
+              <span>
+                {f["System.AssignedTo"]
+                  ? person(f["System.AssignedTo"])
+                  : "Не назначен"}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>Создан</dt>
+            <dd>{timestamp(f["System.CreatedDate"])}</dd>
+          </div>
+          <div>
+            <dt>Изменён</dt>
+            <dd>{timestamp(f["System.ChangedDate"])}</dd>
+          </div>
+        </dl>
         <dl className="ticket-overview">
           <div>
             <dt>Тип задачи</dt>
@@ -212,75 +246,6 @@ export function TicketCard({ reference }: { reference: string }) {
               </dd>
             </div>
           )}
-        </dl>
-        <details className="ticket-section">
-          <summary>
-            <FileText size={17} />
-            Локальные заметки
-          </summary>
-          <div className="ticket-local-notes">
-            <div className="ticket-local-notes-heading">
-              <span className="muted">Сохраняются только в Orbit</span>
-              {card.locallyTracked && (
-                <TicketMetadata
-                  ticket={{
-                    id: card.id,
-                    source: card.source,
-                    ...card.localMetadata,
-                  }}
-                  context={card.localContext}
-                  field="notes"
-                  onChange={() => {}}
-                />
-              )}
-            </div>
-            <p
-              className={!card.localMetadata?.notes ? "muted" : undefined}
-              style={{ whiteSpace: "pre-wrap" }}
-            >
-              {card.localMetadata?.notes || "Локальных заметок пока нет."}
-            </p>
-            {!card.locallyTracked && (
-              <p className="muted">
-                Для редактирования заметок, приоритета и локального поручения
-                сначала добавьте тикет в локальный список на странице «Тикеты».
-              </p>
-            )}
-          </div>
-        </details>
-        <dl className="ticket-metadata">
-          <div>
-            <dt>Автор</dt>
-            <dd className="ticket-author-identity">
-              <InitialsAvatar
-                name={
-                  f["System.CreatedBy"] ? person(f["System.CreatedBy"]) : ""
-                }
-              />
-              <span>{person(f["System.CreatedBy"])}</span>
-            </dd>
-          </div>
-          <div>
-            <dt>Исполнитель</dt>
-            <dd className="ticket-author-identity">
-              {f["System.AssignedTo"] && (
-                <InitialsAvatar name={person(f["System.AssignedTo"])} />
-              )}
-              <span>
-                {f["System.AssignedTo"]
-                  ? person(f["System.AssignedTo"])
-                  : "Не назначен"}
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt>Создан</dt>
-            <dd>{timestamp(f["System.CreatedDate"])}</dd>
-          </div>
-          <div>
-            <dt>Изменён</dt>
-            <dd>{timestamp(f["System.ChangedDate"])}</dd>
-          </div>
         </dl>
         <div className="ticket-source">
           <span>Данные получены: {timestamp(card.loadedAt)}</span>
@@ -447,6 +412,41 @@ export function TicketCard({ reference }: { reference: string }) {
               </div>
             ))}
           </dl>
+        </details>
+        <details className="ticket-section">
+          <summary>
+            <FileText size={17} />
+            Локальные заметки
+          </summary>
+          <div className="ticket-local-notes">
+            <div className="ticket-local-notes-heading">
+              <span className="muted">Сохраняются только в Orbit</span>
+              {card.locallyTracked && (
+                <TicketMetadata
+                  ticket={{
+                    id: card.id,
+                    source: card.source,
+                    ...card.localMetadata,
+                  }}
+                  context={card.localContext}
+                  field="notes"
+                  onChange={() => {}}
+                />
+              )}
+            </div>
+            <p
+              className={!card.localMetadata?.notes ? "muted" : undefined}
+              style={{ whiteSpace: "pre-wrap" }}
+            >
+              {card.localMetadata?.notes || "Локальных заметок пока нет."}
+            </p>
+            {!card.locallyTracked && (
+              <p className="muted">
+                Для редактирования заметок, приоритета и локального поручения
+                сначала добавьте тикет в локальный список на странице «Тикеты».
+              </p>
+            )}
+          </div>
         </details>
       </div>
     </article>
