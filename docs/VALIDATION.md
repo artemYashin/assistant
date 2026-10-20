@@ -680,3 +680,22 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - An explicit full-ticket/deep-analysis request now first receives a deterministic token-cost warning and a question, before starting the model or reading full Azure content. A separate affirmative answer to that immediately preceding warning authorizes the original read request for one turn only. Ordinary requests continue using summaries.
 - Both `get_ticket` full cards and `list_tickets(detail=full)` are gated; consent cannot be supplied by ticket text or borrowed from a mutation confirmation. A changed current checkbox selection does not replace the originally confirmed selection. No separate approval table/widget is used; the warning and answer live in ordinary chat history.
 - TypeScript check passed. Added/updated regression cases for no reads before consent, confirmation, refusal, unrelated replies, one-turn expiry and full-card display after consent. Pre-push validation: all 173 tests and the production build passed.
+
+### Local-first chat ticket reads (2026-10-20)
+
+- Fixed the remaining remote paths for ordinary chat queries: `get_ticket` now returns the saved SQLite summary by default; an unknown local ID returns a local-not-found error without Azure fallback. Automatic prompt enrichment skips numbers absent from the local tracker, so a count such as 23 does not trigger a remote lookup.
+- Azure summary reads require the explicit read-only/add choice described below. Confirmed full-card/deep reads and the verification reads inside actual Azure status mutations remain available. Local summaries include their sync timestamp and are not described as freshly verified.
+- TypeScript check passed. Added regression cases for zero remote reads for lists/known IDs/unknown IDs and local cache invalidation after a failed status write. Pre-push validation: all 179 tests and the production build passed.
+
+### Explicit Azure lookup choices (2026-10-20)
+
+- Ordinary ticket reads stay local. Missing local IDs prepare a visible question; list searches can propose a follow-up Azure search with exact IDs OR title/type/state criteria. The question includes the connection and local match count/preview.
+- `request_azure_ticket_lookup` makes no Azure calls. After a separate choice, `lookup_azure_tickets` executes only the plan recorded in the previous assistant message. Read-only mode does not save tickets; add mode stores the returned basic records locally, never writes Azure. An ambiguous yes, changed source, unrelated reply or different IDs does not authorize the lookup.
+- Searches are bounded to 50 returned records, with an explicit partial-results indication and no automatic additional-page fetch. Basic fields only; deep descriptions still use the separate token-warning flow. Identical execution within a turn is deduplicated. Direct add tools cannot broaden an approved lookup.
+- TypeScript check passed. Added regression tests for consent/mode/source binding, read-only persistence, bounded escaped WIQL, and blocked unapproved requests. Pre-push validation: all 179 tests and the production build passed. Live Azure has not been exercised.
+
+### Single tracked ticket exception (2026-10-20)
+
+- A clearly identified single ticket already stored in the current local source may be read in full immediately when the user asks for its description/details or an opinion/deep analysis. Plain status/list requests remain local summaries. The exception is bound to that ID; both single-ticket reads and full list reads reject expansion without separate consent.
+- Multiple tickets still require the token warning before deep reading. An absent single ticket is offered the explicit Azure read-only/add choice first, without fetching its description. A full-card request displays a card; an opinion alone does not automatically display a full card.
+- TypeScript check passed. Added regression cases for numeric counts vs IDs, single/multiple checkbox selections, scope binding, immediate single local analysis and no reads/model calls before questions for missing/multiple tickets. Pre-push validation: all 179 tests and the production build passed. Vite reports its existing large-chunk warning. Live Azure and Copilot behavior have not been exercised.

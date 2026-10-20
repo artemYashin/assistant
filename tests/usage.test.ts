@@ -231,6 +231,19 @@ test("manual PR review has no tools or chat history and still accounts usage", a
 
 test("chat fetches a mentioned ticket live and persists its UI card reference", async (t) => {
   const store = fixture(t);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(
+      store.source(),
+      123456,
+      "Summary title",
+      "Resolved",
+      "Owner",
+      "Bug",
+      "",
+      "",
+      "now",
+    );
   let fetched = 0,
     prompt = "";
   const session = {
@@ -271,10 +284,7 @@ test("chat fetches a mentioned ticket live and persists its UI card reference", 
     () => client as any,
     connectors as any,
   );
-  const warning = await agent.chat("Покажи тикет 123456", context);
-  assert.match(warning.body, /много токенов/);
-  assert.equal(fetched, 0);
-  const result = await agent.chat("Да, давай", context);
+  const result = await agent.chat("Покажи тикет 123456", context);
   assert.equal(fetched, 1);
   assert.deepEqual(result.cards, ["card-reference"]);
   assert.match(prompt, /Current Azure title/);
@@ -402,8 +412,20 @@ test("review feedback tools are limited to questions and memory proposals with o
 
 test("failed status change invalidates cached ticket without retrying the write", async (t) => {
   const store = fixture(t);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(
+      store.source(),
+      123456,
+      "Local title",
+      "Active",
+      "",
+      "Bug",
+      "",
+      "",
+      "now",
+    );
   let config: any,
-    reads = 0,
     writes = 0;
   const session = {
     on: () => {},
@@ -413,14 +435,12 @@ test("failed status change invalidates cached ticket without retrying the write"
       const change = config.tools.find(
         (x: any) => x.name === "change_ticket_status",
       );
-      await get.handler({ id: 123456 }, {});
-      const initialReads = reads;
+      assert.equal((await get.handler({ id: 123456 }, {})).state, "Active");
       assert.equal(
         (await change.handler({ id: 123456, state: "RFT" }, {})).success,
         false,
       );
-      await get.handler({ id: 123456 }, {});
-      assert.equal(reads, initialReads + 1);
+      assert.equal((await get.handler({ id: 123456 }, {})).state, "Resolved");
       assert.equal(
         (await change.handler({ id: 123456, state: "RFT" }, {})).success,
         false,
@@ -439,13 +459,14 @@ test("failed status change invalidates cached ticket without retrying the write"
     forceStop: async () => {},
   };
   const connectors = {
-    ticketSummary: async () => ({
-      cardId: `card-${++reads}`,
-      source: store.source(),
-      fields: {},
-    }),
+    ticketSummary: async () => {
+      throw new Error("Local reads must not fetch Azure");
+    },
     changeTicketStatus: async () => {
       writes++;
+      store.db
+        .prepare("UPDATE tickets SET state='Resolved' WHERE id=123456")
+        .run();
       throw new Error("unconfirmed");
     },
   };
@@ -823,4 +844,145 @@ test("list tool blocks unsolicited full content and permits explicit deep analys
   allowed = false;
   await agent.chat("Покажи список тикетов", context);
   assert.equal(reads, 1, "consent must not carry into the next request");
+});
+
+test("ordinary ticket lists, known IDs and missing IDs never read Azure", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(
+      store.source(),
+      42,
+      "Saved title",
+      "Resolved",
+      "Owner",
+      "Bug",
+      "",
+      "",
+      "yesterday",
+    );
+  let remoteReads = 0;
+  const forbidden = async () => {
+    remoteReads++;
+    throw new Error("Unexpected Azure request");
+  };
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const call = (name: string, args: any) =>
+        config.tools.find((tool: any) => tool.name === name).handler(args, {});
+      const list = await call("list_tickets", {});
+      assert.equal(list.tickets[0].title, "Saved title");
+      const known = await call("get_ticket", { id: 42 });
+      assert.equal(known.origin, "local");
+      assert.equal(known.synced_at, "yesterday");
+      const missing = await call("get_ticket", { id: 99 });
+      assert.equal(missing.success, false);
+      assert.match(missing.error, /отсутствует в локальной базе/);
+      assert.match(missing.error, /Azure не запрашивался/);
+      return { data: { content: "Локальные данные" } };
+    },
+    { ticketSummary: forbidden, ticketDetails: forbidden },
+  );
+  await agent.chat("Найди 23 тикета и скажи статус #42", context);
+  assert.equal(remoteReads, 0);
+});
+
+test("Azure lookup requires an explicit mode choice and cannot expand the confirmed plan", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  let reads = 0,
+    approved = false;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const call = (name: string, args: any = {}) =>
+        config.tools.find((tool: any) => tool.name === name).handler(args, {});
+      if (!approved) {
+        const local = await call("get_ticket", { id: 42 });
+        assert.equal(local.success, false);
+        const denied = await call("lookup_azure_tickets");
+        assert.equal(denied.success, false);
+      } else {
+        for (let i = 0; i < 2; i++) {
+          const result = await call("lookup_azure_tickets");
+          assert.equal(result.tickets[0].state, "Live state");
+          assert.deepEqual(result.added, []);
+        }
+        assert.equal(
+          (await call("add_local_ticket", { id: 42 })).success,
+          false,
+        );
+      }
+      return { data: { content: "Ответ" } };
+    },
+    {
+      lookupTickets: async (plan: any, add: boolean, guard: () => void) => {
+        guard();
+        reads++;
+        assert.deepEqual(plan, { ids: [42] });
+        assert.equal(add, false);
+        return {
+          tickets: [{ id: 42, source: store.source(), state: "Live state" }],
+          added: [],
+        };
+      },
+    },
+  );
+  const question = await agent.chat("Что знаешь о тикете #42?", context);
+  assert.match(question.body, /Какой вариант выбрать/);
+  assert.equal(reads, 0);
+  approved = true;
+  await agent.chat("Только показать", context);
+  assert.equal(reads, 1);
+});
+
+test("single local ticket analysis is immediate; missing and multiple tickets ask first", async (t) => {
+  const store = fixture(t);
+  for (const id of [42, 43])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, "Title", "Active", "", "Bug", "", "", "now");
+  let reads = 0,
+    modelCalls = 0;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      modelCalls++;
+      const get = config.tools.find((tool: any) => tool.name === "get_ticket");
+      const result = await get.handler({ id: 42 }, {});
+      assert.equal(result.fields["System.Description"], "Full description");
+      const denied = await get.handler({ id: 43 }, {});
+      assert.equal(denied.success, false);
+      return { data: { content: "Мнение" } };
+    },
+    {
+      ticketDetails: async (id: number) => {
+        reads++;
+        return {
+          id,
+          source: store.source(),
+          fields: { "System.Description": "Full description" },
+          comments: [],
+        };
+      },
+    },
+  );
+  t.mock.method(console, "error", () => {});
+  const opinion = await agent.chat("Что ты думаешь о тикете #42?", context);
+  assert.equal(reads, 1);
+  assert.equal(modelCalls, 1);
+  assert.deepEqual(opinion.cards, []);
+  const missing = await agent.chat("Покажи описание тикета #99", context);
+  assert.match(missing.body, /Запросить сведения в Azure/);
+  assert.equal(reads, 1);
+  assert.equal(modelCalls, 1);
+  const multiple = await agent.chat(
+    "Что думаешь о тикетах #42 и #43?",
+    context,
+  );
+  assert.match(multiple.body, /много токенов/);
+  assert.equal(reads, 1);
+  assert.equal(modelCalls, 1);
 });

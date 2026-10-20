@@ -78,3 +78,30 @@ test("deep read consent requires a separate yes after the actual token warning",
     request,
   );
 });
+
+import { singleTicketTarget } from "../server/ticket-display.js";
+test("single-ticket exception excludes counts and multi-ticket selections", () => {
+  assert.equal(singleTicketTarget("Что думаешь о тикете #42?"), 42);
+  assert.equal(singleTicketTarget("Покажи описание тикета 42"), 42);
+  assert.equal(singleTicketTarget("Покажи описание #42 и 43"), undefined);
+  assert.equal(singleTicketTarget("Проанализируй все 23 тикета"), undefined);
+  assert.equal(
+    singleTicketTarget(
+      "Проанализируй все тикеты\n\nВыбранные пользователем тикеты в таблице: #42",
+    ),
+    undefined,
+  );
+  assert.equal(
+    singleTicketTarget(
+      "Покажи описание выбранного тикета\n\nВыбранные пользователем тикеты в таблице: #42",
+    ),
+    42,
+  );
+  assert.equal(
+    singleTicketTarget("Что думаешь об этом тикете?", [
+      { role: "user", body: "Какой статус тикета #42?" },
+      { role: "assistant", body: "Active" },
+    ]),
+    42,
+  );
+});

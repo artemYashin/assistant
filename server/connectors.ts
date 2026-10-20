@@ -1,3 +1,4 @@
+import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
 import {
   changeTicketStates,
   type StatusChange,
@@ -981,6 +982,116 @@ export class Connectors {
           this.saveTicket(item, s);
       }
     }
+  }
+  async lookupTickets(input: AzureLookup, add: boolean, guard: () => void) {
+    const plan = azureLookupSchema.parse(input);
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const check = () => {
+      guard();
+      if (this.store.source(s) !== this.store.source())
+        throw new AppError(409, "Подключение Azure изменилось");
+    };
+    check();
+    let ids = plan.ids ? [...new Set(plan.ids)] : [];
+    let hasMore = false;
+    if (!ids.length) {
+      const quote = (value: string) => "'" + value.replace(/'/g, "''") + "'";
+      const filters = ["[System.TeamProject] = @project"];
+      if (plan.search)
+        filters.push(`[System.Title] CONTAINS ${quote(plan.search)}`);
+      if (plan.type)
+        filters.push(`[System.WorkItemType] = ${quote(plan.type)}`);
+      if (plan.state) filters.push(`[System.State] = ${quote(plan.state)}`);
+      const found = await this.azure(
+        "wiql?$top=51",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            query: `SELECT [System.Id] FROM WorkItems WHERE ${filters.join(" AND ")} ORDER BY [System.Id] ASC`,
+          }),
+        },
+        s,
+        pat,
+      );
+      if (!Array.isArray(found.workItems))
+        throw new AppError(502, "Azure не вернул результаты поиска");
+      hasMore = found.workItems.length > 50;
+      ids = found.workItems.slice(0, 50).map((item: any) => item.id);
+    }
+    check();
+    if (!ids.length)
+      return { scope: "azure", tickets: [], added: [], missing: [], hasMore };
+    const response = await this.azure(
+      "workitemsbatch",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ids,
+          errorPolicy: "Omit",
+          fields: [
+            "System.Id",
+            "System.TeamProject",
+            "System.Title",
+            "System.WorkItemType",
+            "System.State",
+            "System.AssignedTo",
+            "System.ChangedDate",
+          ],
+        }),
+      },
+      s,
+      pat,
+    );
+    check();
+    if (!Array.isArray(response.value))
+      throw new AppError(502, "Azure не вернул тикеты");
+    const items = response.value.filter(
+      (item: any) =>
+        ids.includes(item.id) &&
+        item.fields?.["System.TeamProject"] === s.azureProject,
+    );
+    const tickets = items.map((item: any) => {
+      const f = item.fields;
+      return {
+        id: item.id,
+        title: f["System.Title"] || "",
+        state: f["System.State"] || "",
+        type: f["System.WorkItemType"] || "",
+        assigned:
+          typeof f["System.AssignedTo"] === "string"
+            ? f["System.AssignedTo"]
+            : f["System.AssignedTo"]?.displayName || "",
+        source: this.store.source(s),
+        localUrl: `/tickets?${new URLSearchParams({ id: String(item.id), source: this.store.source(s) })}`,
+      };
+    });
+    if (add)
+      this.store.db.transaction(() => {
+        check();
+        for (const item of items) {
+          this.store.db
+            .prepare(
+              "UPDATE ticket_local SET removed=0 WHERE source=? AND id=?",
+            )
+            .run(this.store.source(s), item.id);
+          this.saveTicket(item, s);
+          this.store.db
+            .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
+            .run(this.store.source(s), item.id);
+          this.store.audit("ticket.tracked", String(item.id));
+        }
+      })();
+    return {
+      scope: "azure",
+      tickets,
+      added: add ? tickets.map((item: any) => item.id) : [],
+      missing: ids.filter((id) => !items.some((item: any) => item.id === id)),
+      hasMore,
+      note: hasMore
+        ? "Показаны первые 50 результатов; уточните критерии для следующего поиска"
+        : undefined,
+    };
   }
   async trackTicket(id: number, guard: () => void = () => {}) {
     this.store.purgeTicketTrash();
