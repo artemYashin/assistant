@@ -508,6 +508,46 @@ export class Connectors {
     }
     return options;
   }
+  async ticketSummary(id: number) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const fields = [
+      "System.Id",
+      "System.TeamProject",
+      "System.Title",
+      "System.WorkItemType",
+      "System.State",
+      "System.AssignedTo",
+    ];
+    const item = await this.azure(
+      `workitems/${id}?fields=${fields.join(",")}`,
+      {},
+      s,
+      pat,
+    );
+    if (
+      item.id !== id ||
+      item.fields?.["System.TeamProject"] !== s.azureProject
+    )
+      throw new AppError(
+        400,
+        "Номер или проект тикета не соответствует запросу",
+      );
+    if (this.store.source(s) !== this.store.source())
+      throw new AppError(409, "Подключение Azure изменилось");
+    const f = item.fields;
+    const assigned = f["System.AssignedTo"];
+    return {
+      id,
+      source: this.store.source(s),
+      title: f["System.Title"] || "",
+      type: f["System.WorkItemType"] || "",
+      state: f["System.State"] || "",
+      assigned:
+        typeof assigned === "string" ? assigned : assigned?.displayName || "",
+    };
+  }
+
   async ticketDetails(id: number) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");

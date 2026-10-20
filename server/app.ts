@@ -487,6 +487,47 @@ export function createApp(
     res.json({ ok: true });
   });
   const localDevelopers = new LocalDevelopers(store);
+  const developerBoardKey = (context: Context) =>
+    `developer-board:${JSON.stringify([context.client, context.project, store.source()])}`;
+  const developerNoteKey = (context: Context, id: string) =>
+    `developer-note:${JSON.stringify([context.client, context.project, id])}`;
+  app.get("/api/developer-board", (req, res) => {
+    const context = contextSchema.parse(req.query);
+    res.json({
+      developers: localDevelopers
+        .list(context)
+        .map((person) => ({
+          ...person,
+          notes: store.get<string>(developerNoteKey(context, person.id), ""),
+        })),
+      completedStates: store.get<string[]>(developerBoardKey(context), [
+        "Closed",
+        "Done",
+        "Completed",
+        "Removed",
+      ]),
+    });
+  });
+  app.put("/api/developer-board/states", (req, res) => {
+    const input = z
+      .object({
+        context: contextSchema,
+        states: z.array(z.string().trim().min(1).max(200)).max(100),
+      })
+      .parse(req.body);
+    store.set(developerBoardKey(input.context), [...new Set(input.states)]);
+    res.json({ ok: true });
+  });
+  app.put("/api/developer-board/:id/notes", (req, res) => {
+    const input = z
+      .object({ context: contextSchema, notes: z.string().max(20000) })
+      .parse(req.body);
+    const id = String(req.params.id);
+    if (!localDevelopers.list(input.context).some((person) => person.id === id))
+      throw new AppError(404, "Разработчик не найден в этом проекте");
+    store.set(developerNoteKey(input.context, id), input.notes);
+    res.json({ ok: true });
+  });
   app.get("/api/local-developers", (req, res) =>
     res.json(localDevelopers.list(contextSchema.parse(req.query))),
   );

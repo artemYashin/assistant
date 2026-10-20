@@ -5055,3 +5055,107 @@ summary > svg {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.developer-board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.developer-board-toolbar > input {
+  width: min(100%, 300px);
+}
+.developer-board-settings {
+  flex: 1 1 320px;
+  padding: 12px;
+  min-width: 0;
+}
+.developer-board-settings > .multi-select {
+  margin: 12px 0;
+}
+.developer-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.developer-board-card {
+  min-width: 0;
+  padding: 18px;
+}
+.developer-board-card > header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.developer-board-card h2 {
+  margin: 0 0 3px;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.developer-board-card .pr-page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.developer-board-card .pr-page-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f4f1;
+  color: #3c5147;
+  padding: 8px;
+  border: 1px solid #d6dfd8;
+  border-radius: 7px;
+}
+.developer-board-card .pr-page-tabs button[aria-pressed="true"] {
+  background: #24564c;
+  color: white;
+}
+.developer-board-tickets {
+  max-height: 370px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.developer-board-ticket {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.developer-board-ticket > a {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.developer-board-ticket > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+.developer-board-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  font-size: 12px;
+}
+.developer-board-notes {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.developer-board-notes textarea {
+  width: 100%;
+  resize: vertical;
+  margin: 10px 0;
+}
+.developer-board-notes > small {
+  display: block;
+  margin-top: 8px;
+}

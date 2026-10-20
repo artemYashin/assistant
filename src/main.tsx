@@ -1,3 +1,4 @@
+import { DevelopersPage } from "./DevelopersPage.js";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
@@ -84,6 +85,7 @@ const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
   { id: "inbox", label: "Входящие", icon: Inbox },
   { id: "tickets", label: "Тикеты", icon: Ticket },
+  { id: "developers", label: "Разработчики", icon: Users },
   { id: "pullrequests", label: "Pull requests", icon: GitPullRequest },
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
@@ -494,13 +496,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             orbit<span>personal workspace</span>
           </b>
         </div>
-        <div className="workspace-label">
-          <span className="avatar">Я</span>
-          <div>
-            <b>Моё пространство</b>
-            <small>Локально · только для вас</small>
-          </div>
-        </div>
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
           {navigation
@@ -531,11 +526,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="privacy-note">
-            <ShieldCheck size={20} />
-            <strong>Последнее слово за вами</strong>
-            <p>Предложения в память сохраняются после вашего подтверждения.</p>
-          </div>
           <Link
             to={pagePaths.settings}
             title="Настройки"
@@ -1052,6 +1042,18 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   busy={busy}
                 />
               )}
+            {page === "developers" && (
+              <DevelopersPage
+                key={JSON.stringify([
+                  context,
+                  settings?.azureUrl,
+                  settings?.azureProject,
+                ])}
+                context={context}
+                tickets={tickets}
+                settings={settings}
+              />
+            )}
             {page === "approvals" && (
               <>
                 <PageHeading

@@ -2,6 +2,7 @@ export const pagePaths = {
   overview: "/",
   inbox: "/inbox",
   tickets: "/tickets",
+  developers: "/developers",
   approvals: "/approvals",
   memory: "/memory",
   teams: "/teams",

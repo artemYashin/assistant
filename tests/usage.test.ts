@@ -233,6 +233,13 @@ test("chat fetches a mentioned ticket live and persists its UI card reference", 
     forceStop: async () => {},
   };
   const connectors = {
+    ticketSummary: async (id: number) => ({
+      id,
+      source: store.source(),
+      title: "Summary title",
+      state: "Resolved",
+      assigned: "Owner",
+    }),
     ticketDetails: async (id: number) => {
       fetched++;
       assert.equal(id, 123456);
@@ -258,6 +265,11 @@ test("chat fetches a mentioned ticket live and persists its UI card reference", 
     (store.history(context).at(-1) as any).cards,
     '["card-reference"]',
   );
+  const summary = await agent.chat("Какой статус тикета 123456?", context);
+  assert.equal(fetched, 1, "summary must not fetch full details again");
+  assert.deepEqual(summary.cards, []);
+  assert.match(prompt, /Summary title/);
+  assert.doesNotMatch(prompt, /Latest comment/);
 });
 
 test("status tool requires current user instruction and deduplicates repeated writes", async (t) => {
@@ -297,7 +309,7 @@ test("status tool requires current user instruction and deduplicates repeated wr
     forceStop: async () => {},
   };
   const connectors = {
-    ticketDetails: async () => ({ cardId: "card", fields: {} }),
+    ticketSummary: async () => ({ cardId: "card", fields: {} }),
     changeTicketStatus: async () => {
       writes++;
       return { success: true, state: "RFT", outcome: "changed" };
@@ -401,7 +413,7 @@ test("failed status change invalidates cached ticket without retrying the write"
     forceStop: async () => {},
   };
   const connectors = {
-    ticketDetails: async () => ({
+    ticketSummary: async () => ({
       cardId: `card-${++reads}`,
       source: store.source(),
       fields: {},
@@ -470,7 +482,7 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
     forceStop: async () => {},
   };
   const connectors = {
-    ticketDetails: async () => ({
+    ticketSummary: async () => ({
       cardId: "card",
       source: store.source(),
       fields: {},
