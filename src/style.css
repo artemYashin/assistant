@@ -6061,63 +6061,173 @@ summary > svg {
   max-height: 90vh;
   max-height: 90dvh;
 }
-.ticket-section-resize {
+.ticket-section-resizable {
+  position: relative;
+}
+.ticket-detail .ticket-section > .ticket-section-resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 12px;
+  margin: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 18px;
-  margin-top: 4px;
-  border-radius: 5px;
-  background: #f1f5f9;
+  border-radius: 0 0 8px 8px;
+  background: transparent;
   cursor: ns-resize;
   touch-action: none;
   user-select: none;
+  z-index: 2;
 }
 .ticket-section-resize > span {
   width: 36px;
   height: 4px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #94a3b8;
 }
-.ticket-section-resize:hover {
-  background: #e2e8f0;
+.ticket-detail
+  .ticket-section
+  > .ticket-section-resize:is(:hover, :focus-visible, :active) {
+  background: #87a98f30;
+  outline: none;
 }
-.ticket-section-resize:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+.ticket-section-resize:is(:hover, :focus-visible, :active) > span {
+  background: var(--green);
 }
 
-/* Reveal cell editing without moving the value; touch keeps visible controls. */
+/* The edit button covers the compact field; its pencil is only an affordance. */
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer) {
+  position: relative;
+  min-height: 34px;
+  min-width: 60px;
+  padding: 5px 28px 5px 6px;
+  border-radius: 8px;
+  transition:
+    background-color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > .local-developer {
+  padding-right: 60px;
+  min-width: 96px;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  ):is(:hover, :focus-within)
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer) {
+  box-shadow: inset 0 0 0 1px #94a3b8;
+  background: #f0f5fa;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+  > .ticket-field-edit-trigger {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  box-shadow: none;
+  z-index: 1;
+  cursor: pointer;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+  > .ticket-field-edit-trigger
+  > svg {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 11px;
+  height: 11px;
+  transition: opacity 0.1s ease;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > .local-developer
+  > .ticket-field-edit-trigger
+  > svg {
+  right: 38px;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > .local-developer
+  > button:not(.ticket-field-edit-trigger) {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
 @media (hover: hover) and (pointer: fine) {
-  .ticket-table-fit
-    > table
-    > tbody
-    > tr:not(.ticket-preview-row)
-    > td:is(
-      [data-column="state"],
-      [data-column="priority"],
-      [data-column="tags"],
-      [data-column="developer_name"]
-    ):has(
-      > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    ) {
-    position: relative;
-  }
-  .ticket-table-fit
-    > table
-    > tbody
-    > tr:not(.ticket-preview-row)
-    > td:is(
-      [data-column="state"],
-      [data-column="priority"],
-      [data-column="tags"],
-      [data-column="developer_name"]
-    ):has(
-      > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    ):is(:hover, :focus-within) {
-    box-shadow: inset 0 0 0 1px #94a3b8;
-    background: #f0f5fa;
-  }
   .ticket-table-fit
     > table
     > tbody
@@ -6129,25 +6239,25 @@ summary > svg {
       [data-column="developer_name"]
     )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    > button {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
+    > .ticket-field-edit-trigger
+    > svg {
     opacity: 0;
-    pointer-events: none;
-    background: #fff;
-    box-shadow: 0 1px 4px #33415524;
   }
   .ticket-table-fit
     > table
     > tbody
     > tr:not(.ticket-preview-row)
-    > td[data-column="developer_name"]
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    )
     > .local-developer
-    > button:first-of-type {
-    right: 36px;
+    > button:not(.ticket-field-edit-trigger) {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
   }
   .ticket-table-fit
     > table
@@ -6160,18 +6270,78 @@ summary > svg {
       [data-column="developer_name"]
     ):is(:hover, :focus-within)
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    > button {
+    > .ticket-field-edit-trigger
+    > svg {
     opacity: 1;
-    pointer-events: auto;
   }
   .ticket-table-fit
     > table
     > tbody
     > tr:not(.ticket-preview-row)
-    > td:is(:hover, :focus-within)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    ):is(:hover, :focus-within)
+    > .local-developer
+    > button:not(.ticket-field-edit-trigger) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:is(
+    [data-column="state"],
+    [data-column="priority"],
+    [data-column="tags"],
+    [data-column="developer_name"]
+  )
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+  > .ticket-field-edit-trigger:disabled {
+  cursor: wait;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    )
+    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer),
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    > button:disabled {
-    opacity: 0.45;
+    > button,
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    )
+    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    > button
+    > svg {
+    transition: none;
   }
 }
 
@@ -6226,4 +6396,247 @@ summary > svg {
 }
 .sidebar a.active .sidebar-pr-icon {
   color: #286693;
+}
+
+/* Dialogs opened inside nowrap table cells must size and wrap independently. */
+:is(.ticket-status-dialog, .ticket-metadata-dialog) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  grid-template-columns: minmax(0, 1fr);
+}
+:is(.ticket-status-dialog, .ticket-metadata-dialog) > *,
+.ticket-metadata-dialog form,
+.ticket-metadata-dialog form > *,
+:is(.ticket-status-dialog, .ticket-metadata-dialog)
+  .developer-dialog-heading
+  > :first-child {
+  min-width: 0;
+}
+.ticket-metadata-dialog form,
+.ticket-metadata-dialog label {
+  grid-template-columns: minmax(0, 1fr);
+}
+:is(.ticket-status-dialog, .ticket-metadata-dialog)
+  .developer-dialog-heading
+  > button {
+  flex-shrink: 0;
+}
+:is(.ticket-status-dialog, .ticket-metadata-dialog)
+  .single-select-option
+  > span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.sidebar .sidebar-icon-overview {
+  color: #b77924;
+}
+.sidebar .sidebar-icon-tickets {
+  color: #537b49;
+}
+.sidebar .sidebar-icon-developers {
+  color: #327e85;
+}
+.sidebar .sidebar-icon-pullrequests {
+  color: #4284b6;
+}
+.sidebar .sidebar-icon-approvals {
+  color: #aa7040;
+}
+.sidebar .sidebar-icon-memory {
+  color: #8863ab;
+}
+.sidebar .sidebar-icon-usage {
+  color: #ac5981;
+}
+.sidebar .sidebar-icon-settings {
+  color: #64748b;
+}
+.sidebar .sidebar-icon-logout {
+  color: #a86868;
+}
+.sidebar .sidebar-icon-inbox {
+  color: #578da5;
+}
+.sidebar .sidebar-icon-teams {
+  color: #777ba7;
+}
+.overview-toolbar,
+.overview-connections {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.overview-toolbar {
+  justify-content: flex-end;
+}
+.overview-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 9px;
+  border: 1px solid #d7dce3;
+  border-radius: 8px;
+  background: #f6f7f9;
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.overview-connection.is-connected {
+  color: #306347;
+  background: #edf6ef;
+  border-color: #bad3c0;
+}
+.overview-connection:hover {
+  border-color: #94a3b8;
+}
+.stats-grid.overview-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 600px) {
+  .stats-grid.overview-stats {
+    grid-template-columns: 1fr;
+  }
+  .overview-toolbar {
+    justify-content: flex-start;
+  }
+}
+
+.overview-token-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 12px 0 20px;
+}
+.overview-token-totals > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.overview-token-totals strong {
+  font-size: 24px;
+}
+.overview-token-totals small,
+.overview-token-totals span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.overview-chart-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.overview-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.overview-chart-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.token-input {
+  background: #4e86be;
+}
+.token-output {
+  background: #aa71bc;
+}
+.overview-token-chart {
+  display: flex;
+  gap: 3px;
+  height: 150px;
+  border-bottom: 1px solid var(--border);
+}
+.overview-token-day {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+}
+.overview-token-bar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 1px;
+  overflow: hidden;
+  border-radius: 3px 3px 0 0;
+  background: #e2e8f0;
+}
+.overview-token-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #263444;
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: 11px;
+  pointer-events: none;
+}
+.overview-token-day:is(:hover, :focus-visible) .overview-token-tooltip {
+  display: block;
+}
+.overview-token-day:nth-child(-n + 8) .overview-token-tooltip {
+  left: 0;
+  transform: none;
+}
+.overview-token-day:nth-last-child(-n + 8) .overview-token-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.overview-chart-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 6px 0 12px;
+}
+.overview-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.overview-activity-item > svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+.overview-activity-item > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.overview-activity-item a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+.overview-activity-item time {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .overview-token-totals {
+    grid-template-columns: 1fr;
+  }
+  .overview-activity-item {
+    flex-wrap: wrap;
+  }
 }

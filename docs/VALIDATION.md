@@ -813,3 +813,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - On devices with a fine hover pointer, editable table cells reveal bordered edit/remove controls on hover or keyboard focus without moving their values. Touch controls remain visible.
 - Acceptance criteria use pale-red borders/headings, linked PRs pale blue, comments/attachments neutral gray. Sidebar PR icon uses matching blue.
 - Pre-push validation: all 192 tests passed; production build passed again after final color changes. Vite retains its large-chunk warning. Browser pointer/resize behavior and macOS scrollbar presentation were not exercised.
+
+### Overview usage dashboard and compact ticket editing (2026-10-20)
+
+- Overview now shows scoped ticket/PR/memory counts, compact integration indicators, token totals for 24 hours and seven weeks, and a daily input/output chart. Recent activity includes ticket identities, chat requests and PR review links. Sidebar icons have distinct colors.
+- Added a local-database usage aggregation test covering context filtering, reporting periods, missing receipts, daily zero filling and PR metadata.
+- Editable ticket fields use compact rounded clickable areas with small hover pencils and reserved icon space. Accordion resize grips sit on the bottom border; status/metadata dialogs allow text wrapping to avoid horizontal overflow.
+- Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/pointer behavior and live integrations were not exercised.

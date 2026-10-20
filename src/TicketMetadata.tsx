@@ -48,7 +48,7 @@ export function TicketMetadata({
         className={
           showLabel
             ? "secondary ticket-notes-trigger"
-            : "icon-button ticket-cell-button"
+            : `icon-button ticket-cell-button${field !== "notes" ? " ticket-field-edit-trigger" : ""}`
         }
         aria-label={label + " тикета #" + ticket.id}
         title={

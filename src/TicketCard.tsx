@@ -311,7 +311,7 @@ export function TicketCard({ reference }: { reference: string }) {
           .filter(([key]) => f[key])
           .map(([key, label]) => (
             <details
-              className={`ticket-section${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
+              className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
               key={key}
               open
             >

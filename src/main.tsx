@@ -1,3 +1,5 @@
+import { OverviewUsage } from "./OverviewUsage.js";
+import { OverviewActivity } from "./OverviewActivity.js";
 import { RotateCcw } from "lucide-react";
 import { ChatTools } from "./ChatTools.js";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
@@ -389,7 +391,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   async function reload() {
     const generation = ++loadGeneration.current;
     const [o, i, t, a, m, c, rq, mp] = await Promise.all([
-      api("/overview"),
+      api(`/overview?${new URLSearchParams(context)}`),
       api("/inbox"),
       api("/tickets"),
       api("/approvals"),
@@ -516,9 +518,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               >
                 <n.icon
                   size={19}
-                  className={
-                    n.id === "pullrequests" ? "sidebar-pr-icon" : undefined
-                  }
+                  className={`sidebar-icon sidebar-icon-${n.id}`}
                 />
                 <span className="sidebar-text">{n.label}</span>
                 {n.id === "approvals" &&
@@ -543,7 +543,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             aria-current={page === "settings" ? "page" : undefined}
             className={page === "settings" ? "active" : ""}
           >
-            <Settings2 size={19} />
+            <Settings2
+              size={19}
+              className="sidebar-icon sidebar-icon-settings"
+            />
             <span className="sidebar-text">Настройки</span>
           </Link>
           <button
@@ -562,7 +565,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             aria-label="Выйти"
             onClick={() => run("logout", onLogout)}
           >
-            <LogOut size={18} />
+            <LogOut size={18} className="sidebar-icon sidebar-icon-logout" />
             <span className="sidebar-text">Выйти</span>
           </button>
         </div>
@@ -639,53 +642,73 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <>
                 <div className="page-heading">
                   <div>
-                    <span className="eyebrow">ВАШ РАБОЧИЙ ФОКУС</span>
-                    <h1>Всё важное — в поле зрения.</h1>
+                    <h1>Обзор</h1>
                     <p>
-                      Orbit помнит детали, замечает задачи и помогает двигаться
-                      дальше.
+                      Тикеты, pull requests и знания вашего рабочего
+                      пространства.
                     </p>
                   </div>
-                  <button
-                    className="secondary"
-                    disabled={!!busy}
-                    onClick={() =>
-                      run(
-                        "sync",
-                        () => api("/sync", "POST", {}),
-                        "Синхронизация завершена. Статус — ниже.",
-                      )
-                    }
-                  >
-                    <RefreshCw
-                      size={16}
-                      className={busy === "sync" ? "spin" : ""}
-                    />
-                    Обновить
-                  </button>
+                  <div className="overview-toolbar">
+                    <div
+                      className="overview-connections"
+                      aria-label="Подключения"
+                    >
+                      {[
+                        { name: "Copilot", icon: Github },
+                        { name: "Teams", icon: MessageSquare },
+                        { name: "DevOps", icon: Ticket },
+                      ].map((item, index) => (
+                        <button
+                          type="button"
+                          key={item.name}
+                          className={`overview-connection${connected[index] ? " is-connected" : ""}`}
+                          onClick={() => setPage("settings")}
+                          title={`${item.name}: ${connected[index] ? (index === 2 ? "подключение настроено" : "подключено") : "не подключено"}`}
+                          aria-label={`${item.name}: ${connected[index] ? "подключение настроено" : "не подключено"}. Открыть настройки`}
+                        >
+                          <item.icon size={15} /> {item.name}{" "}
+                          {connected[index] ? (
+                            <Check size={14} />
+                          ) : (
+                            <ArrowUpRight size={14} />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="secondary"
+                      disabled={!!busy}
+                      onClick={() =>
+                        run(
+                          "sync",
+                          () => api("/sync", "POST", {}),
+                          "Синхронизация завершена. Статус — ниже.",
+                        )
+                      }
+                    >
+                      <RefreshCw
+                        size={16}
+                        className={busy === "sync" ? "spin" : ""}
+                      />
+                      Обновить
+                    </button>
+                  </div>
                 </div>
-                <div className="stats-grid">
+                <div className="stats-grid overview-stats">
                   {[
                     {
-                      label: "Требуют внимания",
-                      value: items.length,
-                      icon: Inbox,
-                      target: "inbox",
-                      note: "упоминания тикетов",
-                    },
-                    {
-                      label: "В работе",
+                      label: "Тикеты",
                       value: tickets.length,
                       icon: Ticket,
                       target: "tickets",
-                      note: "в вашем трекере",
+                      note: "в локальном трекере, без корзины",
                     },
                     {
-                      label: "Ждут решения",
-                      value: pending.length,
-                      icon: ShieldCheck,
-                      target: "approvals",
-                      note: "сообщения для отправки",
+                      label: "Pull requests",
+                      value: overview.pullRequests ?? 0,
+                      icon: GitPullRequest,
+                      target: "pullrequests",
+                      note: "активные в выбранном контексте",
                     },
                     {
                       label: "В памяти",
@@ -712,131 +735,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                     </button>
                   ))}
                 </div>
-                {!connected.every(Boolean) && (
-                  <section className="setup-card">
-                    <div className="section-heading">
-                      <div>
-                        <Badge tone="green">НАЧНЁМ С ОСНОВ</Badge>
-                        <h2>Подключите свой рабочий мир</h2>
-                        <p>
-                          Три подключения, чтобы ассистент видел нужный
-                          контекст.
-                        </p>
-                      </div>
-                      <span className="setup-progress">
-                        {connected.filter(Boolean).length} / 3
-                      </span>
-                    </div>
-                    <div className="integration-steps">
-                      {[
-                        {
-                          title: "GitHub Copilot",
-                          description: "Модель из вашей подписки",
-                          icon: Github,
-                        },
-                        {
-                          title: "Microsoft Teams",
-                          description: "Сообщения и черновики",
-                          icon: MessageSquare,
-                        },
-                        {
-                          title: "Azure DevOps",
-                          description: "Тикеты и их статусы",
-                          icon: Ticket,
-                        },
-                      ].map((s, i) => (
-                        <button
-                          key={s.title}
-                          onClick={() => setPage("settings")}
-                          className={connected[i] ? "done" : ""}
-                        >
-                          <div className="integration-icon">
-                            <s.icon size={21} />
-                          </div>
-                          <div>
-                            <b>{s.title}</b>
-                            <small>{s.description}</small>
-                          </div>
-                          {connected[i] ? (
-                            <Check size={18} />
-                          ) : (
-                            <ArrowUpRight size={17} />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-                <div className="dashboard-columns">
-                  <section className="panel">
-                    <div className="section-heading">
-                      <h2>
-                        Требует внимания <span>{items.length}</span>
-                      </h2>
-                      <button
-                        className="text-button"
-                        onClick={() => setPage("inbox")}
-                      >
-                        Все входящие <ArrowUpRight size={15} />
-                      </button>
-                    </div>
-                    {items.length ? (
-                      <div className="compact-list">
-                        {items.slice(0, 4).map((i) => (
-                          <button key={i.id} onClick={() => setPage("inbox")}>
-                            <span className="ticket-square">
-                              <Ticket size={18} />
-                            </span>
-                            <div>
-                              <b>Возможный тикет #{i.ticket_id}</b>
-                              <p>{i.excerpt}</p>
-                              <small>{i.chat_name}</small>
-                            </div>
-                            <ChevronRight size={16} />
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <Empty
-                        title="Ничего не потерялось"
-                        description="Здесь появятся упоминания тикетов из выбранных чатов Teams."
-                      />
-                    )}
-                  </section>
-                  <section className="panel">
-                    <div className="section-heading">
-                      <h2>Под вашим контролем</h2>
-                      <ShieldCheck size={19} />
-                    </div>
-                    {pending.length ? (
-                      <div className="compact-list">
-                        {pending.slice(0, 3).map((a) => (
-                          <button
-                            key={a.id}
-                            onClick={() => setPage("approvals")}
-                          >
-                            <div>
-                              <Badge tone="amber">Нужен апрув</Badge>
-                              <b>{a.chat_name}</b>
-                              <p>{a.body}</p>
-                            </div>
-                            <ChevronRight size={16} />
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <Empty
-                        icon={CheckCheck}
-                        title="Все решения приняты"
-                        description="Когда ассистент подготовит сообщение, здесь появится черновик на проверку."
-                      />
-                    )}
-                    <div className="panel-footer">
-                      <LockKeyhole size={14} /> Отправка только после вашего
-                      подтверждения
-                    </div>
-                  </section>
-                </div>
+                <OverviewUsage usage={overview.usage} />
                 <section className="panel activity-panel">
                   <div className="section-heading">
                     <h2>Последняя активность</h2>
@@ -847,42 +746,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                       {e}
                     </div>
                   ))}
-                  {overview.activity?.length ? (
-                    <div className="activity-list">
-                      {overview.activity.slice(0, 5).map((a: any) => (
-                        <div key={a.id}>
-                          <span className="activity-dot" />
-                          <span>
-                            {(
-                              {
-                                "settings.updated": "Настройки сохранены",
-                                "memory.saved": "Добавлена запись в память",
-                                "message.proposed":
-                                  "Подготовлен черновик Teams",
-                                "message.approved": "Отправка подтверждена",
-                                "message.sent": "Сообщение отправлено",
-                                "ticket.state.verified":
-                                  "Статус тикета подтверждён",
-                                "ticket.state.unconfirmed":
-                                  "Смена статуса не подтверждена",
-                                "ticket.tracked": "Тикет добавлен в трекер",
-                                "github.connected": "GitHub подключён",
-                                "teams.connected": "Teams подключён",
-                                "message.rejected": "Черновик отклонён",
-                                "message.unknown":
-                                  "Проверьте результат отправки в Teams",
-                              } as any
-                            )[a.action] || a.action}
-                          </span>
-                          <time>{date(a.created_at)}</time>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="muted">
-                      Ваша история действий появится здесь.
-                    </p>
-                  )}
+                  <OverviewActivity
+                    audit={overview.activity || []}
+                    requests={overview.usage?.recent || []}
+                    tickets={tickets}
+                  />
                 </section>
               </>
             )}

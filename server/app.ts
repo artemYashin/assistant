@@ -1,3 +1,4 @@
+import { overviewUsage } from "./overview-usage.js";
 import { PrCreate } from "./pr-create.js";
 import { reviewFileSettings } from "./review-files.js";
 import {
@@ -314,9 +315,23 @@ export function createApp(
   app.get("/api/copilot/models", async (_req, res) =>
     res.json(await agent.models()),
   );
-  app.get("/api/overview", (_req, res) => {
+  app.get("/api/overview", (req, res) => {
+    const context = contextSchema.parse(req.query);
     const source = store.source();
     res.json({
+      usage: overviewUsage(store, context),
+      pullRequests: (
+        store.db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor WHERE p.in_scope=1 AND m.enabled=1 AND (?='' OR m.client=?) AND (?='' OR m.project=?)`,
+          )
+          .get(
+            context.client,
+            context.client,
+            context.project,
+            context.project,
+          ) as any
+      ).n,
       pending: (
         store.db
           .prepare(

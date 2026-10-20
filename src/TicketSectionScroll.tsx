@@ -50,85 +50,90 @@ export function TicketSectionScroll({
     ? Math.min(travel, (metrics.top / maximum) * travel)
     : 0;
   return (
-    <div className={`ticket-scroll-shell${overflowing ? " has-overflow" : ""}`}>
+    <>
       <div
-        id={id}
-        ref={viewport}
-        className={`ticket-section-scroll${height !== null ? " is-resized" : ""}`}
-        style={height !== null ? { height } : undefined}
-        role="region"
-        aria-label={label}
-        tabIndex={0}
+        className={`ticket-scroll-shell${overflowing ? " has-overflow" : ""}`}
       >
-        <div ref={content}>{children}</div>
-      </div>
-      {overflowing && (
         <div
-          className="ticket-scroll-track"
-          style={{ height: metrics.height }}
-          role="scrollbar"
-          aria-label={`Прокрутка: ${label}`}
-          aria-controls={id}
-          aria-orientation="vertical"
-          aria-valuemin={0}
-          aria-valuemax={Math.round(maximum)}
-          aria-valuenow={Math.round(
-            Math.min(maximum, Math.max(0, metrics.top)),
-          )}
+          id={id}
+          ref={viewport}
+          className={`ticket-section-scroll${height !== null ? " is-resized" : ""}`}
+          style={height !== null ? { height } : undefined}
+          role="region"
+          aria-label={label}
           tabIndex={0}
-          onKeyDown={(event) => {
-            const node = viewport.current!;
-            const steps: Record<string, number> = {
-              ArrowDown: 40,
-              ArrowUp: -40,
-              PageDown: node.clientHeight,
-              PageUp: -node.clientHeight,
-              " ": event.shiftKey ? -node.clientHeight : node.clientHeight,
-            };
-            if (event.key in steps) {
-              event.preventDefault();
-              node.scrollTop += steps[event.key];
-            } else if (event.key === "Home" || event.key === "End") {
-              event.preventDefault();
-              node.scrollTop = event.key === "Home" ? 0 : maximum;
-            }
-          }}
-          onPointerDown={(event) => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            event.currentTarget.focus({ preventScroll: true });
-            event.currentTarget.setPointerCapture(event.pointerId);
-            const node = viewport.current!;
-            if (!(event.target as Element).closest(".ticket-scroll-thumb")) {
-              const y =
-                event.clientY - event.currentTarget.getBoundingClientRect().top;
-              node.scrollTop =
-                Math.max(0, Math.min(1, (y - thumb / 2) / travel)) * maximum;
-            }
-            drag.current = { y: event.clientY, top: node.scrollTop };
-          }}
-          onPointerMove={(event) => {
-            if (drag.current)
-              viewport.current!.scrollTop =
-                drag.current.top +
-                ((event.clientY - drag.current.y) / travel) * maximum;
-          }}
-          onPointerUp={() => {
-            drag.current = null;
-          }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
-          onLostPointerCapture={() => {
-            drag.current = null;
-          }}
         >
-          <span
-            className="ticket-scroll-thumb"
-            style={{ height: thumb, transform: `translateY(${offset}px)` }}
-          />
+          <div ref={content}>{children}</div>
         </div>
-      )}
+        {overflowing && (
+          <div
+            className="ticket-scroll-track"
+            style={{ height: metrics.height }}
+            role="scrollbar"
+            aria-label={`Прокрутка: ${label}`}
+            aria-controls={id}
+            aria-orientation="vertical"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(maximum)}
+            aria-valuenow={Math.round(
+              Math.min(maximum, Math.max(0, metrics.top)),
+            )}
+            tabIndex={0}
+            onKeyDown={(event) => {
+              const node = viewport.current!;
+              const steps: Record<string, number> = {
+                ArrowDown: 40,
+                ArrowUp: -40,
+                PageDown: node.clientHeight,
+                PageUp: -node.clientHeight,
+                " ": event.shiftKey ? -node.clientHeight : node.clientHeight,
+              };
+              if (event.key in steps) {
+                event.preventDefault();
+                node.scrollTop += steps[event.key];
+              } else if (event.key === "Home" || event.key === "End") {
+                event.preventDefault();
+                node.scrollTop = event.key === "Home" ? 0 : maximum;
+              }
+            }}
+            onPointerDown={(event) => {
+              if (event.button !== 0) return;
+              event.preventDefault();
+              event.currentTarget.focus({ preventScroll: true });
+              event.currentTarget.setPointerCapture(event.pointerId);
+              const node = viewport.current!;
+              if (!(event.target as Element).closest(".ticket-scroll-thumb")) {
+                const y =
+                  event.clientY -
+                  event.currentTarget.getBoundingClientRect().top;
+                node.scrollTop =
+                  Math.max(0, Math.min(1, (y - thumb / 2) / travel)) * maximum;
+              }
+              drag.current = { y: event.clientY, top: node.scrollTop };
+            }}
+            onPointerMove={(event) => {
+              if (drag.current)
+                viewport.current!.scrollTop =
+                  drag.current.top +
+                  ((event.clientY - drag.current.y) / travel) * maximum;
+            }}
+            onPointerUp={() => {
+              drag.current = null;
+            }}
+            onPointerCancel={() => {
+              drag.current = null;
+            }}
+            onLostPointerCapture={() => {
+              drag.current = null;
+            }}
+          >
+            <span
+              className="ticket-scroll-thumb"
+              style={{ height: thumb, transform: `translateY(${offset}px)` }}
+            />
+          </div>
+        )}
+      </div>
       <div
         className="ticket-section-resize"
         role="separator"
@@ -188,6 +193,6 @@ export function TicketSectionScroll({
       >
         <span aria-hidden="true" />
       </div>
-    </div>
+    </>
   );
 }
