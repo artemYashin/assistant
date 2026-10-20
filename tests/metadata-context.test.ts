@@ -1,0 +1,59 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { metadataContextRequest } from "../server/metadata-context.js";
+const history = [
+  { role: "user", body: "Добавь тег UI тикетам Internal Sites" },
+  { role: "assistant", body: "Добавить ко всем 23 тикетам или только к #42?" },
+];
+test("scope clarification retains the user's metadata request, never the assistant's suggested action", () => {
+  const result = metadataContextRequest("Ко всем 23, кроме #42", history);
+  assert.equal(result.contextual, true);
+  assert.match(result.prompt, /Добавь тег UI/);
+  assert.match(result.prompt, /кроме #42/);
+  assert.doesNotMatch(result.prompt, /или только/);
+  for (const reply of ["Нет", "Отмена", "Спасибо", "Какие там статусы?"]) {
+    assert.equal(metadataContextRequest(reply, history).contextual, false);
+  }
+  assert.equal(
+    metadataContextRequest("Да", [
+      { role: "user", body: "Покажи тикеты" },
+      { role: "assistant", body: "Добавить тег UI?" },
+    ]).contextual,
+    false,
+  );
+  assert.equal(metadataContextRequest("Да", []).contextual, false);
+});
+
+import { confirmedChatRequest } from "../server/metadata-context.js";
+
+test("text approval continues the immediately preceding request only", () => {
+  const history = [
+    { role: "user", body: "Переведи #42 и #43 в RFT" },
+    {
+      role: "assistant",
+      body: "#42 — Full title\n#43 — Another title\nВыполнить эти изменения? Ответьте „да, делай“",
+    },
+  ];
+  const result = confirmedChatRequest("Да, делай", history);
+  assert.equal(result.contextual, true);
+  assert.match(result.prompt, /Переведи #42 и #43 в RFT/);
+  for (const reply of ["Нет", "Да, но только #42", "Добавь тег X"])
+    assert.equal(confirmedChatRequest(reply, history).contextual, false);
+  assert.equal(
+    confirmedChatRequest("Да", [{ role: "assistant", body: "Помочь ещё?" }])
+      .contextual,
+    false,
+  );
+});
+
+test("text approval preserves original metadata intent through a clarification", () => {
+  const result = confirmedChatRequest("да, давай делай", [
+    { role: "user", body: "Добавь тег UI всем тикетам" },
+    { role: "assistant", body: "Всем 23?" },
+    { role: "user", body: "Ко всем 23, кроме #42" },
+    { role: "assistant", body: "Добавлю тег UI. Выполнить эти изменения?" },
+  ]);
+  assert.equal(result.contextual, true);
+  assert.match(result.prompt, /Добавь тег UI/);
+  assert.match(result.prompt, /кроме #42/);
+});

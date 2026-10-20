@@ -38,6 +38,7 @@ export function ticketMetadataTools(
   prompt: string,
   assertActive: () => void,
   isKnownTicket: (id: number) => boolean = () => false,
+  requireResolvedTicket = false,
 ) {
   const source = store.source();
   const written = new Map<string, string>();
@@ -50,7 +51,8 @@ export function ticketMetadataTools(
         assertActive();
         const args = editMetadataSchema.parse(input);
         const hasId =
-          new RegExp(`(?<![0-9])${args.id}(?![0-9])`).test(prompt) ||
+          (!requireResolvedTicket &&
+            new RegExp(`(?<![0-9])${args.id}(?![0-9])`).test(prompt)) ||
           isKnownTicket(args.id);
         const command =
           /добавь|добавит|допиши|дописать|запиши|записать|поставь|поставить|установи|выстави|измени|изменить|поменяй|обнови|замени|заменить|убери|удали|удалить|очисти|присвой|присвоить|пометь|clear|replace|append|add|remove|update|set\b/iu.test(
@@ -64,6 +66,16 @@ export function ticketMetadataTools(
           throw new AppError(
             403,
             "Нужна явная просьба изменить локальные поля. Номер тикета должен быть в сообщении или получен через list_tickets/get_ticket/get_local_ticket_metadata в этом запросе.",
+          );
+        const excluded = [
+          ...prompt.matchAll(
+            /(?:кроме|исключая|except|excluding)\s+(?:(?:тикет(?:а|ов)?|задач(?:и|у)?|ticket)\s*)?#?(\d+)(?!\d)/giu,
+          ),
+        ].map((match) => Number(match[1]));
+        if (excluded.includes(args.id))
+          throw new AppError(
+            403,
+            "Этот тикет исключён пользователем из изменения",
           );
         if (source !== store.source())
           throw new AppError(409, "Подключение изменилось. Повторите запрос.");

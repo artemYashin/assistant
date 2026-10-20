@@ -647,3 +647,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - API-тест проверяет сохранённых исполнителей удалённого тикета и исчезновение его из завершённых после восстановления.
 - Playwright с mock API: минимум 550px у карточки, пагинация, активный список включает Closed, завершённый содержит удалённый Active, ссылка ведёт в корзину, настройка завершённых статусов отсутствует.
 - Между опциями merge установлен grid gap 12px.
+
+### Conversational bulk confirmation (2026-10-20)
+
+- The chat policy asks for a normal text preview (full ticket titles and local navigation links) before changing multiple tickets, and waits for a textual confirmation. Single-ticket requests execute without an extra approval. This is a conversational model rule, not a persisted approval transaction or a new UI widget.
+- A short confirmation after the prescribed preview continues the preceding user request for status, local tracker, developer and metadata tools. Metadata scope clarifications retain the original requested values and explicit exclusions; affected IDs must be resolved through tools again.
+- `npm test`: 159 passed, including confirmation context, cancellation/unrelated replies, clarification exclusions, single status writes, deduplication and failed-write cache invalidation. Real Copilot conversation behavior and live Azure writes were not exercised.

@@ -336,9 +336,17 @@ test("status tool requires current user instruction and deduplicates repeated wr
   );
   await agent.chat("Переведи тикет 123456 в RFT", context);
   assert.equal(writes, 1);
+  store.say("user", "Переведи тикет 123456 в RFT", context);
+  store.say(
+    "assistant",
+    "#123456 — Полное название. Перевести в RFT. Выполнить эти изменения?",
+    context,
+  );
+  await agent.chat("Да, делай", context);
+  assert.equal(writes, 2);
   allow = false;
   await agent.chat("Покажи тикет 123456. Статус RFT?", context);
-  assert.equal(writes, 1);
+  assert.equal(writes, 2);
 });
 
 test("review feedback tools are limited to questions and memory proposals with ordinary usage guard", async (t) => {
@@ -572,4 +580,53 @@ test("chat can validate historical ticket IDs locally before a batch", async (t)
     return { data: { content: "Готово" } };
   });
   await agent.chat("Добавь этим тикетам тег UI", context);
+});
+
+test("metadata clarification uses prior user intent, resolves targets and honors explicit exclusion", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  for (const id of [42, 43])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(
+        store.source(),
+        id,
+        "Internal Sites",
+        "Active",
+        "",
+        "Bug",
+        "",
+        "",
+        "now",
+      );
+  store.say("user", "Добавь тег UI тикетам Internal Sites", context);
+  store.say(
+    "assistant",
+    "Добавить ко всем 23 тикетам Internal Sites или только к #42?",
+    context,
+  );
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const call = (name: string, args: any) =>
+      config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    await call("list_tickets", {});
+    const result = await call("batch_update_tickets", {
+      operations: [42, 43].map((id) => ({
+        action: "metadata",
+        data: { id, tags: { mode: "add", values: ["UI"] } },
+      })),
+    });
+    assert.equal(result.results[0].success, false);
+    assert.match(result.results[0].error, /исключён/);
+    assert.equal(result.results[1].success, true);
+    assert.deepEqual(
+      (await call("get_local_ticket_metadata", { id: 42 })).tags,
+      [],
+    );
+    assert.deepEqual(
+      (await call("get_local_ticket_metadata", { id: 43 })).tags,
+      ["UI"],
+    );
+    return { data: { content: "Готово, кроме #42" } };
+  });
+  await agent.chat("Ко всем 23, кроме #42", context);
 });
