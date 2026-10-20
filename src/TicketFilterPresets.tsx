@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { GripVertical, Save, X } from "lucide-react";
+import { GripVertical, RotateCcw, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
 function sameFilters(left: Filters, right: Filters) {
@@ -168,13 +168,31 @@ export function TicketFilterPresets({
           </form>
         </div>
       )}
-      {compact && !presets.length && (
-        <p className="muted">
-          Наборов пока нет. Разверните блок, чтобы сохранить первый.
-        </p>
-      )}
-      {presets.length > 0 && (
+      {(compact || presets.length > 0) && (
         <div className="ticket-preset-list">
+          {compact && (
+            <>
+              <button
+                type="button"
+                className="ticket-preset-compact-reset"
+                title="Сбросить выбранный набор, фильтры и поиск"
+                aria-label="Сбросить выбранный набор, фильтры и поиск"
+                disabled={disabled}
+                onClick={() => {
+                  select(null);
+                  onApply(parseTicketFilters(null));
+                }}
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+              </button>
+              <span className="ticket-preset-divider" aria-hidden="true" />
+              {!presets.length && (
+                <span className="muted">
+                  Наборов пока нет. Разверните блок, чтобы сохранить первый.
+                </span>
+              )}
+            </>
+          )}
           {presets.map((preset) => {
             const selected = preset.id === selectedId;
             const modified = selected && !sameFilters(preset.filters, filters);

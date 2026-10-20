@@ -973,3 +973,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - The ticket-detail restore/import action is now an explicitly content-width, non-growing button with padding, a green background, full-area hover and keyboard focus outline. Explanatory text stays beside the button and wraps on narrow layouts.
 - Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Collapsed preset reset action (2026-10-21)
+
+- Added a compact circular reset button and vertical divider before presets in collapsed filter panels. Reset clears the persisted selected preset/name and applies default filters, search and sorting without deleting saved presets. The action respects the panel's disabled state and also appears when no presets are saved.
+- Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser interactions were not exercised.

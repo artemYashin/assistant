@@ -7680,3 +7680,28 @@ summary > svg {
   min-width: 0;
   font-size: 12px;
 }
+
+.ticket-preset-compact-reset {
+  display: inline-flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #d5dde5;
+  border-radius: 50%;
+  background: #fff;
+  color: #596573;
+}
+.ticket-preset-compact-reset:hover:not(:disabled) {
+  background: #eaf0ed;
+  border-color: #a6b9ad;
+}
+.ticket-preset-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 20px;
+  margin: 0 5px;
+  background: #d5dde5;
+}
