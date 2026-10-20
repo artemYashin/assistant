@@ -626,8 +626,29 @@ export function TicketTableRow({
       <tr
         ref={rowRef}
         id={`ticket-${id}`}
-        tabIndex={-1}
-        className={highlighted ? "ticket-row-highlighted" : undefined}
+        tabIndex={0}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className={`ticket-clickable-row${highlighted ? " ticket-row-highlighted" : ""}`}
+        onClick={(event) => {
+          const target = event.target;
+          if (
+            !(target instanceof Element) ||
+            target.closest(
+              'button, a, input, label, select, textarea, summary, dialog, [role="button"], [role="checkbox"], [contenteditable], [data-row-click-ignore]',
+            ) ||
+            window.getSelection()?.toString()
+          )
+            return;
+          setOpen((value) => !value);
+        }}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen((value) => !value);
+          }
+        }}
       >
         <OrderedTicketCells order={columnOrder}>
           {children}

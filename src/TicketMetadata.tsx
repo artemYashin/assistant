@@ -43,7 +43,7 @@ export function TicketMetadata({
       )}
       <button
         type="button"
-        className="icon-button"
+        className="icon-button ticket-cell-button"
         aria-label={label + " тикета #" + ticket.id}
         title={
           label + (field === "notes" && ticket.notes ? " · есть запись" : "")

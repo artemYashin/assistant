@@ -793,3 +793,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Ticket identity/date metadata now follows the title, before type/status/local priority. Local notes are the last detail section, below attachments and raw fields.
 - Added selectable Azure Tags to Excel/CSV export immediately after local Tags, enabled by default. Missing tags export as empty values; existing filtered/selected row ordering and formatting remain shared by both formats.
 - Pre-push validation: all 192 tests and production build passed. Excel round-trip and CSV tests cover separate Azure tag values and missing-tag rows. Vite retains its large-chunk warning. Browser visuals were not exercised.
+
+### Ticket row interactions and content links (2026-10-20)
+
+- Ticket rows toggle their details from non-interactive content; links, buttons, form controls, dialogs and text selection are excluded. Focused rows also support Enter/Space. Added row hover/focus feedback.
+- Ticket edit controls use compact square bordered buttons. Markdown and ticket rich-text links use blue underlined styling, including visited links and explicit hover/focus feedback.
+- Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser interaction/visual behavior was not exercised.

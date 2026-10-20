@@ -2519,9 +2519,26 @@ summary:focus-visible {
   background: none;
   border-radius: 0;
 }
-.chat-markdown a {
+.chat-markdown a,
+.ticket-formatted a {
+  color: #1d4ed8;
   text-decoration: underline;
   text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.chat-markdown a:visited,
+.ticket-formatted a:visited {
+  color: #1d4ed8;
+}
+.chat-markdown a:hover,
+.ticket-formatted a:hover {
+  color: #1e40af;
+  text-decoration-thickness: 2px;
+}
+.chat-markdown a:focus-visible,
+.ticket-formatted a:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 3px;
 }
 .chat-markdown hr {
   border: 0;
@@ -5931,4 +5948,39 @@ summary > svg {
     grid-row: 2;
     width: min(400px, 100%);
   }
+}
+
+.ticket-clickable-row {
+  cursor: pointer;
+}
+.ticket-clickable-row:hover > td {
+  background-color: #f0f5fa;
+}
+.ticket-clickable-row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+.ticket-table-fit .ticket-cell-button,
+.ticket-detail .ticket-cell-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  flex: 0 0 28px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #475569;
+}
+.ticket-cell-button:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+.ticket-cell-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }

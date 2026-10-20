@@ -91,7 +91,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       </span>
       <button
         type="button"
-        className="text-button"
+        className="text-button ticket-cell-button"
         disabled={busy}
         aria-label={`Редактировать локальное поручение #${ticket.id}`}
         title="Редактировать локальное поручение"
@@ -101,7 +101,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       </button>
       <button
         type="button"
-        className="text-button"
+        className="text-button ticket-cell-button"
         disabled={busy || !assigned.length}
         aria-label={`Снять локальное поручение #${ticket.id}`}
         title="Снять все локальные поручения"
@@ -271,7 +271,7 @@ export function TicketStatus({
       <StatusBadge state={shown || "Не указан"} colors={colors} />
       <button
         type="button"
-        className="text-button"
+        className="text-button ticket-cell-button"
         aria-label={`Изменить статус тикета #${id}`}
         title="Изменить статус в Azure DevOps"
         disabled={busy}
