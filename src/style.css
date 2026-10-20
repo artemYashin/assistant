@@ -7654,9 +7654,29 @@ summary > svg {
 }
 .ticket-tracking-action > button {
   display: inline-flex;
+  flex: 0 0 auto;
+  width: fit-content;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #39734b;
+  border-radius: 7px;
+  background: #39734b;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ticket-tracking-action > button:hover:not(:disabled) {
+  background: #2d5d3c;
+  border-color: #2d5d3c;
+}
+.ticket-tracking-action > button:focus-visible {
+  outline: 2px solid #39734b;
+  outline-offset: 3px;
 }
 .ticket-tracking-action > span {
+  flex: 1 1 180px;
+  min-width: 0;
   font-size: 12px;
 }
