@@ -32,7 +32,11 @@ export function TicketLookupDialog() {
         ref={dialog}
         className="ticket-lookup-dialog"
         aria-labelledby={titleId}
-        onClose={() => setOpen(false)}
+        onClose={(event) => {
+          // React propagates close events from nested status/metadata dialogs.
+          // Only closing this lookup window should unmount its ticket card.
+          if (event.target === event.currentTarget) setOpen(false);
+        }}
       >
         <header className="ticket-lookup-dialog-heading">
           <h2 id={titleId}>Открыть тикет по номеру</h2>
