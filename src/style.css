@@ -7725,3 +7725,53 @@ summary > svg {
 .azure-ticket-pagination > span:last-child {
   margin-left: 6px;
 }
+
+.image-thumbnail {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.image-thumbnail.is-loading {
+  width: 300px;
+  height: 150px;
+  overflow: hidden;
+  border: 1px solid #dfe5e9;
+  border-radius: 8px;
+  background: linear-gradient(100deg, #f0f3f5 25%, #fafbfc 45%, #f0f3f5 65%);
+  background-size: 240% 100%;
+  animation: image-skeleton-shimmer 1.8s ease-in-out infinite;
+}
+.image-thumbnail.is-loading > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+}
+.image-thumbnail-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  color: #657585;
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+  text-decoration: none;
+}
+@keyframes image-skeleton-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .image-thumbnail.is-loading,
+  .image-thumbnail-placeholder .spin {
+    animation: none;
+  }
+}

@@ -17,9 +17,13 @@ export function ImagePreview({
   thumbnail?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [imageState, setImageState] = useState<{
+    src: string;
+    status: "loaded" | "failed";
+  } | null>(null);
+  const failed = imageState?.src === src && imageState.status === "failed";
+  const loading = imageState?.src !== src;
   useEffect(() => {
-    setFailed(false);
     setOpen(false);
   }, [src]);
   return (
@@ -37,12 +41,33 @@ export function ImagePreview({
       >
         {children ??
           (thumbnail && !failed ? (
-            <img
-              src={src}
-              alt={alt}
-              loading="lazy"
-              onError={() => setFailed(true)}
-            />
+            <span
+              className={`image-thumbnail${loading ? " is-loading" : ""}`}
+              aria-busy={loading}
+            >
+              {loading && (
+                <span className="image-thumbnail-placeholder" role="status">
+                  <LoaderCircle size={20} className="spin" aria-hidden="true" />
+                  <span>Загрузка изображения…</span>
+                </span>
+              )}
+              <img
+                key={src}
+                src={src}
+                alt={alt}
+                loading="lazy"
+                ref={(node) => {
+                  if (node?.complete && node.naturalWidth > 0)
+                    setImageState((old) =>
+                      old?.src === src && old.status === "loaded"
+                        ? old
+                        : { src, status: "loaded" },
+                    );
+                }}
+                onLoad={() => setImageState({ src, status: "loaded" })}
+                onError={() => setImageState({ src, status: "failed" })}
+              />
+            </span>
           ) : (
             <span>
               {alt}
