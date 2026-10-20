@@ -871,3 +871,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Azure assignee cells use the existing hover edit affordance, with debounced identity search, initials, single-user selection and unassignment. Writes use a revision test and read-back identity verification; confirmed updates refresh tracked tickets and cached detail cards. Added four mocked integration cases covering assignment, clearing, mismatched verification and failed writes, plus source/user validation.
 - Ticket header ID/type sort controls sit horizontally; added-at column has an 80px minimum width. Light table headers and alternate ticket backgrounds exclude detail rows and preserve focused-ticket highlights. Search and add/import controls share a compact wrapping toolbar.
 - Pre-push validation: all 207 tests and production build passed. Vite retains its large-chunk warning. Real Azure permissions/search/write behavior and browser layout/focus were not exercised.
+
+### Faster image preview zoom (2026-10-20)
+
+- Increased wheel zoom sensitivity and added stronger trackpad-pinch sensitivity, normalized wheel delta units and bounded individual zoom steps. Updated viewer hints.
+- TypeScript check and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Mac trackpad behavior was not exercised.

@@ -115,15 +115,21 @@ function ImageViewer({
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
       if (!ready) return;
+      // Trackpad pinch produces small wheel deltas with ctrlKey set.
+      // Normalize line/page wheels and cap each step to avoid sudden jumps.
+      const delta =
+        event.deltaY *
+        (event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? node.clientHeight
+            : 1);
+      const sensitivity = event.ctrlKey ? 0.035 : 0.006;
+      const factor = Math.exp(
+        Math.max(-0.45, Math.min(0.45, -delta * sensitivity)),
+      );
       setZoom((value) =>
-        Math.max(
-          0.25,
-          Math.min(
-            maxZoom,
-            value *
-              Math.exp(-Math.max(-100, Math.min(100, event.deltaY)) * 0.002),
-          ),
-        ),
+        Math.max(0.25, Math.min(maxZoom, value * factor)),
       );
     };
     node.addEventListener("wheel", wheel, { passive: false });
@@ -214,7 +220,7 @@ function ImageViewer({
         ref={stage}
         className={`image-viewer-stage${dragging ? " is-dragging" : ""}`}
         tabIndex={0}
-        aria-label="Изображение. Колесо мыши — масштаб, перетаскивание — перемещение, стрелки — перемещение, 0 — вписать"
+        aria-label="Изображение. Щипок трекпада или колесо мыши — масштаб, перетаскивание — перемещение, стрелки — перемещение, 0 — вписать"
         onDoubleClick={reset}
         onKeyDown={(event) => {
           if (!ready) return;
@@ -321,8 +327,8 @@ function ImageViewer({
         )}
       </div>
       <footer>
-        Колесо мыши — масштаб · Перетаскивание — перемещение · Двойной клик —
-        вписать · Esc — закрыть
+        Щипок трекпада / колесо — масштаб · Перетаскивание — перемещение ·
+        Двойной клик — вписать · Esc — закрыть
       </footer>
     </dialog>
   );
