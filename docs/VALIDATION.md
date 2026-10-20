@@ -882,3 +882,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Muted description and acceptance-criteria accordion colors; moved Analyze with AI into the ticket header actions and kept errors in the body.
 - Bounded the active-table ID/type content width, shortened the type sort label and removed extra minimum widths from identity sort buttons. Long type badges truncate with their existing full-text tooltip.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser visual behavior was not exercised.
+
+### Saved ticket filters, presets and partial identity lookup (2026-10-20)
+
+- Active-ticket search, filters and sorting persist per Azure source/customer/project. Named browser-local presets can be saved, applied or deleted; malformed stored values fall back to defaults. Filter and display/export controls have separate panels. Ticket-number input is wider and matches the search font size.
+- Empty identity searches fall back to a bounded Graph Subject Query and one batched descriptor-to-identity lookup. Previously found identities also support case-insensitive partial-name matching; unavailable Graph produces an actionable warning. No full-directory enumeration is performed.
+- Ticket details now offer the same Azure-assignee edit dialog as the table, with a visible pencil and existing verified-write behavior.
+- Pre-push validation: all 209 tests passed. Production build passed, including the final sidebar sizing adjustment. Vite retains its large-chunk warning. Real Azure Graph permissions/partial-search behavior and browser interactions were not exercised.

@@ -7207,10 +7207,11 @@ summary > svg {
   margin: 0;
 }
 .ticket-add-form input {
-  flex: 1 1 120px;
-  width: 130px;
+  flex: 1 1 190px;
+  width: 190px;
   min-width: 0;
-  max-width: 160px;
+  max-width: 220px;
+  font-size: 11px;
 }
 .ticket-add-block button {
   white-space: nowrap;
@@ -7266,4 +7267,84 @@ summary > svg {
   > .ticket-column-sort {
   min-width: 0;
   flex: 0 0 auto;
+}
+
+.ticket-filter-panel,
+.ticket-actions-panel {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  background: #f7f8fa;
+}
+.ticket-filter-panel .ticket-filters {
+  margin-bottom: 0;
+}
+.ticket-filter-presets {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e6ea;
+}
+.ticket-preset-heading,
+.ticket-preset-save,
+.ticket-preset-heading > strong,
+.ticket-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-preset-heading {
+  justify-content: space-between;
+}
+.ticket-preset-heading > strong {
+  font-size: 12px;
+  color: #596573;
+}
+.ticket-preset-save {
+  margin: 0;
+  min-width: 0;
+}
+.ticket-preset-save input {
+  width: 190px;
+  min-width: 0;
+  max-width: 100%;
+}
+.ticket-preset-list {
+  margin-top: 10px;
+}
+.ticket-preset {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid #d5dde5;
+  background: white;
+  border-radius: 8px;
+}
+.ticket-preset.is-active {
+  background: #e9f1f8;
+  border-color: #91b0ca;
+}
+.ticket-preset > button:first-child {
+  background: transparent;
+  border: 0;
+  color: #40576c;
+  padding: 6px 9px;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.ticket-preset > .icon-button {
+  flex-shrink: 0;
+  margin-right: 3px;
+}
+.ticket-actions-panel .ticket-display-summary p {
+  margin: 0;
+}
+
+.ticket-detail-sidebar .ticket-metadata .local-developer {
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
 }

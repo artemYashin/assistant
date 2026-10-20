@@ -613,10 +613,48 @@ export class Connectors {
       if (!Array.isArray(response.value))
         throw new AppError(502, "Azure вернул неверный список пользователей");
     }
-    const matches = response.value.filter(
-      (u: any) => u.id && !u.isContainer && u.isActive !== false,
-    );
-    const users = matches.slice(0, 20).map((u: any) => ({
+    const isUser = (u: any) => u.id && !u.isContainer && u.isActive !== false;
+    let warning = "";
+    let graphTruncated = false;
+    if (!response.value.some(isUser)) {
+      try {
+        const graph = await requestJson(
+          `${base}/_apis/graph/subjectquery?api-version=7.1-preview.1`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query, subjectKind: ["User"] }),
+          },
+          "Azure поиск по части имени (PAT: Graph Read)",
+        );
+        if (!Array.isArray(graph.value)) throw new AppError(502, "Azure вернул неверный результат поиска Graph");
+        const subjects = [...new Set<string>(graph.value.filter((u: any) =>
+          String(u.subjectKind).toLowerCase() === "user" && typeof u.descriptor === "string",
+        ).map((u: any) => u.descriptor))];
+        graphTruncated = subjects.length > 20 || graph.value.length >= 100;
+        if (subjects.length) {
+          // Resolve Graph descriptors to Azure identity IDs in one bounded call.
+          // originId is an Entra ID, not the ID used by System.AssignedTo.
+          const lookup = new URLSearchParams({
+            subjectDescriptors: subjects.slice(0, 20).join(","),
+            queryMembership: "None",
+            "api-version": s.azureVersion,
+          });
+          const resolved = await requestJson(`${base}/_apis/identities?${lookup}`, {
+            headers: { Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}` },
+          }, "Azure сопоставление пользователей (PAT: Identity Read)");
+          if (!Array.isArray(resolved.value)) throw new AppError(502, "Azure вернул неверный список пользователей");
+          response = resolved;
+        }
+      } catch {
+        warning = "Расширенный поиск Azure недоступен: проверьте Graph: Read у PAT и поддержку Graph API вашим сервером. Можно искать по полному имени или e-mail; ранее найденные пользователи доступны по части имени.";
+      }
+    }
+    const matches = response.value.filter(isUser);
+    const remoteUsers = matches.map((u: any) => ({
       id: String(u.id),
       name: String(
         u.customDisplayName ||
@@ -633,15 +671,25 @@ export class Connectors {
       pat !== this.store.secret("azure.pat")
     )
       throw new AppError(409, "Подключение изменилось; повторите поиск");
-    const old = this.store.get<{ id: string; name: string }[]>(
+    const old = this.store.get<{ id: string; name: string; email?: string }[]>(
       "developers:" + source,
       [],
     );
-    const merged = new Map<string, { id: string; name: string }>();
-    for (const user of [...users, ...old])
+    const normalize = (text: string) => text.normalize("NFKC").toLocaleLowerCase().replace(/ё/g, "е").trim();
+    const terms = normalize(query).split(/\s+/).filter(Boolean);
+    const returnedIds = new Set(response.value.map((u: any) => String(u.id)));
+    const cachedMatches = old.filter((u) => !returnedIds.has(u.id) && terms.every((term) =>
+      normalize(`${u.name} ${u.email || ""}`).includes(term),
+    ));
+    const results = [...new Map<string, { id: string; name: string; email?: string }>(
+      [...remoteUsers, ...cachedMatches].map((u) => [u.id, u]),
+    ).values()];
+    const users = results.slice(0, 20);
+    const merged = new Map<string, { id: string; name: string; email?: string }>();
+    for (const user of [...users, ...old.filter((u) => !returnedIds.has(u.id))])
       if (!merged.has(user.id)) merged.set(user.id, user);
     this.store.set("developers:" + source, [...merged.values()].slice(0, 1000));
-    return { users, truncated: matches.length > 20 };
+    return { users, truncated: graphTruncated || results.length > 20, warning };
   }
   async assignTicket(id: number, source: string, userId: string | null) {
     const s = this.store.settings(), pat = this.store.secret("azure.pat");

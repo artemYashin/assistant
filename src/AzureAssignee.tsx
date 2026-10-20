@@ -15,10 +15,12 @@ export function AzureAssignee({ ticket, onChange }: any) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [truncated, setTruncated] = useState(false);
+  const [warning, setWarning] = useState("");
   useEffect(() => {
     if (!open) return;
     let live = true;
     setPeople([]);
+    setWarning("");
     setTruncated(false);
     if (query.trim().length < 2) {
       setLoading(false);
@@ -31,6 +33,7 @@ export function AzureAssignee({ ticket, onChange }: any) {
           if (live) {
             setPeople(result.users);
             setTruncated(result.truncated);
+            setWarning(result.warning || "");
             setError("");
           }
         })
@@ -143,6 +146,11 @@ export function AzureAssignee({ ticket, onChange }: any) {
         {selected !== undefined && (
           <p>
             Выбрано: <strong>{selected?.name || "Не назначен"}</strong>
+          </p>
+        )}
+        {warning && (
+          <p className="muted" role="status">
+            {warning}
           </p>
         )}
         {error && (

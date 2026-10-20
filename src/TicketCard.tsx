@@ -1,3 +1,4 @@
+import { AzureAssignee } from "./AzureAssignee.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { openTicketAnalysis } from "./chat-ticket-analysis.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
@@ -199,15 +200,16 @@ export function TicketCard({ reference }: { reference: string }) {
             </div>
             <div>
               <dt>Исполнитель</dt>
-              <dd className="ticket-author-identity">
-                {f["System.AssignedTo"] && (
-                  <InitialsAvatar name={person(f["System.AssignedTo"])} />
-                )}
-                <span>
-                  {f["System.AssignedTo"]
-                    ? person(f["System.AssignedTo"])
-                    : "Не назначен"}
-                </span>
+              <dd>
+                <AzureAssignee
+                  ticket={{
+                    id: card.id,
+                    source: card.source,
+                    assigned: f["System.AssignedTo"]
+                      ? person(f["System.AssignedTo"])
+                      : "",
+                  }}
+                />
               </dd>
             </div>
             <div>

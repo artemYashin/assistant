@@ -1,3 +1,5 @@
+import { TicketFilterPresets } from "./TicketFilterPresets.js";
+import { useTicketFilters } from "./useTicketFilters.js";
 import { AzureAssignee } from "./AzureAssignee.js";
 import { MemoryBody } from "./MemoryBody.js";
 import {
@@ -923,11 +925,15 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <Tickets
                   context={context}
                   settings={settings}
-                  key={`${settings?.azureUrl}|${settings?.azureProject}|${location.search}`}
+                  key={JSON.stringify([
+                    settings?.azureUrl,
+                    settings?.azureProject,
+                    context.client,
+                    context.project,
+                    location.search,
+                  ])}
                   tickets={tickets}
                   lastSync={overview?.ticketsLastSync}
-                  query={query}
-                  setQuery={setQuery}
                   run={run}
                   busy={busy}
                 />
@@ -1118,16 +1124,7 @@ function PageHeading({
     </div>
   );
 }
-function Tickets({
-  tickets,
-  lastSync,
-  query,
-  setQuery,
-  run,
-  busy,
-  settings,
-  context,
-}: any) {
+function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
   const columns = useTicketColumns();
   const location = useLocation();
   const navigate = useNavigate();
@@ -1144,14 +1141,37 @@ function Tickets({
   const sourceMismatch =
     !!targetSource && !!settings && targetSource !== currentSource;
   const [id, setId] = useState(targetId ? String(targetId) : "");
-  const [sort, setSort] = useState("id-desc");
-  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [azureTagFilter, setAzureTagFilter] = useState<string[]>([]);
-  const [typeFilter, setTypeFilter] = useState<string[]>([]);
-  const [stateFilter, setStateFilter] = useState<string[]>([]);
-  const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
-  const [localFilter, setLocalFilter] = useState<string[]>([]);
+  const filterStorageKey =
+    "orbit.ticket-filters.active:" +
+    JSON.stringify([currentSource, context.client, context.project]);
+  const {
+    filters,
+    set: setFilter,
+    apply: applyFilters,
+  } = useTicketFilters(filterStorageKey);
+  const {
+    query,
+    sort,
+    priorityFilter,
+    tagFilter,
+    azureTagFilter,
+    typeFilter,
+    stateFilter,
+    assigneeFilter,
+    localFilter,
+  } = filters;
+  const setQuery = (value: string) => setFilter("query", value);
+  const setSort = (value: string) => setFilter("sort", value);
+  const setPriorityFilter = (value: string[]) =>
+    setFilter("priorityFilter", value);
+  const setTagFilter = (value: string[]) => setFilter("tagFilter", value);
+  const setAzureTagFilter = (value: string[]) =>
+    setFilter("azureTagFilter", value);
+  const setTypeFilter = (value: string[]) => setFilter("typeFilter", value);
+  const setStateFilter = (value: string[]) => setFilter("stateFilter", value);
+  const setAssigneeFilter = (value: string[]) =>
+    setFilter("assigneeFilter", value);
+  const setLocalFilter = (value: string[]) => setFilter("localFilter", value);
   const values = (key: string) =>
     [...new Set<string>(tickets.map((t: any) => t[key] || ""))].sort((a, b) =>
       a.localeCompare(b, "ru"),
@@ -1322,127 +1342,135 @@ function Tickets({
           </button>
         </div>
       </div>
-      <div className="ticket-filters">
-        <button
-          className="secondary ticket-filter-reset"
-          title="Сбросить все фильтры и поиск"
-          disabled={
-            !rawTarget &&
-            !priorityFilter.length &&
-            !tagFilter.length &&
-            !typeFilter.length &&
-            !stateFilter.length &&
-            !assigneeFilter.length &&
-            !localFilter.length &&
-            !azureTagFilter.length &&
-            !query
-          }
-          onClick={() => {
-            if (rawTarget) navigate("/tickets");
-            setPriorityFilter([]);
-            setTagFilter([]);
-            setAzureTagFilter([]);
-            setTypeFilter([]);
-            setStateFilter([]);
-            setAssigneeFilter([]);
-            setLocalFilter([]);
-            setQuery("");
-          }}
-        >
-          <RotateCcw size={15} /> Сбросить
-        </button>
-        <MultiSelect
-          label="Приоритет"
-          placeholder="Все приоритеты"
-          value={priorityFilter}
-          onChange={setPriorityFilter}
+      <section className="ticket-filter-panel" aria-label="Фильтры тикетов">
+        <TicketFilterPresets
+          storageKey={filterStorageKey + ".presets"}
+          filters={filters}
+          onApply={applyFilters}
           disabled={!!rawTarget}
-          options={[
-            ...new Set<number>(tickets.map((t: any) => t.priority ?? 1)),
-          ]
-            .sort((a, b) => a - b)
-            .map((v) => ({ value: String(v), label: "P" + v }))}
         />
-        <MultiSelect
-          label="Теги"
-          placeholder="Все теги"
-          value={tagFilter}
-          onChange={setTagFilter}
-          disabled={!!rawTarget}
-          options={[
-            { value: "", label: "Без тегов" },
-            ...[...new Set<string>(tickets.flatMap((t: any) => t.tags || []))]
-              .sort()
-              .map((v) => ({ value: v, label: v })),
-          ]}
-        />
-        <MultiSelect
-          label="Azure теги"
-          placeholder="Все Azure теги"
-          value={azureTagFilter}
-          onChange={setAzureTagFilter}
-          disabled={!!rawTarget}
-          options={[
-            { value: "", label: "Без Azure тегов" },
-            ...[
-              ...new Set<string>(
-                tickets.flatMap((t: any) => t.azureTags || []),
-              ),
+        <div className="ticket-filters">
+          <button
+            className="secondary ticket-filter-reset"
+            title="Сбросить все фильтры и поиск"
+            disabled={
+              !rawTarget &&
+              !priorityFilter.length &&
+              !tagFilter.length &&
+              !typeFilter.length &&
+              !stateFilter.length &&
+              !assigneeFilter.length &&
+              !localFilter.length &&
+              !azureTagFilter.length &&
+              !query
+            }
+            onClick={() => {
+              if (rawTarget) navigate("/tickets");
+              setPriorityFilter([]);
+              setTagFilter([]);
+              setAzureTagFilter([]);
+              setTypeFilter([]);
+              setStateFilter([]);
+              setAssigneeFilter([]);
+              setLocalFilter([]);
+              setQuery("");
+            }}
+          >
+            <RotateCcw size={15} /> Сбросить
+          </button>
+          <MultiSelect
+            label="Приоритет"
+            placeholder="Все приоритеты"
+            value={priorityFilter}
+            onChange={setPriorityFilter}
+            disabled={!!rawTarget}
+            options={[
+              ...new Set<number>(tickets.map((t: any) => t.priority ?? 1)),
             ]
-              .sort()
-              .map((v) => ({ value: v, label: v })),
-          ]}
-        />
+              .sort((a, b) => a - b)
+              .map((v) => ({ value: String(v), label: "P" + v }))}
+          />
+          <MultiSelect
+            label="Теги"
+            placeholder="Все теги"
+            value={tagFilter}
+            onChange={setTagFilter}
+            disabled={!!rawTarget}
+            options={[
+              { value: "", label: "Без тегов" },
+              ...[...new Set<string>(tickets.flatMap((t: any) => t.tags || []))]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+            ]}
+          />
+          <MultiSelect
+            label="Azure теги"
+            placeholder="Все Azure теги"
+            value={azureTagFilter}
+            onChange={setAzureTagFilter}
+            disabled={!!rawTarget}
+            options={[
+              { value: "", label: "Без Azure тегов" },
+              ...[
+                ...new Set<string>(
+                  tickets.flatMap((t: any) => t.azureTags || []),
+                ),
+              ]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+            ]}
+          />
 
-        <MultiSelect
-          label="Тип задачи"
-          placeholder="Все типы"
-          disabled={!!rawTarget}
-          value={typeFilter}
-          onChange={setTypeFilter}
-          options={values("type").map((value) => ({
-            value,
-            label: value || "Тип не указан",
-          }))}
-        />
-        <MultiSelect
-          label="Статус"
-          placeholder="Все статусы"
-          disabled={!!rawTarget}
-          value={stateFilter}
-          onChange={setStateFilter}
-          options={values("state").map((value) => ({
-            value,
-            label: value || "Статус не указан",
-          }))}
-        />
-        <MultiSelect
-          label="Исполнитель Azure"
-          placeholder="Все исполнители"
-          disabled={!!rawTarget}
-          value={assigneeFilter}
-          onChange={setAssigneeFilter}
-          options={values("assigned").map((name) => ({
-            value: name,
-            label: name || "Не назначен в Azure",
-          }))}
-        />
-        <MultiSelect
-          label="Локальное поручение"
-          placeholder="Все разработчики"
-          disabled={!!rawTarget}
-          value={localFilter}
-          onChange={setLocalFilter}
-          options={[
-            { value: "", label: "Нет поручения" },
-            ...localDevelopers.map(([id, name]) => ({
-              value: id,
-              label: name,
-            })),
-          ]}
-        />
-      </div>
-      <div className="ticket-export-bar">
+          <MultiSelect
+            label="Тип задачи"
+            placeholder="Все типы"
+            disabled={!!rawTarget}
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={values("type").map((value) => ({
+              value,
+              label: value || "Тип не указан",
+            }))}
+          />
+          <MultiSelect
+            label="Статус"
+            placeholder="Все статусы"
+            disabled={!!rawTarget}
+            value={stateFilter}
+            onChange={setStateFilter}
+            options={values("state").map((value) => ({
+              value,
+              label: value || "Статус не указан",
+            }))}
+          />
+          <MultiSelect
+            label="Исполнитель Azure"
+            placeholder="Все исполнители"
+            disabled={!!rawTarget}
+            value={assigneeFilter}
+            onChange={setAssigneeFilter}
+            options={values("assigned").map((name) => ({
+              value: name,
+              label: name || "Не назначен в Azure",
+            }))}
+          />
+          <MultiSelect
+            label="Локальное поручение"
+            placeholder="Все разработчики"
+            disabled={!!rawTarget}
+            value={localFilter}
+            onChange={setLocalFilter}
+            options={[
+              { value: "", label: "Нет поручения" },
+              ...localDevelopers.map(([id, name]) => ({
+                value: id,
+                label: name,
+              })),
+            ]}
+          />
+        </div>
+      </section>
+      <div className="ticket-export-bar ticket-actions-panel">
         <div className="ticket-display-summary">
           {columns.control}
           <p className="muted" role="status">

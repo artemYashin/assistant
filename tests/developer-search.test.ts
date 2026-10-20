@@ -109,3 +109,95 @@ test("empty general search falls back to explicit display name or mail, without 
     "MailAddress",
   ]);
 });
+
+test("partial-name Graph search resolves descriptors in one batch and excludes groups", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-partial-search-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://dev.azure.com/org",
+    azureProject: "P",
+  });
+  store.setSecret("azure.pat", "pat");
+  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
+    calls++;
+    const url = new URL(raw);
+    if (url.pathname.endsWith("subjectquery")) {
+      assert.equal(init.method, "POST");
+      assert.deepEqual(JSON.parse(init.body), {
+        query: "Art",
+        subjectKind: ["User"],
+      });
+      return Response.json({
+        value: [
+          {
+            subjectKind: "user",
+            descriptor: "aad.person",
+            originId: "entra-id",
+          },
+          { subjectKind: "group", descriptor: "group" },
+        ],
+      });
+    }
+    if (url.searchParams.has("subjectDescriptors")) {
+      assert.equal(url.searchParams.get("subjectDescriptors"), "aad.person");
+      return Response.json({
+        value: [
+          {
+            id: "ado-id",
+            providerDisplayName: "Artem Example",
+            properties: { Mail: { $value: "artem@example.test" } },
+          },
+        ],
+      });
+    }
+    assert.equal(url.searchParams.get("filterValue"), "Art");
+    return Response.json({ value: [] });
+  });
+  const result = await connectors.developers("Art");
+  assert.equal(calls, 4);
+  assert.equal(result.users[0].id, "ado-id");
+  assert.equal(result.warning, "");
+});
+
+test("unavailable Graph keeps cached partial-name results and reports a warning", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-partial-cache-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://ado.test/Collection",
+    azureProject: "P",
+  });
+  store.setSecret("azure.pat", "pat");
+  const person = {
+    id: "known",
+    name: "Artem Example",
+    email: "artem@example.test",
+  };
+  store.set("developers:" + store.source(), [
+    person,
+    { id: "other", name: "Other User" },
+  ]);
+  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async (raw: any) => {
+    calls++;
+    if (String(raw).includes("subjectquery"))
+      return new Response("Not supported", { status: 404 });
+    return Response.json({ value: [] });
+  });
+  const result = await connectors.developers("EXA art");
+  assert.deepEqual(result.users, [person]);
+  assert.match(result.warning, /Graph: Read/);
+  assert.equal(calls, 3);
+});
