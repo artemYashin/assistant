@@ -3818,9 +3818,11 @@ summary > svg {
   font-size: 12px;
   font-weight: 600;
 }
-.pr-merge-name textarea {
+.pr-merge-name-value {
   width: 100%;
-  resize: vertical;
+  padding: 8px 10px;
+  border-radius: 7px;
+  overflow-wrap: anywhere;
   background: #f2f5f2;
   border: 1px solid #dce4dd;
   color: #34483d;

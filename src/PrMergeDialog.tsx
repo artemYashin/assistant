@@ -147,10 +147,12 @@ export function PrMergeDialog({
           <X size={18} />
         </button>
       </div>
-      <label className="pr-merge-name">
-        <span>Название pull request</span>
-        <textarea readOnly rows={2} value={plan?.title || pr.title || ""} />
-      </label>
+      <div className="pr-merge-name">
+        <span id="pr-merge-name-label">Название pull request</span>
+        <div className="pr-merge-name-value" aria-labelledby="pr-merge-name-label">
+          {plan?.title || pr.title || ""}
+        </div>
+      </div>
       <p className="muted">
         {moveTickets
           ? "После подтверждённого merge выбранные статусы изменятся в Azure DevOps."
