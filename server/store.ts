@@ -649,6 +649,15 @@ export class Store {
       .get(id) as { attachment: string | null };
     return row.attachment ? JSON.parse(row.attachment) : null;
   }
+  detachChatTicket(context: Context, id: string) {
+    this.chatSession(context, id);
+    this.db
+      .prepare(
+        "UPDATE chat_sessions SET attachment=NULL,updated_at=? WHERE id=?",
+      )
+      .run(new Date().toISOString(), id);
+    return { ok: true };
+  }
   conversationPage(context: Context, id?: string, before?: number) {
     const session = this.chatSession(context, id);
     const rows = this.db

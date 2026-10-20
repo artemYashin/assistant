@@ -7397,3 +7397,13 @@ summary > svg {
   white-space: nowrap;
   border: 0;
 }
+
+.chat-analysis-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chat-analysis-heading > .icon-button {
+  flex-shrink: 0;
+}

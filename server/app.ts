@@ -419,6 +419,16 @@ export function createApp(
       : undefined;
     res.json(store.createChat(context, attachment));
   });
+  app.delete("/api/conversation/sessions/:id/attachment", (req, res) => {
+    const context = contextSchema.parse(req.body);
+    const id = z.string().uuid().parse(req.params.id);
+    if (agent.active())
+      throw new AppError(
+        409,
+        "Дождитесь завершения ответа или остановите его, затем уберите тикет из контекста.",
+      );
+    res.json(store.detachChatTicket(context, id));
+  });
   app.put("/api/conversation/sessions/:id/active", (req, res) =>
     res.json(
       store.selectChat(contextSchema.parse(req.body), String(req.params.id)),

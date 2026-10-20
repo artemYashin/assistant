@@ -2641,6 +2641,44 @@ function Assistant({
       setLoadingOlder(false);
     }
   }
+  async function detachAnalysis() {
+    if (
+      working ||
+      clearing ||
+      recording ||
+      transcribing ||
+      !sessionId ||
+      !attachment
+    )
+      return;
+    const captured = key;
+    const generation = historyGeneration.current;
+    const defaultPrompt = `Проанализируй тикет #${attachment.id}: объясни требования, найди неоднозначности и риски, предложи проверки.`;
+    setClearing(true);
+    setError("");
+    try {
+      await api(
+        `/conversation/sessions/${sessionId}/attachment`,
+        "DELETE",
+        context,
+      );
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      ) {
+        setAttachment(null);
+        setPrompt((current) => (current === defaultPrompt ? "" : current));
+      }
+    } catch (e: any) {
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      )
+        setError(e.message);
+    } finally {
+      setClearing(false);
+    }
+  }
   async function clearHistory() {
     if (working || clearing || recording || transcribing) return;
     if (
@@ -2943,9 +2981,23 @@ function Assistant({
         )}
         {attachment && (
           <div className="chat-analysis-attachment">
-            <span className="chat-analysis-badge">
-              <Sparkles size={14} /> Анализ тикета #{attachment.id}
-            </span>
+            <div className="chat-analysis-heading">
+              <span className="chat-analysis-badge">
+                <Sparkles size={14} /> Анализ тикета #{attachment.id}
+              </span>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Убрать анализ тикета из контекста"
+                title="Убрать прикреплённый тикет. Переписка сохранится."
+                disabled={
+                  working || clearing || recording || transcribing || !sessionId
+                }
+                onClick={() => void detachAnalysis()}
+              >
+                <X size={16} />
+              </button>
+            </div>
             <strong>{attachment.title}</strong>
             <small>
               Описание, критерии, шаги воспроизведения и комментарии (

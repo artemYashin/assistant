@@ -121,3 +121,25 @@ test("agent receives attached criteria and full comments without Azure or anothe
   assert.equal(store.history(context, other.id).length, 1);
   assert.equal(store.history(context, session.id).length, 2);
 });
+
+test("detaching a ticket preserves chat messages and other session attachments", (t) => {
+  const store = fixture(t);
+  const attachment = ticketAnalysisAttachment(
+    card(store.source()),
+    store.source(),
+  );
+  const first = store.createChat(context, attachment);
+  const other = store.createChat(context, attachment);
+  store.say("user", "Analyze the requirements", context, [], first.id);
+  store.say("assistant", "Saved response", context, [], first.id);
+  assert.throws(
+    () => store.detachChatTicket({ client: "Other", project: "P" }, first.id),
+    /Чат не найден/,
+  );
+  store.detachChatTicket(context, first.id);
+  assert.equal(store.chatAttachment(context, first.id), null);
+  assert.equal(store.history(context, first.id).length, 2);
+  assert.equal(store.chatAttachment(context, other.id)?.id, attachment.id);
+  store.detachChatTicket(context, first.id);
+  assert.equal(store.chatAttachment(context, first.id), null);
+});
