@@ -14,15 +14,32 @@ export function OverviewUsage({ usage }: { usage: any }) {
     at: point.hour ? point.hour + ":00:00Z" : point.day + "T00:00:00Z",
   }));
   const max = Math.max(1, ...points.flatMap((p: any) => [p.input, p.output]));
-  const exponent = Math.max(1, Math.ceil(Math.log10(max + 1)));
-  const ticks = [
+  const unit = 10 ** Math.max(0, Math.floor(Math.log10(max)) - 2);
+  const candidates = [
     0,
-    ...Array.from({ length: exponent + 1 }, (_, index) => 10 ** index),
+    ...Array.from({ length: Math.ceil(Math.log10(max)) + 2 }, (_, exponent) =>
+      [1, 2, 5].map((n) => n * 10 ** exponent),
+    ).flat(),
   ];
+  const ceiling = candidates.find((value) => value >= max) || max;
   const x = (index: number) =>
     60 + (index / Math.max(1, points.length - 1)) * 660;
   const y = (value: number) =>
-    205 - (Math.log10(1 + value) / Math.log10(1 + 10 ** exponent)) * 180;
+    150 - (Math.log10(1 + value / unit) / Math.log10(1 + ceiling / unit)) * 132;
+  // Keep labels legible; select from the high end so large-value steps remain visible.
+  const ticks = candidates
+    .filter((value) => value <= ceiling)
+    .reverse()
+    .reduce<number[]>((chosen, value) => {
+      if (!chosen.length || y(value) - y(chosen.at(-1)!) >= 13)
+        chosen.push(value);
+      return chosen;
+    }, [])
+    .reverse();
+  if (!ticks.includes(0)) {
+    if (ticks.length && y(0) - y(ticks[0]) < 13) ticks.shift();
+    ticks.unshift(0);
+  }
   const label = (at: string, full = false) =>
     new Date(at).toLocaleString("ru-RU", {
       timeZone: "UTC",
@@ -105,7 +122,7 @@ export function OverviewUsage({ usage }: { usage: any }) {
           <small>Логарифмическая шкала Y</small>
         </div>
         <svg
-          viewBox="0 0 760 245"
+          viewBox="0 0 760 185"
           role="img"
           aria-label="Линейный график входных и выходных токенов, логарифмическая шкала"
         >
@@ -138,7 +155,7 @@ export function OverviewUsage({ usage }: { usage: any }) {
               key={key}
               fill="none"
               stroke={key === "input" ? "#377a68" : "#6784c4"}
-              strokeWidth="2"
+              strokeWidth="1.2"
               strokeLinejoin="round"
               points={points
                 .map((p: any, i: number) => x(i) + "," + y(p[key]))
@@ -152,7 +169,7 @@ export function OverviewUsage({ usage }: { usage: any }) {
                   key={key}
                   cx={x(index)}
                   cy={y(point[key])}
-                  r={selected === index ? 4 : 2}
+                  r={selected === index ? 3 : 1.5}
                   fill={key === "input" ? "#377a68" : "#6784c4"}
                 />
               ))}
@@ -161,7 +178,7 @@ export function OverviewUsage({ usage }: { usage: any }) {
                 index % Math.ceil(points.length / 5) === 0) && (
                 <text
                   x={x(index)}
-                  y="230"
+                  y="174"
                   textAnchor={
                     index === 0
                       ? "start"
@@ -178,7 +195,7 @@ export function OverviewUsage({ usage }: { usage: any }) {
                 x={x(index) - 330 / Math.max(1, points.length - 1)}
                 y="15"
                 width={660 / Math.max(1, points.length - 1)}
-                height="195"
+                height="140"
                 fill="transparent"
                 tabIndex={0}
                 role="button"
@@ -197,22 +214,32 @@ export function OverviewUsage({ usage }: { usage: any }) {
               />
             </g>
           ))}
+          {hovered && selected !== null && (
+            <g
+              pointerEvents="none"
+              transform={`translate(${Math.max(60, Math.min(544, x(selected) + 10))},${Math.max(8, Math.min(90, y(Math.max(hovered.input, hovered.output)) - 64))})`}
+              className="overview-point-tooltip"
+            >
+              <rect width="174" height="58" rx="7" />
+              <text x="9" y="15">
+                {label(hovered.at, true)} UTC
+              </text>
+              <text x="9" y="33" fill="#377a68">
+                Вход: {number(hovered.input)}
+              </text>
+              <text x="9" y="48" fill="#6784c4">
+                Выход: {number(hovered.output)}
+              </text>
+            </g>
+          )}
         </svg>
-        <div className="overview-chart-readout" aria-live="polite">
-          {hovered
-            ? label(hovered.at, true) +
-              " UTC · Вход: " +
-              number(hovered.input) +
-              " · Выход: " +
-              number(hovered.output)
-            : "Наведите курсор на график, чтобы увидеть значения"}
-        </div>
       </div>
       <small className="muted">
         По полученным отчётам модели в выбранном контексте. Шкала log₁₀(1 +
-        токены) позволяет показать нулевые значения. Текущий час/день ещё не
-        завершён; токены относятся к началу запроса. Без отчёта модели расход
-        может быть неполным.
+        токены / {number(unit)}) позволяет показать нулевые значения и подробнее
+        различать крупные значения. Текущий час/день ещё не завершён; токены
+        относятся к началу запроса. Без отчёта модели расход может быть
+        неполным.
       </small>
     </section>
   );

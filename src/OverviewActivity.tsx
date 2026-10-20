@@ -1,3 +1,4 @@
+import { activityDescription } from "./activity-description.js";
 import { useState } from "react";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { api } from "./api.js";
@@ -12,6 +13,9 @@ import {
 } from "lucide-react";
 import { pullRequestPath, ticketPath } from "./routing.js";
 const actions: Record<string, string> = {
+  "ticket.metadata_updated_by_chat": "Обновлены локальные поля через чат",
+  "memory.updated": "Изменена запись в памяти",
+  "memory.proposal_removed": "Удалено предложение памяти",
   "ticket.tracked": "Добавлен тикет",
   "ticket.removed_locally": "Тикет отправлен в корзину",
   "ticket.restored_locally": "Тикет восстановлен",
@@ -92,19 +96,20 @@ export function OverviewActivity({
           ),
       )
       .map((a) => {
-        const id = a.action.startsWith("ticket.")
-          ? /^#?(\d+)(?:\D|$)/.exec(a.detail)?.[1]
-          : null;
+        const description = activityDescription(a.action, a.detail || "");
+        const id = description.id;
         const ticket = tickets.find((t) => String(t.id) === id);
         return {
           id: "audit:" + a.id,
           at: a.created_at,
-          title: actions[a.action] || a.action,
+          title: actions[a.action] || description.fallback,
           detail: a.pull_request
             ? `#${a.pull_request.number} · ${a.pull_request.title || "Название недоступно"}`
             : ticket
-              ? `#${id} · ${ticket.title}`
-              : a.detail,
+              ? `#${id} · ${ticket.title}${description.summary ? " · " + description.summary : ""}`
+              : id && description.summary
+                ? `#${id} · ${description.summary}`
+                : description.detail,
           href: a.pull_request
             ? pullRequestPath(a.pull_request)
             : ticket

@@ -1050,3 +1050,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Overview usage is now an input/output line chart with day (24 hourly buckets), week (7 daily buckets) and month (30 daily buckets) controls in UTC. A log10(1 + tokens) Y scale supports zero values, with a bordered chart background and point readouts. Current buckets can be incomplete.
 - Ticket ID/type has a 90px minimum in automatic and manual sizing calculations, including narrowing and divider movement. Long type labels truncate with a native title tooltip. Trash header now says ID / Тип.
 - TypeScript and whitespace checks passed. Added/updated regression tests for hourly summaries, PR history metadata and identity sizing; tests were not run at the user's explicit request. Production build, live integrations and browser visuals were not exercised.
+
+### Readable activity fallback and compact usage chart (2026-10-21)
+
+- Local metadata changes from chat now display a translated action, ticket identity and changed field names. Unknown events use category labels and structured details are summarized rather than rendering raw JSON.
+- Reduced chart height and stroke width, darkened its background and moved readouts into pointer/focus-triggered SVG tooltips. Adaptive log1p scaling uses 1/2/5 tick candidates, a data-dependent unit explicitly labelled below the chart, and spacing rules to avoid overlapping labels.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.
