@@ -945,3 +945,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Azure URL/project can be configured per customer, inherited by a project or overridden. Legacy defaults remain available; context switching retains raw global configuration. Added inheritance, read-only pagination, query escaping, batch deduplication and N/A export regression coverage.
 - Trash now shares search/filter/display/export styling and scoped persisted presets. All three ticket tabs offer a persisted collapsible filter panel: expanded by default, compact mode retains the vertical preset list. Reduced spacing between ticket subtitle and last successful sync.
 - Pre-push validation: all 220 tests and production build passed. Corrected the new API test's missing CSRF header and an existing assertion for the relocated Azure-project settings message. Vite retains its large-chunk warning. Browser interactions and live Azure endpoints were not exercised.
+
+### Filter panel header and compact preset layout (2026-10-21)
+
+- The complete filter-panel header is now a native collapse/expand button, including the title and icon, with hover/focus styling. Preset name/save controls align right; collapsed presets wrap horizontally at content width across all three ticket tabs.
+- Pre-push validation: all 220 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

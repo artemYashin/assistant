@@ -29,30 +29,34 @@ export function TicketFilterPanel({
       className={`ticket-filter-panel${expanded ? "" : " is-collapsed"}`}
       aria-label="Наборы и фильтры тикетов"
     >
-      <div className="ticket-filter-panel-heading">
-        <strong>
-          <Bookmark size={15} />
+      <button
+        type="button"
+        className="ticket-filter-panel-heading"
+        aria-expanded={expanded}
+        aria-controls={id}
+        onClick={() => {
+          const next = !expanded;
+          setExpanded(next);
+          try {
+            localStorage.setItem(storageKey + ".expanded", String(next));
+          } catch {
+            /* Optional storage. */
+          }
+        }}
+      >
+        <span className="ticket-filter-panel-title">
+          <Bookmark size={15} aria-hidden="true" />
           Наборы фильтров
-        </strong>
-        <button
-          type="button"
-          className="text-button"
-          aria-expanded={expanded}
-          aria-controls={id}
-          onClick={() => {
-            const next = !expanded;
-            setExpanded(next);
-            try {
-              localStorage.setItem(storageKey + ".expanded", String(next));
-            } catch {
-              /* Optional storage. */
-            }
-          }}
-        >
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+        <span className="ticket-filter-panel-toggle">
+          {expanded ? (
+            <ChevronUp size={16} aria-hidden="true" />
+          ) : (
+            <ChevronDown size={16} aria-hidden="true" />
+          )}
           {expanded ? "Свернуть" : "Развернуть"}
-        </button>
-      </div>
+        </span>
+      </button>
       <div id={id}>
         <TicketFilterPresets
           storageKey={storageKey + ".presets"}
