@@ -60,12 +60,16 @@ export function confirmedChatRequest(
     plan?.role !== "assistant" ||
     request?.role !== "user" ||
     !request.body ||
-    !/Выполнить эти изменения\?/iu.test(plan.body || "")
+    !/(?:выполнить(?:\s+(?:эти|это))?\s+изменени[ея]|выполнить(?:\s+(?:действие|операцию|переход))?|применить(?:\s+изменения)?|продолжить|подтверждаете)[?？]/iu.test(plan.body || "")
   )
     return { prompt, contextual: false };
-  const original = metadataContextRequest(request.body, rows.slice(0, -2));
+  const prior = confirmedChatRequest(request.body, rows.slice(0, -2));
+  const original = prior.contextual ? prior : metadataContextRequest(request.body, rows.slice(0, -2));
+  // Explicitly displayed IDs belong to the plan the user just confirmed.
+  // Do not copy assistant prose into the command or infer IDs from counts.
+  const ids = [...new Set([...String(plan.body).matchAll(/#(\d+)\b/g)].map(m => m[1]))];
   return {
-    prompt: `${original.prompt}\n\nПользователь подтвердил предыдущий план: ${reply}`,
+    prompt: `${original.prompt}\n\nПользователь подтвердил предыдущий план: ${reply}${ids.length ? `\nТикеты подтверждённого плана: ${ids.map(id => `#${id}`).join(", ")}` : ""}`,
     contextual: true,
   };
 }

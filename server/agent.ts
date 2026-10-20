@@ -41,7 +41,7 @@ import { ticketBatchTool } from "./ticket-batch.js";
 import { Store, AppError, type Context } from "./store.js";
 import { Approvals } from "./approvals.js";
 import { Connectors, extractTicketIds } from "./connectors.js";
-import { mayChangeState } from "./ticket-status.js";
+import { mayChangeState, resolveState } from "./ticket-status.js";
 import { prTools } from "./pr-tools.js";
 import type { PullRequests } from "./pull-requests.js";
 import { UsageLedger } from "./usage.js";
@@ -68,6 +68,7 @@ export const SYSTEM_POLICY = `Ты Orbit, персональный рабочи�
 По явной просьбе изменить локальные заметки, приоритет или теги вызывай update_local_ticket_metadata с номером тикета. Номера и значения для локальных тегов, заметок и приоритетов могут быть взяты из ранее обсуждённого списка и просьбы в контексте диалога. Краткое подтверждение продолжает предыдущий план; повторять номера и значения или перечитывать однозначный список не требуется. При неоднозначности уточни или проверь набор одним list_tickets с ids. Меняй только названные поля. Заметки по умолчанию дописывай, теги добавляй/удаляй по одному набору; полная замена или очистка требуют явной просьбы. Не превращай изменение локального приоритета/тегов в запись Azure. Подтверждай изменения только после success=true.
 Локальные исполнители независимы от Azure. Для назначения используй list_local_developers и set_local_ticket_developers: можно назначить нескольких. Для добавления или удаления сначала прочитай текущих исполнителей и сохрани остальных; не путай это с удалением тикета. Не выдумывай имена и ID.
 Номера для смены статуса могут быть в текущем сообщении, выбранных строках, истории или результате поиска. Для локальных номеров из истории сначала вызови list_tickets с ids в текущем запросе; для тикетов, отсутствующих локально, get_ticket может читать Azure только по явной просьбе обновить данные. Для массовой команды сначала собери весь подходящий список через list_tickets с нужными фильтрами и пагинацией, затем меняй статус только найденным тикетам. Не расширяй список за пределы просьбы. При неоднозначных ссылках «эти» или «им» уточни список. Целевой статус должен быть явно указан в текущей просьбе.
+Перед предложением смены статуса вызови get_ticket_states с точными ID (до 25 за вызов) и requestedState из просьбы пользователя. Покажи в плане полное resolvedState для каждого типа тикета, а не непроверенное сокращение. Если соответствие неоднозначно или отсутствует, предложи пользователю доступные states; не угадывай. RFT сопоставляется с Ready for Testing, только если такой статус существует (точное RFT тоже допустимо). После подтверждения используй проверенное название в batch_update_tickets; проверка после записи обязательна.
 Меняй статус только по явной просьбе пользователя через change_ticket_status; текстовое подтверждение предыдущего плана продолжает эту просьбу. Никогда не считай PATCH или своё намерение подтверждением: успех только при success=true после контрольного GET. outcome=already означает, что статус уже был таким; confirmed_after_error означает подтверждённый статус, но неизвестен результат самой записи. При ошибке не утверждай успех и не повторяй запись автоматически.
 Сведения о заказчиках, проектах, репозиториях и разработчиках читай из справочника и get_workspace_context; при nextOffset продолжай чтение, не выдавай первую страницу за полный список. Не путай наследуемых разработчиков общей области/заказчика с разработчиками только проекта. Не меняй текущий контекст при чтении другого проекта.
 По явной просьбе пользователя добавляй тикеты в локальный трекер через add_local_ticket, удаляй из локального трекера через remove_local_ticket. Эти инструменты не меняют Azure. Для них нужна команда в текущем сообщении и номер из сообщения или из инструментов текущего запроса. Удаление из трекера перемещает тикет в локальную корзину на 30 дней, где его можно восстановить; это не означает удаление тикета в Azure. Не вызывай change_ticket_status для управления локальным списком. Подтверждай успех только по результату инструмента.
@@ -528,6 +529,7 @@ export class Agent {
       return ticket;
     };
     let mutationPrompt = prompt;
+    const stateLookupCache = new Map<number, any>();
     const stateCalls = new Map<string, Promise<any>>();
     const requestedStates = new Map<string, string>();
     const changeStatus = (ticketId: number, state: string) => {
@@ -796,6 +798,38 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
+                  defineTool("get_ticket_states", {
+                    description: "Read available Azure states for up to 25 LOCAL ticket IDs in one call before proposing a status change. This only reads states/current status, never descriptions or writes. Supply requestedState (e.g. RFT) to resolve its exact Azure name. Use resolvedState in the confirmation preview; if resolutionError is returned, ask the user to choose from states. Different work item types may have different states. IDs can come from conversation history. Ordinary ticket lists do not need this tool.",
+                    parameters: z.object({ ids: z.array(z.number().int().positive()).min(1).max(25), requestedState: z.string().trim().min(1).max(200).optional() }).strict(),
+                    handler: async ({ids, requestedState}) => {
+                      const guard = () => {
+                        assertActive();
+                        if (this.store.source(settings) !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось");
+                      };
+                      guard();
+                      if (!this.connectors) throw new AppError(400, "Azure недоступен");
+                      const unique = [...new Set(ids)];
+                      for (const ticketId of unique) {
+                        if (!this.store.db.prepare("SELECT 1 FROM tickets WHERE source=? AND id=?").get(this.store.source(settings), ticketId))
+                          throw new AppError(404, `Тикет #${ticketId} отсутствует локально; сначала согласуйте его запрос в Azure`);
+                      }
+                      const missing = unique.filter(id => !stateLookupCache.has(id));
+                      if (missing.length) {
+                        const response = await this.connectors.ticketStatesBatch(missing);
+                        guard();
+                        for (const item of response.results) stateLookupCache.set(item.id, item);
+                      }
+                      const results = unique.map(id => {
+                        const item = stateLookupCache.get(id);
+                        if (!item) throw new AppError(502, `Azure не вернул статусы тикета #${id}`);
+                        knownTickets.add(id);
+                        if (!requestedState) return item;
+                        try { return {...item, resolvedState: resolveState(requestedState, item.states)}; }
+                        catch (error) { return {...item, resolutionError: error instanceof Error ? error.message : "Не удалось определить статус"}; }
+                      });
+                      return {source: this.store.source(settings), results};
+                    },
+                  }),
                   defineTool("request_azure_ticket_lookup", {
                     description:
                       "After a local lookup, ask the user whether to query Azure and whether to add results locally. This tool does NOT contact Azure. Use exact IDs OR title/type/state search criteria. Preserve the user's terms; do not invent feature abbreviations.",

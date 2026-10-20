@@ -69,3 +69,19 @@ test("metadata confirmation retains exclusions across several clarification turn
   assert.match(result.prompt, /Inside 2/);
   assert.match(result.prompt, /кроме #42/);
 });
+
+test("status confirmation accepts natural question variants and carries displayed IDs", () => {
+  for (const question of ["Выполнить изменение?", "Выполнить изменения?", "Выполнить действие?", "Применить изменения?"]) {
+    const result = confirmedChatRequest("Да, давай", [
+      {role: "user", body: "Переведи эти тикеты в RFT"},
+      {role: "assistant", body: `#42 — First; #43 — Second. Ready for Testing. ${question}`},
+    ]);
+    assert.equal(result.contextual, true);
+    assert.match(result.prompt, /Переведи эти тикеты в RFT/);
+    assert.match(result.prompt, /#42, #43/);
+  }
+  assert.equal(confirmedChatRequest("Да, давай", [
+    {role: "user", body: "Переведи эти тикеты в RFT"},
+    {role: "assistant", body: "Хочешь посмотреть другие тикеты?"},
+  ]).contextual, false);
+});

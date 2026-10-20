@@ -1042,3 +1042,43 @@ test("full tool results are exact, loaded separately and scoped to the chat", (t
   assert.equal(ledger.chatTools(context).requests[0].tools[0].hasFullResult, 0);
   assert.throws(() => ledger.toolResult(trace, context), /не сохранён/);
 });
+
+test("chat resolves Azure RFT before a natural-language confirmation and batches 22 tickets", async (t) => {
+  const store = fixture(t);
+  const ids = Array.from({length: 22}, (_, i) => i + 100);
+  for (const id of ids) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), id, `Ticket ${id}`, "Resolved", "", "Bug", "", "", "now");
+  let reads = 0, writes = 0, turn = 0;
+  const {agent} = fakeAgent(store, async (_session, config) => {
+    const call = (name: string, args: any) => config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    if (turn++ === 0) {
+      for (let i = 0; i < 2; i++) {
+        const result = await call("get_ticket_states", {ids, requestedState: "RFT"});
+        assert.equal(result.results.length, 22);
+        assert.equal(result.results[0].resolvedState, "Ready for Testing");
+      }
+      const invalid = await call("get_ticket_states", {ids, requestedState: "Imaginary"});
+      assert.match(invalid.results[0].resolutionError, /не найден однозначно/);
+      assert.equal(writes, 0);
+      return {data: {content: ids.map(id => `#${id} — Ticket ${id}`).join("\n") + "\nПереведу в Ready for Testing. Выполнить изменение?"}};
+    }
+    const result = await call("batch_update_tickets", {operations: ids.map(id => ({action: "status", id, state: "Ready for Testing"}))});
+    assert.equal(result.succeeded, 22);
+    assert.equal(result.failed, 0);
+    return {data: {content: "Статусы подтверждены."}};
+  }, {
+    ticketStatesBatch: async (requested: number[]) => {
+      reads++; assert.deepEqual(requested, ids);
+      return {source: store.source(), results: ids.map(id => ({id, state: "Resolved", states: ["Resolved", "Ready for Testing"]}))};
+    },
+    changeTicketStatuses: async (changes: any[], guard: () => void) => {
+      guard(); writes++;
+      assert.deepEqual(changes, ids.map(id => ({id, state: "Ready for Testing"})));
+      return changes.map(item => ({...item, success: true, outcome: "changed"}));
+    },
+  });
+  await agent.chat("Переведи тикеты с этим тегом в RFT", context);
+  await agent.chat("Да, давай", context);
+  assert.equal(reads, 1);
+  assert.equal(writes, 1);
+});

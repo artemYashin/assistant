@@ -300,7 +300,7 @@ export class Connectors {
       pat = this.store.secret("azure.pat");
     const response = await this.azure(
       "workitemsbatch",
-      { method: "POST", body: JSON.stringify({ ids }) },
+      { method: "POST", body: JSON.stringify({ ids, fields: ["System.TeamProject", "System.WorkItemType", "System.State"] }) },
       s,
       pat,
     );
