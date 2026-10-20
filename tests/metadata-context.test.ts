@@ -85,3 +85,16 @@ test("status confirmation accepts natural question variants and carries displaye
     {role: "assistant", body: "Хочешь посмотреть другие тикеты?"},
   ]).contextual, false);
 });
+
+test("status approval survives clarification, Markdown and local links without hash IDs", () => {
+  const result = confirmedChatRequest("Да, давай", [
+    {role: "user", body: "Давай поменяем статус тикетов с тегом Inside 2"},
+    {role: "assistant", body: "В какой статус перевести?"},
+    {role: "user", body: "RFT"},
+    {role: "assistant", body: "42 — First [Перейти](/tickets?id=42&source=example)\n43 — Second [Перейти](/tickets?source=example&id=43)\nГотов перевести в Ready for Testing. **Выполнить изменения для этих тикетов?**"},
+  ]);
+  assert.equal(result.contextual, true);
+  assert.match(result.prompt, /Давай поменяем статус/);
+  assert.match(result.prompt, /Уточнение пользователя: RFT/);
+  assert.match(result.prompt, /#42, #43/);
+});

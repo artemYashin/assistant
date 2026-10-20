@@ -60,16 +60,47 @@ export function confirmedChatRequest(
     plan?.role !== "assistant" ||
     request?.role !== "user" ||
     !request.body ||
-    !/(?:выполнить(?:\s+(?:эти|это))?\s+изменени[ея]|выполнить(?:\s+(?:действие|операцию|переход))?|применить(?:\s+изменения)?|продолжить|подтверждаете)[?？]/iu.test(plan.body || "")
+    !isMutationQuestion(plan.body || "")
   )
     return { prompt, contextual: false };
-  const prior = confirmedChatRequest(request.body, rows.slice(0, -2));
-  const original = prior.contextual ? prior : metadataContextRequest(request.body, rows.slice(0, -2));
+  const original = continuedMutationRequest(request.body, rows.slice(0, -2));
   // Explicitly displayed IDs belong to the plan the user just confirmed.
   // Do not copy assistant prose into the command or infer IDs from counts.
-  const ids = [...new Set([...String(plan.body).matchAll(/#(\d+)\b/g)].map(m => m[1]))];
+  const ids = planTicketIds(String(plan.body));
   return {
     prompt: `${original.prompt}\n\nПользователь подтвердил предыдущий план: ${reply}${ids.length ? `\nТикеты подтверждённого плана: ${ids.map(id => `#${id}`).join(", ")}` : ""}`,
     contextual: true,
   };
+}
+
+function isMutationQuestion(text: string) {
+  const plain = text.replace(/[*_`]/g, "");
+  return /[?？]/u.test(plain) && /выполн|примен|подтвержд|продолж|перевест|перевод|смен|помен|измен|установ|выстав|confirm|proceed|apply/iu.test(plain);
+}
+function planTicketIds(text: string) {
+  const values = [...text.matchAll(/#(\d+)\b/g)].map(m => m[1]);
+  // Local navigation links also identify tickets when the displayed number has no #.
+  for (const match of text.matchAll(/\]\((\/tickets\?[^\s)]+)\)/g)) {
+    const id = new URL(match[1], "http://orbit.local").searchParams.get("id");
+    if (id && /^\d+$/.test(id)) values.push(id);
+  }
+  return [...new Set(values)];
+}
+function continuedMutationRequest(prompt: string, history: unknown[]): {prompt: string; contextual: boolean} {
+  const confirmed = confirmedChatRequest(prompt, history);
+  if (confirmed.contextual) return confirmed;
+  const rows = history as {role?: string; body?: string}[];
+  const question = rows.at(-1), previous = rows.at(-2);
+  // A user's answer to a status/scope clarification continues their own request.
+  // Never use assistant text to invent the requested target state.
+  if (question?.role !== "assistant" || previous?.role !== "user" || !previous.body ||
+      !/[?？]/u.test(question.body || "") ||
+      !/статус|status|state|каким.*тикет|какие.*тикет|всем|which.*ticket/iu.test(question.body || "") ||
+      /^(?:нет|отмена|не надо|не нужно|no|cancel)(?:$|[.!\s])/iu.test(prompt.trim()) ||
+      prompt.length > 200 || /[?？]/u.test(prompt))
+    return metadataContextRequest(prompt, history);
+  const original = continuedMutationRequest(previous.body, rows.slice(0, -2));
+  if (!/перев|смен|помен|измен|выстав|установ|move|change|set|transition/iu.test(original.prompt))
+    return metadataContextRequest(prompt, history);
+  return {prompt: `${original.prompt}\n\nУточнение пользователя: ${prompt}`, contextual: true};
 }

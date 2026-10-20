@@ -1082,3 +1082,23 @@ test("chat resolves Azure RFT before a natural-language confirmation and batches
   assert.equal(reads, 1);
   assert.equal(writes, 1);
 });
+
+test("Azure status batch accepts clarified intent and confirmed link IDs without rereading", async (t) => {
+  const store = fixture(t);
+  store.say("user", "Давай поменяем статус тикетов с тегом Inside 2", context);
+  store.say("assistant", "Какой статус выставить?", context);
+  store.say("user", "RFT", context);
+  store.say("assistant", "42 — First [Перейти](/tickets?id=42&source=x)\n43 — Second [Перейти](/tickets?id=43&source=x)\nПереведу в Ready for Testing. **Выполнить изменения для этих тикетов?**", context);
+  let writes = 0;
+  const {agent} = fakeAgent(store, async (_session, config) => {
+    const result = await config.tools.find((tool: any) => tool.name === "batch_update_tickets").handler({operations: [42, 43].map(id => ({action: "status", id, state: "Ready for Testing"}))}, {});
+    assert.equal(result.succeeded, 2);
+    assert.equal(result.failed, 0);
+    return {data: {content: "Готово"}};
+  }, {changeTicketStatuses: async (changes: any[], guard: () => void) => {
+    guard(); writes++;
+    return changes.map(item => ({...item, success: true, outcome: "changed"}));
+  }});
+  await agent.chat("Да, давай", context);
+  assert.equal(writes, 1);
+});

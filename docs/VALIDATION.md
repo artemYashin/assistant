@@ -722,3 +722,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Conversational confirmation accepts natural variants such as «Выполнить изменение?» and carries explicit #IDs from the confirmed plan while retaining the user's original command. Unrelated questions do not continue a mutation.
 - get_ticket_states reads current/available Azure states for up to 25 local IDs, caches reads within the turn, resolves RFT against actual state names, and returns an actionable error for an ambiguous/missing target. The read requests only project, work item type and state. Prompt guidance uses the verified full name before confirmation; write-time validation and post-write verification remain unchanged.
 - Pre-push validation: all 186 tests and production build passed, including a 22-ticket RFT preflight/confirmation/batch regression. Vite retains its large-chunk warning. Live Azure/Copilot behavior was not exercised.
+
+### Contextual status requests and ticket-link formatting (2026-10-20)
+
+- Status intent now accepts conversational verbs such as «давай поменяем», follows user status/scope clarifications, recognizes Markdown-formatted confirmation questions and reads confirmed IDs from local navigation links. Rejection diagnostics distinguish missing intent, unresolved IDs, mismatched targets and explicit refusal, and state that no Azure write was sent.
+- Model formatting guidance places each ticket navigation link in its own Markdown paragraph after the full title; no CSS override is introduced.
+- Pre-push validation: all 189 tests and production build passed. The initial run caught a metadata-clarification regression, corrected before the successful rerun. Coverage includes clarified RFT commands, link-only IDs, refusal/read-only cases and metadata exclusions. Vite retains its large-chunk warning. Live Azure/Copilot behavior was not exercised.

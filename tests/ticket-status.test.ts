@@ -278,3 +278,12 @@ test("connector bulk update preserves collection URL and verifies with one bulk 
   assert.equal(calls.length, 4);
   assert.equal(calls.filter((call) => call.includes("/$batch")).length, 1);
 });
+
+test("conversational status verbs work and diagnostics distinguish rejection reasons", async () => {
+  const {stateChangeRejection} = await import("../server/ticket-status.js");
+  for (const prompt of ["Давай поменяем статус на RFT", "Давай переведём их в RFT", "Давай изменим статус на RFT"])
+    assert.equal(stateChangeRejection(prompt, 42, "Ready for Testing", true), null);
+  assert.equal(stateChangeRejection("Да, давай", 42, "RFT", true), "intent_missing");
+  assert.equal(stateChangeRejection("Переведи их в RFT", 42, "RFT"), "ticket_unresolved");
+  assert.equal(stateChangeRejection("Переведи их в Active", 42, "RFT", true), "target_not_requested");
+});
