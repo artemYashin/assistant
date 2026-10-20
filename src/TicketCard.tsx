@@ -424,7 +424,10 @@ export function TicketCard({ reference }: { reference: string }) {
                   {card.comments.map((c: any) => (
                     <article className="ticket-comment" key={c.id}>
                       <header>
-                        <strong>{c.author || "Автор не указан"}</strong>
+                        <span className="ticket-comment-author">
+                          <InitialsAvatar name={c.author || ""} />
+                          <strong>{c.author || "Автор не указан"}</strong>
+                        </span>
                         <time dateTime={c.date || undefined}>
                           {timestamp(c.date)}
                         </time>
@@ -615,52 +618,6 @@ function TicketCommentForm({ reference }: { reference: string }) {
       )}
       {sent && <p role="status">Комментарий отправлен.</p>}
     </form>
-  );
-}
-
-export function TicketLookup() {
-  const [id, setId] = useState(""),
-    [ref, setRef] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  return (
-    <section className="panel ticket-lookup">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError("");
-          setRef("");
-          try {
-            const result = await api(
-              `/tickets/${encodeURIComponent(id)}/details`,
-            );
-            setRef(result.cardId);
-          } catch (e: any) {
-            setError(e.message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <label>
-          Открыть полную карточку по номеру
-          <input
-            type="number"
-            autoFocus
-            min={1}
-            required
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-          />
-        </label>
-        <button className="secondary" disabled={busy}>
-          {busy ? "Загрузка…" : "Показать тикет"}
-        </button>
-      </form>
-      {error && <p className="error">{error}</p>}
-      {ref && <TicketCard reference={ref} />}
-    </section>
   );
 }
 

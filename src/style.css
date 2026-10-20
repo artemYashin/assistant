@@ -6695,3 +6695,67 @@ summary > svg {
   line-height: 1.4;
   box-shadow: 0 2px 8px #24392f22;
 }
+
+.ticket-comment header {
+  align-items: center;
+}
+.ticket-comment-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ticket-comment-author .initials-avatar {
+  width: 26px;
+  height: 26px;
+  flex-basis: 26px;
+  font-size: 10px;
+}
+.ticket-detail
+  .ticket-detail-sidebar
+  .ticket-overview
+  :is(.local-developer, .ticket-metadata-control) {
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  gap: 8px;
+}
+.ticket-detail .ticket-detail-sidebar .local-developer-name {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.ticket-detail .ticket-detail-sidebar .ticket-field-edit-trigger {
+  position: static;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  margin-left: auto;
+  opacity: 1;
+  visibility: visible;
+  color: #365444;
+  background: #edf3e9;
+  border: 1px solid #bbcdb5;
+}
+.ticket-detail .ticket-detail-sidebar .ticket-field-edit-trigger > svg {
+  opacity: 1;
+  width: 15px;
+  height: 15px;
+}
+
+.ticket-lookup-dialog.is-lookup {
+  width: min(440px, calc(100vw - 32px));
+}
+.ticket-lookup-dialog.is-lookup .ticket-lookup form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.ticket-lookup-dialog.is-lookup .ticket-lookup input {
+  width: 100%;
+}
+.ticket-lookup-dialog.is-lookup .ticket-lookup form > button {
+  justify-self: end;
+}

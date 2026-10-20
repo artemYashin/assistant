@@ -844,3 +844,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Moved ticket ID to the top of the metadata rail, with an ID copy control. Notes and all-fields dialogs now open from the rail. A link-copy button beside the title copies the Azure ticket URL, with success/error feedback and accessible labels.
 - Metadata rail stretches to the content column height without distributing or stretching its field rows.
 - Pre-push validation: all 193 tests passed; production build passed after final styles. Vite retains its large-chunk warning. Browser clipboard/dialog/visual behavior was not exercised.
+
+### Comment authors and two-step ticket lookup (2026-10-20)
+
+- Added stable-color initials avatars to comment authors. Sidebar local priority/assignment edit controls have explicit visible styling, reserved button width and flexible assignment text.
+- Header lookup now starts as a centered compact number form; successful loading replaces it with the full card. Escape/close from the card returns to the preserved number, and Escape/close from the form dismisses the dialog. Focus and scroll reset per stage; route changes close the lookup; nested dialog events and stale lookup responses are guarded.
+- Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser focus/modal/pointer behavior was not exercised.
