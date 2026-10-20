@@ -514,7 +514,12 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 aria-current={page === n.id ? "page" : undefined}
                 className={page === n.id ? "active" : ""}
               >
-                <n.icon size={19} />
+                <n.icon
+                  size={19}
+                  className={
+                    n.id === "pullrequests" ? "sidebar-pr-icon" : undefined
+                  }
+                />
                 <span className="sidebar-text">{n.label}</span>
                 {n.id === "approvals" &&
                   pending.length +

@@ -8,11 +8,13 @@ export function TicketMetadata({
   context,
   field,
   onChange,
+  showLabel = false,
 }: {
   ticket: any;
   context: { client: string; project: string };
   field: "notes" | "priority" | "tags";
   onChange: () => void;
+  showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const label = { notes: "Заметки", priority: "Приоритет", tags: "Теги" }[
@@ -43,7 +45,11 @@ export function TicketMetadata({
       )}
       <button
         type="button"
-        className="icon-button ticket-cell-button"
+        className={
+          showLabel
+            ? "secondary ticket-notes-trigger"
+            : "icon-button ticket-cell-button"
+        }
         aria-label={label + " тикета #" + ticket.id}
         title={
           label + (field === "notes" && ticket.notes ? " · есть запись" : "")
@@ -55,6 +61,7 @@ export function TicketMetadata({
         ) : (
           <Pencil size={14} />
         )}
+        {showLabel && <span>{label}</span>}
       </button>
       {open && (
         <Editor

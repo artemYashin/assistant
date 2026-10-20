@@ -1,3 +1,5 @@
+import { PrInfoPopup } from "./PrInfoPopup.js";
+import { TicketSectionScroll } from "./TicketSectionScroll.js";
 import { OrderedTicketCells } from "./TicketColumns.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
@@ -17,6 +19,7 @@ import {
   MessageSquare,
   Paperclip,
   Database,
+  NotebookPen,
   Send,
 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
@@ -140,6 +143,51 @@ export function TicketCard({ reference }: { reference: string }) {
             <ExternalLink size={15} />
             Открыть в Azure DevOps
           </a>
+          {card.locallyTracked ? (
+            <TicketMetadata
+              ticket={{
+                id: card.id,
+                source: card.source,
+                ...card.localMetadata,
+              }}
+              context={card.localContext}
+              field="notes"
+              showLabel
+              onChange={() => {}}
+            />
+          ) : (
+            <PrInfoPopup
+              title={`Локальные заметки · #${card.id}`}
+              className="secondary ticket-notes-trigger"
+              trigger={
+                <>
+                  <NotebookPen size={16} /> Заметки
+                </>
+              }
+            >
+              <p style={{ whiteSpace: "pre-wrap" }}>
+                {card.localMetadata?.notes || "Локальных заметок пока нет."}
+              </p>
+              <p className="muted">
+                Для редактирования добавьте тикет в локальный список.
+              </p>
+            </PrInfoPopup>
+          )}
+          <PrInfoPopup
+            title={`Все поля тикета #${card.id}`}
+            trigger={<Database size={17} />}
+          >
+            <div className="ticket-all-fields">
+              <dl>
+                {Object.entries(f).map(([key, value]) => (
+                  <div key={key}>
+                    <dt>{key}</dt>
+                    <dd className="ticket-prose">{text(value)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </PrInfoPopup>
         </nav>
       </header>
       <div className="ticket-card-body">
@@ -262,7 +310,11 @@ export function TicketCard({ reference }: { reference: string }) {
         ]
           .filter(([key]) => f[key])
           .map(([key, label]) => (
-            <details className="ticket-section" key={key} open>
+            <details
+              className={`ticket-section${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
+              key={key}
+              open
+            >
               <summary>
                 {key === "System.Description" ? (
                   <FileText size={17} aria-hidden="true" />
@@ -273,22 +325,17 @@ export function TicketCard({ reference }: { reference: string }) {
                 )}
                 {label}
               </summary>
-              <div
-                className="ticket-section-scroll"
-                role="region"
-                aria-label={label}
-                tabIndex={0}
-              >
+              <TicketSectionScroll label={label}>
                 <TicketRichText
                   value={f[key]}
                   card={card}
                   reference={reference}
                 />
-              </div>
+              </TicketSectionScroll>
             </details>
           ))}
         <details
-          className="ticket-section"
+          className="ticket-section ticket-section-prs"
           open={!!card.linkedPullRequests?.length}
         >
           <summary>
@@ -336,7 +383,7 @@ export function TicketCard({ reference }: { reference: string }) {
             фильтра ревьюеров.
           </p>
         </details>
-        <details className="ticket-section">
+        <details className="ticket-section ticket-section-neutral">
           <summary>
             <MessageSquare size={17} aria-hidden="true" />
             Комментарии{" "}
@@ -367,7 +414,7 @@ export function TicketCard({ reference }: { reference: string }) {
           )}
           <TicketCommentForm key={reference} reference={reference} />
         </details>
-        <details className="ticket-section">
+        <details className="ticket-section ticket-section-neutral">
           <summary>
             <Paperclip size={17} aria-hidden="true" />
             Вложения и изображения{" "}
@@ -405,55 +452,6 @@ export function TicketCard({ reference }: { reference: string }) {
               не пиксели изображения.
             </p>
           )}
-        </details>
-        <details className="ticket-all-fields">
-          <summary>
-            <Database size={17} aria-hidden="true" />
-            Все поля тикета · {Object.keys(f).length}
-          </summary>
-          <dl>
-            {Object.entries(f).map(([key, value]) => (
-              <div key={key}>
-                <dt>{key}</dt>
-                <dd className="ticket-prose">{text(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
-        <details className="ticket-section">
-          <summary>
-            <FileText size={17} />
-            Локальные заметки
-          </summary>
-          <div className="ticket-local-notes">
-            <div className="ticket-local-notes-heading">
-              <span className="muted">Сохраняются только в Orbit</span>
-              {card.locallyTracked && (
-                <TicketMetadata
-                  ticket={{
-                    id: card.id,
-                    source: card.source,
-                    ...card.localMetadata,
-                  }}
-                  context={card.localContext}
-                  field="notes"
-                  onChange={() => {}}
-                />
-              )}
-            </div>
-            <p
-              className={!card.localMetadata?.notes ? "muted" : undefined}
-              style={{ whiteSpace: "pre-wrap" }}
-            >
-              {card.localMetadata?.notes || "Локальных заметок пока нет."}
-            </p>
-            {!card.locallyTracked && (
-              <p className="muted">
-                Для редактирования заметок, приоритета и локального поручения
-                сначала добавьте тикет в локальный список на странице «Тикеты».
-              </p>
-            )}
-          </div>
         </details>
       </div>
     </article>

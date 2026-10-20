@@ -2590,8 +2590,10 @@ summary:focus-visible {
   padding: 0;
 }
 .ticket-section-scroll {
-  max-height: 30vh;
-  max-height: 30dvh;
+  min-height: 10vh;
+  min-height: 10dvh;
+  max-height: 35vh;
+  max-height: 35dvh;
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -4673,7 +4675,7 @@ summary > svg {
 }
 .ticket-overview {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
   gap: 10px 16px;
   margin: 0;
   padding: 12px;
@@ -4683,9 +4685,9 @@ summary > svg {
 }
 .ticket-overview > div {
   display: grid;
-  grid-template-columns: minmax(0, min(40%, 140px)) minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 6px;
   min-width: 0;
 }
 .ticket-overview dt {
@@ -5996,4 +5998,232 @@ summary > svg {
 .ticket-cell-button:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
+}
+
+.ticket-scroll-shell {
+  position: relative;
+  min-width: 0;
+}
+.ticket-detail .ticket-section > .ticket-scroll-shell.has-overflow {
+  padding-right: 18px;
+}
+.ticket-scroll-shell .ticket-section-scroll {
+  scrollbar-width: none;
+  scrollbar-gutter: auto;
+}
+.ticket-scroll-shell .ticket-section-scroll::-webkit-scrollbar {
+  display: none;
+}
+.ticket-scroll-track {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 12px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}
+.ticket-scroll-thumb {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  right: 2px;
+  border-radius: 6px;
+  background: #8495a9;
+  cursor: grab;
+}
+.ticket-scroll-track:hover .ticket-scroll-thumb {
+  background: #526b88;
+}
+.ticket-scroll-track:active .ticket-scroll-thumb {
+  cursor: grabbing;
+  background: #365b83;
+}
+.ticket-scroll-track:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.ticket-card-actions {
+  align-items: center;
+}
+.ticket-card-actions .ticket-notes-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ticket-section-scroll.is-resized {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+.ticket-section-resize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  margin-top: 4px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+.ticket-section-resize > span {
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: #94a3b8;
+}
+.ticket-section-resize:hover {
+  background: #e2e8f0;
+}
+.ticket-section-resize:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Reveal cell editing without moving the value; touch keeps visible controls. */
+@media (hover: hover) and (pointer: fine) {
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    ):has(
+      > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    ) {
+    position: relative;
+  }
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    ):has(
+      > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    ):is(:hover, :focus-within) {
+    box-shadow: inset 0 0 0 1px #94a3b8;
+    background: #f0f5fa;
+  }
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    )
+    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    > button {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    background: #fff;
+    box-shadow: 0 1px 4px #33415524;
+  }
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td[data-column="developer_name"]
+    > .local-developer
+    > button:first-of-type {
+    right: 36px;
+  }
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(
+      [data-column="state"],
+      [data-column="priority"],
+      [data-column="tags"],
+      [data-column="developer_name"]
+    ):is(:hover, :focus-within)
+    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    > button {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .ticket-table-fit
+    > table
+    > tbody
+    > tr:not(.ticket-preview-row)
+    > td:is(:hover, :focus-within)
+    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+    > button:disabled {
+    opacity: 0.45;
+  }
+}
+
+.ticket-section.ticket-section-acceptance {
+  border-color: #e7b6bc;
+}
+.ticket-section-acceptance > summary {
+  color: #813b47;
+  background: #fff1f2;
+}
+.ticket-section-acceptance[open] > summary {
+  color: #813b47;
+  background: #fce4e7;
+  border-bottom-color: #e7b6bc;
+}
+.ticket-section-acceptance > summary:hover {
+  background: #f8d9de;
+}
+
+.ticket-section.ticket-section-prs {
+  border-color: #b6d5ef;
+}
+.ticket-section-prs > summary {
+  color: #285d87;
+  background: #eff7ff;
+}
+.ticket-section-prs[open] > summary {
+  color: #285d87;
+  background: #dfedfb;
+  border-bottom-color: #b6d5ef;
+}
+.ticket-section-prs > summary:hover {
+  background: #d4e7f9;
+}
+.ticket-section.ticket-section-neutral {
+  border-color: #cbd1d9;
+}
+.ticket-section-neutral > summary {
+  color: #475569;
+  background: #f3f4f6;
+}
+.ticket-section-neutral[open] > summary {
+  color: #475569;
+  background: #e5e7eb;
+  border-bottom-color: #cbd1d9;
+}
+.ticket-section-neutral > summary:hover {
+  background: #dce1e7;
+}
+.sidebar .sidebar-pr-icon {
+  color: #4284b6;
+}
+.sidebar a.active .sidebar-pr-icon {
+  color: #286693;
 }

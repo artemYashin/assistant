@@ -805,3 +805,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Active/trash ticket cells and checkboxes align vertically in the middle; wrapped tags align with their edit button.
 - Description, reproduction steps and acceptance criteria use keyboard-focusable inner scroll regions capped at 30dvh (30vh fallback). Accordion summaries remain outside the scroll area; overscroll containment prevents scrolling the page at the boundary.
 - Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser visual/scroll behavior was not exercised.
+
+### Compact ticket details, resizable content and hover editing (2026-10-20)
+
+- Ticket description/reproduction/acceptance blocks have a persistent custom vertical scrollbar when overflowing, with pointer and keyboard controls. Default maximum height is 35dvh, minimum 10dvh; bottom handles resize up to 90dvh and reset on double click/Enter. ResizeObserver updates scrollbar geometry for content, images and viewport changes.
+- Notes and all-fields controls now open dialogs from the card header. Type/status/priority/local assignment use responsive columns with labels above values.
+- On devices with a fine hover pointer, editable table cells reveal bordered edit/remove controls on hover or keyboard focus without moving their values. Touch controls remain visible.
+- Acceptance criteria use pale-red borders/headings, linked PRs pale blue, comments/attachments neutral gray. Sidebar PR icon uses matching blue.
+- Pre-push validation: all 192 tests passed; production build passed again after final color changes. Vite retains its large-chunk warning. Browser pointer/resize behavior and macOS scrollbar presentation were not exercised.
