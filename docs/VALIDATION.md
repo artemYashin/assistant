@@ -820,3 +820,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added a local-database usage aggregation test covering context filtering, reporting periods, missing receipts, daily zero filling and PR metadata.
 - Editable ticket fields use compact rounded clickable areas with small hover pencils and reserved icon space. Accordion resize grips sit on the bottom border; status/metadata dialogs allow text wrapping to avoid horizontal overflow.
 - Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/pointer behavior and live integrations were not exercised.
+
+### Compact PR author identity (2026-10-20)
+
+- Active/completed PR cards show a stable-color initials avatar beside the title and a compact author/date line, removing the separate author row. Long names/titles can wrap within the available width.
+- Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

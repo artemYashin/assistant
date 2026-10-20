@@ -2774,26 +2774,6 @@ td > small {
   padding: 2px;
   cursor: pointer;
 }
-.pr-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.pr-avatar {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  background: #edf3e9;
-  color: #466540;
-  border-radius: 50%;
-  font-weight: 600;
-}
-.pr-author small {
-  display: block;
-  margin-bottom: 3px;
-}
 .pr-context-badges {
   display: flex;
   flex-wrap: wrap;
@@ -4031,17 +4011,6 @@ summary > svg {
   font-size: 12px;
 }
 
-.pr-author-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 20px;
-  margin: 14px 0;
-}
-.pr-author-meta > .pr-author,
-.pr-author-meta > p {
-  margin: 0;
-}
 .pr-review > .pr-card-actions {
   margin: 16px 0 12px;
   padding: 12px 0;
@@ -4261,11 +4230,12 @@ summary > svg {
 }
 
 .pr-created-at {
-  margin: 4px 0 12px;
+  margin: 4px 0 0;
   font-size: 12px;
 }
-.pr-title:has(+ .pr-created-at) {
-  margin-bottom: 0;
+.pr-created-at strong {
+  color: #24392f;
+  font-weight: 600;
 }
 .pr-review-outcome.is-idle {
   color: #994449;
@@ -5238,8 +5208,21 @@ summary > svg {
 .pr-card-heading {
   min-width: 0;
 }
-.pr-card-heading .pr-title {
+.pr-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin-top: 10px;
+}
+.pr-identity > .initials-avatar {
+  margin-top: 2px;
+}
+.pr-identity-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pr-card-heading .pr-title {
+  margin: 0;
   overflow-wrap: anywhere;
 }
 .pr-card-header > .pr-card-utilities {

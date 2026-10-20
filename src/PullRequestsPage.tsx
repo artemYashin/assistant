@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "./InitialsAvatar.js";
 import { PrCreateDialog } from "./PrCreateDialog.js";
 import { LastSync } from "./LastSync.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
@@ -541,30 +542,25 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                   {p.review_count > 1 && <ReviewHistory pr={p} />}
                   {!!p.draft && <span className="badge">Черновик</span>}
                 </div>
-                <h2 className="pr-title">
-                  <a href={p.url} target="_blank" rel="noreferrer">
-                    #{p.number} · {p.title}
-                  </a>
-                </h2>
-                <p className="muted pr-created-at">
-                  Создан:{" "}
-                  {p.created_at ? (
-                    <time dateTime={p.created_at}>
-                      {new Date(p.created_at).toLocaleString("ru-RU")}
-                    </time>
-                  ) : (
-                    "дата пока не загружена"
-                  )}
-                </p>
-                <div className="pr-author-meta">
-                  <div className="pr-author">
-                    <span className="pr-avatar" aria-hidden="true">
-                      {(p.author || "?").slice(0, 1).toUpperCase()}
-                    </span>
-                    <div>
-                      <small>Автор</small>
-                      <strong>{p.author || "Не указан"}</strong>
-                    </div>
+                <div className="pr-identity">
+                  <InitialsAvatar name={p.author || "?"} />
+                  <div className="pr-identity-text">
+                    <h2 className="pr-title">
+                      <a href={p.url} target="_blank" rel="noreferrer">
+                        #{p.number} · {p.title}
+                      </a>
+                    </h2>
+                    <p className="muted pr-created-at">
+                      <strong>{p.author || "Автор не указан"}</strong>
+                      {" · Создан: "}
+                      {p.created_at ? (
+                        <time dateTime={p.created_at}>
+                          {new Date(p.created_at).toLocaleString("ru-RU")}
+                        </time>
+                      ) : (
+                        "дата пока не загружена"
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>
