@@ -381,6 +381,17 @@ export function createApp(
       .parse(req.body);
     res.json(store.addMemory(v.scope, v.body, v.context));
   });
+  app.patch("/api/memories/:id", (req, res) => {
+    const { body } = z
+      .object({ body: z.string().trim().min(1).max(8000) })
+      .parse(req.body);
+    const result = store.db
+      .prepare("UPDATE memories SET body=? WHERE id=?")
+      .run(body, String(req.params.id));
+    if (!result.changes) throw new AppError(404, "Запись памяти не найдена");
+    store.audit("memory.updated", String(req.params.id));
+    res.json({ ok: true, body });
+  });
   app.delete("/api/memories/:id", (req, res) => {
     store.db.prepare("DELETE FROM memories WHERE id=?").run(req.params.id);
     res.json({ ok: true });
@@ -521,6 +532,14 @@ export function createApp(
   app.get("/api/memory-proposals", (_req, res) =>
     res.json(memoryProposals.list()),
   );
+  app.delete("/api/memory-proposals/:id", (req, res) => {
+    const result = store.db
+      .prepare("DELETE FROM memory_proposals WHERE id=?")
+      .run(String(req.params.id));
+    if (!result.changes) throw new AppError(404, "Предложение не найдено");
+    store.audit("memory.proposal_removed", String(req.params.id));
+    res.json({ ok: true });
+  });
   app.post("/api/memory-proposals/:id/approve", (req, res) =>
     res.json(memoryProposals.decide(String(req.params.id), true)),
   );
@@ -787,6 +806,16 @@ export function createApp(
         }),
     ),
   );
+  app.put("/api/tickets/:id/assignee", async (req, res) => {
+    const id = z.coerce.number().int().positive().parse(req.params.id);
+    const { source, userId } = z
+      .object({
+        source: z.string().min(1),
+        userId: z.string().uuid().nullable(),
+      })
+      .parse(req.body);
+    res.json(await connectors.assignTicket(id, source, userId));
+  });
   app.post("/api/developers/search", async (req, res) => {
     const { query } = z
       .object({ query: z.string().trim().min(2).max(100) })

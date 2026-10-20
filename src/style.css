@@ -6088,7 +6088,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   )
   > :is(.ticket-status-control, .ticket-metadata-control, .local-developer) {
   position: relative;
@@ -6108,7 +6109,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   ):is(
     :hover,
     :has(
@@ -6127,7 +6129,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   )
   > :is(.ticket-status-control, .ticket-metadata-control, .local-developer):has(
     > .ticket-field-edit-trigger:is(:hover, :focus-visible):not(:disabled)
@@ -6145,7 +6148,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   )
   > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
   > .ticket-field-edit-trigger {
@@ -6172,7 +6176,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   )
   > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
   > .ticket-field-edit-trigger
@@ -6197,7 +6202,8 @@ summary > svg {
       [data-column="state"],
       [data-column="priority"],
       [data-column="tags"],
-      [data-column="developer_name"]
+      [data-column="developer_name"],
+      [data-column="assigned"]
     )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
     > .ticket-field-edit-trigger
@@ -6212,7 +6218,8 @@ summary > svg {
       [data-column="state"],
       [data-column="priority"],
       [data-column="tags"],
-      [data-column="developer_name"]
+      [data-column="developer_name"],
+      [data-column="assigned"]
     ):is(
       :hover,
       :has(
@@ -6238,7 +6245,8 @@ summary > svg {
     [data-column="state"],
     [data-column="priority"],
     [data-column="tags"],
-    [data-column="developer_name"]
+    [data-column="developer_name"],
+    [data-column="assigned"]
   )
   > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
   > .ticket-field-edit-trigger:disabled {
@@ -6253,7 +6261,8 @@ summary > svg {
       [data-column="state"],
       [data-column="priority"],
       [data-column="tags"],
-      [data-column="developer_name"]
+      [data-column="developer_name"],
+      [data-column="assigned"]
     )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer),
   .ticket-table-fit
@@ -6264,7 +6273,8 @@ summary > svg {
       [data-column="state"],
       [data-column="priority"],
       [data-column="tags"],
-      [data-column="developer_name"]
+      [data-column="developer_name"],
+      [data-column="assigned"]
     )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
     > .ticket-field-edit-trigger
@@ -7098,8 +7108,7 @@ summary > svg {
 }
 
 /* Keep ticket identity separate so short titles do not add another row. */
-.ticket-active-table .ticket-id-type,
-.ticket-active-table .ticket-identity-heading {
+.ticket-active-table .ticket-id-type {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
@@ -7111,4 +7120,104 @@ summary > svg {
 .ticket-active-table > table > tbody > tr:not(.ticket-preview-row) > td {
   padding-top: 7px;
   padding-bottom: 7px;
+}
+
+.ticket-active-table .ticket-identity-heading {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-active-table .ticket-identity-heading .ticket-column-sort > span {
+  white-space: nowrap;
+}
+.ticket-table-fit > table > thead > tr > th[data-column="added_at"],
+.ticket-table-fit > table > tbody > tr > td[data-column="added_at"] {
+  min-width: 80px;
+}
+
+.memory-note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.memory-edit-form,
+.memory-edit-form > label {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.memory-edit-form textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+}
+
+/* Count tickets only: expanded/hidden detail rows do not affect striping. */
+.ticket-table-fit > table > thead > tr > th {
+  background: #f0f2f4;
+  color: #596573;
+  border-bottom: 1px solid #dce1e6;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr:nth-child(even of :not(.ticket-preview-row)):not(
+    .ticket-row-highlighted
+  ) {
+  background-color: #f8f9fa;
+}
+
+.ticket-management-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ticket-search-block,
+.ticket-add-block {
+  padding: 8px;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  background: #f7f8fa;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.ticket-search-block {
+  flex: 1 1 240px;
+}
+.ticket-search-block .search {
+  min-width: 0;
+}
+.ticket-search-block input {
+  min-width: 0;
+  width: 100%;
+}
+.ticket-search-block svg {
+  flex-shrink: 0;
+}
+.ticket-add-block,
+.ticket-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.ticket-add-block {
+  flex: 0 1 auto;
+}
+.ticket-add-form {
+  min-width: 0;
+  margin: 0;
+}
+.ticket-add-form input {
+  flex: 1 1 120px;
+  width: 130px;
+  min-width: 0;
+  max-width: 160px;
+}
+.ticket-add-block button {
+  white-space: nowrap;
+  flex-shrink: 0;
 }

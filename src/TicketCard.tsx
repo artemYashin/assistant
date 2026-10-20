@@ -136,6 +136,21 @@ export function TicketCard({ reference }: { reference: string }) {
     window.addEventListener("orbit:ticket-removed", remove);
     return () => window.removeEventListener("orbit:ticket-removed", remove);
   }, []);
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const { id, source, assigned } = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old?.id === id && old?.source === source
+          ? {
+              ...old,
+              fields: { ...old.fields, "System.AssignedTo": assigned || "" },
+            }
+          : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-assignee", changed);
+    return () => window.removeEventListener("orbit:ticket-assignee", changed);
+  }, []);
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
   const f = card.fields;

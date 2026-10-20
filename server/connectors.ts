@@ -643,6 +643,57 @@ export class Connectors {
     this.store.set("developers:" + source, [...merged.values()].slice(0, 1000));
     return { users, truncated: matches.length > 20 };
   }
+  async assignTicket(id: number, source: string, userId: string | null) {
+    const s = this.store.settings(), pat = this.store.secret("azure.pat");
+    const guard = () => {
+      if (source !== this.store.source() || pat !== this.store.secret("azure.pat"))
+        throw new AppError(409, "Подключение Azure изменилось. Откройте выбор исполнителя заново.");
+    };
+    guard();
+    const users = this.store.get<any[]>("developers:" + source, []);
+    const user = userId ? users.find((p) => p.id === userId) : null;
+    if (userId && !user?.email) throw new AppError(400, "Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.");
+    const read = async () => {
+      const item = await this.azure(`workitems/${id}`, {}, s, pat);
+      if (item.id !== id || item.fields?.["System.TeamProject"] !== s.azureProject)
+        throw new AppError(400, "Тикет относится к другому проекту Azure");
+      return item;
+    };
+    const before = await read();
+    if (!Number.isSafeInteger(before.rev)) throw new AppError(502, "Azure не вернул ревизию тикета");
+    guard();
+    let failure: unknown;
+    try {
+      await this.azure(`workitems/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json-patch+json" },
+        body: JSON.stringify([
+          { op: "test", path: "/rev", value: before.rev },
+          { op: "add", path: "/fields/System.AssignedTo", value: user?.email || "" },
+        ]),
+      }, s, pat);
+    } catch (e) { failure = e; }
+    let after: any;
+    try { after = await read(); } catch {
+      throw new AppError(502, "Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.");
+    }
+    guard();
+    const actual = after.fields["System.AssignedTo"];
+    const confirmed = user
+      ? String(actual?.id || "").toLowerCase() === user.id.toLowerCase() || String(typeof actual === "string" ? actual : actual?.uniqueName || "").toLowerCase() === user.email.toLowerCase()
+      : !actual;
+    if (!confirmed) throw new AppError(409, `Изменение исполнителя не подтверждено. ${failure instanceof Error ? failure.message : "Azure вернул другого исполнителя; проверьте права и правила проекта."}`);
+    if (this.store.db.prepare("SELECT 1 FROM tickets WHERE source=? AND id=?").get(source, id)) this.saveTicket(after, s);
+    for (const row of this.store.db.prepare("SELECT id,data FROM ticket_cards").all() as any[]) {
+      const card = JSON.parse(row.data);
+      if (card.id === id && card.source === source) {
+        card.fields["System.AssignedTo"] = actual || "";
+        this.store.db.prepare("UPDATE ticket_cards SET data=? WHERE id=?").run(JSON.stringify(card), row.id);
+      }
+    }
+    this.store.audit("ticket.assigned", `#${id}: ${user?.name || "Не назначен"}`);
+    return { id, source, assigned: actual || null, verified: true };
+  }
   async ticketOptions() {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");

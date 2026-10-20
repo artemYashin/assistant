@@ -864,3 +864,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added shared image preview dialogs with zoom/pan, smaller ticket lookup detail layout, a local received timestamp and local-trash action in ticket details. Comment image discovery now handles whitespace/unquoted HTML attributes and UUID case.
 - Added first-added timestamps for newly tracked tickets, preserving dates through sync/trash/restore; historical unknown dates remain empty. Added table/export visibility for this date. Active ticket rows now separate ID/type from title with compact spacing.
 - Validation: all 203 tests passed and production build passed. The initial new comment-image test fixture lacked its required project field; corrected the fixture and reran the full suite successfully. Vite retains its large-chunk warning. Browser visuals, clipboard, modal focus/scroll and real Azure/Copilot integrations were not exercised.
+
+### Memory editing, Azure assignment and ticket toolbar (2026-10-20)
+
+- Memory entries can be edited in place; proposals can be removed independently of saved memory, including processed proposals.
+- Azure assignee cells use the existing hover edit affordance, with debounced identity search, initials, single-user selection and unassignment. Writes use a revision test and read-back identity verification; confirmed updates refresh tracked tickets and cached detail cards. Added four mocked integration cases covering assignment, clearing, mismatched verification and failed writes, plus source/user validation.
+- Ticket header ID/type sort controls sit horizontally; added-at column has an 80px minimum width. Light table headers and alternate ticket backgrounds exclude detail rows and preserve focused-ticket highlights. Search and add/import controls share a compact wrapping toolbar.
+- Pre-push validation: all 207 tests and production build passed. Vite retains its large-chunk warning. Real Azure permissions/search/write behavior and browser layout/focus were not exercised.

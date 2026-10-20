@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { api } from "./api.js";
 const scopes: Record<string, string> = {
@@ -64,24 +65,45 @@ export function MemoryProposalList({
             )}
             <p className="memory-proposal-body">{p.body}</p>
             <p className="muted">Зачем сохранить: {p.reason}</p>
-            {p.status === "pending" && (
-              <div className="card-actions">
-                <button
-                  className="primary"
-                  disabled={!!busy}
-                  onClick={() => void decide(p.id, true)}
-                >
-                  Подтвердить сохранение
-                </button>
-                <button
-                  className="secondary"
-                  disabled={!!busy}
-                  onClick={() => void decide(p.id, false)}
-                >
-                  Отклонить
-                </button>
-              </div>
-            )}
+            <div className="card-actions">
+              {p.status === "pending" && (
+                <>
+                  <button
+                    className="primary"
+                    disabled={!!busy}
+                    onClick={() => void decide(p.id, true)}
+                  >
+                    Подтвердить сохранение
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={!!busy}
+                    onClick={() => void decide(p.id, false)}
+                  >
+                    Отклонить
+                  </button>
+                </>
+              )}
+              <button
+                className="secondary"
+                disabled={!!busy}
+                title="Убрать предложение из списка. Сохранённая память останется без изменений."
+                onClick={async () => {
+                  setBusy(p.id);
+                  setError("");
+                  try {
+                    await api(`/memory-proposals/${p.id}`, "DELETE");
+                    onChange();
+                  } catch (e: any) {
+                    setError(e.message);
+                  } finally {
+                    setBusy("");
+                  }
+                }}
+              >
+                <Trash2 size={15} /> Удалить предложение
+              </button>
+            </div>
           </article>
         ))}
       </div>

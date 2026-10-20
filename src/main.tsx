@@ -1,3 +1,5 @@
+import { AzureAssignee } from "./AzureAssignee.js";
+import { MemoryBody } from "./MemoryBody.js";
 import {
   analyzeTicketEvent,
   analysisChatReadyEvent,
@@ -384,11 +386,13 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   useEffect(() => {
     const changed = () => setRefresh((n) => n + 1);
     window.addEventListener("orbit:ticket-state", changed);
+    window.addEventListener("orbit:ticket-assignee", changed);
     window.addEventListener("orbit:ticket-metadata", changed);
     window.addEventListener("orbit:ticket-developers", changed);
     window.addEventListener("orbit:ticket-removed", changed);
     return () => {
       window.removeEventListener("orbit:ticket-state", changed);
+      window.removeEventListener("orbit:ticket-assignee", changed);
       window.removeEventListener("orbit:ticket-metadata", changed);
       window.removeEventListener("orbit:ticket-developers", changed);
       window.removeEventListener("orbit:ticket-removed", changed);
@@ -1262,55 +1266,62 @@ function Tickets({
           <Link to="/tickets">Показать все тикеты</Link>
         </div>
       )}
-      <div className="toolbar">
-        <label className="search">
-          <Search size={17} />
-          <input
-            placeholder="Номер, название, исполнитель…"
-            disabled={!!rawTarget}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <button
-          className="secondary"
-          disabled={!!busy}
-          onClick={() =>
-            run(
-              "import",
-              () => api("/tickets/import", "POST", {}),
-              "Ваши тикеты импортированы",
-            )
-          }
-        >
-          <RefreshCw size={15} />
-          Импортировать мои
-        </button>
+      <div className="ticket-management-toolbar">
+        <div className="ticket-search-block">
+          <label className="search">
+            <Search size={17} />
+            <input
+              aria-label="Поиск тикетов"
+              placeholder="Номер, название, исполнитель…"
+              disabled={!!rawTarget}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="ticket-add-block">
+          <form
+            className="ticket-add-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(
+                "track",
+                () => api("/tickets", "POST", { id: Number(id) }),
+                "Тикет добавлен",
+              );
+            }}
+          >
+            <input
+              aria-label="Номер тикета для добавления"
+              type="number"
+              min="1"
+              required
+              placeholder="Номер тикета"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+            />
+            <button className="primary" disabled={!!busy || sourceMismatch}>
+              <Plus size={16} />
+              Добавить по номеру
+            </button>
+          </form>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!!busy}
+            onClick={() =>
+              run(
+                "import",
+                () => api("/tickets/import", "POST", {}),
+                "Ваши тикеты импортированы",
+              )
+            }
+          >
+            <RefreshCw size={15} />
+            Импортировать мои
+          </button>
+        </div>
       </div>
-      <form
-        className="inline-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(
-            "track",
-            () => api("/tickets", "POST", { id: Number(id) }),
-            "Тикет добавлен",
-          );
-        }}
-      >
-        <input
-          type="number"
-          min="1"
-          required
-          placeholder="Номер тикета"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
-        />
-        <button className="primary" disabled={!!busy || sourceMismatch}>
-          <Plus size={16} />
-          Добавить по номеру
-        </button>
-      </form>
       <div className="ticket-filters">
         <button
           className="secondary ticket-filter-reset"
@@ -1617,10 +1628,7 @@ function Tickets({
                     data-column="assigned"
                     hidden={columns.hidden("assigned")}
                   >
-                    <LocalAssigneeNames
-                      names={t.assigned ? [t.assigned] : []}
-                      emptyLabel="Не назначен"
-                    />
+                    <AzureAssignee ticket={t} />
                   </td>
                   <td
                     data-column="developer_name"
@@ -1788,7 +1796,13 @@ function Memory({ memories, context, run, busy }: any) {
                 <Trash2 size={15} />
               </button>
             </div>
-            <p>{m.body}</p>
+            <MemoryBody
+              key={`${m.id}:${m.body}`}
+              id={m.id}
+              body={m.body}
+              disabled={!!busy}
+              onSaved={() => run("refresh-memory", async () => {})}
+            />
             {(typeof m.cards === "string"
               ? JSON.parse(m.cards)
               : m.cards || []
