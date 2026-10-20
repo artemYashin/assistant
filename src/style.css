@@ -2590,8 +2590,7 @@ summary:focus-visible {
   padding: 0;
 }
 .ticket-section-scroll {
-  min-height: 10vh;
-  min-height: 10dvh;
+  min-height: 0;
   max-height: 35vh;
   max-height: 35dvh;
   overflow: auto;
@@ -6568,4 +6567,81 @@ summary > svg {
   .overview-activity-item {
     flex-wrap: wrap;
   }
+}
+
+/* Keep ticket facts in a compact rail beside its readable content. */
+.ticket-detail {
+  container-type: inline-size;
+}
+.ticket-detail-layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.ticket-detail-sidebar {
+  min-width: 0;
+  background: #f7f9f5;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 12px;
+}
+.ticket-detail-sidebar > :is(.ticket-metadata, .ticket-overview) {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.ticket-detail-sidebar > dl > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e9e2;
+}
+.ticket-detail-sidebar > dl:last-child > div:last-child {
+  border-bottom: 0;
+}
+.ticket-detail-sidebar > dl dt {
+  margin: 0;
+  line-height: 1.4;
+}
+.ticket-detail-sidebar > dl dd {
+  min-width: 0;
+  margin: 0;
+}
+.ticket-detail-sidebar .initials-avatar {
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
+  font-size: 9px;
+}
+.ticket-detail-main {
+  min-width: 0;
+}
+.ticket-detail-main > .ticket-card-body {
+  margin-top: 16px;
+}
+@container (max-width: 760px) {
+  .ticket-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+.ticket-table-fit .ticket-tag-list > .badge {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #435342;
+  background: #edf2e9;
+  border: 1px solid #d6e0d0;
+  padding: 4px 7px;
+}
+.ticket-table-fit .azure-ticket-tags > .badge {
+  color: #41576a;
+  background: #edf2f7;
+  border-color: #d5dfe9;
 }

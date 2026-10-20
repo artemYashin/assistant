@@ -832,3 +832,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Replaced cell focus-within styling with direct edit-trigger focus-visible styling so pointer-restored focus after closing a dialog does not retain the editing affordance; keyboard focus remains indicated.
 - Removed explanatory paragraphs from PR linked tickets, moved local-link information to the link button tooltip, and added subtle backgrounds/shadows to linked ticket cards. Description and linked-ticket navigation use the chat's green button styling and arrow icon.
 - Pre-push validation: all 193 tests passed; production build passed again after the final focus styling change. Vite retains its large-chunk warning. Browser hover/dialog behavior was not exercised.
+
+### Two-column ticket details and readable tags (2026-10-20)
+
+- Ticket details now place metadata/edit controls in a compact left rail and title/actions/content in the right column. Container queries stack the layout in narrow cards. Short rich-text sections size to content without a default minimum height; the 35dvh maximum and manual resize remain.
+- Table local/Azure tag badges use slightly larger semibold text, stronger foreground contrast and subtle green/blue backgrounds and borders, retaining wrapping in active/trash tables.
+- Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/resize behavior was not exercised.

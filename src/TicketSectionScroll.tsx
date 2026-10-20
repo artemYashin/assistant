@@ -140,10 +140,10 @@ export function TicketSectionScroll({
         aria-label={`Высота блока: ${label}`}
         aria-controls={id}
         aria-orientation="horizontal"
-        aria-valuemin={10}
+        aria-valuemin={0}
         aria-valuemax={90}
         aria-valuenow={Math.max(
-          10,
+          0,
           Math.min(90, Math.round((metrics.height / window.innerHeight) * 100)),
         )}
         aria-valuetext={`${Math.round(metrics.height)} пикселей`}

@@ -129,330 +129,340 @@ export function TicketCard({ reference }: { reference: string }) {
   };
   return (
     <article className="ticket-detail">
-      <header className="ticket-card-header">
-        <div className="ticket-card-title">
-          <span className="ticket-number">#{card.id}</span>
-          <strong>{f["System.Title"]}</strong>
-        </div>
-        <nav className="ticket-card-actions" aria-label="Ссылки тикета">
-          <Link to={ticketPath(card.id, card.source)}>
-            <ArrowUpRight size={15} />
-            Перейти к тикету
-          </Link>
-          <a href={card.url} target="_blank" rel="noreferrer">
-            <ExternalLink size={15} />
-            Открыть в Azure DevOps
-          </a>
-          {card.locallyTracked ? (
-            <TicketMetadata
-              ticket={{
-                id: card.id,
-                source: card.source,
-                ...card.localMetadata,
-              }}
-              context={card.localContext}
-              field="notes"
-              showLabel
-              onChange={() => {}}
-            />
-          ) : (
-            <PrInfoPopup
-              title={`Локальные заметки · #${card.id}`}
-              className="secondary ticket-notes-trigger"
-              trigger={
-                <>
-                  <NotebookPen size={16} /> Заметки
-                </>
-              }
-            >
-              <p style={{ whiteSpace: "pre-wrap" }}>
-                {card.localMetadata?.notes || "Локальных заметок пока нет."}
-              </p>
-              <p className="muted">
-                Для редактирования добавьте тикет в локальный список.
-              </p>
-            </PrInfoPopup>
-          )}
-          <PrInfoPopup
-            title={`Все поля тикета #${card.id}`}
-            trigger={<Database size={17} />}
-          >
-            <div className="ticket-all-fields">
-              <dl>
-                {Object.entries(f).map(([key, value]) => (
-                  <div key={key}>
-                    <dt>{key}</dt>
-                    <dd className="ticket-prose">{text(value)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          </PrInfoPopup>
-        </nav>
-      </header>
-      <div className="ticket-card-body">
-        <dl className="ticket-metadata">
-          <div>
-            <dt>Автор</dt>
-            <dd className="ticket-author-identity">
-              <InitialsAvatar
-                name={
-                  f["System.CreatedBy"] ? person(f["System.CreatedBy"]) : ""
-                }
-              />
-              <span>{person(f["System.CreatedBy"])}</span>
-            </dd>
-          </div>
-          <div>
-            <dt>Исполнитель</dt>
-            <dd className="ticket-author-identity">
-              {f["System.AssignedTo"] && (
-                <InitialsAvatar name={person(f["System.AssignedTo"])} />
-              )}
-              <span>
-                {f["System.AssignedTo"]
-                  ? person(f["System.AssignedTo"])
-                  : "Не назначен"}
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt>Создан</dt>
-            <dd>{timestamp(f["System.CreatedDate"])}</dd>
-          </div>
-          <div>
-            <dt>Изменён</dt>
-            <dd>{timestamp(f["System.ChangedDate"])}</dd>
-          </div>
-        </dl>
-        <dl className="ticket-overview">
-          <div>
-            <dt>Тип задачи</dt>
-            <dd>
-              <StatusBadge
-                state={f["System.WorkItemType"] || "Тип не указан"}
-                colors={typeColors}
-                kind="type"
-              />
-            </dd>
-          </div>
-          <div>
-            <dt>Статус</dt>
-            <dd>
-              <TicketStatus
-                id={card.id}
-                source={card.source}
-                state={f["System.State"] || ""}
-                colors={colors}
-              />
-            </dd>
-          </div>
-          {card.localMetadata && (
+      <div className="ticket-detail-layout">
+        <aside className="ticket-detail-sidebar" aria-label="Поля тикета">
+          <dl className="ticket-metadata">
             <div>
-              <dt>Локальный приоритет</dt>
+              <dt>Автор</dt>
+              <dd className="ticket-author-identity">
+                <InitialsAvatar
+                  name={
+                    f["System.CreatedBy"] ? person(f["System.CreatedBy"]) : ""
+                  }
+                />
+                <span>{person(f["System.CreatedBy"])}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Исполнитель</dt>
+              <dd className="ticket-author-identity">
+                {f["System.AssignedTo"] && (
+                  <InitialsAvatar name={person(f["System.AssignedTo"])} />
+                )}
+                <span>
+                  {f["System.AssignedTo"]
+                    ? person(f["System.AssignedTo"])
+                    : "Не назначен"}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>Создан</dt>
+              <dd>{timestamp(f["System.CreatedDate"])}</dd>
+            </div>
+            <div>
+              <dt>Изменён</dt>
+              <dd>{timestamp(f["System.ChangedDate"])}</dd>
+            </div>
+          </dl>
+          <dl className="ticket-overview">
+            <div>
+              <dt>Тип задачи</dt>
+              <dd>
+                <StatusBadge
+                  state={f["System.WorkItemType"] || "Тип не указан"}
+                  colors={typeColors}
+                  kind="type"
+                />
+              </dd>
+            </div>
+            <div>
+              <dt>Статус</dt>
+              <dd>
+                <TicketStatus
+                  id={card.id}
+                  source={card.source}
+                  state={f["System.State"] || ""}
+                  colors={colors}
+                />
+              </dd>
+            </div>
+            {card.localMetadata && (
+              <div>
+                <dt>Локальный приоритет</dt>
+                <dd>
+                  {card.locallyTracked ? (
+                    <TicketMetadata
+                      ticket={{
+                        id: card.id,
+                        source: card.source,
+                        ...card.localMetadata,
+                      }}
+                      context={card.localContext}
+                      field="priority"
+                      onChange={() => {}}
+                    />
+                  ) : (
+                    <span className="badge ticket-priority-badge">
+                      P{card.localMetadata.priority}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt>Локальное поручение</dt>
               <dd>
                 {card.locallyTracked ? (
-                  <TicketMetadata
-                    ticket={{
-                      id: card.id,
-                      source: card.source,
-                      ...card.localMetadata,
-                    }}
-                    context={card.localContext}
-                    field="priority"
-                    onChange={() => {}}
-                  />
+                  <LocalDeveloper ticket={card} context={card.localContext} />
                 ) : (
-                  <span className="badge ticket-priority-badge">
-                    P{card.localMetadata.priority}
-                  </span>
+                  <LocalAssigneeNames
+                    names={(card.developers || []).map((d: any) => d.name)}
+                  />
                 )}
               </dd>
             </div>
-          )}
-          <div>
-            <dt>Локальное поручение</dt>
-            <dd>
-              {card.locallyTracked ? (
-                <LocalDeveloper ticket={card} context={card.localContext} />
-              ) : (
-                <LocalAssigneeNames
-                  names={(card.developers || []).map((d: any) => d.name)}
-                />
-              )}
-            </dd>
-          </div>
-          {!!card.localMetadata?.tags?.length && (
-            <div className="ticket-overview-tags">
-              <dt>Теги</dt>
-              <dd>
-                {card.localMetadata.tags.map((tag: string) => (
-                  <span className="badge" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </dd>
+            {!!card.localMetadata?.tags?.length && (
+              <div className="ticket-overview-tags">
+                <dt>Теги</dt>
+                <dd>
+                  {card.localMetadata.tags.map((tag: string) => (
+                    <span className="badge" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </aside>
+        <div className="ticket-detail-main">
+          <header className="ticket-card-header">
+            <div className="ticket-card-title">
+              <span className="ticket-number">#{card.id}</span>
+              <strong>{f["System.Title"]}</strong>
             </div>
-          )}
-        </dl>
-        <div className="ticket-source">
-          <span>Данные получены: {timestamp(card.loadedAt)}</span>
-        </div>
-        {card.warnings.map((w: string) => (
-          <p className="error" key={w}>
-            {w}
-          </p>
-        ))}
-        {[
-          ["System.Description", "Описание"],
-          ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
-          ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
-        ]
-          .filter(([key]) => f[key])
-          .map(([key, label]) => (
+            <nav className="ticket-card-actions" aria-label="Ссылки тикета">
+              <Link to={ticketPath(card.id, card.source)}>
+                <ArrowUpRight size={15} />
+                Перейти к тикету
+              </Link>
+              <a href={card.url} target="_blank" rel="noreferrer">
+                <ExternalLink size={15} />
+                Открыть в Azure DevOps
+              </a>
+              {card.locallyTracked ? (
+                <TicketMetadata
+                  ticket={{
+                    id: card.id,
+                    source: card.source,
+                    ...card.localMetadata,
+                  }}
+                  context={card.localContext}
+                  field="notes"
+                  showLabel
+                  onChange={() => {}}
+                />
+              ) : (
+                <PrInfoPopup
+                  title={`Локальные заметки · #${card.id}`}
+                  className="secondary ticket-notes-trigger"
+                  trigger={
+                    <>
+                      <NotebookPen size={16} /> Заметки
+                    </>
+                  }
+                >
+                  <p style={{ whiteSpace: "pre-wrap" }}>
+                    {card.localMetadata?.notes || "Локальных заметок пока нет."}
+                  </p>
+                  <p className="muted">
+                    Для редактирования добавьте тикет в локальный список.
+                  </p>
+                </PrInfoPopup>
+              )}
+              <PrInfoPopup
+                title={`Все поля тикета #${card.id}`}
+                trigger={<Database size={17} />}
+              >
+                <div className="ticket-all-fields">
+                  <dl>
+                    {Object.entries(f).map(([key, value]) => (
+                      <div key={key}>
+                        <dt>{key}</dt>
+                        <dd className="ticket-prose">{text(value)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              </PrInfoPopup>
+            </nav>
+          </header>
+          <div className="ticket-card-body">
+            <div className="ticket-source">
+              <span>Данные получены: {timestamp(card.loadedAt)}</span>
+            </div>
+            {card.warnings.map((w: string) => (
+              <p className="error" key={w}>
+                {w}
+              </p>
+            ))}
+            {[
+              ["System.Description", "Описание"],
+              ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
+              ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
+            ]
+              .filter(([key]) => f[key])
+              .map(([key, label]) => (
+                <details
+                  className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
+                  key={key}
+                  open
+                >
+                  <summary>
+                    {key === "System.Description" ? (
+                      <FileText size={17} aria-hidden="true" />
+                    ) : key === "Microsoft.VSTS.TCM.ReproSteps" ? (
+                      <Bug size={17} aria-hidden="true" />
+                    ) : (
+                      <ListChecks size={17} aria-hidden="true" />
+                    )}
+                    {label}
+                  </summary>
+                  <TicketSectionScroll label={label}>
+                    <TicketRichText
+                      value={f[key]}
+                      card={card}
+                      reference={reference}
+                    />
+                  </TicketSectionScroll>
+                </details>
+              ))}
             <details
-              className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
-              key={key}
-              open
+              className="ticket-section ticket-section-prs"
+              open={!!card.linkedPullRequests?.length}
             >
               <summary>
-                {key === "System.Description" ? (
-                  <FileText size={17} aria-hidden="true" />
-                ) : key === "Microsoft.VSTS.TCM.ReproSteps" ? (
-                  <Bug size={17} aria-hidden="true" />
-                ) : (
-                  <ListChecks size={17} aria-hidden="true" />
-                )}
-                {label}
+                <GitPullRequest size={17} aria-hidden="true" />
+                Связанные открытые PR{" "}
+                <span className="ticket-count">
+                  {card.linkedPullRequests?.length || 0}
+                </span>
               </summary>
-              <TicketSectionScroll label={label}>
-                <TicketRichText
-                  value={f[key]}
-                  card={card}
-                  reference={reference}
-                />
-              </TicketSectionScroll>
+              {card.linkedPullRequests?.length ? (
+                <ul className="ticket-linked-prs">
+                  {card.linkedPullRequests.map((pr: any) => (
+                    <li key={`${pr.monitor}:${pr.repo}:${pr.number}`}>
+                      <div className="ticket-linked-pr-heading">
+                        <span className="ticket-type-badge">PR</span>
+                        <Link to={pullRequestPath(pr)}>
+                          #{pr.number} · {pr.title}
+                        </Link>
+                        {pr.draft ? (
+                          <span className="ticket-state-badge">Черновик</span>
+                        ) : null}
+                      </div>
+                      <small>
+                        {pr.author || "Автор не указан"} · {pr.client} /{" "}
+                        {pr.project} · Синхронизация: {timestamp(pr.synced_at)}
+                      </small>
+                      {pr.syncError && (
+                        <p className="error">
+                          Последняя синхронизация не удалась: статус PR может
+                          быть устаревшим.
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="ticket-empty">
+                  Связанные открытые PR не найдены среди синхронизированных
+                  репозиториев.
+                </p>
+              )}
+              <p className="ticket-footnote">
+                Ручные локальные связи и упоминания #номера в описании PR.
+                Открытость — по последней синхронизации с учётом настроенного
+                фильтра ревьюеров.
+              </p>
             </details>
-          ))}
-        <details
-          className="ticket-section ticket-section-prs"
-          open={!!card.linkedPullRequests?.length}
-        >
-          <summary>
-            <GitPullRequest size={17} aria-hidden="true" />
-            Связанные открытые PR{" "}
-            <span className="ticket-count">
-              {card.linkedPullRequests?.length || 0}
-            </span>
-          </summary>
-          {card.linkedPullRequests?.length ? (
-            <ul className="ticket-linked-prs">
-              {card.linkedPullRequests.map((pr: any) => (
-                <li key={`${pr.monitor}:${pr.repo}:${pr.number}`}>
-                  <div className="ticket-linked-pr-heading">
-                    <span className="ticket-type-badge">PR</span>
-                    <Link to={pullRequestPath(pr)}>
-                      #{pr.number} · {pr.title}
-                    </Link>
-                    {pr.draft ? (
-                      <span className="ticket-state-badge">Черновик</span>
-                    ) : null}
-                  </div>
-                  <small>
-                    {pr.author || "Автор не указан"} · {pr.client} /{" "}
-                    {pr.project} · Синхронизация: {timestamp(pr.synced_at)}
-                  </small>
-                  {pr.syncError && (
-                    <p className="error">
-                      Последняя синхронизация не удалась: статус PR может быть
-                      устаревшим.
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="ticket-empty">
-              Связанные открытые PR не найдены среди синхронизированных
-              репозиториев.
-            </p>
-          )}
-          <p className="ticket-footnote">
-            Ручные локальные связи и упоминания #номера в описании PR.
-            Открытость — по последней синхронизации с учётом настроенного
-            фильтра ревьюеров.
-          </p>
-        </details>
-        <details className="ticket-section ticket-section-neutral">
-          <summary>
-            <MessageSquare size={17} aria-hidden="true" />
-            Комментарии{" "}
-            <span className="ticket-count">{card.comments.length}</span>
-          </summary>
-          {card.comments.length ? (
-            <div className="ticket-comments">
-              {card.comments.map((c: any) => (
-                <article className="ticket-comment" key={c.id}>
-                  <header>
-                    <strong>{c.author || "Автор не указан"}</strong>
-                    <time dateTime={c.date || undefined}>
-                      {timestamp(c.date)}
-                    </time>
-                  </header>
-                  <TicketRichText
-                    value={c.richText || c.text}
-                    card={card}
-                    reference={reference}
-                  />
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="ticket-empty">
-              Комментарии отсутствуют в загруженных данных.
-            </p>
-          )}
-          <TicketCommentForm key={reference} reference={reference} />
-        </details>
-        <details className="ticket-section ticket-section-neutral">
-          <summary>
-            <Paperclip size={17} aria-hidden="true" />
-            Вложения и изображения{" "}
-            <span className="ticket-count">{card.attachments.length}</span>
-          </summary>
-          {card.attachments.length ? (
-            <div className="ticket-attachments">
-              {card.attachments.map((a: any) => (
-                <div className="ticket-attachment" key={a.id}>
-                  <a href={attachmentUrl(a)} target="_blank" rel="noreferrer">
-                    {a.name} ↗
-                  </a>
-                  {a.image && (
-                    <img
-                      src={attachmentUrl(a)}
-                      loading="lazy"
-                      alt={a.name}
-                      onError={(e) => {
-                        e.currentTarget.alt =
-                          "Предпросмотр недоступен — откройте вложение по ссылке";
-                      }}
-                    />
-                  )}
+            <details className="ticket-section ticket-section-neutral">
+              <summary>
+                <MessageSquare size={17} aria-hidden="true" />
+                Комментарии{" "}
+                <span className="ticket-count">{card.comments.length}</span>
+              </summary>
+              {card.comments.length ? (
+                <div className="ticket-comments">
+                  {card.comments.map((c: any) => (
+                    <article className="ticket-comment" key={c.id}>
+                      <header>
+                        <strong>{c.author || "Автор не указан"}</strong>
+                        <time dateTime={c.date || undefined}>
+                          {timestamp(c.date)}
+                        </time>
+                      </header>
+                      <TicketRichText
+                        value={c.richText || c.text}
+                        card={card}
+                        reference={reference}
+                      />
+                    </article>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="ticket-empty">
-              Вложения отсутствуют в загруженных данных.
-            </p>
-          )}
-          {!!card.attachments.length && (
-            <p className="ticket-footnote">
-              Картинки показаны вам; модель получает текст и список вложений, а
-              не пиксели изображения.
-            </p>
-          )}
-        </details>
+              ) : (
+                <p className="ticket-empty">
+                  Комментарии отсутствуют в загруженных данных.
+                </p>
+              )}
+              <TicketCommentForm key={reference} reference={reference} />
+            </details>
+            <details className="ticket-section ticket-section-neutral">
+              <summary>
+                <Paperclip size={17} aria-hidden="true" />
+                Вложения и изображения{" "}
+                <span className="ticket-count">{card.attachments.length}</span>
+              </summary>
+              {card.attachments.length ? (
+                <div className="ticket-attachments">
+                  {card.attachments.map((a: any) => (
+                    <div className="ticket-attachment" key={a.id}>
+                      <a
+                        href={attachmentUrl(a)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {a.name} ↗
+                      </a>
+                      {a.image && (
+                        <img
+                          src={attachmentUrl(a)}
+                          loading="lazy"
+                          alt={a.name}
+                          onError={(e) => {
+                            e.currentTarget.alt =
+                              "Предпросмотр недоступен — откройте вложение по ссылке";
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="ticket-empty">
+                  Вложения отсутствуют в загруженных данных.
+                </p>
+              )}
+              {!!card.attachments.length && (
+                <p className="ticket-footnote">
+                  Картинки показаны вам; модель получает текст и список
+                  вложений, а не пиксели изображения.
+                </p>
+              )}
+            </details>
+          </div>
+        </div>
       </div>
     </article>
   );
