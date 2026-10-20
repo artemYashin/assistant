@@ -10,6 +10,7 @@ import { PrDiffDialog } from "./PrDiffDialog.js";
 import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
+  ArrowUpRight,
   LockKeyhole,
   Code2,
   Eye,
@@ -124,8 +125,13 @@ function PrDescription({ pr }: any) {
           aria-label="Переходы к тикетам из описания"
         >
           {pr.tickets.map((t: any) => (
-            <Link key={t.id} to={ticketPath(t.id, pr.ticket_source)}>
+            <Link
+              className="chat-ticket-link"
+              key={t.id}
+              to={ticketPath(t.id, pr.ticket_source)}
+            >
               Перейти к тикету #{t.id}
+              <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
           ))}
         </div>
@@ -714,20 +720,12 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 <Ticket size={17} aria-hidden="true" />
                 Связанные тикеты · {p.tickets?.length || 0}
               </summary>
-              <p className="muted">
-                Упоминание в PR не означает закрытие тикета. Здесь показан
-                последний синхронизированный статус Azure.
-              </p>
               {!readOnly && (
                 <PrTicketLink
                   pr={p}
                   onChange={() => setVersion((v) => v + 1)}
                 />
               )}
-              <p className="muted">
-                Ручные связи сохраняются только в Orbit. При «Merge и смена
-                статусов» они также появятся в диалоге подтверждения.
-              </p>
               {p.ticket_error && <p className="error">{p.ticket_error}</p>}
               {!p.tickets?.length && (
                 <p className="muted">Связанных тикетов пока нет.</p>
@@ -739,10 +737,11 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 {(p.tickets || []).map((t: any) => (
                   <div className="pr-ticket-row" key={t.id}>
                     <Link
-                      className="pr-ticket-jump"
+                      className="chat-ticket-link pr-ticket-jump"
                       to={ticketPath(t.id, p.ticket_source)}
                     >
                       Перейти к тикету #{t.id}
+                      <ArrowUpRight size={14} aria-hidden="true" />
                     </Link>
                     <strong>
                       #{t.id}

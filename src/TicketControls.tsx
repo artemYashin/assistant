@@ -99,16 +99,6 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       >
         <Pencil size={15} />
       </button>
-      <button
-        type="button"
-        className="text-button ticket-cell-button"
-        disabled={busy || !assigned.length}
-        aria-label={`Снять локальное поручение #${ticket.id}`}
-        title="Снять все локальные поручения"
-        onClick={() => void save([])}
-      >
-        <X size={15} />
-      </button>
       <dialog
         ref={dialog}
         className="developer-dialog local-assignment-dialog"

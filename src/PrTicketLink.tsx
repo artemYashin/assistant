@@ -50,7 +50,11 @@ export function PrTicketLink({
           onChange={(e) => setId(e.target.value.trim())}
           disabled={busy}
         />
-        <button className="secondary" disabled={busy || !id}>
+        <button
+          className="secondary"
+          disabled={busy || !id}
+          title="Связь сохраняется только в Orbit и не изменяет Azure. Тикет также появится в диалоге Merge при выборе смены статуса."
+        >
           <Link2 size={16} />
           {busy ? "Привязываю…" : "Привязать локально"}
         </button>

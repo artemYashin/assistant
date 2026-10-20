@@ -2865,6 +2865,8 @@ td > small {
   margin-top: 12px;
 }
 .pr-ticket-row {
+  background: #f8faf7;
+  box-shadow: 0 2px 6px #24392f0d;
   display: grid;
   gap: 8px;
   border: 1px solid #e1e6dd;
@@ -2941,11 +2943,8 @@ td > small {
   gap: 12px;
   margin-top: 16px;
 }
-.pr-ticket-navigation a,
 .pr-ticket-jump {
-  color: var(--green);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  justify-self: start;
 }
 
 .assistant-heading > div:nth-child(2) {
@@ -6081,7 +6080,7 @@ summary > svg {
   background: var(--green);
 }
 
-/* The edit button covers the compact field; its pencil is only an affordance. */
+/* The compact field is clickable; cell hover previews it, direct hover highlights it. */
 .ticket-table-fit
   > table
   > tbody
@@ -6096,7 +6095,7 @@ summary > svg {
   position: relative;
   min-height: 34px;
   min-width: 60px;
-  padding: 5px 28px 5px 6px;
+  padding: 5px 9px 5px 6px;
   border-radius: 8px;
   transition:
     background-color 0.1s ease,
@@ -6111,10 +6110,15 @@ summary > svg {
     [data-column="priority"],
     [data-column="tags"],
     [data-column="developer_name"]
+  ):is(
+    :hover,
+    :has(
+      > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
+        > .ticket-field-edit-trigger:focus-visible
+    )
   )
-  > .local-developer {
-  padding-right: 60px;
-  min-width: 96px;
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer) {
+  box-shadow: inset 0 0 0 1px #a8b5c2;
 }
 .ticket-table-fit
   > table
@@ -6125,10 +6129,14 @@ summary > svg {
     [data-column="priority"],
     [data-column="tags"],
     [data-column="developer_name"]
-  ):is(:hover, :focus-within)
-  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer) {
-  box-shadow: inset 0 0 0 1px #94a3b8;
-  background: #f0f5fa;
+  )
+  > :is(.ticket-status-control, .ticket-metadata-control, .local-developer):has(
+    > .ticket-field-edit-trigger:is(:hover, :focus-visible):not(:disabled)
+  ) {
+  background: #eaf2f8;
+  box-shadow:
+    inset 0 0 0 1px #718ba3,
+    0 0 0 2px #718ba31a;
 }
 .ticket-table-fit
   > table
@@ -6152,7 +6160,7 @@ summary > svg {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #64748b;
+  color: #fff;
   box-shadow: none;
   z-index: 1;
   cursor: pointer;
@@ -6171,44 +6179,15 @@ summary > svg {
   > .ticket-field-edit-trigger
   > svg {
   position: absolute;
-  top: 5px;
-  right: 6px;
-  width: 11px;
-  height: 11px;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  padding: 3px;
+  color: #fff;
+  background: #40566a;
+  border-radius: 0 8px 0 6px;
   transition: opacity 0.1s ease;
-}
-.ticket-table-fit
-  > table
-  > tbody
-  > tr:not(.ticket-preview-row)
-  > td:is(
-    [data-column="state"],
-    [data-column="priority"],
-    [data-column="tags"],
-    [data-column="developer_name"]
-  )
-  > .local-developer
-  > .ticket-field-edit-trigger
-  > svg {
-  right: 38px;
-}
-.ticket-table-fit
-  > table
-  > tbody
-  > tr:not(.ticket-preview-row)
-  > td:is(
-    [data-column="state"],
-    [data-column="priority"],
-    [data-column="tags"],
-    [data-column="developer_name"]
-  )
-  > .local-developer
-  > button:not(.ticket-field-edit-trigger) {
-  position: absolute;
-  right: 5px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
 }
 @media (hover: hover) and (pointer: fine) {
   .ticket-table-fit
@@ -6235,42 +6214,21 @@ summary > svg {
       [data-column="priority"],
       [data-column="tags"],
       [data-column="developer_name"]
+    ):is(
+      :hover,
+      :has(
+        > :is(
+            .ticket-status-control,
+            .ticket-metadata-control,
+            .local-developer
+          )
+          > .ticket-field-edit-trigger:focus-visible
+      )
     )
-    > .local-developer
-    > button:not(.ticket-field-edit-trigger) {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.1s ease;
-  }
-  .ticket-table-fit
-    > table
-    > tbody
-    > tr:not(.ticket-preview-row)
-    > td:is(
-      [data-column="state"],
-      [data-column="priority"],
-      [data-column="tags"],
-      [data-column="developer_name"]
-    ):is(:hover, :focus-within)
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
     > .ticket-field-edit-trigger
     > svg {
     opacity: 1;
-  }
-  .ticket-table-fit
-    > table
-    > tbody
-    > tr:not(.ticket-preview-row)
-    > td:is(
-      [data-column="state"],
-      [data-column="priority"],
-      [data-column="tags"],
-      [data-column="developer_name"]
-    ):is(:hover, :focus-within)
-    > .local-developer
-    > button:not(.ticket-field-edit-trigger) {
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 .ticket-table-fit
@@ -6310,19 +6268,7 @@ summary > svg {
       [data-column="developer_name"]
     )
     > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    > button,
-  .ticket-table-fit
-    > table
-    > tbody
-    > tr:not(.ticket-preview-row)
-    > td:is(
-      [data-column="state"],
-      [data-column="priority"],
-      [data-column="tags"],
-      [data-column="developer_name"]
-    )
-    > :is(.ticket-status-control, .ticket-metadata-control, .local-developer)
-    > button
+    > .ticket-field-edit-trigger
     > svg {
     transition: none;
   }

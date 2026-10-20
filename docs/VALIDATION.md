@@ -825,3 +825,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Active/completed PR cards show a stable-color initials avatar beside the title and a compact author/date line, removing the separate author row. Long names/titles can wrap within the available width.
 - Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Ticket editing affordances and PR ticket links (2026-10-20)
+
+- Removed the separate local-assignment clear button; assignments remain editable through the selector. Compact field overlays reserve less space and show a small dark corner pencil, with distinct cell-preview and direct-target hover feedback.
+- Replaced cell focus-within styling with direct edit-trigger focus-visible styling so pointer-restored focus after closing a dialog does not retain the editing affordance; keyboard focus remains indicated.
+- Removed explanatory paragraphs from PR linked tickets, moved local-link information to the link button tooltip, and added subtle backgrounds/shadows to linked ticket cards. Description and linked-ticket navigation use the chat's green button styling and arrow icon.
+- Pre-push validation: all 193 tests passed; production build passed again after the final focus styling change. Vite retains its large-chunk warning. Browser hover/dialog behavior was not exercised.
