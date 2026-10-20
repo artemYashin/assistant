@@ -568,6 +568,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             Рабочее пространство <ChevronRight size={15} />
             <b>{heading}</b>
           </div>
+          <ContextPicker context={context} onChange={setContext} />
           <div className="topbar-actions">
             <TicketLookupDialog
               key={`${settings?.azureUrl}:${settings?.azureProject}`}
@@ -612,7 +613,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <Link to="/">Перейти к обзору</Link>
               </div>
             )}
-            <ContextPicker context={context} onChange={setContext} />
             {error && (
               <div className="error dismissible" role="alert">
                 {error}

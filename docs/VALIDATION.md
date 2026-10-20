@@ -775,3 +775,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added All / With active tasks / Without active tasks filters with developer counts and name-search composition. Active uses the project's active status group; review, completed and trash tasks do not count. Changing projects resets the activity filter.
 - Pre-push tests: all 192 passed. Browser visual behavior was not exercised.
 - Production build passed; Vite retains its large-chunk warning.
+
+### Header context selector (2026-10-20)
+
+- Removed the separate customer/project panel above page content. Header now shows a compact customer → project path and settings icon, both opening the context manager.
+- Management uses a native modal dialog portaled to body, preserving client/project selectors and all management sections. Escape/close, modal focus and existing page scroll locking apply. Header text truncates on limited widths; secondary breadcrumb hides on narrower screens.
+- Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
