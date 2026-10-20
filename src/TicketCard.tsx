@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
   Sparkles,
+  ArchiveRestore,
+  Download,
   LoaderCircle,
   Copy,
   Link2,
@@ -36,6 +38,9 @@ import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 import { ticketText as text } from "./ticket-text.js";
 export function TicketCard({ reference }: { reference: string }) {
+  const [tracking, setTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
+  const trackingPending = useRef(false);
   const [removing, setRemoving] = useState(false);
   const [removed, setRemoved] = useState(false);
   const [removalError, setRemovalError] = useState("");
@@ -130,13 +135,35 @@ export function TicketCard({ reference }: { reference: string }) {
       const { id, source } = (event as CustomEvent).detail;
       setCard((old: any) =>
         old?.id === id && old?.source === source
-          ? { ...old, locallyTracked: false }
+          ? { ...old, locallyTracked: false, locallyAvailable: true }
           : old,
       );
     };
     window.addEventListener("orbit:ticket-removed", remove);
     return () => window.removeEventListener("orbit:ticket-removed", remove);
   }, []);
+  useEffect(() => {
+    let live = true;
+    const tracked = (event: Event) => {
+      const { id, source } = (event as CustomEvent).detail;
+      if (card?.id !== id || card?.source !== source) return;
+      api(`/ticket-cards/${encodeURIComponent(reference)}`)
+        .then((value) => {
+          if (live) {
+            setCard(value);
+            setRemoved(false);
+          }
+        })
+        .catch((e) => {
+          if (live) setTrackingError(e.message);
+        });
+    };
+    window.addEventListener("orbit:ticket-tracked", tracked);
+    return () => {
+      live = false;
+      window.removeEventListener("orbit:ticket-tracked", tracked);
+    };
+  }, [reference, card?.id, card?.source]);
   useEffect(() => {
     const changed = (event: Event) => {
       const { id, source, assigned } = (event as CustomEvent).detail;
@@ -349,6 +376,72 @@ export function TicketCard({ reference }: { reference: string }) {
           </div>
         </aside>
         <div className="ticket-detail-main">
+          {!card.locallyTracked && (
+            <div className="ticket-tracking-action">
+              <button
+                type="button"
+                disabled={tracking}
+                onClick={async () => {
+                  if (trackingPending.current) return;
+                  trackingPending.current = true;
+                  setTracking(true);
+                  setTrackingError("");
+                  try {
+                    if (card.locallyAvailable) {
+                      await api(`/tickets/${card.id}/restore`, "POST", {
+                        source: card.source,
+                      });
+                    } else {
+                      const result = await api(
+                        "/azure/tickets/import",
+                        "POST",
+                        { source: card.source, ids: [card.id] },
+                      );
+                      if (result.missing?.includes(card.id))
+                        throw new Error(
+                          "Не удалось импортировать тикет. Проверьте доступ к нему в Azure.",
+                        );
+                    }
+                    setCard((old: any) => ({
+                      ...old,
+                      locallyTracked: true,
+                      locallyAvailable: true,
+                    }));
+                    setRemoved(false);
+                    window.dispatchEvent(
+                      new CustomEvent("orbit:ticket-tracked", {
+                        detail: { id: card.id, source: card.source },
+                      }),
+                    );
+                  } catch (e: any) {
+                    setTrackingError(e.message);
+                  } finally {
+                    trackingPending.current = false;
+                    setTracking(false);
+                  }
+                }}
+              >
+                {tracking ? (
+                  <LoaderCircle size={16} className="spin" />
+                ) : card.locallyAvailable ? (
+                  <ArchiveRestore size={16} />
+                ) : (
+                  <Download size={16} />
+                )}
+                {card.locallyAvailable ? "Восстановить" : "Импортировать"}
+              </button>
+              <span className="muted">
+                {card.locallyAvailable
+                  ? "Тикет находится в локальной корзине"
+                  : "Тикет ещё не добавлен в локальный список"}
+              </span>
+            </div>
+          )}
+          {trackingError && (
+            <p className="error" role="alert">
+              {trackingError}
+            </p>
+          )}
           <header className="ticket-card-header">
             <div className="ticket-card-title">
               <TicketCopyButton

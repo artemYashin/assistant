@@ -962,3 +962,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Reduced imported rich-text table cell padding to 3px vertically and 6px horizontally, with specificity that prevents outer ticket-table styles from overriding it. Removed leading/trailing paragraph margins inside cells. Main ticket-list cell spacing is unchanged.
 - Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Azure ticket recovery actions and row hover (2026-10-21)
+
+- Pale red/yellow Azure ticket rows now have matching, stronger hover and keyboard-focus backgrounds with a short color transition.
+- Trashed Azure rows offer restoration. Ticket details show Restore or Import above the title according to local availability; successful actions refresh the card and ticket lists without navigation. Restoring uses the existing local restore endpoint; importing uses the existing source-checked selection import. Neither action writes to Azure.
+- Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser interactions and live Azure endpoints were not exercised.

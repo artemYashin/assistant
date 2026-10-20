@@ -55,6 +55,7 @@ export function TicketTrash({
       "orbit:ticket-assignee",
       "orbit:ticket-metadata",
       "orbit:ticket-developers",
+      "orbit:ticket-tracked",
     ];
     events.forEach((name) => window.addEventListener(name, refresh));
     return () =>

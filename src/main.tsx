@@ -395,12 +395,14 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     window.addEventListener("orbit:ticket-metadata", changed);
     window.addEventListener("orbit:ticket-developers", changed);
     window.addEventListener("orbit:ticket-removed", changed);
+    window.addEventListener("orbit:ticket-tracked", changed);
     return () => {
       window.removeEventListener("orbit:ticket-state", changed);
       window.removeEventListener("orbit:ticket-assignee", changed);
       window.removeEventListener("orbit:ticket-metadata", changed);
       window.removeEventListener("orbit:ticket-developers", changed);
       window.removeEventListener("orbit:ticket-removed", changed);
+      window.removeEventListener("orbit:ticket-tracked", changed);
     };
   }, []);
   const initialized = useRef(false);
@@ -1182,6 +1184,8 @@ function Tickets({
       "orbit:ticket-assignee",
       "orbit:ticket-metadata",
       "orbit:ticket-developers",
+      "orbit:ticket-tracked",
+      "orbit:ticket-removed",
     ];
     events.forEach((name) => window.addEventListener(name, refresh));
     return () =>
@@ -1741,6 +1745,26 @@ function Tickets({
                   onToggle={() => selection.toggle(t)}
                   onChange={() => run("refresh-ticket", async () => {})}
                   highlighted={targetId === t.id && !sourceMismatch}
+                  restoring={busy === "restore"}
+                  onRestore={
+                    azureMode && t.inTrash
+                      ? () =>
+                          run(
+                            "restore",
+                            async () => {
+                              await api(`/tickets/${t.id}/restore`, "POST", {
+                                source: t.source,
+                              });
+                              window.dispatchEvent(
+                                new CustomEvent("orbit:ticket-tracked", {
+                                  detail: { id: t.id, source: t.source },
+                                }),
+                              );
+                            },
+                            "Тикет восстановлен",
+                          )
+                      : undefined
+                  }
                   onRemove={
                     azureMode && !t.imported
                       ? undefined

@@ -7608,9 +7608,55 @@ summary > svg {
 .ticket-table-fit > table > tbody > tr.ticket-tone-trash > td {
   background: #fffbed;
 }
+.ticket-table-fit
+  > table
+  > tbody
+  > tr.ticket-clickable-row:is(.ticket-tone-new, .ticket-tone-trash)
+  > td {
+  transition: background-color 120ms ease;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr.ticket-clickable-row.ticket-tone-new:is(:hover, :focus-visible)
+  > td {
+  background-color: #ffe6e2;
+}
+.ticket-table-fit
+  > table
+  > tbody
+  > tr.ticket-clickable-row.ticket-tone-trash:is(:hover, :focus-visible)
+  > td {
+  background-color: #fff0c2;
+}
 .ticket-table-fit > table > tbody > tr.ticket-preview-row.ticket-tone-new > td {
   background: #f9eeec;
 }
-.ticket-table-fit > table > tbody > tr.ticket-preview-row.ticket-tone-trash > td {
+.ticket-table-fit
+  > table
+  > tbody
+  > tr.ticket-preview-row.ticket-tone-trash
+  > td {
   background: #f7f1df;
+}
+
+.ticket-tracking-action {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d8e4dc;
+  border-radius: 8px;
+  background: #f4f8f5;
+}
+.ticket-tracking-action > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ticket-tracking-action > span {
+  font-size: 12px;
 }
