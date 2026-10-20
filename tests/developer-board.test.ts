@@ -8,7 +8,7 @@ import { Store } from "../server/store.js";
 import { createApp } from "../server/app.js";
 import { LocalDevelopers } from "../server/local-developers.js";
 
-test("developer notes and completed states stay local and scoped to project", async (t) => {
+test("developer notes stay scoped and completed tickets come from trash", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-board-"));
   const store = new Store(dir);
   t.after(() => {
@@ -46,11 +46,11 @@ test("developer notes and completed states stay local and scoped to project", as
     .set(auth)
     .send({ context, notes: "Private project note" })
     .expect(200);
-  await request(app)
-    .put("/api/developer-board/states")
-    .set(auth)
-    .send({ context, states: ["Resolved"] })
-    .expect(200);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Ticket", "Active", "", "Bug", "url", null, "now");
+  people.assign(42, [global.id], context);
+  store.removeLocalTicket(42);
   const read = await request(app)
     .get("/api/developer-board")
     .query(context)
@@ -60,14 +60,22 @@ test("developer notes and completed states stay local and scoped to project", as
     read.body.developers.find((person: any) => person.id === global.id).notes,
     "Private project note",
   );
-  assert.deepEqual(read.body.completedStates, ["Resolved"]);
+  assert.equal(read.body.completedStates, undefined);
+  assert.equal(read.body.completedTickets[0].id, 42);
+  assert.equal(read.body.completedTickets[0].developers[0].id, global.id);
   const second = await request(app)
     .get("/api/developer-board")
     .query(other)
     .set(auth)
     .expect(200);
   assert.equal(second.body.developers[0].notes, "");
-  assert.ok(!second.body.completedStates.includes("Resolved"));
+  store.restoreLocalTicket(42);
+  const restored = await request(app)
+    .get("/api/developer-board")
+    .query(context)
+    .set(auth)
+    .expect(200);
+  assert.deepEqual(restored.body.completedTickets, []);
   await request(app)
     .put(`/api/developer-board/${project.id}/notes`)
     .set(auth)

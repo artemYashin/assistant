@@ -487,8 +487,6 @@ export function createApp(
     res.json({ ok: true });
   });
   const localDevelopers = new LocalDevelopers(store);
-  const developerBoardKey = (context: Context) =>
-    `developer-board:${JSON.stringify([context.client, context.project, store.source()])}`;
   const developerNoteKey = (context: Context, id: string) =>
     `developer-note:${JSON.stringify([context.client, context.project, id])}`;
   app.get("/api/developer-board", (req, res) => {
@@ -498,23 +496,8 @@ export function createApp(
         ...person,
         notes: store.get<string>(developerNoteKey(context, person.id), ""),
       })),
-      completedStates: store.get<string[]>(developerBoardKey(context), [
-        "Closed",
-        "Done",
-        "Completed",
-        "Removed",
-      ]),
+      completedTickets: store.ticketTrash(),
     });
-  });
-  app.put("/api/developer-board/states", (req, res) => {
-    const input = z
-      .object({
-        context: contextSchema,
-        states: z.array(z.string().trim().min(1).max(200)).max(100),
-      })
-      .parse(req.body);
-    store.set(developerBoardKey(input.context), [...new Set(input.states)]);
-    res.json({ ok: true });
   });
   app.put("/api/developer-board/:id/notes", (req, res) => {
     const input = z

@@ -8,12 +8,10 @@ import {
   ChevronRight,
   CheckCheck,
   Ticket,
-  Settings2,
 } from "lucide-react";
 import { api } from "./api.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { StatusBadge } from "./TicketControls.js";
-import { MultiSelect } from "./MultiSelect.js";
 import { ticketPath } from "./routing.js";
 
 type Context = { client: string; project: string };
@@ -38,19 +36,16 @@ export function DevelopersPage({
 }) {
   const [data, setData] = useState<{
     developers: Developer[];
-    completedStates: string[];
+    completedTickets: Task[];
   } | null>(null);
-  const [states, setStates] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
   useEffect(() => {
     let live = true;
     api(`/developer-board?${new URLSearchParams(context)}`)
       .then((result) => {
         if (live) {
           setData(result);
-          setStates(result.completedStates);
         }
       })
       .catch((e) => {
@@ -59,19 +54,7 @@ export function DevelopersPage({
     return () => {
       live = false;
     };
-  }, [context.client, context.project]);
-  async function saveStates() {
-    setSaving(true);
-    setError("");
-    try {
-      await api("/developer-board/states", "PUT", { context, states });
-      setData((old) => (old ? { ...old, completedStates: states } : old));
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
+  }, [context.client, context.project, tickets]);
   if (!context.project)
     return (
       <div className="panel">
@@ -80,13 +63,6 @@ export function DevelopersPage({
         <p>Выберите заказчика и проект сверху.</p>
       </div>
     );
-  const options = [
-    ...new Set([
-      ...tickets.map((ticket) => ticket.state).filter(Boolean),
-      ...states,
-      ...(data?.completedStates || []),
-    ]),
-  ].sort();
   return (
     <>
       <div className="page-heading">
@@ -105,32 +81,6 @@ export function DevelopersPage({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <details className="panel developer-board-settings">
-          <summary>
-            <Settings2 size={16} />
-            Какие статусы считать завершёнными
-          </summary>
-          <MultiSelect
-            label="Завершённые статусы"
-            placeholder="Выберите статусы"
-            value={states}
-            onChange={setStates}
-            options={options.map((value) => ({ value, label: value }))}
-          />
-          <button
-            type="button"
-            className="secondary"
-            disabled={saving || !data}
-            onClick={() => void saveStates()}
-          >
-            <Save size={16} />
-            {saving ? "Сохранение…" : "Применить"}
-          </button>
-          <p className="muted">
-            Настройка сохраняется для текущего проекта. Остальные статусы
-            считаются активными; в Azure ничего не меняется.
-          </p>
-        </details>
       </div>
       {error && (
         <p className="error" role="alert">
@@ -146,6 +96,11 @@ export function DevelopersPage({
           </p>
         </div>
       )}
+      <p className="muted">
+        Завершённые — удалённые из локального списка тикеты. Они доступны здесь
+        до истечения 30 дней хранения в корзине; восстановленные возвращаются в
+        активные.
+      </p>
       <div className="developer-board-grid">
         {data?.developers
           .filter((person) =>
@@ -163,7 +118,11 @@ export function DevelopersPage({
                   (developer) => developer.id === person.id,
                 ),
               )}
-              completedStates={data.completedStates}
+              completedTickets={data.completedTickets.filter((ticket) =>
+                ticket.developers?.some(
+                  (developer) => developer.id === person.id,
+                ),
+              )}
               settings={settings}
             />
           ))}
@@ -182,13 +141,13 @@ function DeveloperCard({
   person,
   context,
   tickets,
-  completedStates,
+  completedTickets,
   settings,
 }: {
   person: Developer;
   context: Context;
   tickets: Task[];
-  completedStates: string[];
+  completedTickets: Task[];
   settings: any;
 }) {
   const [tab, setTab] = useState("active"),
@@ -197,12 +156,8 @@ function DeveloperCard({
     [saved, setSaved] = useState(person.notes);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const completed = (ticket: Task) =>
-    completedStates.some(
-      (state) => state.toLocaleLowerCase() === ticket.state.toLocaleLowerCase(),
-    );
-  const done = tickets.filter(completed),
-    active = tickets.filter((ticket) => !completed(ticket));
+  const done = completedTickets,
+    active = tickets;
   const list = [...(tab === "active" ? active : done)].sort(
     (a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id,
   );
@@ -230,7 +185,9 @@ function DeveloperCard({
         <InitialsAvatar name={person.name} />
         <div>
           <h2>{person.name}</h2>
-          <small className="muted">{tickets.length} локальных поручений</small>
+          <small className="muted">
+            {tickets.length + completedTickets.length} локальных поручений
+          </small>
         </div>
       </header>
       <nav className="pr-page-tabs" aria-label={`Тикеты: ${person.name}`}>
@@ -264,7 +221,11 @@ function DeveloperCard({
             key={`${ticket.source}:${ticket.id}`}
           >
             <Link
-              to={ticketPath(ticket.id, ticket.source)}
+              to={
+                tab === "done"
+                  ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id) })}`
+                  : ticketPath(ticket.id, ticket.source)
+              }
               title={ticket.title}
             >
               #{ticket.id} · {ticket.title}

@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
@@ -61,7 +62,8 @@ export function TicketTrash({
       setBusy(null);
     }
   }
-  const [query, setQuery] = useState("");
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get("id") || "");
   const [priorities, setPriorities] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);

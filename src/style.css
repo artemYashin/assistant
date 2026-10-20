@@ -4265,6 +4265,10 @@ summary > svg {
   }
 }
 
+.pr-merge-options {
+  display: grid;
+  gap: 12px;
+}
 .pr-merge-toggle {
   display: flex;
   align-items: flex-start;
@@ -5066,22 +5070,17 @@ summary > svg {
 .developer-board-toolbar > input {
   width: min(100%, 300px);
 }
-.developer-board-settings {
-  flex: 1 1 320px;
-  padding: 12px;
-  min-width: 0;
-}
-.developer-board-settings > .multi-select {
-  margin: 12px 0;
-}
 .developer-board-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 .developer-board-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 550px;
   padding: 18px;
 }
 .developer-board-card > header {
@@ -5115,6 +5114,7 @@ summary > svg {
   color: white;
 }
 .developer-board-tickets {
+  margin-bottom: 14px;
   max-height: 370px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -5138,6 +5138,7 @@ summary > svg {
   margin-top: 7px;
 }
 .developer-board-pagination {
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -5146,7 +5147,7 @@ summary > svg {
   font-size: 12px;
 }
 .developer-board-notes {
-  margin-top: 14px;
+  margin-top: auto;
   border-top: 1px solid var(--border);
   padding-top: 12px;
 }
