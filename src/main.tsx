@@ -596,9 +596,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <TicketLookupDialog
               key={`${settings?.azureUrl}:${settings?.azureProject}`}
             />
-            <span className="local-label">
-              <span className="dot" /> Локально
-            </span>
             <button
               className="icon-button"
               title="Подтверждения"

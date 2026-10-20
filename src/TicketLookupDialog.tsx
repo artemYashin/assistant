@@ -60,7 +60,7 @@ export function TicketLookupDialog() {
     <>
       <button
         type="button"
-        className="icon-button"
+        className="ticket-lookup-trigger"
         title="Открыть тикет по номеру"
         aria-label="Открыть тикет по номеру"
         aria-haspopup="dialog"
@@ -70,6 +70,7 @@ export function TicketLookupDialog() {
         }}
       >
         <Ticket size={19} />
+        <span>Открыть тикет</span>
       </button>
       <dialog
         ref={dialog}

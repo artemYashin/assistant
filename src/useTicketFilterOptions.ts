@@ -30,10 +30,7 @@ export function useTicketFilterOptions(
   const unique = (values: string[]) =>
     [...new Set(values)].sort((a, b) => a.localeCompare(b, "ru"));
   return {
-    types: unique([
-      ...(options?.types || settings?.azureTypes || []),
-      ...tickets.map((t) => t.type || ""),
-    ]),
+    types: unique(options?.types || settings?.azureTypes || []),
     states: unique(options?.states || settings?.azureStates || []),
     priorities: [
       ...new Set<number>([

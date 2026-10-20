@@ -339,6 +339,33 @@ nav {
   gap: 7px;
   color: #778470;
 }
+.ticket-lookup-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid #a9bfae;
+  border-radius: 9px;
+  background: #e8f0e9;
+  color: #284b34;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.ticket-lookup-trigger:hover {
+  background: #dce9df;
+  border-color: #74957d;
+}
+.ticket-lookup-trigger:focus-visible {
+  outline: 2px solid #39734b;
+  outline-offset: 3px;
+}
+.ticket-lookup-trigger svg {
+  flex-shrink: 0;
+}
 .dot {
   display: inline-block;
   width: 6px;
