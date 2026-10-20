@@ -68,7 +68,7 @@ export function TicketDataRow({
           onChange={onToggle}
         />
       </td>
-      <td>
+      <td className="ticket-identity-column">
         <div className="ticket-id-type">
           <a
             className="ticket-link"
@@ -85,7 +85,7 @@ export function TicketDataRow({
           />
         </div>
       </td>
-      <td>
+      <td className="ticket-title-column">
         <b className="ticket-title-clamp" title={t.title}>
           {t.title}
         </b>

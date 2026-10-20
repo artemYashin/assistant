@@ -391,7 +391,9 @@ export function TicketTrash({
           </div>
         </div>
       )}
-      <div className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}`}>
+      <div
+        className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}`}
+      >
         <table>
           <thead>
             <tr>
@@ -406,6 +408,13 @@ export function TicketTrash({
                 {columns.map(([key, label]) => (
                   <th
                     key={key}
+                    className={
+                      key === "title"
+                        ? "ticket-title-column"
+                        : key === "id"
+                          ? "ticket-identity-column"
+                          : undefined
+                    }
                     data-column={
                       key === "id" || key === "title" ? undefined : key
                     }

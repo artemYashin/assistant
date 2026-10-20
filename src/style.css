@@ -4958,14 +4958,14 @@ summary > svg {
   > table
   > thead
   > tr
-  > th:nth-child(3),
+  > th.ticket-title-column,
 .ticket-table-fit:not(.ticket-trash-table)
   > table
   > tbody
   > tr:not(.ticket-preview-row)
-  > td:nth-child(3),
-.ticket-trash-table > table > thead > tr > th:nth-child(3),
-.ticket-trash-table > table > tbody > tr > td:nth-child(3) {
+  > td.ticket-title-column,
+.ticket-trash-table > table > thead > tr > th.ticket-title-column,
+.ticket-trash-table > table > tbody > tr > td.ticket-title-column {
   width: 100%;
   white-space: normal;
 }
@@ -4973,8 +4973,8 @@ summary > svg {
   > table
   > tbody
   > tr:not(.ticket-preview-row)
-  > td:nth-child(3),
-.ticket-trash-table > table > tbody > tr > td:nth-child(3) {
+  > td.ticket-title-column,
+.ticket-trash-table > table > tbody > tr > td.ticket-title-column {
   max-width: 0;
 }
 .ticket-table-fit > table > thead .ticket-column-sort {
@@ -7303,12 +7303,12 @@ summary > svg {
 }
 
 /* Identity has a bounded content width; long task types must not widen it. */
-.ticket-active-table > table > thead > tr > th:nth-child(2),
+.ticket-active-table > table > thead > tr > th.ticket-identity-column,
 .ticket-active-table
   > table
   > tbody
   > tr:not(.ticket-preview-row)
-  > td:nth-child(2) {
+  > td.ticket-identity-column {
   width: 1%;
   min-width: 80px;
   max-width: 112px;
@@ -7878,4 +7878,44 @@ summary > svg {
 .ticket-table-fit .ticket-empty-row .empty p {
   max-width: none;
   width: 100%;
+}
+
+
+.ticket-columns-dialog {
+  width: min(480px, calc(100vw - 32px));
+}
+.ticket-columns-toolbar,
+.ticket-columns-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-columns-toolbar { margin: 12px 0; }
+.ticket-columns-footer {
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.ticket-columns-dialog .ticket-column-options {
+  max-height: 55vh;
+  overflow-y: auto;
+  gap: 6px;
+}
+.ticket-columns-dialog .ticket-column-option {
+  padding: 6px 10px 6px 4px;
+  border: 1px solid #e2e6ea;
+  border-radius: 8px;
+  background: #f8faf9;
+  gap: 6px;
+}
+.ticket-columns-dialog .ticket-column-option.is-dragging { opacity: .45; }
+.ticket-columns-dialog .ticket-column-option.is-drop-target {
+  border-color: #427eae;
+  box-shadow: inset 0 2px #427eae;
+}
+.ticket-columns-dialog .ticket-column-grip { cursor: grab; flex-shrink: 0; }
+.ticket-columns-dialog .ticket-column-grip:active { cursor: grabbing; }
+.ticket-columns-dialog .ticket-column-option > label {
+  padding: 5px 0;
+  cursor: pointer;
 }

@@ -1017,3 +1017,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Removed the empty-state description width cap inside ticket tables. Empty active/Azure/trash tables distribute width across headers instead of reserving all remaining space for the title; sort controls no longer have the narrow width cap.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser visual behavior was not exercised.
+
+### Ticket workspace continuity and dialog controls (2026-10-21)
+
+- Last successful Azure page, filters and snapshot are retained in a bounded in-memory cache per source/client/project when navigating away and back. Browser reload clears this cache; server snapshot expiry rules remain unchanged.
+- Column settings use draft state with drag-and-drop ordering, Select All/Deselect All, Cancel and Save. Escape and close discard drafts. Keyboard reordering uses Alt+Up/Down on drag handles. Fragment-wrapped cells are flattened before ordering so trash date cells align with headers.
+- Title and identity sizing now targets semantic classes rather than positional selectors. Removed the interim minimum-title/extra field-width overrides. The reported Azure width problem was not visually reproduced, so this is not a verified visual resolution.
+- Modal backdrop clicks dispatch the existing cancel path, preserving busy guards and React cleanup. Clicks inside and drags beginning inside do not dismiss dialogs.
+- Pre-push validation: all 228 tests and production build passed. Vite retains its large-chunk warning. Browser drag/drop, backdrop interactions and live Azure endpoints were not exercised.

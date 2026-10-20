@@ -1,3 +1,4 @@
+import { installDialogBackdropDismiss } from "./dialog-backdrop.js";
 import { TicketColorLegend } from "./TicketColorLegend.js";
 import { paginationItems } from "./pagination.js";
 import { TicketDataRow } from "./TicketDataRow.js";
@@ -178,6 +179,7 @@ function Field({
   );
 }
 function App() {
+  useEffect(() => installDialogBackdropDismiss(document), []);
   const [session, setSession] = useState<any>(null),
     [error, setError] = useState(""),
     [password, setPassword] = useState(""),
@@ -1177,7 +1179,11 @@ function Tickets({
   azureMode = false,
 }: any) {
   const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
-  const browser = useAzureTicketBrowser(azureMode, currentSource);
+  const browser = useAzureTicketBrowser(
+    azureMode,
+    currentSource,
+    JSON.stringify([currentSource, context.client, context.project]),
+  );
   useEffect(() => {
     if (!azureMode) return;
     const refresh = () => browser.refresh();
@@ -1732,7 +1738,9 @@ function Tickets({
           можно вернуть кнопкой «Добавить по номеру».
         </p>
       )}
-      <div className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}`}>
+      <div
+        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}`}
+      >
         <table>
           <thead>
             <tr>
@@ -1744,13 +1752,19 @@ function Tickets({
                     onChange={selection.toggleAll}
                   />
                 </th>
-                <th aria-sort={columnSort(["id", "type"])}>
+                <th
+                  className="ticket-identity-column"
+                  aria-sort={columnSort(["id", "type"])}
+                >
                   <div className="ticket-heading-sorts ticket-identity-heading">
                     {sortButton("id", "ID")}
                     {sortButton("type", "Тип")}
                   </div>
                 </th>
-                <th aria-sort={columnSort(["title"])}>
+                <th
+                  className="ticket-title-column"
+                  aria-sort={columnSort(["title"])}
+                >
                   {sortButton("title", "Тикет")}
                 </th>
                 {(

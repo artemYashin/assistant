@@ -2,20 +2,37 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "./api.js";
 import type { Filters } from "./useTicketFilters.js";
 
-export function useAzureTicketBrowser(enabled: boolean, source: string) {
-  const [rows, setRows] = useState<any[]>([]);
+type SavedSearch = {
+  tickets: any[];
+  snapshot: string;
+  page: number;
+  totalPages: number;
+  total: number;
+  limited: boolean;
+  filters: Filters;
+};
+// Session-only: keep the last page per workspace without writing ticket data to storage.
+const searches = new Map<string, SavedSearch>();
+
+export function useAzureTicketBrowser(
+  enabled: boolean,
+  source: string,
+  workspace = source,
+) {
+  const saved = useRef(enabled ? searches.get(workspace) : undefined).current;
+  const [rows, setRows] = useState<any[]>(saved?.tickets ?? []);
   const [catalog, setCatalog] = useState<{ types: string[]; states: string[] }>(
     { types: [], states: [] },
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [limited, setLimited] = useState(false);
-  const snapshot = useRef<string | undefined>(undefined);
-  const applied = useRef<Filters | null>(null);
+  const [searched, setSearched] = useState(!!saved);
+  const [page, setPage] = useState(saved?.page ?? 1);
+  const [totalPages, setTotalPages] = useState(saved?.totalPages ?? 1);
+  const [total, setTotal] = useState(saved?.total ?? 0);
+  const [limited, setLimited] = useState(saved?.limited ?? false);
+  const snapshot = useRef<string | undefined>(saved?.snapshot);
+  const applied = useRef<Filters | null>(saved?.filters ?? null);
   const generation = useRef(0);
   const locked = useRef(false);
   const queuedSearch = useRef<Filters | null>(null);
@@ -65,6 +82,17 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
         snapshot: newSearch ? undefined : snapshot.current,
       });
       if (request !== generation.current) return;
+      searches.delete(workspace);
+      if (searches.size >= 10) searches.delete(searches.keys().next().value!);
+      searches.set(workspace, {
+        tickets: result.tickets,
+        snapshot: result.snapshot,
+        page: result.page,
+        totalPages: result.totalPages,
+        total: result.total,
+        limited: result.limited,
+        filters: structuredClone(filters),
+      });
       setRows(result.tickets);
       snapshot.current = result.snapshot;
       setPage(result.page);
