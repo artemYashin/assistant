@@ -744,3 +744,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Compose and the service fallback now use multilingual Whisper medium; beam size is 5. CPU/int8, VAD and the persistent model cache remain enabled.
 - Pre-push validation: 190 application tests, 7 Python voice tests and production build passed. Voice tests cover real WAV/WebM decoding and mocked model configuration/inference. Recognition quality and latency with downloaded medium weights have not been benchmarked. Vite retains its large-chunk warning.
+
+### LLM usage table readability (2026-10-20)
+
+- Input/output token values use larger bold compact numbers (K/M), stay on one line and retain exact values in hover/accessibility labels. Reports and tools now have separate columns.
+- Pre-push validation: all 190 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

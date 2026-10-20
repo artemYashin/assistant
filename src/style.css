@@ -5243,6 +5243,21 @@ summary > svg {
   gap: 16px;
   align-items: stretch;
 }
+.usage-token-heading,
+.usage-token-values {
+  white-space: nowrap;
+}
+.usage-token-values {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.usage-token-separator {
+  color: var(--muted);
+  font-weight: 400;
+}
 .usage-origin {
   display: inline-flex;
   align-items: center;

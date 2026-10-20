@@ -12,6 +12,12 @@ import {
 import { api } from "./api.js";
 const number = (value: number | null | undefined) =>
   value == null ? "—" : value.toLocaleString("ru-RU");
+const tokenFormatter = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 0,
+});
+const compactTokens = (value: number | null | undefined) =>
+  value == null ? "—" : tokenFormatter.format(value);
 const statuses: Record<string, string> = {
   running: "Выполняется",
   completed: "Завершён",
@@ -177,8 +183,9 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
                 <th>Запрос · контекст</th>
                 <th>Источник</th>
                 <th>Модель</th>
-                <th>Вход / выход</th>
-                <th>Отчёты / инструменты</th>
+                <th className="usage-token-heading">Вход / выход</th>
+                <th>Отчёты</th>
+                <th>Инструменты</th>
                 <th>Результат</th>
               </tr>
             </thead>
@@ -235,16 +242,23 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
                   </td>
                   <td>{r.models || r.model}</td>
                   <td>
-                    {number(r.input_tokens)} / {number(r.output_tokens)}
+                    <span
+                      className="usage-token-values"
+                      title={`Вход: ${number(r.input_tokens)} · Выход: ${number(r.output_tokens)}`}
+                      aria-label={`Вход: ${number(r.input_tokens)} токенов; выход: ${number(r.output_tokens)} токенов`}
+                    >
+                      {compactTokens(r.input_tokens)}
+                      <span className="usage-token-separator"> / </span>
+                      {compactTokens(r.output_tokens)}
+                    </span>
                     {r.incomplete_calls > 0 && (
                       <small style={{ display: "block" }}>
                         Часть данных отсутствует
                       </small>
                     )}
                   </td>
-                  <td>
-                    {number(r.model_calls)} / {r.tool_calls}
-                  </td>
+                  <td>{number(r.model_calls)}</td>
+                  <td>{number(r.tool_calls)}</td>
                   <td>
                     <span
                       className={`badge ${r.status === "completed" ? "green" : r.status === "running" ? "violet" : "amber"}`}
