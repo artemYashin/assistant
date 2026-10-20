@@ -135,6 +135,7 @@ export function localDeveloperTools(
   context: Context,
   prompt: string,
   assertActive: () => void,
+  isKnownTicket: (id: number) => boolean = () => false,
 ) {
   const service = new LocalDevelopers(store),
     source = store.source();
@@ -167,7 +168,7 @@ export function localDeveloperTools(
           prompt,
         );
         if (
-          !number ||
+          (!number && !isKnownTicket(ticketId)) ||
           !/назнач|поруч|добавь|убери|сними|удали|assign|unassign|remove|add|clear/iu.test(
             prompt,
           ) ||
@@ -177,7 +178,7 @@ export function localDeveloperTools(
         )
           throw new AppError(
             403,
-            "Нужна явная команда с номером тикета и именами разработчиков",
+            "Нужна явная команда с именами разработчиков и тикетом из сообщения или инструментов текущего запроса",
           );
         const current = service.assigned(ticketId, source),
           people = [...service.list(context), ...current];

@@ -235,3 +235,73 @@ test("priority migration preserves old implicit P2 and explicit values while new
   assert.equal(ticketMetadata(store, 44).priority, 1);
   assert.equal(listLocalTickets(store, { priority: 1 }).total, 1);
 });
+
+test("chat metadata accepts known tickets from this turn but not arbitrary IDs", async (t) => {
+  const { ticketMetadataTools } =
+    await import("../server/ticket-metadata-tools.js");
+  const store = fixture(t);
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("Must stay local");
+  });
+  const prompt = "Найди тикеты в статусе Active и добавь им тег UI";
+  const args = { id: 42, tags: { mode: "add" as const, values: ["UI"] } };
+  const unknown = ticketMetadataTools(store, context, prompt, () => {})[0];
+  await assert.rejects(async () => unknown.handler!(args, {} as any));
+  const known = ticketMetadataTools(
+    store,
+    context,
+    prompt,
+    () => {},
+    (id) => id === 42,
+  )[0];
+  const result: any = await known.handler!(args, {} as any);
+  assert.equal(result.success, true);
+  assert.deepEqual(ticketMetadata(store, 42).tags, ["UI"]);
+  const readOnly = ticketMetadataTools(
+    store,
+    context,
+    "Покажи теги этих тикетов",
+    () => {},
+    () => true,
+  )[0];
+  await assert.rejects(async () => readOnly.handler!(args, {} as any));
+});
+
+test("chat metadata tool reports actionable validation errors instead of generic SDK failure", async (t) => {
+  const { ticketMetadataTools } =
+    await import("../server/ticket-metadata-tools.js");
+  const { sessionConfig } = await import("../server/agent.js");
+  const store = fixture(t);
+  const logs: unknown[][] = [];
+  t.mock.method(console, "error", (...args: unknown[]) => {
+    logs.push(args);
+  });
+  const config = sessionConfig(
+    store,
+    {} as any,
+    context,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    ticketMetadataTools(store, context, "Добавь тег UI тикету 999", () => {}),
+  );
+  const tool = config.tools!.find(
+    (t) => t.name === "update_local_ticket_metadata",
+  )!;
+  const result: any = await tool.handler!(
+    { id: 999, tags: { mode: "add", values: ["UI"] } },
+    {} as any,
+  );
+  assert.equal(result.success, false);
+  assert.match(result.error, /отсутствует в локальном списке/);
+  assert.ok(result.reference);
+  assert.equal(result.azureChanged, false);
+  const invalid: any = await tool.handler!(
+    { id: 999, tags: ["UI"] },
+    {} as any,
+  );
+  assert.equal(invalid.success, false);
+  assert.match(invalid.error, /Некорректные параметры/);
+  assert.equal(logs.length, 2);
+});

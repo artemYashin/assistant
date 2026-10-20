@@ -108,7 +108,9 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
       assert.equal(first.azureChanged, false);
       assert.equal(first.success, true);
       assert.deepEqual(await tool.handler({ id: 42 }, {}), first);
-      await assert.rejects(tool.handler({ id: 43 }, {}), /явная команда/);
+      const denied = await tool.handler({ id: 43 }, {});
+      assert.equal(denied.success, false);
+      assert.match(denied.error, /явная команда/);
       return { data: { content: "Done locally" } };
     },
   };

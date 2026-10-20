@@ -305,8 +305,8 @@ test("status tool requires current user instruction and deduplicates repeated wr
         );
         assert.equal(first.state, again.state);
       } else
-        await assert.rejects(
-          tool.handler({ id: 123456, state: "RFT" }, {}),
+        assert.match(
+          (await tool.handler({ id: 123456, state: "RFT" }, {})).error,
           /явная команда/,
         );
       return { data: { content: "Result" } };
@@ -402,15 +402,15 @@ test("failed status change invalidates cached ticket without retrying the write"
       );
       await get.handler({ id: 123456 }, {});
       const initialReads = reads;
-      await assert.rejects(
-        change.handler({ id: 123456, state: "RFT" }, {}),
-        /unconfirmed/,
+      assert.equal(
+        (await change.handler({ id: 123456, state: "RFT" }, {})).success,
+        false,
       );
       await get.handler({ id: 123456 }, {});
       assert.equal(reads, initialReads + 1);
-      await assert.rejects(
-        change.handler({ id: 123456, state: "RFT" }, {}),
-        /unconfirmed/,
+      assert.equal(
+        (await change.handler({ id: 123456, state: "RFT" }, {})).success,
+        false,
       );
       assert.equal(writes, 1);
       return { data: { content: "Not confirmed" } };
@@ -469,8 +469,8 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
       const change = config.tools.find(
         (tool: any) => tool.name === "change_ticket_status",
       );
-      await assert.rejects(
-        change.handler({ id: 42, state: "RFT" }, {}),
+      assert.match(
+        (await change.handler({ id: 42, state: "RFT" }, {})).error,
         /явная команда/,
       );
       const list = config.tools.find(
@@ -478,8 +478,8 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
       );
       await list.handler({ state: "Resolved" }, {});
       await change.handler({ id: 42, state: "RFT" }, {});
-      await assert.rejects(
-        change.handler({ id: 99, state: "RFT" }, {}),
+      assert.match(
+        (await change.handler({ id: 99, state: "RFT" }, {})).error,
         /явная команда/,
       );
       return { data: { content: "Done" } };
@@ -513,4 +513,63 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
   );
   await agent.chat("Найди тикеты в Resolved и переведи их в RFT", context);
   assert.deepEqual(writes, [42]);
+});
+
+test("chat resolves a local list then applies batch tags with per-item failures and no Azure", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("Local edits must not access Azure");
+  });
+  for (const id of [42, 43])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, "Bug " + id, "Active", "", "Bug", "", "", "now");
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const call = (name: string, args: any) =>
+      config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    const list = await call("list_tickets", { state: "Active" });
+    assert.equal(list.tickets.length, 2);
+    const result = await call("batch_update_tickets", {
+      operations: [42, 43, 99].map((id) => ({
+        action: "metadata",
+        data: { id, tags: { mode: "add", values: ["UI"] } },
+      })),
+    });
+    assert.equal(result.succeeded, 2);
+    assert.equal(result.failed, 1);
+    assert.equal(result.results[2].id, 99);
+    assert.match(result.results[2].error, /Нужна явная просьба/);
+    const metadata = await call("get_local_ticket_metadata", { id: 42 });
+    assert.deepEqual(metadata.tags, ["UI"]);
+    return {
+      data: { content: "Два тикета обновлены, третий не подтверждён." },
+    };
+  });
+  await agent.chat("Найди тикеты в Active и добавь им тег UI", context);
+});
+
+test("chat can validate historical ticket IDs locally before a batch", async (t) => {
+  const store = fixture(t);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Bug", "Active", "", "Bug", "", "", "now");
+  store.say("assistant", "Список тикетов: #42", context);
+  const { agent } = fakeAgent(store, async (session, config) => {
+    assert.match(session.prompt, /Список тикетов: #42/);
+    const call = (name: string, args: any) =>
+      config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    await call("get_local_ticket_metadata", { id: 42 });
+    const result = await call("batch_update_tickets", {
+      operations: [
+        {
+          action: "metadata",
+          data: { id: 42, tags: { mode: "add", values: ["UI"] } },
+        },
+      ],
+    });
+    assert.equal(result.success, true);
+    return { data: { content: "Готово" } };
+  });
+  await agent.chat("Добавь этим тикетам тег UI", context);
 });
