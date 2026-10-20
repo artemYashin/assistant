@@ -1,3 +1,4 @@
+import { OrderedTicketCells } from "./TicketColumns.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
@@ -578,10 +579,12 @@ export function TicketTableRow({
   actions,
   columns = 7,
   hideActions = false,
+  columnOrder = [],
 }: {
   actions?: ReactNode;
   columns?: number;
   hideActions?: boolean;
+  columnOrder?: string[];
   highlighted?: boolean;
   onRemove?: () => void;
   id: number;
@@ -626,34 +629,36 @@ export function TicketTableRow({
         tabIndex={-1}
         className={highlighted ? "ticket-row-highlighted" : undefined}
       >
-        {children}
-        <td hidden={hideActions}>
-          <div className="ticket-row-actions">
-            {actions}
-            <button
-              type="button"
-              className="secondary"
-              aria-expanded={open}
-              aria-controls={panelId}
-              aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
-              title={open ? "Скрыть тикет" : "Посмотреть тикет"}
-              onClick={() => setOpen(!open)}
-            >
-              {open ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
-            {onRemove && (
+        <OrderedTicketCells order={columnOrder}>
+          {children}
+          <td data-column="actions" hidden={hideActions}>
+            <div className="ticket-row-actions">
+              {actions}
               <button
                 type="button"
-                className="text-button"
-                aria-label={`Убрать тикет #${id} из локального списка`}
-                onClick={onRemove}
-                title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+                className="secondary"
+                aria-expanded={open}
+                aria-controls={panelId}
+                aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
+                title={open ? "Скрыть тикет" : "Посмотреть тикет"}
+                onClick={() => setOpen(!open)}
               >
-                <Trash2 size={17} />
+                {open ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
-            )}
-          </div>
-        </td>
+              {onRemove && (
+                <button
+                  type="button"
+                  className="text-button"
+                  aria-label={`Убрать тикет #${id} из локального списка`}
+                  onClick={onRemove}
+                  title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+                >
+                  <Trash2 size={17} />
+                </button>
+              )}
+            </div>
+          </td>
+        </OrderedTicketCells>
       </tr>
       <tr id={panelId} hidden={!open} className="ticket-preview-row">
         <td colSpan={columns}>

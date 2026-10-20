@@ -4935,7 +4935,7 @@ summary > svg {
   flex-shrink: 0;
 }
 
-.ticket-trash-table th:last-child {
+.ticket-trash-table th[data-column="actions"] {
   width: 70px;
 }
 .ticket-trash-actions {
@@ -5347,4 +5347,38 @@ summary > svg {
 .ticket-table-fit > table > thead > tr > th[hidden],
 .ticket-table-fit > table > tbody > tr > td[hidden] {
   display: none;
+}
+
+.ticket-column-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ticket-column-option > label {
+  flex: 1;
+  min-width: 0;
+}
+.ticket-column-move {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ticket-id-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ticket-id-type > .ticket-link {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.ticket-id-type > .ticket-type-badge {
+  flex: 0 1 auto;
+  width: fit-content;
+  min-width: 0;
+  max-width: 150px;
 }

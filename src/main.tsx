@@ -1,4 +1,4 @@
-import { useTicketColumns } from "./TicketColumns.js";
+import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { DevelopersPage } from "./DevelopersPage.js";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
@@ -1555,40 +1555,46 @@ function Tickets({
           <table>
             <thead>
               <tr>
-                <th className="ticket-selection-column">
-                  <SelectAllTickets
-                    count={selection.selected.length}
-                    total={sorted.length}
-                    onChange={selection.toggleAll}
-                  />
-                </th>
-                <th aria-sort={columnSort(["id", "title"])}>
-                  <div className="ticket-heading-sorts">
-                    {sortButton("id", "ID")}
-                    <span aria-hidden="true">/</span>
-                    {sortButton("title", "Тикет")}
-                  </div>
-                </th>
-                {(
-                  [
-                    ["type", "Тип задачи"],
-                    ["state", "Статус"],
-                    ["priority", "Приоритет"],
-                    ["tags", "Теги"],
-                    ["assigned", "Исполнитель в Azure"],
-                    ["developer_name", "Локальное поручение"],
-                    ["synced_at", "Синхронизация"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <th
-                    key={key}
-                    hidden={columns.hidden(key)}
-                    aria-sort={columnSort([key])}
-                  >
-                    {sortButton(key, label)}
+                <OrderedTicketCells order={columns.order}>
+                  <th className="ticket-selection-column">
+                    <SelectAllTickets
+                      count={selection.selected.length}
+                      total={sorted.length}
+                      onChange={selection.toggleAll}
+                    />
                   </th>
-                ))}
-                <th hidden={columns.hidden("actions")}>Просмотр</th>
+                  <th aria-sort={columnSort(["id", "title", "type"])}>
+                    <div className="ticket-heading-sorts">
+                      {sortButton("id", "ID")}
+                      <span aria-hidden="true">/</span>
+                      {sortButton("title", "Тикет")}
+                      <span aria-hidden="true">/</span>
+                      {sortButton("type", "Тип задачи")}
+                    </div>
+                  </th>
+                  {(
+                    [
+                      ["state", "Статус"],
+                      ["priority", "Приоритет"],
+                      ["tags", "Теги"],
+                      ["assigned", "Исполнитель в Azure"],
+                      ["developer_name", "Локальное поручение"],
+                      ["synced_at", "Синхронизация"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <th
+                      key={key}
+                      data-column={key}
+                      hidden={columns.hidden(key)}
+                      aria-sort={columnSort([key])}
+                    >
+                      {sortButton(key, label)}
+                    </th>
+                  ))}
+                  <th data-column="actions" hidden={columns.hidden("actions")}>
+                    Просмотр
+                  </th>
+                </OrderedTicketCells>
               </tr>
             </thead>
             <tbody>
@@ -1597,6 +1603,7 @@ function Tickets({
                   key={`${t.source}:${t.id}`}
                   id={t.id}
                   columns={columns.count}
+                  columnOrder={columns.order}
                   hideActions={columns.hidden("actions")}
                   actions={
                     <TicketMetadata
@@ -1625,27 +1632,27 @@ function Tickets({
                     />
                   </td>
                   <td>
-                    <a
-                      className="ticket-link"
-                      href={t.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      #{t.id}
-                      <ArrowUpRight size={13} />
-                    </a>
+                    <div className="ticket-id-type">
+                      <a
+                        className="ticket-link"
+                        href={t.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        #{t.id}
+                        <ArrowUpRight size={13} />
+                      </a>
+                      <StatusBadge
+                        state={t.type || "Тип не указан"}
+                        colors={settings?.typeColors}
+                        kind="type"
+                      />
+                    </div>
                     <b className="ticket-title-clamp" title={t.title}>
                       {t.title}
                     </b>
                   </td>
-                  <td hidden={columns.hidden("type")}>
-                    <StatusBadge
-                      state={t.type || "Тип не указан"}
-                      colors={settings?.typeColors}
-                      kind="type"
-                    />
-                  </td>
-                  <td hidden={columns.hidden("state")}>
+                  <td data-column="state" hidden={columns.hidden("state")}>
                     <TicketStatus
                       id={t.id}
                       source={t.source}
@@ -1654,7 +1661,10 @@ function Tickets({
                       onChange={() => run("refresh-state", async () => {})}
                     />
                   </td>
-                  <td hidden={columns.hidden("priority")}>
+                  <td
+                    data-column="priority"
+                    hidden={columns.hidden("priority")}
+                  >
                     <TicketMetadata
                       ticket={t}
                       context={context}
@@ -1662,7 +1672,7 @@ function Tickets({
                       onChange={() => run("refresh-priority", async () => {})}
                     />
                   </td>
-                  <td hidden={columns.hidden("tags")}>
+                  <td data-column="tags" hidden={columns.hidden("tags")}>
                     <TicketMetadata
                       ticket={t}
                       context={context}
@@ -1670,16 +1680,26 @@ function Tickets({
                       onChange={() => run("refresh-tags", async () => {})}
                     />
                   </td>
-                  <td hidden={columns.hidden("assigned")}>
+                  <td
+                    data-column="assigned"
+                    hidden={columns.hidden("assigned")}
+                  >
                     <LocalAssigneeNames
                       names={t.assigned ? [t.assigned] : []}
                       emptyLabel="Не назначен"
                     />
                   </td>
-                  <td hidden={columns.hidden("developer_name")}>
+                  <td
+                    data-column="developer_name"
+                    hidden={columns.hidden("developer_name")}
+                  >
                     <LocalDeveloper ticket={t} context={context} />
                   </td>
-                  <td className="muted" hidden={columns.hidden("synced_at")}>
+                  <td
+                    data-column="synced_at"
+                    className="muted"
+                    hidden={columns.hidden("synced_at")}
+                  >
                     {date(t.synced_at)}
                   </td>
                 </TicketTableRow>

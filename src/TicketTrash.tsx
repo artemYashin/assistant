@@ -1,4 +1,4 @@
-import { useTicketColumns } from "./TicketColumns.js";
+import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { useSearchParams } from "react-router-dom";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
@@ -140,7 +140,6 @@ export function TicketTrash({
   const columns = [
     ["id", "ID"],
     ["title", "Тикет"],
-    ["type", "Тип задачи"],
     ["state", "Статус"],
     ["priority", "Приоритет"],
     ["tags", "Теги"],
@@ -310,170 +309,226 @@ export function TicketTrash({
           <table>
             <thead>
               <tr>
-                <th className="ticket-selection-column">
-                  <SelectAllTickets
-                    count={selection.selected.length}
-                    total={filtered.length}
-                    onChange={selection.toggleAll}
-                  />
-                </th>
-                {columns.map(([key, label]) => (
-                  <th
-                    key={key}
-                    hidden={display.hidden(key)}
-                    aria-sort={
-                      sort.key === key
-                        ? sort.descending
-                          ? "descending"
-                          : "ascending"
-                        : "none"
-                    }
-                  >
-                    <div className="ticket-heading-sorts">
-                      <button
-                        type="button"
-                        className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
-                        aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
-                        onClick={() =>
-                          setSort({
-                            key,
-                            descending: sort.key === key && !sort.descending,
-                          })
-                        }
-                      >
-                        <span>{label}</span>
-                        {sort.key === key ? (
-                          sort.descending ? (
-                            <ArrowDown size={13} />
-                          ) : (
-                            <ArrowUp size={13} />
-                          )
-                        ) : (
-                          <ArrowUpDown size={13} />
-                        )}
-                      </button>
-                    </div>
+                <OrderedTicketCells order={display.order}>
+                  <th className="ticket-selection-column">
+                    <SelectAllTickets
+                      count={selection.selected.length}
+                      total={filtered.length}
+                      onChange={selection.toggleAll}
+                    />
                   </th>
-                ))}
-                <th hidden={display.hidden("actions")}>Действия</th>
+                  {columns.map(([key, label]) => (
+                    <th
+                      key={key}
+                      data-column={
+                        key === "id" || key === "title" ? undefined : key
+                      }
+                      hidden={display.hidden(key)}
+                      aria-sort={
+                        sort.key === key ||
+                        (key === "id" && sort.key === "type")
+                          ? sort.descending
+                            ? "descending"
+                            : "ascending"
+                          : "none"
+                      }
+                    >
+                      <div className="ticket-heading-sorts">
+                        <button
+                          type="button"
+                          className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
+                          aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
+                          onClick={() =>
+                            setSort({
+                              key,
+                              descending: sort.key === key && !sort.descending,
+                            })
+                          }
+                        >
+                          <span>{label}</span>
+                          {sort.key === key ? (
+                            sort.descending ? (
+                              <ArrowDown size={13} />
+                            ) : (
+                              <ArrowUp size={13} />
+                            )
+                          ) : (
+                            <ArrowUpDown size={13} />
+                          )}
+                        </button>
+                        {key === "id" && (
+                          <>
+                            <span aria-hidden="true">/</span>
+                            <button
+                              type="button"
+                              className={`ticket-column-sort${sort.key === "type" ? " is-active" : ""}`}
+                              aria-label="Сортировать: Тип задачи"
+                              onClick={() =>
+                                setSort({
+                                  key: "type",
+                                  descending:
+                                    sort.key === "type" && !sort.descending,
+                                })
+                              }
+                            >
+                              <span>Тип задачи</span>
+                              {sort.key === "type" ? (
+                                sort.descending ? (
+                                  <ArrowDown size={13} />
+                                ) : (
+                                  <ArrowUp size={13} />
+                                )
+                              ) : (
+                                <ArrowUpDown size={13} />
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                  <th data-column="actions" hidden={display.hidden("actions")}>
+                    Действия
+                  </th>
+                </OrderedTicketCells>
               </tr>
             </thead>
             <tbody>
               {filtered.map((t) => (
                 <tr key={`${t.source}:${t.id}`}>
-                  <td className="ticket-selection-column">
-                    <input
-                      className="ticket-checkbox"
-                      type="checkbox"
-                      aria-label={`Выбрать тикет #${t.id}`}
-                      checked={selection.checked(t)}
-                      onChange={() => selection.toggle(t)}
-                    />
-                  </td>
-                  <td hidden={display.hidden("id")}>
-                    {t.url?.startsWith("https://") ? (
-                      <a
-                        className="ticket-link"
-                        href={t.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        #{t.id}
-                      </a>
-                    ) : (
-                      `#${t.id}`
-                    )}
-                  </td>
-                  <td hidden={display.hidden("title")}>
-                    <strong className="ticket-title-clamp" title={t.title}>
-                      {t.title}
-                    </strong>
-                  </td>
-                  <td hidden={display.hidden("type")}>
-                    <StatusBadge
-                      state={t.type || "Без типа"}
-                      kind="type"
-                      colors={settings?.typeColors}
-                    />
-                  </td>
-                  <td hidden={display.hidden("state")}>
-                    <StatusBadge
-                      state={t.state}
-                      colors={settings?.statusColors}
-                    />
-                  </td>
-                  <td hidden={display.hidden("priority")}>
-                    <span className="badge ticket-priority-badge">
-                      P{t.priority ?? 1}
-                    </span>
-                  </td>
-                  <td hidden={display.hidden("tags")}>
-                    <div className="ticket-tag-list">
-                      {(t.tags || []).map((tag: string) => (
-                        <span className="badge" key={tag}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td hidden={display.hidden("assigned")}>
-                    <LocalAssigneeNames
-                      names={t.assigned ? [t.assigned] : []}
-                      emptyLabel="Не назначен"
-                    />
-                  </td>
-                  <td hidden={display.hidden("developer_name")}>
-                    <LocalAssigneeNames
-                      names={
-                        t.developers?.length
-                          ? t.developers.map((d: any) => d.name)
-                          : t.developer_name
-                            ? [t.developer_name]
-                            : []
-                      }
-                    />
-                  </td>
-                  <td hidden={display.hidden("removedAt")}>
-                    <time dateTime={new Date(t.removedAt).toISOString()}>
-                      {date(t.removedAt)}
-                    </time>
-                  </td>
-                  <td hidden={display.hidden("expiresAt")}>
-                    <time dateTime={new Date(t.expiresAt).toISOString()}>
-                      {date(t.expiresAt)}
-                    </time>
-                  </td>
-                  <td hidden={display.hidden("actions")}>
-                    <div className="ticket-trash-actions">
-                      <PrInfoPopup
-                        title={`Заметки тикета #${t.id}`}
-                        trigger={<NotebookPen size={17} />}
-                      >
-                        <p style={{ whiteSpace: "pre-wrap" }}>
-                          {t.notes || "Заметок нет"}
-                        </p>
-                      </PrInfoPopup>
-                      <button
-                        type="button"
-                        className="secondary"
-                        disabled={busy !== null}
-                        onClick={() => void restore(t)}
-                        aria-label={`Восстановить тикет #${t.id}`}
-                        title={
-                          busy === t.id
-                            ? "Восстанавливаю…"
-                            : "Восстановить тикет"
-                        }
-                        aria-busy={busy === t.id}
-                      >
-                        {busy === t.id ? (
-                          <LoaderCircle className="spin" size={17} />
+                  <OrderedTicketCells order={display.order}>
+                    <td className="ticket-selection-column">
+                      <input
+                        className="ticket-checkbox"
+                        type="checkbox"
+                        aria-label={`Выбрать тикет #${t.id}`}
+                        checked={selection.checked(t)}
+                        onChange={() => selection.toggle(t)}
+                      />
+                    </td>
+                    <td hidden={display.hidden("id")}>
+                      <div className="ticket-id-type">
+                        {t.url?.startsWith("https://") ? (
+                          <a
+                            className="ticket-link"
+                            href={t.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            #{t.id}
+                          </a>
                         ) : (
-                          <ArchiveRestore size={17} />
+                          `#${t.id}`
                         )}
-                      </button>
-                    </div>
-                  </td>
+                        <StatusBadge
+                          state={t.type || "Без типа"}
+                          kind="type"
+                          colors={settings?.typeColors}
+                        />
+                      </div>
+                    </td>
+                    <td hidden={display.hidden("title")}>
+                      <strong className="ticket-title-clamp" title={t.title}>
+                        {t.title}
+                      </strong>
+                    </td>
+                    <td data-column="state" hidden={display.hidden("state")}>
+                      <StatusBadge
+                        state={t.state}
+                        colors={settings?.statusColors}
+                      />
+                    </td>
+                    <td
+                      data-column="priority"
+                      hidden={display.hidden("priority")}
+                    >
+                      <span className="badge ticket-priority-badge">
+                        P{t.priority ?? 1}
+                      </span>
+                    </td>
+                    <td data-column="tags" hidden={display.hidden("tags")}>
+                      <div className="ticket-tag-list">
+                        {(t.tags || []).map((tag: string) => (
+                          <span className="badge" key={tag}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td
+                      data-column="assigned"
+                      hidden={display.hidden("assigned")}
+                    >
+                      <LocalAssigneeNames
+                        names={t.assigned ? [t.assigned] : []}
+                        emptyLabel="Не назначен"
+                      />
+                    </td>
+                    <td
+                      data-column="developer_name"
+                      hidden={display.hidden("developer_name")}
+                    >
+                      <LocalAssigneeNames
+                        names={
+                          t.developers?.length
+                            ? t.developers.map((d: any) => d.name)
+                            : t.developer_name
+                              ? [t.developer_name]
+                              : []
+                        }
+                      />
+                    </td>
+                    <td
+                      data-column="removedAt"
+                      hidden={display.hidden("removedAt")}
+                    >
+                      <time dateTime={new Date(t.removedAt).toISOString()}>
+                        {date(t.removedAt)}
+                      </time>
+                    </td>
+                    <td
+                      data-column="expiresAt"
+                      hidden={display.hidden("expiresAt")}
+                    >
+                      <time dateTime={new Date(t.expiresAt).toISOString()}>
+                        {date(t.expiresAt)}
+                      </time>
+                    </td>
+                    <td
+                      data-column="actions"
+                      hidden={display.hidden("actions")}
+                    >
+                      <div className="ticket-trash-actions">
+                        <PrInfoPopup
+                          title={`Заметки тикета #${t.id}`}
+                          trigger={<NotebookPen size={17} />}
+                        >
+                          <p style={{ whiteSpace: "pre-wrap" }}>
+                            {t.notes || "Заметок нет"}
+                          </p>
+                        </PrInfoPopup>
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={busy !== null}
+                          onClick={() => void restore(t)}
+                          aria-label={`Восстановить тикет #${t.id}`}
+                          title={
+                            busy === t.id
+                              ? "Восстанавливаю…"
+                              : "Восстановить тикет"
+                          }
+                          aria-busy={busy === t.id}
+                        >
+                          {busy === t.id ? (
+                            <LoaderCircle className="spin" size={17} />
+                          ) : (
+                            <ArchiveRestore size={17} />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </OrderedTicketCells>
                 </tr>
               ))}
             </tbody>
