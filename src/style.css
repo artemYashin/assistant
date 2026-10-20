@@ -5303,7 +5303,7 @@ summary > svg {
 .developer-board-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   align-items: stretch;
 }
 .usage-token-heading,
@@ -5342,6 +5342,7 @@ summary > svg {
   flex-direction: column;
   min-width: 0;
   padding: 14px 18px;
+  margin-bottom: 0;
 }
 .developer-board-card > header {
   display: flex;
@@ -5359,7 +5360,8 @@ summary > svg {
   flex-wrap: wrap;
   gap: 6px;
 }
-.developer-board-card .pr-page-tabs button {
+.developer-board-card .pr-page-tabs button,
+.developer-activity-tabs button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -5369,7 +5371,8 @@ summary > svg {
   border: 1px solid #d6dfd8;
   border-radius: 7px;
 }
-.developer-board-card .pr-page-tabs button[aria-pressed="true"] {
+.developer-board-card .pr-page-tabs button[aria-pressed="true"],
+.developer-activity-tabs button[aria-pressed="true"] {
   background: #24564c;
   color: white;
 }
@@ -5786,4 +5789,7 @@ summary > svg {
 .ticket-filters > .multi-select:last-child .multi-select-panel {
   left: auto;
   right: 0;
+}
+.developer-activity-tabs {
+  flex-wrap: wrap;
 }

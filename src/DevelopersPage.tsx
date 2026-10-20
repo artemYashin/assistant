@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Users,
+  UserRoundMinus,
   ClipboardCheck,
   NotebookPen,
   Save,
@@ -52,6 +53,7 @@ export function DevelopersPage({
   useEffect(() => {
     setData(null);
     setError("");
+    setActivity("all");
   }, [context.client, context.project]);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -59,6 +61,9 @@ export function DevelopersPage({
     window.addEventListener("orbit:developer-board", refresh);
     return () => window.removeEventListener("orbit:developer-board", refresh);
   }, []);
+  const [activity, setActivity] = useState<"all" | "active" | "inactive">(
+    "all",
+  );
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
@@ -76,6 +81,30 @@ export function DevelopersPage({
       live = false;
     };
   }, [context.client, context.project, tickets, revision]);
+  const activeIds = new Set(
+    tickets
+      .filter(
+        (ticket) =>
+          ticket.removedAt === undefined &&
+          developerGroup(ticket.state, data?.statusGroups || {}) === "active",
+      )
+      .flatMap((ticket) =>
+        (ticket.developers || []).map((person) => person.id),
+      ),
+  );
+  const matchingDevelopers = (data?.developers || []).filter((person) =>
+    person.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
+  const activeCount = matchingDevelopers.filter((person) =>
+    activeIds.has(person.id),
+  ).length;
+  const visibleDevelopers = matchingDevelopers.filter(
+    (person) =>
+      activity === "all" ||
+      (activity === "active"
+        ? activeIds.has(person.id)
+        : !activeIds.has(person.id)),
+  );
   if (!context.project)
     return (
       <div className="panel">
@@ -103,6 +132,33 @@ export function DevelopersPage({
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
+      <nav
+        className="pr-page-tabs developer-activity-tabs"
+        aria-label="Фильтр разработчиков по активным задачам"
+      >
+        <button
+          type="button"
+          aria-pressed={activity === "all"}
+          onClick={() => setActivity("all")}
+        >
+          <Users size={16} /> Все · {matchingDevelopers.length}
+        </button>
+        <button
+          type="button"
+          aria-pressed={activity === "active"}
+          onClick={() => setActivity("active")}
+        >
+          <Ticket size={16} /> С активными задачами · {activeCount}
+        </button>
+        <button
+          type="button"
+          aria-pressed={activity === "inactive"}
+          onClick={() => setActivity("inactive")}
+        >
+          <UserRoundMinus size={16} /> Без активных задач ·{" "}
+          {matchingDevelopers.length - activeCount}
+        </button>
+      </nav>
       {error && (
         <p className="error" role="alert">
           {error}
@@ -125,13 +181,8 @@ export function DevelopersPage({
           : "Тикеты из корзины скрыты."}
       </p>
       <div className="developer-board-list">
-        {data?.developers
-          .filter((person) =>
-            person.name
-              .toLocaleLowerCase()
-              .includes(query.trim().toLocaleLowerCase()),
-          )
-          .map((person) => (
+        {data &&
+          visibleDevelopers.map((person) => (
             <DeveloperCard
               key={`${context.client}:${context.project}:${person.id}`}
               person={person}
@@ -154,13 +205,11 @@ export function DevelopersPage({
             />
           ))}
       </div>
-      {data &&
-        data.developers.length > 0 &&
-        !data.developers.some((person) =>
-          person.name
-            .toLocaleLowerCase()
-            .includes(query.trim().toLocaleLowerCase()),
-        ) && <p>Разработчики не найдены.</p>}
+      {data && data.developers.length > 0 && !visibleDevelopers.length && (
+        <p className="muted" role="status">
+          Нет разработчиков по выбранному фильтру и поиску.
+        </p>
+      )}
     </>
   );
 }

@@ -768,3 +768,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Developer directory and chat context expose only manually added current-project developers. General/client inheritance and new non-project additions are disabled. Existing assignments remain readable/removable; the legacy Azure assignment endpoint returns 410 before mutation.
 - Active/trash ticket filters separate Azure assignees from local assignments; compact controls and the leading icon/text reset clear all filters, including Azure tags.
 - Pre-push validation: all 192 tests and production build passed. Scope tests cover legacy general/client isolation, rejected non-project additions and project-only chat context. Vite retains its large-chunk warning. Browser visuals and live Azure were not exercised.
+
+### Developer activity filters and spacing (2026-10-20)
+
+- Developer list spacing is 8px; cards no longer inherit the panel's 20px bottom margin.
+- Added All / With active tasks / Without active tasks filters with developer counts and name-search composition. Active uses the project's active status group; review, completed and trash tasks do not count. Changing projects resets the activity filter.
+- Pre-push tests: all 192 passed. Browser visual behavior was not exercised.
+- Production build passed; Vite retains its large-chunk warning.
