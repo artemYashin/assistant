@@ -34,10 +34,7 @@ export function useTicketFilterOptions(
       ...(options?.types || settings?.azureTypes || []),
       ...tickets.map((t) => t.type || ""),
     ]),
-    states: unique([
-      ...(options?.states || settings?.azureStates || []),
-      ...tickets.map((t) => t.state || ""),
-    ]),
+    states: unique(options?.states || settings?.azureStates || []),
     priorities: [
       ...new Set<number>([
         ...Array.from({ length: options?.priorityCount ?? 3 }, (_, i) => i + 1),

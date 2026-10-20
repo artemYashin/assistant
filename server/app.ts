@@ -866,12 +866,7 @@ export function createApp(
           ...settings.azureTypes,
         ]),
       ],
-      states: [
-        ...new Set([
-          ...cached.flatMap((type) => type.states),
-          ...settings.azureStates,
-        ]),
-      ],
+      states: [...new Set(settings.azureStates)],
       priorityCount: priorityCount(store, context),
     });
   });

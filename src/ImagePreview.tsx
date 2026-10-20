@@ -1,3 +1,4 @@
+import { zoomAtPoint } from "./image-zoom.js";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Expand, LoaderCircle, Minus, Plus, X } from "lucide-react";
@@ -70,8 +71,24 @@ function ImageViewer({
   const stage = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [natural, setNatural] = useState({ width: 0, height: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [view, setView] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
+  const { zoom, pan } = view;
+  function setZoom(value: number | ((current: number) => number)) {
+    setView((current) => ({
+      ...current,
+      zoom: typeof value === "function" ? value(current.zoom) : value,
+    }));
+  }
+  function setPan(
+    value:
+      | { x: number; y: number }
+      | ((current: { x: number; y: number }) => { x: number; y: number }),
+  ) {
+    setView((current) => ({
+      ...current,
+      pan: typeof value === "function" ? value(current.pan) : value,
+    }));
+  }
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState(false);
   const drag = useRef<{
@@ -128,13 +145,34 @@ function ImageViewer({
       const factor = Math.exp(
         Math.max(-0.45, Math.min(0.45, -delta * sensitivity)),
       );
-      setZoom((value) =>
-        Math.max(0.25, Math.min(maxZoom, value * factor)),
+      const bounds = node.getBoundingClientRect();
+      const point = {
+        x: event.clientX - bounds.left - node.clientWidth / 2,
+        y: event.clientY - bounds.top - node.clientHeight / 2,
+      };
+      setView((current) =>
+        zoomAtPoint(
+          current,
+          factor,
+          point,
+          Math.max(0.001, fit),
+          natural,
+          size,
+          maxZoom,
+        ),
       );
     };
     node.addEventListener("wheel", wheel, { passive: false });
     return () => node.removeEventListener("wheel", wheel);
-  }, [ready, maxZoom]);
+  }, [
+    ready,
+    maxZoom,
+    fit,
+    natural.width,
+    natural.height,
+    size.width,
+    size.height,
+  ]);
   function adjust(factor: number) {
     setZoom((value) => Math.max(0.25, Math.min(maxZoom, value * factor)));
   }
@@ -327,8 +365,8 @@ function ImageViewer({
         )}
       </div>
       <footer>
-        Щипок трекпада / колесо — масштаб · Перетаскивание — перемещение ·
-        Двойной клик — вписать · Esc — закрыть
+        Щипок трекпада / колесо — масштаб к курсору · Перетаскивание —
+        перемещение · Двойной клик — вписать · Esc — закрыть
       </footer>
     </dialog>
   );

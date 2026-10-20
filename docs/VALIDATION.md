@@ -902,3 +902,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Preset handles support drag-and-drop reordering with before/after insertion indicators; order is persisted in the existing scoped browser storage. No keyboard-arrow reorder behavior, per user request. Applying/deleting presets remain separate controls.
 - Preset names use 11px text to match ticket search/number inputs.
 - Pre-push validation: all 210 tests and production build passed. Vite retains its large-chunk warning. Browser drag/drop behavior was not exercised.
+
+### Cursor-anchored image zoom and selected status filters (2026-10-20)
+
+- Wheel/pinch zoom updates scale and pan together to preserve the image point under the cursor, respecting pan/zoom limits. Added coverage for panned anchors, zoom limits and centering below fit.
+- Status filter options now include only checked import statuses, without adding unselected cached or ticket statuses. Types and priorities retain their previous behavior.
+- Pre-push validation: all 213 tests and production build passed. Vite retains its large-chunk warning. Browser wheel/trackpad interaction was not exercised.
