@@ -7,7 +7,7 @@ import { Store, AppError } from "../server/store.js";
 import { PrMerge } from "../server/pr-merge.js";
 import type { Connectors } from "../server/connectors.js";
 
-function fixture(t: any) {
+function fixture(t: any, bypass = false) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-merge-"));
   const store = new Store(dir);
   t.after(() => {
@@ -61,7 +61,8 @@ function fixture(t: any) {
       const body = JSON.parse(init.body);
       writes.push(body);
       assert.equal(body.completionOptions.transitionWorkItems, false);
-      assert.equal(body.completionOptions.bypassPolicy, false);
+      assert.equal(body.completionOptions.bypassPolicy, bypass);
+      if (!bypass) assert.equal(body.completionOptions.bypassReason, undefined);
       assert.equal(body.completionOptions.deleteSourceBranch, false);
       assert.equal(body.lastMergeSourceCommit.commitId, "head");
       if (failMerge)
@@ -259,4 +260,32 @@ test("merge explicitly skips unselected ticket statuses", async (t) => {
     [{ id: 43, state: "Done" }],
   );
   assert.equal(result.tickets.find((v: any) => v.id === 42).skipped, true);
+});
+
+test("policy bypass is explicit, requires a reason and preserves merge verification", async (t) => {
+  const f = fixture(t, true);
+  const plan = await f.service.prepare(f.key, false);
+  await assert.rejects(
+    f.service.execute(plan.id, [], "squash", { enabled: true, reason: "   " }),
+    /причину/,
+  );
+  assert.equal(f.writes.length, 0);
+  const result = await f.service.execute(plan.id, [], "squash", {
+    enabled: true,
+    reason: "Approved exception",
+  });
+  assert.equal(
+    f.writes[0].completionOptions.bypassReason,
+    "Approved exception",
+  );
+  assert.equal(f.writes[0].completionOptions.transitionWorkItems, false);
+  assert.equal(f.writes.length, 1);
+  assert.deepEqual(
+    await f.service.execute(plan.id, [], "squash", {
+      enabled: true,
+      reason: "Approved exception",
+    }),
+    result,
+  );
+  assert.equal(f.writes.length, 1);
 });

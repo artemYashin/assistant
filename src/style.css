@@ -5159,3 +5159,12 @@ summary > svg {
   display: block;
   margin-top: 8px;
 }
+.pr-bypass-reason {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.pr-bypass-reason textarea {
+  width: 100%;
+  resize: vertical;
+}

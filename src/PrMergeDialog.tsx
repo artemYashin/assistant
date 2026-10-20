@@ -19,6 +19,8 @@ export function PrMergeDialog({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [moveTickets, setMoveTickets] = useState(false);
+  const [bypassPolicy, setBypassPolicy] = useState(false);
+  const [bypassReason, setBypassReason] = useState("");
   const [linkedIds, setLinkedIds] = useState<number[] | null>(null);
   const [linksError, setLinksError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -79,7 +81,8 @@ export function PrMergeDialog({
     };
   }, [pr.monitor, pr.repo, pr.number, moveTickets, retry]);
   async function submit() {
-    if (!plan || submitted || busy) return;
+    if (!plan || submitted || busy || (bypassPolicy && !bypassReason.trim()))
+      return;
     setBusy(true);
     setError("");
     setSubmitted(true);
@@ -87,6 +90,8 @@ export function PrMergeDialog({
       setResult(
         await api(`/pr/merge/${plan.id}`, "POST", {
           strategy,
+          bypassPolicy,
+          bypassReason: bypassPolicy ? bypassReason.trim() : "",
           tickets: plan.tickets.map((t) => ({
             id: t.id,
             state: states[t.id] || null,
@@ -147,7 +152,10 @@ export function PrMergeDialog({
         {moveTickets
           ? "После подтверждённого merge выбранные статусы изменятся в Azure DevOps."
           : "Будет выполнен только merge. Статусы связанных тикетов останутся без изменений."}{" "}
-        Исходная ветка сохранится. Политики репозитория применяются.
+        Исходная ветка сохранится.{" "}
+        {bypassPolicy
+          ? "Запрошен обход политик репозитория."
+          : "Политики репозитория применяются."}
       </p>
       {busy && (
         <p role="status">
@@ -162,6 +170,36 @@ export function PrMergeDialog({
       )}
       {!submitted && (
         <div className="pr-merge-options">
+          <label className="pr-merge-toggle">
+            <input
+              type="checkbox"
+              checked={bypassPolicy}
+              disabled={busy}
+              onChange={(event) => setBypassPolicy(event.target.checked)}
+            />
+            <span>
+              <strong>Обойти проверки и политики Azure</strong>
+              <small>
+                Требуется право Bypass policies when completing pull requests.
+                Конфликты кода всё равно нужно разрешить.
+              </small>
+            </span>
+          </label>
+          {bypassPolicy && (
+            <label className="pr-bypass-reason">
+              Причина обхода политик
+              <textarea
+                aria-label="Причина обхода политик"
+                rows={3}
+                maxLength={2000}
+                required
+                value={bypassReason}
+                disabled={busy}
+                onChange={(event) => setBypassReason(event.target.value)}
+                placeholder="Почему PR нужно завершить без прохождения проверок"
+              />
+            </label>
+          )}
           <label
             className={`pr-merge-toggle ${!linkedIds?.length ? "is-disabled" : ""}`}
             title={
@@ -290,10 +328,13 @@ export function PrMergeDialog({
           )}
           <button
             className="primary"
-            disabled={busy}
+            disabled={busy || (bypassPolicy && !bypassReason.trim())}
             onClick={() => void submit()}
           >
-            <GitMerge size={17} /> Подтвердить merge
+            <GitMerge size={17} />{" "}
+            {bypassPolicy
+              ? "Подтвердить merge с обходом политик"
+              : "Подтвердить merge"}
             {plan.tickets.some((t) => !!states[t.id])
               ? " и смену выбранных статусов"
               : ""}

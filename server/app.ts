@@ -494,12 +494,10 @@ export function createApp(
   app.get("/api/developer-board", (req, res) => {
     const context = contextSchema.parse(req.query);
     res.json({
-      developers: localDevelopers
-        .list(context)
-        .map((person) => ({
-          ...person,
-          notes: store.get<string>(developerNoteKey(context, person.id), ""),
-        })),
+      developers: localDevelopers.list(context).map((person) => ({
+        ...person,
+        notes: store.get<string>(developerNoteKey(context, person.id), ""),
+      })),
       completedStates: store.get<string[]>(developerBoardKey(context), [
         "Closed",
         "Done",
@@ -856,6 +854,8 @@ export function createApp(
           )
           .max(100),
         strategy: z.enum(["noFastForward", "squash", "rebase", "rebaseMerge"]),
+        bypassPolicy: z.boolean().default(false),
+        bypassReason: z.string().trim().max(2000).default(""),
       })
       .strict()
       .parse(req.body);
@@ -864,6 +864,7 @@ export function createApp(
         String(req.params.id),
         input.tickets,
         input.strategy,
+        { enabled: input.bypassPolicy, reason: input.bypassReason },
       ),
     );
   });

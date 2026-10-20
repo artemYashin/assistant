@@ -214,7 +214,17 @@ export class PrMerge {
     id: string,
     selections: { id: number; state: string | null }[],
     strategy: string,
+    bypass: { enabled: boolean; reason: string } = {
+      enabled: false,
+      reason: "",
+    },
   ) {
+    const bypassReason = bypass.reason.trim();
+    if (bypass.enabled && (!bypassReason || bypassReason.length > 2000))
+      throw new AppError(
+        400,
+        "Укажите причину обхода политик (до 2000 символов)",
+      );
     const row = this.store.db
       .prepare("SELECT * FROM pr_merge_plans WHERE id=?")
       .get(id) as any;
@@ -290,6 +300,14 @@ export class PrMerge {
       message:
         "Операция начата. При перезапуске сервера проверьте результат в Azure; автоматического повтора нет.",
     });
+    this.store.audit(
+      "pr.merge.requested",
+      JSON.stringify({
+        id,
+        bypassPolicy: bypass.enabled,
+        bypassReason: bypass.enabled ? bypassReason : undefined,
+      }),
+    );
     let writeError = "";
     let denied = false;
     try {
@@ -302,7 +320,8 @@ export class PrMerge {
             mergeStrategy: strategy,
             deleteSourceBranch: false,
             transitionWorkItems: false,
-            bypassPolicy: false,
+            bypassPolicy: bypass.enabled,
+            ...(bypass.enabled ? { bypassReason } : {}),
           },
         }),
       });
