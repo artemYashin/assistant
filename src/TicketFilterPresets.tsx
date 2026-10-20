@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bookmark, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
@@ -36,6 +37,11 @@ export function TicketFilterPresets({
       return [];
     }
   });
+  const [pendingDelete, setPendingDelete] = useState<Preset | null>(null);
+  const confirmDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (pendingDelete) confirmDialog.current?.showModal();
+  }, [pendingDelete]);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   function save(next: Preset[]) {
@@ -128,9 +134,11 @@ export function TicketFilterPresets({
                   className="icon-button"
                   aria-label={`Удалить набор ${preset.name}`}
                   title="Удалить сохранённый набор"
-                  onClick={() =>
-                    save(presets.filter((p) => p.id !== preset.id))
-                  }
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setError("");
+                    setPendingDelete(preset);
+                  }}
                 >
                   <X size={13} />
                 </button>
@@ -139,7 +147,68 @@ export function TicketFilterPresets({
           })}
         </div>
       )}
-      {error && (
+      {pendingDelete &&
+        createPortal(
+          <dialog
+            ref={confirmDialog}
+            className="developer-dialog preset-delete-dialog"
+            aria-label="Удалить набор фильтров"
+            onCancel={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setPendingDelete(null);
+            }}
+          >
+            <div className="developer-dialog-heading">
+              <strong>Удалить набор фильтров?</strong>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Закрыть"
+                onClick={() => setPendingDelete(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p>
+              Вы действительно хотите удалить набор{" "}
+              <strong className="preset-delete-name">
+                «{pendingDelete.name}»
+              </strong>
+              ?
+            </p>
+            <p className="muted">
+              Текущие фильтры и тикеты останутся без изменений.
+            </p>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="card-actions">
+              <button
+                type="button"
+                className="secondary"
+                autoFocus
+                onClick={() => setPendingDelete(null)}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  if (save(presets.filter((p) => p.id !== pendingDelete.id)))
+                    setPendingDelete(null);
+                }}
+              >
+                Удалить набор
+              </button>
+            </div>
+          </dialog>,
+          document.body,
+        )}
+      {error && !pendingDelete && (
         <p className="error" role="alert">
           {error}
         </p>

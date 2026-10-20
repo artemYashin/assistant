@@ -889,3 +889,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Empty identity searches fall back to a bounded Graph Subject Query and one batched descriptor-to-identity lookup. Previously found identities also support case-insensitive partial-name matching; unavailable Graph produces an actionable warning. No full-directory enumeration is performed.
 - Ticket details now offer the same Azure-assignee edit dialog as the table, with a visible pencil and existing verified-write behavior.
 - Pre-push validation: all 209 tests passed. Production build passed, including the final sidebar sizing adjustment. Vite retains its large-chunk warning. Real Azure Graph permissions/partial-search behavior and browser interactions were not exercised.
+
+### Filter catalog and preset deletion confirmation (2026-10-20)
+
+- Active/trash ticket filters include all cached imported Azure types/states and the configured project/customer priority range, plus values present in tickets. The local filter-options endpoint makes no Azure calls; covered catalog/source isolation and priority inheritance with an API test.
+- Preset deletion now requires confirmation in a modal showing the preset name; Escape, close and Cancel preserve it. Storage failures remain visible in the modal. Applied filters and tickets are not removed with a preset.
+- Reduced developer accordion vertical spacing.
+- Pre-push validation: all 210 tests and production build passed. Vite retains its large-chunk warning. Browser visual/modal behavior was not exercised.

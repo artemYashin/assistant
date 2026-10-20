@@ -1,3 +1,4 @@
+import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
 import { TicketFilterPresets } from "./TicketFilterPresets.js";
 import { useTicketFilters } from "./useTicketFilters.js";
 import { AzureAssignee } from "./AzureAssignee.js";
@@ -915,6 +916,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             {page === "tickets" &&
               new URLSearchParams(location.search).get("tab") === "trash" && (
                 <TicketTrash
+                  context={context}
                   settings={settings}
                   key={`${settings?.azureUrl}|${settings?.azureProject}`}
                   onChange={() => setRefresh((n) => n + 1)}
@@ -1126,6 +1128,7 @@ function PageHeading({
 }
 function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
   const columns = useTicketColumns();
+  const filterOptions = useTicketFilterOptions(context, settings, tickets);
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
@@ -1343,6 +1346,11 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
         </div>
       </div>
       <section className="ticket-filter-panel" aria-label="Фильтры тикетов">
+        {filterOptions.error && (
+          <p className="error" role="alert">
+            Не удалось загрузить справочник фильтров: {filterOptions.error}
+          </p>
+        )}
         <TicketFilterPresets
           storageKey={filterStorageKey + ".presets"}
           filters={filters}
@@ -1384,11 +1392,10 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
             value={priorityFilter}
             onChange={setPriorityFilter}
             disabled={!!rawTarget}
-            options={[
-              ...new Set<number>(tickets.map((t: any) => t.priority ?? 1)),
-            ]
-              .sort((a, b) => a - b)
-              .map((v) => ({ value: String(v), label: "P" + v }))}
+            options={filterOptions.priorities.map((v) => ({
+              value: String(v),
+              label: "P" + v,
+            }))}
           />
           <MultiSelect
             label="Теги"
@@ -1427,7 +1434,7 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
             disabled={!!rawTarget}
             value={typeFilter}
             onChange={setTypeFilter}
-            options={values("type").map((value) => ({
+            options={filterOptions.types.map((value) => ({
               value,
               label: value || "Тип не указан",
             }))}
@@ -1438,7 +1445,7 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
             disabled={!!rawTarget}
             value={stateFilter}
             onChange={setStateFilter}
-            options={values("state").map((value) => ({
+            options={filterOptions.states.map((value) => ({
               value,
               label: value || "Статус не указан",
             }))}

@@ -5354,7 +5354,7 @@ summary > svg {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 14px 18px;
+  padding: 8px 18px;
   margin-bottom: 0;
 }
 .developer-board-card > header {
@@ -5722,7 +5722,7 @@ summary > svg {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
+  padding: 4px 0;
   background: transparent;
   border: 0;
   color: inherit;
@@ -5754,8 +5754,8 @@ summary > svg {
 }
 .developer-board-content {
   border-top: 1px solid var(--border);
-  margin-top: 12px;
-  padding-top: 14px;
+  margin-top: 8px;
+  padding-top: 10px;
 }
 .developer-board-content[hidden] {
   display: none;
@@ -5765,7 +5765,7 @@ summary > svg {
     display: none;
   }
   .developer-board-card {
-    padding: 10px 12px;
+    padding: 8px 12px;
   }
 }
 
@@ -7347,4 +7347,12 @@ summary > svg {
   width: 100%;
   min-width: 0;
   gap: 8px;
+}
+
+.preset-delete-dialog p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.preset-delete-dialog .card-actions {
+  justify-content: flex-end;
 }

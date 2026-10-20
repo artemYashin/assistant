@@ -851,6 +851,30 @@ export function createApp(
       "Назначение из Azure больше не поддерживается. Выберите разработчиков из локального списка проекта.",
     );
   });
+  app.get("/api/tickets/filter-options", (req, res) => {
+    const context = metadataContext.parse(req.query);
+    const settings = store.settings();
+    const cached = store.get<{ name: string; states: string[] }[]>(
+      "azure.ticket-options:" + store.source(),
+      [],
+    );
+    res.json({
+      source: store.source(),
+      types: [
+        ...new Set([
+          ...cached.map((type) => type.name),
+          ...settings.azureTypes,
+        ]),
+      ],
+      states: [
+        ...new Set([
+          ...cached.flatMap((type) => type.states),
+          ...settings.azureStates,
+        ]),
+      ],
+      priorityCount: priorityCount(store, context),
+    });
+  });
   app.get("/api/tickets/options", async (_req, res) =>
     res.json(await connectors.ticketOptions()),
   );

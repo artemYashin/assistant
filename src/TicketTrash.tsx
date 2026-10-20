@@ -1,3 +1,4 @@
+import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
 import { RotateCcw } from "lucide-react";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { useSearchParams } from "react-router-dom";
@@ -20,10 +21,12 @@ import { MultiSelect } from "./MultiSelect.js";
 import { api } from "./api.js";
 import { StatusBadge } from "./TicketControls.js";
 export function TicketTrash({
+  context,
   onChange,
   settings,
 }: {
   onChange: () => void;
+  context: { client: string; project: string };
   settings?: any;
 }) {
   const display = useTicketColumns(true);
@@ -32,6 +35,7 @@ export function TicketTrash({
     [error, setError] = useState(""),
     [busy, setBusy] = useState<number | null>(null),
     [version, setVersion] = useState(0);
+  const filterOptions = useTicketFilterOptions(context, settings, items);
   useEffect(() => {
     let live = true;
     api("/tickets/trash")
@@ -214,9 +218,10 @@ export function TicketTrash({
           placeholder="Все приоритеты"
           value={priorities}
           onChange={setPriorities}
-          options={[...new Set<number>(items.map((t) => t.priority ?? 1))]
-            .sort((a, b) => a - b)
-            .map((v) => ({ value: String(v), label: "P" + v }))}
+          options={filterOptions.priorities.map((v) => ({
+            value: String(v),
+            label: "P" + v,
+          }))}
         />
         <MultiSelect
           label="Теги"
@@ -248,7 +253,7 @@ export function TicketTrash({
           placeholder="Все типы"
           value={types}
           onChange={setTypes}
-          options={values("type").map((value) => ({
+          options={filterOptions.types.map((value) => ({
             value,
             label: value || "Тип не указан",
           }))}
@@ -258,7 +263,7 @@ export function TicketTrash({
           placeholder="Все статусы"
           value={states}
           onChange={setStates}
-          options={values("state").map((value) => ({
+          options={filterOptions.states.map((value) => ({
             value,
             label: value || "Статус не указан",
           }))}
@@ -284,6 +289,11 @@ export function TicketTrash({
           ]}
         />
       </div>
+      {filterOptions.error && (
+        <p className="error" role="alert">
+          Не удалось загрузить справочник фильтров: {filterOptions.error}
+        </p>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}
