@@ -1012,3 +1012,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Azure sort changes trigger a fresh ID search and first-page load. Remote fields use whitelisted WIQL ordering; local fields sort the bounded ID index before pagination, with unknown values last. Page batches preserve index order. Rapid sort changes coalesce and stale responses are ignored.
 - Added a compact color legend to Azure/trash controls. All three ticket tables retain sortable headers when empty, with empty/loading messages below.
 - Pre-push validation: all 228 tests and production build passed. Regression coverage includes date lifecycle, summary date fields, optional date exports, sort validation, ID ordering and snapshot mismatch. Vite retains its large-chunk warning. Live Azure endpoints and browser interactions were not exercised.
+
+### Empty ticket table spacing (2026-10-21)
+
+- Removed the empty-state description width cap inside ticket tables. Empty active/Azure/trash tables distribute width across headers instead of reserving all remaining space for the title; sort controls no longer have the narrow width cap.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser visual behavior was not exercised.

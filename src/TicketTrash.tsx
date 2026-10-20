@@ -391,7 +391,7 @@ export function TicketTrash({
           </div>
         </div>
       )}
-      <div className="panel ticket-table-fit ticket-trash-table">
+      <div className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}`}>
         <table>
           <thead>
             <tr>

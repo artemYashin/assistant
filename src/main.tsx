@@ -1732,7 +1732,7 @@ function Tickets({
           можно вернуть кнопкой «Добавить по номеру».
         </p>
       )}
-      <div className="panel ticket-table-fit ticket-active-table">
+      <div className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}`}>
         <table>
           <thead>
             <tr>

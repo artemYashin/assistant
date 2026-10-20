@@ -7861,3 +7861,21 @@ summary > svg {
   gap: 8px;
   color: #64716e;
 }
+
+/* Empty tables share available width between headers, not an absent title. */
+.ticket-table-fit.is-empty:is(.ticket-active-table, .ticket-trash-table)
+  > table > thead > tr > th:not(.ticket-selection-column) {
+  width: auto;
+  max-width: none;
+}
+.ticket-table-fit.is-empty > table > thead .ticket-column-sort {
+  max-width: none;
+}
+.ticket-table-fit.is-empty .ticket-column-sort > span {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.ticket-table-fit .ticket-empty-row .empty p {
+  max-width: none;
+  width: 100%;
+}
