@@ -4788,9 +4788,12 @@ summary > svg {
 }
 .ticket-table-fit .ticket-metadata-control > .ticket-tag-list {
   flex: 0 1 auto;
-  flex-wrap: nowrap;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 4px;
   min-width: 0;
+}
+.ticket-table-fit .ticket-metadata-control:has(> .ticket-tag-list) {
+  align-items: flex-start;
 }
 .ticket-table-fit .ticket-metadata-control > .ticket-tag-list > .badge {
   flex: 0 0 auto;
@@ -4859,8 +4862,12 @@ summary > svg {
   > tr:not(.ticket-preview-row)
   > td
   > .ticket-tag-list {
-  flex-wrap: nowrap;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ticket-table-fit > table > tbody > tr > td > .ticket-tag-list > .badge {
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 .ticket-table-fit
   > table
