@@ -81,6 +81,16 @@ class VoiceDiagnosticsTests(unittest.TestCase):
             self.invoke()
         self.assertEqual(result.exception.status_code, 422)
 
+    def test_default_model_and_decoding_settings(self):
+        app.model = None
+        with patch.dict(app.os.environ, {}, clear=True), patch.object(app, "WhisperModel") as factory:
+            factory.return_value.transcribe.return_value = (
+                [SimpleNamespace(text=" hello ")], SimpleNamespace(duration=1, language="en")
+            )
+            self.assertEqual(self.invoke()["text"], "hello")
+            factory.assert_called_once_with("medium", device="cpu", compute_type="int8", download_root="/models")
+            self.assertEqual(factory.return_value.transcribe.call_args.kwargs, {"beam_size": 5, "vad_filter": True})
+
     def test_success(self):
         app.model = SimpleNamespace(transcribe=lambda *a, **kw: (
             [SimpleNamespace(text=" hello ")], SimpleNamespace(duration=1, language="en")

@@ -30,7 +30,7 @@ services:
   voice:
     build: ./voice
     environment:
-      WHISPER_MODEL: "base"
+      WHISPER_MODEL: "medium"
       HF_HOME: "/models"
     volumes:
       - whisper-models:/models

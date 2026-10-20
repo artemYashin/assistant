@@ -739,3 +739,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - The assignment picker resets inherited nowrap, bounds grid content and shows compact shared initials avatars. Modal scroll locking remains on html only, avoiding a new body scroll ancestor for sticky UI.
 - Ticket and trash table data columns have a 60px minimum; checkbox columns use 44px with 12px side padding, retaining 16px checkboxes. Sort labels have a minimum content width to avoid character-by-character compression.
 - Pre-push validation: all 190 tests passed; production build passed again after the final CSS adjustment. Vite retains its large-chunk warning. Browser visual behavior has not been exercised.
+
+### Voice quality defaults (2026-10-20)
+
+- Compose and the service fallback now use multilingual Whisper medium; beam size is 5. CPU/int8, VAD and the persistent model cache remain enabled.
+- Pre-push validation: 190 application tests, 7 Python voice tests and production build passed. Voice tests cover real WAV/WebM decoding and mocked model configuration/inference. Recognition quality and latency with downloaded medium weights have not been benchmarked. Vite retains its large-chunk warning.

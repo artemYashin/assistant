@@ -46,14 +46,14 @@ def recognize(data: bytes):
     global model
     with lock:
         if model is None:
-            logger.info("[voice] stage=model_load model=%s", os.getenv('WHISPER_MODEL', 'base'))
+            logger.info("[voice] stage=model_load model=%s", os.getenv('WHISPER_MODEL', 'medium'))
             try:
-                model = WhisperModel(os.getenv('WHISPER_MODEL', 'base'), device='cpu', compute_type='int8', download_root='/models')
+                model = WhisperModel(os.getenv('WHISPER_MODEL', 'medium'), device='cpu', compute_type='int8', download_root='/models')
             except Exception as error:
                 raise RecognitionFailure("model_load", error) from error
             logger.info("[voice] stage=model_load complete")
         try:
-            segments, info = model.transcribe(io.BytesIO(data), beam_size=3, vad_filter=True)
+            segments, info = model.transcribe(io.BytesIO(data), beam_size=5, vad_filter=True)
             if info.duration > 150:
                 raise AudioTooLong()
             # faster-whisper performs inference while iterating this generator.
