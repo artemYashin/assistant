@@ -91,17 +91,32 @@ export function ContextPicker({
   }
   return (
     <div className="header-context">
-      <button
-        type="button"
-        className="header-context-path"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        title="Выбрать заказчика и проект"
-      >
-        <span>{context.client || "Общий контекст"}</span>
-        <ChevronRight size={15} aria-hidden="true" />
-        <strong>{context.project || "Без проекта"}</strong>
-      </button>
+      <SingleSelect
+        label="Текущий заказчик"
+        value={context.client}
+        disabled={busy}
+        options={[
+          { value: "", label: "Общий контекст" },
+          ...clients.map((value) => ({ value, label: value })),
+        ]}
+        onChange={(client) => void choose({ client, project: "" })}
+      />
+      <ChevronRight size={15} aria-hidden="true" />
+      <SingleSelect
+        label="Текущий проект"
+        value={context.project}
+        disabled={busy || !context.client}
+        options={[
+          { value: "", label: "Без проекта" },
+          ...projects(context.client).map((value) => ({ value, label: value })),
+        ]}
+        onChange={(project) => void choose({ ...context, project })}
+      />
+      {error && !open && (
+        <div className="header-context-error" role="alert">
+          {error}
+        </div>
+      )}
       <button
         type="button"
         className="icon-button"

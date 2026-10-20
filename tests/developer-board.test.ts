@@ -63,8 +63,22 @@ test("developer notes stay scoped and completed tickets come from trash", async 
   );
   assert.equal(read.body.completedStates, undefined);
   assert.equal(read.body.showDeleted, true);
-  assert.equal(read.body.statusGroups.Prod, "done");
-  assert.equal(read.body.statusGroups["Ready for Testing"], "review");
+  assert.deepEqual(read.body.statusGroups, {});
+  assert.deepEqual(read.body.availableStates, []);
+  store.set("azure.ticket-options:" + store.source(), [
+    { name: "Bug", states: ["Real Active", "Real Testing", "Real Done"] },
+  ]);
+  const catalog = await request(app)
+    .get("/api/developer-board")
+    .query(context)
+    .set(auth)
+    .expect(200);
+  assert.deepEqual(catalog.body.availableStates, [
+    "Real Active",
+    "Real Done",
+    "Real Testing",
+  ]);
+  assert.deepEqual(catalog.body.statusGroups, {});
   const groups = { Prod: "done", UAT: "review", Closed: "active" };
   await request(app)
     .put("/api/developer-board/status-groups")

@@ -146,7 +146,7 @@ test("unavailable comments are shown as incomplete and wrong-project ticket is r
   await assert.rejects(connectors.ticketDetails(42), /другому проекту/);
 });
 test("work item types and states are loaded from the configured project", async (t) => {
-  const { connectors } = fixture(t);
+  const { store, connectors } = fixture(t);
   t.mock.method(globalThis, "fetch", async (raw: any) => {
     const url = new URL(String(raw));
     assert.ok(url.pathname.startsWith("/Collection/P/"));
@@ -162,6 +162,10 @@ test("work item types and states are loaded from the configured project", async 
     );
   });
   assert.deepEqual(await connectors.ticketOptions(), [
+    { name: "Bug", states: ["New", "Active"] },
+    { name: "Change Request", states: ["Proposed"] },
+  ]);
+  assert.deepEqual(store.get("azure.ticket-options:" + store.source(), []), [
     { name: "Bug", states: ["New", "Active"] },
     { name: "Change Request", states: ["Proposed"] },
   ]);

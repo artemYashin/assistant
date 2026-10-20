@@ -30,14 +30,14 @@ export function DeveloperStatusSettings({
   const prefix = useId();
   const [draft, setDraft] = useState(groups);
   const [includeDeleted, setIncludeDeleted] = useState(showDeleted);
-  const [loaded, setLoaded] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState<string[] | null>(null);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const options = [
     ...new Map(
-      [...Object.keys(draft), ...states, ...loaded]
+      (loaded ?? states)
         .filter(Boolean)
         .map((state) => [state.trim().toLocaleLowerCase(), state.trim()]),
     ).values(),
@@ -62,7 +62,14 @@ export function DeveloperStatusSettings({
       const result = await api("/developer-board/status-groups", "PUT", {
         context,
         source,
-        statusGroups: draft,
+        statusGroups: Object.fromEntries(
+          Object.entries(draft).filter(([state]) =>
+            options.some(
+              (option) =>
+                option.toLocaleLowerCase() === state.toLocaleLowerCase(),
+            ),
+          ),
+        ),
         showDeleted: includeDeleted,
       });
       onSaved(result.statusGroups, result.showDeleted);
@@ -103,6 +110,12 @@ export function DeveloperStatusSettings({
       >
         <RefreshCw size={15} /> Загрузить все статусы из Azure
       </button>
+      {!options.length && (
+        <p className="muted">
+          Список статусов ещё не загружен. Загрузите типы и статусы в настройках
+          Azure или кнопкой выше. Все задачи пока считаются активными.
+        </p>
+      )}
       <input
         aria-label="Поиск статуса"
         placeholder="Найти статус…"
@@ -227,10 +240,7 @@ export function ProjectDeveloperStatusSettings({
       source={data.source}
       groups={data.statusGroups}
       showDeleted={data.showDeleted}
-      states={[
-        ...data.availableStates,
-        ...data.completedTickets.map((ticket: any) => ticket.state),
-      ]}
+      states={data.availableStates}
       onSaved={(statusGroups, showDeleted) =>
         setData({ ...data, statusGroups, showDeleted })
       }

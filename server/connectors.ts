@@ -664,6 +664,7 @@ export class Connectors {
         states: (states || []).map((v: any) => v.name),
       });
     }
+    this.store.set("azure.ticket-options:" + this.store.source(s), options);
     return options;
   }
   async ticketSummary(id: number) {

@@ -502,11 +502,18 @@ export function createApp(
     `developer-note:${JSON.stringify([context.client, context.project, id])}`;
   const developerStatusKey = (context: Context) =>
     `developer-status-groups:${JSON.stringify([store.source(), context.client, context.project])}`;
-  const defaultDeveloperGroups = {
-    UAT: "review",
-    "Ready for Testing": "review",
-    RFT: "review",
-    Prod: "done",
+  const importedDeveloperStates = () => {
+    const cached = store.get<{ name: string; states: string[] }[] | null>(
+      "azure.ticket-options:" + store.source(),
+      null,
+    );
+    return [
+      ...new Set(
+        cached
+          ? cached.flatMap((type) => type.states)
+          : store.settings().azureStates,
+      ),
+    ].sort();
   };
   app.put("/api/developer-board/status-groups", (req, res) => {
     const input = z
@@ -554,17 +561,9 @@ export function createApp(
         notes: store.get<string>(developerNoteKey(context, person.id), ""),
       })),
       completedTickets: store.ticketTrash(),
-      availableStates: store.db
-        .prepare(
-          "SELECT DISTINCT state FROM tickets WHERE source=? ORDER BY state",
-        )
-        .all(store.source())
-        .map((row: any) => row.state),
+      availableStates: importedDeveloperStates(),
       source: store.source(),
-      statusGroups: store.get(
-        developerStatusKey(context),
-        defaultDeveloperGroups,
-      ),
+      statusGroups: store.get(developerStatusKey(context), {}),
       showDeleted: store.get(
         developerStatusKey(context) + ":show-deleted",
         true,

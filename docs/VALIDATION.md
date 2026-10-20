@@ -781,3 +781,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Removed the separate customer/project panel above page content. Header now shows a compact customer → project path and settings icon, both opening the context manager.
 - Management uses a native modal dialog portaled to body, preserving client/project selectors and all management sections. Escape/close, modal focus and existing page scroll locking apply. Header text truncates on limited widths; secondary breadcrumb hides on narrower screens.
 - Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Header quick switching and imported developer statuses (2026-10-20)
+
+- Header uses balanced outer grid tracks and compact searchable customer/project dropdowns; the gear retains the management dialog. Narrow layouts place selectors on a centered second row with matching sticky offsets. Selection errors are shown outside the dialog as well.
+- Removed hardcoded initial developer grouping rules: unconfigured statuses resolve to active. Existing explicitly saved mappings remain. The grouping editor lists the source-scoped Azure type/state catalog cached after successful loading in settings (or the same explicit reload action), rather than ticket states or mapping keys. Until the first catalog reload, previously saved import-status selections are used.
+- Pre-push validation: all 192 tests and production build passed, including catalog persistence and empty default mappings. Vite retains its large-chunk warning. Live Azure and browser visual behavior were not exercised.
