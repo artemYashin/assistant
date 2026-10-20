@@ -2594,7 +2594,7 @@ summary:focus-visible {
   max-height: 35vh;
   max-height: 35dvh;
   overflow: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: auto;
   scrollbar-gutter: stable;
 }
 .ticket-section-scroll:focus-visible {
@@ -4992,7 +4992,7 @@ summary > svg {
 
 /* Give expanded ticket cards their own space within the table. */
 .ticket-table-fit > table > tbody > .ticket-preview-row > td {
-  padding: 24px clamp(12px, 4cqw, 36px);
+  padding: 24px clamp(16px, 6cqw, 72px);
   background: #edf1ed;
   border-top: 1px solid #d7dfd8;
   border-bottom: 1px solid #d7dfd8;
@@ -6667,7 +6667,7 @@ summary > svg {
   border-top: 1px solid var(--border);
 }
 .ticket-detail .ticket-card-title {
-  align-items: flex-start;
+  align-items: center;
 }
 .ticket-copy-control {
   position: relative;
@@ -6758,4 +6758,21 @@ summary > svg {
 }
 .ticket-lookup-dialog.is-lookup .ticket-lookup form > button {
   justify-self: end;
+}
+
+.ticket-detail .ticket-sidebar-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 104px;
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ticket-lookup-dialog.is-detail {
+  width: min(2112px, calc(100vw - 48px));
 }

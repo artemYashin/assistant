@@ -850,3 +850,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added stable-color initials avatars to comment authors. Sidebar local priority/assignment edit controls have explicit visible styling, reserved button width and flexible assignment text.
 - Header lookup now starts as a centered compact number form; successful loading replaces it with the full card. Escape/close from the card returns to the preserved number, and Escape/close from the form dismisses the dialog. Focus and scroll reset per stage; route changes close the lookup; nested dialog events and stale lookup responses are guarded.
 - Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser focus/modal/pointer behavior was not exercised.
+
+### Detail spacing, scrolling and actions (2026-10-20)
+
+- Notes/all-fields sidebar buttons share larger dimensions and typography. Copy-link control sits to the right of the ticket title, vertically centered.
+- Rich-text accordion scroll regions allow vertical scroll chaining at their edges; modal page locking remains unchanged. Expanded table cards have larger responsive horizontal outer padding.
+- Detail-stage lookup dialog width increased to 220% of the previous 960px cap (2112px), constrained to the viewport; the number-entry stage stays compact.
+- Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/scroll behavior was not exercised.
