@@ -799,3 +799,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Ticket rows toggle their details from non-interactive content; links, buttons, form controls, dialogs and text selection are excluded. Focused rows also support Enter/Space. Added row hover/focus feedback.
 - Ticket edit controls use compact square bordered buttons. Markdown and ticket rich-text links use blue underlined styling, including visited links and explicit hover/focus feedback.
 - Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser interaction/visual behavior was not exercised.
+
+### Ticket alignment and bounded detail sections (2026-10-20)
+
+- Active/trash ticket cells and checkboxes align vertically in the middle; wrapped tags align with their edit button.
+- Description, reproduction steps and acceptance criteria use keyboard-focusable inner scroll regions capped at 30dvh (30vh fallback). Accordion summaries remain outside the scroll area; overscroll containment prevents scrolling the page at the boundary.
+- Pre-push validation: all 192 tests and production build passed. Vite retains its large-chunk warning. Browser visual/scroll behavior was not exercised.

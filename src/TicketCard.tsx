@@ -273,11 +273,18 @@ export function TicketCard({ reference }: { reference: string }) {
                 )}
                 {label}
               </summary>
-              <TicketRichText
-                value={f[key]}
-                card={card}
-                reference={reference}
-              />
+              <div
+                className="ticket-section-scroll"
+                role="region"
+                aria-label={label}
+                tabIndex={0}
+              >
+                <TicketRichText
+                  value={f[key]}
+                  card={card}
+                  reference={reference}
+                />
+              </div>
             </details>
           ))}
         <details

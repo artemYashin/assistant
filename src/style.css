@@ -2589,6 +2589,17 @@ summary:focus-visible {
   border: 0;
   padding: 0;
 }
+.ticket-section-scroll {
+  max-height: 30vh;
+  max-height: 30dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.ticket-section-scroll:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
 .ticket-section > summary .ticket-count {
   background: #fff;
   color: #405347;
@@ -4558,6 +4569,7 @@ summary > svg {
   min-width: 0;
   max-width: none;
   padding: 10px 6px;
+  vertical-align: middle;
   overflow-wrap: anywhere;
 }
 .ticket-table-fit .ticket-title-clamp {
@@ -4899,7 +4911,7 @@ summary > svg {
   min-width: 0;
 }
 .ticket-table-fit .ticket-metadata-control:has(> .ticket-tag-list) {
-  align-items: flex-start;
+  align-items: center;
 }
 .ticket-table-fit .ticket-metadata-control > .ticket-tag-list > .badge {
   flex: 0 0 auto;
@@ -5193,10 +5205,11 @@ summary > svg {
   min-width: 44px;
   padding: 10px 12px;
   text-align: center;
-  vertical-align: top;
+  vertical-align: middle;
 }
 .ticket-table-fit .ticket-selection-column input.ticket-checkbox {
-  margin: 2px 0 0;
+  margin: 0;
+  vertical-align: middle;
 }
 .chat-ticket-context {
   padding: 8px 0;
