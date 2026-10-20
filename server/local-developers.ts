@@ -87,11 +87,7 @@ export class LocalDevelopers {
         409,
         "Подключение Azure изменилось. Обновите список тикетов.",
       );
-    if (
-      !this.store.db
-        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-        .get(source, id)
-    )
+    if (!this.store.hasLocalTicket(id, source))
       throw new AppError(404, "Сначала добавьте тикет в локальный трекер");
     const allowed = new Set(
       [...this.list(context), ...this.assigned(id, source)].map((d) => d.id),

@@ -251,7 +251,7 @@ export function TicketCard({ reference }: { reference: string }) {
               <div>
                 <dt>Локальный приоритет</dt>
                 <dd>
-                  {card.locallyTracked ? (
+                  {card.locallyAvailable || card.locallyTracked ? (
                     <TicketMetadata
                       ticket={{
                         id: card.id,
@@ -273,7 +273,7 @@ export function TicketCard({ reference }: { reference: string }) {
             <div>
               <dt>Локальное поручение</dt>
               <dd>
-                {card.locallyTracked ? (
+                {card.locallyAvailable || card.locallyTracked ? (
                   <LocalDeveloper ticket={card} context={card.localContext} />
                 ) : (
                   <LocalAssigneeNames
@@ -296,7 +296,7 @@ export function TicketCard({ reference }: { reference: string }) {
             )}
           </dl>
           <div className="ticket-sidebar-actions">
-            {card.locallyTracked ? (
+            {card.locallyAvailable || card.locallyTracked ? (
               <TicketMetadata
                 ticket={{
                   id: card.id,
@@ -750,6 +750,7 @@ function TicketCommentForm({ reference }: { reference: string }) {
 }
 
 export function TicketTableRow({
+  tone,
   unavailable = false,
   id,
   children,
@@ -760,6 +761,7 @@ export function TicketTableRow({
   hideActions = false,
   columnOrder = [],
 }: {
+  tone?: "new" | "trash";
   unavailable?: boolean;
   actions?: ReactNode;
   columns?: number;
@@ -812,7 +814,7 @@ export function TicketTableRow({
         tabIndex={unavailable ? undefined : 0}
         aria-expanded={open}
         aria-controls={panelId}
-        className={`${unavailable ? "ticket-azure-unimported" : "ticket-clickable-row"}${highlighted ? " ticket-row-highlighted" : ""}`}
+        className={`${unavailable ? "ticket-azure-unimported" : "ticket-clickable-row"}${tone ? ` ticket-tone-${tone}` : ""}${highlighted ? " ticket-row-highlighted" : ""}`}
         onClick={(event) => {
           if (unavailable) return;
           const target = event.target;
@@ -873,7 +875,11 @@ export function TicketTableRow({
           </td>
         </OrderedTicketCells>
       </tr>
-      <tr id={panelId} hidden={!open} className="ticket-preview-row">
+      <tr
+        id={panelId}
+        hidden={!open}
+        className={`ticket-preview-row${tone ? ` ticket-tone-${tone}` : ""}`}
+      >
         <td colSpan={columns}>
           {open && (
             <section aria-label={`Карточка тикета #${id}`}>

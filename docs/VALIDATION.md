@@ -950,3 +950,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - The complete filter-panel header is now a native collapse/expand button, including the title and icon, with hover/focus styling. Preset name/save controls align right; collapsed presets wrap horizontally at content width across all three ticket tabs.
 - Pre-push validation: all 220 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Interactive Azure/trash tickets and full catalog filters (2026-10-21)
+
+- Active, Azure and trash tickets share table cells and editors. Azure rows distinguish never-imported tickets (pale red) from locally trashed tickets (pale yellow), including expanded row backgrounds. Azure status/assignee editing and details remain available without import; Azure tags remain read-only.
+- Trash retains editable local metadata and developer assignments. Verified Azure changes update the stored trash snapshot without restoring it or extending retention. Azure refresh preserves expanded rows. Added regression coverage for untracked/trash edits, local metadata, retention and restoration.
+- Preset name/save controls align left. Type/status filters use the full cached imported Azure catalog, independent of auto-import checkboxes, with configured values as fallback before catalog import.
+- Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser interactions and live Azure endpoints were not exercised.

@@ -16,9 +16,7 @@ export const ticketColumns = [
 export function useTicketColumns(trash = false, namespace = "active") {
   const options: readonly (readonly [string, string])[] = trash
     ? [
-        ...ticketColumns.filter(
-          ([key]) => !["synced_at", "actions"].includes(key),
-        ),
+        ...ticketColumns.filter(([key]) => key !== "actions"),
         ["removedAt", "Удалён"],
         ["expiresAt", "Хранится до"],
         ["actions", "Просмотр и действия"],

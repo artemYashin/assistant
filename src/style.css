@@ -7564,7 +7564,7 @@ summary > svg {
   white-space: nowrap;
 }
 .ticket-filter-panel .ticket-preset-heading {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 .ticket-filter-panel.is-collapsed .ticket-filter-presets {
   margin: 0;
@@ -7594,4 +7594,17 @@ summary > svg {
 .ticket-filter-panel.is-collapsed .ticket-filter-presets > p {
   margin: 0;
   font-size: 12px;
+}
+
+.ticket-table-fit > table > tbody > tr.ticket-tone-new > td {
+  background: #fff7f6;
+}
+.ticket-table-fit > table > tbody > tr.ticket-tone-trash > td {
+  background: #fffbed;
+}
+.ticket-table-fit > table > tbody > tr.ticket-preview-row.ticket-tone-new > td {
+  background: #f9eeec;
+}
+.ticket-table-fit > table > tbody > tr.ticket-preview-row.ticket-tone-trash > td {
+  background: #f7f1df;
 }

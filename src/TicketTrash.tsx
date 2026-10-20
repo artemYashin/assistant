@@ -1,28 +1,18 @@
+import { BulkTicketStatus } from "./BulkTicketStatus.js";
+import { TicketDataRow } from "./TicketDataRow.js";
 import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
 import { parseTicketFilters, useTicketFilters } from "./useTicketFilters.js";
 import { TicketFilterPanel } from "./TicketFilterPanel.js";
 import { RotateCcw } from "lucide-react";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { useSearchParams } from "react-router-dom";
-import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
-import { PrInfoPopup } from "./PrInfoPopup.js";
-import { NotebookPen } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  ArchiveRestore,
-  LoaderCircle,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Search, Trash2 } from "lucide-react";
 import { MultiSelect } from "./MultiSelect.js";
 import { AzureAssigneeFilter } from "./AzureAssigneeFilter.js";
 import { api } from "./api.js";
-import { StatusBadge } from "./TicketControls.js";
 export function TicketTrash({
   context,
   onChange,
@@ -58,6 +48,18 @@ export function TicketTrash({
       live = false;
     };
   }, [version]);
+  useEffect(() => {
+    const refresh = () => setVersion((v) => v + 1);
+    const events = [
+      "orbit:ticket-state",
+      "orbit:ticket-assignee",
+      "orbit:ticket-metadata",
+      "orbit:ticket-developers",
+    ];
+    events.forEach((name) => window.addEventListener(name, refresh));
+    return () =>
+      events.forEach((name) => window.removeEventListener(name, refresh));
+  }, []);
   async function restore(t: any) {
     setBusy(t.id);
     setError("");
@@ -194,10 +196,10 @@ export function TicketTrash({
     ["assigned", "Исполнитель в Azure"],
     ["developer_name", "Локальное поручение"],
     ["added_at", "Добавлено в систему"],
+    ["synced_at", "Синхронизация"],
     ["removedAt", "Удалён"],
     ["expiresAt", "Хранится до"],
   ];
-  const date = (value: number) => new Date(value).toLocaleString("ru-RU");
   return (
     <>
       <div className="page-heading">
@@ -210,7 +212,8 @@ export function TicketTrash({
         </div>
       </div>
       <p className="muted">
-        Данные сохранены на момент удаления. Azure не изменяется.
+        Статус и исполнитель изменяются в Azure. Заметки, приоритет и поручения
+        сохраняются локально.
       </p>
       <div className="ticket-management-toolbar">
         <div className="ticket-search-block">
@@ -361,6 +364,13 @@ export function TicketTrash({
                 Снять выбор
               </button>
             )}
+            <BulkTicketStatus
+              tickets={selection.selected}
+              onChange={() => {
+                setVersion((v) => v + 1);
+                onChange();
+              }}
+            />
             <ExportTickets
               tickets={
                 selection.selected.length ? selection.selected : filtered
@@ -468,175 +478,21 @@ export function TicketTrash({
             </thead>
             <tbody>
               {filtered.map((t) => (
-                <tr key={`${t.source}:${t.id}`}>
-                  <OrderedTicketCells order={display.order}>
-                    <td className="ticket-selection-column">
-                      <input
-                        className="ticket-checkbox"
-                        type="checkbox"
-                        aria-label={`Выбрать тикет #${t.id}`}
-                        checked={selection.checked(t)}
-                        onChange={() => selection.toggle(t)}
-                      />
-                    </td>
-                    <td hidden={display.hidden("id")}>
-                      <div className="ticket-id-type">
-                        {t.url?.startsWith("https://") ? (
-                          <a
-                            className="ticket-link"
-                            href={t.url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            #{t.id}
-                          </a>
-                        ) : (
-                          `#${t.id}`
-                        )}
-                        <StatusBadge
-                          state={t.type || "Без типа"}
-                          kind="type"
-                          colors={settings?.typeColors}
-                        />
-                      </div>
-                    </td>
-                    <td hidden={display.hidden("title")}>
-                      <strong className="ticket-title-clamp" title={t.title}>
-                        {t.title}
-                      </strong>
-                    </td>
-                    <td data-column="state" hidden={display.hidden("state")}>
-                      <StatusBadge
-                        state={t.state}
-                        colors={settings?.statusColors}
-                      />
-                    </td>
-                    <td
-                      data-column="priority"
-                      hidden={display.hidden("priority")}
-                    >
-                      <span className="badge ticket-priority-badge">
-                        P{t.priority ?? 1}
-                      </span>
-                    </td>
-                    <td
-                      data-column="azureTags"
-                      hidden={display.hidden("azureTags")}
-                    >
-                      <span
-                        className="ticket-tag-list azure-ticket-tags"
-                        title="Azure теги · только чтение"
-                      >
-                        {t.azureTags?.length
-                          ? t.azureTags.map((tag: string) => (
-                              <span className="badge" key={tag}>
-                                {tag}
-                              </span>
-                            ))
-                          : "—"}
-                      </span>
-                    </td>
-                    <td data-column="tags" hidden={display.hidden("tags")}>
-                      <div className="ticket-tag-list">
-                        {(t.tags || []).map((tag: string) => (
-                          <span className="badge" key={tag}>
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td
-                      data-column="assigned"
-                      hidden={display.hidden("assigned")}
-                    >
-                      <LocalAssigneeNames
-                        names={t.assigned ? [t.assigned] : []}
-                        emptyLabel="Не назначен"
-                      />
-                    </td>
-                    <td
-                      data-column="developer_name"
-                      hidden={display.hidden("developer_name")}
-                    >
-                      <LocalAssigneeNames
-                        names={
-                          t.developers?.length
-                            ? t.developers.map((d: any) => d.name)
-                            : t.developer_name
-                              ? [t.developer_name]
-                              : []
-                        }
-                      />
-                    </td>
-                    <td
-                      data-column="added_at"
-                      hidden={display.hidden("added_at")}
-                      title={
-                        t.added_at
-                          ? undefined
-                          : "Дата первого добавления ранее не сохранялась"
-                      }
-                    >
-                      {t.added_at ? (
-                        <time dateTime={t.added_at}>
-                          {new Date(t.added_at).toLocaleString("ru-RU")}
-                        </time>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td
-                      data-column="removedAt"
-                      hidden={display.hidden("removedAt")}
-                    >
-                      <time dateTime={new Date(t.removedAt).toISOString()}>
-                        {date(t.removedAt)}
-                      </time>
-                    </td>
-                    <td
-                      data-column="expiresAt"
-                      hidden={display.hidden("expiresAt")}
-                    >
-                      <time dateTime={new Date(t.expiresAt).toISOString()}>
-                        {date(t.expiresAt)}
-                      </time>
-                    </td>
-                    <td
-                      data-column="actions"
-                      hidden={display.hidden("actions")}
-                    >
-                      <div className="ticket-trash-actions">
-                        <PrInfoPopup
-                          title={`Заметки тикета #${t.id}`}
-                          trigger={<NotebookPen size={17} />}
-                        >
-                          <p style={{ whiteSpace: "pre-wrap" }}>
-                            {t.notes || "Заметок нет"}
-                          </p>
-                        </PrInfoPopup>
-                        <button
-                          type="button"
-                          className="secondary"
-                          disabled={busy !== null}
-                          onClick={() => void restore(t)}
-                          aria-label={`Восстановить тикет #${t.id}`}
-                          title={
-                            busy === t.id
-                              ? "Восстанавливаю…"
-                              : "Восстановить тикет"
-                          }
-                          aria-busy={busy === t.id}
-                        >
-                          {busy === t.id ? (
-                            <LoaderCircle className="spin" size={17} />
-                          ) : (
-                            <ArchiveRestore size={17} />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </OrderedTicketCells>
-                </tr>
+                <TicketDataRow
+                  key={`${t.source}:${t.id}`}
+                  ticket={{ ...t, inTrash: true }}
+                  columns={display}
+                  settings={settings}
+                  context={context}
+                  checked={selection.checked(t)}
+                  onToggle={() => selection.toggle(t)}
+                  onChange={() => {
+                    setVersion((v) => v + 1);
+                    onChange();
+                  }}
+                  onRestore={() => void restore(t)}
+                  restoring={busy !== null}
+                />
               ))}
             </tbody>
           </table>

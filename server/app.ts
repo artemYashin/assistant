@@ -866,14 +866,19 @@ export function createApp(
   app.get("/api/tickets", (_req, res) => res.json(localTickets()));
   app.post("/api/azure/tickets/search", async (req, res) => {
     const input = azureBrowseSchema.parse(req.body);
-    const result = await connectors.browseAzureTickets(input, localTickets());
+    const result = await connectors.browseAzureTickets(input, [
+      ...localTickets(),
+      ...store.ticketTrash(),
+    ]);
     const local = new Map(localTickets().map((t: any) => [t.id, t]));
+    const trash = new Map(store.ticketTrash().map((t: any) => [t.id, t]));
     res.json({
       ...result,
       tickets: result.tickets.map((t: any) => ({
-        ...(local.get(t.id) || {}),
+        ...(local.get(t.id) || trash.get(t.id) || {}),
         ...t,
         imported: local.has(t.id),
+        inTrash: !local.has(t.id) && trash.has(t.id),
       })),
     });
   });
@@ -949,10 +954,14 @@ export function createApp(
   app.get("/api/tickets/filter-options", (req, res) => {
     const context = metadataContext.parse(req.query);
     const settings = store.settings();
+    const catalog = store.get<{ name: string; states: string[] }[] | null>(
+      "azure.ticket-options:" + store.source(),
+      null,
+    );
     res.json({
       source: store.source(),
-      types: [...new Set(settings.azureTypes)],
-      states: [...new Set(settings.azureStates)],
+      types: [...new Set(catalog ? catalog.map((type) => type.name) : settings.azureTypes)],
+      states: [...new Set(catalog ? catalog.flatMap((type) => type.states) : settings.azureStates)],
       priorityCount: priorityCount(store, context),
     });
   });
@@ -976,6 +985,7 @@ export function createApp(
         client: store.settings().client,
         project: store.settings().project,
       },
+      locallyAvailable: store.hasLocalTicket(card.id, card.source),
       locallyTracked: !!store.db
         .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
         .get(card.source, card.id),

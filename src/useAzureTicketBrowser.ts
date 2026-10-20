@@ -30,13 +30,17 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
       generation.current++;
     };
   }, [enabled, source]);
-  async function load(filters: Filters, trail: (number | undefined)[]) {
+  async function load(
+    filters: Filters,
+    trail: (number | undefined)[],
+    keepRows = false,
+  ) {
     if (!enabled || locked.current) return;
     locked.current = true;
     const request = ++generation.current;
     setLoading(true);
     setError("");
-    setRows([]);
+    if (!keepRows) setRows([]);
     setNext(null);
     try {
       const { sort: _sort, ...search } = filters;
@@ -75,7 +79,7 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
       applied.current &&
       pages.length > 1 &&
       void load(applied.current, pages.slice(0, -1)),
-    refresh: () => applied.current && void load(applied.current, pages),
+    refresh: () => applied.current && void load(applied.current, pages, true),
     pending: (filters: Filters) =>
       applied.current &&
       JSON.stringify({ ...filters, sort: "" }) !==

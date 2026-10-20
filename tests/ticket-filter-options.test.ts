@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { createApp } from "../server/app.js";
 
-test("filter options use only selected types and states and scoped priority count without Azure calls", async (t) => {
+test("filter options use the full imported Azure catalog and scoped priority count without Azure calls", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-filter-options-"));
   const store = new Store(dir);
   t.after(() => {
@@ -50,8 +50,8 @@ test("filter options use only selected types and states and scoped priority coun
     .query({ client: "Customer", project: "Project" })
     .set(auth)
     .expect(200);
-  assert.deepEqual(result.body.types, ["Bug"]);
-  assert.deepEqual(result.body.states, ["Active"]);
+  assert.deepEqual(result.body.types, ["Bug", "User Story"]);
+  assert.deepEqual(result.body.states, ["Active", "Resolved", "New", "Done"]);
   assert.equal(result.body.priorityCount, 6);
   const fallback = await request(app)
     .get("/api/tickets/filter-options")

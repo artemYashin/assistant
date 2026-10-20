@@ -47,11 +47,7 @@ export function saveTicketMetadata(
 ) {
   if (source !== store.source())
     throw new AppError(409, "Подключение изменилось. Обновите список.");
-  if (
-    !store.db
-      .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-      .get(source, id)
-  )
+  if (!store.hasLocalTicket(id, source))
     throw new AppError(404, "Тикет отсутствует в локальном списке");
   const patch = metadataPatch.parse(input);
   if (

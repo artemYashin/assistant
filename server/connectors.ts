@@ -248,8 +248,10 @@ export class Connectors {
           "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
         )
         .get(this.store.source(s), item.id)
-    )
+    ) {
+      this.store.updateTrashFromAzure(item, this.store.source(s));
       return;
+    }
     const f = item.fields || {};
     const azureTags = [
       ...new Set(
@@ -432,9 +434,7 @@ export class Connectors {
       if (
         receipt.success &&
         item &&
-        this.store.db
-          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-          .get(this.store.source(s), receipt.id)
+        this.store.hasLocalTicket(receipt.id, this.store.source(s))
       )
         this.saveTicket(item, s);
       this.store.audit(
@@ -524,9 +524,7 @@ export class Connectors {
         },
       });
       if (
-        this.store.db
-          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-          .get(this.store.source(s), id)
+        this.store.hasLocalTicket(id, this.store.source(s))
       )
         this.saveTicket(result.item, s);
       this.store.audit(
@@ -803,12 +801,10 @@ export class Connectors {
         409,
         `Изменение исполнителя не подтверждено. ${failure instanceof Error ? failure.message : "Azure вернул другого исполнителя; проверьте права и правила проекта."}`,
       );
-    if (
-      this.store.db
-        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-        .get(source, id)
-    )
-      this.saveTicket(after, s);
+    if (this.store.hasLocalTicket(id, source)) {
+      // Azure omits AssignedTo when the assignment has been cleared.
+      this.saveTicket({ ...after, fields: { ...after.fields, "System.AssignedTo": actual || "" } }, s);
+    }
     for (const row of this.store.db
       .prepare("SELECT id,data FROM ticket_cards")
       .all() as any[]) {

@@ -1,6 +1,7 @@
 export type CsvTicket = {
   id: number;
   imported?: boolean;
+  inTrash?: boolean;
   title?: string;
   type?: string;
   state?: string;
@@ -48,7 +49,8 @@ export const exportColumns = [
     header: "Local Priority",
     label: "Локальный приоритет",
     width: 23,
-    value: (t: CsvTicket) => (t.imported === false ? "N/A" : (t.priority ?? 1)),
+    value: (t: CsvTicket) =>
+      t.imported === false && !t.inTrash ? "N/A" : (t.priority ?? 1),
   },
   {
     key: "tags",
@@ -56,7 +58,7 @@ export const exportColumns = [
     label: "Теги",
     width: 36,
     value: (t: CsvTicket) =>
-      t.imported === false ? "N/A" : (t.tags || []).join("; "),
+      t.imported === false && !t.inTrash ? "N/A" : (t.tags || []).join("; "),
   },
   {
     key: "azureTags",
@@ -71,7 +73,7 @@ export const exportColumns = [
     label: "Локальное поручение",
     width: 36,
     value: (t: CsvTicket) =>
-      t.imported === false
+      t.imported === false && !t.inTrash
         ? "N/A"
         : t.developers?.map((d) => d.name).join("; ") || t.developer_name || "",
   },
@@ -87,14 +89,16 @@ export const exportColumns = [
     header: "Local Notes",
     label: "Локальные заметки",
     width: 60,
-    value: (t: CsvTicket) => (t.imported === false ? "N/A" : t.notes || ""),
+    value: (t: CsvTicket) =>
+      t.imported === false && !t.inTrash ? "N/A" : t.notes || "",
   },
   {
     key: "added_at",
     header: "Added to System (UTC)",
     label: "Добавлено в систему",
     width: 28,
-    value: (t: CsvTicket) => (t.imported === false ? "N/A" : t.added_at || ""),
+    value: (t: CsvTicket) =>
+      t.imported === false && !t.inTrash ? "N/A" : t.added_at || "",
   },
   {
     key: "url",

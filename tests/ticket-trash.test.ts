@@ -86,3 +86,65 @@ test("trash expires at 30 days and retains only the auto-import exclusion marker
   assert.equal(local.developer_name, "");
   assert.throws(() => store.restoreLocalTicket(42));
 });
+
+test("trash edits preserve removal date, stay local and survive restoration", async (t) => {
+  const { store, source } = fixture(t);
+  const { saveTicketMetadata } = await import("../server/ticket-metadata.js");
+  const { LocalDevelopers } = await import("../server/local-developers.js");
+  store.removeLocalTicket(42);
+  const removedAt = store.ticketTrash()[0].removedAt;
+  saveTicketMetadata(
+    store,
+    42,
+    source,
+    { client: "", project: "" },
+    { priority: 3, tags: ["follow-up"], notes: "Updated in trash" },
+  );
+  new LocalDevelopers(store).assign(
+    42,
+    [],
+    { client: "", project: "" },
+    source,
+  );
+  store.updateTrashFromAzure(
+    {
+      id: 42,
+      fields: {
+        "System.State": "Resolved",
+        "System.AssignedTo": { displayName: "New Owner" },
+      },
+    },
+    source,
+  );
+  const ticket = store.ticketTrash()[0];
+  assert.equal(ticket.removedAt, removedAt);
+  assert.equal(ticket.inTrash, true);
+  assert.equal(ticket.state, "Resolved");
+  assert.equal(ticket.assigned, "New Owner");
+  assert.equal(ticket.priority, 3);
+  assert.deepEqual(ticket.tags, ["follow-up"]);
+  assert.equal(ticket.notes, "Updated in trash");
+  assert.deepEqual(ticket.developers, []);
+  assert.equal(ticket.developer_name, "");
+  assert.equal(
+    (store.db.prepare("SELECT COUNT(*) n FROM tickets").get() as any).n,
+    0,
+  );
+  assert.throws(
+    () =>
+      saveTicketMetadata(
+        store,
+        999,
+        source,
+        { client: "", project: "" },
+        { notes: "unknown" },
+      ),
+    /отсутствует/,
+  );
+  store.restoreLocalTicket(42, source);
+  assert.equal(
+    (store.db.prepare("SELECT state FROM tickets WHERE id=42").get() as any)
+      .state,
+    "Resolved",
+  );
+});

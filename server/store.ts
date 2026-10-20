@@ -496,6 +496,55 @@ export class Store {
       return expired.length;
     })();
   }
+  hasLocalTicket(id: number, source = this.source()) {
+    return !!this.db
+      .prepare(
+        "SELECT 1 FROM tickets WHERE source=? AND id=? UNION SELECT 1 FROM ticket_trash WHERE source=? AND id=? AND removed_at>?",
+      )
+      .get(source, id, source, id, Date.now() - 30 * 86400000);
+  }
+  updateTrashFromAzure(item: any, source: string) {
+    const row = this.db
+      .prepare(
+        "SELECT body FROM ticket_trash WHERE source=? AND id=? AND removed_at>?",
+      )
+      .get(source, item.id, Date.now() - 30 * 86400000) as any;
+    if (!row) return;
+    const body = JSON.parse(row.body),
+      fields = item.fields || {};
+    for (const [key, field] of Object.entries({
+      title: "System.Title",
+      state: "System.State",
+      type: "System.WorkItemType",
+      changed_at: "System.ChangedDate",
+    })) {
+      if (field in fields) body[key] = fields[field];
+    }
+    if ("System.AssignedTo" in fields)
+      body.assigned =
+        typeof fields["System.AssignedTo"] === "string"
+          ? fields["System.AssignedTo"]
+          : fields["System.AssignedTo"]?.displayName || "";
+    if ("System.Tags" in fields)
+      this.db
+        .prepare(
+          "INSERT INTO ticket_azure_tags(source,id,tags) VALUES (?,?,?) ON CONFLICT(source,id) DO UPDATE SET tags=excluded.tags",
+        )
+        .run(
+          source,
+          item.id,
+          JSON.stringify(
+            String(fields["System.Tags"] || "")
+              .split(";")
+              .map((v) => v.trim())
+              .filter(Boolean),
+          ),
+        );
+    body.synced_at = new Date().toISOString();
+    this.db
+      .prepare("UPDATE ticket_trash SET body=? WHERE source=? AND id=?")
+      .run(JSON.stringify(body), source, item.id);
+  }
   ticketTrash() {
     this.purgeTicketTrash();
     return (
@@ -504,14 +553,28 @@ export class Store {
           "SELECT * FROM ticket_trash WHERE source=? ORDER BY removed_at DESC",
         )
         .all(this.source()) as any[]
-    ).map((row) => ({
-      ...JSON.parse(row.body),
-      added_at: this.ticketAddedAt(row.id, row.source),
-      azureTags: this.azureTags(row.id, row.source),
-      ...ticketMetadata(this, row.id, row.source),
-      removedAt: row.removed_at,
-      expiresAt: row.removed_at + 30 * 86400000,
-    }));
+    ).map((row) => {
+      const developers = this.db
+        .prepare(
+          "SELECT d.id,d.name,d.active FROM ticket_developers a JOIN local_developers d ON d.id=a.developer_id WHERE a.source=? AND a.ticket_id=? ORDER BY d.name COLLATE NOCASE,d.id",
+        )
+        .all(row.source, row.id) as {
+        id: string;
+        name: string;
+        active: number;
+      }[];
+      return {
+        ...JSON.parse(row.body),
+        added_at: this.ticketAddedAt(row.id, row.source),
+        azureTags: this.azureTags(row.id, row.source),
+        ...ticketMetadata(this, row.id, row.source),
+        developers,
+        developer_name: developers.map((d) => d.name).join(", "),
+        inTrash: true,
+        removedAt: row.removed_at,
+        expiresAt: row.removed_at + 30 * 86400000,
+      };
+    });
   }
   restoreLocalTicket(id: number, source = this.source()) {
     if (source !== this.source())

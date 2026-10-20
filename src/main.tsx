@@ -1,10 +1,10 @@
+import { TicketDataRow } from "./TicketDataRow.js";
 import { Cloud } from "lucide-react";
 import { useAzureTicketBrowser } from "./useAzureTicketBrowser.js";
 import { ImportAzureTickets } from "./ImportAzureTickets.js";
 import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
 import { TicketFilterPanel } from "./TicketFilterPanel.js";
 import { useTicketFilters } from "./useTicketFilters.js";
-import { AzureAssignee } from "./AzureAssignee.js";
 import { MemoryBody } from "./MemoryBody.js";
 import {
   analyzeTicketEvent,
@@ -25,7 +25,6 @@ import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
 import { ExportTickets } from "./ExportTickets.js";
 import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
-import { TicketMetadata } from "./TicketMetadata.js";
 import { TicketTrash } from "./TicketTrash.js";
 import { MemoryProposalList } from "./MemoryProposals.js";
 import { ReviewQuestionInbox } from "./ReviewQuestions.js";
@@ -43,7 +42,6 @@ import {
   readChatPreference,
   saveChatPreference,
 } from "./AssistantResize.js";
-import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -96,7 +94,7 @@ import "./style.css";
 import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
 import { TicketLookupDialog } from "./TicketLookupDialog.js";
-import { TicketCard, TicketTableRow } from "./TicketCard.js";
+import { TicketCard } from "./TicketCard.js";
 import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
@@ -1176,6 +1174,19 @@ function Tickets({
 }: any) {
   const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
   const browser = useAzureTicketBrowser(azureMode, currentSource);
+  useEffect(() => {
+    if (!azureMode) return;
+    const refresh = () => browser.refresh();
+    const events = [
+      "orbit:ticket-state",
+      "orbit:ticket-assignee",
+      "orbit:ticket-metadata",
+      "orbit:ticket-developers",
+    ];
+    events.forEach((name) => window.addEventListener(name, refresh));
+    return () =>
+      events.forEach((name) => window.removeEventListener(name, refresh));
+  }, [azureMode, browser.refresh]);
   const run = async (...args: any[]) => {
     await parentRun(...args);
     if (azureMode) browser.refresh();
@@ -1195,6 +1206,7 @@ function Tickets({
               assigned: t.assigned,
               azureTags: t.azureTags,
               imported: true,
+              inTrash: false,
             }
           : { ...t, imported: false };
       })
@@ -1719,23 +1731,15 @@ function Tickets({
             </thead>
             <tbody>
               {sorted.map((t: any) => (
-                <TicketTableRow
+                <TicketDataRow
                   key={`${t.source}:${t.id}`}
-                  id={t.id}
-                  unavailable={azureMode && !t.imported}
-                  columns={columns.count}
-                  columnOrder={columns.order}
-                  hideActions={columns.hidden("actions")}
-                  actions={
-                    !(azureMode && !t.imported) && (
-                      <TicketMetadata
-                        ticket={t}
-                        context={context}
-                        field="notes"
-                        onChange={() => run("refresh-notes", async () => {})}
-                      />
-                    )
-                  }
+                  ticket={t}
+                  columns={columns}
+                  settings={settings}
+                  context={context}
+                  checked={selection.checked(t)}
+                  onToggle={() => selection.toggle(t)}
+                  onChange={() => run("refresh-ticket", async () => {})}
                   highlighted={targetId === t.id && !sourceMismatch}
                   onRemove={
                     azureMode && !t.imported
@@ -1743,152 +1747,14 @@ function Tickets({
                       : () =>
                           run(
                             "remove",
-                            () => api(`/tickets/${t.id}`, "DELETE"),
+                            () =>
+                              api(`/tickets/${t.id}`, "DELETE", {
+                                source: t.source,
+                              }),
                             "Тикет перемещён в корзину на 30 дней",
                           )
                   }
-                >
-                  <td className="ticket-selection-column">
-                    <input
-                      className="ticket-checkbox"
-                      type="checkbox"
-                      aria-label={`Выбрать тикет #${t.id}`}
-                      checked={selection.checked(t)}
-                      onChange={() => selection.toggle(t)}
-                    />
-                  </td>
-                  <td>
-                    <div className="ticket-id-type">
-                      <a
-                        className="ticket-link"
-                        href={t.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        #{t.id}
-                        <ArrowUpRight size={13} />
-                      </a>
-                      <StatusBadge
-                        state={t.type || "Тип не указан"}
-                        colors={settings?.typeColors}
-                        kind="type"
-                      />
-                    </div>
-                  </td>
-                  <td>
-                    <b className="ticket-title-clamp" title={t.title}>
-                      {t.title}
-                    </b>
-                  </td>
-                  <td data-column="state" hidden={columns.hidden("state")}>
-                    {azureMode && !t.imported ? (
-                      <StatusBadge
-                        state={t.state}
-                        colors={settings?.statusColors}
-                      />
-                    ) : (
-                      <TicketStatus
-                        id={t.id}
-                        source={t.source}
-                        state={t.state}
-                        colors={settings?.statusColors}
-                        onChange={() => run("refresh-state", async () => {})}
-                      />
-                    )}
-                  </td>
-                  <td
-                    data-column="priority"
-                    hidden={columns.hidden("priority")}
-                  >
-                    {azureMode && !t.imported ? (
-                      "N/A"
-                    ) : (
-                      <TicketMetadata
-                        ticket={t}
-                        context={context}
-                        field="priority"
-                        onChange={() => run("refresh-priority", async () => {})}
-                      />
-                    )}
-                  </td>
-                  <td
-                    data-column="azureTags"
-                    hidden={columns.hidden("azureTags")}
-                  >
-                    <span
-                      className="ticket-tag-list azure-ticket-tags"
-                      title="Azure теги · только чтение"
-                    >
-                      {t.azureTags?.length
-                        ? t.azureTags.map((tag: string) => (
-                            <span className="badge" key={tag}>
-                              {tag}
-                            </span>
-                          ))
-                        : "—"}
-                    </span>
-                  </td>
-                  <td data-column="tags" hidden={columns.hidden("tags")}>
-                    {azureMode && !t.imported ? (
-                      "N/A"
-                    ) : (
-                      <TicketMetadata
-                        ticket={t}
-                        context={context}
-                        field="tags"
-                        onChange={() => run("refresh-tags", async () => {})}
-                      />
-                    )}
-                  </td>
-                  <td
-                    data-column="assigned"
-                    hidden={columns.hidden("assigned")}
-                  >
-                    {azureMode && !t.imported ? (
-                      <LocalAssigneeNames
-                        names={t.assigned ? [t.assigned] : []}
-                        emptyLabel="Не назначен"
-                      />
-                    ) : (
-                      <AzureAssignee ticket={t} />
-                    )}
-                  </td>
-                  <td
-                    data-column="developer_name"
-                    hidden={columns.hidden("developer_name")}
-                  >
-                    {azureMode && !t.imported ? (
-                      "N/A"
-                    ) : (
-                      <LocalDeveloper ticket={t} context={context} />
-                    )}
-                  </td>
-                  <td
-                    data-column="added_at"
-                    className="muted"
-                    hidden={columns.hidden("added_at")}
-                    title={
-                      t.added_at
-                        ? new Date(t.added_at).toLocaleString("ru-RU")
-                        : "Дата первого добавления ранее не сохранялась"
-                    }
-                  >
-                    {azureMode && !t.imported ? (
-                      "N/A"
-                    ) : t.added_at ? (
-                      <time dateTime={t.added_at}>{date(t.added_at)}</time>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td
-                    data-column="synced_at"
-                    className="muted"
-                    hidden={columns.hidden("synced_at")}
-                  >
-                    {azureMode && !t.imported ? "N/A" : date(t.synced_at)}
-                  </td>
-                </TicketTableRow>
+                />
               ))}
             </tbody>
           </table>
