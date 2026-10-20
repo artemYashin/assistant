@@ -1084,3 +1084,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Settings now offer always-on synchronization or selected weekday/time windows with an explicit IANA timezone (initially taken from the browser). Overnight windows belong to their starting weekday; equal times mean the whole selected day, and no weekdays pauses automatic synchronization.
 - The automatic scheduler checks the window locally every 30 seconds without contacting integrations outside allowed hours. Manual refreshes and explicitly queued PR reviews remain available. An already-running synchronization is allowed to finish.
 - TypeScript and whitespace checks passed. The full suite (243 tests) was launched under the initial authorization and finished successfully before the user's clarification to skip testing arrived. No further tests were run. This also validates the previously pending model override/cache regression cases. Browser interactions and production build were not exercised.
+
+### Review model dropdown overlay (2026-10-21)
+
+- Removed the review dialog's static dropdown positioning so menus overlay the form instead of expanding it. Options scroll within a bounded height.
+- Whitespace check passed. Tests and browser visual checks were not run for this CSS-only adjustment.

@@ -4136,7 +4136,10 @@ summary > svg {
   gap: 10px;
 }
 .pr-review-dialog .multi-select-panel {
-  position: static;
+  position: absolute;
+}
+.pr-review-dialog .multi-select-options {
+  max-height: min(240px, 30dvh);
 }
 
 .pr-diff-directory {
