@@ -924,19 +924,41 @@ main {
 .composer-bottom small {
   font-size: 9px;
   color: #b4bcab;
+  min-width: 0;
 }
 .mic-button {
-  padding: 6px;
+  margin-left: auto;
+  padding: 8px 12px;
+  min-height: 36px;
+  flex-shrink: 0;
   display: flex;
-  color: #93a380;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #b9d0c4;
+  border-radius: 8px;
+  background: #deeee5;
+  color: #214f3c;
+  font-size: 12px;
+  font-weight: 600;
+}
+.mic-button:hover:not(:disabled) {
+  background: #cce4d7;
+}
+.mic-button:focus-visible {
+  outline: 2px solid #285341;
+  outline-offset: 2px;
 }
 .mic-button.recording {
-  color: #b25c4e;
+  color: #8b302b;
   background: #fbeee8;
-  border-radius: 5px;
+  border-color: #dfa59c;
+}
+.mic-button.recording:hover:not(:disabled) {
+  background: #f5d9d1;
 }
 .send-button {
-  margin-left: auto;
+  flex-shrink: 0;
   width: 30px;
   height: 30px;
   background: #345a41;
@@ -3718,8 +3740,49 @@ summary > svg {
   position: static;
   margin-top: 6px;
 }
-.pr-merge-dialog > * + * {
-  margin-top: 16px;
+.pr-merge-dialog > * {
+  margin: 0;
+  min-width: 0;
+}
+.pr-merge-name {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pr-merge-name textarea {
+  width: 100%;
+  resize: vertical;
+  background: #f2f5f2;
+  border: 1px solid #dce4dd;
+  color: #34483d;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.pr-merge-option-block {
+  min-width: 0;
+  border: 1px solid #cbd8d0;
+  border-radius: 10px;
+  background: #f2f7f3;
+  overflow-wrap: anywhere;
+}
+.pr-merge-option-block > .pr-merge-toggle {
+  border: 0;
+  background: transparent;
+}
+.pr-merge-option-block > .pr-bypass-reason,
+.pr-merge-option-block > .pr-merge-tickets,
+.pr-merge-option-block > .error {
+  margin: 0 14px 14px;
+  padding-top: 12px;
+  border: 0;
+  border-top: 1px solid #dce4dd;
+  border-radius: 0;
+  background: transparent;
+}
+.pr-merge-option-block > .pr-merge-tickets {
+  padding-right: 0;
+  padding-left: 0;
 }
 .pr-merge-dialog .developer-dialog-heading strong {
   display: flex;

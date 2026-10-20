@@ -147,7 +147,10 @@ export function PrMergeDialog({
           <X size={18} />
         </button>
       </div>
-      <p>{plan?.title || pr.title}</p>
+      <label className="pr-merge-name">
+        <span>Название pull request</span>
+        <textarea readOnly rows={2} value={plan?.title || pr.title || ""} />
+      </label>
       <p className="muted">
         {moveTickets
           ? "После подтверждённого merge выбранные статусы изменятся в Azure DevOps."
@@ -168,83 +171,161 @@ export function PrMergeDialog({
           {error}
         </p>
       )}
+      {plan && !submitted && (
+        <SingleSelect
+          label="Способ слияния"
+          value={strategy}
+          onChange={setStrategy}
+          disabled={busy}
+          options={[
+            { value: "noFastForward", label: "Merge commit" },
+            { value: "squash", label: "Squash" },
+            { value: "rebase", label: "Rebase и fast-forward" },
+            { value: "rebaseMerge", label: "Rebase с merge commit" },
+          ]}
+        />
+      )}
       {!submitted && (
         <div className="pr-merge-options">
-          <label className="pr-merge-toggle">
-            <input
-              type="checkbox"
-              checked={bypassPolicy}
-              disabled={busy}
-              onChange={(event) => setBypassPolicy(event.target.checked)}
-            />
-            <span>
-              <strong>Обойти проверки и политики Azure</strong>
-              <small>
-                Требуется право Bypass policies when completing pull requests.
-                Конфликты кода всё равно нужно разрешить.
-              </small>
-            </span>
-          </label>
-          {bypassPolicy && (
-            <label className="pr-bypass-reason">
-              Причина обхода политик
-              <textarea
-                aria-label="Причина обхода политик"
-                rows={3}
-                maxLength={2000}
-                required
-                value={bypassReason}
+          <section className="pr-merge-option-block">
+            <label className="pr-merge-toggle">
+              <input
+                type="checkbox"
+                checked={bypassPolicy}
                 disabled={busy}
-                onChange={(event) => setBypassReason(event.target.value)}
-                placeholder="Почему PR нужно завершить без прохождения проверок"
+                onChange={(event) => setBypassPolicy(event.target.checked)}
               />
+              <span>
+                <strong>Обойти проверки и политики Azure</strong>
+                <small>
+                  Требуется право Bypass policies when completing pull requests.
+                  Конфликты кода всё равно нужно разрешить.
+                </small>
+              </span>
             </label>
-          )}
-          <label
-            className={`pr-merge-toggle ${!linkedIds?.length ? "is-disabled" : ""}`}
-            title={
-              linkedIds?.length === 0
-                ? "Привяжите сначала тикет"
-                : linksError
-                  ? "Не удалось проверить связанные тикеты"
-                  : linkedIds === null
-                    ? "Проверяем связанные тикеты…"
-                    : ""
-            }
-          >
-            <input
-              type="checkbox"
-              checked={moveTickets}
-              disabled={busy || !linkedIds?.length}
-              onChange={(e) => {
-                setMoveTickets(e.target.checked);
-                setPlan(null);
-                setBusy(true);
-              }}
-            />
-            <span>
-              <strong>Сменить статусы связанных тикетов</strong>
-              <small>
-                {linkedIds?.length
-                  ? `Связано тикетов: ${linkedIds.length}`
-                  : linkedIds?.length === 0
-                    ? "Привяжите сначала тикет"
-                    : "Проверка связей с Azure…"}
-              </small>
-            </span>
-          </label>
-          {linksError && (
-            <p className="error" role="alert">
-              {linksError}{" "}
-              <button
-                type="button"
-                className="text-button"
-                onClick={() => setLinksRetry((v) => v + 1)}
-              >
-                Повторить проверку связей
-              </button>
-            </p>
-          )}
+            {bypassPolicy && (
+              <label className="pr-bypass-reason">
+                Причина обхода политик
+                <textarea
+                  aria-label="Причина обхода политик"
+                  rows={3}
+                  maxLength={2000}
+                  required
+                  value={bypassReason}
+                  disabled={busy}
+                  onChange={(event) => setBypassReason(event.target.value)}
+                  placeholder="Почему PR нужно завершить без прохождения проверок"
+                />
+              </label>
+            )}
+          </section>
+          <section className="pr-merge-option-block">
+            <label
+              className={`pr-merge-toggle ${!linkedIds?.length ? "is-disabled" : ""}`}
+              title={
+                linkedIds?.length === 0
+                  ? "Привяжите сначала тикет"
+                  : linksError
+                    ? "Не удалось проверить связанные тикеты"
+                    : linkedIds === null
+                      ? "Проверяем связанные тикеты…"
+                      : ""
+              }
+            >
+              <input
+                type="checkbox"
+                checked={moveTickets}
+                disabled={busy || !linkedIds?.length}
+                onChange={(e) => {
+                  setMoveTickets(e.target.checked);
+                  setPlan(null);
+                  setBusy(true);
+                }}
+              />
+              <span>
+                <strong>Сменить статусы связанных тикетов</strong>
+                <small>
+                  {linkedIds?.length
+                    ? `Связано тикетов: ${linkedIds.length}`
+                    : linkedIds?.length === 0
+                      ? "Привяжите сначала тикет"
+                      : "Проверка связей с Azure…"}
+                </small>
+              </span>
+            </label>
+            {linksError && (
+              <p className="error" role="alert">
+                {linksError}{" "}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setLinksRetry((v) => v + 1)}
+                >
+                  Повторить проверку связей
+                </button>
+              </p>
+            )}
+            {moveTickets && plan && (
+              <section className="pr-merge-tickets">
+                <h3>
+                  <Ticket size={18} /> Связанные тикеты · {plan.tickets.length}
+                </h3>
+                {!!common.length && (
+                  <SingleSelect
+                    label="Применить статус ко всем"
+                    value=""
+                    onChange={(s) =>
+                      setStates(
+                        Object.fromEntries(plan.tickets.map((t) => [t.id, s])),
+                      )
+                    }
+                    disabled={busy}
+                    options={[
+                      { value: "", label: "Не менять статус" },
+                      ...common.map((s) => ({ value: s, label: s })),
+                    ]}
+                  />
+                )}
+                {!plan.tickets.length && (
+                  <p className="muted">
+                    Связанных тикетов нет — будет выполнен только merge.
+                  </p>
+                )}
+                <ul className="pr-merge-ticket-list">
+                  {plan.tickets.map((t) => (
+                    <li className="pr-merge-ticket" key={t.id}>
+                      <div className="pr-merge-ticket-heading">
+                        <span className="badge">#{t.id}</span>
+                        <strong>{t.title || "Тикет"}</strong>
+                      </div>
+                      <p className="pr-merge-current-state">
+                        <span>Сейчас:</span>
+                        <span className="badge">{t.state}</span>
+                        <ArrowRight size={15} aria-hidden="true" />
+                      </p>
+                      <SingleSelect
+                        label={`Новый статус #${t.id}`}
+                        value={states[t.id] || ""}
+                        onChange={(s) =>
+                          setStates((old) => ({ ...old, [t.id]: s }))
+                        }
+                        disabled={busy}
+                        options={[
+                          { value: "", label: "Не менять статус" },
+                          ...t.states.map((s) => ({ value: s, label: s })),
+                        ]}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <p className="muted">
+                  По умолчанию статусы не меняются. Выберите новый статус только
+                  для нужных тикетов. Перед слиянием проверяются коммиты и
+                  список тикетов.
+                </p>
+              </section>
+            )}
+          </section>
         </div>
       )}
       {!busy && !plan && !submitted && (
@@ -254,78 +335,6 @@ export function PrMergeDialog({
       )}
       {plan && !submitted && (
         <>
-          <SingleSelect
-            label="Способ слияния"
-            value={strategy}
-            onChange={setStrategy}
-            disabled={busy}
-            options={[
-              { value: "noFastForward", label: "Merge commit" },
-              { value: "squash", label: "Squash" },
-              { value: "rebase", label: "Rebase и fast-forward" },
-              { value: "rebaseMerge", label: "Rebase с merge commit" },
-            ]}
-          />
-          {moveTickets && (
-            <section className="pr-merge-tickets">
-              <h3>
-                <Ticket size={18} /> Связанные тикеты · {plan.tickets.length}
-              </h3>
-              {!!common.length && (
-                <SingleSelect
-                  label="Применить статус ко всем"
-                  value=""
-                  onChange={(s) =>
-                    setStates(
-                      Object.fromEntries(plan.tickets.map((t) => [t.id, s])),
-                    )
-                  }
-                  disabled={busy}
-                  options={[
-                    { value: "", label: "Не менять статус" },
-                    ...common.map((s) => ({ value: s, label: s })),
-                  ]}
-                />
-              )}
-              {!plan.tickets.length && (
-                <p className="muted">
-                  Связанных тикетов нет — будет выполнен только merge.
-                </p>
-              )}
-              <ul className="pr-merge-ticket-list">
-                {plan.tickets.map((t) => (
-                  <li className="pr-merge-ticket" key={t.id}>
-                    <div className="pr-merge-ticket-heading">
-                      <span className="badge">#{t.id}</span>
-                      <strong>{t.title || "Тикет"}</strong>
-                    </div>
-                    <p className="pr-merge-current-state">
-                      <span>Сейчас:</span>
-                      <span className="badge">{t.state}</span>
-                      <ArrowRight size={15} aria-hidden="true" />
-                    </p>
-                    <SingleSelect
-                      label={`Новый статус #${t.id}`}
-                      value={states[t.id] || ""}
-                      onChange={(s) =>
-                        setStates((old) => ({ ...old, [t.id]: s }))
-                      }
-                      disabled={busy}
-                      options={[
-                        { value: "", label: "Не менять статус" },
-                        ...t.states.map((s) => ({ value: s, label: s })),
-                      ]}
-                    />
-                  </li>
-                ))}
-              </ul>
-              <p className="muted">
-                По умолчанию статусы не меняются. Выберите новый статус только
-                для нужных тикетов. Перед слиянием проверяются коммиты и список
-                тикетов.
-              </p>
-            </section>
-          )}
           <button
             className="primary"
             disabled={busy || (bypassPolicy && !bypassReason.trim())}

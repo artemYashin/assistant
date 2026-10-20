@@ -749,3 +749,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Input/output token values use larger bold compact numbers (K/M), stay on one line and retain exact values in hover/accessibility labels. Reports and tools now have separate columns.
 - Pre-push validation: all 190 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Merge dialog, microphone and favicon (2026-10-20)
+
+- Merge dialog title is a labeled read-only field, strategy precedes grouped optional controls, and expanded ticket/bypass settings stay inside their respective blocks. Removed stacked outer margins.
+- Voice button sits beside send with a larger colored icon-only target, preserving recording/loading states and accessible labels. Added an Orbit SVG favicon through Vite's asset pipeline.
+- Pre-push validation: all 190 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

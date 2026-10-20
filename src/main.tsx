@@ -2809,6 +2809,13 @@ function Assistant({
             }}
           />
           <div className="composer-bottom">
+            <small>
+              {recording
+                ? "Идёт запись · до 2 минут"
+                : transcribing
+                  ? "Распознаю локально…"
+                  : "Enter ↵"}
+            </small>
             <button
               type="button"
               className={`mic-button ${recording ? "recording" : ""}`}
@@ -2825,13 +2832,7 @@ function Assistant({
                 <Mic size={18} />
               )}
             </button>
-            <small>
-              {recording
-                ? "Идёт запись · до 2 минут"
-                : transcribing
-                  ? "Распознаю локально…"
-                  : "Enter ↵"}
-            </small>
+
             <button
               className="send-button"
               disabled={
