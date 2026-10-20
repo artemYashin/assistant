@@ -699,3 +699,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - A clearly identified single ticket already stored in the current local source may be read in full immediately when the user asks for its description/details or an opinion/deep analysis. Plain status/list requests remain local summaries. The exception is bound to that ID; both single-ticket reads and full list reads reject expansion without separate consent.
 - Multiple tickets still require the token warning before deep reading. An absent single ticket is offered the explicit Azure read-only/add choice first, without fetching its description. A full-card request displays a card; an opinion alone does not automatically display a full card.
 - TypeScript check passed. Added regression cases for numeric counts vs IDs, single/multiple checkbox selections, scope binding, immediate single local analysis and no reads/model calls before questions for missing/multiple tickets. Pre-push validation: all 179 tests and the production build passed. Vite reports its existing large-chunk warning. Live Azure and Copilot behavior have not been exercised.
+
+### Iterative local search guidance (2026-10-20)
+
+- Chat policy and list_tickets guidance now allow up to four distinct local summary search formulations, using distinctive user keywords or exact feature codes observed in relevant titles. Explicit filters/exclusions, pagination, deduplication and bulk confirmation remain required; this does not authorize remote or full-content reads.
+- Pre-push validation: all 179 tests and the production build passed. Vite retains its large-chunk warning. Real model adherence to this prompt has not been exercised.
