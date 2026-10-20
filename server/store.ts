@@ -1,3 +1,4 @@
+import type { TicketAnalysisAttachment } from "./chat-ticket-attachment.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import Database from "better-sqlite3";
 import {
@@ -163,6 +164,25 @@ export class Store {
       this.db.exec(
         "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
       );
+    if (
+      !(
+        this.db.prepare("PRAGMA table_info(conversations)").all() as any[]
+      ).some((c) => c.name === "session_id")
+    )
+      this.db.exec(
+        "ALTER TABLE conversations ADD COLUMN session_id TEXT NOT NULL DEFAULT ''",
+      );
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, title TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS chat_session_context ON chat_sessions(client,project,updated_at);
+      CREATE INDEX IF NOT EXISTS conversation_session ON conversations(session_id);
+    `);
+    if (
+      !(
+        this.db.prepare("PRAGMA table_info(chat_sessions)").all() as any[]
+      ).some((c) => c.name === "attachment")
+    )
+      this.db.exec("ALTER TABLE chat_sessions ADD COLUMN attachment TEXT");
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS pr_completed(monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,closed_at TEXT NOT NULL,expires_at INTEGER NOT NULL,hydrated INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(monitor,repo,number));
       CREATE TABLE IF NOT EXISTS pr_ticket_links (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,ticket_id INTEGER NOT NULL,PRIMARY KEY(monitor,repo,number,ticket_id));
@@ -171,6 +191,16 @@ export class Store {
       CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 1,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
+    this.db.transaction(() => {
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS ticket_tracking_dates (source TEXT NOT NULL,id INTEGER NOT NULL,added_at TEXT,PRIMARY KEY(source,id));
+        INSERT OR IGNORE INTO ticket_tracking_dates(source,id,added_at) SELECT source,id,NULL FROM tickets;
+        INSERT OR IGNORE INTO ticket_tracking_dates(source,id,added_at) SELECT source,id,NULL FROM ticket_trash;
+        CREATE TRIGGER IF NOT EXISTS ticket_first_added AFTER INSERT ON tickets BEGIN
+          INSERT INTO ticket_tracking_dates(source,id,added_at) VALUES (NEW.source,NEW.id,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(source,id) DO NOTHING;
+        END;
+      `);
+    })();
     if (!this.get("migration.ticketPriorityOne", false)) {
       this.db.transaction(() => {
         this.db.exec(`
@@ -376,12 +406,25 @@ export class Store {
       .get(source, id) as { tags: string } | undefined;
     return row ? JSON.parse(row.tags) : [];
   }
+  ticketAddedAt(id: number, source = this.source()): string | null {
+    const row = this.db
+      .prepare(
+        "SELECT added_at FROM ticket_tracking_dates WHERE source=? AND id=?",
+      )
+      .get(source, id) as { added_at: string | null } | undefined;
+    return row?.added_at ?? null;
+  }
   purgeTicketTrash(now = Date.now()) {
     return this.db.transaction(() => {
       const expired = this.db
         .prepare("SELECT source,id FROM ticket_trash WHERE removed_at<=?")
         .all(now - 30 * 86400000) as any[];
       for (const row of expired) {
+        this.db
+          .prepare(
+            "DELETE FROM ticket_tracking_dates WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
+          )
+          .run(row.source, row.id, row.source, row.id);
         this.db
           .prepare(
             "DELETE FROM ticket_metadata WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
@@ -419,6 +462,7 @@ export class Store {
         .all(this.source()) as any[]
     ).map((row) => ({
       ...JSON.parse(row.body),
+      added_at: this.ticketAddedAt(row.id, row.source),
       azureTags: this.azureTags(row.id, row.source),
       ...ticketMetadata(this, row.id, row.source),
       removedAt: row.removed_at,
@@ -509,33 +553,184 @@ export class Store {
       azureChanged: false,
     };
   }
-  clearHistory(context: Context) {
-    const result = this.db
-      .prepare("DELETE FROM conversations WHERE client=? AND project=?")
-      .run(context.client, context.project);
-    return { deleted: result.changes };
+  private activeChatKey(context: Context) {
+    return `chat.active:${JSON.stringify([context.client, context.project])}`;
   }
-  history(context: Context) {
-    return this.db
+  chatSession(context: Context, id?: string) {
+    if (!id) return this.activeChat(context);
+    const session = this.db
       .prepare(
-        "SELECT * FROM (SELECT rowid AS sequence,* FROM conversations WHERE client=? AND project=? ORDER BY rowid DESC LIMIT 40) ORDER BY sequence",
+        "SELECT id,client,project,title,created_at,updated_at FROM chat_sessions WHERE id=? AND client=? AND project=?",
       )
-      .all(context.client, context.project);
+      .get(id, context.client, context.project) as any;
+    if (!session) throw new AppError(404, "Чат не найден в текущем контексте.");
+    return session;
   }
-  say(role: string, body: string, context: Context, cards: string[] = []) {
+  activeChat(context: Context): any {
+    return this.db.transaction(() => {
+      const legacy = this.db
+        .prepare(
+          "SELECT body,created_at FROM conversations WHERE client=? AND project=? AND session_id='' ORDER BY rowid",
+        )
+        .all(context.client, context.project) as any[];
+      if (legacy.length) {
+        const id = randomUUID();
+        this.db
+          .prepare(
+            "INSERT INTO chat_sessions(id,client,project,title,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+          )
+          .run(
+            id,
+            context.client,
+            context.project,
+            "Предыдущий разговор",
+            legacy[0].created_at,
+            legacy.at(-1).created_at,
+          );
+        this.db
+          .prepare(
+            "UPDATE conversations SET session_id=? WHERE client=? AND project=? AND session_id=''",
+          )
+          .run(id, context.client, context.project);
+        this.set(this.activeChatKey(context), id);
+      }
+      const id = this.get(this.activeChatKey(context), "");
+      const session = this.db
+        .prepare(
+          "SELECT id,client,project,title,created_at,updated_at FROM chat_sessions WHERE client=? AND project=? ORDER BY (id=?) DESC,updated_at DESC,rowid DESC LIMIT 1",
+        )
+        .get(context.client, context.project, id) as any;
+      if (session) return session;
+      return this.createChat(context);
+    })();
+  }
+  createChat(context: Context, attachment?: TicketAnalysisAttachment) {
+    const id = randomUUID(),
+      now = new Date().toISOString();
     this.db
       .prepare(
-        "INSERT INTO conversations(id,client,project,role,body,created_at,cards) VALUES (?,?,?,?,?,?,?)",
+        "INSERT INTO chat_sessions(id,client,project,title,created_at,updated_at) VALUES (?,?,?,?,?,?)",
       )
-      .run(
-        randomUUID(),
+      .run(id, context.client, context.project, "Новый чат", now, now);
+    if (attachment)
+      this.db
+        .prepare("UPDATE chat_sessions SET attachment=?,title=? WHERE id=?")
+        .run(
+          JSON.stringify(attachment),
+          `Анализ #${attachment.id} · ${attachment.title}`.slice(0, 100),
+          id,
+        );
+    this.set(this.activeChatKey(context), id);
+    return this.chatSession(context, id);
+  }
+  selectChat(context: Context, id: string) {
+    const session = this.chatSession(context, id);
+    this.set(this.activeChatKey(context), id);
+    return session;
+  }
+  chatSessions(context: Context) {
+    const active = this.activeChat(context);
+    return {
+      activeId: active.id,
+      sessions: this.db
+        .prepare(
+          "SELECT s.id,s.client,s.project,s.title,s.created_at,s.updated_at, (SELECT COUNT(*) FROM conversations c WHERE c.session_id=s.id) AS messageCount FROM chat_sessions s WHERE client=? AND project=? ORDER BY updated_at DESC,rowid DESC",
+        )
+        .all(context.client, context.project),
+    };
+  }
+  chatAttachment(
+    context: Context,
+    id: string,
+  ): TicketAnalysisAttachment | null {
+    this.chatSession(context, id);
+    const row = this.db
+      .prepare("SELECT attachment FROM chat_sessions WHERE id=?")
+      .get(id) as { attachment: string | null };
+    return row.attachment ? JSON.parse(row.attachment) : null;
+  }
+  conversationPage(context: Context, id?: string, before?: number) {
+    const session = this.chatSession(context, id);
+    const rows = this.db
+      .prepare(
+        "SELECT rowid AS sequence,* FROM conversations WHERE session_id=? AND client=? AND project=? AND rowid<? ORDER BY rowid DESC LIMIT 101",
+      )
+      .all(
+        session.id,
         context.client,
         context.project,
-        role,
-        body,
-        new Date().toISOString(),
-        JSON.stringify(cards),
-      );
+        before ?? Number.MAX_SAFE_INTEGER,
+      ) as any[];
+    return {
+      messages: rows.slice(0, 100).reverse(),
+      hasMore: rows.length > 100,
+    };
+  }
+  clearHistory(context: Context, id?: string) {
+    const session = this.chatSession(context, id);
+    return this.db.transaction(() => {
+      const result = this.db
+        .prepare(
+          "DELETE FROM conversations WHERE session_id=? AND client=? AND project=?",
+        )
+        .run(session.id, context.client, context.project);
+      this.db
+        .prepare(
+          "UPDATE chat_sessions SET title='Новый чат',attachment=NULL,updated_at=? WHERE id=?",
+        )
+        .run(new Date().toISOString(), session.id);
+      return { deleted: result.changes };
+    })();
+  }
+  history(context: Context, id?: string) {
+    const session = this.chatSession(context, id);
+    return this.db
+      .prepare(
+        "SELECT * FROM (SELECT rowid AS sequence,* FROM conversations WHERE session_id=? AND client=? AND project=? ORDER BY rowid DESC LIMIT 40) ORDER BY sequence",
+      )
+      .all(session.id, context.client, context.project);
+  }
+  say(
+    role: string,
+    body: string,
+    context: Context,
+    cards: string[] = [],
+    id?: string,
+  ) {
+    const session = this.chatSession(context, id);
+    this.db.transaction(() => {
+      const first =
+        role === "user" &&
+        !this.db
+          .prepare(
+            "SELECT 1 FROM conversations WHERE session_id=? AND role='user' LIMIT 1",
+          )
+          .get(session.id);
+      const now = new Date().toISOString();
+      this.db
+        .prepare(
+          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id) VALUES (?,?,?,?,?,?,?,?)",
+        )
+        .run(
+          randomUUID(),
+          context.client,
+          context.project,
+          role,
+          body,
+          now,
+          JSON.stringify(cards),
+          session.id,
+        );
+      this.db
+        .prepare("UPDATE chat_sessions SET title=?,updated_at=? WHERE id=?")
+        .run(
+          first
+            ? body.replace(/\s+/g, " ").trim().slice(0, 80) || "Новый чат"
+            : session.title,
+          now,
+          session.id,
+        );
+    })();
   }
   close() {
     this.db.close();

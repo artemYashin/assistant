@@ -9,6 +9,7 @@ export const ticketColumns = [
   ["azureTags", "Azure теги"],
   ["assigned", "Исполнитель в Azure"],
   ["developer_name", "Локальное поручение"],
+  ["added_at", "Добавлено в систему"],
   ["synced_at", "Синхронизация"],
   ["actions", "Просмотр и действия"],
 ] as const;
@@ -30,14 +31,19 @@ export function useTicketColumns(trash = false) {
       const saved = JSON.parse(
         localStorage.getItem(storageKey + ".order") || "[]",
       );
-      return Array.isArray(saved)
-        ? [
-            ...new Set([
-              ...saved.filter((key) => defaults.includes(key)),
-              ...defaults,
-            ]),
-          ]
-        : defaults;
+      if (!Array.isArray(saved)) return defaults;
+      const merged = [
+        ...new Set<string>(saved.filter((key) => defaults.includes(key))),
+      ];
+      for (const [index, key] of defaults.entries()) {
+        if (merged.includes(key)) continue;
+        const next = defaults
+          .slice(index + 1)
+          .find((candidate) => merged.includes(candidate));
+        if (next) merged.splice(merged.indexOf(next), 0, key);
+        else merged.push(key);
+      }
+      return merged;
     } catch {
       return defaults;
     }
@@ -76,7 +82,7 @@ export function useTicketColumns(trash = false) {
   return {
     order,
     hidden: (key: string) => hidden.includes(key),
-    count: (trash ? 12 : 10) - hidden.length,
+    count: options.length + 3 - hidden.length,
     control: (
       <PrInfoPopup
         title="Отображение столбцов"

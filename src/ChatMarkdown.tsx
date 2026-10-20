@@ -1,34 +1,10 @@
+import { ImagePreview } from "./ImagePreview.js";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { chatTicketPath } from "./routing.js";
-import { useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-function PreviewImage({ src, alt }: { src: string; alt?: string }) {
-  const [failed, setFailed] = useState(false);
-  return failed ? (
-    <span className="pr-image-error" role="status">
-      {alt || "Изображение"}: не удалось загрузить. Проверьте доступ к вложению
-      и формат (PNG, JPEG, GIF, WebP).
-    </span>
-  ) : (
-    <a
-      className="pr-image-link"
-      href={src}
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Открыть изображение в полном размере"
-    >
-      <img
-        src={src}
-        alt={alt || "Вложение PR"}
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
-    </a>
-  );
-}
 export function ChatMarkdown({
   text,
   images,
@@ -52,8 +28,12 @@ export function ChatMarkdown({
                 : ""
         }
         components={{
-          a: ({ href, children }) =>
-            href && chatTicketPath(href) ? (
+          a: ({ href, children, node }) =>
+            node?.children.some(
+              (child) => child.type === "element" && child.tagName === "img",
+            ) ? (
+              <span>{children}</span>
+            ) : href && chatTicketPath(href) ? (
               <Link className="chat-ticket-link" to={chatTicketPath(href)!}>
                 {children}
                 <ArrowUpRight size={14} aria-hidden="true" />
@@ -76,11 +56,20 @@ export function ChatMarkdown({
                   preview,
                 ))
             )
-              return <PreviewImage key={preview} src={preview} alt={alt} />;
+              return (
+                <ImagePreview
+                  key={preview}
+                  src={preview}
+                  alt={alt}
+                  className="pr-image-link"
+                />
+              );
             return typeof src === "string" && /^https?:\/\//i.test(src) ? (
-              <a href={src} target="_blank" rel="noopener noreferrer">
-                {alt || "Открыть изображение"}
-              </a>
+              <ImagePreview
+                src={src}
+                alt={alt || "Изображение"}
+                thumbnail={false}
+              />
             ) : (
               <span>{alt || "Изображение"}</span>
             );

@@ -99,6 +99,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     );
     const metadata = ticketMetadata(store, row.id);
     Object.assign(ticket, metadata, {
+      added_at: store.ticketAddedAt(row.id),
       azureTags: store.azureTags(row.id),
       notes: metadata.notes.slice(0, 300),
       notesTruncated: metadata.notes.length > 300,

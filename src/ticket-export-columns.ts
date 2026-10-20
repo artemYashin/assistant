@@ -11,6 +11,7 @@ export type CsvTicket = {
   developer_name?: string;
   notes?: string;
   url?: string;
+  added_at?: string | null;
 };
 export const exportColumns = [
   {
@@ -83,6 +84,13 @@ export const exportColumns = [
     label: "Локальные заметки",
     width: 60,
     value: (t: CsvTicket) => t.notes || "",
+  },
+  {
+    key: "added_at",
+    header: "Added to System (UTC)",
+    label: "Добавлено в систему",
+    width: 28,
+    value: (t: CsvTicket) => t.added_at || "",
   },
   {
     key: "url",

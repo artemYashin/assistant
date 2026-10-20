@@ -1,3 +1,9 @@
+import {
+  analyzeTicketEvent,
+  analysisChatReadyEvent,
+  type AnalyzeTicketRequest,
+} from "./chat-ticket-analysis.js";
+import { ChatHistory } from "./ChatHistory.js";
 import { OverviewUsage } from "./OverviewUsage.js";
 import { OverviewActivity } from "./OverviewActivity.js";
 import { RotateCcw } from "lucide-react";
@@ -380,10 +386,12 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     window.addEventListener("orbit:ticket-state", changed);
     window.addEventListener("orbit:ticket-metadata", changed);
     window.addEventListener("orbit:ticket-developers", changed);
+    window.addEventListener("orbit:ticket-removed", changed);
     return () => {
       window.removeEventListener("orbit:ticket-state", changed);
       window.removeEventListener("orbit:ticket-metadata", changed);
       window.removeEventListener("orbit:ticket-developers", changed);
+      window.removeEventListener("orbit:ticket-removed", changed);
     };
   }, []);
   const initialized = useRef(false);
@@ -1070,6 +1078,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
           </main>
           <Assistant
             open={assistantOpen}
+            onExpand={() => setAssistantOpen(true)}
             onCollapse={() => {
               setAssistantOpen(false);
               document.getElementById("assistant-toggle")?.focus();
@@ -1454,7 +1463,7 @@ function Tickets({
         вернуть кнопкой «Добавить по номеру».
       </p>
       {sorted.length ? (
-        <div className="panel ticket-table-fit">
+        <div className="panel ticket-table-fit ticket-active-table">
           <table>
             <thead>
               <tr>
@@ -1466,14 +1475,14 @@ function Tickets({
                       onChange={selection.toggleAll}
                     />
                   </th>
-                  <th aria-sort={columnSort(["id", "title", "type"])}>
-                    <div className="ticket-heading-sorts">
+                  <th aria-sort={columnSort(["id", "type"])}>
+                    <div className="ticket-heading-sorts ticket-identity-heading">
                       {sortButton("id", "ID")}
-                      <span aria-hidden="true">/</span>
-                      {sortButton("title", "Тикет")}
-                      <span aria-hidden="true">/</span>
                       {sortButton("type", "Тип задачи")}
                     </div>
+                  </th>
+                  <th aria-sort={columnSort(["title"])}>
+                    {sortButton("title", "Тикет")}
                   </th>
                   {(
                     [
@@ -1483,6 +1492,7 @@ function Tickets({
                       ["azureTags", "Azure теги"],
                       ["assigned", "Исполнитель в Azure"],
                       ["developer_name", "Локальное поручение"],
+                      ["added_at", "Добавлено в систему"],
                       ["synced_at", "Синхронизация"],
                     ] as const
                   ).map(([key, label]) => (
@@ -1552,6 +1562,8 @@ function Tickets({
                         kind="type"
                       />
                     </div>
+                  </td>
+                  <td>
                     <b className="ticket-title-clamp" title={t.title}>
                       {t.title}
                     </b>
@@ -1615,6 +1627,22 @@ function Tickets({
                     hidden={columns.hidden("developer_name")}
                   >
                     <LocalDeveloper ticket={t} context={context} />
+                  </td>
+                  <td
+                    data-column="added_at"
+                    className="muted"
+                    hidden={columns.hidden("added_at")}
+                    title={
+                      t.added_at
+                        ? new Date(t.added_at).toLocaleString("ru-RU")
+                        : "Дата первого добавления ранее не сохранялась"
+                    }
+                  >
+                    {t.added_at ? (
+                      <time dateTime={t.added_at}>{date(t.added_at)}</time>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td
                     data-column="synced_at"
@@ -2371,6 +2399,7 @@ function LoginCode({ flow }: any) {
 }
 function Assistant({
   open,
+  onExpand,
   onCollapse,
   context,
   connected,
@@ -2381,6 +2410,13 @@ function Assistant({
 }: any) {
   const resize = useAssistantResize();
   const selectedTickets = useSelectedChatTickets();
+  const [sessionId, setSessionId] = useState("");
+  const [attachment, setAttachment] = useState<any>(null);
+  const analysisPending = useRef(false);
+  const promptInput = useRef<HTMLTextAreaElement>(null);
+  const [hasOlder, setHasOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [sessionTitle, setSessionTitle] = useState("Новый чат");
   const [history, setHistory] = useState<any[]>([]),
     [prompt, setPrompt] = useState(""),
     [working, setWorking] = useState(false),
@@ -2401,19 +2437,38 @@ function Assistant({
     let active = true;
     const generation = ++historyGeneration.current;
     setHistory([]);
+    setSessionId("");
+    setAttachment(null);
+    setHasOlder(false);
+    setPrompt("");
     setError("");
-    api(`/conversation?${new URLSearchParams(context)}`)
-      .then((h) => {
-        if (active && generation === historyGeneration.current) setHistory(h);
+    api(`/conversation/sessions?${new URLSearchParams(context)}`)
+      .then(async (result) => {
+        const page = await api(
+          `/conversation?${new URLSearchParams({ ...context, sessionId: result.activeId, page: "true" })}`,
+        );
+        if (active && generation === historyGeneration.current) {
+          setSessionId(result.activeId);
+          setSessionTitle(
+            result.sessions.find((s: any) => s.id === result.activeId)?.title ||
+              "Новый чат",
+          );
+          setHistory(page.messages);
+          setAttachment(page.attachment);
+          setHasOlder(page.hasMore);
+        }
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => {
+        if (active && generation === historyGeneration.current)
+          setError(e.message);
+      });
     return () => {
       active = false;
     };
   }, [key]);
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [history, working]);
+  }, [history.at(-1)?.id, working]);
   useEffect(
     () => () => {
       mounted.current = false;
@@ -2423,48 +2478,180 @@ function Assistant({
     },
     [],
   );
+  useEffect(() => {
+    const handle = (event: Event) => {
+      const task = (event as CustomEvent<AnalyzeTicketRequest>).detail;
+      if (
+        working ||
+        clearing ||
+        recording ||
+        transcribing ||
+        analysisPending.current
+      ) {
+        task.reject(
+          new Error(
+            "Дождитесь завершения текущего ответа или записи голоса, затем начните анализ.",
+          ),
+        );
+        return;
+      }
+      analysisPending.current = true;
+      const captured = key;
+      const generation = ++historyGeneration.current;
+      setClearing(true);
+      void (async () => {
+        try {
+          const session = await api("/conversation/sessions", "POST", {
+            ...context,
+            ticketCardRef: task.reference,
+          });
+          const page = await api(
+            `/conversation?${new URLSearchParams({ ...context, sessionId: session.id, page: "true" })}`,
+          );
+          if (
+            contextKey.current !== captured ||
+            generation !== historyGeneration.current
+          )
+            throw new Error(
+              "Контекст проекта изменился. Чат сохранён в истории исходного проекта.",
+            );
+          setSessionId(session.id);
+          setSessionTitle(session.title);
+          setHistory(page.messages);
+          setAttachment(page.attachment);
+          setHasOlder(false);
+          setPrompt(
+            `Проанализируй тикет #${page.attachment.id}: объясни требования, найди неоднозначности и риски, предложи проверки.`,
+          );
+          setError("");
+          onExpand();
+          window.dispatchEvent(new Event(analysisChatReadyEvent));
+          requestAnimationFrame(() => promptInput.current?.focus());
+          task.resolve();
+        } catch (e: any) {
+          task.reject(e);
+        } finally {
+          analysisPending.current = false;
+          setClearing(false);
+        }
+      })();
+    };
+    window.addEventListener(analyzeTicketEvent, handle);
+    return () => window.removeEventListener(analyzeTicketEvent, handle);
+  }, [key, working, clearing, recording, transcribing, onExpand]);
+  async function chooseChat(id?: string) {
+    if (working || clearing || recording || transcribing) return;
+    const captured = key;
+    const generation = ++historyGeneration.current;
+    setClearing(true);
+    try {
+      const session = id
+        ? await api(`/conversation/sessions/${id}/active`, "PUT", context)
+        : await api("/conversation/sessions", "POST", context);
+      const page = await api(
+        `/conversation?${new URLSearchParams({ ...context, sessionId: session.id, page: "true" })}`,
+      );
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      ) {
+        setSessionId(session.id);
+        setSessionTitle(session.title);
+        setHistory(page.messages);
+        setAttachment(page.attachment);
+        setHasOlder(page.hasMore);
+        setPrompt("");
+        setError("");
+      }
+    } finally {
+      setClearing(false);
+    }
+  }
+  async function loadOlder() {
+    if (loadingOlder || !hasOlder || !history[0]?.sequence) return;
+    const generation = historyGeneration.current;
+    const container = bottom.current?.parentElement;
+    const height = container?.scrollHeight || 0;
+    const top = container?.scrollTop || 0;
+    setLoadingOlder(true);
+    try {
+      const page = await api(
+        `/conversation?${new URLSearchParams({ ...context, sessionId, page: "true", before: String(history[0].sequence) })}`,
+      );
+      if (generation === historyGeneration.current) {
+        setHistory((h) => [...page.messages, ...h]);
+        setHasOlder(page.hasMore);
+        requestAnimationFrame(() => {
+          if (container && generation === historyGeneration.current)
+            container.scrollTop = top + container.scrollHeight - height;
+        });
+      }
+    } catch (e: any) {
+      if (generation === historyGeneration.current) setError(e.message);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }
   async function clearHistory() {
     if (working || clearing || recording || transcribing) return;
     if (
       !window.confirm(
-        "Очистить историю чата текущего заказчика и проекта? Сохранённая память и тикеты останутся.",
+        "Очистить сообщения выбранного чата? Другие чаты, память и тикеты останутся.",
       )
     )
       return;
     const captured = key;
+    const generation = historyGeneration.current;
     setClearing(true);
     setError("");
     try {
-      await api("/conversation", "DELETE", context);
-      if (contextKey.current === captured) {
+      await api("/conversation", "DELETE", { ...context, sessionId });
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      ) {
         historyGeneration.current++;
         setHistory([]);
+        setHasOlder(false);
+        setSessionTitle("Новый чат");
+        setAttachment(null);
       }
     } catch (e: any) {
-      if (contextKey.current === captured) setError(e.message);
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      )
+        setError(e.message);
     } finally {
       setClearing(false);
     }
   }
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!prompt.trim() || working || clearing) return;
+    if (!prompt.trim() || working || clearing || !sessionId) return;
     const text = prompt;
     const captured = key;
+    const generation = historyGeneration.current;
     setWorking(true);
     setError("");
     setPrompt("");
+    if (!history.length)
+      setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
     setHistory((h) => [...h, { role: "user", body: text, id: Date.now() }]);
     try {
       const r = await api("/conversation", "POST", {
         prompt: text,
         context,
+        sessionId,
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,
         })),
       });
-      if (contextKey.current === captured)
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      )
         setHistory((h) => [
           ...h,
           {
@@ -2476,8 +2663,13 @@ function Assistant({
         ]);
       onChange();
     } catch (e: any) {
-      setError(e.message);
-      if (contextKey.current === captured) setPrompt(text);
+      if (
+        contextKey.current === captured &&
+        generation === historyGeneration.current
+      ) {
+        setError(e.message);
+        setPrompt(text);
+      }
       onChange();
     } finally {
       setWorking(false);
@@ -2488,6 +2680,7 @@ function Assistant({
       recorder.current?.stop();
       return;
     }
+    const voiceGeneration = historyGeneration.current;
     try {
       setError("");
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder)
@@ -2523,9 +2716,11 @@ function Assistant({
           const r = await api("/voice/transcribe", "POST", form);
           if (!r.text?.trim())
             throw new Error("Речь не распознана. Попробуйте ещё раз.");
-          setPrompt((p) => `${p}${p ? " " : ""}${r.text}`);
+          if (voiceGeneration === historyGeneration.current)
+            setPrompt((p) => `${p}${p ? " " : ""}${r.text}`);
         } catch (e: any) {
-          setError(e.message);
+          if (voiceGeneration === historyGeneration.current)
+            setError(e.message);
         } finally {
           setTranscribing(false);
         }
@@ -2560,18 +2755,14 @@ function Assistant({
           </small>
         </div>
         <ChatTools context={context} />
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Очистить историю чата"
-          title="Очистить историю текущего чата"
+        <ChatHistory
+          context={context}
+          activeId={sessionId}
           disabled={
-            working || clearing || recording || transcribing || !history.length
+            working || clearing || recording || transcribing || !sessionId
           }
-          onClick={() => void clearHistory()}
-        >
-          <Trash2 size={17} />
-        </button>
+          onSelect={chooseChat}
+        />
         <button
           type="button"
           className="icon-button"
@@ -2588,12 +2779,23 @@ function Assistant({
           {[context.client, context.project].filter(Boolean).join(" / ") ||
             "Общий контекст"}
           <small>
-            Память: общая{context.client ? " + заказчика" : ""}
-            {context.project ? " + проекта" : ""}. История — текущего контекста.
+            Чат: {sessionTitle}. Память: общая
+            {context.client ? " + заказчика" : ""}
+            {context.project ? " + проекта" : ""}. История — выбранного чата.
           </small>
         </div>
       </div>
-      <div className="conversation">
+      <div className="conversation" aria-busy={clearing}>
+        {hasOlder && (
+          <button
+            type="button"
+            className="text-button chat-load-older"
+            disabled={loadingOlder || clearing}
+            onClick={() => void loadOlder()}
+          >
+            {loadingOlder ? "Загрузка…" : "Показать более ранние сообщения"}
+          </button>
+        )}
         {!history.length && (
           <div className="assistant-welcome">
             <div className="welcome-symbol">
@@ -2690,6 +2892,27 @@ function Assistant({
             </button>
           </div>
         )}
+        {attachment && (
+          <div className="chat-analysis-attachment">
+            <span className="chat-analysis-badge">
+              <Sparkles size={14} /> Анализ тикета #{attachment.id}
+            </span>
+            <strong>{attachment.title}</strong>
+            <small>
+              Описание, критерии, шаги воспроизведения и комментарии (
+              {attachment.comments}). Снимок от{" "}
+              {new Date(attachment.loadedAt).toLocaleString("ru-RU")}.
+            </small>
+            <small>
+              Полный текст · {attachment.characters.toLocaleString("ru-RU")}{" "}
+              символов. Отправка может потребовать много токенов. Дополните
+              запрос и нажмите «Отправить».
+            </small>
+            {!!attachment.warnings?.length && (
+              <small className="error">{attachment.warnings.join(" ")}</small>
+            )}
+          </div>
+        )}
         {!!selectedTickets.length && (
           <div className="chat-ticket-context">
             <small>
@@ -2711,6 +2934,7 @@ function Assistant({
         )}
         <form className="composer" onSubmit={send}>
           <textarea
+            ref={promptInput}
             aria-label="Сообщение ассистенту"
             placeholder={
               recording
@@ -2729,6 +2953,23 @@ function Assistant({
             }}
           />
           <div className="composer-bottom">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Очистить историю чата"
+              title="Очистить историю текущего чата"
+              disabled={
+                working ||
+                clearing ||
+                recording ||
+                transcribing ||
+                !history.length
+              }
+              onClick={() => void clearHistory()}
+            >
+              <Trash2 size={17} />
+            </button>
+
             <small>
               {recording
                 ? "Идёт запись · до 2 минут"
@@ -2760,7 +3001,9 @@ function Assistant({
                 working ||
                 recording ||
                 transcribing ||
-                !connected
+                !connected ||
+                clearing ||
+                !sessionId
               }
               aria-label="Отправить ассистенту"
             >

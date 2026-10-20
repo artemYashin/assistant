@@ -766,14 +766,15 @@ export class Connectors {
           !match
         )
           return;
-        if (!attachments.some((a) => a.id === match[1]))
+        const attachmentId = match[1].toLowerCase();
+        if (!attachments.some((a) => a.id === attachmentId))
           attachments.push({
-            id: match[1],
+            id: attachmentId,
             name,
             image: image || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name),
           });
         else if (image)
-          attachments.find((a) => a.id === match[1])!.image = true;
+          attachments.find((a) => a.id === attachmentId)!.image = true;
       } catch {}
     };
     for (const relation of item.relations || [])
@@ -783,8 +784,11 @@ export class Connectors {
       ...Object.values(item.fields || {}).filter((v) => typeof v === "string"),
       ...comments.map((c) => c.renderedText || c.text || ""),
     ].join("\n");
-    for (const match of content.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi))
-      add(match[1].replace(/&amp;/g, "&"), "Изображение в тексте", true);
+    for (const imageTag of content.matchAll(/<img\b[^>]*>/gi)) {
+      const source = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(imageTag[0]);
+      if (source)
+        add((source[1] ?? source[2] ?? source[3]).replace(/&amp;/gi, "&"), "Изображение в тексте", true);
+    }
     for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
       add(match[1], "Изображение в комментарии", true);
     const cardId = randomUUID();

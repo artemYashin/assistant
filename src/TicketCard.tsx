@@ -1,3 +1,5 @@
+import { ImagePreview } from "./ImagePreview.js";
+import { openTicketAnalysis } from "./chat-ticket-analysis.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { TicketSectionScroll } from "./TicketSectionScroll.js";
 import { OrderedTicketCells } from "./TicketColumns.js";
@@ -7,6 +9,8 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
+  Sparkles,
+  LoaderCircle,
   Copy,
   Link2,
   Check,
@@ -31,6 +35,13 @@ import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 import { ticketText as text } from "./ticket-text.js";
 export function TicketCard({ reference }: { reference: string }) {
+  const [removing, setRemoving] = useState(false);
+  const [removed, setRemoved] = useState(false);
+  const [removalError, setRemovalError] = useState("");
+  const removalPending = useRef(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
+  const analysisPending = useRef(false);
   const [typeColors, setTypeColors] = useState<Record<string, string>>({});
   const [colors, setColors] = useState<Record<string, string>>({});
   useEffect(() => {
@@ -88,6 +99,8 @@ export function TicketCard({ reference }: { reference: string }) {
     let live = true;
     setCard(null);
     setError("");
+    setRemoved(false);
+    setRemovalError("");
     api(`/ticket-cards/${encodeURIComponent(reference)}`)
       .then((v) => {
         if (live) setCard(v);
@@ -110,6 +123,18 @@ export function TicketCard({ reference }: { reference: string }) {
     };
     window.addEventListener("orbit:ticket-state", changed);
     return () => window.removeEventListener("orbit:ticket-state", changed);
+  }, []);
+  useEffect(() => {
+    const remove = (event: Event) => {
+      const { id, source } = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old?.id === id && old?.source === source
+          ? { ...old, locallyTracked: false }
+          : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-removed", remove);
+    return () => window.removeEventListener("orbit:ticket-removed", remove);
   }, []);
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
@@ -177,6 +202,10 @@ export function TicketCard({ reference }: { reference: string }) {
             <div>
               <dt>Изменён</dt>
               <dd>{timestamp(f["System.ChangedDate"])}</dd>
+            </div>
+            <div>
+              <dt>Локально получено</dt>
+              <dd>{timestamp(card.loadedAt)}</dd>
             </div>
           </dl>
           <dl className="ticket-overview">
@@ -322,12 +351,90 @@ export function TicketCard({ reference }: { reference: string }) {
                 <ExternalLink size={15} />
                 Открыть в Azure DevOps
               </a>
+              {card.locallyTracked && (
+                <button
+                  type="button"
+                  className="secondary ticket-remove-button"
+                  disabled={removing}
+                  title="Переместить в локальную корзину на 30 дней. Azure не изменяется."
+                  onClick={async () => {
+                    if (removalPending.current) return;
+                    removalPending.current = true;
+                    setRemoving(true);
+                    setRemovalError("");
+                    try {
+                      await api(`/tickets/${card.id}`, "DELETE", {
+                        source: card.source,
+                      });
+                      setRemoved(true);
+                      window.dispatchEvent(
+                        new CustomEvent("orbit:ticket-removed", {
+                          detail: { id: card.id, source: card.source },
+                        }),
+                      );
+                    } catch (e: any) {
+                      setRemovalError(e.message);
+                    } finally {
+                      removalPending.current = false;
+                      setRemoving(false);
+                    }
+                  }}
+                >
+                  {removing ? (
+                    <LoaderCircle size={15} className="spin" />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  {removing ? "Удаляю…" : "Удалить"}
+                </button>
+              )}
             </nav>
           </header>
+          <div className="ticket-analysis-action">
+            <button
+              type="button"
+              className="ticket-analyze-button"
+              disabled={analyzing}
+              onClick={async () => {
+                if (analysisPending.current) return;
+                analysisPending.current = true;
+                setAnalyzing(true);
+                setAnalysisError("");
+                try {
+                  await openTicketAnalysis(reference);
+                } catch (e: any) {
+                  setAnalysisError(e.message);
+                } finally {
+                  analysisPending.current = false;
+                  setAnalyzing(false);
+                }
+              }}
+            >
+              {analyzing ? (
+                <LoaderCircle size={17} className="spin" />
+              ) : (
+                <Sparkles size={17} />
+              )}
+              Analyze with AI
+            </button>
+            {analysisError && (
+              <p className="error" role="alert">
+                {analysisError}
+              </p>
+            )}
+          </div>
           <div className="ticket-card-body">
-            <div className="ticket-source">
-              <span>Данные получены: {timestamp(card.loadedAt)}</span>
-            </div>
+            {removed && (
+              <p className="success-note" role="status">
+                Тикет перемещён в локальную корзину на 30 дней. В Azure ничего
+                не изменилось.
+              </p>
+            )}
+            {removalError && (
+              <p className="error" role="alert">
+                {removalError}
+              </p>
+            )}
             {card.warnings.map((w: string) => (
               <p className="error" key={w}>
                 {w}
@@ -457,23 +564,29 @@ export function TicketCard({ reference }: { reference: string }) {
                 <div className="ticket-attachments">
                   {card.attachments.map((a: any) => (
                     <div className="ticket-attachment" key={a.id}>
-                      <a
-                        href={attachmentUrl(a)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {a.name} ↗
-                      </a>
-                      {a.image && (
-                        <img
-                          src={attachmentUrl(a)}
-                          loading="lazy"
-                          alt={a.name}
-                          onError={(e) => {
-                            e.currentTarget.alt =
-                              "Предпросмотр недоступен — откройте вложение по ссылке";
-                          }}
-                        />
+                      {a.image ? (
+                        <>
+                          <ImagePreview
+                            src={attachmentUrl(a)}
+                            alt={a.name}
+                            thumbnail={false}
+                          >
+                            {a.name}
+                          </ImagePreview>
+                          <ImagePreview
+                            src={attachmentUrl(a)}
+                            alt={a.name}
+                            className="ticket-attachment-preview"
+                          />
+                        </>
+                      ) : (
+                        <a
+                          href={attachmentUrl(a)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {a.name} ↗
+                        </a>
                       )}
                     </div>
                   ))}

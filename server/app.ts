@@ -1,3 +1,7 @@
+import {
+  ticketAnalysisAttachment,
+  attachmentPreview,
+} from "./chat-ticket-attachment.js";
 import { overviewUsage } from "./overview-usage.js";
 import { PrCreate } from "./pr-create.js";
 import { reviewFileSettings } from "./review-files.js";
@@ -392,17 +396,52 @@ export function createApp(
   app.get("/api/conversation/tools", (req, res) =>
     res.json(new UsageLedger(store).chatTools(contextSchema.parse(req.query))),
   );
-  app.get("/api/conversation", (req, res) =>
-    res.json(store.history(contextSchema.parse(req.query))),
+  app.get("/api/conversation/sessions", (req, res) =>
+    res.json(store.chatSessions(contextSchema.parse(req.query))),
   );
+  app.post("/api/conversation/sessions", (req, res) => {
+    const context = contextSchema.parse(req.body);
+    store.activeChat(context); // Preserve pre-session conversations before creating another chat.
+    const ref = z.string().uuid().optional().parse(req.body.ticketCardRef);
+    const attachment = ref
+      ? ticketAnalysisAttachment(connectors.ticketCard(ref), store.source())
+      : undefined;
+    res.json(store.createChat(context, attachment));
+  });
+  app.put("/api/conversation/sessions/:id/active", (req, res) =>
+    res.json(
+      store.selectChat(contextSchema.parse(req.body), String(req.params.id)),
+    ),
+  );
+  app.get("/api/conversation", (req, res) => {
+    const context = contextSchema.parse(req.query);
+    const id = z.string().uuid().optional().parse(req.query.sessionId);
+    if (req.query.page === "true") {
+      const before = z.coerce
+        .number()
+        .int()
+        .positive()
+        .safe()
+        .optional()
+        .parse(req.query.before);
+      const session = store.chatSession(context, id);
+      res.json({
+        ...store.conversationPage(context, session.id, before),
+        attachment: attachmentPreview(
+          store.chatAttachment(context, session.id),
+        ),
+      });
+    } else res.json(store.history(context, id));
+  });
   app.delete("/api/conversation", (req, res) => {
     const context = contextSchema.parse(req.body);
+    const id = z.string().uuid().optional().parse(req.body.sessionId);
     if (agent.active())
       throw new AppError(
         409,
         "Дождитесь завершения ответа или остановите его, затем очистите историю.",
       );
-    res.json(store.clearHistory(context));
+    res.json(store.clearHistory(context, id));
   });
   app.get("/api/usage", (req, res) => {
     const days = z.coerce
@@ -427,6 +466,7 @@ export function createApp(
         .object({
           prompt: z.string().trim().min(1).max(16000),
           context: contextSchema,
+          sessionId: z.string().uuid().optional(),
           selectedTickets: z
             .array(
               z.object({
@@ -447,7 +487,9 @@ export function createApp(
       const prompt = ids.length
         ? `${v.prompt}\n\nВыбранные пользователем тикеты в таблице: ${ids.map((id) => `#${id}`).join(", ")}. Это номера, а не содержимое тикетов. При необходимости прочитай данные доступными инструментами; сам выбор не является просьбой изменить тикеты.`
         : v.prompt;
-      res.json(await agent.chat(prompt, v.context));
+      res.json(
+        await agent.chat(prompt, v.context, false, undefined, v.sessionId),
+      );
     },
   );
   app.get("/api/chats", (_req, res) =>
@@ -734,6 +776,7 @@ export function createApp(
           const developers = localDevelopers.assigned(ticket.id, ticket.source);
           return {
             ...ticket,
+            added_at: store.ticketAddedAt(ticket.id, ticket.source),
             ...ticketMetadata(store, ticket.id, ticket.source),
             azureTags: store.azureTags(ticket.id, ticket.source),
             developers,
@@ -765,6 +808,12 @@ export function createApp(
   });
   app.delete("/api/tickets/:id", (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id);
+    const source = z.string().min(1).optional().parse(req.body?.source);
+    if (source && source !== store.source())
+      throw new AppError(
+        409,
+        "Подключение Azure изменилось. Обновите карточку перед удалением.",
+      );
     res.json(store.removeLocalTicket(id));
   });
   app.put("/api/tickets/:id/developer", (_req, _res) => {

@@ -857,3 +857,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Rich-text accordion scroll regions allow vertical scroll chaining at their edges; modal page locking remains unchanged. Expanded table cards have larger responsive horizontal outer padding.
 - Detail-stage lookup dialog width increased to 220% of the previous 960px cap (2112px), constrained to the viewport; the number-entry stage stays compact.
 - Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/scroll behavior was not exercised.
+
+### Chat sessions, ticket analysis and compact ticket UI (2026-10-20)
+
+- Added scoped chat history with legacy conversation migration, session selection, older-message pagination, and clear-current-chat behavior. Analyze with AI opens a new conversation with a bounded snapshot of the ticket text, criteria, reproduction steps and loaded comments; it does not send a prompt automatically.
+- Added shared image preview dialogs with zoom/pan, smaller ticket lookup detail layout, a local received timestamp and local-trash action in ticket details. Comment image discovery now handles whitespace/unquoted HTML attributes and UUID case.
+- Added first-added timestamps for newly tracked tickets, preserving dates through sync/trash/restore; historical unknown dates remain empty. Added table/export visibility for this date. Active ticket rows now separate ID/type from title with compact spacing.
+- Validation: all 203 tests passed and production build passed. The initial new comment-image test fixture lacked its required project field; corrected the fixture and reran the full suite successfully. Vite retains its large-chunk warning. Browser visuals, clipboard, modal focus/scroll and real Azure/Copilot integrations were not exercised.

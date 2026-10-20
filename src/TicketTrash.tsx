@@ -152,6 +152,7 @@ export function TicketTrash({
     ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],
     ["developer_name", "Локальное поручение"],
+    ["added_at", "Добавлено в систему"],
     ["removedAt", "Удалён"],
     ["expiresAt", "Хранится до"],
   ];
@@ -515,6 +516,23 @@ export function TicketTrash({
                               : []
                         }
                       />
+                    </td>
+                    <td
+                      data-column="added_at"
+                      hidden={display.hidden("added_at")}
+                      title={
+                        t.added_at
+                          ? undefined
+                          : "Дата первого добавления ранее не сохранялась"
+                      }
+                    >
+                      {t.added_at ? (
+                        <time dateTime={t.added_at}>
+                          {new Date(t.added_at).toLocaleString("ru-RU")}
+                        </time>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td
                       data-column="removedAt"

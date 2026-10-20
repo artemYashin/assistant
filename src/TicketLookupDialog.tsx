@@ -1,3 +1,4 @@
+import { analysisChatReadyEvent } from "./chat-ticket-analysis.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Ticket, X } from "lucide-react";
@@ -28,6 +29,14 @@ export function TicketLookupDialog() {
     dialog.current?.close();
     reset();
   }, [location.key]);
+  useEffect(() => {
+    const close = () => {
+      reset();
+      dialog.current?.close();
+    };
+    window.addEventListener(analysisChatReadyEvent, close);
+    return () => window.removeEventListener(analysisChatReadyEvent, close);
+  }, []);
   useEffect(() => {
     if (!open) return;
     if (cardRef) closeButton.current?.focus({ preventScroll: true });

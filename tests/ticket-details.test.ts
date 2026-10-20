@@ -170,3 +170,29 @@ test("work item types and states are loaded from the configured project", async 
     { name: "Change Request", states: ["Proposed"] },
   ]);
 });
+
+test("comment images accept HTML attribute spacing and unquoted sources, deduplicating UUID case", async (t) => {
+  const { connectors } = fixture(t);
+  const id = "abcdefab-1234-1234-1234-abcdefabcdef";
+  t.mock.method(globalThis, "fetch", async (raw: any) => {
+    if (new URL(String(raw)).pathname.endsWith("/comments"))
+      return Response.json({
+        comments: [
+          {
+            id: 1,
+            renderedText: `<p>Screenshot</p><img src = "https://ado.test/Collection/_apis/wit/attachments/${id.toUpperCase()}"><img src=https://ado.test/Collection/_apis/wit/attachments/${id}><img src = "https://evil.test/Collection/_apis/wit/attachments/${image}">`,
+          },
+        ],
+      });
+    return Response.json({
+      id: 42,
+      fields: { "System.Title": "Comment images", "System.TeamProject": "P" },
+      relations: [],
+    });
+  });
+  const card = await connectors.ticketDetails(42);
+  assert.deepEqual(card.attachments, [
+    { id, name: "Изображение в тексте", image: true },
+  ]);
+  assert.match(card.comments[0].richText, /Screenshot/);
+});

@@ -1,29 +1,7 @@
-import { createElement, Fragment, useState, type ReactNode } from "react";
+import { ImagePreview } from "./ImagePreview.js";
+import { createElement, Fragment, type ReactNode } from "react";
 import { ticketText } from "./ticket-text.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
-
-function InlineImage({ src, alt }: { src: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <a
-      href={src}
-      target="_blank"
-      rel="noreferrer"
-      className="ticket-inline-image"
-    >
-      {failed ? (
-        `${alt}: открыть вложение ↗`
-      ) : (
-        <img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onError={() => setFailed(true)}
-        />
-      )}
-    </a>
-  );
-}
 
 export function TicketRichText({ value, card, reference }: any) {
   const raw = typeof value === "string" ? value : "";
@@ -40,7 +18,7 @@ export function TicketRichText({ value, card, reference }: any) {
         url.pathname,
       )?.[1];
       const attachment = card.attachments.find(
-        (a: any) => a.id === id && a.image,
+        (a: any) => a.id.toLowerCase() === id?.toLowerCase() && a.image,
       );
       return attachment
         ? `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${encodeURIComponent(attachment.id)}`
@@ -152,13 +130,20 @@ export function TicketRichText({ value, card, reference }: any) {
         const src = preview(node.getAttribute("src") || "");
         const alt = node.getAttribute("alt") || "Изображение";
         return src ? (
-          <InlineImage key={index} src={src} alt={alt} />
+          <ImagePreview
+            key={index}
+            src={src}
+            alt={alt}
+            className="ticket-inline-image"
+          />
         ) : (
           <span key={index}>[{alt}: предпросмотр недоступен]</span>
         );
       }
       let children: ReactNode = renderChildren(node, pre || tag === "pre");
       if (tag === "a") {
+        if (node.querySelector("img"))
+          return <Fragment key={index}>{children}</Fragment>;
         let href: string | undefined;
         try {
           const url = new URL(node.getAttribute("href") || "", card.base + "/");
