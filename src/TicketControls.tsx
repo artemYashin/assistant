@@ -1,4 +1,5 @@
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
+import { InitialsAvatar } from "./InitialsAvatar.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, X } from "lucide-react";
@@ -110,7 +111,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       </button>
       <dialog
         ref={dialog}
-        className="developer-dialog"
+        className="developer-dialog local-assignment-dialog"
         aria-label={`Локальные исполнители тикета #${ticket.id}`}
         onCancel={(event) => {
           event.stopPropagation();
@@ -160,8 +161,11 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
                     )
                   }
                 />
-                {p.name}
-                {p.active === 0 ? " (убран из справочника)" : ""}
+                <InitialsAvatar name={p.name} />
+                <span className="local-developer-option-name">
+                  {p.name}
+                  {p.active === 0 && <small>Убран из справочника</small>}
+                </span>
               </label>
             ))}
           {!people.length && !busy && (

@@ -733,3 +733,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Conversational approval accepts combinations such as «Давай, погнали», «Поехали», «Ок, делай» and English equivalents after the preceding mutation plan. Refusals, questions, changed scope/target and unrelated sentences are not treated as blanket approval.
 - Pre-push validation: all 190 tests and production build passed, including the status-batch integration using «Давай, погнали». Vite retains its large-chunk warning. Live Copilot/Azure behavior was not exercised.
+
+### Assignment dialog and table spacing (2026-10-20)
+
+- The assignment picker resets inherited nowrap, bounds grid content and shows compact shared initials avatars. Modal scroll locking remains on html only, avoiding a new body scroll ancestor for sticky UI.
+- Ticket and trash table data columns have a 60px minimum; checkbox columns use 44px with 12px side padding, retaining 16px checkboxes. Sort labels have a minimum content width to avoid character-by-character compression.
+- Pre-push validation: all 190 tests passed; production build passed again after the final CSS adjustment. Vite retains its large-chunk warning. Browser visual behavior has not been exercised.
