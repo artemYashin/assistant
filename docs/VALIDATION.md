@@ -876,3 +876,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Increased wheel zoom sensitivity and added stronger trackpad-pinch sensitivity, normalized wheel delta units and bounded individual zoom steps. Updated viewer hints.
 - TypeScript check and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Mac trackpad behavior was not exercised.
+
+### Quieter ticket details and compact identity column (2026-10-20)
+
+- Muted description and acceptance-criteria accordion colors; moved Analyze with AI into the ticket header actions and kept errors in the body.
+- Bounded the active-table ID/type content width, shortened the type sort label and removed extra minimum widths from identity sort buttons. Long type badges truncate with their existing full-text tooltip.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser visual behavior was not exercised.

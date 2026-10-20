@@ -6284,19 +6284,19 @@ summary > svg {
 }
 
 .ticket-section.ticket-section-acceptance {
-  border-color: #e7b6bc;
+  border-color: #ded8da;
 }
 .ticket-section-acceptance > summary {
-  color: #813b47;
-  background: #fff1f2;
+  color: #62585d;
+  background: #f7f5f6;
 }
 .ticket-section-acceptance[open] > summary {
-  color: #813b47;
-  background: #fce4e7;
-  border-bottom-color: #e7b6bc;
+  color: #62585d;
+  background: #eeeaec;
+  border-bottom-color: #ded8da;
 }
 .ticket-section-acceptance > summary:hover {
-  background: #f8d9de;
+  background: #e7e2e5;
 }
 
 .ticket-section.ticket-section-prs {
@@ -6817,9 +6817,7 @@ summary > svg {
   flex-direction: column;
   min-height: 0;
 }
-.ticket-lookup-dialog.is-detail
-  .ticket-detail-main
-  > :is(.ticket-card-header, .ticket-analysis-action) {
+.ticket-lookup-dialog.is-detail .ticket-detail-main > .ticket-card-header {
   flex: 0 0 auto;
 }
 .ticket-lookup-dialog.is-detail .ticket-card-body {
@@ -6927,9 +6925,6 @@ summary > svg {
   margin: 0 auto 12px;
 }
 
-.ticket-analysis-action {
-  margin-top: 12px;
-}
 .ticket-analyze-button {
   display: inline-flex;
   align-items: center;
@@ -7220,4 +7215,55 @@ summary > svg {
 .ticket-add-block button {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.ticket-section.ticket-section-description {
+  border-color: #dce0e3;
+}
+.ticket-section-description > summary {
+  color: #505c65;
+  background: #f5f6f7;
+}
+.ticket-section-description[open] > summary {
+  background: #eceff1;
+  border-bottom-color: #dce0e3;
+}
+.ticket-section-description > summary:hover {
+  background: #e5e9ec;
+}
+.ticket-card-actions .ticket-analyze-button {
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Identity has a bounded content width; long task types must not widen it. */
+.ticket-active-table > table > thead > tr > th:nth-child(2),
+.ticket-active-table
+  > table
+  > tbody
+  > tr:not(.ticket-preview-row)
+  > td:nth-child(2) {
+  width: 1%;
+  min-width: 80px;
+  max-width: 112px;
+}
+.ticket-active-table .ticket-id-type {
+  width: max-content;
+  max-width: 112px;
+}
+.ticket-active-table .ticket-id-type > .ticket-type-badge {
+  max-width: 112px;
+}
+.ticket-active-table .ticket-identity-heading {
+  width: max-content;
+  gap: 6px;
+}
+.ticket-active-table
+  > table
+  > thead
+  .ticket-identity-heading
+  > .ticket-column-sort {
+  min-width: 0;
+  flex: 0 0 auto;
 }

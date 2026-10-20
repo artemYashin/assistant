@@ -1489,7 +1489,7 @@ function Tickets({
                   <th aria-sort={columnSort(["id", "type"])}>
                     <div className="ticket-heading-sorts ticket-identity-heading">
                       {sortButton("id", "ID")}
-                      {sortButton("type", "Тип задачи")}
+                      {sortButton("type", "Тип")}
                     </div>
                   </th>
                   <th aria-sort={columnSort(["title"])}>

@@ -357,7 +357,7 @@ export function TicketCard({ reference }: { reference: string }) {
                 link
               />
             </div>
-            <nav className="ticket-card-actions" aria-label="Ссылки тикета">
+            <nav className="ticket-card-actions" aria-label="Действия тикета">
               <Link to={ticketPath(card.id, card.source)}>
                 <ArrowUpRight size={15} />
                 Перейти к тикету
@@ -403,42 +403,40 @@ export function TicketCard({ reference }: { reference: string }) {
                   {removing ? "Удаляю…" : "Удалить"}
                 </button>
               )}
+              <button
+                type="button"
+                className="ticket-analyze-button"
+                disabled={analyzing}
+                onClick={async () => {
+                  if (analysisPending.current) return;
+                  analysisPending.current = true;
+                  setAnalyzing(true);
+                  setAnalysisError("");
+                  try {
+                    await openTicketAnalysis(reference);
+                  } catch (e: any) {
+                    setAnalysisError(e.message);
+                  } finally {
+                    analysisPending.current = false;
+                    setAnalyzing(false);
+                  }
+                }}
+              >
+                {analyzing ? (
+                  <LoaderCircle size={17} className="spin" />
+                ) : (
+                  <Sparkles size={17} />
+                )}
+                Analyze with AI
+              </button>
             </nav>
           </header>
-          <div className="ticket-analysis-action">
-            <button
-              type="button"
-              className="ticket-analyze-button"
-              disabled={analyzing}
-              onClick={async () => {
-                if (analysisPending.current) return;
-                analysisPending.current = true;
-                setAnalyzing(true);
-                setAnalysisError("");
-                try {
-                  await openTicketAnalysis(reference);
-                } catch (e: any) {
-                  setAnalysisError(e.message);
-                } finally {
-                  analysisPending.current = false;
-                  setAnalyzing(false);
-                }
-              }}
-            >
-              {analyzing ? (
-                <LoaderCircle size={17} className="spin" />
-              ) : (
-                <Sparkles size={17} />
-              )}
-              Analyze with AI
-            </button>
+          <div className="ticket-card-body">
             {analysisError && (
               <p className="error" role="alert">
                 {analysisError}
               </p>
             )}
-          </div>
-          <div className="ticket-card-body">
             {removed && (
               <p className="success-note" role="status">
                 Тикет перемещён в локальную корзину на 30 дней. В Azure ничего
@@ -463,7 +461,7 @@ export function TicketCard({ reference }: { reference: string }) {
               .filter(([key]) => f[key])
               .map(([key, label]) => (
                 <details
-                  className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : ""}`}
+                  className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : key === "System.Description" ? " ticket-section-description" : ""}`}
                   key={key}
                   open
                 >
