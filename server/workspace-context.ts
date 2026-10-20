@@ -27,7 +27,7 @@ export function workspaceContext(store: Store, context: Context, offset = 0) {
       offset + 10
         ? offset + 10
         : null,
-    note: "Developers include inherited general/client names and current-project names. Developer assignments are local; repository mode required means required-reviewer-only, all means all PRs. No secrets included.",
+    note: "Developers are manually added to this project only; there is no general/client inheritance. Developer assignments are local; repository mode required means required-reviewer-only, all means all PRs. No secrets included.",
   };
 }
 export function workspaceContextTool(
@@ -37,7 +37,7 @@ export function workspaceContextTool(
 ) {
   return defineTool("get_workspace_context", {
     description:
-      "Read Customers and Projects UI data: registered contexts, manually configured developers (including inherited), repository and PR synchronization mode. Defaults to current context; specify a known client/project to inspect another. Paginate with nextOffset until null for complete lists. Does not change selected context or settings.",
+      "Read Customers and Projects UI data: registered contexts, manually configured project developers, repository and PR synchronization mode. Defaults to current context; specify a known client/project to inspect another. Paginate with nextOffset until null for complete lists. Does not change selected context or settings.",
     parameters: z.object({
       client: z.string().max(200).optional(),
       project: z.string().max(200).optional(),

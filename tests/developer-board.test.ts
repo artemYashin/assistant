@@ -22,7 +22,7 @@ test("developer notes stay scoped and completed tickets come from trash", async 
   const context = { client: "Customer", project: "One" },
     other = { ...context, project: "Two" };
   const people = new LocalDevelopers(store);
-  const global = people.add(["Global Dev"], { client: "", project: "" })[0];
+  const developer = people.add(["Developer"], context)[0];
   const project = people
     .add(["Project Dev"], context)
     .find((person) => person.name === "Project Dev")!;
@@ -42,14 +42,14 @@ test("developer notes stay scoped and completed tickets come from trash", async 
     "X-CSRF-Token": setup.body.csrf,
   };
   await request(app)
-    .put(`/api/developer-board/${global.id}/notes`)
+    .put(`/api/developer-board/${developer.id}/notes`)
     .set(auth)
     .send({ context, notes: "Private project note" })
     .expect(200);
   store.db
     .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
     .run(store.source(), 42, "Ticket", "Active", "", "Bug", "url", null, "now");
-  people.assign(42, [global.id], context);
+  people.assign(42, [developer.id], context);
   store.removeLocalTicket(42);
   const read = await request(app)
     .get("/api/developer-board")
@@ -57,35 +57,61 @@ test("developer notes stay scoped and completed tickets come from trash", async 
     .set(auth)
     .expect(200);
   assert.equal(
-    read.body.developers.find((person: any) => person.id === global.id).notes,
+    read.body.developers.find((person: any) => person.id === developer.id)
+      .notes,
     "Private project note",
   );
   assert.equal(read.body.completedStates, undefined);
   assert.equal(read.body.showDeleted, true);
   assert.equal(read.body.statusGroups.Prod, "done");
   assert.equal(read.body.statusGroups["Ready for Testing"], "review");
-  const groups = {Prod: "done", UAT: "review", Closed: "active"};
-  await request(app).put("/api/developer-board/status-groups").set(auth)
-    .send({context, source:store.source(), statusGroups:groups, showDeleted:false}).expect(200);
-  const configured = await request(app).get("/api/developer-board").query(context).set(auth).expect(200);
+  const groups = { Prod: "done", UAT: "review", Closed: "active" };
+  await request(app)
+    .put("/api/developer-board/status-groups")
+    .set(auth)
+    .send({
+      context,
+      source: store.source(),
+      statusGroups: groups,
+      showDeleted: false,
+    })
+    .expect(200);
+  const configured = await request(app)
+    .get("/api/developer-board")
+    .query(context)
+    .set(auth)
+    .expect(200);
   assert.deepEqual(configured.body.statusGroups, groups);
   assert.equal(configured.body.showDeleted, false);
   assert.equal(configured.body.completedTickets[0].id, 42); // Visibility never deletes trash.
-  await request(app).put("/api/developer-board/status-groups").set(auth)
-    .send({context, source:"other", statusGroups:groups}).expect(409);
-  await request(app).put("/api/developer-board/status-groups").set(auth)
-    .send({context, source:store.source(), statusGroups:{Prod:"invalid"}}).expect(400);
-  await request(app).put("/api/developer-board/status-groups").set(headers)
-    .send({context, source:store.source(), statusGroups:groups}).expect(401);
+  await request(app)
+    .put("/api/developer-board/status-groups")
+    .set(auth)
+    .send({ context, source: "other", statusGroups: groups })
+    .expect(409);
+  await request(app)
+    .put("/api/developer-board/status-groups")
+    .set(auth)
+    .send({
+      context,
+      source: store.source(),
+      statusGroups: { Prod: "invalid" },
+    })
+    .expect(400);
+  await request(app)
+    .put("/api/developer-board/status-groups")
+    .set(headers)
+    .send({ context, source: store.source(), statusGroups: groups })
+    .expect(401);
 
   assert.equal(read.body.completedTickets[0].id, 42);
-  assert.equal(read.body.completedTickets[0].developers[0].id, global.id);
+  assert.equal(read.body.completedTickets[0].developers[0].id, developer.id);
   const second = await request(app)
     .get("/api/developer-board")
     .query(other)
     .set(auth)
     .expect(200);
-  assert.equal(second.body.developers[0].notes, "");
+  assert.deepEqual(second.body.developers, []);
   assert.equal(second.body.statusGroups.Closed, undefined);
   assert.equal(second.body.showDeleted, true);
   store.restoreLocalTicket(42);
@@ -101,7 +127,7 @@ test("developer notes stay scoped and completed tickets come from trash", async 
     .send({ context: other, notes: "Wrong scope" })
     .expect(404);
   await request(app)
-    .put(`/api/developer-board/${global.id}/notes`)
+    .put(`/api/developer-board/${developer.id}/notes`)
     .set(headers)
     .send({ context, notes: "Unauthorized" })
     .expect(401);

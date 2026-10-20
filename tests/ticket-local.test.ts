@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
+import { LocalDevelopers } from "../server/local-developers.js";
 import { createApp } from "../server/app.js";
 test("local assignment and removal never write Azure and survive import", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-local-")),
@@ -74,13 +75,12 @@ test("local assignment and removal never write Azure and survive import", async 
   await request(app)
     .put("/api/tickets/42/developer")
     .set(auth)
-    .send({ developerId: "forged" })
-    .expect(400);
-  await request(app)
-    .put("/api/tickets/42/developer")
-    .set(auth)
     .send({ developerId: "developer" })
-    .expect(200);
+    .expect(410);
+  const context = { client: "Customer", project: "Project" };
+  const people = new LocalDevelopers(store);
+  const developer = people.add(["Dev"], context)[0];
+  people.assign(42, [developer.id], context);
   assert.equal(calls.length, before);
   await connectors.syncTickets();
   let rows = (await request(app).get("/api/tickets").set(auth).expect(200))

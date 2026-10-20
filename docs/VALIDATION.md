@@ -761,3 +761,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Azure System.Tags are cached separately from editable local tags, refreshed on import/sync, exposed in summaries and searchable/filterable/sortable in active/trash tables. No Azure-tag write tool or UI is exposed. Cache follows trash restore/purge lifecycle.
 - Developer tabs are Active, In review and Completed. Project/source-scoped status mappings and trash visibility live under Customers & Projects → Developers in a collapsible settings panel. Directory form and scrollable roster use a compact responsive layout with initials avatars and icon actions.
 - Pre-push validation: all 192 tests and production build passed. Added coverage for tag import/sync/search/isolation/trash and status grouping/settings validation. Vite retains its large-chunk warning. Browser visual behavior and live Azure access were not exercised.
+
+### Project developer list and ticket filters (2026-10-20)
+
+- Developer board uses full-width collapsible rows with horizontal status tabs and a separate notes dialog. Removed fixed card minimum height.
+- Developer directory and chat context expose only manually added current-project developers. General/client inheritance and new non-project additions are disabled. Existing assignments remain readable/removable; the legacy Azure assignment endpoint returns 410 before mutation.
+- Active/trash ticket filters separate Azure assignees from local assignments; compact controls and the leading icon/text reset clear all filters, including Azure tags.
+- Pre-push validation: all 192 tests and production build passed. Scope tests cover legacy general/client isolation, rejected non-project additions and project-only chat context. Vite retains its large-chunk warning. Browser visuals and live Azure were not exercised.

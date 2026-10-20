@@ -17,8 +17,12 @@ test("workspace context exposes scoped developers, registry and repository setti
   store.addContext(context);
   store.setSecret("azure.pat", "TOP-SECRET");
   const devs = new LocalDevelopers(store);
-  devs.add(["General"], { client: "", project: "" });
-  devs.add(["Client Dev"], { client: "Client", project: "" });
+  store.db
+    .prepare("INSERT INTO local_developers VALUES (?,?,?,?,1)")
+    .run("old-global", "General", "", "");
+  store.db
+    .prepare("INSERT INTO local_developers VALUES (?,?,?,?,1)")
+    .run("old-client", "Client Dev", "Client", "");
   devs.add(["Project Dev"], context);
   devs.add(["Other Dev"], { client: "Other", project: "Other" });
   store.db
@@ -27,11 +31,7 @@ test("workspace context exposes scoped developers, registry and repository setti
     )
     .run();
   const data = workspaceContext(store, context);
-  assert.deepEqual(data.developers.map((d) => d.name).sort(), [
-    "Client Dev",
-    "General",
-    "Project Dev",
-  ]);
+  assert.deepEqual(data.developers.map((d) => d.name).sort(), ["Project Dev"]);
   assert.equal((data.repositories[0] as any).repository, "Repo");
   assert.ok(data.contexts.some((c) => c.project === "Project"));
   assert.ok(!JSON.stringify(data).includes("TOP-SECRET"));
@@ -42,5 +42,5 @@ test("workspace context exposes scoped developers, registry and repository setti
   const first = workspaceContext(store, context);
   assert.equal(first.developers.length, 10);
   assert.equal(first.nextOffset, 10);
-  assert.equal(workspaceContext(store, context, 20).developers.length, 8);
+  assert.equal(workspaceContext(store, context, 20).developers.length, 6);
 });

@@ -1,3 +1,4 @@
+import { RotateCcw } from "lucide-react";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { useSearchParams } from "react-router-dom";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
@@ -72,6 +73,7 @@ export function TicketTrash({
   const [types, setTypes] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
+  const [localFilter, setLocalFilter] = useState<string[]>([]);
   const [sort, setSort] = useState({ key: "removedAt", descending: true });
   const localName = (t: any) =>
     t.developers?.map((d: any) => d.name).join(", ") || t.developer_name || "";
@@ -88,7 +90,6 @@ export function TicketTrash({
       ),
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], "ru"));
-  const selectedPeople = people.map((p) => JSON.parse(p));
   const filtered = items
     .filter((t) => {
       const q = query.trim().toLocaleLowerCase();
@@ -119,13 +120,12 @@ export function TicketTrash({
           )) &&
         (!types.length || types.includes(t.type || "")) &&
         (!states.length || states.includes(t.state || "")) &&
-        (!people.length ||
-          selectedPeople.some(([kind, value]) =>
-            kind === "azure"
-              ? (t.assigned || "") === value
-              : value
-                ? (t.developers || []).some((d: any) => d.id === value)
-                : !(t.developers || []).length,
+        (!people.length || people.includes(t.assigned || "")) &&
+        (!localFilter.length ||
+          localFilter.some((id) =>
+            id === ""
+              ? !t.developers?.length
+              : t.developers?.some((d: any) => d.id === id),
           ))
       );
     })
@@ -182,6 +182,32 @@ export function TicketTrash({
         </label>
       </div>
       <div className="ticket-filters">
+        <button
+          className="secondary ticket-filter-reset"
+          title="Сбросить все фильтры и поиск"
+          disabled={
+            !query &&
+            !types.length &&
+            !states.length &&
+            !people.length &&
+            !localFilter.length &&
+            !azureTags.length &&
+            !priorities.length &&
+            !tags.length
+          }
+          onClick={() => {
+            setPriorities([]);
+            setTags([]);
+            setAzureTags([]);
+            setQuery("");
+            setTypes([]);
+            setStates([]);
+            setPeople([]);
+            setLocalFilter([]);
+          }}
+        >
+          <RotateCcw size={15} /> Сбросить
+        </button>
         <MultiSelect
           label="Приоритет"
           placeholder="Все приоритеты"
@@ -237,50 +263,25 @@ export function TicketTrash({
           }))}
         />
         <MultiSelect
-          label="Исполнитель"
+          label="Исполнитель Azure"
           placeholder="Все исполнители"
           value={people}
           onChange={setPeople}
+          options={values("assigned").map((name) => ({
+            value: name,
+            label: name || "Не назначен в Azure",
+          }))}
+        />
+        <MultiSelect
+          label="Локальное поручение"
+          placeholder="Все разработчики"
+          value={localFilter}
+          onChange={setLocalFilter}
           options={[
-            ...values("assigned").map((name) => ({
-              value: JSON.stringify(["azure", name]),
-              label: name || "Не назначен в Azure",
-              group: "Назначен в Azure",
-            })),
-            {
-              value: JSON.stringify(["local", ""]),
-              label: "Нет локального поручения",
-              group: "Локальное поручение",
-            },
-            ...localOptions.map(([id, name]) => ({
-              value: JSON.stringify(["local", id]),
-              label: name,
-              group: "Локальное поручение",
-            })),
+            { value: "", label: "Нет поручения" },
+            ...localOptions.map(([id, name]) => ({ value: id, label: name })),
           ]}
         />
-        <button
-          className="secondary"
-          disabled={
-            !query &&
-            !types.length &&
-            !states.length &&
-            !people.length &&
-            !priorities.length &&
-            !tags.length
-          }
-          onClick={() => {
-            setPriorities([]);
-            setTags([]);
-            setAzureTags([]);
-            setQuery("");
-            setTypes([]);
-            setStates([]);
-            setPeople([]);
-          }}
-        >
-          Сбросить фильтры
-        </button>
       </div>
       {error && (
         <p role="alert" className="error">

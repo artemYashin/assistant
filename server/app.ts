@@ -753,42 +753,11 @@ export function createApp(
     const id = z.coerce.number().int().positive().parse(req.params.id);
     res.json(store.removeLocalTicket(id));
   });
-  app.put("/api/tickets/:id/developer", (req, res) => {
-    const id = z.coerce.number().int().positive().parse(req.params.id),
-      source = store.source();
-    const { developerId } = z
-      .object({ developerId: text })
-      .strict()
-      .parse(req.body);
-    if (
-      !store.db
-        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-        .get(source, id)
-    )
-      throw new AppError(404, "Тикет не найден");
-    const developer = store
-      .get<{ id: string; name: string }[]>("developers:" + source, [])
-      .find((d) => d.id === developerId);
-    if (developerId && !developer)
-      throw new AppError(400, "Найдите разработчика через поиск Azure");
-    store.db
-      .prepare(
-        "INSERT INTO ticket_local(source,id,developer_id,developer_name) VALUES (?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET developer_id=excluded.developer_id,developer_name=excluded.developer_name",
-      )
-      .run(source, id, developerId, developer?.name || "");
-    // Compatibility for older UI clients: mirror their one-person assignment locally.
-    store.db
-      .prepare("DELETE FROM ticket_developers WHERE source=? AND ticket_id=?")
-      .run(source, id);
-    if (developer) {
-      const added = localDevelopers
-        .add([developer.name], { client: "", project: "" })
-        .find((d) => d.name === developer.name)!;
-      store.db
-        .prepare("INSERT INTO ticket_developers VALUES (?,?,?)")
-        .run(source, id, added.id);
-    }
-    res.json({ ok: true });
+  app.put("/api/tickets/:id/developer", (_req, _res) => {
+    throw new AppError(
+      410,
+      "Назначение из Azure больше не поддерживается. Выберите разработчиков из локального списка проекта.",
+    );
   });
   app.get("/api/tickets/options", async (_req, res) =>
     res.json(await connectors.ticketOptions()),

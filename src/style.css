@@ -5300,9 +5300,9 @@ summary > svg {
 .developer-board-toolbar > input {
   width: min(100%, 300px);
 }
-.developer-board-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+.developer-board-list {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   align-items: stretch;
 }
@@ -5341,14 +5341,13 @@ summary > svg {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 300px;
-  padding: 18px;
+  padding: 14px 18px;
 }
 .developer-board-card > header {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 .developer-board-card h2 {
   margin: 0 0 3px;
@@ -5408,9 +5407,7 @@ summary > svg {
   font-size: 12px;
 }
 .developer-board-notes {
-  margin-top: auto;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
+  min-width: 0;
 }
 .developer-board-notes textarea {
   width: 100%;
@@ -5644,7 +5641,7 @@ summary > svg {
 }
 .developer-directory-editor {
   display: grid;
-  grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr);
+  grid-template-columns: minmax(220px, 0.8fr) minmax(280px, 1.2fr);
   gap: 20px;
   align-items: start;
 }
@@ -5701,4 +5698,92 @@ summary > svg {
   .developer-directory-editor {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.developer-board-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  user-select: none;
+}
+.developer-board-toggle > svg {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+.developer-board-toggle > svg.is-expanded {
+  transform: rotate(0deg);
+}
+.developer-board-person {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.developer-board-name {
+  font-size: 17px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.developer-notes-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.developer-board-content {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 14px;
+}
+.developer-board-content[hidden] {
+  display: none;
+}
+@media (max-width: 480px) {
+  .developer-notes-button > span {
+    display: none;
+  }
+  .developer-board-card {
+    padding: 10px 12px;
+  }
+}
+
+.ticket-filters {
+  gap: 8px;
+  margin-top: 12px;
+}
+.ticket-filters > .multi-select {
+  flex: 1 1 125px;
+  min-width: 120px;
+}
+.ticket-filters .multi-select-label {
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+.ticket-filters .multi-select-trigger {
+  padding: 8px;
+  gap: 5px;
+  font-size: 12px;
+}
+.ticket-filters .multi-select-panel {
+  width: max(100%, 240px);
+  max-width: calc(100vw - 40px);
+}
+.ticket-filter-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 8px 10px;
+}
+.ticket-filters > .multi-select:last-child .multi-select-panel {
+  left: auto;
+  right: 0;
 }

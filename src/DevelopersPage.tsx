@@ -2,7 +2,7 @@ import {
   developerGroup,
   type DeveloperStatusGroups,
 } from "./developer-status.js";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -11,9 +11,11 @@ import {
   Save,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   CheckCheck,
   Ticket,
 } from "lucide-react";
+import { PrInfoPopup } from "./PrInfoPopup.js";
 import { api } from "./api.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { StatusBadge } from "./TicketControls.js";
@@ -122,7 +124,7 @@ export function DevelopersPage({
           ? "Тикеты из корзины видны в завершённых."
           : "Тикеты из корзины скрыты."}
       </p>
-      <div className="developer-board-grid">
+      <div className="developer-board-list">
         {data?.developers
           .filter((person) =>
             person.name
@@ -177,6 +179,8 @@ function DeveloperCard({
   groups: DeveloperStatusGroups;
   settings: any;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const contentId = useId();
   const [tab, setTab] = useState("active"),
     [page, setPage] = useState(0);
   const [notes, setNotes] = useState(person.notes),
@@ -219,145 +223,171 @@ function DeveloperCard({
   return (
     <article className="panel developer-board-card">
       <header>
-        <InitialsAvatar name={person.name} />
-        <div>
-          <h2>{person.name}</h2>
-          <small className="muted">
-            {tickets.length + completedTickets.length} локальных поручений
-          </small>
-        </div>
-      </header>
-      <nav className="pr-page-tabs" aria-label={`Тикеты: ${person.name}`}>
         <button
           type="button"
-          aria-pressed={tab === "active"}
-          onClick={() => {
-            setTab("active");
-            setPage(0);
-          }}
+          className="developer-board-toggle"
+          aria-expanded={expanded}
+          aria-controls={contentId}
+          onClick={() => setExpanded((value) => !value)}
         >
-          <Ticket size={15} />
-          Активные · {active.length}
+          <ChevronDown
+            size={18}
+            className={expanded ? "is-expanded" : ""}
+            aria-hidden="true"
+          />
+          <InitialsAvatar name={person.name} />
+          <span className="developer-board-person">
+            <span className="developer-board-name">{person.name}</span>
+            <small className="muted">
+              {tickets.length + completedTickets.length} локальных поручений
+            </small>
+          </span>
         </button>
-        <button
-          type="button"
-          aria-pressed={tab === "review"}
-          onClick={() => {
-            setTab("review");
-            setPage(0);
-          }}
+        <PrInfoPopup
+          title={`Внутренние заметки · ${person.name}`}
+          trigger={
+            <>
+              <NotebookPen size={17} />
+              <span>Заметки{notes !== saved ? " •" : ""}</span>
+            </>
+          }
+          className="secondary developer-notes-button"
         >
-          <ClipboardCheck size={15} /> На проверке · {review.length}
-        </button>
-        <button
-          type="button"
-          aria-pressed={tab === "done"}
-          onClick={() => {
-            setTab("done");
-            setPage(0);
-          }}
-        >
-          <CheckCheck size={15} />
-          Завершённые · {done.length}
-        </button>
-      </nav>
-      <div className="developer-board-tickets">
-        {list.slice(current * 5, current * 5 + 5).map((ticket) => (
-          <div
-            className="developer-board-ticket"
-            key={`${ticket.source}:${ticket.id}`}
-          >
-            <Link
-              to={
-                ticket.removedAt !== undefined
-                  ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id), source: ticket.source })}`
-                  : ticketPath(ticket.id, ticket.source)
-              }
-              title={ticket.title}
+          <div className="developer-board-notes">
+            <textarea
+              aria-label={`Заметки: ${person.name}`}
+              rows={4}
+              maxLength={20000}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              disabled={busy}
+              placeholder="Что важно помнить об этом разработчике…"
+            />
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy || notes === saved}
+              onClick={() => void save()}
             >
-              #{ticket.id} · {ticket.title}
-            </Link>
-            <div>
-              <StatusBadge
-                state={ticket.type}
-                kind="type"
-                colors={settings?.typeColors}
-              />
-              <StatusBadge
-                state={ticket.state}
-                colors={settings?.statusColors}
-              />
-              <span className="badge">P{ticket.priority ?? 1}</span>
-            </div>
+              <Save size={15} />
+              {busy ? "Сохранение…" : "Сохранить заметки"}
+            </button>
+            <small className="muted">
+              Только локально, в рамках этого проекта.
+            </small>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
           </div>
-        ))}
-        {!list.length && (
-          <p className="muted">
-            {tab === "active"
-              ? "Нет активных поручений"
-              : tab === "review"
-                ? "Нет поручений на проверке"
-                : "Нет завершённых поручений"}
-          </p>
+        </PrInfoPopup>
+      </header>
+      <div
+        id={contentId}
+        hidden={!expanded}
+        className="developer-board-content"
+      >
+        <nav className="pr-page-tabs" aria-label={`Тикеты: ${person.name}`}>
+          <button
+            type="button"
+            aria-pressed={tab === "active"}
+            onClick={() => {
+              setTab("active");
+              setPage(0);
+            }}
+          >
+            <Ticket size={15} />
+            Активные · {active.length}
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === "review"}
+            onClick={() => {
+              setTab("review");
+              setPage(0);
+            }}
+          >
+            <ClipboardCheck size={15} /> На проверке · {review.length}
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === "done"}
+            onClick={() => {
+              setTab("done");
+              setPage(0);
+            }}
+          >
+            <CheckCheck size={15} />
+            Завершённые · {done.length}
+          </button>
+        </nav>
+        <div className="developer-board-tickets">
+          {list.slice(current * 5, current * 5 + 5).map((ticket) => (
+            <div
+              className="developer-board-ticket"
+              key={`${ticket.source}:${ticket.id}`}
+            >
+              <Link
+                to={
+                  ticket.removedAt !== undefined
+                    ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id), source: ticket.source })}`
+                    : ticketPath(ticket.id, ticket.source)
+                }
+                title={ticket.title}
+              >
+                #{ticket.id} · {ticket.title}
+              </Link>
+              <div>
+                <StatusBadge
+                  state={ticket.type}
+                  kind="type"
+                  colors={settings?.typeColors}
+                />
+                <StatusBadge
+                  state={ticket.state}
+                  colors={settings?.statusColors}
+                />
+                <span className="badge">P{ticket.priority ?? 1}</span>
+              </div>
+            </div>
+          ))}
+          {!list.length && (
+            <p className="muted">
+              {tab === "active"
+                ? "Нет активных поручений"
+                : tab === "review"
+                  ? "Нет поручений на проверке"
+                  : "Нет завершённых поручений"}
+            </p>
+          )}
+        </div>
+        {pages > 1 && (
+          <div className="developer-board-pagination">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={`Предыдущие тикеты: ${person.name}`}
+              disabled={!current}
+              onClick={() => setPage(current - 1)}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span>
+              {current + 1} / {pages}
+            </span>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={`Следующие тикеты: ${person.name}`}
+              disabled={current === pages - 1}
+              onClick={() => setPage(current + 1)}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         )}
       </div>
-      {pages > 1 && (
-        <div className="developer-board-pagination">
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={`Предыдущие тикеты: ${person.name}`}
-            disabled={!current}
-            onClick={() => setPage(current - 1)}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span>
-            {current + 1} / {pages}
-          </span>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={`Следующие тикеты: ${person.name}`}
-            disabled={current === pages - 1}
-            onClick={() => setPage(current + 1)}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
-      <details className="developer-board-notes">
-        <summary>
-          <NotebookPen size={16} />
-          Внутренние заметки{notes !== saved ? " · не сохранены" : ""}
-        </summary>
-        <textarea
-          aria-label={`Заметки: ${person.name}`}
-          rows={4}
-          maxLength={20000}
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          disabled={busy}
-          placeholder="Что важно помнить об этом разработчике…"
-        />
-        <button
-          type="button"
-          className="secondary"
-          disabled={busy || notes === saved}
-          onClick={() => void save()}
-        >
-          <Save size={15} />
-          {busy ? "Сохранение…" : "Сохранить заметки"}
-        </button>
-        <small className="muted">
-          Только локально, в рамках этого проекта.
-        </small>
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-      </details>
     </article>
   );
 }

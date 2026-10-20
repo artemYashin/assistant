@@ -3,25 +3,18 @@ import { ProjectDeveloperStatusSettings } from "./DeveloperStatusSettings.js";
 import { Users, Settings2, Plus, Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
-import { SingleSelect } from "./SingleSelect.js";
 export function DeveloperDirectory({
   context,
 }: {
   context: { client: string; project: string };
 }) {
-  const [scope, setScope] = useState(
-      context.project ? "project" : context.client ? "client" : "general",
-    ),
-    [items, setItems] = useState<any[]>([]),
+  const [items, setItems] = useState<any[]>([]),
     [names, setNames] = useState("");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [revision, setRevision] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const target = {
-    client: scope === "general" ? "" : context.client,
-    project: scope === "project" ? context.project : "",
-  };
+  const target = context;
   const query = new URLSearchParams(target).toString();
   useEffect(() => {
     let live = true;
@@ -49,37 +42,22 @@ export function DeveloperDirectory({
       setBusy(false);
     }
   }
-  const own = items.filter(
-    (p) => p.client === target.client && p.project === target.project,
-  );
-  const inherited = items.filter(
-    (p) => p.client !== target.client || p.project !== target.project,
-  );
+  const own = items;
+  if (!context.client || !context.project)
+    return (
+      <p className="muted">
+        Выберите заказчика и проект, чтобы добавить разработчиков.
+      </p>
+    );
   return (
     <div className="developer-directory">
       <section className="developer-directory-panel">
         <h3>
           <Users size={18} /> Справочник разработчиков
         </h3>
-        <SingleSelect
-          label="Область списка разработчиков"
-          value={scope}
-          onChange={setScope}
-          disabled={busy}
-          options={[
-            { value: "general", label: "Общий список" },
-            ...(context.client
-              ? [{ value: "client", label: `Заказчик: ${context.client}` }]
-              : []),
-            ...(context.project
-              ? [{ value: "project", label: `Проект: ${context.project}` }]
-              : []),
-          ]}
-        />
         <p className="muted">
-          Одна строка — одно имя. Это локальный справочник, без привязки к
-          Azure. Общие имена доступны всем проектам, имена заказчика — его
-          проектам.
+          Разработчики проекта {context.project}. Одна строка — одно имя. Список
+          добавляется вручную и хранится только локально.
         </p>
         <div className="developer-directory-editor">
           <form
@@ -113,7 +91,7 @@ export function DeveloperDirectory({
             </button>
           </form>
           <section className="developer-directory-roster">
-            <h4>В выбранной области · {own.length}</h4>
+            <h4>В проекте · {own.length}</h4>
             <div className="developer-directory-list">
               {own.map((person) => (
                 <DeveloperRow
@@ -125,7 +103,7 @@ export function DeveloperDirectory({
               ))}
             </div>
             {!own.length && (
-              <p className="muted">В этой области пока нет разработчиков.</p>
+              <p className="muted">В проекте пока нет разработчиков.</p>
             )}
           </section>
         </div>
@@ -133,22 +111,6 @@ export function DeveloperDirectory({
           <p className="error" role="alert">
             {error}
           </p>
-        )}
-        {!!inherited.length && (
-          <details>
-            <summary>
-              <Users size={17} aria-hidden="true" />
-              Доступны из общей области и заказчика · {inherited.length}
-            </summary>
-            <div className="developer-inherited-list">
-              {inherited.map((p) => (
-                <span key={p.id}>
-                  <InitialsAvatar name={p.name} />
-                  {p.name}
-                </span>
-              ))}
-            </div>
-          </details>
         )}
         <small className="muted">
           «Убрать» скрывает имя из новых назначений. Существующие поручения

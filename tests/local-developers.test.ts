@@ -37,11 +37,24 @@ test("local developers support scoped multi-assignment, renaming and retired nam
   const store = fixture(t),
     service = new LocalDevelopers(store);
   ticket(store);
-  service.add(["Global"], { client: "", project: "" });
-  service.add(["Customer dev"], { ...context, project: "" });
-  service.add(["Project dev"], context);
+  assert.throws(
+    () => service.add(["Global"], { client: "", project: "" }),
+    /проект/,
+  );
+  assert.throws(
+    () => service.add(["Customer dev"], { ...context, project: "" }),
+    /проект/,
+  );
+  store.db
+    .prepare("INSERT INTO local_developers VALUES (?,?,?,?,1)")
+    .run("legacy-global", "Global", "", "");
+  service.add(["Project dev", "Anna", "Boris"], context);
+  assert.throws(
+    () => service.assign(42, ["legacy-global"], context),
+    /недоступен/,
+  );
   assert.equal(service.list(context).length, 3);
-  assert.equal(service.list({ client: "Other", project: "Other" }).length, 1);
+  assert.equal(service.list({ client: "Other", project: "Other" }).length, 0);
   const ids = service.list(context).map((d) => d.id);
   assert.equal(service.assign(42, ids, context).developers.length, 3);
   assert.equal(service.assign(42, ids, context).azureChanged, false);

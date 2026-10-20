@@ -6,9 +6,10 @@ import { defineTool } from "@github/copilot-sdk";
 export class LocalDevelopers {
   constructor(private store: Store) {}
   list(context: Context) {
+    if (!context.client || !context.project) return [];
     return this.store.db
       .prepare(
-        "SELECT id,name,client,project FROM local_developers WHERE active=1 AND ((client='' AND project='') OR (client=? AND (project='' OR project=?))) ORDER BY name COLLATE NOCASE,id",
+        "SELECT id,name,client,project FROM local_developers WHERE active=1 AND client=? AND project=? ORDER BY name COLLATE NOCASE,id",
       )
       .all(context.client, context.project) as {
       id: string;
@@ -23,8 +24,8 @@ export class LocalDevelopers {
       .min(1)
       .max(100)
       .parse(names);
-    if (context.project && !context.client)
-      throw new AppError(400, "Выберите заказчика");
+    if (!context.client || !context.project)
+      throw new AppError(400, "Выберите заказчика и проект");
     return this.store.db.transaction(() => {
       for (const name of parsed) {
         const existing = this.store.db
@@ -143,7 +144,7 @@ export function localDeveloperTools(
   return [
     defineTool("list_local_developers", {
       description:
-        "Read locally configured developers available to current client/project. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
+        "Read locally configured developers manually added to the current project only. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
       parameters: z.object({
         ticketId: z.number().int().positive().optional(),
       }),

@@ -1,3 +1,4 @@
+import { RotateCcw } from "lucide-react";
 import { ChatTools } from "./ChatTools.js";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { DevelopersPage } from "./DevelopersPage.js";
@@ -1264,6 +1265,7 @@ function Tickets({
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [stateFilter, setStateFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
+  const [localFilter, setLocalFilter] = useState<string[]>([]);
   const values = (key: string) =>
     [...new Set<string>(tickets.map((t: any) => t[key] || ""))].sort((a, b) =>
       a.localeCompare(b, "ru"),
@@ -1292,7 +1294,6 @@ function Tickets({
         .toLocaleLowerCase()
         .includes(query.trim().toLocaleLowerCase()),
     );
-    const people = assigneeFilter.map((value) => JSON.parse(value));
     return (
       matchesQuery &&
       (!priorityFilter.length ||
@@ -1307,13 +1308,12 @@ function Tickets({
         )) &&
       (!typeFilter.length || typeFilter.includes(t.type || "")) &&
       (!stateFilter.length || stateFilter.includes(t.state || "")) &&
-      (!people.length ||
-        people.some((person) =>
-          person[0] === "azure"
-            ? (t.assigned || "") === person[1]
-            : person[1]
-              ? (t.developers || []).some((d: any) => d.id === person[1])
-              : !(t.developers || []).length,
+      (!assigneeFilter.length || assigneeFilter.includes(t.assigned || "")) &&
+      (!localFilter.length ||
+        localFilter.some((id) =>
+          id === ""
+            ? !t.developers?.length
+            : t.developers?.some((d: any) => d.id === id),
         ))
     );
   });
@@ -1430,6 +1430,34 @@ function Tickets({
         </button>
       </form>
       <div className="ticket-filters">
+        <button
+          className="secondary ticket-filter-reset"
+          title="Сбросить все фильтры и поиск"
+          disabled={
+            !rawTarget &&
+            !priorityFilter.length &&
+            !tagFilter.length &&
+            !typeFilter.length &&
+            !stateFilter.length &&
+            !assigneeFilter.length &&
+            !localFilter.length &&
+            !azureTagFilter.length &&
+            !query
+          }
+          onClick={() => {
+            if (rawTarget) navigate("/tickets");
+            setPriorityFilter([]);
+            setTagFilter([]);
+            setAzureTagFilter([]);
+            setTypeFilter([]);
+            setStateFilter([]);
+            setAssigneeFilter([]);
+            setLocalFilter([]);
+            setQuery("");
+          }}
+        >
+          <RotateCcw size={15} /> Сбросить
+        </button>
         <MultiSelect
           label="Приоритет"
           placeholder="Все приоритеты"
@@ -1496,53 +1524,30 @@ function Tickets({
           }))}
         />
         <MultiSelect
-          label="Исполнитель"
+          label="Исполнитель Azure"
           placeholder="Все исполнители"
           disabled={!!rawTarget}
           value={assigneeFilter}
           onChange={setAssigneeFilter}
+          options={values("assigned").map((name) => ({
+            value: name,
+            label: name || "Не назначен в Azure",
+          }))}
+        />
+        <MultiSelect
+          label="Локальное поручение"
+          placeholder="Все разработчики"
+          disabled={!!rawTarget}
+          value={localFilter}
+          onChange={setLocalFilter}
           options={[
-            ...values("assigned").map((name) => ({
-              value: JSON.stringify(["azure", name]),
-              label: name || "Не назначен в Azure",
-              group: "Назначен в Azure",
-            })),
-            {
-              value: JSON.stringify(["local", ""]),
-              label: "Нет локального поручения",
-              group: "Локальное поручение",
-            },
+            { value: "", label: "Нет поручения" },
             ...localDevelopers.map(([id, name]) => ({
-              value: JSON.stringify(["local", id]),
+              value: id,
               label: name,
-              group: "Локальное поручение",
             })),
           ]}
         />
-        <button
-          className="secondary"
-          disabled={
-            !rawTarget &&
-            !priorityFilter.length &&
-            !tagFilter.length &&
-            !typeFilter.length &&
-            !stateFilter.length &&
-            !assigneeFilter.length &&
-            !query
-          }
-          onClick={() => {
-            if (rawTarget) navigate("/tickets");
-            setPriorityFilter([]);
-            setTagFilter([]);
-            setAzureTagFilter([]);
-            setTypeFilter([]);
-            setStateFilter([]);
-            setAssigneeFilter([]);
-            setQuery("");
-          }}
-        >
-          Сбросить фильтры
-        </button>
       </div>
       <div className="ticket-export-bar">
         <div className="ticket-display-summary">
@@ -1756,7 +1761,7 @@ function Tickets({
           title={tickets.length ? "Ничего не найдено" : "Трекер пока пуст"}
           description={
             tickets.length
-              ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить фильтры»."
+              ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить»."
               : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
           }
         />
