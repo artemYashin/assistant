@@ -12,13 +12,22 @@ export function TicketSectionScroll({
   const content = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | null>(null);
   const resizeDrag = useRef<{ y: number; height: number } | null>(null);
-  const resizeTo = (value: number) =>
+  const resizeTo = (value: number) => {
+    const minimum = window.innerHeight * 0.1;
+    // Measure the content, not the manually enlarged viewport: its scrollHeight
+    // cannot become smaller than the fixed height we are trying to remove.
+    const naturalHeight = content.current?.scrollHeight ?? minimum;
+    if (naturalHeight <= minimum && value <= naturalHeight + 2) {
+      setHeight(null);
+      return;
+    }
     setHeight(
       Math.max(
-        window.innerHeight * 0.1,
+        Math.min(minimum, naturalHeight),
         Math.min(window.innerHeight * 0.9, value),
       ),
     );
+  };
   const drag = useRef<{ y: number; top: number } | null>(null);
   const [metrics, setMetrics] = useState({ height: 0, total: 0, top: 0 });
   useEffect(() => {
@@ -148,7 +157,7 @@ export function TicketSectionScroll({
         )}
         aria-valuetext={`${Math.round(metrics.height)} пикселей`}
         tabIndex={0}
-        title="Потяните, чтобы изменить высоту. Двойной клик — сбросить"
+        title="Потяните, чтобы изменить высоту. Двойной клик или Home — высота по содержимому"
         onDoubleClick={() => setHeight(null)}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -159,7 +168,8 @@ export function TicketSectionScroll({
             );
           } else if (event.key === "Home" || event.key === "End") {
             event.preventDefault();
-            resizeTo(window.innerHeight * (event.key === "Home" ? 0.1 : 0.9));
+            if (event.key === "Home") setHeight(null);
+            else resizeTo(window.innerHeight * 0.9);
           } else if (event.key === "Enter") {
             event.preventDefault();
             setHeight(null);

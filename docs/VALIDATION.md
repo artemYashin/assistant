@@ -1062,3 +1062,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Combined input/output into one total-token line, retaining the breakdown in a compact HTML tooltip with explicit token labels, translucent background and blur. Tooltip text no longer scales with the SVG.
 - Reduced axis-label and marker sizes, added axis strokes and moved the Y axis closer to the chart's left edge. The scale is calculated from total tokens.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.
+
+### Restore compact accordion height after resizing (2026-10-21)
+
+- Short ticket sections can shrink back to content height instead of being forced to a 10vh minimum after dragging. Home and double-click restore automatic height; End retains maximum expansion.
+- Whitespace check passed. Tests skipped at the user's explicit request; build and browser interaction were not exercised.
