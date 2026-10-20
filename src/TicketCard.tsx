@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Paperclip,
   Database,
+  Send,
 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
 import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
@@ -35,6 +36,24 @@ export function TicketCard({ reference }: { reference: string }) {
   }, []);
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
+  useEffect(() => {
+    const update = (event: Event) => {
+      const { id, source, comment } = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old?.id === id && old?.source === source
+          ? {
+              ...old,
+              comments: [
+                ...old.comments.filter((c: any) => c.id !== comment.id),
+                comment,
+              ],
+            }
+          : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-comment", update);
+    return () => window.removeEventListener("orbit:ticket-comment", update);
+  }, []);
   useEffect(() => {
     const update = (event: Event) => {
       const { id, source, developers } = (event as CustomEvent).detail;
@@ -373,6 +392,7 @@ export function TicketCard({ reference }: { reference: string }) {
               Комментарии отсутствуют в загруженных данных.
             </p>
           )}
+          <TicketCommentForm key={reference} reference={reference} />
         </details>
         <details className="ticket-section">
           <summary>
@@ -429,6 +449,78 @@ export function TicketCard({ reference }: { reference: string }) {
         </details>
       </div>
     </article>
+  );
+}
+
+function TicketCommentForm({ reference }: { reference: string }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+  const sending = useRef(false);
+  const inputId = useId();
+  return (
+    <form
+      className="ticket-comment-form"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (sending.current || !text.trim()) return;
+        sending.current = true;
+        setBusy(true);
+        setError("");
+        setSent(false);
+        try {
+          const result = await api(
+            `/ticket-cards/${encodeURIComponent(reference)}/comments`,
+            "POST",
+            { text },
+          );
+          window.dispatchEvent(
+            new CustomEvent("orbit:ticket-comment", { detail: result }),
+          );
+          setText("");
+          setSent(true);
+        } catch (e: any) {
+          setError(e.message);
+        } finally {
+          sending.current = false;
+          setBusy(false);
+        }
+      }}
+    >
+      <label htmlFor={inputId}>Новый комментарий</label>
+      <textarea
+        id={inputId}
+        rows={4}
+        maxLength={10000}
+        value={text}
+        disabled={busy}
+        placeholder="Напишите комментарий к тикету…"
+        onChange={(event) => {
+          setText(event.target.value);
+          setSent(false);
+        }}
+      />
+      <div className="ticket-comment-form-actions">
+        <small className="muted">
+          Комментарий будет отправлен в Azure DevOps.
+        </small>
+        <button
+          type="submit"
+          className="primary"
+          disabled={busy || !text.trim()}
+        >
+          <Send size={15} />
+          {busy ? "Отправка…" : "Отправить"}
+        </button>
+      </div>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      {sent && <p role="status">Комментарий отправлен.</p>}
+    </form>
   );
 }
 

@@ -712,6 +712,12 @@ export function createApp(
       linkedPullRequests: pullRequests.linkedToTicket(card.id, card.source),
     });
   });
+  app.post("/api/ticket-cards/:ref/comments", async (req, res) => {
+    const { text } = z
+      .object({ text: z.string().trim().min(1).max(10000) })
+      .parse(req.body);
+    res.json(await connectors.addTicketComment(String(req.params.ref), text));
+  });
   app.get("/api/ticket-cards/:ref/attachments/:id", async (req, res) => {
     const file = await connectors.attachment(
       String(req.params.ref),

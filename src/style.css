@@ -2349,6 +2349,29 @@ summary:focus-visible {
   display: grid;
   gap: 12px;
 }
+.ticket-comment-form {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.ticket-comment-form textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+}
+.ticket-comment-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ticket-comment-form-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .ticket-comment {
   border: 1px solid var(--border);
   background: #fafbf8;

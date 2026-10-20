@@ -652,6 +652,79 @@ export class Connectors {
       .run(cardId, JSON.stringify(card));
     return { cardId, ...card };
   }
+  async addTicketComment(ref: string, text: string) {
+    const card = this.ticketCard(ref);
+    const s = this.store.settings();
+    const source = this.store.source(s);
+    if (card.source !== source)
+      throw new AppError(
+        409,
+        "Подключение Azure изменилось: загрузите тикет заново",
+      );
+    text = text.trim();
+    if (!text || text.length > 10000)
+      throw new AppError(
+        400,
+        "Комментарий должен содержать от 1 до 10000 символов",
+      );
+    // Check the current project before writing, including for old cached cards.
+    await this.ticketSummary(card.id);
+    if (source !== this.store.source())
+      throw new AppError(
+        409,
+        "Подключение Azure изменилось: загрузите тикет заново",
+      );
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/\r\n?|\n/g, "<br>");
+    const html = `<p>${escaped}</p>`;
+    const result = await this.azure(
+      `workitems/${card.id}/comments?format=html`,
+      { method: "POST", body: JSON.stringify({ text: html }) },
+      {
+        ...s,
+        azureVersion: s.azureVersion.startsWith("7.0")
+          ? "7.0-preview.3"
+          : "7.1-preview.4",
+      },
+      this.store.secret("azure.pat"),
+    );
+    if (!Number.isInteger(result.id) || result.id <= 0)
+      throw new AppError(
+        502,
+        "Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.",
+      );
+    const comment = {
+      id: result.id,
+      author: result.createdBy?.displayName || "",
+      date: result.createdDate,
+      text,
+      richText: html,
+    };
+    // Keep all open/saved cards consistent without refetching the full ticket.
+    this.store.db.transaction(() => {
+      const rows = this.store.db
+        .prepare("SELECT id,data FROM ticket_cards")
+        .all() as { id: string; data: string }[];
+      for (const row of rows) {
+        const saved = JSON.parse(row.data);
+        if (saved.id !== card.id || saved.source !== source) continue;
+        saved.comments = [
+          ...(saved.comments || []).filter((c: any) => c.id !== comment.id),
+          comment,
+        ];
+        this.store.db
+          .prepare("UPDATE ticket_cards SET data=? WHERE id=?")
+          .run(JSON.stringify(saved), row.id);
+      }
+    })();
+    this.store.audit("ticket.comment.added", `${card.id}: ${comment.id}`);
+    return { id: card.id, source, comment };
+  }
   ticketCard(ref: string) {
     const row = this.store.db
       .prepare("SELECT data FROM ticket_cards WHERE id=?")
