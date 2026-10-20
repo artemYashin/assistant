@@ -98,3 +98,19 @@ test("status approval survives clarification, Markdown and local links without h
   assert.match(result.prompt, /Уточнение пользователя: RFT/);
   assert.match(result.prompt, /#42, #43/);
 });
+
+test("natural short approvals preserve the plan, but changed scope and refusals do not", () => {
+  const history = [
+    {role: "user", body: "Переведи #42 и #43 в RFT"},
+    {role: "assistant", body: "#42 — First; #43 — Second. Выполнить изменения?"},
+  ];
+  for (const reply of ["Давай, погнали", "Поехали!", "Ок, делай", "Да, конечно, выполняй", "Ага, давай", "Хорошо, сделай, пожалуйста", "Подтверждаю", "Okay, go ahead", "Yes, do it please"]) {
+    const result = confirmedChatRequest(reply, history);
+    assert.equal(result.contextual, true, reply);
+    assert.match(result.prompt, /Переведи #42 и #43 в RFT/);
+    assert.equal(confirmedChatRequest(reply, []).contextual, false);
+  }
+  for (const reply of ["Давай, но только #42", "Да, кроме #43", "Да, но в Active", "Не надо", "Нет, погнали дальше", "Давай погнали?", "Погнали посмотреть список", "Пожалуйста", "Да, стоп"]) {
+    assert.equal(confirmedChatRequest(reply, history).contextual, false, reply);
+  }
+});

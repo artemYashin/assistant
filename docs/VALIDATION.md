@@ -728,3 +728,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Status intent now accepts conversational verbs such as «давай поменяем», follows user status/scope clarifications, recognizes Markdown-formatted confirmation questions and reads confirmed IDs from local navigation links. Rejection diagnostics distinguish missing intent, unresolved IDs, mismatched targets and explicit refusal, and state that no Azure write was sent.
 - Model formatting guidance places each ticket navigation link in its own Markdown paragraph after the full title; no CSS override is introduced.
 - Pre-push validation: all 189 tests and production build passed. The initial run caught a metadata-clarification regression, corrected before the successful rerun. Coverage includes clarified RFT commands, link-only IDs, refusal/read-only cases and metadata exclusions. Vite retains its large-chunk warning. Live Azure/Copilot behavior was not exercised.
+
+### Flexible short confirmations (2026-10-20)
+
+- Conversational approval accepts combinations such as «Давай, погнали», «Поехали», «Ок, делай» and English equivalents after the preceding mutation plan. Refusals, questions, changed scope/target and unrelated sentences are not treated as blanket approval.
+- Pre-push validation: all 190 tests and production build passed, including the status-batch integration using «Давай, погнали». Vite retains its large-chunk warning. Live Copilot/Azure behavior was not exercised.

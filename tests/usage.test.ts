@@ -1099,6 +1099,6 @@ test("Azure status batch accepts clarified intent and confirmed link IDs without
     guard(); writes++;
     return changes.map(item => ({...item, success: true, outcome: "changed"}));
   }});
-  await agent.chat("Да, давай", context);
+  await agent.chat("Давай, погнали", context);
   assert.equal(writes, 1);
 });

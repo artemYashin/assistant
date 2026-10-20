@@ -47,11 +47,7 @@ export function confirmedChatRequest(
   history: unknown[],
 ): { prompt: string; contextual: boolean } {
   const reply = prompt.split(/\n\nВыбранные пользователем тикеты/u)[0].trim();
-  if (
-    !/^(?:да(?:[,\s]+(?:давай|делай|выполняй|сделай))*|подтверждаю|давай(?:\s+делай)?|делай|yes|confirm|go ahead)[.!\s]*$/iu.test(
-      reply,
-    )
-  )
+  if (!isActionConfirmation(reply))
     return { prompt, contextual: false };
   const rows = history as { role?: string; body?: string }[];
   const plan = rows.at(-1);
@@ -103,4 +99,14 @@ function continuedMutationRequest(prompt: string, history: unknown[]): {prompt: 
   if (!/перев|смен|помен|измен|выстав|установ|move|change|set|transition/iu.test(original.prompt))
     return metadataContextRequest(prompt, history);
   return {prompt: `${original.prompt}\n\nУточнение пользователя: ${prompt}`, contextual: true};
+}
+
+// Accept combinations of short affirmative phrases, not arbitrary sentences
+// containing "yes". Changed scope, negation and questions must stay separate.
+export function isActionConfirmation(reply: string): boolean {
+  const text = reply.trim().toLocaleLowerCase()
+    .replace(/[,.!;:—–-]+/gu, " ").replace(/\s+/gu, " ").trim();
+  if (!text || text.length > 160) return false;
+  const affirmative = "(?:да|давай|давайте|погнали|поехали|ага|угу|ок|окей|окэй|хорошо|конечно|согласен|согласна|подтверждаю|делай|делайте|сделай|сделайте|выполняй|выполняйте|применяй|применяйте|действуй|действуйте|начинай|начинайте|продолжай|продолжайте|yes|yep|yeah|ok|okay|sure|confirm|confirmed|proceed|go ahead|do it|let['’]s go)";
+  return new RegExp(`^(?:${affirmative})(?: (?:${affirmative}|пожалуйста|please))*$`, "u").test(text);
 }
