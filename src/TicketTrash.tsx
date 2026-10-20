@@ -334,7 +334,11 @@ export function TicketTrash({
             onChange={setLocalFilter}
             options={[
               { value: "", label: "Нет поручения" },
-              ...localOptions.map(([id, name]) => ({ value: id, label: name })),
+              ...localOptions.map(([id, name]) => ({
+                value: id,
+                label: name,
+                avatarName: name,
+              })),
             ]}
           />
         </div>

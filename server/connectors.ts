@@ -617,7 +617,8 @@ export class Connectors {
         throw new AppError(502, "Azure вернул неверный список пользователей");
     }
     const isUser = (u: any) => u.id && !u.isContainer && u.isActive !== false;
-    let warning = "";
+    let searchFailure = "";
+    let graphStage = "поиск по части имени";
     let graphTruncated = false;
     if (!response.value.some(isUser)) {
       try {
@@ -658,6 +659,7 @@ export class Connectors {
             queryMembership: "None",
             "api-version": s.azureVersion,
           });
+          graphStage = "сопоставление пользователей";
           const resolved = await requestJson(
             `${base}/_apis/identities?${lookup}`,
             {
@@ -674,9 +676,16 @@ export class Connectors {
             );
           response = resolved;
         }
-      } catch {
-        warning =
-          "Расширенный поиск Azure недоступен: проверьте Graph: Read у PAT и поддержку Graph API вашим сервером. Можно искать по полному имени или e-mail; ранее найденные пользователи доступны по части имени.";
+      } catch (error) {
+        const status = (error as { upstreamStatus?: number })?.upstreamStatus;
+        const reason = status === 401 || status === 403
+          ? `сервер отклонил доступ (HTTP ${status}); это не обязательно отсутствие Graph: Read у PAT`
+          : status === 404
+            ? "API по настроенному адресу не найден (HTTP 404)"
+            : status === 429
+              ? "Azure ограничил частоту запросов (HTTP 429)"
+              : "запрос не выполнен; подробности в логах сервера";
+        searchFailure = `Azure: ${graphStage} — ${reason}.`;
       }
     }
     const matches = response.value.filter(isUser);
@@ -725,6 +734,11 @@ export class Connectors {
     for (const user of [...users, ...old.filter((u) => !returnedIds.has(u.id))])
       if (!merged.has(user.id)) merged.set(user.id, user);
     this.store.set("developers:" + source, [...merged.values()].slice(0, 1000));
+    const warning = searchFailure
+      ? `${users.length
+          ? "Показаны ранее найденные пользователи из локального кэша. Список может быть неполным."
+          : "Пользователи не найдены в локальном кэше, а онлайн-поиск не завершён. Попробуйте полное имя или e-mail."} ${searchFailure}`
+      : "";
     return { users, truncated: graphTruncated || results.length > 20, warning };
   }
   async assignTicket(id: number, source: string, userId: string | null) {

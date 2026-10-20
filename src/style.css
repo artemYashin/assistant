@@ -7775,3 +7775,45 @@ summary > svg {
     animation: none;
   }
 }
+
+.multi-select-option > .initials-avatar {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  font-size: 9px;
+}
+.multi-select-option-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.multi-select-search-notice {
+  margin: 5px 2px;
+  color: #657585;
+  font-size: 11px;
+}
+.multi-select-search-notice > summary {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 5px;
+  list-style: none;
+}
+.multi-select-search-notice > summary::-webkit-details-marker { display: none; }
+.multi-select-search-notice > summary:hover { background: #f0f3f5; }
+.multi-select-search-notice > p {
+  margin: 4px 6px;
+  max-height: 80px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.multi-select-search-notice > summary::before {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+}

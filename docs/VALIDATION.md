@@ -999,3 +999,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Shared image previews show a responsive 300×150 placeholder with a subtle shimmer, spinner and loading label until the thumbnail loads. Cached images resolve immediately; failures retain the existing retry-view link. Reduced-motion preferences disable placeholder animation.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser loading behavior was not exercised.
+
+### Compact people-search diagnostics and filter avatars (2026-10-21)
+
+- Azure fallback-search warnings now distinguish cached matches, HTTP 404, access refusal and other failures rather than attributing every error to missing Graph permissions. The message identifies whether subject search or identity resolution failed; regression assertions cover cached and empty fallback results.
+- Multiselect search warnings/errors are collapsed into a small expandable notice. Azure assignee and local-assignment filter options show compact stable initials avatars across active, Azure and trash tickets, including remotely found users. Unassigned options remain without avatars.
+- Pre-push validation: all 224 tests and production build passed. Vite retains its large-chunk warning. Browser visuals and live Azure endpoints were not exercised.

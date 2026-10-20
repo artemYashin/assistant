@@ -4,11 +4,15 @@ import { MultiSelect } from "./MultiSelect.js";
 async function searchPeople(query: string) {
   const result = await api("/developers/search", "POST", { query });
   // Ticket summaries store Azure display names, which are also the filter values.
-  const people = new Map<string, { value: string; label: string }>();
+  const people = new Map<
+    string,
+    { value: string; label: string; avatarName: string }
+  >();
   for (const user of result.users) {
     if (!user.name) continue;
     people.set(user.name, {
       value: user.name,
+      avatarName: user.name,
       label: user.email ? `${user.name} · ${user.email}` : user.name,
     });
   }
@@ -46,6 +50,7 @@ export function AzureAssigneeFilter({
       searchOptions={searchPeople}
       options={[...new Set([...names, ...value])].sort().map((name) => ({
         value: name,
+        avatarName: name || undefined,
         label: name || "Не назначен в Azure",
       }))}
     />

@@ -198,6 +198,12 @@ test("unavailable Graph keeps cached partial-name results and reports a warning"
   });
   const result = await connectors.developers("EXA art");
   assert.deepEqual(result.users, [person]);
-  assert.match(result.warning, /Graph: Read/);
+  assert.match(result.warning, /локального кэша/);
+  assert.match(result.warning, /HTTP 404/);
+  assert.doesNotMatch(result.warning, /Graph: Read/);
   assert.equal(calls, 3);
+  const missing = await connectors.developers("Unknown Person");
+  assert.deepEqual(missing.users, []);
+  assert.match(missing.warning, /онлайн-поиск не завершён/);
+  assert.doesNotMatch(missing.warning, /Показаны ранее найденные/);
 });

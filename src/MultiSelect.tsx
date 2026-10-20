@@ -1,7 +1,13 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { InitialsAvatar } from "./InitialsAvatar.js";
+import { Check, ChevronDown, Info, Search } from "lucide-react";
 
-type Option = { value: string; label: string; group?: string };
+type Option = {
+  value: string;
+  label: string;
+  group?: string;
+  avatarName?: string;
+};
 type SearchResult = { options: Option[]; warning?: string };
 export function MultiSelect({
   label,
@@ -71,7 +77,7 @@ export function MultiSelect({
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
-  const localVisible = [
+  const localVisible: Option[] = [
     ...options,
     ...(allowCustom
       ? value
@@ -191,7 +197,12 @@ export function MultiSelect({
                   <span className="multi-select-check" aria-hidden="true">
                     {value.includes(option.value) && <Check size={13} />}
                   </span>
-                  <span>{option.label}</span>
+                  {option.avatarName && (
+                    <InitialsAvatar name={option.avatarName} />
+                  )}
+                  <span className="multi-select-option-text">
+                    {option.label}
+                  </span>
                 </label>
               </div>
             ))}
@@ -203,15 +214,14 @@ export function MultiSelect({
                 Поиск в Azure…
               </p>
             )}
-            {remote.warning && (
-              <p className="multi-select-empty" role="status">
-                {remote.warning}
-              </p>
-            )}
-            {searchError && (
-              <p className="error" role="alert">
-                {searchError}
-              </p>
+            {(remote.warning || searchError) && (
+              <details className="multi-select-search-notice">
+                <summary>
+                  <Info size={13} aria-hidden="true" />
+                  {searchError ? "Ошибка поиска" : "Поиск ограничен"}
+                </summary>
+                <p>{searchError || remote.warning}</p>
+              </details>
             )}
           </div>
           <div className="multi-select-footer">

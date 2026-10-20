@@ -1598,6 +1598,7 @@ function Tickets({
               ...localDevelopers.map(([id, name]) => ({
                 value: id,
                 label: name,
+                avatarName: name,
               })),
             ]}
           />
