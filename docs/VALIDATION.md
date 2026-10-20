@@ -896,3 +896,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Preset deletion now requires confirmation in a modal showing the preset name; Escape, close and Cancel preserve it. Storage failures remain visible in the modal. Applied filters and tickets are not removed with a preset.
 - Reduced developer accordion vertical spacing.
 - Pre-push validation: all 210 tests and production build passed. Vite retains its large-chunk warning. Browser visual/modal behavior was not exercised.
+
+### Drag-and-drop filter preset ordering (2026-10-20)
+
+- Preset handles support drag-and-drop reordering with before/after insertion indicators; order is persisted in the existing scoped browser storage. No keyboard-arrow reorder behavior, per user request. Applying/deleting presets remain separate controls.
+- Preset names use 11px text to match ticket search/number inputs.
+- Pre-push validation: all 210 tests and production build passed. Vite retains its large-chunk warning. Browser drag/drop behavior was not exercised.

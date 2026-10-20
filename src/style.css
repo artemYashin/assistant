@@ -7325,10 +7325,11 @@ summary > svg {
   background: #e9f1f8;
   border-color: #91b0ca;
 }
-.ticket-preset > button:first-child {
+.ticket-preset > .ticket-preset-apply {
   background: transparent;
   border: 0;
   color: #40576c;
+  font-size: 11px;
   padding: 6px 9px;
   min-width: 0;
   white-space: normal;
@@ -7355,4 +7356,44 @@ summary > svg {
 }
 .preset-delete-dialog .card-actions {
   justify-content: flex-end;
+}
+
+.ticket-preset > .ticket-preset-drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 7px 0 0 7px;
+  background: transparent;
+  color: #8995a1;
+  cursor: grab;
+}
+.ticket-preset > .ticket-preset-drag:active {
+  cursor: grabbing;
+}
+.ticket-preset > .ticket-preset-drag:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.ticket-preset.is-dragging {
+  opacity: 0.45;
+}
+.ticket-preset.drop-before {
+  box-shadow: -3px 0 0 #618baa;
+}
+.ticket-preset.drop-after {
+  box-shadow: 3px 0 0 #618baa;
+}
+.ticket-filter-presets > .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

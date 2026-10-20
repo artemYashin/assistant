@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bookmark, Save, X } from "lucide-react";
+import { Bookmark, GripVertical, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
 type Preset = { id: string; name: string; filters: Filters };
@@ -37,6 +37,31 @@ export function TicketFilterPresets({
       return [];
     }
   });
+  const dragged = useRef<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    id: string;
+    after: boolean;
+  } | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  function finishDrag() {
+    dragged.current = null;
+    setDragging(null);
+    setDropTarget(null);
+  }
+  function movePreset(id: string, targetId: string, after: boolean) {
+    if (id === targetId) return;
+    const moving = presets.find((p) => p.id === id);
+    const next = presets.filter((p) => p.id !== id);
+    const targetIndex = next.findIndex((p) => p.id === targetId);
+    if (!moving || targetIndex < 0) return;
+    const index = targetIndex + (after ? 1 : 0);
+    next.splice(index, 0, moving);
+    if (save(next))
+      setAnnouncement(
+        `Набор «${moving.name}»: позиция ${index + 1} из ${next.length}`,
+      );
+  }
   const [pendingDelete, setPendingDelete] = useState<Preset | null>(null);
   const confirmDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -117,11 +142,63 @@ export function TicketFilterPresets({
               JSON.stringify(preset.filters) === JSON.stringify(filters);
             return (
               <div
-                className={`ticket-preset${active ? " is-active" : ""}`}
+                className={`ticket-preset${active ? " is-active" : ""}${dragging === preset.id ? " is-dragging" : ""}${dropTarget?.id === preset.id ? (dropTarget.after ? " drop-after" : " drop-before") : ""}`}
                 key={preset.id}
+                onDragOver={(event) => {
+                  if (!dragged.current || dragged.current === preset.id) return;
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  setDropTarget({
+                    id: preset.id,
+                    after: event.clientX > bounds.left + bounds.width / 2,
+                  });
+                }}
+                onDragLeave={(event) => {
+                  if (
+                    !event.currentTarget.contains(
+                      event.relatedTarget as Node | null,
+                    )
+                  )
+                    setDropTarget(null);
+                }}
+                onDrop={(event) => {
+                  if (!dragged.current) return;
+                  event.preventDefault();
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  movePreset(
+                    dragged.current,
+                    preset.id,
+                    event.clientX > bounds.left + bounds.width / 2,
+                  );
+                  finishDrag();
+                }}
               >
                 <button
                   type="button"
+                  className="ticket-preset-drag"
+                  draggable={presets.length > 1}
+                  disabled={presets.length < 2}
+                  title="Перетащить набор"
+                  aria-label={`Изменить порядок набора ${preset.name}`}
+                  onDragStart={(event) => {
+                    dragged.current = preset.id;
+                    setDragging(preset.id);
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", preset.id);
+                    event.dataTransfer.setDragImage(
+                      event.currentTarget.parentElement!,
+                      12,
+                      12,
+                    );
+                  }}
+                  onDragEnd={finishDrag}
+                >
+                  <GripVertical size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="ticket-preset-apply"
                   disabled={disabled}
                   aria-pressed={active}
                   title={`Применить набор: ${preset.name}`}
@@ -147,6 +224,9 @@ export function TicketFilterPresets({
           })}
         </div>
       )}
+      <span className="sr-only" role="status">
+        {announcement}
+      </span>
       {pendingDelete &&
         createPortal(
           <dialog
