@@ -7483,9 +7483,10 @@ summary > svg {
 }
 .azure-ticket-pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 6px;
   margin: 12px 0;
   color: var(--muted);
   font-size: 12px;
@@ -7704,4 +7705,18 @@ summary > svg {
   height: 20px;
   margin: 0 5px;
   background: #d5dde5;
+}
+
+.azure-ticket-pagination .azure-page-number {
+  min-width: 32px;
+  padding: 6px 9px;
+}
+.azure-ticket-pagination .azure-page-number[aria-current="page"] {
+  background: #e2ecf9;
+  border-color: #91add1;
+  color: #244d80;
+  font-weight: 700;
+}
+.azure-ticket-pagination > span:last-child {
+  margin-left: 6px;
 }

@@ -13,6 +13,8 @@ export const azureBrowseSchema = z
     tagFilter: choices,
     localFilter: choices,
     before: z.number().int().positive().optional(),
+    page: z.number().int().min(1).max(400).default(1),
+    snapshot: z.string().uuid().optional(),
   })
   .strict();
 export type AzureBrowse = z.infer<typeof azureBrowseSchema>;

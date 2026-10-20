@@ -978,3 +978,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Added a compact circular reset button and vertical divider before presets in collapsed filter panels. Reset clears the persisted selected preset/name and applies default filters, search and sorting without deleting saved presets. The action respects the panel's disabled state and also appears when no presets are saved.
 - Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser interactions were not exercised.
+
+### Numbered Azure pages and cursor-anchored image zoom (2026-10-21)
+
+- Azure pagination is grouped on the left with page numbers, ellipses, first/last-page access and total/page counts. A manual search retrieves an ID-only index capped at 20,000, with explicit truncation guidance at that limit. Up to ten indexes are retained for 15 minutes, bound to source, credentials and filters; page changes read at most 50 summaries and do not rerun WIQL. Expired indexes require a new explicit search. Counts reflect the search index; sorting/export remain page-local. API reference: https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/wiql/query-by-wiql?view=azure-devops-rest-7.1
+- Removed pan clamping/recentering from both zoom calculations and rendering, preserving the image coordinate beneath the cursor even while the image fits inside the viewport. Reset/fit and original-size controls still recenter explicitly.
+- Pre-push validation: all 224 tests and production build passed. Regression coverage includes numbered-page windows, ID-index reuse, source/filter mismatch, expiry, empty/capped results and small-image zoom anchoring. Vite retains its large-chunk warning. Browser gestures and live Azure endpoints were not exercised.

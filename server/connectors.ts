@@ -63,6 +63,10 @@ export function plainText(value: string) {
     .trim();
 }
 export class Connectors {
+  private browseSnapshots = new Map<string, {
+    source: string; pat: string | undefined; filters: string;
+    ids: number[]; expires: number; limited: boolean;
+  }>();
   constructor(
     private store: Store,
     private auth: IntegrationsAuth,
@@ -1208,21 +1212,43 @@ export class Connectors {
         );
     };
     check();
-    const query = browseQuery(input, local);
-    if (!query) return { tickets: [], next: null };
-    const found = await this.azure(
-      "wiql?$top=51",
-      { method: "POST", body: JSON.stringify({ query }) },
-      s,
-      pat,
-    );
-    check();
-    if (!Array.isArray(found.workItems))
-      throw new AppError(502, "Azure не вернул список тикетов");
-    const ids: number[] = found.workItems.slice(0, 50).map((v: any) => v.id);
-    if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0))
-      throw new AppError(502, "Некорректные номера тикетов Azure");
-    if (!ids.length) return { tickets: [], next: null };
+    const { page, snapshot: requestedSnapshot, ...filters } = input;
+    const filterKey = JSON.stringify(filters);
+    const now = Date.now();
+    for (const [key, value] of this.browseSnapshots)
+      if (value.expires <= now) this.browseSnapshots.delete(key);
+    let snapshot = requestedSnapshot;
+    let entry = snapshot ? this.browseSnapshots.get(snapshot) : undefined;
+    if (snapshot && (!entry || entry.source !== source || entry.pat !== pat || entry.filters !== filterKey))
+      throw new AppError(409, "Результаты поиска устарели. Нажмите «Найти», чтобы обновить список страниц.");
+    if (!entry) {
+      const query = browseQuery(input, local);
+      const found = query ? await this.azure(
+        "wiql?$top=20000",
+        { method: "POST", body: JSON.stringify({ query }) }, s, pat,
+      ) : { workItems: [] };
+      check();
+      if (!Array.isArray(found.workItems))
+        throw new AppError(502, "Azure не вернул список тикетов");
+      const allIds: number[] = found.workItems.map((v: any) => v.id);
+      if (allIds.some((id) => !Number.isSafeInteger(id) || id <= 0))
+        throw new AppError(502, "Некорректные номера тикетов Azure");
+      entry = {
+        source, pat, filters: filterKey,
+        ids: [...new Set(allIds)].sort((a, b) => b - a).slice(0, 20000),
+        expires: now + 15 * 60 * 1000, limited: allIds.length >= 20000,
+      };
+      while (this.browseSnapshots.size >= 10)
+        this.browseSnapshots.delete(this.browseSnapshots.keys().next().value!);
+      snapshot = randomUUID();
+      this.browseSnapshots.set(snapshot, entry);
+    }
+    const total = entry.ids.length;
+    const totalPages = Math.max(1, Math.ceil(total / 50));
+    const currentPage = Math.min(page, totalPages);
+    const pagination = { snapshot, total, totalPages, page: currentPage, limited: entry.limited };
+    const ids = entry.ids.slice((currentPage - 1) * 50, currentPage * 50);
+    if (!ids.length) return { tickets: [], ...pagination };
     const result = await this.azure(
       "workitemsbatch",
       {
@@ -1251,7 +1277,7 @@ export class Connectors {
       .sort((a: any, b: any) => b.id - a.id);
     return {
       tickets,
-      next: found.workItems.length > 50 ? ids[ids.length - 1] : null,
+      ...pagination,
     };
   }
   async importAzureSelection(ids: number[], source: string) {

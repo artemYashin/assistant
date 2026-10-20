@@ -49,14 +49,17 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
   store.setSecret("azure.pat", "pat");
   const connectors = new Connectors(store, new IntegrationsAuth(store));
   let batches = 0,
-    queries = 0;
+    queries = 0,
+    resultCount = 51;
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
     assert.equal(init.method, "POST");
     if (String(url).includes("/wiql?")) {
       queries++;
-      assert.match(String(url), /\$top=51/);
+      assert.match(String(url), /\$top=20000/);
       return Response.json({
-        workItems: Array.from({ length: 51 }, (_, i) => ({ id: 100 - i })),
+        workItems: Array.from({ length: resultCount }, (_, i) => ({
+          id: 40000 - i,
+        })),
       });
     }
     assert.match(String(url), /\/workitemsbatch\?/);
@@ -82,21 +85,56 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     [],
   );
   assert.equal(result.tickets.length, 50);
-  assert.equal(result.next, 51);
+  assert.equal(result.total, 51);
+  assert.equal(result.totalPages, 2);
+  assert.equal(result.page, 1);
   assert.equal(
     (store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n,
     0,
   );
   assert.equal(queries, 1);
   assert.equal(batches, 1);
+  const second = await connectors.browseAzureTickets(
+    azureBrowseSchema.parse({
+      source: store.source(),
+      snapshot: result.snapshot,
+      page: 2,
+    }),
+    [],
+  );
+  assert.deepEqual(
+    second.tickets.map((t: any) => t.id),
+    [39950],
+  );
+  assert.equal(second.page, 2);
+  assert.equal(queries, 1, "page changes reuse the ID snapshot");
+  assert.equal(batches, 2);
+  await assert.rejects(
+    connectors.browseAzureTickets(
+      azureBrowseSchema.parse({
+        source: store.source(),
+        snapshot: result.snapshot,
+        query: "different",
+      }),
+      [],
+    ),
+    /устарели/,
+  );
+  await assert.rejects(
+    connectors.browseAzureTickets(
+      azureBrowseSchema.parse({ source: "wrong", snapshot: result.snapshot }),
+      [],
+    ),
+    /изменилось/,
+  );
   const imported = await connectors.importAzureSelection(
     [100, 99],
     store.source(),
   );
   assert.deepEqual(imported.added, [100, 99]);
-  assert.equal(batches, 2);
+  assert.equal(batches, 3);
   await connectors.importAzureSelection([100, 99], store.source());
-  assert.equal(batches, 2);
+  assert.equal(batches, 3);
   assert.equal(
     (store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n,
     2,
@@ -105,7 +143,40 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     connectors.importAzureSelection([98], "wrong"),
     /изменилось/,
   );
-  assert.equal(batches, 2);
+  assert.equal(batches, 3);
+  const empty = await connectors.browseAzureTickets(
+    azureBrowseSchema.parse({
+      source: store.source(),
+      tagFilter: ["not-local"],
+    }),
+    [],
+  );
+  assert.equal(empty.total, 0);
+  assert.equal(empty.totalPages, 1);
+  assert.equal(queries, 1);
+  resultCount = 20000;
+  const capped = await connectors.browseAzureTickets(
+    azureBrowseSchema.parse({ source: store.source(), page: 400 }),
+    [],
+  );
+  assert.equal(capped.total, 20000);
+  assert.equal(capped.totalPages, 400);
+  assert.equal(capped.limited, true);
+  assert.equal(capped.tickets.length, 50);
+  assert.equal(queries, 2);
+  const future = Date.now() + 16 * 60 * 1000;
+  t.mock.method(Date, "now", () => future);
+  await assert.rejects(
+    connectors.browseAzureTickets(
+      azureBrowseSchema.parse({
+        source: store.source(),
+        snapshot: capped.snapshot,
+        page: 2,
+      }),
+      [],
+    ),
+    /устарели/,
+  );
 });
 
 test("exports mark local fields of unimported Azure tickets as unavailable", () => {

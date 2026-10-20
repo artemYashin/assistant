@@ -1,3 +1,4 @@
+import { paginationItems } from "./pagination.js";
 import { TicketDataRow } from "./TicketDataRow.js";
 import { Cloud } from "lucide-react";
 import { useAzureTicketBrowser } from "./useAzureTicketBrowser.js";
@@ -1655,7 +1656,10 @@ function Tickets({
               Условия изменены. Нажмите «Найти», чтобы применить их.
             </p>
           )}
-          <div className="azure-ticket-pagination">
+          <nav
+            className="azure-ticket-pagination"
+            aria-label="Страницы Azure тикетов"
+          >
             <button
               type="button"
               className="secondary"
@@ -1664,9 +1668,25 @@ function Tickets({
             >
               Назад
             </button>
-            <span>
-              Страница {browser.page} · сортировка и экспорт текущей страницы
-            </span>
+            {paginationItems(browser.page, browser.totalPages).map((item) =>
+              typeof item === "number" ? (
+                <button
+                  key={item}
+                  type="button"
+                  className="secondary azure-page-number"
+                  aria-label={`Страница ${item}`}
+                  aria-current={item === browser.page ? "page" : undefined}
+                  disabled={browser.loading}
+                  onClick={() => browser.goTo(item)}
+                >
+                  {item}
+                </button>
+              ) : (
+                <span key={item} aria-hidden="true">
+                  …
+                </span>
+              ),
+            )}
             <button
               type="button"
               className="secondary"
@@ -1675,7 +1695,18 @@ function Tickets({
             >
               Далее
             </button>
-          </div>
+            <span>
+              Страница {browser.page} из {browser.totalPages} · {browser.total}{" "}
+              тикетов · по 50
+            </span>
+          </nav>
+          {browser.limited && (
+            <p className="muted">
+              Показаны первые 20 000 результатов. Уточните фильтры, чтобы
+              увидеть остальные.
+            </p>
+          )}
+          <p className="muted">Сортировка и экспорт — для текущей страницы.</p>
         </>
       )}
       {!azureMode && (

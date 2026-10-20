@@ -10,8 +10,11 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [next, setNext] = useState<number | null>(null);
-  const [pages, setPages] = useState<(number | undefined)[]>([undefined]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [limited, setLimited] = useState(false);
+  const snapshot = useRef<string | undefined>(undefined);
   const applied = useRef<Filters | null>(null);
   const generation = useRef(0);
   const locked = useRef(false);
@@ -32,8 +35,9 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
   }, [enabled, source]);
   async function load(
     filters: Filters,
-    trail: (number | undefined)[],
+    targetPage: number,
     keepRows = false,
+    newSearch = false,
   ) {
     if (!enabled || locked.current) return;
     locked.current = true;
@@ -41,18 +45,21 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
     setLoading(true);
     setError("");
     if (!keepRows) setRows([]);
-    setNext(null);
     try {
       const { sort: _sort, ...search } = filters;
       const result = await api("/azure/tickets/search", "POST", {
         ...search,
         source,
-        before: trail[trail.length - 1],
+        page: targetPage,
+        snapshot: newSearch ? undefined : snapshot.current,
       });
       if (request !== generation.current) return;
       setRows(result.tickets);
-      setNext(result.next);
-      setPages(trail);
+      snapshot.current = result.snapshot;
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+      setTotal(result.total);
+      setLimited(result.limited);
       applied.current = structuredClone(filters);
       setSearched(true);
     } catch (e: any) {
@@ -68,18 +75,25 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
     error,
     loading,
     searched,
-    page: pages.length,
-    hasNext: next !== null,
-    search: (filters: Filters) => load(filters, [undefined]),
+    page,
+    totalPages,
+    total,
+    limited,
+    hasNext: page < totalPages,
+    search: (filters: Filters) => load(filters, 1, false, true),
+    goTo: (target: number) =>
+      applied.current &&
+      target >= 1 &&
+      target <= totalPages &&
+      target !== page &&
+      void load(applied.current, target),
     next: () =>
       applied.current &&
-      next !== null &&
-      void load(applied.current, [...pages, next]),
+      page < totalPages &&
+      void load(applied.current, page + 1),
     previous: () =>
-      applied.current &&
-      pages.length > 1 &&
-      void load(applied.current, pages.slice(0, -1)),
-    refresh: () => applied.current && void load(applied.current, pages, true),
+      applied.current && page > 1 && void load(applied.current, page - 1),
+    refresh: () => applied.current && void load(applied.current, page, true),
     pending: (filters: Filters) =>
       applied.current &&
       JSON.stringify({ ...filters, sort: "" }) !==

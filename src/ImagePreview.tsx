@@ -107,17 +107,8 @@ function ImageViewer({
       : 1;
   const scale = Math.max(0.001, fit) * zoom;
   const maxZoom = Math.max(8, 1 / Math.max(0.001, fit));
-  const maxX = Math.max(0, (natural.width * scale - size.width) / 2 + 12);
-  const maxY = Math.max(0, (natural.height * scale - size.height) / 2 + 12);
-  const x = Math.max(-maxX, Math.min(maxX, pan.x));
-  const y = Math.max(-maxY, Math.min(maxY, pan.y));
+  const { x, y } = pan;
   const ready = natural.width > 0 && !error;
-  useEffect(() => {
-    setPan((current) => ({
-      x: Math.max(-maxX, Math.min(maxX, current.x)),
-      y: Math.max(-maxY, Math.min(maxY, current.y)),
-    }));
-  }, [maxX, maxY]);
   useEffect(() => {
     dialog.current?.showModal();
     const node = stage.current!;
@@ -150,17 +141,7 @@ function ImageViewer({
         x: event.clientX - bounds.left - node.clientWidth / 2,
         y: event.clientY - bounds.top - node.clientHeight / 2,
       };
-      setView((current) =>
-        zoomAtPoint(
-          current,
-          factor,
-          point,
-          Math.max(0.001, fit),
-          natural,
-          size,
-          maxZoom,
-        ),
-      );
+      setView((current) => zoomAtPoint(current, factor, point, maxZoom));
     };
     node.addEventListener("wheel", wheel, { passive: false });
     return () => node.removeEventListener("wheel", wheel);
@@ -312,20 +293,8 @@ function ImageViewer({
         onPointerMove={(event) => {
           if (drag.current)
             setPan({
-              x: Math.max(
-                -maxX,
-                Math.min(
-                  maxX,
-                  drag.current.panX + event.clientX - drag.current.x,
-                ),
-              ),
-              y: Math.max(
-                -maxY,
-                Math.min(
-                  maxY,
-                  drag.current.panY + event.clientY - drag.current.y,
-                ),
-              ),
+              x: drag.current.panX + event.clientX - drag.current.x,
+              y: drag.current.panY + event.clientY - drag.current.y,
             });
         }}
         onPointerUp={endDrag}
