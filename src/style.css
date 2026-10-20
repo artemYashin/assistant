@@ -1098,7 +1098,7 @@ td:first-child {
   min-width: 230px;
   max-width: 390px;
 }
-td b {
+td > b {
   display: block;
   font-size: 11px;
   font-weight: 500;
@@ -2296,6 +2296,17 @@ summary:focus-visible {
 .ticket-detail .ticket-formatted {
   white-space: normal;
   line-height: 1.6;
+}
+.ticket-detail .ticket-formatted :is(b, strong) {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: inherit;
+}
+.ticket-detail .ticket-formatted :is(i, em) {
+  display: inline;
+  font-style: italic;
 }
 .ticket-formatted :is(p, ul, ol, blockquote, pre, table) {
   margin: 0.45em 0;
