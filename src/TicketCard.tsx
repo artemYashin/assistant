@@ -182,6 +182,14 @@ export function TicketCard({ reference }: { reference: string }) {
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
   const f = card.fields;
+  const azureTags = [
+    ...new Set(
+      String(f["System.Tags"] || "")
+        .split(";")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ];
   const attachmentUrl = (a: any) =>
     `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${encodeURIComponent(a.id)}`;
   const person = (value: any) =>
@@ -309,18 +317,34 @@ export function TicketCard({ reference }: { reference: string }) {
                 )}
               </dd>
             </div>
-            {!!card.localMetadata?.tags?.length && (
-              <div className="ticket-overview-tags">
-                <dt>Теги</dt>
-                <dd>
-                  {card.localMetadata.tags.map((tag: string) => (
+            <div className="ticket-overview-tags">
+              <dt>Теги</dt>
+              <dd>
+                {card.localMetadata?.tags?.length ? (
+                  card.localMetadata.tags.map((tag: string) => (
                     <span className="badge" key={tag}>
                       {tag}
                     </span>
-                  ))}
-                </dd>
-              </div>
-            )}
+                  ))
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </dd>
+            </div>
+            <div className="ticket-overview-tags">
+              <dt>Azure теги</dt>
+              <dd title="Теги Azure DevOps · только чтение">
+                {azureTags.length ? (
+                  azureTags.map((tag) => (
+                    <span className="badge azure-ticket-tag" key={tag}>
+                      {tag}
+                    </span>
+                  ))
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </dd>
+            </div>
           </dl>
           <div className="ticket-sidebar-actions">
             {card.locallyAvailable || card.locallyTracked ? (

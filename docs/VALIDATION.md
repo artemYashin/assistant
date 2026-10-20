@@ -1036,3 +1036,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added header resize handles to active, Azure and trash tables. Dragging redistributes width between adjacent visible columns; manual sizing uses a fixed-layout colgroup and adapts proportions to available width. Checkbox width stays fixed.
 - Width preferences persist separately for each tab in browser storage, independently of column order/visibility. Double-clicking a handle resets all widths; the display dialog also offers a reset applied on Save. Keyboard arrows resize and Home resets.
 - TypeScript and whitespace checks passed. Added pure sizing regression tests, but did not run tests at the user's explicit request. Production build and browser drag/resize behavior were not exercised. This change is isolated in its own commit for possible rollback.
+
+### Detail tags and consistent ticket identity (2026-10-21)
+
+- Ticket detail sidebar now always shows local tags and read-only Azure tags from System.Tags, with an empty marker and wrapping for long values.
+- Trash identity cells use the same vertical ID/type layout and width bounds as active/Azure rows.
+- Resize indicators are 1px wide; pointer hit area remains 8px.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.

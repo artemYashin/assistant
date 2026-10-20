@@ -7167,7 +7167,7 @@ summary > svg {
 }
 
 /* Keep ticket identity separate so short titles do not add another row. */
-.ticket-active-table .ticket-id-type {
+.ticket-table-fit .ticket-id-type {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
@@ -7313,7 +7313,7 @@ summary > svg {
   min-width: 80px;
   max-width: 112px;
 }
-.ticket-active-table .ticket-id-type {
+.ticket-table-fit .ticket-id-type {
   width: max-content;
   max-width: 112px;
 }
@@ -7945,7 +7945,7 @@ summary > svg {
   top: 20%;
   bottom: 20%;
   left: 3px;
-  width: 2px;
+  width: 1px;
   border-radius: 2px;
   background: #bcc8c2;
   transition: background 100ms, top 100ms, bottom 100ms;
@@ -7973,4 +7973,11 @@ summary > svg {
 .ticket-table-fit.has-manual-widths > table > tbody > tr:not(.ticket-preview-row) > td > :is(.ticket-id-type, .ticket-status-control, .ticket-metadata-control, .local-developer, .ticket-tag-list, .local-assignee-names) {
   max-width: 100%;
   min-width: 0;
+}
+
+
+.ticket-detail-sidebar .ticket-overview-tags .badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
