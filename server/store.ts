@@ -57,7 +57,7 @@ export const defaults = {
   llmMaxTokens: 100000,
   llmMaxToolCalls: 20,
   instructions:
-    "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. Сохраняй факты в память, когда я явно прошу.",
+    "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. По моей просьбе сохраняй факты в память. Также сам замечай полезные для будущей работы факты, договорённости, правила и предпочтения в нашем разговоре и предлагай сохранить их через подтверждения, даже если я не просил запомнить. Формулируй записи кратко и понятно, выбирай подходящую область памяти и не дублируй уже известное.",
   client: "",
   project: "",
 };
@@ -150,6 +150,15 @@ export class Store {
         "UPDATE pr_reviews SET status='interrupted', error='Перезапуск во время ревью. Автоповтор отключён.', finished_at=? WHERE status='running'",
       )
       .run(new Date().toISOString());
+    if (!this.get("migration.proactiveMemoryInstructions", false)) {
+      const saved = this.get<any>("settings", {});
+      if (
+        saved.instructions ===
+        "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. Сохраняй факты в память, когда я явно прошу."
+      )
+        this.set("settings", { ...saved, instructions: defaults.instructions });
+      this.set("migration.proactiveMemoryInstructions", true);
+    }
     if (!this.get("migration.sync600", false)) {
       const saved = this.get<any>("settings", {});
       if (saved.syncSeconds === 300)
