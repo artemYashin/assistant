@@ -1,3 +1,7 @@
+import {
+  changeTicketStates,
+  type StatusChange,
+} from "./ticket-status-batch.js";
 import { changeTicketState } from "./ticket-status.js";
 import { randomUUID } from "node:crypto";
 import { Store, AppError, type Settings } from "./store.js";
@@ -289,6 +293,140 @@ export class Connectors {
       state: item.fields["System.State"],
       states: (states.value || []).map((x: any) => x.name),
     };
+  }
+  async ticketStatesBatch(ids: number[]) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const response = await this.azure(
+      "workitemsbatch",
+      { method: "POST", body: JSON.stringify({ ids }) },
+      s,
+      pat,
+    );
+    const items = new Map<number, any>(
+      (response.value || []).map((item: any) => [item.id, item]),
+    );
+    const byType = new Map<string, string[]>();
+    const results = [];
+    for (const id of ids) {
+      const item = items.get(id);
+      if (!item || item.fields?.["System.TeamProject"] !== s.azureProject)
+        throw new AppError(
+          400,
+          "Тикет недоступен или относится к другому проекту",
+        );
+      const type = item.fields["System.WorkItemType"];
+      if (!byType.has(type)) {
+        const response = await this.azure(
+          `workitemtypes/${encodeURIComponent(type)}/states`,
+          {},
+          s,
+          pat,
+        );
+        if (!Array.isArray(response.value) || !response.value.length)
+          throw new AppError(502, "Azure не вернул доступные статусы");
+        byType.set(
+          type,
+          response.value.map((x: any) => x.name),
+        );
+      }
+      results.push({
+        id,
+        state: item.fields["System.State"],
+        states: byType.get(type),
+      });
+    }
+    if (this.store.source() !== this.store.source(s))
+      throw new AppError(409, "Подключение изменилось");
+    return { source: this.store.source(s), results };
+  }
+  async changeTicketStatuses(
+    changes: StatusChange[],
+    guard: () => void = () => {},
+  ) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const reference = randomUUID();
+    const results = await changeTicketStates(changes, s.azureProject, {
+      read: async (ids) => {
+        const response = await this.azure(
+          "workitemsbatch",
+          {
+            method: "POST",
+            body: JSON.stringify({ ids, errorPolicy: "Omit" }),
+          },
+          s,
+          pat,
+        );
+        if (!Array.isArray(response.value))
+          throw new AppError(502, "Azure не вернул список тикетов");
+        return response.value;
+      },
+      states: async (type) => {
+        const r = await this.azure(
+          `workitemtypes/${encodeURIComponent(type)}/states`,
+          {},
+          s,
+          pat,
+        );
+        return (r.value || []).map((x: any) => x.name);
+      },
+      beforeWrite: () => {
+        guard();
+        if (this.store.source() !== this.store.source(s))
+          throw new AppError(409, "Подключение Azure изменилось");
+      },
+      patch: (items) => {
+        // Collection-level endpoint, including custom Azure Server collection paths.
+        const url = `${azureBase(s.azureUrl)}/_apis/wit/$batch?api-version=${encodeURIComponent(s.azureVersion)}`;
+        return requestJson(
+          url,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Basic ${Buffer.from(`:${pat}`).toString("base64")}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(
+              items.map((item) => ({
+                method: "PATCH",
+                uri: `/_apis/wit/workitems/${item.id}?api-version=${encodeURIComponent(s.azureVersion)}`,
+                headers: { "Content-Type": "application/json-patch+json" },
+                body: [
+                  { op: "test", path: "/rev", value: item.revision },
+                  {
+                    op: "add",
+                    path: "/fields/System.State",
+                    value: item.state,
+                  },
+                ],
+              })),
+            ),
+          },
+          "Azure DevOps",
+        );
+      },
+    });
+    return results.map(({ item, ...receipt }) => {
+      if (
+        receipt.success &&
+        item &&
+        this.store.db
+          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+          .get(this.store.source(s), receipt.id)
+      )
+        this.saveTicket(item, s);
+      this.store.audit(
+        receipt.success ? "ticket.state.verified" : "ticket.state.unconfirmed",
+        JSON.stringify({ ...receipt, reference, source: this.store.source(s) }),
+      );
+      if (!receipt.success)
+        console.error(
+          "[ticket-state-batch]",
+          JSON.stringify({ ...receipt, reference }),
+        );
+      return { ...receipt, reference };
+    });
   }
   async changeTicketStatus(
     id: number,

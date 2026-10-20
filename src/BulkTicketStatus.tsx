@@ -47,11 +47,24 @@ export function BulkTicketStatus({
     dialog.current?.showModal();
     const loaded: Row[] = [];
     try {
-      for (const ticket of snapshot) {
-        const data = await api(`/tickets/${ticket.id}/states`);
-        if (data.source !== ticket.source)
+      for (let i = 0; i < snapshot.length; i += 25) {
+        const chunk = snapshot.slice(i, i + 25);
+        const source = chunk[0].source;
+        if (chunk.some((ticket) => ticket.source !== source))
+          throw new Error("Выберите тикеты одного подключения.");
+        const data = await api("/tickets/states/batch", "POST", {
+          ids: chunk.map((ticket) => ticket.id),
+          source,
+        });
+        if (data.source !== source)
           throw new Error("Подключение изменилось. Обновите список тикетов.");
-        loaded.push({ ...ticket, states: data.states, state: data.state });
+        for (const ticket of chunk) {
+          const row = data.results.find(
+            (result: any) => result.id === ticket.id,
+          );
+          if (!row) throw new Error(`Azure не вернул тикет #${ticket.id}`);
+          loaded.push({ ...ticket, states: row.states, state: row.state });
+        }
       }
       setRows(loaded);
       setReady(true);
@@ -69,25 +82,52 @@ export function BulkTicketStatus({
     setError("");
     const results = [...rows];
     try {
-      for (let i = 0; i < results.length; i++) {
-        const row = results[i];
+      for (let i = 0; i < results.length; i += 25) {
+        const chunk = results.slice(i, i + 25);
         try {
-          const result = await api(`/tickets/${row.id}/state`, "PUT", {
-            source: row.source,
+          const response = await api("/tickets/state/batch", "PUT", {
+            ids: chunk.map((row) => row.id),
+            source: chunk[0].source,
             state,
           });
-          if (!result.success || result.state !== state)
-            throw new Error(
-              "Новый статус не подтверждён. Проверьте тикет перед повтором.",
+          for (const [offset, row] of chunk.entries()) {
+            const result = response.results.find(
+              (entry: any) => entry.id === row.id,
             );
-          results[i] = { ...row, result: `Подтверждено: ${result.state}` };
-          window.dispatchEvent(
-            new CustomEvent("orbit:ticket-state", {
-              detail: { id: row.id, source: row.source, state: result.state },
-            }),
-          );
+            if (result?.success && result.state === state) {
+              results[i + offset] = {
+                ...row,
+                result: `Подтверждено: ${result.state}`,
+              };
+              window.dispatchEvent(
+                new CustomEvent("orbit:ticket-state", {
+                  detail: {
+                    id: row.id,
+                    source: row.source,
+                    state: result.state,
+                  },
+                }),
+              );
+            } else
+              results[i + offset] = {
+                ...row,
+                error:
+                  result?.error ||
+                  "Новый статус не подтверждён. Проверьте результат перед повтором.",
+              };
+          }
         } catch (e: any) {
-          results[i] = { ...row, error: e.message };
+          // Do not retry writes or continue sending chunks after an unknown outcome.
+          for (let j = i; j < results.length; j++)
+            results[j] = {
+              ...results[j],
+              error:
+                j < i + chunk.length
+                  ? e.message
+                  : "Пакет не отправлен из-за ошибки предыдущего запроса",
+            };
+          setRows([...results]);
+          break;
         }
         setRows([...results]);
       }

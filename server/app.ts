@@ -545,6 +545,37 @@ export function createApp(
       ),
     );
   });
+  app.post("/api/tickets/states/batch", async (req, res) => {
+    const input = z
+      .object({
+        ids: z.array(z.number().int().positive()).min(1).max(25),
+        source: z.string().min(1),
+      })
+      .parse(req.body);
+    if (input.source !== store.source())
+      throw new AppError(409, "Подключение изменилось");
+    res.json(await connectors.ticketStatesBatch([...new Set(input.ids)]));
+  });
+  app.put("/api/tickets/state/batch", async (req, res) => {
+    const input = z
+      .object({
+        ids: z.array(z.number().int().positive()).min(1).max(25),
+        state: text.min(1),
+        source: z.string().min(1),
+      })
+      .parse(req.body);
+    const guard = () => {
+      if (input.source !== store.source())
+        throw new AppError(409, "Подключение изменилось");
+    };
+    guard();
+    res.json({
+      results: await connectors.changeTicketStatuses(
+        [...new Set(input.ids)].map((id) => ({ id, state: input.state })),
+        guard,
+      ),
+    });
+  });
   app.get("/api/tickets/:id/states", async (req, res) =>
     res.json(
       await connectors.ticketStates(

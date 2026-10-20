@@ -653,3 +653,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - The chat policy asks for a normal text preview (full ticket titles and local navigation links) before changing multiple tickets, and waits for a textual confirmation. Single-ticket requests execute without an extra approval. This is a conversational model rule, not a persisted approval transaction or a new UI widget.
 - A short confirmation after the prescribed preview continues the preceding user request for status, local tracker, developer and metadata tools. Metadata scope clarifications retain the original requested values and explicit exclusions; affected IDs must be resolved through tools again.
 - `npm test`: 159 passed, including confirmation context, cancellation/unrelated replies, clarification exclusions, single status writes, deduplication and failed-write cache invalidation. Real Copilot conversation behavior and live Azure writes were not exercised.
+
+### Azure bulk status transport (2026-10-20)
+
+- Table bulk edits and consecutive status actions in the chat batch tool now use collection-level POST `/_apis/wit/$batch`, with revision-tested PATCH entries. Initial and verification reads use `workitemsbatch`; state lists are reused per work item type within a batch. The table also loads its status picker data in batches.
+- Groups contain at most 25 tickets. Table selections beyond 25 are split sequentially. Already-correct states are omitted from writes; every reported successful change is independently verified from the subsequent bulk read. No automatic single-write fallback or retry after batch failure. Single chat edits retain the existing path. PR merge status updates are unchanged.
+- Protocol reference: https://learn.microsoft.com/en-us/previous-versions/azure/devops/integrate/previous-apis/wit/batch?view=tfs-2017
+- Pre-push validation: all 165 tests passed; production build and TypeScript checks passed. Regression cases cover request counts/shape, custom collection URLs, partial outcomes, cancellation and chat authorization/deduplication. Live Azure behavior has not been tested.

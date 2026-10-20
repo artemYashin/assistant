@@ -125,3 +125,34 @@ test("batch permits 50 local operations and 25 Azure changes; rejects oversized 
     assert.equal(writes, before);
   }
 });
+
+test("chat batch sends consecutive status operations together and preserves results after cancellation", async () => {
+  let envelopes = 0;
+  const tool = ticketBatchTool(
+    [],
+    () => {
+      if (envelopes) throw new AppError(409, "Stopped");
+    },
+    async (changes) => {
+      envelopes++;
+      assert.deepEqual(
+        changes.map((x) => x.id),
+        [1, 2],
+      );
+      return [
+        { success: true, state: "RFT" },
+        { success: false, error: "Revision conflict" },
+      ];
+    },
+  );
+  const result: any = await tool.handler!(
+    {
+      operations: [1, 2].map((id) => ({ action: "status", id, state: "RFT" })),
+    },
+    {} as any,
+  );
+  assert.equal(envelopes, 1);
+  assert.equal(result.succeeded, 1);
+  assert.equal(result.failed, 1);
+  assert.match(result.results[1].error, /Revision conflict/);
+});

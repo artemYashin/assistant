@@ -220,6 +220,7 @@ export function sessionConfig(
   localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
   extraTools: Tool<any>[] = [],
   assertBatchActive?: () => void,
+  changeStatuses?: (changes: { id: number; state: string }[]) => Promise<any[]>,
 ): SessionConfig {
   const tools: Tool<any>[] = [
     ...makeTools(
@@ -257,6 +258,7 @@ export function sessionConfig(
         (() => {
           if (guard && !guard()) throw new AppError(409, "Запрос остановлен");
         }),
+      changeStatuses,
     ),
   );
   const names = tools.map((t) => t.name);
@@ -504,6 +506,100 @@ export class Agent {
         );
       return stateCalls.get(key)!;
     };
+    const changeStatuses = async (changes: { id: number; state: string }[]) => {
+      assertActive();
+      // Keep the existing single-ticket path for a one-item group.
+      if (changes.length === 1) {
+        try {
+          return [await changeStatus(changes[0].id, changes[0].state)];
+        } catch (error) {
+          return [toolFailure("change_ticket_status", changes[0], error)];
+        }
+      }
+      const pending: { id: number; state: string }[] = [];
+      const results = new Map<number, Promise<any>>();
+      const resolve = new Map<number, (value: any) => void>();
+      for (const [index, change] of changes.entries()) {
+        try {
+          if (
+            review ||
+            !mayChangeState(
+              mutationPrompt,
+              change.id,
+              change.state,
+              knownTickets.has(change.id),
+            )
+          )
+            throw new AppError(
+              403,
+              "Нужна явная команда сменить статус этого тикета",
+            );
+          const key = `${change.id}`;
+          const target = change.state
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .replace(/^ready for testing$/, "rft");
+          if (requestedStates.has(key) && requestedStates.get(key) !== target)
+            throw new AppError(409, "Одна смена статуса на тикет за запрос");
+          if (!stateCalls.has(key)) {
+            requestedStates.set(key, target);
+            const promise = new Promise<any>((done) =>
+              resolve.set(change.id, done),
+            );
+            stateCalls.set(key, promise);
+            pending.push(change);
+          }
+          results.set(
+            index,
+            stateCalls
+              .get(key)!
+              .catch((error) =>
+                toolFailure("change_ticket_status", change, error),
+              ),
+          );
+        } catch (error) {
+          results.set(
+            index,
+            Promise.resolve(toolFailure("change_ticket_status", change, error)),
+          );
+        }
+      }
+      if (pending.length) {
+        try {
+          const guard = () => {
+            assertActive();
+            if (this.store.source(settings) !== this.store.source())
+              throw new AppError(409, "Подключение Azure изменилось");
+          };
+          guard();
+          if (!this.connectors) throw new AppError(400, "Azure недоступен");
+          const receipts = await this.connectors.changeTicketStatuses(
+            pending,
+            guard,
+          );
+          pending.forEach((change, i) => resolve.get(change.id)!(receipts[i]));
+        } catch (error) {
+          pending.forEach((change) =>
+            resolve.get(change.id)!(
+              toolFailure("change_ticket_status", change, error),
+            ),
+          );
+        } finally {
+          // The bulk verification already refreshed local summaries. Drop old cards
+          // without issuing another GET for every member of the batch.
+          for (const change of pending) {
+            const previous = fetched.get(change.id);
+            fetched.delete(change.id);
+            if (previous) {
+              const i = cards.indexOf(previous.cardId);
+              if (i >= 0) cards.splice(i, 1);
+            }
+          }
+        }
+      }
+      return Promise.all(changes.map((_, index) => results.get(index)!));
+    };
     const localCalls = new Map<
       number,
       { action: "add" | "remove"; result: Promise<any> }
@@ -633,6 +729,7 @@ export class Agent {
               : []),
           ],
           assertActive,
+          review ? undefined : changeStatuses,
         );
         if (!review) {
           const list = config.tools?.find(

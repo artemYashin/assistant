@@ -218,3 +218,63 @@ test("negative contextual commands cannot change states", () => {
   ])
     assert.ok(!mayChangeState(prompt, 42, "RFT", true));
 });
+
+test("connector bulk update preserves collection URL and verifies with one bulk read", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-bulk-state-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.settings(),
+    azureUrl: "https://ado.test/tfs/Collection",
+    azureProject: "Project",
+  });
+  store.setSecret("azure.pat", "pat");
+  const calls: string[] = [];
+  let reads = 0;
+  t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
+    const url = new URL(String(raw));
+    calls.push(`${init.method || "GET"} ${url.pathname}`);
+    if (url.pathname.endsWith("/workitemsbatch")) {
+      assert.equal(init.method, "POST");
+      assert.deepEqual(JSON.parse(init.body).ids, [1, 2]);
+      reads++;
+      return Response.json({
+        value: [1, 2].map((id) => ({
+          ...item(reads === 1 ? "Active" : "RFT"),
+          id,
+        })),
+      });
+    }
+    if (url.pathname.endsWith("/states"))
+      return Response.json({ value: [{ name: "RFT" }] });
+    assert.equal(url.pathname, "/tfs/Collection/_apis/wit/$batch");
+    assert.equal(init.method, "POST");
+    const requests = JSON.parse(init.body);
+    assert.equal(requests.length, 2);
+    requests.forEach((request: any, i: number) => {
+      assert.equal(request.method, "PATCH");
+      assert.equal(
+        request.uri,
+        `/_apis/wit/workitems/${i + 1}?api-version=${store.settings().azureVersion}`,
+      );
+      assert.deepEqual(request.body, [
+        { op: "test", path: "/rev", value: 7 },
+        { op: "add", path: "/fields/System.State", value: "RFT" },
+      ]);
+    });
+    return Response.json({ value: [{ code: 200 }, { code: 200 }] });
+  });
+  const results = await new Connectors(
+    store,
+    new IntegrationsAuth(store),
+  ).changeTicketStatuses([
+    { id: 1, state: "RFT" },
+    { id: 2, state: "RFT" },
+  ]);
+  assert.ok(results.every((result) => result.success));
+  assert.equal(calls.length, 4);
+  assert.equal(calls.filter((call) => call.includes("/$batch")).length, 1);
+});

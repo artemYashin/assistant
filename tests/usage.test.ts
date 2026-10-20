@@ -75,6 +75,7 @@ test("usage survives restart and marks unfinished requests interrupted", (t) => 
 function fakeAgent(
   store: Store,
   run: (session: any, config: any) => Promise<any>,
+  connectors?: any,
 ) {
   let handler: any,
     config: any,
@@ -110,6 +111,7 @@ function fakeAgent(
     store,
     new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
+    connectors,
   );
   return { agent, counts: () => ({ aborts, stops }) };
 }
@@ -629,4 +631,58 @@ test("metadata clarification uses prior user intent, resolves targets and honors
     return { data: { content: "Готово, кроме #42" } };
   });
   await agent.chat("Ко всем 23, кроме #42", context);
+});
+
+test("chat bulk status uses the connector batch, rejects unrequested IDs and deduplicates repeats", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  let writes = 0;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const tool = config.tools.find(
+        (tool: any) => tool.name === "batch_update_tickets",
+      );
+      const input = {
+        operations: [42, 43, 99].map((id) => ({
+          action: "status",
+          id,
+          state: "RFT",
+        })),
+      };
+      for (let i = 0; i < 2; i++) {
+        const result = await tool.handler(input, {});
+        assert.equal(result.succeeded, 2);
+        assert.equal(result.failed, 1);
+        assert.match(result.results[2].error, /явная команда/);
+      }
+      return { data: { content: "Готово" } };
+    },
+    {
+      changeTicketStatuses: async (changes: any[], guard: () => void) => {
+        guard();
+        writes++;
+        assert.deepEqual(
+          changes.map((x) => x.id),
+          [42, 43],
+        );
+        return changes.map((x) => ({
+          ...x,
+          success: true,
+          outcome: "changed",
+        }));
+      },
+      changeTicketStatus: async () => {
+        throw new Error("Individual write must not run");
+      },
+    },
+  );
+  store.say("user", "Переведи #42 и #43 в RFT", context);
+  store.say(
+    "assistant",
+    "#42 — First title. #43 — Second title. Выполнить эти изменения?",
+    context,
+  );
+  await agent.chat("Да, делай", context);
+  assert.equal(writes, 1);
 });
