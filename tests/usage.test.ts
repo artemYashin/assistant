@@ -1005,3 +1005,40 @@ test("short confirmation applies historical local metadata selection without rer
   });
   await agent.chat("Да, давай", context);
 });
+
+test("Azure search proposal preserves the broader local search answer", async (t) => {
+  const store = fixture(t);
+  for (let id = 1; id <= 23; id++)
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, id === 1 ? "IBR Insight Reports" : `IBR task ${id}`, "Active", "", "Bug", "", "", "now");
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const call = (name: string, args: any) => config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    assert.equal((await call("list_tickets", {search: "Insight Reports"})).total, 1);
+    assert.equal((await call("list_tickets", {search: "IBR"})).total, 23);
+    await call("request_azure_ticket_lookup", {search: "Insight Reports"});
+    return {data: {content: "По связанному коду IBR найдено 23 локальных тикета."}};
+  });
+  const result = await agent.chat("Найди тикеты Insight Reports", context);
+  assert.match(result.body, /По связанному коду IBR найдено 23/);
+  assert.match(result.body, /запроса Azure: 1/);
+  assert.match(result.body, /Запросить сведения в Azure DevOps/);
+  const {azureLookupConsent} = await import("../server/azure-ticket-consent.js");
+  assert.deepEqual(azureLookupConsent("Только показать", [{role: "assistant", body: result.body}], store.source()), {plan: {search: "Insight Reports"}, add: false});
+});
+
+test("full tool results are exact, loaded separately and scoped to the chat", (t) => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  const request = ledger.begin("model", context, "chat");
+  const trace = ledger.toolTrace(request, "list_tickets", {}, false);
+  const result = {tickets: [{id: 42, title: "Full ticket title", notes: "Saved local note", tags: ["UI"]}], total: 1, hasMore: false};
+  ledger.finishToolTrace(trace, "completed", result);
+  const summary = ledger.chatTools(context).requests[0].tools[0];
+  assert.equal(summary.hasFullResult, 1);
+  assert.equal(summary.full_result, undefined);
+  assert.doesNotMatch(summary.result, /Full ticket title|Saved local note/);
+  assert.deepEqual(ledger.toolResult(trace, context), {result});
+  assert.throws(() => ledger.toolResult(trace, {client: "other", project: "other"}), /не найден/);
+  store.db.prepare("UPDATE llm_tool_traces SET full_result=NULL WHERE id=?").run(trace);
+  assert.equal(ledger.chatTools(context).requests[0].tools[0].hasFullResult, 0);
+  assert.throws(() => ledger.toolResult(trace, context), /не сохранён/);
+});

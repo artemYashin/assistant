@@ -28,7 +28,7 @@ export function azureLookupQuestion(
   source: string,
   localCount: number,
 ) {
-  return `Локально найдено: ${localCount}.\n\n${heading}\nПодключение: ${source}\nНомера: ${plan.ids?.join(", ") || "—"}\nНазвание содержит: ${plan.search || "—"}\nТип: ${plan.type || "—"}\nСтатус: ${plan.state || "—"}\n\nМожно только показать краткие сведения или запросить и добавить найденные тикеты в локальный список (не более 50 за один поиск). Описания и критерии загружаться не будут. Какой вариант выбрать?`;
+  return `Локальных совпадений по критериям предложенного запроса Azure: ${localCount}. Это не общее количество результатов предыдущих поисков.\n\n${heading}\nПодключение: ${source}\nНомера: ${plan.ids?.join(", ") || "—"}\nНазвание содержит: ${plan.search || "—"}\nТип: ${plan.type || "—"}\nСтатус: ${plan.state || "—"}\n\nМожно только показать краткие сведения или запросить и добавить найденные тикеты в локальный список (не более 50 за один поиск). Описания и критерии загружаться не будут. Какой вариант выбрать?`;
 }
 export function azureLookupConsent(
   prompt: string,
@@ -38,7 +38,8 @@ export function azureLookupConsent(
   const last = (history as { role?: string; body?: string }[]).at(-1);
   if (last?.role !== "assistant" || !last.body?.includes(`\n${heading}\n`))
     return;
-  const lines = last.body.split("\n");
+  // Parse only the final canonical plan, never labels quoted in the model summary.
+  const lines = last.body.slice(last.body.lastIndexOf(`\n${heading}\n`)).split("\n");
   const value = (label: string) =>
     lines.find((line) => line.startsWith(label))?.slice(label.length);
   if (value("Подключение: ") !== source) return;

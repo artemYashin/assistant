@@ -91,8 +91,7 @@ export function ChatTools({
             </header>
             <p>
               Лимит расходуют вызовы модели. Операции внутри пакета показаны
-              отдельно и не расходуют дополнительные вызовы. Тексты заметок и
-              сообщений не записываются.
+              отдельно и не расходуют дополнительные вызовы. Сводка сокращена. Полный результат загружается по кнопке и показывает JSON, возвращённый инструментом; для шагов пакета — внутреннему обработчику.
             </p>
             <button
               type="button"
@@ -143,9 +142,10 @@ export function ChatTools({
                     </small>
                     <h4>Параметры</h4>
                     <pre>{pretty(tool.arguments)}</pre>
+                    <ToolResult key={`${key}:${tool.id}`} tool={tool} context={context} />
                     {tool.result && (
                       <>
-                        <h4>Результат</h4>
+                        <h4>Сводка результата</h4>
                         <pre>{pretty(tool.result)}</pre>
                       </>
                     )}
@@ -165,4 +165,26 @@ function pretty(value: string) {
   } catch {
     return value;
   }
+}
+
+function ToolResult({tool, context}: {tool: any; context: {client: string; project: string}}) {
+  const [body, setBody] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!tool.hasFullResult) return <p><small>{tool.status === "running" ? "Полный результат будет доступен после завершения." : "Полный результат для этого вызова не сохранён."}</small></p>;
+  async function toggle() {
+    if (body !== null) { setVisible(!visible); return; }
+    setBusy(true); setError("");
+    try {
+      const data = await api(`/conversation/tools/${encodeURIComponent(tool.id)}/result?${new URLSearchParams(context)}`);
+      setBody(JSON.stringify(data.result, null, 2)); setVisible(true);
+    } catch (e: any) { setError(e.message); }
+    finally { setBusy(false); }
+  }
+  return <div>
+    <button type="button" className="secondary" disabled={busy} aria-expanded={visible} onClick={() => void toggle()}>{busy ? "Загрузка…" : visible ? "Скрыть полный результат" : "Показать полный результат"}</button>
+    {error && <p role="alert">{error}</p>}
+    {visible && <><p><small>Фактический результат инструмента. Если сам инструмент ограничил данные, признаки пагинации или усечения сохранены в JSON.</small></p><pre>{body}</pre></>}
+  </div>;
 }

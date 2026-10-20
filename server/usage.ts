@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Store, type Context } from "./store.js";
+import { Store, AppError, type Context } from "./store.js";
 export type UsagePullRequest = {
   monitor: string;
   repo: string;
@@ -150,14 +150,23 @@ export class UsageLedger {
       }));
     this.store.db
       .prepare(
-        "UPDATE llm_tool_traces SET status=?, result=?, finished_at=? WHERE id=?",
+        "UPDATE llm_tool_traces SET status=?, result=?, full_result=?, finished_at=? WHERE id=?",
       )
       .run(
         status,
         JSON.stringify(summary).slice(0, 24000),
+        JSON.stringify(result ?? null),
         new Date().toISOString(),
         id,
       );
+  }
+  toolResult(id: string, context: Context) {
+    const row = this.store.db.prepare(
+      "SELECT t.full_result FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin='chat' AND r.client=? AND r.project=?",
+    ).get(id, context.client, context.project) as { full_result: string | null } | undefined;
+    if (!row) throw new AppError(404, "Вызов инструмента не найден в текущем чате");
+    if (row.full_result === null) throw new AppError(404, "Полный результат не сохранён или вызов ещё выполняется");
+    return { result: JSON.parse(row.full_result) };
   }
   chatTools(context: Context) {
     const requests = this.store.db
@@ -171,7 +180,7 @@ export class UsageLedger {
         tools: (
           this.store.db
             .prepare(
-              "SELECT * FROM llm_tool_traces WHERE request_id=? ORDER BY started_at,rowid LIMIT 500",
+              "SELECT id,request_id,name,arguments,internal,status,result,started_at,finished_at,full_result IS NOT NULL AS hasFullResult FROM llm_tool_traces WHERE request_id=? ORDER BY started_at,rowid LIMIT 500",
             )
             .all(request.id) as any[]
         ).map((tool) => ({ ...tool, internal: Boolean(tool.internal) })),

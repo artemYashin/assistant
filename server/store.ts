@@ -103,6 +103,8 @@ export class Store {
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
+    if (!(this.db.prepare("PRAGMA table_info(llm_tool_traces)").all() as any[]).some(c => c.name === "full_result"))
+      this.db.exec("ALTER TABLE llm_tool_traces ADD COLUMN full_result TEXT");
     if (
       !(this.db.prepare("PRAGMA table_info(llm_requests)").all() as any[]).some(
         (c) => c.name === "origin",
