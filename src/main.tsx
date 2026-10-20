@@ -27,6 +27,7 @@ import { TicketTrash } from "./TicketTrash.js";
 import { MemoryProposalList } from "./MemoryProposals.js";
 import { ReviewQuestionInbox } from "./ReviewQuestions.js";
 import { MultiSelect } from "./MultiSelect.js";
+import { AzureAssigneeFilter } from "./AzureAssigneeFilter.js";
 import {
   BrowserRouter,
   Link,
@@ -1447,16 +1448,11 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
               label: value || "Статус не указан",
             }))}
           />
-          <MultiSelect
-            label="Исполнитель Azure"
-            placeholder="Все исполнители"
+          <AzureAssigneeFilter
             disabled={!!rawTarget}
             value={assigneeFilter}
             onChange={setAssigneeFilter}
-            options={values("assigned").map((name) => ({
-              value: name,
-              label: name || "Не назначен в Azure",
-            }))}
+            names={values("assigned")}
           />
           <MultiSelect
             label="Локальное поручение"

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 
 type Option = { value: string; label: string; group?: string };
+type SearchResult = { options: Option[]; warning?: string };
 export function MultiSelect({
   label,
   placeholder,
@@ -9,6 +10,7 @@ export function MultiSelect({
   value,
   onChange,
   disabled = false,
+  searchOptions,
 }: {
   label: string;
   placeholder: string;
@@ -16,9 +18,37 @@ export function MultiSelect({
   value: string[];
   onChange: (value: string[]) => void;
   disabled?: boolean;
+  searchOptions?: (query: string) => Promise<SearchResult>;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [remote, setRemote] = useState<SearchResult>({ options: [] });
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  useEffect(() => {
+    let live = true;
+    setRemote({ options: [] });
+    setSearchError("");
+    setSearching(false);
+    if (!open || disabled || !searchOptions || query.trim().length < 2) return;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchOptions(query.trim())
+        .then((result) => {
+          if (live) setRemote(result);
+        })
+        .catch((error) => {
+          if (live) setSearchError(error.message);
+        })
+        .finally(() => {
+          if (live) setSearching(false);
+        });
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [open, disabled, query, searchOptions]);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -39,14 +69,22 @@ export function MultiSelect({
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
-  const visible = options.filter((o) =>
+  const localVisible = options.filter((o) =>
     `${o.label} ${o.group || ""}`
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase()),
   );
+  const visible = [
+    ...localVisible,
+    ...remote.options.filter(
+      (option) => !localVisible.some((known) => known.value === option.value),
+    ),
+  ];
   const selectedLabel =
     value.length === 1
-      ? options.find((o) => o.value === value[0])?.label || "Выбрано: 1"
+      ? options.find((o) => o.value === value[0])?.label ||
+        value[0] ||
+        "Выбрано: 1"
       : `Выбрано: ${value.length}`;
   return (
     <div
@@ -100,7 +138,10 @@ export function MultiSelect({
               aria-label={`Поиск: ${label}`}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Найти…"
+              placeholder={
+                searchOptions ? "Имя или e-mail · от 2 символов" : "Найти…"
+              }
+              maxLength={searchOptions ? 100 : undefined}
             />
           </div>
           <div className="multi-select-options">
@@ -130,8 +171,23 @@ export function MultiSelect({
                 </label>
               </div>
             ))}
-            {!visible.length && (
+            {!visible.length && !searching && !searchError && (
               <p className="multi-select-empty">Ничего не найдено</p>
+            )}
+            {searching && (
+              <p className="multi-select-empty" role="status">
+                Поиск в Azure…
+              </p>
+            )}
+            {remote.warning && (
+              <p className="multi-select-empty" role="status">
+                {remote.warning}
+              </p>
+            )}
+            {searchError && (
+              <p className="error" role="alert">
+                {searchError}
+              </p>
             )}
           </div>
           <div className="multi-select-footer">

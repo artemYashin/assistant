@@ -932,3 +932,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Header ticket lookup now has an icon, visible label and bordered background; removed the redundant local-only label.
 - Active/trash task-type filters now use only checked import types, matching status filters; cached catalog entries and ticket values no longer add unselected types. Updated the endpoint regression assertion.
 - Pre-push validation: all 216 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Azure assignee filter search and muted priority badges (2026-10-20)
+
+- Active/trash assignee filters retain known and selected display names and add debounced Azure user search through the existing identity/Graph endpoint. Queries require two characters; results, truncation warnings and errors stay in the multiselect. Ticket filtering remains local.
+- Priority badges now use a muted green background/border and slightly lighter text weight.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser interactions and live Azure search were not exercised.

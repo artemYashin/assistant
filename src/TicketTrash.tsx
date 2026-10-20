@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { MultiSelect } from "./MultiSelect.js";
+import { AzureAssigneeFilter } from "./AzureAssigneeFilter.js";
 import { api } from "./api.js";
 import { StatusBadge } from "./TicketControls.js";
 export function TicketTrash({
@@ -268,15 +269,10 @@ export function TicketTrash({
             label: value || "Статус не указан",
           }))}
         />
-        <MultiSelect
-          label="Исполнитель Azure"
-          placeholder="Все исполнители"
+        <AzureAssigneeFilter
           value={people}
           onChange={setPeople}
-          options={values("assigned").map((name) => ({
-            value: name,
-            label: name || "Не назначен в Azure",
-          }))}
+          names={values("assigned")}
         />
         <MultiSelect
           label="Локальное поручение"
