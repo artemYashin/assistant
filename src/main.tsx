@@ -1739,12 +1739,16 @@ function Tickets({
         </p>
       )}
       <div
-        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}`}
+        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}`}
       >
-        <table>
+        <table ref={columns.resize.tableRef}>
+          {columns.resize.colgroup}
           <thead>
             <tr>
-              <OrderedTicketCells order={columns.order}>
+              <OrderedTicketCells
+                order={columns.order}
+                headerResize={columns.resize.handle}
+              >
                 <th className="ticket-selection-column">
                   <SelectAllTickets
                     count={selection.selected.length}

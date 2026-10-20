@@ -392,12 +392,16 @@ export function TicketTrash({
         </div>
       )}
       <div
-        className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}`}
+        className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}${display.resize.manual ? " has-manual-widths" : ""}`}
       >
-        <table>
+        <table ref={display.resize.tableRef}>
+          {display.resize.colgroup}
           <thead>
             <tr>
-              <OrderedTicketCells order={display.order}>
+              <OrderedTicketCells
+                order={display.order}
+                headerResize={display.resize.handle}
+              >
                 <th className="ticket-selection-column">
                   <SelectAllTickets
                     count={selection.selected.length}

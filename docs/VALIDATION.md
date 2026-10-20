@@ -1030,3 +1030,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Dragging over the upper/lower half of a column row now selects insertion before/after it, with the matching top/bottom indicator. Drop position is calculated again on release; insertion uses the target index after removing the dragged item. Stale indicators clear on leaving the row. Keyboard reordering preserves its direction.
 - All 228 tests and production build completed successfully after being started before the user's instruction to skip tests; no additional tests were started afterward. Vite retains its large-chunk warning. Browser drag interactions were not exercised.
+
+### Persistent manual ticket column widths (2026-10-21)
+
+- Added header resize handles to active, Azure and trash tables. Dragging redistributes width between adjacent visible columns; manual sizing uses a fixed-layout colgroup and adapts proportions to available width. Checkbox width stays fixed.
+- Width preferences persist separately for each tab in browser storage, independently of column order/visibility. Double-clicking a handle resets all widths; the display dialog also offers a reset applied on Save. Keyboard arrows resize and Home resets.
+- TypeScript and whitespace checks passed. Added pure sizing regression tests, but did not run tests at the user's explicit request. Production build and browser drag/resize behavior were not exercised. This change is isolated in its own commit for possible rollback.

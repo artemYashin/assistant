@@ -1,5 +1,7 @@
+import { useTicketColumnResize } from "./useTicketColumnResize.js";
 import {
   Fragment,
+  cloneElement,
   Children,
   isValidElement,
   useState,
@@ -80,6 +82,13 @@ export function useTicketColumns(trash = false, namespace = "active") {
       /* Still usable without browser storage. */
     }
   };
+  const resize = useTicketColumnResize(storageKey + ".widths", [
+    "selection",
+    "id",
+    "title",
+    ...order.filter((key) => !hidden.includes(key)),
+  ]);
+  const [resetWidths, setResetWidths] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const [draftOrder, setDraftOrder] = useState<string[]>([]);
   const [draftHidden, setDraftHidden] = useState<string[]>([]);
@@ -106,6 +115,7 @@ export function useTicketColumns(trash = false, namespace = "active") {
     });
   };
   return {
+    resize,
     order,
     hidden: (key: string) => hidden.includes(key),
     count: options.length + 3 - hidden.length,
@@ -116,6 +126,7 @@ export function useTicketColumns(trash = false, namespace = "active") {
           className="secondary ticket-display-button"
           aria-haspopup="dialog"
           onClick={() => {
+            setResetWidths(false);
             setDraftOrder([...order]);
             setDraftHidden([...hidden]);
             finishDrag();
@@ -264,6 +275,16 @@ export function useTicketColumns(trash = false, namespace = "active") {
               );
             })}
           </div>
+          <button
+            type="button"
+            className="text-button"
+            disabled={!resize.manual || resetWidths}
+            onClick={() => setResetWidths(true)}
+          >
+            {resetWidths
+              ? "Ширины будут сброшены при сохранении"
+              : "Сбросить ширины"}
+          </button>
           <div className="ticket-columns-footer">
             <button type="button" className="secondary" onClick={close}>
               Cancel
@@ -272,6 +293,7 @@ export function useTicketColumns(trash = false, namespace = "active") {
               type="button"
               className="primary"
               onClick={() => {
+                if (resetWidths) resize.reset();
                 saveOrder(draftOrder);
                 save(draftHidden);
                 close();
@@ -289,9 +311,11 @@ export function useTicketColumns(trash = false, namespace = "active") {
 export function OrderedTicketCells({
   children,
   order,
+  headerResize,
 }: {
   children: ReactNode;
   order: string[];
+  headerResize?: (key: string, label: string) => ReactNode;
 }) {
   const rank = (child: ReactNode) => {
     if (!isValidElement<{ "data-column"?: string }>(child)) return -1;
@@ -304,5 +328,52 @@ export function OrderedTicketCells({
         ? flatten(child.props.children)
         : [child],
     );
-  return <>{flatten(children).sort((a, b) => rank(a) - rank(b))}</>;
+  return (
+    <>
+      {flatten(children)
+        .sort((a, b) => rank(a) - rank(b))
+        .map((child) => {
+          if (
+            !headerResize ||
+            !isValidElement<{
+              "data-column"?: string;
+              "data-resize-key"?: string;
+              className?: string;
+              children?: ReactNode;
+              hidden?: boolean;
+            }>(child) ||
+            child.type !== "th"
+          )
+            return child;
+          const props = child.props;
+          const key =
+            props["data-column"] ||
+            (props.className?.includes("ticket-selection-column")
+              ? "selection"
+              : props.className?.includes("ticket-identity-column")
+                ? "id"
+                : "title");
+          const label =
+            ticketColumns.find(([id]) => id === key)?.[1] ||
+            (
+              {
+                id: "ID и тип",
+                title: "Тикет",
+                removedAt: "Удалён",
+                expiresAt: "Хранится до",
+              } as Record<string, string>
+            )[key] ||
+            key;
+          return cloneElement(
+            child,
+            {
+              "data-resize-key": key,
+              className: (props.className || "") + " ticket-resizable-heading",
+            },
+            props.children,
+            !props.hidden && headerResize(key, label),
+          );
+        })}
+    </>
+  );
 }

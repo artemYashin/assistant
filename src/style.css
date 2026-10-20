@@ -7923,3 +7923,54 @@ summary > svg {
   padding: 5px 0;
   cursor: pointer;
 }
+
+.ticket-table-fit > table > thead > tr > th.ticket-resizable-heading {
+  position: relative;
+  padding-right: 12px;
+}
+.ticket-column-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+}
+.ticket-column-resize::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 3px;
+  width: 2px;
+  border-radius: 2px;
+  background: #bcc8c2;
+  transition: background 100ms, top 100ms, bottom 100ms;
+}
+.ticket-column-resize:is(:hover, :focus-visible, .is-active)::after {
+  background: #397b65;
+  top: 0;
+  bottom: 0;
+}
+.ticket-table-fit.has-manual-widths > table { table-layout: fixed; }
+.ticket-table-fit.has-manual-widths > table > :is(thead, tbody) > tr > :is(th, td):not(.ticket-selection-column) {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+.ticket-table-fit.has-manual-widths > table > tbody > tr:not(.ticket-preview-row):not(.ticket-empty-row) > td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ticket-table-fit.has-manual-widths > table > thead .ticket-column-sort,
+.ticket-table-fit.has-manual-widths > table > thead .ticket-heading-sorts {
+  max-width: 100%;
+  min-width: 0;
+}
+.ticket-table-fit.has-manual-widths > table > tbody > tr:not(.ticket-preview-row) > td > :is(.ticket-id-type, .ticket-status-control, .ticket-metadata-control, .local-developer, .ticket-tag-list, .local-assignee-names) {
+  max-width: 100%;
+  min-width: 0;
+}
