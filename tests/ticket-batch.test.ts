@@ -156,3 +156,32 @@ test("chat batch sends consecutive status operations together and preserves resu
   assert.equal(result.failed, 1);
   assert.match(result.results[1].error, /Revision conflict/);
 });
+
+test("shared metadata batch sends one patch, deduplicates IDs and returns partial outcomes", async () => {
+  const calls: any[] = [];
+  const tool = ticketBatchTool([defineTool("update_local_ticket_metadata", {
+    description: "test",
+    parameters: z.object({ id: z.number() }),
+    handler: async (args, invocation) => {
+      calls.push(args);
+      assert.equal((invocation as any).orbitBatchChild, true);
+      return args.id === 43 ? { success: false, error: "Missing ticket" } : { success: true, changedFields: ["tags"], azureChanged: false };
+    },
+  })]);
+  const result: any = await tool.handler!({ ids: [42, 43, 42], metadata: { tags: { mode: "add", values: ["Inside 2"] } } }, {} as any);
+  assert.deepEqual(calls, [42, 43].map(id => ({ id, tags: { mode: "add", values: ["Inside 2"] } })));
+  assert.equal(result.total, 2);
+  assert.equal(result.succeeded, 1);
+  assert.equal(result.failed, 1);
+  assert.equal(result.results[1].error, "Missing ticket");
+  const invalid: any[] = [
+    { ids: [42] }, { metadata: { priority: 1 } },
+    { ids: [], metadata: { priority: 1 } },
+    { ids: Array.from({length: 51}, (_, i) => i + 1), metadata: { priority: 1 } },
+    { ids: [42], metadata: {} },
+    { ids: [42], metadata: { id: 43, priority: 1 } },
+    { ids: [42], metadata: { priority: 1 }, operations: [{ action: "remove", id: 42 }] },
+  ];
+  for (const args of invalid) await assert.rejects(async () => tool.handler!(args, {} as any));
+  assert.equal(calls.length, 2);
+});

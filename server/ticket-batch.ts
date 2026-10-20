@@ -32,12 +32,25 @@ export const ticketBatchSchema = z
         ]),
       )
       .min(1)
-      .max(50),
+      .max(50)
+      .optional(),
+    ids: z.array(id).min(1).max(50).optional(),
+    metadata: z.object({
+      notes: editMetadataSchema.shape.notes,
+      priority: editMetadataSchema.shape.priority,
+      tags: editMetadataSchema.shape.tags,
+    }).strict().refine(v => v.notes || v.priority !== undefined || v.tags, "Укажите изменяемое поле").optional(),
   })
   .strict()
   .refine(
+    ({ operations, ids, metadata }) => operations !== undefined
+      ? ids === undefined && metadata === undefined
+      : ids !== undefined && metadata !== undefined,
+    "Укажите либо operations, либо ids и metadata",
+  )
+  .refine(
     ({ operations }) =>
-      operations.filter((op) => op.action === "status").length <= 25,
+      (operations || []).filter((op) => op.action === "status").length <= 25,
     "В одном пакете допускается не больше 25 изменений статуса в Azure",
   );
 
@@ -48,10 +61,14 @@ export function ticketBatchTool(
 ) {
   return defineTool("batch_update_tickets", {
     description:
-      "Execute up to 50 explicitly requested ticket operations in order, grouping consecutive Azure status changes into one Azure batch request, with at most 25 Azure status changes per batch (also for mixed batches). Limits are validated before any operation starts. First resolve the exact IDs via list_tickets/get_ticket/get_local_ticket_metadata, including IDs from conversation history. Actions: metadata (data uses update_local_ticket_metadata schema), developers, add/remove LOCAL tracker, status in Azure. Add reads Azure but does not write it. Same authorization and verification as individual tools; no automatic retries or rollback. Returns success/error for EACH item; report partial success honestly. For larger sets send separate batches, never repeat completed or unconfirmed operations.",
+      "Execute up to 50 explicitly requested ticket operations in order, grouping consecutive Azure status changes into one Azure batch request, with at most 25 Azure status changes per batch (also for mixed batches). Limits are validated before any operation starts. For IDENTICAL local metadata edits prefer {ids:[42,43], metadata:{tags:{mode:'add',values:['Inside 2']}}: provide the patch ONCE for up to 50 IDs, not one tool call/operation per ticket. Metadata IDs/values may come from an unambiguous historical selection; no reread required. For differing edits or Azure statuses use operations; resolve IDs as required by those individual tools. Never combine the two input forms. Actions: metadata (data uses update_local_ticket_metadata schema), developers, add/remove LOCAL tracker, status in Azure. Add reads Azure but does not write it. Same authorization and verification as individual tools; no automatic retries or rollback. Returns success/error for EACH item; report partial success honestly. For larger sets send separate batches, never repeat completed or unconfirmed operations.",
     parameters: ticketBatchSchema,
     handler: async (input, invocation) => {
-      const { operations } = ticketBatchSchema.parse(input);
+      const parsed = ticketBatchSchema.parse(input);
+      const operations = parsed.operations ?? [...new Set(parsed.ids!)].map(id => ({
+        action: "metadata" as const,
+        data: { ...parsed.metadata!, id },
+      }));
       const results: any[] = [];
       let stopped = false;
       const statusResults = new Map<number, any>();

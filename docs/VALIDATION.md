@@ -704,3 +704,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Chat policy and list_tickets guidance now allow up to four distinct local summary search formulations, using distinctive user keywords or exact feature codes observed in relevant titles. Explicit filters/exclusions, pagination, deduplication and bulk confirmation remain required; this does not authorize remote or full-content reads.
 - Pre-push validation: all 179 tests and the production build passed. Vite retains its large-chunk warning. Real model adherence to this prompt has not been exercised.
+
+### Conversational local edits and compact metadata batches (2026-10-20)
+
+- Local metadata writes no longer parse the latest user message for mutation verbs, field values or newly resolved IDs. The main assistant uses conversation context and asks for bulk confirmation; this is a prompt rule, not a server-side approval boundary. Schema validation, local existence/source checks, priority limits, exclusions and per-turn deduplication remain. No second LLM permission agent exists in the Orbit tool path.
+- Consecutive metadata clarification turns retain the original user request and exclusions. Identical local changes can use batch_update_tickets with ids and one metadata patch (up to 50 IDs), deduplicating IDs and returning individual outcomes. Mixed operations remain supported, with at most 25 Azure status changes. Internal child handlers do not represent additional model tool calls.
+- Pre-push validation: all 182 tests and the production build passed. Tests cover historical selection confirmation without rereads, preserved exclusions, shared-patch validation/deduplication, partial failures and existing Azure verification behavior. Live Copilot/Azure behavior was not exercised. Vite retains its large-chunk warning.

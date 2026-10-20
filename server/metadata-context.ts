@@ -1,6 +1,5 @@
-// Only a user's own immediately preceding request can supply the missing
-// operation/value. Assistant text is used solely to detect a clarification,
-// never as authorization to mutate fields.
+// Follow consecutive clarification turns back to the user's request.
+// Assistant text only identifies a question; it never supplies mutation values.
 export function metadataContextRequest(
   prompt: string,
   history: unknown[],
@@ -31,10 +30,12 @@ export function metadataContextRequest(
     return { prompt, contextual: false };
   if (!/[?？]|уточни|подтверд|clarify|confirm/iu.test(question.body))
     return { prompt, contextual: false };
-  if (!/тег|тэг|tag|замет|note|приоритет|priority/iu.test(request.body))
+  const previous = metadataContextRequest(request.body, rows.slice(0, -2));
+  const original = previous.contextual ? previous.prompt : request.body;
+  if (!/тег|тэг|tag|замет|note|приоритет|priority/iu.test(original))
     return { prompt, contextual: false };
   return {
-    prompt: `${request.body}\n\nУточнение пользователя к этой просьбе:\n${prompt}`,
+    prompt: `${original}\n\nУточнение пользователя к этой просьбе:\n${prompt}`,
     contextual: true,
   };
 }

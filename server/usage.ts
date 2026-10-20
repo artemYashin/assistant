@@ -96,6 +96,8 @@ export class UsageLedger {
     summary.fields = Object.keys(args || {}).filter(
       (key) => !Object.hasOwn(summary, key),
     );
+    if (args?.metadata && typeof args.metadata === "object")
+      summary.metadataFields = Object.keys(args.metadata);
     if (Array.isArray(args?.operations))
       summary.operations = args.operations.slice(0, 50).map((op: any) => ({
         action: op.action,

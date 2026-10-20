@@ -573,7 +573,7 @@ test("chat resolves a local list then applies batch tags with per-item failures 
     assert.equal(result.succeeded, 2);
     assert.equal(result.failed, 1);
     assert.equal(result.results[2].id, 99);
-    assert.match(result.results[2].error, /Нужна явная просьба/);
+    assert.match(result.results[2].error, /отсутствует в локальном списке/);
     const metadata = await call("get_local_ticket_metadata", { id: 42 });
     assert.deepEqual(metadata.tags, ["UI"]);
     return {
@@ -985,4 +985,23 @@ test("single local ticket analysis is immediate; missing and multiple tickets as
   assert.match(multiple.body, /много токенов/);
   assert.equal(reads, 1);
   assert.equal(modelCalls, 1);
+});
+
+test("short confirmation applies historical local metadata selection without rereading", async (t) => {
+  const store = fixture(t);
+  t.mock.method(globalThis, "fetch", async () => { throw new Error("No Azure calls"); });
+  for (const id of [42, 43])
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, "Inside", "Active", "", "Bug", "", "", "now");
+  store.say("user", "Добавь тег Inside 2 тикетам из списка", context);
+  store.say("assistant", "Добавлю локальный тег Inside 2: #42 — Inside; #43 — Inside. Выполнить?", context);
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const result = await config.tools.find((tool: any) => tool.name === "batch_update_tickets").handler({
+      ids: [42, 43], metadata: { tags: { mode: "add", values: ["Inside 2"] } },
+    }, {});
+    assert.equal(result.succeeded, 2);
+    assert.equal(result.failed, 0);
+    return { data: { content: "Тег добавлен двум тикетам." } };
+  });
+  await agent.chat("Да, давай", context);
 });

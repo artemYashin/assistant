@@ -125,47 +125,13 @@ test("chat metadata edits are local, preserve other fields and deduplicate appen
     ),
   );
 });
-test("chat metadata rejects read-only prompts, unnamed fields and stale sources", async (t) => {
-  const { ticketMetadataTools } =
-    await import("../server/ticket-metadata-tools.js");
+test("chat metadata validates priority limits and source without parsing the confirmation", async (t) => {
+  const { ticketMetadataTools } = await import("../server/ticket-metadata-tools.js");
   const store = fixture(t);
-  const call = async (prompt: string, args: any) =>
-    ticketMetadataTools(store, context, prompt, () => {})[0].handler!(
-      args,
-      {} as any,
-    );
-  await assert.rejects(
-    call("Какие теги у тикета 42?", {
-      id: 42,
-      tags: { mode: "add", values: ["UI"] },
-    }),
-  );
-  await assert.rejects(
-    call("Не меняй приоритет тикета 42 на 1", { id: 42, priority: 1 }),
-  );
-  await assert.rejects(
-    call("Добавь заметку тикету 42", { id: 42, priority: 1 }),
-  );
-  await assert.rejects(
-    call("Добавь тег UI тикету 42", {
-      id: 42,
-      tags: { mode: "replace", values: ["UI"] },
-    }),
-  );
-  await assert.rejects(
-    call("Поставь приоритет 4 тикету 42", { id: 42, priority: 4 }),
-  );
-  const tool = ticketMetadataTools(
-    store,
-    context,
-    "Поставь приоритет 1 тикету 42",
-    () => {},
-  )[0];
+  const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
+  await assert.rejects(async () => tool.handler!({ id: 42, priority: 4 }, {} as any), /Приоритет/);
   store.set("settings", { ...store.settings(), azureProject: "Changed" });
-  await assert.rejects(
-    async () => tool.handler!({ id: 42, priority: 1 }, {} as any),
-    /Подключение/,
-  );
+  await assert.rejects(async () => tool.handler!({ id: 42, priority: 1 }, {} as any), /Подключение/);
 });
 test("chat tag removal and explicit notes clearing preserve unrelated metadata", async (t) => {
   const { ticketMetadataTools } =
@@ -236,35 +202,15 @@ test("priority migration preserves old implicit P2 and explicit values while new
   assert.equal(listLocalTickets(store, { priority: 1 }).total, 1);
 });
 
-test("chat metadata accepts known tickets from this turn but not arbitrary IDs", async (t) => {
-  const { ticketMetadataTools } =
-    await import("../server/ticket-metadata-tools.js");
+test("chat metadata accepts historical IDs and values without rereading and stays local", async (t) => {
+  const { ticketMetadataTools } = await import("../server/ticket-metadata-tools.js");
   const store = fixture(t);
-  t.mock.method(globalThis, "fetch", async () => {
-    throw new Error("Must stay local");
-  });
-  const prompt = "Найди тикеты в статусе Active и добавь им тег UI";
-  const args = { id: 42, tags: { mode: "add" as const, values: ["UI"] } };
-  const unknown = ticketMetadataTools(store, context, prompt, () => {})[0];
-  await assert.rejects(async () => unknown.handler!(args, {} as any));
-  const known = ticketMetadataTools(
-    store,
-    context,
-    prompt,
-    () => {},
-    (id) => id === 42,
-  )[0];
-  const result: any = await known.handler!(args, {} as any);
+  t.mock.method(globalThis, "fetch", async () => { throw new Error("Must stay local"); });
+  const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
+  const result: any = await tool.handler!({ id: 42, tags: { mode: "add", values: ["Inside 2"] }, notes: { mode: "append", text: "Ready" }, priority: 2 }, {} as any);
   assert.equal(result.success, true);
-  assert.deepEqual(ticketMetadata(store, 42).tags, ["UI"]);
-  const readOnly = ticketMetadataTools(
-    store,
-    context,
-    "Покажи теги этих тикетов",
-    () => {},
-    () => true,
-  )[0];
-  await assert.rejects(async () => readOnly.handler!(args, {} as any));
+  assert.deepEqual(ticketMetadata(store, 42), { tags: ["Inside 2"], notes: "Ready", priority: 2 });
+  await assert.rejects(async () => tool.handler!({ id: 999, tags: { mode: "add", values: ["Inside 2"] } }, {} as any), /отсутствует/);
 });
 
 test("chat metadata tool reports actionable validation errors instead of generic SDK failure", async (t) => {

@@ -57,3 +57,15 @@ test("text approval preserves original metadata intent through a clarification",
   assert.match(result.prompt, /Добавь тег UI/);
   assert.match(result.prompt, /кроме #42/);
 });
+
+test("metadata confirmation retains exclusions across several clarification turns", () => {
+  const result = metadataContextRequest("Да, давай", [
+    { role: "user", body: "Добавь тег Inside 2 всем тикетам" },
+    { role: "assistant", body: "Всем из списка?" },
+    { role: "user", body: "Всем, кроме #42" },
+    { role: "assistant", body: "Добавлю Inside 2 к остальным. Выполнить?" },
+  ]);
+  assert.equal(result.contextual, true);
+  assert.match(result.prompt, /Inside 2/);
+  assert.match(result.prompt, /кроме #42/);
+});
