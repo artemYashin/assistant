@@ -7,6 +7,9 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
+  Copy,
+  Link2,
+  Check,
   ArrowUpRight,
   ExternalLink,
   Eye,
@@ -133,6 +136,17 @@ export function TicketCard({ reference }: { reference: string }) {
         <aside className="ticket-detail-sidebar" aria-label="Поля тикета">
           <dl className="ticket-metadata">
             <div>
+              <dt>Номер</dt>
+              <dd className="ticket-sidebar-number">
+                <strong>#{card.id}</strong>
+                <TicketCopyButton
+                  key={`id:${card.id}`}
+                  value={String(card.id)}
+                  label="Скопировать номер тикета"
+                />
+              </dd>
+            </div>
+            <div>
               <dt>Автор</dt>
               <dd className="ticket-author-identity">
                 <InitialsAvatar
@@ -235,11 +249,68 @@ export function TicketCard({ reference }: { reference: string }) {
               </div>
             )}
           </dl>
+          <div className="ticket-sidebar-actions">
+            {card.locallyTracked ? (
+              <TicketMetadata
+                ticket={{
+                  id: card.id,
+                  source: card.source,
+                  ...card.localMetadata,
+                }}
+                context={card.localContext}
+                field="notes"
+                showLabel
+                onChange={() => {}}
+              />
+            ) : (
+              <PrInfoPopup
+                title={`Локальные заметки · #${card.id}`}
+                className="secondary ticket-notes-trigger"
+                trigger={
+                  <>
+                    <NotebookPen size={16} /> Заметки
+                  </>
+                }
+              >
+                <p style={{ whiteSpace: "pre-wrap" }}>
+                  {card.localMetadata?.notes || "Локальных заметок пока нет."}
+                </p>
+                <p className="muted">
+                  Для редактирования добавьте тикет в локальный список.
+                </p>
+              </PrInfoPopup>
+            )}
+            <PrInfoPopup
+              title={`Все поля тикета #${card.id}`}
+              className="secondary"
+              trigger={
+                <>
+                  <Database size={17} /> Все поля
+                </>
+              }
+            >
+              <div className="ticket-all-fields">
+                <dl>
+                  {Object.entries(f).map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{key}</dt>
+                      <dd className="ticket-prose">{text(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </PrInfoPopup>
+          </div>
         </aside>
         <div className="ticket-detail-main">
           <header className="ticket-card-header">
             <div className="ticket-card-title">
-              <span className="ticket-number">#{card.id}</span>
+              <TicketCopyButton
+                key={`url:${card.url}`}
+                value={card.url}
+                label="Скопировать ссылку на тикет в Azure DevOps"
+                link
+              />
               <strong>{f["System.Title"]}</strong>
             </div>
             <nav className="ticket-card-actions" aria-label="Ссылки тикета">
@@ -251,51 +322,6 @@ export function TicketCard({ reference }: { reference: string }) {
                 <ExternalLink size={15} />
                 Открыть в Azure DevOps
               </a>
-              {card.locallyTracked ? (
-                <TicketMetadata
-                  ticket={{
-                    id: card.id,
-                    source: card.source,
-                    ...card.localMetadata,
-                  }}
-                  context={card.localContext}
-                  field="notes"
-                  showLabel
-                  onChange={() => {}}
-                />
-              ) : (
-                <PrInfoPopup
-                  title={`Локальные заметки · #${card.id}`}
-                  className="secondary ticket-notes-trigger"
-                  trigger={
-                    <>
-                      <NotebookPen size={16} /> Заметки
-                    </>
-                  }
-                >
-                  <p style={{ whiteSpace: "pre-wrap" }}>
-                    {card.localMetadata?.notes || "Локальных заметок пока нет."}
-                  </p>
-                  <p className="muted">
-                    Для редактирования добавьте тикет в локальный список.
-                  </p>
-                </PrInfoPopup>
-              )}
-              <PrInfoPopup
-                title={`Все поля тикета #${card.id}`}
-                trigger={<Database size={17} />}
-              >
-                <div className="ticket-all-fields">
-                  <dl>
-                    {Object.entries(f).map(([key, value]) => (
-                      <div key={key}>
-                        <dt>{key}</dt>
-                        <dd className="ticket-prose">{text(value)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </PrInfoPopup>
             </nav>
           </header>
           <div className="ticket-card-body">
@@ -465,6 +491,58 @@ export function TicketCard({ reference }: { reference: string }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function TicketCopyButton({
+  value,
+  label,
+  link = false,
+}: {
+  value: string;
+  label: string;
+  link?: boolean;
+}) {
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+  useEffect(() => {
+    if (status === "idle") return;
+    const timer = window.setTimeout(() => setStatus("idle"), 2500);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+  const message =
+    status === "copied"
+      ? "Скопировано"
+      : status === "error"
+        ? "Не удалось скопировать. Проверьте доступ к буферу обмена."
+        : label;
+  return (
+    <span className="ticket-copy-control">
+      <button
+        type="button"
+        className="icon-button ticket-copy-button"
+        title={message}
+        aria-label={message}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setStatus("copied");
+          } catch {
+            setStatus("error");
+          }
+        }}
+      >
+        {status === "copied" ? (
+          <Check size={16} />
+        ) : link ? (
+          <Link2 size={16} />
+        ) : (
+          <Copy size={16} />
+        )}
+      </button>
+      <span className="ticket-copy-feedback" role="status">
+        {status !== "idle" ? message : ""}
+      </span>
+    </span>
   );
 }
 

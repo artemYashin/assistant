@@ -838,3 +838,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Ticket details now place metadata/edit controls in a compact left rail and title/actions/content in the right column. Container queries stack the layout in narrow cards. Short rich-text sections size to content without a default minimum height; the 35dvh maximum and manual resize remain.
 - Table local/Azure tag badges use slightly larger semibold text, stronger foreground contrast and subtle green/blue backgrounds and borders, retaining wrapping in active/trash tables.
 - Pre-push validation: all 193 tests and production build passed. Vite retains its large-chunk warning. Browser visual/resize behavior was not exercised.
+
+### Ticket sidebar actions and copy controls (2026-10-20)
+
+- Moved ticket ID to the top of the metadata rail, with an ID copy control. Notes and all-fields dialogs now open from the rail. A link-copy button beside the title copies the Azure ticket URL, with success/error feedback and accessible labels.
+- Metadata rail stretches to the content column height without distributing or stretching its field rows.
+- Pre-push validation: all 193 tests passed; production build passed after final styles. Vite retains its large-chunk warning. Browser clipboard/dialog/visual behavior was not exercised.

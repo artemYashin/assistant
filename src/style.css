@@ -6601,7 +6601,7 @@ summary > svg {
   padding: 12px 0;
   border-bottom: 1px solid #e5e9e2;
 }
-.ticket-detail-sidebar > dl:last-child > div:last-child {
+.ticket-detail-sidebar > dl:last-of-type > div:last-child {
   border-bottom: 0;
 }
 .ticket-detail-sidebar > dl dt {
@@ -6644,4 +6644,54 @@ summary > svg {
   color: #41576a;
   background: #edf2f7;
   border-color: #d5dfe9;
+}
+
+.ticket-detail-layout > .ticket-detail-sidebar {
+  align-self: stretch;
+}
+.ticket-sidebar-number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ticket-sidebar-number > strong {
+  font-size: 15px;
+  color: #304a3c;
+}
+.ticket-sidebar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.ticket-detail .ticket-card-title {
+  align-items: flex-start;
+}
+.ticket-copy-control {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.ticket-copy-button {
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  color: var(--green);
+}
+.ticket-copy-feedback:not(:empty) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 3;
+  width: max-content;
+  max-width: 220px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #24392f;
+  color: white;
+  font-size: 11px;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px #24392f22;
 }
