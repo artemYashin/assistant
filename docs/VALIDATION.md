@@ -989,3 +989,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Replaced the PR title textarea with a labelled, non-editable text block styled like a disabled input. The title wraps naturally without a resize handle or editable-field affordance.
 - Pre-push validation: all 224 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### More readable ticket ID links (2026-10-21)
+
+- Shared active/Azure/trash ticket rows now display ID links at 13px instead of 10px, without increasing font weight. Removed the external-link arrow and added an underline, preserving the existing link destination and new-tab behavior.
+- Pre-push validation: all 224 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

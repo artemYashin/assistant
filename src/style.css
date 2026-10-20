@@ -5560,6 +5560,9 @@ summary > svg {
   flex: 0 0 auto;
   flex-wrap: nowrap;
   white-space: nowrap;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .ticket-id-type > .ticket-type-badge {
   flex: 0 1 auto;

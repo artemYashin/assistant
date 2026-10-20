@@ -1,4 +1,4 @@
-import { ArchiveRestore, ArrowUpRight, LoaderCircle } from "lucide-react";
+import { ArchiveRestore, LoaderCircle } from "lucide-react";
 import { TicketTableRow } from "./TicketCard.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
@@ -77,7 +77,6 @@ export function TicketDataRow({
             rel="noreferrer"
           >
             #{t.id}
-            <ArrowUpRight size={13} />
           </a>
           <StatusBadge
             state={t.type || "Тип не указан"}
