@@ -1,3 +1,4 @@
+import { TicketColorLegend } from "./TicketColorLegend.js";
 import { paginationItems } from "./pagination.js";
 import { TicketDataRow } from "./TicketDataRow.js";
 import { Cloud } from "lucide-react";
@@ -1210,6 +1211,8 @@ function Tickets({
               type: t.type,
               assigned: t.assigned,
               azureTags: t.azureTags,
+              created_at: t.created_at,
+              changed_at: t.changed_at,
               imported: true,
               inTrash: false,
             }
@@ -1260,6 +1263,12 @@ function Tickets({
     assigneeFilter,
     localFilter,
   } = filters;
+  const previousSort = useRef(sort);
+  useEffect(() => {
+    if (previousSort.current === sort) return;
+    previousSort.current = sort;
+    if (azureMode) void browser.search(filters);
+  }, [sort, azureMode, filters, browser.search]);
   const setQuery = (value: string) => setFilter("query", value);
   const setSort = (value: string) => setFilter("sort", value);
   const setPriorityFilter = (value: string[]) =>
@@ -1354,16 +1363,20 @@ function Tickets({
         ? "ascending"
         : "descending"
       : "none";
-  const sorted = [...filteredTickets].sort((a, b) => {
-    const [key, direction] = sort.split("-");
-    const cmp =
-      key === "id"
-        ? a.id - b.id
-        : String(a[key] || "").localeCompare(String(b[key] || ""), "ru", {
-            numeric: true,
-          });
-    return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
-  });
+  const sorted = azureMode
+    ? filteredTickets
+    : [...filteredTickets].sort((a, b) => {
+        const [key, direction] = sort.split("-");
+        const cmp =
+          key === "id"
+            ? a.id - b.id
+            : ["created_at", "changed_at"].includes(key)
+              ? (Date.parse(a[key]) || 0) - (Date.parse(b[key]) || 0)
+              : String(a[key] || "").localeCompare(String(b[key] || ""), "ru", {
+                  numeric: true,
+                });
+        return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
+      });
   const selection = useTicketSelection<any>(
     sorted,
     JSON.stringify([currentSource, context]),
@@ -1622,6 +1635,7 @@ function Tickets({
               ? `На странице: ${sorted.length}`
               : `Показано ${sorted.length} из ${tickets.length}`}
           </p>
+          {azureMode && <TicketColorLegend />}
         </div>
         <div className="ticket-bulk-actions">
           <span role="status">Выбрано: {selection.selected.length}</span>
@@ -1707,7 +1721,9 @@ function Tickets({
               увидеть остальные.
             </p>
           )}
-          <p className="muted">Сортировка и экспорт — для текущей страницы.</p>
+          <p className="muted">
+            Сортировка — по всему результату поиска. Экспорт — текущая страница.
+          </p>
         </>
       )}
       {!azureMode && (
@@ -1716,128 +1732,133 @@ function Tickets({
           можно вернуть кнопкой «Добавить по номеру».
         </p>
       )}
-      {sorted.length ? (
-        <div className="panel ticket-table-fit ticket-active-table">
-          <table>
-            <thead>
-              <tr>
-                <OrderedTicketCells order={columns.order}>
-                  <th className="ticket-selection-column">
-                    <SelectAllTickets
-                      count={selection.selected.length}
-                      total={sorted.length}
-                      onChange={selection.toggleAll}
-                    />
+      <div className="panel ticket-table-fit ticket-active-table">
+        <table>
+          <thead>
+            <tr>
+              <OrderedTicketCells order={columns.order}>
+                <th className="ticket-selection-column">
+                  <SelectAllTickets
+                    count={selection.selected.length}
+                    total={sorted.length}
+                    onChange={selection.toggleAll}
+                  />
+                </th>
+                <th aria-sort={columnSort(["id", "type"])}>
+                  <div className="ticket-heading-sorts ticket-identity-heading">
+                    {sortButton("id", "ID")}
+                    {sortButton("type", "Тип")}
+                  </div>
+                </th>
+                <th aria-sort={columnSort(["title"])}>
+                  {sortButton("title", "Тикет")}
+                </th>
+                {(
+                  [
+                    ["state", "Статус"],
+                    ["priority", "Приоритет"],
+                    ["tags", "Теги"],
+                    ["azureTags", "Azure теги"],
+                    ["assigned", "Исполнитель в Azure"],
+                    ["developer_name", "Локальное поручение"],
+                    ["created_at", "Дата создания"],
+                    ["changed_at", "Дата изменения"],
+                    ["added_at", "Добавлено в систему"],
+                    ["synced_at", "Синхронизация"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <th
+                    key={key}
+                    data-column={key}
+                    hidden={columns.hidden(key)}
+                    aria-sort={columnSort([key])}
+                  >
+                    {sortButton(key, label)}
                   </th>
-                  <th aria-sort={columnSort(["id", "type"])}>
-                    <div className="ticket-heading-sorts ticket-identity-heading">
-                      {sortButton("id", "ID")}
-                      {sortButton("type", "Тип")}
-                    </div>
-                  </th>
-                  <th aria-sort={columnSort(["title"])}>
-                    {sortButton("title", "Тикет")}
-                  </th>
-                  {(
-                    [
-                      ["state", "Статус"],
-                      ["priority", "Приоритет"],
-                      ["tags", "Теги"],
-                      ["azureTags", "Azure теги"],
-                      ["assigned", "Исполнитель в Azure"],
-                      ["developer_name", "Локальное поручение"],
-                      ["added_at", "Добавлено в систему"],
-                      ["synced_at", "Синхронизация"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <th
-                      key={key}
-                      data-column={key}
-                      hidden={columns.hidden(key)}
-                      aria-sort={columnSort([key])}
-                    >
-                      {sortButton(key, label)}
-                    </th>
-                  ))}
-                  <th data-column="actions" hidden={columns.hidden("actions")}>
-                    Просмотр
-                  </th>
-                </OrderedTicketCells>
+                ))}
+                <th data-column="actions" hidden={columns.hidden("actions")}>
+                  Просмотр
+                </th>
+              </OrderedTicketCells>
+            </tr>
+          </thead>
+          <tbody>
+            {!sorted.length && (
+              <tr className="ticket-empty-row">
+                <td colSpan={columns.count}>
+                  <Empty
+                    icon={Ticket}
+                    title={
+                      azureMode
+                        ? browser.loading
+                          ? "Поиск в Azure…"
+                          : browser.searched
+                            ? "Ничего не найдено"
+                            : "Найдите тикеты в Azure"
+                        : tickets.length
+                          ? "Ничего не найдено"
+                          : "Трекер пока пуст"
+                    }
+                    description={
+                      azureMode
+                        ? "Задайте условия и нажмите «Найти» или Enter. Без условий будут показаны все задачи проекта, по 50 на страницу."
+                        : tickets.length
+                          ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить»."
+                          : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
+                    }
+                  />
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sorted.map((t: any) => (
-                <TicketDataRow
-                  key={`${t.source}:${t.id}`}
-                  ticket={t}
-                  columns={columns}
-                  settings={settings}
-                  context={context}
-                  checked={selection.checked(t)}
-                  onToggle={() => selection.toggle(t)}
-                  onChange={() => run("refresh-ticket", async () => {})}
-                  highlighted={targetId === t.id && !sourceMismatch}
-                  restoring={busy === "restore"}
-                  onRestore={
-                    azureMode && t.inTrash
-                      ? () =>
-                          run(
-                            "restore",
-                            async () => {
-                              await api(`/tickets/${t.id}/restore`, "POST", {
-                                source: t.source,
-                              });
-                              window.dispatchEvent(
-                                new CustomEvent("orbit:ticket-tracked", {
-                                  detail: { id: t.id, source: t.source },
-                                }),
-                              );
-                            },
-                            "Тикет восстановлен",
-                          )
-                      : undefined
-                  }
-                  onRemove={
-                    azureMode && !t.imported
-                      ? undefined
-                      : () =>
-                          run(
-                            "remove",
-                            () =>
-                              api(`/tickets/${t.id}`, "DELETE", {
-                                source: t.source,
+            )}
+            {sorted.map((t: any) => (
+              <TicketDataRow
+                key={`${t.source}:${t.id}`}
+                ticket={t}
+                columns={columns}
+                settings={settings}
+                context={context}
+                checked={selection.checked(t)}
+                onToggle={() => selection.toggle(t)}
+                onChange={() => run("refresh-ticket", async () => {})}
+                highlighted={targetId === t.id && !sourceMismatch}
+                restoring={busy === "restore"}
+                onRestore={
+                  azureMode && t.inTrash
+                    ? () =>
+                        run(
+                          "restore",
+                          async () => {
+                            await api(`/tickets/${t.id}/restore`, "POST", {
+                              source: t.source,
+                            });
+                            window.dispatchEvent(
+                              new CustomEvent("orbit:ticket-tracked", {
+                                detail: { id: t.id, source: t.source },
                               }),
-                            "Тикет перемещён в корзину на 30 дней",
-                          )
-                  }
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <Empty
-          icon={Ticket}
-          title={
-            azureMode
-              ? browser.loading
-                ? "Поиск в Azure…"
-                : browser.searched
-                  ? "Ничего не найдено"
-                  : "Найдите тикеты в Azure"
-              : tickets.length
-                ? "Ничего не найдено"
-                : "Трекер пока пуст"
-          }
-          description={
-            azureMode
-              ? "Задайте условия и нажмите «Найти» или Enter. Без условий будут показаны все задачи проекта, по 50 на страницу."
-              : tickets.length
-                ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить»."
-                : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
-          }
-        />
-      )}
+                            );
+                          },
+                          "Тикет восстановлен",
+                        )
+                    : undefined
+                }
+                onRemove={
+                  azureMode && !t.imported
+                    ? undefined
+                    : () =>
+                        run(
+                          "remove",
+                          () =>
+                            api(`/tickets/${t.id}`, "DELETE", {
+                              source: t.source,
+                            }),
+                          "Тикет перемещён в корзину на 30 дней",
+                        )
+                }
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

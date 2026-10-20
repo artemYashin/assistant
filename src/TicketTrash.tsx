@@ -1,3 +1,4 @@
+import { TicketColorLegend } from "./TicketColorLegend.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { TicketDataRow } from "./TicketDataRow.js";
 import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
@@ -178,9 +179,11 @@ export function TicketTrash({
         sort.key === "developer_name" ? localName(t) : t[sort.key];
       const cmp = ["id", "removedAt", "expiresAt"].includes(sort.key)
         ? Number(value(a)) - Number(value(b))
-        : String(value(a) || "").localeCompare(String(value(b) || ""), "ru", {
-            numeric: true,
-          });
+        : ["created_at", "changed_at"].includes(sort.key)
+          ? (Date.parse(value(a)) || 0) - (Date.parse(value(b)) || 0)
+          : String(value(a) || "").localeCompare(String(value(b) || ""), "ru", {
+              numeric: true,
+            });
       return (sort.descending ? -cmp : cmp) || a.id - b.id;
     });
   const selection = useTicketSelection(
@@ -196,6 +199,8 @@ export function TicketTrash({
     ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],
     ["developer_name", "Локальное поручение"],
+    ["created_at", "Дата создания"],
+    ["changed_at", "Дата изменения"],
     ["added_at", "Добавлено в систему"],
     ["synced_at", "Синхронизация"],
     ["removedAt", "Удалён"],
@@ -357,6 +362,7 @@ export function TicketTrash({
             <p className="muted" role="status">
               Показано {filtered.length} из {items.length}
             </p>
+            <TicketColorLegend />
           </div>
           <div className="ticket-bulk-actions">
             <span role="status">Выбрано: {selection.selected.length}</span>
@@ -385,124 +391,135 @@ export function TicketTrash({
           </div>
         </div>
       )}
-      {loaded && !filtered.length && !error && (
-        <div className="panel">
-          <Trash2 size={22} />
-          <h2>{items.length ? "Ничего не найдено" : "Корзина пуста"}</h2>
-          {!!items.length && <p>Измените поиск или сбросьте фильтры.</p>}
-        </div>
-      )}
-      {!!filtered.length && (
-        <div className="panel ticket-table-fit ticket-trash-table">
-          <table>
-            <thead>
-              <tr>
-                <OrderedTicketCells order={display.order}>
-                  <th className="ticket-selection-column">
-                    <SelectAllTickets
-                      count={selection.selected.length}
-                      total={filtered.length}
-                      onChange={selection.toggleAll}
-                    />
-                  </th>
-                  {columns.map(([key, label]) => (
-                    <th
-                      key={key}
-                      data-column={
-                        key === "id" || key === "title" ? undefined : key
-                      }
-                      hidden={display.hidden(key)}
-                      aria-sort={
-                        sort.key === key ||
-                        (key === "id" && sort.key === "type")
-                          ? sort.descending
-                            ? "descending"
-                            : "ascending"
-                          : "none"
-                      }
-                    >
-                      <div className="ticket-heading-sorts">
-                        <button
-                          type="button"
-                          className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
-                          aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
-                          onClick={() =>
-                            setSort({
-                              key,
-                              descending: sort.key === key && !sort.descending,
-                            })
-                          }
-                        >
-                          <span>{label}</span>
-                          {sort.key === key ? (
-                            sort.descending ? (
-                              <ArrowDown size={13} />
-                            ) : (
-                              <ArrowUp size={13} />
-                            )
+      <div className="panel ticket-table-fit ticket-trash-table">
+        <table>
+          <thead>
+            <tr>
+              <OrderedTicketCells order={display.order}>
+                <th className="ticket-selection-column">
+                  <SelectAllTickets
+                    count={selection.selected.length}
+                    total={filtered.length}
+                    onChange={selection.toggleAll}
+                  />
+                </th>
+                {columns.map(([key, label]) => (
+                  <th
+                    key={key}
+                    data-column={
+                      key === "id" || key === "title" ? undefined : key
+                    }
+                    hidden={display.hidden(key)}
+                    aria-sort={
+                      sort.key === key || (key === "id" && sort.key === "type")
+                        ? sort.descending
+                          ? "descending"
+                          : "ascending"
+                        : "none"
+                    }
+                  >
+                    <div className="ticket-heading-sorts">
+                      <button
+                        type="button"
+                        className={`ticket-column-sort${sort.key === key ? " is-active" : ""}`}
+                        aria-label={`Сортировать: ${label}, ${sort.key === key && !sort.descending ? "по убыванию" : "по возрастанию"}`}
+                        onClick={() =>
+                          setSort({
+                            key,
+                            descending: sort.key === key && !sort.descending,
+                          })
+                        }
+                      >
+                        <span>{label}</span>
+                        {sort.key === key ? (
+                          sort.descending ? (
+                            <ArrowDown size={13} />
                           ) : (
-                            <ArrowUpDown size={13} />
-                          )}
-                        </button>
-                        {key === "id" && (
-                          <>
-                            <span aria-hidden="true">/</span>
-                            <button
-                              type="button"
-                              className={`ticket-column-sort${sort.key === "type" ? " is-active" : ""}`}
-                              aria-label="Сортировать: Тип задачи"
-                              onClick={() =>
-                                setSort({
-                                  key: "type",
-                                  descending:
-                                    sort.key === "type" && !sort.descending,
-                                })
-                              }
-                            >
-                              <span>Тип задачи</span>
-                              {sort.key === "type" ? (
-                                sort.descending ? (
-                                  <ArrowDown size={13} />
-                                ) : (
-                                  <ArrowUp size={13} />
-                                )
-                              ) : (
-                                <ArrowUpDown size={13} />
-                              )}
-                            </button>
-                          </>
+                            <ArrowUp size={13} />
+                          )
+                        ) : (
+                          <ArrowUpDown size={13} />
                         )}
-                      </div>
-                    </th>
-                  ))}
-                  <th data-column="actions" hidden={display.hidden("actions")}>
-                    Действия
+                      </button>
+                      {key === "id" && (
+                        <>
+                          <span aria-hidden="true">/</span>
+                          <button
+                            type="button"
+                            className={`ticket-column-sort${sort.key === "type" ? " is-active" : ""}`}
+                            aria-label="Сортировать: Тип задачи"
+                            onClick={() =>
+                              setSort({
+                                key: "type",
+                                descending:
+                                  sort.key === "type" && !sort.descending,
+                              })
+                            }
+                          >
+                            <span>Тип задачи</span>
+                            {sort.key === "type" ? (
+                              sort.descending ? (
+                                <ArrowDown size={13} />
+                              ) : (
+                                <ArrowUp size={13} />
+                              )
+                            ) : (
+                              <ArrowUpDown size={13} />
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </th>
-                </OrderedTicketCells>
+                ))}
+                <th data-column="actions" hidden={display.hidden("actions")}>
+                  Действия
+                </th>
+              </OrderedTicketCells>
+            </tr>
+          </thead>
+          <tbody>
+            {!filtered.length && (
+              <tr className="ticket-empty-row">
+                <td colSpan={display.count}>
+                  <div className="ticket-empty-message" role="status">
+                    <Trash2 size={22} aria-hidden="true" />
+                    <strong>
+                      {!loaded
+                        ? "Загрузка корзины…"
+                        : error
+                          ? "Не удалось загрузить корзину"
+                          : items.length
+                            ? "Ничего не найдено"
+                            : "Корзина пуста"}
+                    </strong>
+                    {loaded && !error && !!items.length && (
+                      <span>Измените поиск или сбросьте фильтры.</span>
+                    )}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.map((t) => (
-                <TicketDataRow
-                  key={`${t.source}:${t.id}`}
-                  ticket={{ ...t, inTrash: true }}
-                  columns={display}
-                  settings={settings}
-                  context={context}
-                  checked={selection.checked(t)}
-                  onToggle={() => selection.toggle(t)}
-                  onChange={() => {
-                    setVersion((v) => v + 1);
-                    onChange();
-                  }}
-                  onRestore={() => void restore(t)}
-                  restoring={busy !== null}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            )}
+            {filtered.map((t) => (
+              <TicketDataRow
+                key={`${t.source}:${t.id}`}
+                ticket={{ ...t, inTrash: true }}
+                columns={display}
+                settings={settings}
+                context={context}
+                checked={selection.checked(t)}
+                onToggle={() => selection.toggle(t)}
+                onChange={() => {
+                  setVersion((v) => v + 1);
+                  onChange();
+                }}
+                onRestore={() => void restore(t)}
+                restoring={busy !== null}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

@@ -1,9 +1,38 @@
 import { z } from "zod";
 import { AppError } from "./store.js";
+const azureSortFields: Record<string, string> = {
+  id: "System.Id",
+  title: "System.Title",
+  type: "System.WorkItemType",
+  state: "System.State",
+  assigned: "System.AssignedTo",
+  azureTags: "System.Tags",
+  created_at: "System.CreatedDate",
+  changed_at: "System.ChangedDate",
+};
+const localSortFields = new Set([
+  "priority",
+  "tags",
+  "developer_name",
+  "added_at",
+  "synced_at",
+]);
+const sortSchema = z
+  .string()
+  .refine((value) => {
+    const [key, direction, extra] = value.split("-");
+    return (
+      !extra &&
+      (direction === "asc" || direction === "desc") &&
+      (Object.hasOwn(azureSortFields, key) || localSortFields.has(key))
+    );
+  }, "Неизвестная сортировка")
+  .default("id-desc");
 const choices = z.array(z.string().max(200)).max(100).default([]);
 export const azureBrowseSchema = z
   .object({
     source: z.string().max(2200),
+    sort: sortSchema,
     query: z.string().trim().max(200).default(""),
     typeFilter: choices,
     stateFilter: choices,
@@ -78,7 +107,12 @@ export function browseQuery(input: AzureBrowse, local: any[]) {
       );
     clauses.push(`[System.Id] IN (${ids.join(",")})`);
   }
-  const query = `SELECT [System.Id] FROM WorkItems WHERE ${clauses.join(" AND ")} ORDER BY [System.Id] DESC`;
+  const [sortKey, direction] = input.sort.split("-");
+  const field = azureSortFields[sortKey];
+  const order = field
+    ? `[${field}] ${direction.toUpperCase()}${sortKey === "id" ? "" : ", [System.Id] DESC"}`
+    : "[System.Id] DESC";
+  const query = `SELECT [System.Id] FROM WorkItems WHERE ${clauses.join(" AND ")} ORDER BY ${order}`;
   if (query.length > 30000)
     throw new AppError(
       400,
@@ -95,6 +129,7 @@ export const browseFields = [
   "System.AssignedTo",
   "System.Tags",
   "System.ChangedDate",
+  "System.CreatedDate",
 ];
 export function azureSummary(
   item: any,
@@ -118,6 +153,36 @@ export function azureSummary(
       .map((v) => v.trim())
       .filter(Boolean),
     changed_at: f["System.ChangedDate"],
+    created_at: f["System.CreatedDate"] || null,
     url: `${base}/${encodeURIComponent(project)}/_workitems/edit/${item.id}`,
   };
+}
+
+// Azure owns remote-field ordering. Local fields are sorted over the entire ID
+// index before pagination, using local metadata only (unknown values go last).
+export function orderBrowseIds(ids: number[], sort: string, local: any[]) {
+  const unique = [...new Set(ids)];
+  const [key, direction] = sort.split("-");
+  if (!localSortFields.has(key)) return unique;
+  const byId = new Map(local.map((ticket) => [ticket.id, ticket]));
+  const value = (id: number): string | number | null => {
+    const ticket = byId.get(id);
+    if (!ticket) return null;
+    if (key === "priority") return ticket.priority ?? 1;
+    if (key === "tags") return (ticket.tags || []).join("; ");
+    if (key === "developer_name") return ticket.developer_name || "";
+    const date = Date.parse(ticket[key]);
+    return Number.isFinite(date) ? date : null;
+  };
+  return unique.sort((a, b) => {
+    const av = value(a),
+      bv = value(b);
+    if (av === null || bv === null)
+      return av === bv ? b - a : av === null ? 1 : -1;
+    const cmp =
+      typeof av === "number" && typeof bv === "number"
+        ? av - bv
+        : String(av).localeCompare(String(bv), "ru", { numeric: true });
+    return (direction === "desc" ? -cmp : cmp) || b - a;
+  });
 }

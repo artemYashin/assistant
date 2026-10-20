@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
 import { IntegrationsAuth } from "../server/auth.js";
-import { azureBrowseSchema, browseQuery } from "../server/azure-browser.js";
+import { azureBrowseSchema, browseQuery, orderBrowseIds } from "../server/azure-browser.js";
 import { ticketsCsv } from "../src/tickets-csv.js";
 
 test("Azure browsing escapes filters, uses ID cursors and intersects local filters", () => {
@@ -32,6 +32,22 @@ test("Azure browsing escapes filters, uses ID cursors and intersects local filte
     browseQuery({ ...input, query: "#42" }, [])!,
     /\[System.Id\] = 42/,
   );
+});
+
+test("Azure sorting validates fields and preserves global ordering before pagination", () => {
+  for (const [sort, field, direction] of [
+    ["created_at-asc", "System.CreatedDate", "ASC"],
+    ["changed_at-desc", "System.ChangedDate", "DESC"],
+    ["title-asc", "System.Title", "ASC"],
+  ]) {
+    const query = browseQuery(azureBrowseSchema.parse({ source: "s", sort }), [])!;
+    assert.ok(query.endsWith(`ORDER BY [${field}] ${direction}, [System.Id] DESC`));
+  }
+  assert.equal(azureBrowseSchema.safeParse({ source: "s", sort: "title-asc; DROP" }).success, false);
+  assert.deepEqual(orderBrowseIds([3, 9, 1], "title-asc", []), [3, 9, 1]);
+  const local = [{ id: 1, priority: 1 }, { id: 3, priority: 3 }];
+  assert.deepEqual(orderBrowseIds([9, 3, 1], "priority-asc", local), [1, 3, 9]);
+  assert.deepEqual(orderBrowseIds([9, 3, 1], "priority-desc", local), [3, 1, 9]);
 });
 
 test("Azure pages are bounded and read-only; selected imports use one read batch and deduplicate", async (t) => {
@@ -68,7 +84,7 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     assert.ok(body.ids.length <= 50);
     assert.ok(!body.fields.includes("System.Description"));
     return Response.json({
-      value: body.ids.map((id: number) => ({
+      value: [...body.ids].reverse().map((id: number) => ({
         id,
         fields: {
           "System.TeamProject": "P",
@@ -76,6 +92,8 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
           "System.WorkItemType": "Bug",
           "System.State": "Active",
           "System.Tags": "a; b",
+          "System.CreatedDate": "2025-01-02T03:04:05Z",
+          "System.ChangedDate": "2026-02-03T04:05:06Z",
         },
       })),
     });
@@ -85,6 +103,9 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     [],
   );
   assert.equal(result.tickets.length, 50);
+  assert.equal(result.tickets[0].id, 40000);
+  assert.equal(result.tickets[0].created_at, "2025-01-02T03:04:05Z");
+  assert.equal(result.tickets[0].changed_at, "2026-02-03T04:05:06Z");
   assert.equal(result.total, 51);
   assert.equal(result.totalPages, 2);
   assert.equal(result.page, 1);
@@ -127,11 +148,19 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     ),
     /изменилось/,
   );
+  await assert.rejects(
+    connectors.browseAzureTickets(
+      azureBrowseSchema.parse({ source: store.source(), snapshot: result.snapshot, sort: "title-asc" }),
+      [],
+    ),
+    /устарели/,
+  );
   const imported = await connectors.importAzureSelection(
     [100, 99],
     store.source(),
   );
-  assert.deepEqual(imported.added, [100, 99]);
+  assert.deepEqual([...imported.added].sort((a, b) => b - a), [100, 99]);
+  assert.equal(store.ticketCreatedAt(100), "2025-01-02T03:04:05.000Z");
   assert.equal(batches, 3);
   await connectors.importAzureSelection([100, 99], store.source());
   assert.equal(batches, 3);

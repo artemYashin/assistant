@@ -210,6 +210,8 @@ export class Store {
         END;
       `);
     })();
+    if (!(this.db.prepare("PRAGMA table_info(ticket_tracking_dates)").all() as any[]).some((c) => c.name === "created_at"))
+      this.db.exec("ALTER TABLE ticket_tracking_dates ADD COLUMN created_at TEXT");
     if (!this.get("migration.ticketPriorityOne", false)) {
       this.db.transaction(() => {
         this.db.exec(`
@@ -450,6 +452,15 @@ export class Store {
       .get(source, id) as { tags: string } | undefined;
     return row ? JSON.parse(row.tags) : [];
   }
+  ticketCreatedAt(id: number, source = this.source()): string | null {
+    return (this.db.prepare("SELECT created_at FROM ticket_tracking_dates WHERE source=? AND id=?")
+      .get(source, id) as { created_at: string | null } | undefined)?.created_at ?? null;
+  }
+  saveTicketCreatedAt(id: number, source: string, value: unknown) {
+    if (typeof value !== "string" || !Number.isFinite(Date.parse(value))) return;
+    this.db.prepare("UPDATE ticket_tracking_dates SET created_at=? WHERE source=? AND id=?")
+      .run(new Date(value).toISOString(), source, id);
+  }
   ticketAddedAt(id: number, source = this.source()): string | null {
     const row = this.db
       .prepare(
@@ -517,6 +528,7 @@ export class Store {
       state: "System.State",
       type: "System.WorkItemType",
       changed_at: "System.ChangedDate",
+      created_at: "System.CreatedDate",
     })) {
       if (field in fields) body[key] = fields[field];
     }
@@ -540,6 +552,7 @@ export class Store {
               .filter(Boolean),
           ),
         );
+    this.saveTicketCreatedAt(item.id, source, fields["System.CreatedDate"]);
     body.synced_at = new Date().toISOString();
     this.db
       .prepare("UPDATE ticket_trash SET body=? WHERE source=? AND id=?")
@@ -566,6 +579,7 @@ export class Store {
       return {
         ...JSON.parse(row.body),
         added_at: this.ticketAddedAt(row.id, row.source),
+        created_at: this.ticketCreatedAt(row.id, row.source) ?? JSON.parse(row.body).created_at ?? null,
         azureTags: this.azureTags(row.id, row.source),
         ...ticketMetadata(this, row.id, row.source),
         developers,

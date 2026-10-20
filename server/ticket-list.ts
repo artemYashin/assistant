@@ -81,7 +81,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     .get(...params) as { total: number };
   const rows = store.db
     .prepare(
-      `SELECT id, title, type, state, assigned, synced_at FROM tickets WHERE ${where} AND id > ? ORDER BY id LIMIT ?`,
+      `SELECT id, title, type, state, assigned, changed_at, synced_at FROM tickets WHERE ${where} AND id > ? ORDER BY id LIMIT ?`,
     )
     .all(...params, afterId, limit + 1) as Record<string, any>[];
   const tickets: Record<string, any>[] = [];
@@ -100,6 +100,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     const metadata = ticketMetadata(store, row.id);
     Object.assign(ticket, metadata, {
       added_at: store.ticketAddedAt(row.id),
+      created_at: store.ticketCreatedAt(row.id),
       azureTags: store.azureTags(row.id),
       notes: metadata.notes.slice(0, 300),
       notesTruncated: metadata.notes.length > 300,

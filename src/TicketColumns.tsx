@@ -9,6 +9,8 @@ export const ticketColumns = [
   ["azureTags", "Azure теги"],
   ["assigned", "Исполнитель в Azure"],
   ["developer_name", "Локальное поручение"],
+  ["created_at", "Дата создания"],
+  ["changed_at", "Дата изменения"],
   ["added_at", "Добавлено в систему"],
   ["synced_at", "Синхронизация"],
   ["actions", "Просмотр и действия"],

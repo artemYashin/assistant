@@ -23,6 +23,8 @@ const sorts = new Set(
     "azureTags",
     "assigned",
     "developer_name",
+    "created_at",
+    "changed_at",
     "added_at",
     "synced_at",
     "removedAt",

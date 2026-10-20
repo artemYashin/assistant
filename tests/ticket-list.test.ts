@@ -153,3 +153,22 @@ test("ticket list supports exact ID batches and literal title search together", 
     [4],
   );
 });
+
+
+test("summary ticket tool includes Azure dates without reading full content", async (t) => {
+  const store = fixture(t);
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(
+    store.source(), 42, "Example", "Active", "Alice", "Bug", "",
+    "2026-10-20T10:00:00Z", "2026-10-21T11:00:00Z",
+  );
+  store.saveTicketCreatedAt(42, store.source(), "2026-09-01T09:00:00Z");
+  const tool = sessionConfig(
+    store, new Approvals(store, async () => ({ id: "unused" })),
+    { client: "", project: "" },
+  ).tools!.find((tool) => tool.name === "list_tickets")!;
+  const result: any = await tool.handler!({ ids: [42] }, {} as any);
+  assert.equal(result.tickets[0].created_at, "2026-09-01T09:00:00.000Z");
+  assert.equal(result.tickets[0].changed_at, "2026-10-20T10:00:00Z");
+  assert.equal(result.tickets[0].synced_at, "2026-10-21T11:00:00Z");
+  assert.equal(result.tickets[0].description, undefined);
+});

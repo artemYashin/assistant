@@ -150,6 +150,12 @@ export function TicketDataRow({
           "N/A"
         )}
       </td>
+      <td data-column="created_at" hidden={columns.hidden("created_at")}>
+        {date(t.created_at)}
+      </td>
+      <td data-column="changed_at" hidden={columns.hidden("changed_at")}>
+        {date(t.changed_at)}
+      </td>
       <td data-column="added_at" hidden={columns.hidden("added_at")}>
         {local ? date(t.added_at) : "N/A"}
       </td>

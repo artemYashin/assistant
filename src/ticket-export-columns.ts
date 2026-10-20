@@ -14,6 +14,8 @@ export type CsvTicket = {
   notes?: string;
   url?: string;
   added_at?: string | null;
+  created_at?: string | null;
+  changed_at?: string | null;
 };
 export const exportColumns = [
   {
@@ -91,6 +93,20 @@ export const exportColumns = [
     width: 60,
     value: (t: CsvTicket) =>
       t.imported === false && !t.inTrash ? "N/A" : t.notes || "",
+  },
+  {
+    key: "created_at",
+    header: "Created Date (UTC)",
+    label: "Дата создания",
+    width: 28,
+    value: (t: CsvTicket) => t.created_at || "",
+  },
+  {
+    key: "changed_at",
+    header: "Changed Date (UTC)",
+    label: "Дата изменения",
+    width: 28,
+    value: (t: CsvTicket) => t.changed_at || "",
   },
   {
     key: "added_at",

@@ -855,6 +855,7 @@ export function createApp(
         return {
           ...ticket,
           added_at: store.ticketAddedAt(ticket.id, ticket.source),
+          created_at: store.ticketCreatedAt(ticket.id, ticket.source),
           ...ticketMetadata(store, ticket.id, ticket.source),
           azureTags: store.azureTags(ticket.id, ticket.source),
           developers,

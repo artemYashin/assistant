@@ -1005,3 +1005,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Azure fallback-search warnings now distinguish cached matches, HTTP 404, access refusal and other failures rather than attributing every error to missing Graph permissions. The message identifies whether subject search or identity resolution failed; regression assertions cover cached and empty fallback results.
 - Multiselect search warnings/errors are collapsed into a small expandable notice. Azure assignee and local-assignment filter options show compact stable initials avatars across active, Azure and trash tickets, including remotely found users. Unassigned options remain without avatars.
 - Pre-push validation: all 224 tests and production build passed. Vite retains its large-chunk warning. Browser visuals and live Azure endpoints were not exercised.
+
+### Ticket dates, Azure sorting and empty-table controls (2026-10-21)
+
+- Added Azure creation/modification date columns to active, Azure and trash tables, persisted display/sort choices, and optional CSV/XLSX export fields. Creation dates are stored per source, retained through trash/restore, and populated on subsequent synchronization for older records. Chat summary tools include both dates without full-content reads.
+- Azure sort changes trigger a fresh ID search and first-page load. Remote fields use whitelisted WIQL ordering; local fields sort the bounded ID index before pagination, with unknown values last. Page batches preserve index order. Rapid sort changes coalesce and stale responses are ignored.
+- Added a compact color legend to Azure/trash controls. All three ticket tables retain sortable headers when empty, with empty/loading messages below.
+- Pre-push validation: all 228 tests and production build passed. Regression coverage includes date lifecycle, summary date fields, optional date exports, sort validation, ID ordering and snapshot mismatch. Vite retains its large-chunk warning. Live Azure endpoints and browser interactions were not exercised.

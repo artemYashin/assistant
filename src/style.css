@@ -7817,3 +7817,47 @@ summary > svg {
   height: 6px;
   margin-right: 3px;
 }
+
+.ticket-table-fit > table > thead > tr > th:is([data-column="created_at"], [data-column="changed_at"]),
+.ticket-table-fit > table > tbody > tr > td:is([data-column="created_at"], [data-column="changed_at"]) {
+  min-width: 85px;
+}
+
+.ticket-color-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: #64716e;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.ticket-color-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.ticket-color-swatch {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border: 1px solid #ccd5d1;
+  border-radius: 3px;
+}
+.ticket-color-swatch.is-imported { background: #fff; }
+.ticket-color-swatch.is-new { background: #fff7f6; border-color: #e7bbb5; }
+.ticket-color-swatch.is-trash { background: #fffbed; border-color: #dcca92; }
+
+.ticket-table-fit > table > tbody > .ticket-empty-row > td {
+  padding: 20px 16px;
+  white-space: normal;
+  text-align: center;
+}
+.ticket-empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #64716e;
+}

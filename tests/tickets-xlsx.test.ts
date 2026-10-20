@@ -70,3 +70,30 @@ test("Excel selected columns retain styling by field and omit unselected data", 
   assert.equal(!!sheet.getCell("B2").font.bold, false);
   assert.equal(sheet.autoFilter, "A1:B2");
 });
+
+test("creation and change dates can be exported without local import", async () => {
+  const { ticketsCsv } = await import("../src/tickets-csv.js");
+  const tickets = [
+    {
+      id: 42,
+      imported: false,
+      created_at: "2020-01-02T03:04:05Z",
+      changed_at: "2026-10-21T09:00:00Z",
+    },
+  ];
+  const keys = ["created_at", "changed_at"] as const;
+  const csv = ticketsCsv(tickets, [...keys]);
+  assert.match(csv, /Created Date \(UTC\)/);
+  assert.match(csv, /Changed Date \(UTC\)/);
+  assert.match(csv, /2020-01-02T03:04:05Z/);
+  assert.doesNotMatch(csv, /N\/A/);
+  const bytes = await ticketsXlsx(tickets, false, [...keys]);
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(
+    bytes as unknown as Parameters<typeof book.xlsx.load>[0],
+  );
+  const sheet = book.getWorksheet("Tickets")!;
+  assert.equal(sheet.columnCount, 2);
+  assert.equal(sheet.getCell("A2").value, tickets[0].created_at);
+  assert.equal(sheet.getCell("B2").value, tickets[0].changed_at);
+});

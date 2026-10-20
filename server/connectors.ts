@@ -1,4 +1,4 @@
-import { browseQuery, browseFields, azureSummary, type AzureBrowse } from "./azure-browser.js";
+import { browseQuery, browseFields, azureSummary, orderBrowseIds, type AzureBrowse } from "./azure-browser.js";
 import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
 import {
   changeTicketStates,
@@ -288,6 +288,7 @@ export class Connectors {
         f["System.ChangedDate"] || null,
         new Date().toISOString(),
       );
+    this.store.saveTicketCreatedAt(item.id, this.store.source(s), f["System.CreatedDate"]);
   }
   async ticketStates(id: number) {
     const s = this.store.settings(),
@@ -874,6 +875,8 @@ export class Connectors {
       "System.WorkItemType",
       "System.State",
       "System.AssignedTo",
+      "System.CreatedDate",
+      "System.ChangedDate",
     ];
     const item = await this.azure(
       `workitems/${id}?fields=${fields.join(",")}`,
@@ -896,6 +899,8 @@ export class Connectors {
     return {
       id,
       source: this.store.source(s),
+      created_at: f["System.CreatedDate"] || null,
+      changed_at: f["System.ChangedDate"] || null,
       title: f["System.Title"] || "",
       type: f["System.WorkItemType"] || "",
       state: f["System.State"] || "",
@@ -1249,7 +1254,7 @@ export class Connectors {
         throw new AppError(502, "Некорректные номера тикетов Azure");
       entry = {
         source, pat, filters: filterKey,
-        ids: [...new Set(allIds)].sort((a, b) => b - a).slice(0, 20000),
+        ids: orderBrowseIds(allIds.slice(0, 20000), input.sort, local),
         expires: now + 15 * 60 * 1000, limited: allIds.length >= 20000,
       };
       while (this.browseSnapshots.size >= 10)
@@ -1288,7 +1293,7 @@ export class Connectors {
       .map((item: any) =>
         azureSummary(item, source, azureBase(s.azureUrl), s.azureProject),
       )
-      .sort((a: any, b: any) => b.id - a.id);
+      .sort((a: any, b: any) => ids.indexOf(a.id) - ids.indexOf(b.id));
     return {
       tickets,
       ...pagination,
@@ -1412,6 +1417,7 @@ export class Connectors {
             "System.State",
             "System.AssignedTo",
             "System.ChangedDate",
+            "System.CreatedDate",
             "System.Tags",
           ],
         }),
@@ -1564,6 +1570,7 @@ export class Connectors {
               "System.AssignedTo",
               "System.WorkItemType",
               "System.ChangedDate",
+            "System.CreatedDate",
               "System.Tags",
               "System.TeamProject",
             ],

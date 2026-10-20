@@ -18,6 +18,7 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
   const applied = useRef<Filters | null>(null);
   const generation = useRef(0);
   const locked = useRef(false);
+  const queuedSearch = useRef<Filters | null>(null);
   useEffect(() => {
     if (!enabled) return;
     let live = true;
@@ -31,6 +32,7 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
     return () => {
       live = false;
       generation.current++;
+      queuedSearch.current = null;
     };
   }, [enabled, source]);
   async function load(
@@ -39,16 +41,25 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
     keepRows = false,
     newSearch = false,
   ) {
-    if (!enabled || locked.current) return;
+    if (!enabled) return;
+    if (locked.current) {
+      if (newSearch) {
+        queuedSearch.current = structuredClone(filters);
+        generation.current++;
+        setRows([]);
+        setPage(1);
+      }
+      return;
+    }
     locked.current = true;
+    if (newSearch) setPage(1);
     const request = ++generation.current;
     setLoading(true);
     setError("");
     if (!keepRows) setRows([]);
     try {
-      const { sort: _sort, ...search } = filters;
       const result = await api("/azure/tickets/search", "POST", {
-        ...search,
+        ...filters,
         source,
         page: targetPage,
         snapshot: newSearch ? undefined : snapshot.current,
@@ -66,7 +77,10 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
       if (request === generation.current) setError(e.message);
     } finally {
       locked.current = false;
-      if (request === generation.current) setLoading(false);
+      const queued = queuedSearch.current;
+      queuedSearch.current = null;
+      if (queued) void load(queued, 1, false, true);
+      else if (request === generation.current) setLoading(false);
     }
   }
   return {
@@ -96,7 +110,6 @@ export function useAzureTicketBrowser(enabled: boolean, source: string) {
     refresh: () => applied.current && void load(applied.current, page, true),
     pending: (filters: Filters) =>
       applied.current &&
-      JSON.stringify({ ...filters, sort: "" }) !==
-        JSON.stringify({ ...applied.current, sort: "" }),
+      JSON.stringify(filters) !== JSON.stringify(applied.current),
   };
 }

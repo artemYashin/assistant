@@ -90,3 +90,22 @@ test("expired trash also removes its local addition timestamp", (t) => {
   store.purgeTicketTrash(Date.now() + 31 * 86400000);
   assert.equal(store.ticketAddedAt(42), null);
 });
+
+test("Azure creation date survives local deletion and restoration independently of import date", (t) => {
+  const f = fixture(t),
+    store = f.store;
+  insert(store, 42);
+  const added = store.ticketAddedAt(42);
+  store.saveTicketCreatedAt(42, store.source(), "2020-01-02T03:04:05Z");
+  store.saveTicketCreatedAt(42, store.source(), undefined);
+  assert.equal(store.ticketCreatedAt(42), "2020-01-02T03:04:05.000Z");
+  assert.equal(store.ticketAddedAt(42), added);
+  store.removeLocalTicket(42);
+  assert.equal(store.ticketTrash()[0].created_at, "2020-01-02T03:04:05.000Z");
+  store.restoreLocalTicket(42);
+  assert.equal(f.reopen().ticketCreatedAt(42), "2020-01-02T03:04:05.000Z");
+  assert.equal(f.store.ticketCreatedAt(42, "another-source"), null);
+  f.store.removeLocalTicket(42);
+  f.store.purgeTicketTrash(Date.now() + 31 * 86400000);
+  assert.equal(f.store.ticketCreatedAt(42), null);
+});
