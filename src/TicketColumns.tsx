@@ -6,6 +6,7 @@ export const ticketColumns = [
   ["state", "Статус"],
   ["priority", "Приоритет"],
   ["tags", "Теги"],
+  ["azureTags", "Azure теги"],
   ["assigned", "Исполнитель в Azure"],
   ["developer_name", "Локальное поручение"],
   ["synced_at", "Синхронизация"],
@@ -75,7 +76,7 @@ export function useTicketColumns(trash = false) {
   return {
     order,
     hidden: (key: string) => hidden.includes(key),
-    count: (trash ? 11 : 9) - hidden.length,
+    count: (trash ? 12 : 10) - hidden.length,
     control: (
       <PrInfoPopup
         title="Отображение столбцов"

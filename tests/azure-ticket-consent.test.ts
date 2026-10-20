@@ -73,6 +73,7 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
     const body = JSON.parse(init.body);
     assert.deepEqual(body.ids, [42]);
     assert.ok(!body.fields.includes("System.Description"));
+    assert.ok(body.fields.includes("System.Tags"));
     return Response.json({
       value: [
         {
@@ -80,6 +81,7 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
           fields: {
             "System.TeamProject": "Project",
             "System.Title": "Title",
+            "System.Tags": "Azure ; External",
             "System.State": "Active",
             "System.WorkItemType": "Bug",
           },
@@ -94,6 +96,8 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
     () => {},
   );
   assert.deepEqual(read.added, []);
+  assert.deepEqual(read.tickets[0].azureTags, ["Azure", "External"]);
+  assert.deepEqual(store.azureTags(42), []);
   assert.equal(
     store.db.prepare("SELECT count(*) n FROM tickets").get() &&
       (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
@@ -101,6 +105,7 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
   );
   const add = await connectors.lookupTickets({ ids: [42] }, true, () => {});
   assert.deepEqual(add.added, [42]);
+  assert.deepEqual(store.azureTags(42), ["Azure", "External"]);
   assert.equal(
     (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
     1,

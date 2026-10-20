@@ -1,7 +1,12 @@
+import {
+  developerGroup,
+  type DeveloperStatusGroups,
+} from "./developer-status.js";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Users,
+  ClipboardCheck,
   NotebookPen,
   Save,
   ChevronLeft,
@@ -23,6 +28,7 @@ type Task = {
   state: string;
   type: string;
   priority?: number;
+  removedAt?: number;
   developers?: { id: string }[];
 };
 export function DevelopersPage({
@@ -37,7 +43,20 @@ export function DevelopersPage({
   const [data, setData] = useState<{
     developers: Developer[];
     completedTickets: Task[];
+    source: string;
+    statusGroups: DeveloperStatusGroups;
+    showDeleted: boolean;
   } | null>(null);
+  useEffect(() => {
+    setData(null);
+    setError("");
+  }, [context.client, context.project]);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const refresh = () => setRevision((value) => value + 1);
+    window.addEventListener("orbit:developer-board", refresh);
+    return () => window.removeEventListener("orbit:developer-board", refresh);
+  }, []);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
@@ -54,7 +73,7 @@ export function DevelopersPage({
     return () => {
       live = false;
     };
-  }, [context.client, context.project, tickets]);
+  }, [context.client, context.project, tickets, revision]);
   if (!context.project)
     return (
       <div className="panel">
@@ -97,9 +116,11 @@ export function DevelopersPage({
         </div>
       )}
       <p className="muted">
-        Завершённые — удалённые из локального списка тикеты. Они доступны здесь
-        до истечения 30 дней хранения в корзине; восстановленные возвращаются в
-        активные.
+        Группы настраиваются в «Заказчики и проекты → Разработчики». Не
+        настроенные статусы — активные.{" "}
+        {data?.showDeleted
+          ? "Тикеты из корзины видны в завершённых."
+          : "Тикеты из корзины скрыты."}
       </p>
       <div className="developer-board-grid">
         {data?.developers
@@ -110,7 +131,7 @@ export function DevelopersPage({
           )
           .map((person) => (
             <DeveloperCard
-              key={person.id}
+              key={`${context.client}:${context.project}:${person.id}`}
               person={person}
               context={context}
               tickets={tickets.filter((ticket) =>
@@ -118,11 +139,15 @@ export function DevelopersPage({
                   (developer) => developer.id === person.id,
                 ),
               )}
-              completedTickets={data.completedTickets.filter((ticket) =>
+              completedTickets={(data.showDeleted
+                ? data.completedTickets
+                : []
+              ).filter((ticket) =>
                 ticket.developers?.some(
                   (developer) => developer.id === person.id,
                 ),
               )}
+              groups={data.statusGroups}
               settings={settings}
             />
           ))}
@@ -142,12 +167,14 @@ function DeveloperCard({
   context,
   tickets,
   completedTickets,
+  groups,
   settings,
 }: {
   person: Developer;
   context: Context;
   tickets: Task[];
   completedTickets: Task[];
+  groups: DeveloperStatusGroups;
   settings: any;
 }) {
   const [tab, setTab] = useState("active"),
@@ -156,11 +183,21 @@ function DeveloperCard({
     [saved, setSaved] = useState(person.notes);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const done = completedTickets,
-    active = tickets;
-  const list = [...(tab === "active" ? active : done)].sort(
-    (a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id,
-  );
+  const done = [
+      ...tickets.filter(
+        (ticket) => developerGroup(ticket.state, groups) === "done",
+      ),
+      ...completedTickets,
+    ],
+    review = tickets.filter(
+      (ticket) => developerGroup(ticket.state, groups) === "review",
+    ),
+    active = tickets.filter(
+      (ticket) => developerGroup(ticket.state, groups) === "active",
+    );
+  const list = [
+    ...(tab === "active" ? active : tab === "review" ? review : done),
+  ].sort((a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id);
   const pages = Math.max(1, Math.ceil(list.length / 5)),
     current = Math.min(page, pages - 1);
   async function save() {
@@ -204,6 +241,16 @@ function DeveloperCard({
         </button>
         <button
           type="button"
+          aria-pressed={tab === "review"}
+          onClick={() => {
+            setTab("review");
+            setPage(0);
+          }}
+        >
+          <ClipboardCheck size={15} /> На проверке · {review.length}
+        </button>
+        <button
+          type="button"
           aria-pressed={tab === "done"}
           onClick={() => {
             setTab("done");
@@ -222,8 +269,8 @@ function DeveloperCard({
           >
             <Link
               to={
-                tab === "done"
-                  ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id) })}`
+                ticket.removedAt !== undefined
+                  ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id), source: ticket.source })}`
                   : ticketPath(ticket.id, ticket.source)
               }
               title={ticket.title}
@@ -248,7 +295,9 @@ function DeveloperCard({
           <p className="muted">
             {tab === "active"
               ? "Нет активных поручений"
-              : "Нет завершённых поручений"}
+              : tab === "review"
+                ? "Нет поручений на проверке"
+                : "Нет завершённых поручений"}
           </p>
         )}
       </div>

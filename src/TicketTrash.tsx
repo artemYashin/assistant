@@ -68,6 +68,7 @@ export function TicketTrash({
   const [query, setQuery] = useState(params.get("id") || "");
   const [priorities, setPriorities] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [azureTags, setAzureTags] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
@@ -101,6 +102,7 @@ export function TicketTrash({
           localName(t),
           t.notes,
           t.tags,
+          t.azureTags,
         ].some((v) =>
           String(v ?? "")
             .toLocaleLowerCase()
@@ -110,6 +112,10 @@ export function TicketTrash({
         (!tags.length ||
           tags.some((tag) =>
             tag === "" ? !t.tags?.length : t.tags?.includes(tag),
+          )) &&
+        (!azureTags.length ||
+          azureTags.some((tag) =>
+            tag === "" ? !t.azureTags?.length : t.azureTags?.includes(tag),
           )) &&
         (!types.length || types.includes(t.type || "")) &&
         (!states.length || states.includes(t.state || "")) &&
@@ -143,6 +149,7 @@ export function TicketTrash({
     ["state", "Статус"],
     ["priority", "Приоритет"],
     ["tags", "Теги"],
+    ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],
     ["developer_name", "Локальное поручение"],
     ["removedAt", "Удалён"],
@@ -192,6 +199,18 @@ export function TicketTrash({
           options={[
             { value: "", label: "Без тегов" },
             ...[...new Set<string>(items.flatMap((t) => t.tags || []))]
+              .sort()
+              .map((v) => ({ value: v, label: v })),
+          ]}
+        />
+        <MultiSelect
+          label="Azure теги"
+          placeholder="Все Azure теги"
+          value={azureTags}
+          onChange={setAzureTags}
+          options={[
+            { value: "", label: "Без Azure тегов" },
+            ...[...new Set<string>(items.flatMap((t) => t.azureTags || []))]
               .sort()
               .map((v) => ({ value: v, label: v })),
           ]}
@@ -253,6 +272,7 @@ export function TicketTrash({
           onClick={() => {
             setPriorities([]);
             setTags([]);
+            setAzureTags([]);
             setQuery("");
             setTypes([]);
             setStates([]);
@@ -444,6 +464,23 @@ export function TicketTrash({
                     >
                       <span className="badge ticket-priority-badge">
                         P{t.priority ?? 1}
+                      </span>
+                    </td>
+                    <td
+                      data-column="azureTags"
+                      hidden={display.hidden("azureTags")}
+                    >
+                      <span
+                        className="ticket-tag-list azure-ticket-tags"
+                        title="Azure теги · только чтение"
+                      >
+                        {t.azureTags?.length
+                          ? t.azureTags.map((tag: string) => (
+                              <span className="badge" key={tag}>
+                                {tag}
+                              </span>
+                            ))
+                          : "—"}
                       </span>
                     </td>
                     <td data-column="tags" hidden={display.hidden("tags")}>

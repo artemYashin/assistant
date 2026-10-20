@@ -91,6 +91,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
       CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, name TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
       CREATE TABLE IF NOT EXISTS messages (id TEXT NOT NULL, chat_id TEXT NOT NULL, sender TEXT NOT NULL, body TEXT NOT NULL, url TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(chat_id,id));
+      CREATE TABLE IF NOT EXISTS ticket_azure_tags (source TEXT NOT NULL, id INTEGER NOT NULL, tags TEXT NOT NULL DEFAULT '[]', PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS tickets (source TEXT NOT NULL, id INTEGER NOT NULL, title TEXT NOT NULL, state TEXT NOT NULL, assigned TEXT NOT NULL, type TEXT NOT NULL, url TEXT NOT NULL, changed_at TEXT, synced_at TEXT NOT NULL, PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS suggestions (id TEXT PRIMARY KEY, source TEXT NOT NULL, ticket_id INTEGER NOT NULL, chat_id TEXT NOT NULL, message_id TEXT NOT NULL, excerpt TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', created_at TEXT NOT NULL, UNIQUE(source,ticket_id,chat_id,message_id));
       CREATE TABLE IF NOT EXISTS approvals (id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, chat_name TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL, expires_at TEXT NOT NULL, remote_id TEXT, error TEXT);
@@ -103,7 +104,11 @@ export class Store {
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
-    if (!(this.db.prepare("PRAGMA table_info(llm_tool_traces)").all() as any[]).some(c => c.name === "full_result"))
+    if (
+      !(
+        this.db.prepare("PRAGMA table_info(llm_tool_traces)").all() as any[]
+      ).some((c) => c.name === "full_result")
+    )
       this.db.exec("ALTER TABLE llm_tool_traces ADD COLUMN full_result TEXT");
     if (
       !(this.db.prepare("PRAGMA table_info(llm_requests)").all() as any[]).some(
@@ -365,6 +370,12 @@ export class Store {
     this.audit("memory.saved", `${scope}: ${id}`);
     return { id, scope, body };
   }
+  azureTags(id: number, source = this.source()): string[] {
+    const row = this.db
+      .prepare("SELECT tags FROM ticket_azure_tags WHERE source=? AND id=?")
+      .get(source, id) as { tags: string } | undefined;
+    return row ? JSON.parse(row.tags) : [];
+  }
   purgeTicketTrash(now = Date.now()) {
     return this.db.transaction(() => {
       const expired = this.db
@@ -374,6 +385,11 @@ export class Store {
         this.db
           .prepare(
             "DELETE FROM ticket_metadata WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
+          )
+          .run(row.source, row.id, row.source, row.id);
+        this.db
+          .prepare(
+            "DELETE FROM ticket_azure_tags WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
           )
           .run(row.source, row.id, row.source, row.id);
         this.db
@@ -403,6 +419,7 @@ export class Store {
         .all(this.source()) as any[]
     ).map((row) => ({
       ...JSON.parse(row.body),
+      azureTags: this.azureTags(row.id, row.source),
       ...ticketMetadata(this, row.id, row.source),
       removedAt: row.removed_at,
       expiresAt: row.removed_at + 30 * 86400000,

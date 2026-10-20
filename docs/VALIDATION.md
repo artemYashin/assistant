@@ -755,3 +755,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Merge dialog title is a labeled read-only field, strategy precedes grouped optional controls, and expanded ticket/bypass settings stay inside their respective blocks. Removed stacked outer margins.
 - Voice button sits beside send with a larger colored icon-only target, preserving recording/loading states and accessible labels. Added an Orbit SVG favicon through Vite's asset pipeline.
 - Pre-push validation: all 190 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.
+
+### Azure tags and developer board settings (2026-10-20)
+
+- Azure System.Tags are cached separately from editable local tags, refreshed on import/sync, exposed in summaries and searchable/filterable/sortable in active/trash tables. No Azure-tag write tool or UI is exposed. Cache follows trash restore/purge lifecycle.
+- Developer tabs are Active, In review and Completed. Project/source-scoped status mappings and trash visibility live under Customers & Projects → Developers in a collapsible settings panel. Directory form and scrollable roster use a compact responsive layout with initials avatars and icon actions.
+- Pre-push validation: all 192 tests and production build passed. Added coverage for tag import/sync/search/isolation/trash and status grouping/settings validation. Vite retains its large-chunk warning. Browser visual behavior and live Azure access were not exercised.

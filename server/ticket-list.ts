@@ -11,14 +11,25 @@ export const ticketListSchema = z.object({
   type: z.string().trim().max(200).optional(),
   state: z.string().trim().max(200).optional(),
   priority: z.number().int().min(1).max(20).optional(),
+  azureTag: z.string().trim().max(400).optional(),
   tag: z.string().trim().max(60).optional(),
   afterId: z.number().int().nonnegative().default(0),
   limit: z.number().int().min(1).max(100).default(100),
 });
 
 export function listLocalTickets(store: Store, input: unknown) {
-  const { detail, ids, search, type, state, priority, tag, afterId, limit } =
-    ticketListSchema.parse(input);
+  const {
+    detail,
+    ids,
+    search,
+    type,
+    state,
+    priority,
+    tag,
+    azureTag,
+    afterId,
+    limit,
+  } = ticketListSchema.parse(input);
   if (detail === "full")
     throw new AppError(
       403,
@@ -31,8 +42,10 @@ export function listLocalTickets(store: Store, input: unknown) {
     params.push(...ids);
   }
   if (search) {
-    clauses.push("instr(lower(title), lower(?)) > 0");
-    params.push(search);
+    clauses.push(
+      "(instr(lower(title), lower(?)) > 0 OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=tickets.source AND a.id=tickets.id AND instr(lower(tag.value), lower(?)) > 0))",
+    );
+    params.push(search, search);
   }
 
   for (const [field, value] of [
@@ -55,6 +68,12 @@ export function listLocalTickets(store: Store, input: unknown) {
       "EXISTS (SELECT 1 FROM ticket_metadata m,json_each(m.tags) tag WHERE m.source=tickets.source AND m.id=tickets.id AND tag.value=? COLLATE NOCASE)",
     );
     params.push(tag);
+  }
+  if (azureTag) {
+    clauses.push(
+      "EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=tickets.source AND a.id=tickets.id AND tag.value=? COLLATE NOCASE)",
+    );
+    params.push(azureTag);
   }
   const where = clauses.join(" AND ");
   const { total } = store.db
@@ -80,6 +99,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     );
     const metadata = ticketMetadata(store, row.id);
     Object.assign(ticket, metadata, {
+      azureTags: store.azureTags(row.id),
       notes: metadata.notes.slice(0, 300),
       notesTruncated: metadata.notes.length > 300,
     });
@@ -96,7 +116,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const hasMore = rows.length > tickets.length;
   return {
     scope: "local",
-    filters: { ids, search, type, state, priority, tag },
+    filters: { ids, search, type, state, priority, tag, azureTag },
     total,
     tickets,
     hasMore,

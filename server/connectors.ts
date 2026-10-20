@@ -250,6 +250,19 @@ export class Connectors {
     )
       return;
     const f = item.fields || {};
+    const azureTags = [
+      ...new Set(
+        String(f["System.Tags"] || "")
+          .split(";")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      ),
+    ];
+    this.store.db
+      .prepare(
+        "INSERT INTO ticket_azure_tags(source,id,tags) VALUES (?,?,?) ON CONFLICT(source,id) DO UPDATE SET tags=excluded.tags",
+      )
+      .run(this.store.source(s), item.id, JSON.stringify(azureTags));
     const url = `${azureBase(s.azureUrl)}/${encodeURIComponent(s.azureProject)}/_workitems/edit/${item.id}`;
     this.store.db
       .prepare(
@@ -300,7 +313,13 @@ export class Connectors {
       pat = this.store.secret("azure.pat");
     const response = await this.azure(
       "workitemsbatch",
-      { method: "POST", body: JSON.stringify({ ids, fields: ["System.TeamProject", "System.WorkItemType", "System.State"] }) },
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ids,
+          fields: ["System.TeamProject", "System.WorkItemType", "System.State"],
+        }),
+      },
       s,
       pat,
     );
@@ -1037,6 +1056,7 @@ export class Connectors {
             "System.State",
             "System.AssignedTo",
             "System.ChangedDate",
+            "System.Tags",
           ],
         }),
       },
@@ -1055,6 +1075,14 @@ export class Connectors {
       const f = item.fields;
       return {
         id: item.id,
+        azureTags: [
+          ...new Set(
+            String(f["System.Tags"] || "")
+              .split(";")
+              .map((tag) => tag.trim())
+              .filter(Boolean),
+          ),
+        ],
         title: f["System.Title"] || "",
         state: f["System.State"] || "",
         type: f["System.WorkItemType"] || "",
@@ -1180,6 +1208,7 @@ export class Connectors {
               "System.AssignedTo",
               "System.WorkItemType",
               "System.ChangedDate",
+              "System.Tags",
               "System.TeamProject",
             ],
             errorPolicy: "Fail",

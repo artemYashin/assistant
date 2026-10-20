@@ -5554,3 +5554,151 @@ summary > svg {
 .chat-tool-request h4 {
   margin: 12px 0 4px;
 }
+
+.developer-status-settings {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.developer-status-settings > p {
+  margin: 0;
+}
+.developer-status-table {
+  max-height: 50vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.developer-status-table table {
+  width: 100%;
+}
+.developer-status-table th,
+.developer-status-table td {
+  padding: 8px;
+  white-space: normal;
+}
+.developer-status-table td {
+  text-align: center;
+}
+.developer-status-table label {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  cursor: pointer;
+}
+.developer-status-table input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #285341;
+}
+.developer-board-toolbar {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.developer-board-card .pr-page-tabs {
+  flex-wrap: wrap;
+}
+
+.developer-deleted-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f2f7f3;
+  cursor: pointer;
+}
+.developer-deleted-toggle input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 2px 0 0;
+  accent-color: #285341;
+}
+.developer-deleted-toggle small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.developer-directory {
+  max-width: 920px;
+  width: 100%;
+}
+.developer-directory-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+.developer-directory-panel > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.developer-directory-panel > .single-select {
+  max-width: 360px;
+}
+.developer-directory-editor {
+  display: grid;
+  grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr);
+  gap: 20px;
+  align-items: start;
+}
+.developer-directory-editor form {
+  align-content: start;
+}
+.developer-directory-editor form > button {
+  justify-self: start;
+  width: fit-content;
+}
+.developer-directory-roster {
+  min-width: 0;
+}
+.developer-directory-roster h4 {
+  margin: 0 0 10px;
+}
+.developer-directory-list {
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.developer-directory-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 30px 30px;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.developer-directory-row input {
+  width: 100%;
+}
+.developer-directory-row .initials-avatar,
+.developer-inherited-list .initials-avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+.developer-inherited-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+}
+.developer-inherited-list > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.developer-directory-panel > .developer-status-settings {
+  margin-top: 14px;
+}
+@media (max-width: 760px) {
+  .developer-directory-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

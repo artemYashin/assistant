@@ -86,6 +86,7 @@ export class UsageLedger {
       "detail",
       "contentOffset",
       "search",
+      "azureTag",
       "type",
       "afterId",
       "offset",

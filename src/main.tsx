@@ -1260,6 +1260,7 @@ function Tickets({
   const [sort, setSort] = useState("id-desc");
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [azureTagFilter, setAzureTagFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [stateFilter, setStateFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
@@ -1285,6 +1286,7 @@ function Tickets({
       "developer_name",
       "notes",
       "tags",
+      "azureTags",
     ].some((key) =>
       String(t[key] || "")
         .toLocaleLowerCase()
@@ -1298,6 +1300,10 @@ function Tickets({
       (!tagFilter.length ||
         tagFilter.some((tag) =>
           tag === "" ? !t.tags?.length : t.tags?.includes(tag),
+        )) &&
+      (!azureTagFilter.length ||
+        azureTagFilter.some((tag) =>
+          tag === "" ? !t.azureTags?.length : t.azureTags?.includes(tag),
         )) &&
       (!typeFilter.length || typeFilter.includes(t.type || "")) &&
       (!stateFilter.length || stateFilter.includes(t.state || "")) &&
@@ -1449,6 +1455,23 @@ function Tickets({
               .map((v) => ({ value: v, label: v })),
           ]}
         />
+        <MultiSelect
+          label="Azure теги"
+          placeholder="Все Azure теги"
+          value={azureTagFilter}
+          onChange={setAzureTagFilter}
+          disabled={!!rawTarget}
+          options={[
+            { value: "", label: "Без Azure тегов" },
+            ...[
+              ...new Set<string>(
+                tickets.flatMap((t: any) => t.azureTags || []),
+              ),
+            ]
+              .sort()
+              .map((v) => ({ value: v, label: v })),
+          ]}
+        />
 
         <MultiSelect
           label="Тип задачи"
@@ -1511,6 +1534,7 @@ function Tickets({
             if (rawTarget) navigate("/tickets");
             setPriorityFilter([]);
             setTagFilter([]);
+            setAzureTagFilter([]);
             setTypeFilter([]);
             setStateFilter([]);
             setAssigneeFilter([]);
@@ -1578,6 +1602,7 @@ function Tickets({
                       ["state", "Статус"],
                       ["priority", "Приоритет"],
                       ["tags", "Теги"],
+                      ["azureTags", "Azure теги"],
                       ["assigned", "Исполнитель в Azure"],
                       ["developer_name", "Локальное поручение"],
                       ["synced_at", "Синхронизация"],
@@ -1672,6 +1697,23 @@ function Tickets({
                       field="priority"
                       onChange={() => run("refresh-priority", async () => {})}
                     />
+                  </td>
+                  <td
+                    data-column="azureTags"
+                    hidden={columns.hidden("azureTags")}
+                  >
+                    <span
+                      className="ticket-tag-list azure-ticket-tags"
+                      title="Azure теги · только чтение"
+                    >
+                      {t.azureTags?.length
+                        ? t.azureTags.map((tag: string) => (
+                            <span className="badge" key={tag}>
+                              {tag}
+                            </span>
+                          ))
+                        : "—"}
+                    </span>
                   </td>
                   <td data-column="tags" hidden={columns.hidden("tags")}>
                     <TicketMetadata

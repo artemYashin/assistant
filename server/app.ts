@@ -367,7 +367,12 @@ export function createApp(
     res.json({ ok: true });
   });
   app.get("/api/conversation/tools/:id/result", (req, res) =>
-    res.json(new UsageLedger(store).toolResult(String(req.params.id), contextSchema.parse(req.query))),
+    res.json(
+      new UsageLedger(store).toolResult(
+        String(req.params.id),
+        contextSchema.parse(req.query),
+      ),
+    ),
   );
   app.get("/api/conversation/tools", (req, res) =>
     res.json(new UsageLedger(store).chatTools(contextSchema.parse(req.query))),
@@ -495,6 +500,52 @@ export function createApp(
   const localDevelopers = new LocalDevelopers(store);
   const developerNoteKey = (context: Context, id: string) =>
     `developer-note:${JSON.stringify([context.client, context.project, id])}`;
+  const developerStatusKey = (context: Context) =>
+    `developer-status-groups:${JSON.stringify([store.source(), context.client, context.project])}`;
+  const defaultDeveloperGroups = {
+    UAT: "review",
+    "Ready for Testing": "review",
+    RFT: "review",
+    Prod: "done",
+  };
+  app.put("/api/developer-board/status-groups", (req, res) => {
+    const input = z
+      .object({
+        context: contextSchema,
+        source: z.string(),
+        showDeleted: z.boolean().optional(),
+        statusGroups: z
+          .record(
+            z.string().trim().min(1).max(200),
+            z.enum(["active", "review", "done"]),
+          )
+          .refine((value) => Object.keys(value).length <= 300),
+      })
+      .strict()
+      .parse(req.body);
+    if (!input.context.project) throw new AppError(400, "Выберите проект");
+    if (input.source !== store.source())
+      throw new AppError(
+        409,
+        "Подключение изменилось; откройте настройки заново",
+      );
+    const keys = Object.keys(input.statusGroups).map((key) =>
+      key.toLocaleLowerCase(),
+    );
+    if (new Set(keys).size !== keys.length)
+      throw new AppError(
+        400,
+        "Статусы не должны повторяться без учёта регистра",
+      );
+    store.set(developerStatusKey(input.context), input.statusGroups);
+    const visibilityKey = developerStatusKey(input.context) + ":show-deleted";
+    if (input.showDeleted !== undefined)
+      store.set(visibilityKey, input.showDeleted);
+    res.json({
+      statusGroups: input.statusGroups,
+      showDeleted: store.get(visibilityKey, true),
+    });
+  });
   app.get("/api/developer-board", (req, res) => {
     const context = contextSchema.parse(req.query);
     res.json({
@@ -503,6 +554,21 @@ export function createApp(
         notes: store.get<string>(developerNoteKey(context, person.id), ""),
       })),
       completedTickets: store.ticketTrash(),
+      availableStates: store.db
+        .prepare(
+          "SELECT DISTINCT state FROM tickets WHERE source=? ORDER BY state",
+        )
+        .all(store.source())
+        .map((row: any) => row.state),
+      source: store.source(),
+      statusGroups: store.get(
+        developerStatusKey(context),
+        defaultDeveloperGroups,
+      ),
+      showDeleted: store.get(
+        developerStatusKey(context) + ":show-deleted",
+        true,
+      ),
     });
   });
   app.put("/api/developer-board/:id/notes", (req, res) => {
@@ -655,6 +721,7 @@ export function createApp(
           return {
             ...ticket,
             ...ticketMetadata(store, ticket.id, ticket.source),
+            azureTags: store.azureTags(ticket.id, ticket.source),
             developers,
             developer_name: developers.length
               ? developers.map((d) => d.name).join(", ")
