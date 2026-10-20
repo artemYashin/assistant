@@ -8012,7 +8012,7 @@ summary > svg {
 .overview-line-chart svg { display: block; width: 100%; overflow: visible; }
 .overview-line-chart .token-input { background: #377a68; }
 .overview-line-chart .token-output { background: #6784c4; }
-.overview-axis-label { fill: #687987; font-size: 11px; }
+.overview-axis-label { fill: #687987; font-size: 8px; }
 .overview-chart-readout {
   min-height: 22px;
   text-align: center;
@@ -8045,9 +8045,28 @@ summary > svg {
   padding: 10px 10px 6px;
 }
 .overview-line-chart .overview-chart-legend { margin-bottom: 5px; }
-.overview-point-tooltip rect {
-  fill: #fff;
-  stroke: #c3cfda;
-  filter: drop-shadow(0 2px 3px #243c5220);
+/* HTML tooltip keeps its compact text size independently of SVG scaling. */
+.overview-chart-plot { position: relative; }
+.overview-point-tooltip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  box-sizing: border-box;
+  width: 172px;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ffffffb3;
+  border-radius: 8px;
+  background: #f8fafcdb;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 3px 12px #243c521a;
+  color: #344956;
+  font-size: 10px;
+  line-height: 1.4;
+  transform: translateY(-100%);
 }
-.overview-point-tooltip text { font-size: 11px; font-weight: 500; }
+.overview-tooltip-date { color: #657784; font-size: 9px; margin-bottom: 5px; }
+.overview-tooltip-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.overview-tooltip-row :is(b, strong) { font-size: 10px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.overview-tooltip-total { color: #2f6656; padding-bottom: 3px; margin-bottom: 3px; border-bottom: 1px solid #34495614; }

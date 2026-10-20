@@ -1056,3 +1056,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Local metadata changes from chat now display a translated action, ticket identity and changed field names. Unknown events use category labels and structured details are summarized rather than rendering raw JSON.
 - Reduced chart height and stroke width, darkened its background and moved readouts into pointer/focus-triggered SVG tooltips. Adaptive log1p scaling uses 1/2/5 tick candidates, a data-dependent unit explicitly labelled below the chart, and spacing rules to avoid overlapping labels.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.
+
+### Compact overview axes and glass tooltip (2026-10-21)
+
+- Combined input/output into one total-token line, retaining the breakdown in a compact HTML tooltip with explicit token labels, translucent background and blur. Tooltip text no longer scales with the SVG.
+- Reduced axis-label and marker sizes, added axis strokes and moved the Y axis closer to the chart's left edge. The scale is calculated from total tokens.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build and browser visuals were not exercised.
