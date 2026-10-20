@@ -122,3 +122,34 @@ test("chat and review use separate models and record the selection, with legacy 
     models,
   );
 });
+
+test("ticket list supports exact ID batches and literal title search together", async (t) => {
+  const store = fixture(t);
+  for (const [id, title] of [
+    [1, "Feature UI"],
+    [2, "Feature protocol"],
+    [3, "Other"],
+    [4, "100% literal"],
+  ] as const)
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, title, "Active", "", "Bug", "", "", "now");
+  const tool = sessionConfig(
+    store,
+    new Approvals(store, async () => ({ id: "unused" })),
+    { client: "", project: "" },
+  ).tools!.find((tool) => tool.name === "list_tickets")!;
+  const list: any = await tool.handler!(
+    { ids: [1, 3], search: "feature" },
+    {} as any,
+  );
+  assert.deepEqual(
+    list.tickets.map((ticket: any) => ticket.id),
+    [1],
+  );
+  const literal: any = await tool.handler!({ search: "%" }, {} as any);
+  assert.deepEqual(
+    literal.tickets.map((ticket: any) => ticket.id),
+    [4],
+  );
+});

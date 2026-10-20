@@ -366,6 +366,9 @@ export function createApp(
     store.db.prepare("DELETE FROM memories WHERE id=?").run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/conversation/tools", (req, res) =>
+    res.json(new UsageLedger(store).chatTools(contextSchema.parse(req.query))),
+  );
   app.get("/api/conversation", (req, res) =>
     res.json(store.history(contextSchema.parse(req.query))),
   );

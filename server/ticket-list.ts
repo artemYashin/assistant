@@ -1,9 +1,13 @@
 import { ticketMetadata } from "./ticket-metadata.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { z } from "zod";
-import { Store } from "./store.js";
+import { AppError, Store } from "./store.js";
 
 export const ticketListSchema = z.object({
+  detail: z.enum(["summary", "full"]).default("summary"),
+  contentOffset: z.number().int().nonnegative().default(0),
+  ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
+  search: z.string().trim().min(1).max(300).optional(),
   type: z.string().trim().max(200).optional(),
   state: z.string().trim().max(200).optional(),
   priority: z.number().int().min(1).max(20).optional(),
@@ -13,10 +17,24 @@ export const ticketListSchema = z.object({
 });
 
 export function listLocalTickets(store: Store, input: unknown) {
-  const { type, state, priority, tag, afterId, limit } =
+  const { detail, ids, search, type, state, priority, tag, afterId, limit } =
     ticketListSchema.parse(input);
+  if (detail === "full")
+    throw new AppError(
+      403,
+      "Полное чтение доступно только по явной просьбе пользователя через чат",
+    );
   const clauses = ["source = ?"];
   const params: (string | number)[] = [store.source()];
+  if (ids) {
+    clauses.push(`id IN (${ids.map(() => "?").join(",")})`);
+    params.push(...ids);
+  }
+  if (search) {
+    clauses.push("instr(lower(title), lower(?)) > 0");
+    params.push(search);
+  }
+
   for (const [field, value] of [
     ["type", type],
     ["state", state],
@@ -78,7 +96,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const hasMore = rows.length > tickets.length;
   return {
     scope: "local",
-    filters: { type, state, priority, tag },
+    filters: { ids, search, type, state, priority, tag },
     total,
     tickets,
     hasMore,

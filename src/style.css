@@ -5382,3 +5382,63 @@ summary > svg {
   min-width: 0;
   max-width: 150px;
 }
+
+.chat-tools-dialog {
+  width: min(760px, calc(100vw - 32px));
+  max-height: 85dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+}
+.chat-tools-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.chat-tools-dialog h2 {
+  margin: 0 0 6px;
+}
+.chat-tools-dialog p,
+.chat-tools-dialog small {
+  color: var(--muted, #64748b);
+}
+.chat-tool-request {
+  padding: 16px;
+  margin-top: 16px;
+  border: 1px solid #dce2eb;
+  border-radius: 12px;
+}
+.chat-tool-request details {
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+}
+.chat-tool-request summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+.chat-tool-request summary code {
+  overflow-wrap: anywhere;
+}
+.chat-tool-request summary span {
+  font-size: 12px;
+  color: #64748b;
+}
+.chat-tool-request pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f3f5f8;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.chat-tool-request h4 {
+  margin: 12px 0 4px;
+}

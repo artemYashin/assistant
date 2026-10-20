@@ -660,3 +660,23 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Groups contain at most 25 tickets. Table selections beyond 25 are split sequentially. Already-correct states are omitted from writes; every reported successful change is independently verified from the subsequent bulk read. No automatic single-write fallback or retry after batch failure. Single chat edits retain the existing path. PR merge status updates are unchanged.
 - Protocol reference: https://learn.microsoft.com/en-us/previous-versions/azure/devops/integrate/previous-apis/wit/batch?view=tfs-2017
 - Pre-push validation: all 165 tests passed; production build and TypeScript checks passed. Regression cases cover request counts/shape, custom collection URLs, partial outcomes, cancellation and chat authorization/deduplication. Live Azure behavior has not been tested.
+
+### Chat tool diagnostics and batched selection reads (2026-10-20)
+
+- Root-cause inspection: the SDK pre-tool hook consumes one tool-call allowance per model invocation; batch children do not invoke that hook. However, the previous history policy asked the model to validate historical ticket IDs individually, which could exhaust 20 calls for a 23-ticket selection before mutation.
+- `list_tickets` now accepts up to 50 exact IDs and a literal title substring search. Prompt guidance uses this batch read followed by one update batch, with pagination as needed. The final confirmation question no longer instructs the user to type a particular phrase.
+- A context-scoped chat header dialog displays the last 20 requests with tool names, bounded argument summaries, results/errors, timestamps and durations. Internal batch children are labeled separately. Notes/message bodies/credentials are not persisted in argument summaries. Historic requests without trace records show a clear unavailable message.
+- TypeScript check passed. Added regression tests for 23 edits within a 20-call budget, trace context isolation/redaction and exact-ID/title filtering. Pre-push validation: all 173 tests and the production build passed. Live model behavior has not been exercised.
+
+### Explicit full-ticket analysis (2026-10-20)
+
+- `list_tickets` defaults to `detail=summary` (local basic fields, tags, priority, local developers, bounded notes). Full descriptions/criteria are not fetched in this mode.
+- `detail=full` requires exact selected IDs and server-checked explicit intent in the current user message. It reads description, acceptance criteria, reproduction steps, local notes and comments, with attachment metadata and upstream warnings. It does not expose unrelated Azure system fields or automatically display full ticket cards. Attachment binaries/image understanding are not part of this text search.
+- Full-mode `search` searches the complete extracted text of the selected candidates. Results are bounded and paginated with `nextAfterId`/`nextContentOffset`; content is cached within the turn. Source/cancellation checks remain active.
+- TypeScript check passed. Added tests for authorization, summary default, description search, pagination and chat integration; all 173 tests and the production build passed before push.
+
+### Token warning before deep reads (2026-10-20)
+
+- An explicit full-ticket/deep-analysis request now first receives a deterministic token-cost warning and a question, before starting the model or reading full Azure content. A separate affirmative answer to that immediately preceding warning authorizes the original read request for one turn only. Ordinary requests continue using summaries.
+- Both `get_ticket` full cards and `list_tickets(detail=full)` are gated; consent cannot be supplied by ticket text or borrowed from a mutation confirmation. A changed current checkbox selection does not replace the originally confirmed selection. No separate approval table/widget is used; the warning and answer live in ordinary chat history.
+- TypeScript check passed. Added/updated regression cases for no reads before consent, confirmation, refusal, unrelated replies, one-turn expiry and full-card display after consent. Pre-push validation: all 173 tests and the production build passed.

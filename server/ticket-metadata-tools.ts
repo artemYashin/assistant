@@ -45,7 +45,7 @@ export function ticketMetadataTools(
   return [
     defineTool("update_local_ticket_metadata", {
       description:
-        "Edit LOCAL notes, priority and tags on explicit current-user request. Ticket ID must be in the message or retrieved via list_tickets/get_ticket/get_local_ticket_metadata during this turn. For tickets from conversation history, read them first. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. P1 is highest; project priority limits are validated. Repeating the same operation is idempotent within this message. Confirm only success=true.",
+        "Edit LOCAL notes, priority and tags on explicit current-user request. Ticket ID must be in the message or retrieved via list_tickets/get_ticket/get_local_ticket_metadata during this turn. For tickets from conversation history, validate all IDs together with list_tickets({ids:[...]}), not one get_local_ticket_metadata call per ticket. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. P1 is highest; project priority limits are validated. Repeating the same operation is idempotent within this message. Confirm only success=true.",
       parameters: editMetadataSchema,
       handler: async (input) => {
         assertActive();

@@ -125,7 +125,10 @@ export function ticketBatchTool(
             const tool = tools.find((t) => t.name === name);
             if (!tool?.handler)
               throw new AppError(403, "Операция недоступна в текущем запросе");
-            value = await tool.handler(args, invocation);
+            value = await tool.handler(args, {
+              ...invocation,
+              orbitBatchChild: true,
+            } as any);
           }
         } catch (error) {
           value = toolFailure(name, args, error);

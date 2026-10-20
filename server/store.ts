@@ -97,6 +97,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS audit (id TEXT PRIMARY KEY, action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS llm_requests (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, finished_at TEXT, model TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, status TEXT NOT NULL, reason TEXT, tool_calls INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS llm_usage (request_id TEXT NOT NULL REFERENCES llm_requests(id), receipt_id TEXT NOT NULL, model TEXT NOT NULL, input_tokens INTEGER, output_tokens INTEGER, cache_read_tokens INTEGER, cache_write_tokens INTEGER, PRIMARY KEY(request_id,receipt_id));
+      CREATE TABLE IF NOT EXISTS llm_tool_traces (id TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES llm_requests(id), name TEXT NOT NULL, arguments TEXT NOT NULL, internal INTEGER NOT NULL, status TEXT NOT NULL, result TEXT, started_at TEXT NOT NULL, finished_at TEXT);
+      CREATE INDEX IF NOT EXISTS llm_tool_trace_request ON llm_tool_traces(request_id);
       CREATE INDEX IF NOT EXISTS llm_request_time ON llm_requests(created_at);
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);

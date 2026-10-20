@@ -68,6 +68,114 @@ export class UsageLedger {
       .prepare("UPDATE llm_requests SET tool_calls=tool_calls+1 WHERE id=?")
       .run(id);
   }
+  toolTrace(
+    requestId: string,
+    name: string,
+    args: any,
+    internal: boolean,
+    status = "running",
+  ) {
+    const id = randomUUID();
+    // Record identifiers and operation shape, never notes, message bodies or secrets.
+    const summary: Record<string, unknown> = {};
+    for (const key of [
+      "id",
+      "ticketId",
+      "ids",
+      "state",
+      "detail",
+      "contentOffset",
+      "search",
+      "type",
+      "afterId",
+      "offset",
+      "limit",
+    ]) {
+      if (args?.[key] !== undefined) summary[key] = args[key];
+    }
+    summary.fields = Object.keys(args || {}).filter(
+      (key) => !Object.hasOwn(summary, key),
+    );
+    if (Array.isArray(args?.operations))
+      summary.operations = args.operations.slice(0, 50).map((op: any) => ({
+        action: op.action,
+        id: op.id ?? op.data?.id,
+        fields: op.data
+          ? Object.keys(op.data).filter((key) => key !== "id")
+          : undefined,
+      }));
+    this.store.db
+      .prepare(
+        "INSERT INTO llm_tool_traces(id,request_id,name,arguments,internal,status,started_at) VALUES (?,?,?,?,?,?,?)",
+      )
+      .run(
+        id,
+        requestId,
+        name,
+        JSON.stringify(summary).slice(0, 16000),
+        internal ? 1 : 0,
+        status,
+        new Date().toISOString(),
+      );
+    return id;
+  }
+  finishToolTrace(id: string, status: string, result: any) {
+    const summary: Record<string, unknown> = {};
+    for (const key of [
+      "success",
+      "error",
+      "reference",
+      "code",
+      "total",
+      "succeeded",
+      "failed",
+      "hasMore",
+      "nextAfterId",
+      "nextContentOffset",
+      "totalCandidates",
+      "scanned",
+      "truncated",
+    ])
+      if (result?.[key] !== undefined) summary[key] = result[key];
+    if (Array.isArray(result?.tickets))
+      summary.ticketIds = result.tickets.map((ticket: any) => ticket.id);
+    if (Array.isArray(result?.results))
+      summary.results = result.results.map((item: any) => ({
+        id: item.id,
+        success: item.success,
+        error: item.error,
+        reference: item.reference,
+      }));
+    this.store.db
+      .prepare(
+        "UPDATE llm_tool_traces SET status=?, result=?, finished_at=? WHERE id=?",
+      )
+      .run(
+        status,
+        JSON.stringify(summary).slice(0, 24000),
+        new Date().toISOString(),
+        id,
+      );
+  }
+  chatTools(context: Context) {
+    const requests = this.store.db
+      .prepare(
+        "SELECT id,created_at,finished_at,status,reason,tool_calls FROM llm_requests WHERE origin='chat' AND client=? AND project=? ORDER BY created_at DESC LIMIT 20",
+      )
+      .all(context.client, context.project) as any[];
+    return {
+      requests: requests.map((request) => ({
+        ...request,
+        tools: (
+          this.store.db
+            .prepare(
+              "SELECT * FROM llm_tool_traces WHERE request_id=? ORDER BY started_at,rowid LIMIT 500",
+            )
+            .all(request.id) as any[]
+        ).map((tool) => ({ ...tool, internal: Boolean(tool.internal) })),
+      })),
+    };
+  }
   tokens(id: string) {
     const row = this.store.db
       .prepare(

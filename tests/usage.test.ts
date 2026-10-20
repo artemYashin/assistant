@@ -271,7 +271,10 @@ test("chat fetches a mentioned ticket live and persists its UI card reference", 
     () => client as any,
     connectors as any,
   );
-  const result = await agent.chat("Покажи тикет 123456", context);
+  const warning = await agent.chat("Покажи тикет 123456", context);
+  assert.match(warning.body, /много токенов/);
+  assert.equal(fetched, 0);
+  const result = await agent.chat("Да, давай", context);
   assert.equal(fetched, 1);
   assert.deepEqual(result.cards, ["card-reference"]);
   assert.match(prompt, /Current Azure title/);
@@ -347,7 +350,7 @@ test("status tool requires current user instruction and deduplicates repeated wr
   await agent.chat("Да, делай", context);
   assert.equal(writes, 2);
   allow = false;
-  await agent.chat("Покажи тикет 123456. Статус RFT?", context);
+  await agent.chat("Какой статус тикета 123456? Статус RFT?", context);
   assert.equal(writes, 2);
 });
 
@@ -685,4 +688,139 @@ test("chat bulk status uses the connector batch, rejects unrequested IDs and ded
   );
   await agent.chat("Да, делай", context);
   assert.equal(writes, 1);
+});
+
+test("23 confirmed local tag edits use two model calls and trace child operations separately", async (t) => {
+  const store = fixture(t);
+  store.set("settings", { ...store.settings(), llmMaxToolCalls: 20 });
+  const ids = Array.from({ length: 23 }, (_, i) => i + 1);
+  for (const id of ids)
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(
+        store.source(),
+        id,
+        `Feature ${id}`,
+        "Active",
+        "",
+        "Bug",
+        "",
+        "",
+        "now",
+      );
+  store.say("user", "Добавь тег UI всем тикетам Feature", context);
+  store.say("assistant", "Нашёл 23 тикета. Выполнить эти изменения?", context);
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const call = async (name: string, args: any) => {
+      const permission = await config.hooks.onPreToolUse(
+        { toolName: name },
+        {},
+      );
+      assert.equal(permission.permissionDecision, "allow");
+      return config.tools
+        .find((tool: any) => tool.name === name)
+        .handler(args, {});
+    };
+    const list = await call("list_tickets", { ids });
+    assert.equal(list.tickets.length, 23);
+    const result = await call("batch_update_tickets", {
+      operations: ids.map((id) => ({
+        action: "metadata",
+        data: { id, tags: { mode: "add", values: ["UI"] } },
+      })),
+    });
+    assert.equal(result.succeeded, 23);
+    return { data: { content: "Готово" } };
+  });
+  await agent.chat("Да", context);
+  const report = new UsageLedger(store).chatTools(context);
+  assert.equal(report.requests[0].tool_calls, 2);
+  assert.equal(
+    report.requests[0].tools.filter((tool: any) => !tool.internal).length,
+    2,
+  );
+  assert.equal(
+    report.requests[0].tools.filter((tool: any) => tool.internal).length,
+    23,
+  );
+  assert.ok(
+    report.requests[0].tools.every((tool: any) => tool.status === "completed"),
+  );
+  assert.equal(
+    new UsageLedger(store).chatTools({ client: "other", project: "other" })
+      .requests.length,
+    0,
+  );
+});
+
+test("tool trace records failures without storing note or message bodies", (t) => {
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
+  const request = ledger.begin("model", context, "chat");
+  const trace = ledger.toolTrace(
+    request,
+    "update_local_ticket_metadata",
+    { id: 42, notes: { value: "private text" }, password: "secret" },
+    false,
+  );
+  ledger.finishToolTrace(trace, "error", {
+    success: false,
+    error: "Validation failed",
+    reference: "ref",
+  });
+  const result = ledger.chatTools(context).requests[0].tools[0];
+  assert.doesNotMatch(result.arguments, /private text|secret/);
+  assert.match(result.arguments, /42/);
+  assert.match(result.result, /Validation failed/);
+});
+
+test("list tool blocks unsolicited full content and permits explicit deep analysis without UI cards", async (t) => {
+  const store = fixture(t);
+  t.mock.method(console, "error", () => {});
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Title", "Active", "", "Bug", "", "", "now");
+  let reads = 0,
+    allowed = false;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const tool = config.tools.find(
+        (tool: any) => tool.name === "list_tickets",
+      );
+      const summary = await tool.handler({ ids: [42] }, {});
+      assert.equal(summary.tickets[0].content, undefined);
+      const full = await tool.handler({ ids: [42], detail: "full" }, {});
+      if (allowed) assert.match(full.tickets[0].content, /Description/);
+      else {
+        assert.equal(full.success, false);
+        assert.match(full.error, /явной просьбы/);
+      }
+      return { data: { content: "Ответ" } };
+    },
+    {
+      ticketDetails: async () => {
+        reads++;
+        return {
+          fields: { "System.Description": "Description" },
+          comments: [],
+        };
+      },
+    },
+  );
+  await agent.chat("Добавь выбранным тег UI", context);
+  assert.equal(reads, 0);
+  allowed = true;
+  const warning = await agent.chat(
+    "Проведи глубокий анализ выбранных тикетов",
+    context,
+  );
+  assert.match(warning.body, /много токенов/);
+  assert.equal(reads, 0);
+  const result = await agent.chat("Да", context);
+  assert.equal(reads, 1);
+  assert.deepEqual(result.cards, []);
+  allowed = false;
+  await agent.chat("Покажи список тикетов", context);
+  assert.equal(reads, 1, "consent must not carry into the next request");
 });

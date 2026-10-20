@@ -1,3 +1,4 @@
+import { ChatTools } from "./ChatTools.js";
 import { OrderedTicketCells, useTicketColumns } from "./TicketColumns.js";
 import { DevelopersPage } from "./DevelopersPage.js";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
@@ -2638,6 +2639,7 @@ function Assistant({
             {connected ? "GitHub Copilot" : "Ожидает подключения"}
           </small>
         </div>
+        <ChatTools context={context} />
         <button
           type="button"
           className="icon-button"
