@@ -1,3 +1,4 @@
+import { azureBrowseSchema } from "./azure-browser.js";
 import {
   ticketAnalysisAttachment,
   attachmentPreview,
@@ -249,8 +250,53 @@ export function createApp(
     if (previous.client)
       store.addContext({ client: previous.client, project: previous.project });
     if (context.client) store.addContext(context);
-    store.set("settings", { ...previous, ...context });
+    store.set("settings", { ...store.rawSettings(), ...context });
     res.json(context);
+  });
+  app.get("/api/context/azure", (req, res) => {
+    const context = contextSchema.strict().parse(req.query);
+    const resolved = store.settings(context);
+    const parent = store.settings({
+      client: context.project ? context.client : "",
+      project: "",
+    });
+    res.json({
+      azureProject: resolved.azureProject,
+      azureUrl: resolved.azureUrl,
+      inherit: !store.azureBinding(context),
+      parent: { azureUrl: parent.azureUrl, azureProject: parent.azureProject },
+    });
+  });
+  app.put("/api/context/azure", (req, res) => {
+    const input = contextSchema
+      .extend({
+        azureProject: text.default(""),
+        azureUrl: z.string().max(2000).default(""),
+        inherit: z.boolean().default(false),
+      })
+      .strict()
+      .parse(req.body);
+    if (!input.client) throw new AppError(400, "Выберите заказчика");
+    if (
+      !store
+        .contexts()
+        .some((c) => c.client === input.client && c.project === input.project)
+    )
+      throw new AppError(400, "Заказчик или проект не найден");
+    if (!input.inherit && !input.azureProject)
+      throw new AppError(400, "Укажите проект Azure DevOps");
+    const azureUrl = input.inherit
+      ? ""
+      : azureBase(input.azureUrl || store.settings(input).azureUrl);
+    store.set(
+      store.azureContextKey(input),
+      input.inherit ? null : { azureUrl, azureProject: input.azureProject },
+    );
+    store.audit(
+      "context.azure.updated",
+      `Azure: ${input.client} / ${input.project || "настройки заказчика"}`,
+    );
+    res.json({ ok: true });
   });
   app.get("/api/settings", (_req, res) =>
     res.json({
@@ -289,6 +335,10 @@ export function createApp(
       );
     store.set("settings", {
       ...settings,
+      azureUrl: old.client ? store.rawSettings().azureUrl : settings.azureUrl,
+      azureProject: old.client
+        ? store.rawSettings().azureProject
+        : settings.azureProject,
       client: old.client,
       project: old.project,
     });
@@ -794,28 +844,63 @@ export function createApp(
       saveTicketMetadata(store, id, input.source, input.context, input.patch),
     );
   });
-  app.get("/api/tickets", (_req, res) =>
-    res.json(
-      store.db
-        .prepare(
-          "SELECT t.*,l.developer_id,l.developer_name FROM tickets t LEFT JOIN ticket_local l ON t.source=l.source AND t.id=l.id WHERE t.source=? ORDER BY t.changed_at DESC",
-        )
-        .all(store.source())
-        .map((ticket: any) => {
-          const developers = localDevelopers.assigned(ticket.id, ticket.source);
-          return {
-            ...ticket,
-            added_at: store.ticketAddedAt(ticket.id, ticket.source),
-            ...ticketMetadata(store, ticket.id, ticket.source),
-            azureTags: store.azureTags(ticket.id, ticket.source),
-            developers,
-            developer_name: developers.length
-              ? developers.map((d) => d.name).join(", ")
-              : ticket.developer_name,
-          };
-        }),
-    ),
-  );
+  const localTickets = () =>
+    store.db
+      .prepare(
+        "SELECT t.*,l.developer_id,l.developer_name FROM tickets t LEFT JOIN ticket_local l ON t.source=l.source AND t.id=l.id WHERE t.source=? ORDER BY t.changed_at DESC",
+      )
+      .all(store.source())
+      .map((ticket: any) => {
+        const developers = localDevelopers.assigned(ticket.id, ticket.source);
+        return {
+          ...ticket,
+          added_at: store.ticketAddedAt(ticket.id, ticket.source),
+          ...ticketMetadata(store, ticket.id, ticket.source),
+          azureTags: store.azureTags(ticket.id, ticket.source),
+          developers,
+          developer_name: developers.length
+            ? developers.map((d) => d.name).join(", ")
+            : ticket.developer_name,
+        };
+      });
+  app.get("/api/tickets", (_req, res) => res.json(localTickets()));
+  app.post("/api/azure/tickets/search", async (req, res) => {
+    const input = azureBrowseSchema.parse(req.body);
+    const result = await connectors.browseAzureTickets(input, localTickets());
+    const local = new Map(localTickets().map((t: any) => [t.id, t]));
+    res.json({
+      ...result,
+      tickets: result.tickets.map((t: any) => ({
+        ...(local.get(t.id) || {}),
+        ...t,
+        imported: local.has(t.id),
+      })),
+    });
+  });
+  app.post("/api/azure/tickets/import", async (req, res) => {
+    const input = z
+      .object({
+        source: z.string().max(2200),
+        ids: z.array(z.number().int().positive()).min(1).max(50),
+      })
+      .strict()
+      .parse(req.body);
+    res.json(await connectors.importAzureSelection(input.ids, input.source));
+  });
+  app.get("/api/azure/tickets/catalog", async (_req, res) => {
+    const source = store.source();
+    const cached = store.get<{ name: string; states: string[] }[] | null>(
+      "azure.ticket-options:" + source,
+      null,
+    );
+    const types = cached || (await connectors.ticketOptions());
+    if (source !== store.source())
+      throw new AppError(409, "Подключение Azure изменилось");
+    res.json({
+      types: types.map((t) => t.name),
+      states: [...new Set(types.flatMap((t) => t.states))],
+    });
+  });
   app.put("/api/tickets/:id/assignee", async (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id);
     const { source, userId } = z

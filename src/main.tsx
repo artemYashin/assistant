@@ -1,5 +1,8 @@
+import { Cloud } from "lucide-react";
+import { useAzureTicketBrowser } from "./useAzureTicketBrowser.js";
+import { ImportAzureTickets } from "./ImportAzureTickets.js";
 import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
-import { TicketFilterPresets } from "./TicketFilterPresets.js";
+import { TicketFilterPanel } from "./TicketFilterPanel.js";
 import { useTicketFilters } from "./useTicketFilters.js";
 import { AzureAssignee } from "./AzureAssignee.js";
 import { MemoryBody } from "./MemoryBody.js";
@@ -427,16 +430,23 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     setMemoryProposals(mp);
   }
   useEffect(() => {
+    let live = true;
     api("/settings")
       .then((s) => {
+        if (!live) return;
         setSettings(s);
         if (!initialized.current) {
           setContext({ client: s.client, project: s.project });
           initialized.current = true;
         }
       })
-      .catch((e) => setError(e.message));
-  }, [refresh]);
+      .catch((e) => {
+        if (live) setError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [refresh, context.client, context.project]);
   useEffect(() => {
     let live = true;
     setMemories([]);
@@ -592,7 +602,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             Рабочее пространство <ChevronRight size={15} />
             <b>{heading}</b>
           </div>
-          <ContextPicker context={context} onChange={setContext} />
+          <ContextPicker
+            context={context}
+            onChange={setContext}
+            onSettingsChange={() => setRefresh((value) => value + 1)}
+          />
           <div className="topbar-actions">
             <TicketLookupDialog
               key={`${settings?.azureUrl}:${settings?.azureProject}`}
@@ -890,13 +904,26 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <Link
                   to="/tickets"
                   aria-current={
-                    new URLSearchParams(location.search).get("tab") !== "trash"
+                    !["trash", "azure"].includes(
+                      new URLSearchParams(location.search).get("tab") || "",
+                    )
                       ? "page"
                       : undefined
                   }
                 >
                   <Ticket size={16} />
                   Тикеты
+                </Link>
+                <Link
+                  to="/tickets?tab=azure"
+                  aria-current={
+                    new URLSearchParams(location.search).get("tab") === "azure"
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Cloud size={16} />
+                  Azure тикеты
                 </Link>
                 <Link
                   to="/tickets?tab=trash"
@@ -916,13 +943,22 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <TicketTrash
                   context={context}
                   settings={settings}
-                  key={`${settings?.azureUrl}|${settings?.azureProject}`}
+                  key={JSON.stringify([
+                    settings?.azureUrl,
+                    settings?.azureProject,
+                    context.client,
+                    context.project,
+                    location.search,
+                  ])}
                   onChange={() => setRefresh((n) => n + 1)}
                 />
               )}
             {page === "tickets" &&
               new URLSearchParams(location.search).get("tab") !== "trash" && (
                 <Tickets
+                  azureMode={
+                    new URLSearchParams(location.search).get("tab") === "azure"
+                  }
                   context={context}
                   settings={settings}
                   key={JSON.stringify([
@@ -1070,6 +1106,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             )}
             {page === "settings" && settings && (
               <Settings
+                key={JSON.stringify([
+                  context,
+                  settings.azureUrl,
+                  settings.azureProject,
+                ])}
                 settings={settings}
                 context={context}
                 run={run}
@@ -1124,13 +1165,54 @@ function PageHeading({
     </div>
   );
 }
-function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
-  const columns = useTicketColumns();
-  const filterOptions = useTicketFilterOptions(context, settings, tickets);
+function Tickets({
+  tickets: localTickets,
+  lastSync,
+  run: parentRun,
+  busy,
+  settings,
+  context,
+  azureMode = false,
+}: any) {
+  const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
+  const browser = useAzureTicketBrowser(azureMode, currentSource);
+  const run = async (...args: any[]) => {
+    await parentRun(...args);
+    if (azureMode) browser.refresh();
+  };
+  const tickets = azureMode
+    ? browser.rows.map((t: any) => {
+        const local = localTickets.find(
+          (item: any) => item.source === t.source && item.id === t.id,
+        );
+        return local
+          ? {
+              ...t,
+              ...local,
+              title: t.title,
+              state: t.state,
+              type: t.type,
+              assigned: t.assigned,
+              azureTags: t.azureTags,
+              imported: true,
+            }
+          : { ...t, imported: false };
+      })
+    : localTickets;
+  const filterTickets = azureMode ? [...localTickets, ...tickets] : tickets;
+  const columns = useTicketColumns(false, azureMode ? "azure" : "active");
+  const localFilterOptions = useTicketFilterOptions(
+    context,
+    settings,
+    localTickets,
+  );
+  const filterOptions = azureMode
+    ? { ...localFilterOptions, ...browser.catalog }
+    : localFilterOptions;
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
-  const rawTarget = params.get("id");
+  const rawTarget = azureMode ? null : params.get("id");
   const targetId =
     rawTarget &&
     /^[1-9][0-9]*$/.test(rawTarget) &&
@@ -1138,12 +1220,12 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
       ? Number(rawTarget)
       : null;
   const targetSource = params.get("source");
-  const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
+
   const sourceMismatch =
     !!targetSource && !!settings && targetSource !== currentSource;
   const [id, setId] = useState(targetId ? String(targetId) : "");
   const filterStorageKey =
-    "orbit.ticket-filters.active:" +
+    `orbit.ticket-filters.${azureMode ? "azure" : "active"}:` +
     JSON.stringify([currentSource, context.client, context.project]);
   const {
     filters,
@@ -1174,17 +1256,18 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
     setFilter("assigneeFilter", value);
   const setLocalFilter = (value: string[]) => setFilter("localFilter", value);
   const values = (key: string) =>
-    [...new Set<string>(tickets.map((t: any) => t[key] || ""))].sort((a, b) =>
-      a.localeCompare(b, "ru"),
+    [...new Set<string>(filterTickets.map((t: any) => t[key] || ""))].sort(
+      (a, b) => a.localeCompare(b, "ru"),
     );
   const localDevelopers = [
     ...new Map<string, string>(
-      tickets.flatMap((t: any) =>
+      filterTickets.flatMap((t: any) =>
         (t.developers || []).map((d: any) => [d.id, d.name]),
       ),
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], "ru"));
   const filteredTickets = tickets.filter((t: any) => {
+    if (azureMode) return true;
     if (rawTarget) return !sourceMismatch && t.id === targetId;
     const matchesQuery = [
       "id",
@@ -1270,11 +1353,17 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
   );
   return (
     <>
-      <PageHeading
-        title="Ваши тикеты"
-        subtitle="Актуальный статус из Azure DevOps. Данные обновляются в фоне."
-      />
-      <LastSync at={lastSync} />
+      <div className="ticket-page-intro">
+        <PageHeading
+          title={azureMode ? "Azure тикеты" : "Ваши тикеты"}
+          subtitle={
+            azureMode
+              ? `${settings?.azureProject || "Проект не настроен"} · поиск по кнопке или Enter, по 50 задач на страницу.`
+              : "Актуальный статус из Azure DevOps. Данные обновляются в фоне."
+          }
+        />
+        {!azureMode && <LastSync at={lastSync} />}
+      </div>
       {rawTarget && (
         <div className="ticket-target-notice" role="status">
           <p>
@@ -1288,73 +1377,95 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
         </div>
       )}
       <div className="ticket-management-toolbar">
-        <div className="ticket-search-block">
+        <form
+          className="ticket-search-block"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (azureMode) void browser.search(filters);
+          }}
+        >
           <label className="search">
             <Search size={17} />
             <input
               aria-label="Поиск тикетов"
-              placeholder="Номер, название, исполнитель…"
+              maxLength={azureMode ? 200 : undefined}
+              placeholder={
+                azureMode
+                  ? "Номер, название или Azure тег…"
+                  : "Номер, название, исполнитель…"
+              }
               disabled={!!rawTarget}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
-        </div>
-        <div className="ticket-add-block">
-          <form
-            className="ticket-add-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              run(
-                "track",
-                () => api("/tickets", "POST", { id: Number(id) }),
-                "Тикет добавлен",
-              );
-            }}
-          >
-            <input
-              aria-label="Номер тикета для добавления"
-              type="number"
-              min="1"
-              required
-              placeholder="Номер тикета"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-            />
-            <button className="primary" disabled={!!busy || sourceMismatch}>
-              <Plus size={16} />
-              Добавить по номеру
+          {azureMode && (
+            <button
+              type="submit"
+              className="primary"
+              disabled={browser.loading}
+            >
+              <Search size={16} />
+              {browser.loading ? "Поиск…" : "Найти"}
             </button>
-          </form>
-          <button
-            type="button"
-            className="secondary"
-            disabled={!!busy}
-            onClick={() =>
-              run(
-                "import",
-                () => api("/tickets/import", "POST", {}),
-                "Ваши тикеты импортированы",
-              )
-            }
-          >
-            <RefreshCw size={15} />
-            Импортировать мои
-          </button>
-        </div>
+          )}
+        </form>
+        {!azureMode && (
+          <div className="ticket-add-block">
+            <form
+              className="ticket-add-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                run(
+                  "track",
+                  () => api("/tickets", "POST", { id: Number(id) }),
+                  "Тикет добавлен",
+                );
+              }}
+            >
+              <input
+                aria-label="Номер тикета для добавления"
+                type="number"
+                min="1"
+                required
+                placeholder="Номер тикета"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+              />
+              <button className="primary" disabled={!!busy || sourceMismatch}>
+                <Plus size={16} />
+                Добавить по номеру
+              </button>
+            </form>
+            <button
+              type="button"
+              className="secondary"
+              disabled={!!busy}
+              onClick={() =>
+                run(
+                  "import",
+                  () => api("/tickets/import", "POST", {}),
+                  "Ваши тикеты импортированы",
+                )
+              }
+            >
+              <RefreshCw size={15} />
+              Импортировать мои
+            </button>
+          </div>
+        )}
       </div>
-      <section className="ticket-filter-panel" aria-label="Фильтры тикетов">
+      <TicketFilterPanel
+        storageKey={filterStorageKey}
+        filters={filters}
+        onApply={applyFilters}
+        disabled={!!rawTarget}
+      >
         {filterOptions.error && (
           <p className="error" role="alert">
             Не удалось загрузить справочник фильтров: {filterOptions.error}
           </p>
         )}
-        <TicketFilterPresets
-          storageKey={filterStorageKey + ".presets"}
-          filters={filters}
-          onApply={applyFilters}
-          disabled={!!rawTarget}
-        />
         <div className="ticket-filters">
           <button
             className="secondary ticket-filter-reset"
@@ -1403,13 +1514,18 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
             disabled={!!rawTarget}
             options={[
               { value: "", label: "Без тегов" },
-              ...[...new Set<string>(tickets.flatMap((t: any) => t.tags || []))]
+              ...[
+                ...new Set<string>(
+                  filterTickets.flatMap((t: any) => t.tags || []),
+                ),
+              ]
                 .sort()
                 .map((v) => ({ value: v, label: v })),
             ]}
           />
           <MultiSelect
             label="Azure теги"
+            allowCustom={azureMode}
             placeholder="Все Azure теги"
             value={azureTagFilter}
             onChange={setAzureTagFilter}
@@ -1418,7 +1534,7 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
               { value: "", label: "Без Azure тегов" },
               ...[
                 ...new Set<string>(
-                  tickets.flatMap((t: any) => t.azureTags || []),
+                  filterTickets.flatMap((t: any) => t.azureTags || []),
                 ),
               ]
                 .sort()
@@ -1469,12 +1585,24 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
             ]}
           />
         </div>
-      </section>
+      </TicketFilterPanel>
       <div className="ticket-export-bar ticket-actions-panel">
         <div className="ticket-display-summary">
           {columns.control}
+          {azureMode && (
+            <ImportAzureTickets
+              tickets={selection.selected}
+              source={currentSource}
+              onImported={() => {
+                selection.clear();
+                void run("refresh-azure-import", async () => {});
+              }}
+            />
+          )}
           <p className="muted" role="status">
-            Показано {sorted.length} из {tickets.length}
+            {azureMode
+              ? `На странице: ${sorted.length}`
+              : `Показано ${sorted.length} из ${tickets.length}`}
           </p>
         </div>
         <div className="ticket-bulk-actions">
@@ -1488,19 +1616,58 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
               Снять выбор
             </button>
           )}
-          <BulkTicketStatus
-            tickets={selection.selected}
-            onChange={() => run("refresh-bulk-state", async () => {})}
-          />
+          {!azureMode && (
+            <BulkTicketStatus
+              tickets={selection.selected}
+              onChange={() => run("refresh-bulk-state", async () => {})}
+            />
+          )}
           <ExportTickets
             tickets={selection.selected.length ? selection.selected : sorted}
           />
         </div>
       </div>
-      <p className="muted">
-        Удаление и локальное поручение не изменяют Azure. Удалённый тикет можно
-        вернуть кнопкой «Добавить по номеру».
-      </p>
+      {azureMode && (
+        <>
+          {browser.error && (
+            <p className="error" role="alert">
+              {browser.error}
+            </p>
+          )}
+          {browser.pending(filters) && (
+            <p className="muted">
+              Условия изменены. Нажмите «Найти», чтобы применить их.
+            </p>
+          )}
+          <div className="azure-ticket-pagination">
+            <button
+              type="button"
+              className="secondary"
+              disabled={browser.loading || browser.page === 1}
+              onClick={browser.previous}
+            >
+              Назад
+            </button>
+            <span>
+              Страница {browser.page} · сортировка и экспорт текущей страницы
+            </span>
+            <button
+              type="button"
+              className="secondary"
+              disabled={browser.loading || !browser.hasNext}
+              onClick={browser.next}
+            >
+              Далее
+            </button>
+          </div>
+        </>
+      )}
+      {!azureMode && (
+        <p className="muted">
+          Удаление и локальное поручение не изменяют Azure. Удалённый тикет
+          можно вернуть кнопкой «Добавить по номеру».
+        </p>
+      )}
       {sorted.length ? (
         <div className="panel ticket-table-fit ticket-active-table">
           <table>
@@ -1555,24 +1722,30 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
                 <TicketTableRow
                   key={`${t.source}:${t.id}`}
                   id={t.id}
+                  unavailable={azureMode && !t.imported}
                   columns={columns.count}
                   columnOrder={columns.order}
                   hideActions={columns.hidden("actions")}
                   actions={
-                    <TicketMetadata
-                      ticket={t}
-                      context={context}
-                      field="notes"
-                      onChange={() => run("refresh-notes", async () => {})}
-                    />
+                    !(azureMode && !t.imported) && (
+                      <TicketMetadata
+                        ticket={t}
+                        context={context}
+                        field="notes"
+                        onChange={() => run("refresh-notes", async () => {})}
+                      />
+                    )
                   }
                   highlighted={targetId === t.id && !sourceMismatch}
-                  onRemove={() =>
-                    run(
-                      "remove",
-                      () => api(`/tickets/${t.id}`, "DELETE"),
-                      "Тикет перемещён в корзину на 30 дней",
-                    )
+                  onRemove={
+                    azureMode && !t.imported
+                      ? undefined
+                      : () =>
+                          run(
+                            "remove",
+                            () => api(`/tickets/${t.id}`, "DELETE"),
+                            "Тикет перемещён в корзину на 30 дней",
+                          )
                   }
                 >
                   <td className="ticket-selection-column">
@@ -1608,24 +1781,35 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
                     </b>
                   </td>
                   <td data-column="state" hidden={columns.hidden("state")}>
-                    <TicketStatus
-                      id={t.id}
-                      source={t.source}
-                      state={t.state}
-                      colors={settings?.statusColors}
-                      onChange={() => run("refresh-state", async () => {})}
-                    />
+                    {azureMode && !t.imported ? (
+                      <StatusBadge
+                        state={t.state}
+                        colors={settings?.statusColors}
+                      />
+                    ) : (
+                      <TicketStatus
+                        id={t.id}
+                        source={t.source}
+                        state={t.state}
+                        colors={settings?.statusColors}
+                        onChange={() => run("refresh-state", async () => {})}
+                      />
+                    )}
                   </td>
                   <td
                     data-column="priority"
                     hidden={columns.hidden("priority")}
                   >
-                    <TicketMetadata
-                      ticket={t}
-                      context={context}
-                      field="priority"
-                      onChange={() => run("refresh-priority", async () => {})}
-                    />
+                    {azureMode && !t.imported ? (
+                      "N/A"
+                    ) : (
+                      <TicketMetadata
+                        ticket={t}
+                        context={context}
+                        field="priority"
+                        onChange={() => run("refresh-priority", async () => {})}
+                      />
+                    )}
                   </td>
                   <td
                     data-column="azureTags"
@@ -1645,24 +1829,39 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
                     </span>
                   </td>
                   <td data-column="tags" hidden={columns.hidden("tags")}>
-                    <TicketMetadata
-                      ticket={t}
-                      context={context}
-                      field="tags"
-                      onChange={() => run("refresh-tags", async () => {})}
-                    />
+                    {azureMode && !t.imported ? (
+                      "N/A"
+                    ) : (
+                      <TicketMetadata
+                        ticket={t}
+                        context={context}
+                        field="tags"
+                        onChange={() => run("refresh-tags", async () => {})}
+                      />
+                    )}
                   </td>
                   <td
                     data-column="assigned"
                     hidden={columns.hidden("assigned")}
                   >
-                    <AzureAssignee ticket={t} />
+                    {azureMode && !t.imported ? (
+                      <LocalAssigneeNames
+                        names={t.assigned ? [t.assigned] : []}
+                        emptyLabel="Не назначен"
+                      />
+                    ) : (
+                      <AzureAssignee ticket={t} />
+                    )}
                   </td>
                   <td
                     data-column="developer_name"
                     hidden={columns.hidden("developer_name")}
                   >
-                    <LocalDeveloper ticket={t} context={context} />
+                    {azureMode && !t.imported ? (
+                      "N/A"
+                    ) : (
+                      <LocalDeveloper ticket={t} context={context} />
+                    )}
                   </td>
                   <td
                     data-column="added_at"
@@ -1674,7 +1873,9 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
                         : "Дата первого добавления ранее не сохранялась"
                     }
                   >
-                    {t.added_at ? (
+                    {azureMode && !t.imported ? (
+                      "N/A"
+                    ) : t.added_at ? (
                       <time dateTime={t.added_at}>{date(t.added_at)}</time>
                     ) : (
                       "—"
@@ -1685,7 +1886,7 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
                     className="muted"
                     hidden={columns.hidden("synced_at")}
                   >
-                    {date(t.synced_at)}
+                    {azureMode && !t.imported ? "N/A" : date(t.synced_at)}
                   </td>
                 </TicketTableRow>
               ))}
@@ -1695,11 +1896,23 @@ function Tickets({ tickets, lastSync, run, busy, settings, context }: any) {
       ) : (
         <Empty
           icon={Ticket}
-          title={tickets.length ? "Ничего не найдено" : "Трекер пока пуст"}
+          title={
+            azureMode
+              ? browser.loading
+                ? "Поиск в Azure…"
+                : browser.searched
+                  ? "Ничего не найдено"
+                  : "Найдите тикеты в Azure"
+              : tickets.length
+                ? "Ничего не найдено"
+                : "Трекер пока пуст"
+          }
           description={
-            tickets.length
-              ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить»."
-              : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
+            azureMode
+              ? "Задайте условия и нажмите «Найти» или Enter. Без условий будут показаны все задачи проекта, по 50 на страницу."
+              : tickets.length
+                ? "Измените фильтры или поисковый запрос, либо нажмите «Сбросить»."
+                : "Добавьте тикет по номеру, импортируйте назначенные вам задачи или выберите упоминание во Входящих."
           }
         />
       )}
@@ -2258,7 +2471,8 @@ function Settings({ settings, context, run, busy }: any) {
           >
             <input
               type="url"
-              value={form.azureUrl}
+              value={context.client ? settings.azureUrl : form.azureUrl}
+              disabled={!!context.client}
               onChange={(e) => set("azureUrl", e.target.value)}
               placeholder="https://devops.company.com/DefaultCollection"
             />
@@ -2266,10 +2480,13 @@ function Settings({ settings, context, run, busy }: any) {
           <div className="form-grid">
             <Field
               label="Название проекта в Azure DevOps"
-              hint="Именно Project, содержащий Boards и Repos, а не название Git-репозитория. В одном проекте может быть несколько репозиториев."
+              hint="Для выбранного проекта задаётся в меню «Заказчики и проекты» → «Проекты»."
             >
               <input
-                value={form.azureProject}
+                value={
+                  context.client ? settings.azureProject : form.azureProject
+                }
+                disabled={!!context.client}
                 onChange={(e) => set("azureProject", e.target.value)}
                 placeholder="Точное имя проекта"
               />

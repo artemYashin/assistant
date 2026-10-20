@@ -1,5 +1,6 @@
 export type CsvTicket = {
   id: number;
+  imported?: boolean;
   title?: string;
   type?: string;
   state?: string;
@@ -47,14 +48,15 @@ export const exportColumns = [
     header: "Local Priority",
     label: "Локальный приоритет",
     width: 23,
-    value: (t: CsvTicket) => t.priority ?? 1,
+    value: (t: CsvTicket) => (t.imported === false ? "N/A" : (t.priority ?? 1)),
   },
   {
     key: "tags",
     header: "Tags",
     label: "Теги",
     width: 36,
-    value: (t: CsvTicket) => (t.tags || []).join("; "),
+    value: (t: CsvTicket) =>
+      t.imported === false ? "N/A" : (t.tags || []).join("; "),
   },
   {
     key: "azureTags",
@@ -69,7 +71,9 @@ export const exportColumns = [
     label: "Локальное поручение",
     width: 36,
     value: (t: CsvTicket) =>
-      t.developers?.map((d) => d.name).join("; ") || t.developer_name || "",
+      t.imported === false
+        ? "N/A"
+        : t.developers?.map((d) => d.name).join("; ") || t.developer_name || "",
   },
   {
     key: "assigned",
@@ -83,14 +87,14 @@ export const exportColumns = [
     header: "Local Notes",
     label: "Локальные заметки",
     width: 60,
-    value: (t: CsvTicket) => t.notes || "",
+    value: (t: CsvTicket) => (t.imported === false ? "N/A" : t.notes || ""),
   },
   {
     key: "added_at",
     header: "Added to System (UTC)",
     label: "Добавлено в систему",
     width: 28,
-    value: (t: CsvTicket) => t.added_at || "",
+    value: (t: CsvTicket) => (t.imported === false ? "N/A" : t.added_at || ""),
   },
   {
     key: "url",

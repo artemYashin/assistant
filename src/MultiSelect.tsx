@@ -11,6 +11,7 @@ export function MultiSelect({
   onChange,
   disabled = false,
   searchOptions,
+  allowCustom = false,
 }: {
   label: string;
   placeholder: string;
@@ -19,6 +20,7 @@ export function MultiSelect({
   onChange: (value: string[]) => void;
   disabled?: boolean;
   searchOptions?: (query: string) => Promise<SearchResult>;
+  allowCustom?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -69,7 +71,14 @@ export function MultiSelect({
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
-  const localVisible = options.filter((o) =>
+  const localVisible = [
+    ...options,
+    ...(allowCustom
+      ? value
+          .filter((v) => !options.some((o) => o.value === v))
+          .map((v) => ({ value: v, label: v, group: undefined }))
+      : []),
+  ].filter((o) =>
     `${o.label} ${o.group || ""}`
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase()),
@@ -145,6 +154,21 @@ export function MultiSelect({
             />
           </div>
           <div className="multi-select-options">
+            {allowCustom &&
+              query.trim() &&
+              !options.some((o) => o.value === query.trim()) &&
+              !value.includes(query.trim()) && (
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => {
+                    onChange([...value, query.trim()]);
+                    setQuery("");
+                  }}
+                >
+                  Добавить фильтр «{query.trim()}»
+                </button>
+              )}
             {visible.map((option, index) => (
               <div key={option.value}>
                 {option.group && option.group !== visible[index - 1]?.group && (

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bookmark, GripVertical, Save, X } from "lucide-react";
+import { GripVertical, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
 function sameFilters(left: Filters, right: Filters) {
@@ -19,11 +19,13 @@ export function TicketFilterPresets({
   filters,
   onApply,
   disabled,
+  compact = false,
 }: {
   storageKey: string;
   filters: Filters;
   onApply: (filters: Filters) => void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   const [presets, setPresets] = useState<Preset[]>(() => {
     try {
@@ -119,54 +121,58 @@ export function TicketFilterPresets({
   }
   return (
     <div className="ticket-filter-presets">
-      <div className="ticket-preset-heading">
-        <strong>
-          <Bookmark size={15} /> Наборы фильтров
-        </strong>
-        <form
-          className="ticket-preset-save"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const title = name.trim();
-            if (!title || disabled) return;
-            const existing = presets.find(
-              (p) => p.name.toLocaleLowerCase() === title.toLocaleLowerCase(),
-            );
-            const next = {
-              id: existing?.id || crypto.randomUUID(),
-              name: title,
-              filters: parseTicketFilters(filters),
-            };
-            setError("");
-            if (existing) {
-              setConfirmation({
-                kind: "overwrite",
-                preset: existing,
-                replacement: next,
-              });
-              return;
-            }
-            if (save([...presets, next])) select(next);
-          }}
-        >
-          <input
-            aria-label="Название набора фильтров"
-            placeholder="Название набора"
-            maxLength={80}
-            value={name}
-            disabled={disabled}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <button
-            type="submit"
-            className="secondary"
-            disabled={disabled || !name.trim()}
-            title="Сохранить текущие фильтры, поиск и сортировку"
+      {!compact && (
+        <div className="ticket-preset-heading">
+          <form
+            className="ticket-preset-save"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const title = name.trim();
+              if (!title || disabled) return;
+              const existing = presets.find(
+                (p) => p.name.toLocaleLowerCase() === title.toLocaleLowerCase(),
+              );
+              const next = {
+                id: existing?.id || crypto.randomUUID(),
+                name: title,
+                filters: parseTicketFilters(filters),
+              };
+              setError("");
+              if (existing) {
+                setConfirmation({
+                  kind: "overwrite",
+                  preset: existing,
+                  replacement: next,
+                });
+                return;
+              }
+              if (save([...presets, next])) select(next);
+            }}
           >
-            <Save size={15} /> Сохранить набор
-          </button>
-        </form>
-      </div>
+            <input
+              aria-label="Название набора фильтров"
+              placeholder="Название набора"
+              maxLength={80}
+              value={name}
+              disabled={disabled}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <button
+              type="submit"
+              className="secondary"
+              disabled={disabled || !name.trim()}
+              title="Сохранить текущие фильтры, поиск и сортировку"
+            >
+              <Save size={15} /> Сохранить набор
+            </button>
+          </form>
+        </div>
+      )}
+      {compact && !presets.length && (
+        <p className="muted">
+          Наборов пока нет. Разверните блок, чтобы сохранить первый.
+        </p>
+      )}
       {presets.length > 0 && (
         <div className="ticket-preset-list">
           {presets.map((preset) => {
@@ -207,28 +213,30 @@ export function TicketFilterPresets({
                   finishDrag();
                 }}
               >
-                <button
-                  type="button"
-                  className="ticket-preset-drag"
-                  draggable={presets.length > 1}
-                  disabled={presets.length < 2}
-                  title="Перетащить набор"
-                  aria-label={`Изменить порядок набора ${preset.name}`}
-                  onDragStart={(event) => {
-                    dragged.current = preset.id;
-                    setDragging(preset.id);
-                    event.dataTransfer.effectAllowed = "move";
-                    event.dataTransfer.setData("text/plain", preset.id);
-                    event.dataTransfer.setDragImage(
-                      event.currentTarget.parentElement!,
-                      12,
-                      12,
-                    );
-                  }}
-                  onDragEnd={finishDrag}
-                >
-                  <GripVertical size={14} aria-hidden="true" />
-                </button>
+                {!compact && (
+                  <button
+                    type="button"
+                    className="ticket-preset-drag"
+                    draggable={presets.length > 1}
+                    disabled={presets.length < 2}
+                    title="Перетащить набор"
+                    aria-label={`Изменить порядок набора ${preset.name}`}
+                    onDragStart={(event) => {
+                      dragged.current = preset.id;
+                      setDragging(preset.id);
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", preset.id);
+                      event.dataTransfer.setDragImage(
+                        event.currentTarget.parentElement!,
+                        12,
+                        12,
+                      );
+                    }}
+                    onDragEnd={finishDrag}
+                  >
+                    <GripVertical size={14} aria-hidden="true" />
+                  </button>
+                )}
                 <button
                   type="button"
                   className="ticket-preset-apply"
@@ -242,19 +250,21 @@ export function TicketFilterPresets({
                 >
                   {preset.name}
                 </button>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Удалить набор ${preset.name}`}
-                  title="Удалить сохранённый набор"
-                  aria-haspopup="dialog"
-                  onClick={() => {
-                    setError("");
-                    setConfirmation({ kind: "delete", preset });
-                  }}
-                >
-                  <X size={13} />
-                </button>
+                {!compact && (
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={`Удалить набор ${preset.name}`}
+                    title="Удалить сохранённый набор"
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setError("");
+                      setConfirmation({ kind: "delete", preset });
+                    }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
             );
           })}

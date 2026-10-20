@@ -328,7 +328,7 @@ test("PR project comes from shared settings and old connection cannot keep using
         mode: "all",
         enabled: true,
       }),
-    /общих настройках/,
+    /Заказчики и проекты/,
   );
 });
 

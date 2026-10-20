@@ -750,6 +750,7 @@ function TicketCommentForm({ reference }: { reference: string }) {
 }
 
 export function TicketTableRow({
+  unavailable = false,
   id,
   children,
   onRemove,
@@ -759,6 +760,7 @@ export function TicketTableRow({
   hideActions = false,
   columnOrder = [],
 }: {
+  unavailable?: boolean;
   actions?: ReactNode;
   columns?: number;
   hideActions?: boolean;
@@ -769,6 +771,9 @@ export function TicketTableRow({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(highlighted);
+  useEffect(() => {
+    if (unavailable) setOpen(false);
+  }, [unavailable]);
   const rowRef = useRef<HTMLTableRowElement>(null);
   useEffect(() => {
     if (!highlighted) return;
@@ -784,7 +789,7 @@ export function TicketTableRow({
   const [attempt, setAttempt] = useState(0);
   const panelId = useId();
   useEffect(() => {
-    if (!open) return;
+    if (!open || unavailable) return;
     let active = true;
     setReference("");
     setError("");
@@ -798,17 +803,18 @@ export function TicketTableRow({
     return () => {
       active = false;
     };
-  }, [open, id, attempt]);
+  }, [open, id, attempt, unavailable]);
   return (
     <>
       <tr
         ref={rowRef}
         id={`ticket-${id}`}
-        tabIndex={0}
+        tabIndex={unavailable ? undefined : 0}
         aria-expanded={open}
         aria-controls={panelId}
-        className={`ticket-clickable-row${highlighted ? " ticket-row-highlighted" : ""}`}
+        className={`${unavailable ? "ticket-azure-unimported" : "ticket-clickable-row"}${highlighted ? " ticket-row-highlighted" : ""}`}
         onClick={(event) => {
+          if (unavailable) return;
           const target = event.target;
           if (
             !(target instanceof Element) ||
@@ -821,6 +827,7 @@ export function TicketTableRow({
           setOpen((value) => !value);
         }}
         onKeyDown={(event) => {
+          if (unavailable) return;
           if (event.target !== event.currentTarget) return;
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
@@ -836,10 +843,17 @@ export function TicketTableRow({
               <button
                 type="button"
                 className="secondary"
+                disabled={unavailable}
                 aria-expanded={open}
                 aria-controls={panelId}
                 aria-label={`${open ? "Скрыть" : "Посмотреть"} тикет #${id}`}
-                title={open ? "Скрыть тикет" : "Посмотреть тикет"}
+                title={
+                  unavailable
+                    ? "Сначала импортируйте тикет"
+                    : open
+                      ? "Скрыть тикет"
+                      : "Посмотреть тикет"
+                }
                 onClick={() => setOpen(!open)}
               >
                 {open ? <EyeOff size={17} /> : <Eye size={17} />}

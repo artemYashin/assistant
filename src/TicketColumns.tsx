@@ -13,7 +13,7 @@ export const ticketColumns = [
   ["synced_at", "Синхронизация"],
   ["actions", "Просмотр и действия"],
 ] as const;
-export function useTicketColumns(trash = false) {
+export function useTicketColumns(trash = false, namespace = "active") {
   const options: readonly (readonly [string, string])[] = trash
     ? [
         ...ticketColumns.filter(
@@ -24,7 +24,7 @@ export function useTicketColumns(trash = false) {
         ["actions", "Просмотр и действия"],
       ]
     : ticketColumns;
-  const storageKey = `orbit.ticket-columns.${trash ? "trash" : "active"}`;
+  const storageKey = `orbit.ticket-columns.${trash ? "trash" : namespace}`;
   const [order, setOrder] = useState<string[]>(() => {
     const defaults = options.map(([key]) => key);
     try {

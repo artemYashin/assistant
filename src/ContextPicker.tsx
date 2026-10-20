@@ -1,9 +1,11 @@
+import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
 import { PrioritySettings } from "./TicketMetadata.js";
 import { DeveloperDirectory } from "./DeveloperDirectory.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   Users,
   FolderPlus,
+  Flag,
   GitBranch,
   Plus,
   X,
@@ -18,13 +20,16 @@ type Context = { client: string; project: string };
 export function ContextPicker({
   context,
   onChange,
+  onSettingsChange,
 }: {
   context: Context;
   onChange: (c: Context) => void;
+  onSettingsChange: () => void;
 }) {
   const [section, setSection] = useState<
-    "browse" | "create" | "repository" | "developers" | "priorities"
+    "browse" | "repository" | "developers" | "priorities"
   >("browse");
+  const [creating, setCreating] = useState(false);
   const [createKind, setCreateKind] = useState<"client" | "project">("client");
   const [items, setItems] = useState<Context[]>([]),
     [open, setOpen] = useState(false),
@@ -83,6 +88,7 @@ export function ContextPicker({
       setProject("");
       setOwner(next.client);
       await choose(next);
+      setCreating(false);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -195,18 +201,7 @@ export function ContextPicker({
                 onClick={() => setSection("browse")}
               >
                 <Users size={16} />
-                Обзор
-              </button>
-              <button
-                type="button"
-                aria-pressed={section === "create"}
-                onClick={() => {
-                  setSection("create");
-                  setOwner(context.client);
-                }}
-              >
-                <FolderPlus size={16} />
-                Добавить
+                Проекты
               </button>
               <button
                 type="button"
@@ -229,6 +224,7 @@ export function ContextPicker({
                 aria-pressed={section === "priorities"}
                 onClick={() => setSection("priorities")}
               >
+                <Flag size={16} />
                 Приоритеты
               </button>
             </div>
@@ -262,7 +258,8 @@ export function ContextPicker({
                       className="secondary"
                       onClick={() => {
                         setCreateKind("client");
-                        setSection("create");
+                        setSection("browse");
+                        setCreating(true);
                       }}
                     >
                       <Plus size={16} />
@@ -319,7 +316,8 @@ export function ContextPicker({
                             onClick={() => {
                               setOwner(c);
                               setCreateKind("project");
-                              setSection("create");
+                              setSection("browse");
+                              setCreating(true);
                             }}
                           >
                             <Plus size={14} />
@@ -332,88 +330,109 @@ export function ContextPicker({
                 )}
               </div>
             )}
-            {section === "create" && (
+            {section === "browse" && (
               <div className="context-manager-section">
-                <div className="context-create-kind">
-                  <button
-                    type="button"
-                    aria-pressed={createKind === "client"}
-                    onClick={() => setCreateKind("client")}
-                  >
-                    Новый заказчик
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={createKind === "project"}
-                    onClick={() => setCreateKind("project")}
-                  >
-                    Новый проект
-                  </button>
-                </div>
-                <p className="muted">
-                  После создания контекст будет выбран и сохранён автоматически.
-                </p>
-                {createKind === "client" ? (
-                  <form
-                    className="context-create-form"
-                    onSubmit={(e) =>
-                      void add(e, { client: name.trim(), project: "" })
-                    }
-                  >
-                    <label>
-                      Название заказчика
-                      <input
-                        disabled={busy}
-                        maxLength={200}
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Например, Acme"
-                        required
-                      />
-                    </label>
-                    <button className="primary" disabled={busy || !name.trim()}>
-                      Добавить и выбрать
-                    </button>
-                  </form>
-                ) : (
-                  <form
-                    className="context-create-form"
-                    onSubmit={(e) =>
-                      void add(e, { client: owner, project: project.trim() })
-                    }
-                  >
-                    <SingleSelect
-                      label="Заказчик проекта"
-                      disabled={busy}
-                      value={owner}
-                      onChange={setOwner}
-                      options={[
-                        { value: "", label: "Выберите заказчика" },
-                        ...clients.map((c) => ({ value: c, label: c })),
-                      ]}
-                    />
-                    {!clients.length && (
-                      <p className="muted">Сначала добавьте заказчика.</p>
-                    )}
-                    <label>
-                      Название проекта
-                      <input
-                        disabled={busy}
-                        maxLength={200}
-                        value={project}
-                        onChange={(e) => setProject(e.target.value)}
-                        placeholder="Например, Портал"
-                        required
-                      />
-                    </label>
-                    <button
-                      className="primary"
-                      disabled={busy || !owner || !project.trim()}
-                    >
-                      Добавить и выбрать
-                    </button>
-                  </form>
+                {context.client && (
+                  <ProjectAzureSettings
+                    key={JSON.stringify(context)}
+                    context={context}
+                    onSaved={onSettingsChange}
+                  />
                 )}
+                <details
+                  className="context-create-panel"
+                  open={creating}
+                  onToggle={(event) => setCreating(event.currentTarget.open)}
+                >
+                  <summary>
+                    <FolderPlus size={16} />
+                    Добавить заказчика или проект
+                  </summary>
+                  <div className="context-create-kind">
+                    <button
+                      type="button"
+                      aria-pressed={createKind === "client"}
+                      onClick={() => setCreateKind("client")}
+                    >
+                      Новый заказчик
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={createKind === "project"}
+                      onClick={() => setCreateKind("project")}
+                    >
+                      Новый проект
+                    </button>
+                  </div>
+                  <p className="muted">
+                    После создания контекст будет выбран и сохранён
+                    автоматически.
+                  </p>
+                  {createKind === "client" ? (
+                    <form
+                      className="context-create-form"
+                      onSubmit={(e) =>
+                        void add(e, { client: name.trim(), project: "" })
+                      }
+                    >
+                      <label>
+                        Название заказчика
+                        <input
+                          disabled={busy}
+                          maxLength={200}
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Например, Acme"
+                          required
+                        />
+                      </label>
+                      <button
+                        className="primary"
+                        disabled={busy || !name.trim()}
+                      >
+                        Добавить и выбрать
+                      </button>
+                    </form>
+                  ) : (
+                    <form
+                      className="context-create-form"
+                      onSubmit={(e) =>
+                        void add(e, { client: owner, project: project.trim() })
+                      }
+                    >
+                      <SingleSelect
+                        label="Заказчик проекта"
+                        disabled={busy}
+                        value={owner}
+                        onChange={setOwner}
+                        options={[
+                          { value: "", label: "Выберите заказчика" },
+                          ...clients.map((c) => ({ value: c, label: c })),
+                        ]}
+                      />
+                      {!clients.length && (
+                        <p className="muted">Сначала добавьте заказчика.</p>
+                      )}
+                      <label>
+                        Название проекта
+                        <input
+                          disabled={busy}
+                          maxLength={200}
+                          value={project}
+                          onChange={(e) => setProject(e.target.value)}
+                          placeholder="Например, Портал"
+                          required
+                        />
+                      </label>
+                      <button
+                        className="primary"
+                        disabled={busy || !owner || !project.trim()}
+                      >
+                        Добавить и выбрать
+                      </button>
+                    </form>
+                  )}
+                </details>
               </div>
             )}
             {section === "repository" && (

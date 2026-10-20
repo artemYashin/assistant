@@ -292,10 +292,10 @@ export class PullRequests {
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
-    const settings = this.store.settings();
+    const settings = this.store.settings(input);
     const azureProject = settings.azureProject.trim();
     if (!azureProject)
-      throw new AppError(400, "Укажите проект Azure DevOps в общих настройках");
+      throw new AppError(400, "Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Проекты»");
     const source = azureBase(settings.azureUrl);
     if (!input.repository.trim())
       throw new AppError(400, "Укажите Git-репозиторий");

@@ -25,6 +25,8 @@ const sorts = new Set(
     "developer_name",
     "added_at",
     "synced_at",
+    "removedAt",
+    "expiresAt",
   ].flatMap((key) => [`${key}-asc`, `${key}-desc`]),
 );
 
@@ -48,14 +50,18 @@ export function parseTicketFilters(saved: unknown): Filters {
   return result;
 }
 
-export function useTicketFilters(storageKey: string) {
+export function useTicketFilters(
+  storageKey: string,
+  initialFilters: Partial<Filters> = {},
+) {
   const [filters, setFilters] = useState<Filters>(() => {
     try {
       return parseTicketFilters(
-        JSON.parse(localStorage.getItem(storageKey) || "null"),
+        JSON.parse(localStorage.getItem(storageKey) || "null") ??
+          initialFilters,
       );
     } catch {
-      return { ...empty };
+      return parseTicketFilters(initialFilters);
     }
   });
   useEffect(() => {

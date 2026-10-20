@@ -314,8 +314,43 @@ export class Store {
       .prepare("INSERT OR REPLACE INTO kv VALUES (?,?)")
       .run(key, JSON.stringify(value));
   }
-  settings(): Settings {
+  rawSettings(): Settings {
     return { ...defaults, ...this.get("settings", {}) };
+  }
+  projectAzureKey(context: Context, azureUrl = this.rawSettings().azureUrl) {
+    return (
+      "project.azure:" +
+      JSON.stringify([
+        azureUrl.replace(/\/$/, ""),
+        context.client,
+        context.project,
+      ])
+    );
+  }
+  azureContextKey(context: Context) {
+    return "azure.context:" + JSON.stringify([context.client, context.project]);
+  }
+  azureBinding(
+    context: Context,
+  ): { azureUrl: string; azureProject: string } | null {
+    const own = this.get<
+      { azureUrl: string; azureProject: string } | null | undefined
+    >(this.azureContextKey(context), undefined);
+    if (own !== undefined) return own;
+    const legacy = this.get<string | null>(this.projectAzureKey(context), null);
+    return legacy === null
+      ? null
+      : { azureUrl: this.rawSettings().azureUrl, azureProject: legacy };
+  }
+  settings(context?: Context): Settings {
+    const settings = this.rawSettings();
+    const scope = context || settings;
+    const customer = scope.client
+      ? this.azureBinding({ client: scope.client, project: "" })
+      : null;
+    const project =
+      scope.client && scope.project ? this.azureBinding(scope) : null;
+    return { ...settings, ...(project || customer || {}) };
   }
   secret(key: string): string | undefined {
     const row = this.db

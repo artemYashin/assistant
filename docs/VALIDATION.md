@@ -938,3 +938,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Active/trash assignee filters retain known and selected display names and add debounced Azure user search through the existing identity/Graph endpoint. Queries require two characters; results, truncation warnings and errors stay in the multiselect. Ticket filtering remains local.
 - Priority badges now use a muted green background/border and slightly lighter text weight.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Browser interactions and live Azure search were not exercised.
+
+### Azure ticket browsing, context inheritance and compact filters
+
+- Added a manual-search Azure ticket tab with bounded 50-item pages (51 IDs queried for cursor detection, then one fields-only read batch), full cached type/status catalogs, local metadata overlay and confirmed selection import. Existing local tickets are not reimported; unavailable/local fields export as N/A. Sorting/export/selection operate on the current page.
+- Azure URL/project can be configured per customer, inherited by a project or overridden. Legacy defaults remain available; context switching retains raw global configuration. Added inheritance, read-only pagination, query escaping, batch deduplication and N/A export regression coverage.
+- Trash now shares search/filter/display/export styling and scoped persisted presets. All three ticket tabs offer a persisted collapsible filter panel: expanded by default, compact mode retains the vertical preset list. Reduced spacing between ticket subtitle and last successful sync.
+- Pre-push validation: all 220 tests and production build passed. Corrected the new API test's missing CSRF header and an existing assertion for the relocated Azure-project settings message. Vite retains its large-chunk warning. Browser interactions and live Azure endpoints were not exercised.

@@ -1,3 +1,4 @@
+import { browseQuery, browseFields, azureSummary, type AzureBrowse } from "./azure-browser.js";
 import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
 import {
   changeTicketStates,
@@ -630,10 +631,22 @@ export class Connectors {
           },
           "Azure поиск по части имени (PAT: Graph Read)",
         );
-        if (!Array.isArray(graph.value)) throw new AppError(502, "Azure вернул неверный результат поиска Graph");
-        const subjects = [...new Set<string>(graph.value.filter((u: any) =>
-          String(u.subjectKind).toLowerCase() === "user" && typeof u.descriptor === "string",
-        ).map((u: any) => u.descriptor))];
+        if (!Array.isArray(graph.value))
+          throw new AppError(
+            502,
+            "Azure вернул неверный результат поиска Graph",
+          );
+        const subjects = [
+          ...new Set<string>(
+            graph.value
+              .filter(
+                (u: any) =>
+                  String(u.subjectKind).toLowerCase() === "user" &&
+                  typeof u.descriptor === "string",
+              )
+              .map((u: any) => u.descriptor),
+          ),
+        ];
         graphTruncated = subjects.length > 20 || graph.value.length >= 100;
         if (subjects.length) {
           // Resolve Graph descriptors to Azure identity IDs in one bounded call.
@@ -643,14 +656,25 @@ export class Connectors {
             queryMembership: "None",
             "api-version": s.azureVersion,
           });
-          const resolved = await requestJson(`${base}/_apis/identities?${lookup}`, {
-            headers: { Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}` },
-          }, "Azure сопоставление пользователей (PAT: Identity Read)");
-          if (!Array.isArray(resolved.value)) throw new AppError(502, "Azure вернул неверный список пользователей");
+          const resolved = await requestJson(
+            `${base}/_apis/identities?${lookup}`,
+            {
+              headers: {
+                Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
+              },
+            },
+            "Azure сопоставление пользователей (PAT: Identity Read)",
+          );
+          if (!Array.isArray(resolved.value))
+            throw new AppError(
+              502,
+              "Azure вернул неверный список пользователей",
+            );
           response = resolved;
         }
       } catch {
-        warning = "Расширенный поиск Azure недоступен: проверьте Graph: Read у PAT и поддержку Graph API вашим сервером. Можно искать по полному имени или e-mail; ранее найденные пользователи доступны по части имени.";
+        warning =
+          "Расширенный поиск Azure недоступен: проверьте Graph: Read у PAT и поддержку Graph API вашим сервером. Можно искать по полному имени или e-mail; ранее найденные пользователи доступны по части имени.";
       }
     }
     const matches = response.value.filter(isUser);
@@ -675,71 +699,131 @@ export class Connectors {
       "developers:" + source,
       [],
     );
-    const normalize = (text: string) => text.normalize("NFKC").toLocaleLowerCase().replace(/ё/g, "е").trim();
+    const normalize = (text: string) =>
+      text.normalize("NFKC").toLocaleLowerCase().replace(/ё/g, "е").trim();
     const terms = normalize(query).split(/\s+/).filter(Boolean);
     const returnedIds = new Set(response.value.map((u: any) => String(u.id)));
-    const cachedMatches = old.filter((u) => !returnedIds.has(u.id) && terms.every((term) =>
-      normalize(`${u.name} ${u.email || ""}`).includes(term),
-    ));
-    const results = [...new Map<string, { id: string; name: string; email?: string }>(
-      [...remoteUsers, ...cachedMatches].map((u) => [u.id, u]),
-    ).values()];
+    const cachedMatches = old.filter(
+      (u) =>
+        !returnedIds.has(u.id) &&
+        terms.every((term) =>
+          normalize(`${u.name} ${u.email || ""}`).includes(term),
+        ),
+    );
+    const results = [
+      ...new Map<string, { id: string; name: string; email?: string }>(
+        [...remoteUsers, ...cachedMatches].map((u) => [u.id, u]),
+      ).values(),
+    ];
     const users = results.slice(0, 20);
-    const merged = new Map<string, { id: string; name: string; email?: string }>();
+    const merged = new Map<
+      string,
+      { id: string; name: string; email?: string }
+    >();
     for (const user of [...users, ...old.filter((u) => !returnedIds.has(u.id))])
       if (!merged.has(user.id)) merged.set(user.id, user);
     this.store.set("developers:" + source, [...merged.values()].slice(0, 1000));
     return { users, truncated: graphTruncated || results.length > 20, warning };
   }
   async assignTicket(id: number, source: string, userId: string | null) {
-    const s = this.store.settings(), pat = this.store.secret("azure.pat");
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
     const guard = () => {
-      if (source !== this.store.source() || pat !== this.store.secret("azure.pat"))
-        throw new AppError(409, "Подключение Azure изменилось. Откройте выбор исполнителя заново.");
+      if (
+        source !== this.store.source() ||
+        pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось. Откройте выбор исполнителя заново.",
+        );
     };
     guard();
     const users = this.store.get<any[]>("developers:" + source, []);
     const user = userId ? users.find((p) => p.id === userId) : null;
-    if (userId && !user?.email) throw new AppError(400, "Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.");
+    if (userId && !user?.email)
+      throw new AppError(
+        400,
+        "Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.",
+      );
     const read = async () => {
       const item = await this.azure(`workitems/${id}`, {}, s, pat);
-      if (item.id !== id || item.fields?.["System.TeamProject"] !== s.azureProject)
+      if (
+        item.id !== id ||
+        item.fields?.["System.TeamProject"] !== s.azureProject
+      )
         throw new AppError(400, "Тикет относится к другому проекту Azure");
       return item;
     };
     const before = await read();
-    if (!Number.isSafeInteger(before.rev)) throw new AppError(502, "Azure не вернул ревизию тикета");
+    if (!Number.isSafeInteger(before.rev))
+      throw new AppError(502, "Azure не вернул ревизию тикета");
     guard();
     let failure: unknown;
     try {
-      await this.azure(`workitems/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json-patch+json" },
-        body: JSON.stringify([
-          { op: "test", path: "/rev", value: before.rev },
-          { op: "add", path: "/fields/System.AssignedTo", value: user?.email || "" },
-        ]),
-      }, s, pat);
-    } catch (e) { failure = e; }
+      await this.azure(
+        `workitems/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json-patch+json" },
+          body: JSON.stringify([
+            { op: "test", path: "/rev", value: before.rev },
+            {
+              op: "add",
+              path: "/fields/System.AssignedTo",
+              value: user?.email || "",
+            },
+          ]),
+        },
+        s,
+        pat,
+      );
+    } catch (e) {
+      failure = e;
+    }
     let after: any;
-    try { after = await read(); } catch {
-      throw new AppError(502, "Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.");
+    try {
+      after = await read();
+    } catch {
+      throw new AppError(
+        502,
+        "Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.",
+      );
     }
     guard();
     const actual = after.fields["System.AssignedTo"];
     const confirmed = user
-      ? String(actual?.id || "").toLowerCase() === user.id.toLowerCase() || String(typeof actual === "string" ? actual : actual?.uniqueName || "").toLowerCase() === user.email.toLowerCase()
+      ? String(actual?.id || "").toLowerCase() === user.id.toLowerCase() ||
+        String(
+          typeof actual === "string" ? actual : actual?.uniqueName || "",
+        ).toLowerCase() === user.email.toLowerCase()
       : !actual;
-    if (!confirmed) throw new AppError(409, `Изменение исполнителя не подтверждено. ${failure instanceof Error ? failure.message : "Azure вернул другого исполнителя; проверьте права и правила проекта."}`);
-    if (this.store.db.prepare("SELECT 1 FROM tickets WHERE source=? AND id=?").get(source, id)) this.saveTicket(after, s);
-    for (const row of this.store.db.prepare("SELECT id,data FROM ticket_cards").all() as any[]) {
+    if (!confirmed)
+      throw new AppError(
+        409,
+        `Изменение исполнителя не подтверждено. ${failure instanceof Error ? failure.message : "Azure вернул другого исполнителя; проверьте права и правила проекта."}`,
+      );
+    if (
+      this.store.db
+        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+        .get(source, id)
+    )
+      this.saveTicket(after, s);
+    for (const row of this.store.db
+      .prepare("SELECT id,data FROM ticket_cards")
+      .all() as any[]) {
       const card = JSON.parse(row.data);
       if (card.id === id && card.source === source) {
         card.fields["System.AssignedTo"] = actual || "";
-        this.store.db.prepare("UPDATE ticket_cards SET data=? WHERE id=?").run(JSON.stringify(card), row.id);
+        this.store.db
+          .prepare("UPDATE ticket_cards SET data=? WHERE id=?")
+          .run(JSON.stringify(card), row.id);
       }
     }
-    this.store.audit("ticket.assigned", `#${id}: ${user?.name || "Не назначен"}`);
+    this.store.audit(
+      "ticket.assigned",
+      `#${id}: ${user?.name || "Не назначен"}`,
+    );
     return { id, source, assigned: actual || null, verified: true };
   }
   async ticketOptions() {
@@ -884,9 +968,15 @@ export class Connectors {
       ...comments.map((c) => c.renderedText || c.text || ""),
     ].join("\n");
     for (const imageTag of content.matchAll(/<img\b[^>]*>/gi)) {
-      const source = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(imageTag[0]);
+      const source = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(
+        imageTag[0],
+      );
       if (source)
-        add((source[1] ?? source[2] ?? source[3]).replace(/&amp;/gi, "&"), "Изображение в тексте", true);
+        add(
+          (source[1] ?? source[2] ?? source[3]).replace(/&amp;/gi, "&"),
+          "Изображение в тексте",
+          true,
+        );
     }
     for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
       add(match[1], "Изображение в комментарии", true);
@@ -1105,6 +1195,132 @@ export class Connectors {
           this.saveTicket(item, s);
       }
     }
+  }
+  async browseAzureTickets(input: AzureBrowse, local: any[]) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat"),
+      source = this.store.source(s);
+    const check = () => {
+      if (
+        input.source !== source ||
+        source !== this.store.source() ||
+        pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось. Повторите поиск.",
+        );
+    };
+    check();
+    const query = browseQuery(input, local);
+    if (!query) return { tickets: [], next: null };
+    const found = await this.azure(
+      "wiql?$top=51",
+      { method: "POST", body: JSON.stringify({ query }) },
+      s,
+      pat,
+    );
+    check();
+    if (!Array.isArray(found.workItems))
+      throw new AppError(502, "Azure не вернул список тикетов");
+    const ids: number[] = found.workItems.slice(0, 50).map((v: any) => v.id);
+    if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0))
+      throw new AppError(502, "Некорректные номера тикетов Azure");
+    if (!ids.length) return { tickets: [], next: null };
+    const result = await this.azure(
+      "workitemsbatch",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ids,
+          fields: browseFields,
+          errorPolicy: "Omit",
+        }),
+      },
+      s,
+      pat,
+    );
+    check();
+    if (!Array.isArray(result.value))
+      throw new AppError(502, "Azure не вернул данные тикетов");
+    const tickets = result.value
+      .filter(
+        (item: any) =>
+          ids.includes(item.id) &&
+          item.fields?.["System.TeamProject"] === s.azureProject,
+      )
+      .map((item: any) =>
+        azureSummary(item, source, azureBase(s.azureUrl), s.azureProject),
+      )
+      .sort((a: any, b: any) => b.id - a.id);
+    return {
+      tickets,
+      next: found.workItems.length > 50 ? ids[ids.length - 1] : null,
+    };
+  }
+  async importAzureSelection(ids: number[], source: string) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const check = () => {
+      if (
+        source !== this.store.source(s) ||
+        source !== this.store.source() ||
+        pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось. Повторите импорт.",
+        );
+    };
+    check();
+    const missing = [...new Set(ids)].filter(
+      (id) =>
+        !this.store.db
+          .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
+          .get(source, id),
+    );
+    if (!missing.length) return { added: [], missing: [] };
+    const response = await this.azure(
+      "workitemsbatch",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ids: missing,
+          fields: browseFields,
+          errorPolicy: "Omit",
+        }),
+      },
+      s,
+      pat,
+    );
+    check();
+    if (!Array.isArray(response.value))
+      throw new AppError(502, "Azure не вернул данные тикетов");
+    const added: number[] = [];
+    this.store.db.transaction(() => {
+      for (const item of response.value) {
+        if (
+          !missing.includes(item.id) ||
+          item.fields?.["System.TeamProject"] !== s.azureProject
+        )
+          continue;
+        this.store.db
+          .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
+          .run(source, item.id);
+        this.saveTicket(item, s);
+        this.store.db
+          .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
+          .run(source, item.id);
+        this.store.db
+          .prepare(
+            "UPDATE suggestions SET status='tracked' WHERE source=? AND ticket_id=?",
+          )
+          .run(source, item.id);
+        added.push(item.id);
+      }
+      this.store.audit("tickets.imported", `Из Azure: ${added.join(", ")}`);
+    })();
+    return { added, missing: missing.filter((id) => !added.includes(id)) };
   }
   async lookupTickets(input: AzureLookup, add: boolean, guard: () => void) {
     const plan = azureLookupSchema.parse(input);
