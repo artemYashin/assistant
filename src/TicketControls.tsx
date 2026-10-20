@@ -61,13 +61,22 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
     setBusy(true);
     setError("");
     try {
-      await api(`/tickets/${ticket.id}/developers`, "PUT", {
+      const result = await api(`/tickets/${ticket.id}/developers`, "PUT", {
         developerIds: ids,
         context,
         source: ticket.source,
       });
+      window.dispatchEvent(
+        new CustomEvent("orbit:ticket-developers", {
+          detail: {
+            id: ticket.id,
+            source: ticket.source,
+            developers: result.developers,
+          },
+        }),
+      );
       dialog.current?.close();
-      onChange();
+      onChange?.();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -103,6 +112,10 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
         ref={dialog}
         className="developer-dialog"
         aria-label={`Локальные исполнители тикета #${ticket.id}`}
+        onCancel={(event) => {
+          event.stopPropagation();
+          if (busy) event.preventDefault();
+        }}
       >
         <div className="developer-dialog-heading">
           <strong>Локальное поручение · #{ticket.id}</strong>
@@ -110,6 +123,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
             type="button"
             className="icon-button"
             aria-label="Закрыть выбор разработчиков"
+            disabled={busy}
             onClick={() => dialog.current?.close()}
           >
             <X size={18} />

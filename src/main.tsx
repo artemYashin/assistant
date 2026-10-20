@@ -374,9 +374,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     const changed = () => setRefresh((n) => n + 1);
     window.addEventListener("orbit:ticket-state", changed);
     window.addEventListener("orbit:ticket-metadata", changed);
+    window.addEventListener("orbit:ticket-developers", changed);
     return () => {
       window.removeEventListener("orbit:ticket-state", changed);
       window.removeEventListener("orbit:ticket-metadata", changed);
+      window.removeEventListener("orbit:ticket-developers", changed);
     };
   }, []);
   const initialized = useRef(false);
@@ -1665,11 +1667,7 @@ function Tickets({
                     />
                   </td>
                   <td>
-                    <LocalDeveloper
-                      ticket={t}
-                      context={context}
-                      onChange={() => run("refresh-local", async () => {})}
-                    />
+                    <LocalDeveloper ticket={t} context={context} />
                   </td>
                   <td className="muted">{date(t.synced_at)}</td>
                 </TicketTableRow>

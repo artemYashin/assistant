@@ -2293,6 +2293,46 @@ summary:focus-visible {
   line-height: 1.8;
   font-size: 12px;
 }
+.ticket-detail .ticket-formatted {
+  white-space: normal;
+  line-height: 1.6;
+}
+.ticket-formatted :is(p, ul, ol, blockquote, pre, table) {
+  margin: 0.45em 0;
+}
+.ticket-formatted :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0.65em 0 0.3em;
+  font-size: 1.1em;
+}
+.ticket-formatted :is(ul, ol) {
+  padding-left: 1.6em;
+}
+.ticket-formatted blockquote {
+  padding-left: 10px;
+  border-left: 3px solid var(--border);
+}
+.ticket-formatted pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 8px;
+  background: #f1f3f0;
+  border-radius: 5px;
+}
+.ticket-formatted table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.ticket-formatted :is(td, th) {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+}
+.ticket-formatted > :first-child {
+  margin-top: 0;
+}
+.ticket-formatted > :last-child {
+  margin-bottom: 0;
+}
 .ticket-comments,
 .ticket-attachments {
   display: grid;
@@ -5058,6 +5098,17 @@ summary > svg {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.ticket-overview .local-developer {
+  min-width: 0;
+}
+.ticket-overview .local-developer-name {
+  min-width: 0;
+  max-width: none;
+  white-space: normal;
+}
+.ticket-overview .local-assignee-label {
+  white-space: normal;
 }
 
 .developer-board-toolbar {

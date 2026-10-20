@@ -1,5 +1,6 @@
 import { TicketMetadata } from "./TicketMetadata.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
+import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "./routing.js";
 import {
@@ -17,7 +18,7 @@ import {
   Database,
 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
-import { StatusBadge, TicketStatus } from "./TicketControls.js";
+import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 import { ticketText as text } from "./ticket-text.js";
@@ -34,6 +35,16 @@ export function TicketCard({ reference }: { reference: string }) {
   }, []);
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
+  useEffect(() => {
+    const update = (event: Event) => {
+      const { id, source, developers } = (event as CustomEvent).detail;
+      setCard((old: any) =>
+        old?.id === id && old?.source === source ? { ...old, developers } : old,
+      );
+    };
+    window.addEventListener("orbit:ticket-developers", update);
+    return () => window.removeEventListener("orbit:ticket-developers", update);
+  }, []);
   useEffect(() => {
     const update = (event: Event) => {
       const { id, source, value } = (event as CustomEvent).detail;
@@ -157,6 +168,18 @@ export function TicketCard({ reference }: { reference: string }) {
               </dd>
             </div>
           )}
+          <div>
+            <dt>Локальное поручение</dt>
+            <dd>
+              {card.locallyTracked ? (
+                <LocalDeveloper ticket={card} context={card.localContext} />
+              ) : (
+                <LocalAssigneeNames
+                  names={(card.developers || []).map((d: any) => d.name)}
+                />
+              )}
+            </dd>
+          </div>
           {!!card.localMetadata?.tags?.length && (
             <div className="ticket-overview-tags">
               <dt>Теги</dt>
@@ -199,8 +222,8 @@ export function TicketCard({ reference }: { reference: string }) {
             </p>
             {!card.locallyTracked && (
               <p className="muted">
-                Для редактирования заметок и приоритета сначала добавьте тикет в
-                локальный список на странице «Тикеты».
+                Для редактирования заметок, приоритета и локального поручения
+                сначала добавьте тикет в локальный список на странице «Тикеты».
               </p>
             )}
           </div>

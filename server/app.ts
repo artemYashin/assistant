@@ -701,6 +701,7 @@ export function createApp(
     res.json({
       ...card,
       localMetadata: ticketMetadata(store, card.id, card.source),
+      developers: localDevelopers.assigned(card.id, card.source),
       localContext: {
         client: store.settings().client,
         project: store.settings().project,
