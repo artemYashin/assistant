@@ -920,3 +920,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Updated default instructions and agent guidance to propose useful durable facts, agreements and preferences without an explicit memory request, using the existing approval flow. Direct saves still require an explicit request; duplicates, transient ticket states and speculative facts are discouraged.
 - Migrates the exact old default instruction text once, preserving custom prompts and other settings. Added migration regression tests, not executed in this change.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; production build not rerun. Live model behavior was not exercised.
+
+### Selected/modified filter presets and inline ticket link (2026-10-20)
+
+- Persist the selected preset separately from its current filters: exact matches are blue, modified selections yellow. Filter comparison treats multiselect order as irrelevant. Selecting a preset fills its name; saving an existing name requires overwrite confirmation and preserves its ID/order. The name input uses 11px text.
+- Ticket URL copy button now precedes the title inline, allowing subsequent lines to flow across the title area.
+- Pre-push validation: all 216 tests and production build passed, including previously deferred memory/detachment tests. Vite retains its large-chunk warning. Browser preset interactions and title wrapping were not exercised.

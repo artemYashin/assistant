@@ -3,6 +3,16 @@ import { createPortal } from "react-dom";
 import { Bookmark, GripVertical, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
+function sameFilters(left: Filters, right: Filters) {
+  const canonical = (value: Filters) =>
+    JSON.stringify(
+      Object.entries(parseTicketFilters(value)).map(([key, entry]) => [
+        key,
+        Array.isArray(entry) ? [...new Set(entry)].sort() : entry,
+      ]),
+    );
+  return canonical(left) === canonical(right);
+}
 type Preset = { id: string; name: string; filters: Filters };
 export function TicketFilterPresets({
   storageKey,
@@ -37,6 +47,25 @@ export function TicketFilterPresets({
       return [];
     }
   });
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey + ".selected");
+      if (saved && presets.some((p) => p.id === saved)) return saved;
+    } catch {
+      /* Optional browser storage. */
+    }
+    return presets.find((p) => sameFilters(p.filters, filters))?.id || null;
+  });
+  function select(preset: Preset | null) {
+    setSelectedId(preset?.id || null);
+    setName(preset?.name || "");
+    try {
+      if (preset) localStorage.setItem(storageKey + ".selected", preset.id);
+      else localStorage.removeItem(storageKey + ".selected");
+    } catch {
+      /* Selection remains usable in this tab. */
+    }
+  }
   const dragged = useRef<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{
@@ -62,12 +91,18 @@ export function TicketFilterPresets({
         `Набор «${moving.name}»: позиция ${index + 1} из ${next.length}`,
       );
   }
-  const [pendingDelete, setPendingDelete] = useState<Preset | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    kind: "delete" | "overwrite";
+    preset: Preset;
+    replacement?: Preset;
+  } | null>(null);
   const confirmDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (pendingDelete) confirmDialog.current?.showModal();
-  }, [pendingDelete]);
-  const [name, setName] = useState("");
+    if (confirmation) confirmDialog.current?.showModal();
+  }, [confirmation]);
+  const [name, setName] = useState(
+    () => presets.find((p) => p.id === selectedId)?.name || "",
+  );
   const [error, setError] = useState("");
   function save(next: Preset[]) {
     try {
@@ -94,27 +129,24 @@ export function TicketFilterPresets({
             event.preventDefault();
             const title = name.trim();
             if (!title || disabled) return;
-            if (
-              presets.some(
-                (p) => p.name.toLocaleLowerCase() === title.toLocaleLowerCase(),
-              )
-            ) {
-              setError(
-                "Набор с таким названием уже есть. Выберите другое название или удалите старый набор.",
-              );
+            const existing = presets.find(
+              (p) => p.name.toLocaleLowerCase() === title.toLocaleLowerCase(),
+            );
+            const next = {
+              id: existing?.id || crypto.randomUUID(),
+              name: title,
+              filters: parseTicketFilters(filters),
+            };
+            setError("");
+            if (existing) {
+              setConfirmation({
+                kind: "overwrite",
+                preset: existing,
+                replacement: next,
+              });
               return;
             }
-            if (
-              save([
-                ...presets,
-                {
-                  id: crypto.randomUUID(),
-                  name: title,
-                  filters: parseTicketFilters(filters),
-                },
-              ])
-            )
-              setName("");
+            if (save([...presets, next])) select(next);
           }}
         >
           <input
@@ -138,11 +170,12 @@ export function TicketFilterPresets({
       {presets.length > 0 && (
         <div className="ticket-preset-list">
           {presets.map((preset) => {
-            const active =
-              JSON.stringify(preset.filters) === JSON.stringify(filters);
+            const selected = preset.id === selectedId;
+            const modified = selected && !sameFilters(preset.filters, filters);
+            const active = selected && !modified;
             return (
               <div
-                className={`ticket-preset${active ? " is-active" : ""}${dragging === preset.id ? " is-dragging" : ""}${dropTarget?.id === preset.id ? (dropTarget.after ? " drop-after" : " drop-before") : ""}`}
+                className={`ticket-preset${active ? " is-active" : modified ? " is-modified" : ""}${dragging === preset.id ? " is-dragging" : ""}${dropTarget?.id === preset.id ? (dropTarget.after ? " drop-after" : " drop-before") : ""}`}
                 key={preset.id}
                 onDragOver={(event) => {
                   if (!dragged.current || dragged.current === preset.id) return;
@@ -200,9 +233,12 @@ export function TicketFilterPresets({
                   type="button"
                   className="ticket-preset-apply"
                   disabled={disabled}
-                  aria-pressed={active}
-                  title={`Применить набор: ${preset.name}`}
-                  onClick={() => onApply(preset.filters)}
+                  aria-pressed={selected}
+                  title={`${preset.name}${modified ? " · изменён — нажмите, чтобы вернуть сохранённые настройки" : active ? " · сохранённые настройки применены" : " · применить набор"}`}
+                  onClick={() => {
+                    select(preset);
+                    onApply(preset.filters);
+                  }}
                 >
                   {preset.name}
                 </button>
@@ -214,7 +250,7 @@ export function TicketFilterPresets({
                   aria-haspopup="dialog"
                   onClick={() => {
                     setError("");
-                    setPendingDelete(preset);
+                    setConfirmation({ kind: "delete", preset });
                   }}
                 >
                   <X size={13} />
@@ -227,38 +263,50 @@ export function TicketFilterPresets({
       <span className="sr-only" role="status">
         {announcement}
       </span>
-      {pendingDelete &&
+      {confirmation &&
         createPortal(
           <dialog
             ref={confirmDialog}
             className="developer-dialog preset-delete-dialog"
-            aria-label="Удалить набор фильтров"
+            aria-label={
+              confirmation.kind === "delete"
+                ? "Удалить набор фильтров"
+                : "Перезаписать набор фильтров"
+            }
             onCancel={(event) => {
               event.preventDefault();
               event.stopPropagation();
-              setPendingDelete(null);
+              setConfirmation(null);
             }}
           >
             <div className="developer-dialog-heading">
-              <strong>Удалить набор фильтров?</strong>
+              <strong>
+                {confirmation.kind === "delete"
+                  ? "Удалить набор фильтров?"
+                  : "Перезаписать набор фильтров?"}
+              </strong>
               <button
                 type="button"
                 className="icon-button"
                 aria-label="Закрыть"
-                onClick={() => setPendingDelete(null)}
+                onClick={() => setConfirmation(null)}
               >
                 <X size={18} />
               </button>
             </div>
             <p>
-              Вы действительно хотите удалить набор{" "}
+              {confirmation.kind === "delete"
+                ? "Вы действительно хотите удалить набор"
+                : "Заменить сохранённые фильтры, поиск и сортировку в наборе"}{" "}
               <strong className="preset-delete-name">
-                «{pendingDelete.name}»
+                «{confirmation.preset.name}»
               </strong>
               ?
             </p>
             <p className="muted">
-              Текущие фильтры и тикеты останутся без изменений.
+              {confirmation.kind === "delete"
+                ? "Текущие фильтры и тикеты останутся без изменений."
+                : "Прежние настройки набора будут заменены текущими."}
             </p>
             {error && (
               <p className="error" role="alert">
@@ -270,7 +318,7 @@ export function TicketFilterPresets({
                 type="button"
                 className="secondary"
                 autoFocus
-                onClick={() => setPendingDelete(null)}
+                onClick={() => setConfirmation(null)}
               >
                 Отмена
               </button>
@@ -278,17 +326,39 @@ export function TicketFilterPresets({
                 type="button"
                 className="primary"
                 onClick={() => {
-                  if (save(presets.filter((p) => p.id !== pendingDelete.id)))
-                    setPendingDelete(null);
+                  if (confirmation.kind === "delete") {
+                    if (
+                      save(
+                        presets.filter((p) => p.id !== confirmation.preset.id),
+                      )
+                    ) {
+                      if (selectedId === confirmation.preset.id) select(null);
+                      setConfirmation(null);
+                    }
+                  } else if (confirmation.replacement) {
+                    const replacement = confirmation.replacement;
+                    if (
+                      save(
+                        presets.map((p) =>
+                          p.id === replacement.id ? replacement : p,
+                        ),
+                      )
+                    ) {
+                      select(replacement);
+                      setConfirmation(null);
+                    }
+                  }
                 }}
               >
-                Удалить набор
+                {confirmation.kind === "delete"
+                  ? "Удалить набор"
+                  : "Перезаписать"}
               </button>
             </div>
           </dialog>,
           document.body,
         )}
-      {error && !pendingDelete && (
+      {error && !confirmation && (
         <p className="error" role="alert">
           {error}
         </p>

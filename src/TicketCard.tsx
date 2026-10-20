@@ -351,13 +351,13 @@ export function TicketCard({ reference }: { reference: string }) {
         <div className="ticket-detail-main">
           <header className="ticket-card-header">
             <div className="ticket-card-title">
-              <strong>{f["System.Title"]}</strong>
               <TicketCopyButton
                 key={`url:${card.url}`}
                 value={card.url}
                 label="Скопировать ссылку на тикет в Azure DevOps"
                 link
               />
+              <strong>{f["System.Title"]}</strong>
             </div>
             <nav className="ticket-card-actions" aria-label="Действия тикета">
               <Link to={ticketPath(card.id, card.source)}>

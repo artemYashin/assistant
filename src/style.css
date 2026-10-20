@@ -4609,9 +4609,7 @@ summary > svg {
   flex-wrap: wrap;
 }
 .ticket-detail .ticket-card-title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+  display: block;
   flex: 1 1 240px;
   min-width: 0;
   line-height: 1.4;
@@ -6676,8 +6674,9 @@ summary > svg {
   padding: 12px 0;
   border-top: 1px solid var(--border);
 }
-.ticket-detail .ticket-card-title {
-  align-items: center;
+.ticket-card-title > .ticket-copy-control {
+  vertical-align: middle;
+  margin-right: 6px;
 }
 .ticket-copy-control {
   position: relative;
@@ -7406,4 +7405,15 @@ summary > svg {
 }
 .chat-analysis-heading > .icon-button {
   flex-shrink: 0;
+}
+
+.ticket-preset-save input {
+  font-size: 11px;
+}
+.ticket-preset.is-modified {
+  background: #fff5d9;
+  border-color: #d7b967;
+}
+.ticket-preset.is-modified > .ticket-preset-apply {
+  color: #765719;
 }
