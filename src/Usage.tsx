@@ -6,6 +6,8 @@ import {
   Clock,
   ShieldCheck,
   Square,
+  MessageSquare,
+  GitPullRequest,
 } from "lucide-react";
 import { api } from "./api.js";
 const number = (value: number | null | undefined) =>
@@ -173,6 +175,7 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
             <thead>
               <tr>
                 <th>Запрос · контекст</th>
+                <th>Источник</th>
                 <th>Модель</th>
                 <th>Вход / выход</th>
                 <th>Отчёты / инструменты</th>
@@ -194,6 +197,41 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
                         ? ` · ${Math.round((Date.parse(r.finished_at) - Date.parse(r.created_at)) / 1000)} с`
                         : ""}
                     </small>
+                  </td>
+                  <td>
+                    <span
+                      className="badge usage-origin"
+                      title={
+                        r.origin === "pr_review"
+                          ? "Ревью pull request, включая повторное ревью"
+                          : r.origin === "chat"
+                            ? "Запрос ассистенту в чате"
+                            : "Для этой записи источник не сохранялся"
+                      }
+                    >
+                      {r.origin === "chat" ? (
+                        <>
+                          <MessageSquare size={14} />
+                          Чат
+                        </>
+                      ) : r.origin === "pr_review" ? (
+                        <>
+                          <GitPullRequest size={14} />
+                          Ревью PR
+                          {r.pull_request ? ` #${r.pull_request.number}` : ""}
+                        </>
+                      ) : (
+                        "Не указан"
+                      )}
+                    </span>
+                    {r.origin === "pr_review" && r.pull_request && (
+                      <span
+                        className="usage-pr-title"
+                        title={r.pull_request.title}
+                      >
+                        {r.pull_request.title || "Без названия"}
+                      </span>
+                    )}
                   </td>
                   <td>{r.models || r.model}</td>
                   <td>

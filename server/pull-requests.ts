@@ -1420,6 +1420,12 @@ export class PullRequests {
         { client: m.client, project: m.project },
         true,
         {
+          pullRequest: {
+            monitor: job.monitor,
+            repo: job.repo,
+            number: job.number,
+            title: String(detail.title || "").slice(0, 2000),
+          },
           questionFrequency: options.questionFrequency,
           askQuestions:
             options.questionFrequency !== "none" && answers.length < 3

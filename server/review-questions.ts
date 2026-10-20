@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store, AppError } from "./store.js";
+import type { UsagePullRequest } from "./usage.js";
 export const reviewQuestionsSchema = z.object({
   questions: z
     .array(
@@ -34,6 +35,7 @@ export function questionPolicy(
   }[frequency];
 }
 export type ReviewActions = {
+  pullRequest?: UsagePullRequest;
   questionFrequency?: ReviewOptions["questionFrequency"];
   askQuestions?: (questions: ReviewQuestion[]) => void;
 };

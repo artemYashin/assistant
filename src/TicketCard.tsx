@@ -577,9 +577,11 @@ export function TicketTableRow({
   highlighted = false,
   actions,
   columns = 7,
+  hideActions = false,
 }: {
   actions?: ReactNode;
   columns?: number;
+  hideActions?: boolean;
   highlighted?: boolean;
   onRemove?: () => void;
   id: number;
@@ -625,7 +627,7 @@ export function TicketTableRow({
         className={highlighted ? "ticket-row-highlighted" : undefined}
       >
         {children}
-        <td>
+        <td hidden={hideActions}>
           <div className="ticket-row-actions">
             {actions}
             <button

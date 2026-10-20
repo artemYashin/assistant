@@ -1,3 +1,4 @@
+import { useTicketColumns } from "./TicketColumns.js";
 import { useSearchParams } from "react-router-dom";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
@@ -24,6 +25,7 @@ export function TicketTrash({
   onChange: () => void;
   settings?: any;
 }) {
+  const display = useTicketColumns(true);
   const [items, setItems] = useState<any[]>([]),
     [loaded, setLoaded] = useState(false),
     [error, setError] = useState(""),
@@ -270,9 +272,12 @@ export function TicketTrash({
         <p role="status">Загрузка корзины…</p>
       ) : (
         <div className="ticket-export-bar">
-          <p className="muted" role="status">
-            Показано {filtered.length} из {items.length}
-          </p>
+          <div className="ticket-display-summary">
+            {display.control}
+            <p className="muted" role="status">
+              Показано {filtered.length} из {items.length}
+            </p>
+          </div>
           <div className="ticket-bulk-actions">
             <span role="status">Выбрано: {selection.selected.length}</span>
             {!!selection.selected.length && (
@@ -315,6 +320,7 @@ export function TicketTrash({
                 {columns.map(([key, label]) => (
                   <th
                     key={key}
+                    hidden={display.hidden(key)}
                     aria-sort={
                       sort.key === key
                         ? sort.descending
@@ -349,7 +355,7 @@ export function TicketTrash({
                     </div>
                   </th>
                 ))}
-                <th>Действия</th>
+                <th hidden={display.hidden("actions")}>Действия</th>
               </tr>
             </thead>
             <tbody>
@@ -364,7 +370,7 @@ export function TicketTrash({
                       onChange={() => selection.toggle(t)}
                     />
                   </td>
-                  <td>
+                  <td hidden={display.hidden("id")}>
                     {t.url?.startsWith("https://") ? (
                       <a
                         className="ticket-link"
@@ -378,30 +384,30 @@ export function TicketTrash({
                       `#${t.id}`
                     )}
                   </td>
-                  <td>
+                  <td hidden={display.hidden("title")}>
                     <strong className="ticket-title-clamp" title={t.title}>
                       {t.title}
                     </strong>
                   </td>
-                  <td>
+                  <td hidden={display.hidden("type")}>
                     <StatusBadge
                       state={t.type || "Без типа"}
                       kind="type"
                       colors={settings?.typeColors}
                     />
                   </td>
-                  <td>
+                  <td hidden={display.hidden("state")}>
                     <StatusBadge
                       state={t.state}
                       colors={settings?.statusColors}
                     />
                   </td>
-                  <td>
+                  <td hidden={display.hidden("priority")}>
                     <span className="badge ticket-priority-badge">
                       P{t.priority ?? 1}
                     </span>
                   </td>
-                  <td>
+                  <td hidden={display.hidden("tags")}>
                     <div className="ticket-tag-list">
                       {(t.tags || []).map((tag: string) => (
                         <span className="badge" key={tag}>
@@ -410,13 +416,13 @@ export function TicketTrash({
                       ))}
                     </div>
                   </td>
-                  <td>
+                  <td hidden={display.hidden("assigned")}>
                     <LocalAssigneeNames
                       names={t.assigned ? [t.assigned] : []}
                       emptyLabel="Не назначен"
                     />
                   </td>
-                  <td>
+                  <td hidden={display.hidden("developer_name")}>
                     <LocalAssigneeNames
                       names={
                         t.developers?.length
@@ -427,17 +433,17 @@ export function TicketTrash({
                       }
                     />
                   </td>
-                  <td>
+                  <td hidden={display.hidden("removedAt")}>
                     <time dateTime={new Date(t.removedAt).toISOString()}>
                       {date(t.removedAt)}
                     </time>
                   </td>
-                  <td>
+                  <td hidden={display.hidden("expiresAt")}>
                     <time dateTime={new Date(t.expiresAt).toISOString()}>
                       {date(t.expiresAt)}
                     </time>
                   </td>
-                  <td>
+                  <td hidden={display.hidden("actions")}>
                     <div className="ticket-trash-actions">
                       <PrInfoPopup
                         title={`Заметки тикета #${t.id}`}

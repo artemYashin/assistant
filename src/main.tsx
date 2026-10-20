@@ -1,3 +1,4 @@
+import { useTicketColumns } from "./TicketColumns.js";
 import { DevelopersPage } from "./DevelopersPage.js";
 import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
@@ -1239,6 +1240,7 @@ function Tickets({
   settings,
   context,
 }: any) {
+  const columns = useTicketColumns();
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
@@ -1518,9 +1520,12 @@ function Tickets({
         </button>
       </div>
       <div className="ticket-export-bar">
-        <p className="muted" role="status">
-          Показано {sorted.length} из {tickets.length}
-        </p>
+        <div className="ticket-display-summary">
+          {columns.control}
+          <p className="muted" role="status">
+            Показано {sorted.length} из {tickets.length}
+          </p>
+        </div>
         <div className="ticket-bulk-actions">
           <span role="status">Выбрано: {selection.selected.length}</span>
           {!!selection.selected.length && (
@@ -1575,11 +1580,15 @@ function Tickets({
                     ["synced_at", "Синхронизация"],
                   ] as const
                 ).map(([key, label]) => (
-                  <th key={key} aria-sort={columnSort([key])}>
+                  <th
+                    key={key}
+                    hidden={columns.hidden(key)}
+                    aria-sort={columnSort([key])}
+                  >
                     {sortButton(key, label)}
                   </th>
                 ))}
-                <th>Просмотр</th>
+                <th hidden={columns.hidden("actions")}>Просмотр</th>
               </tr>
             </thead>
             <tbody>
@@ -1587,7 +1596,8 @@ function Tickets({
                 <TicketTableRow
                   key={`${t.source}:${t.id}`}
                   id={t.id}
-                  columns={10}
+                  columns={columns.count}
+                  hideActions={columns.hidden("actions")}
                   actions={
                     <TicketMetadata
                       ticket={t}
@@ -1628,14 +1638,14 @@ function Tickets({
                       {t.title}
                     </b>
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("type")}>
                     <StatusBadge
                       state={t.type || "Тип не указан"}
                       colors={settings?.typeColors}
                       kind="type"
                     />
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("state")}>
                     <TicketStatus
                       id={t.id}
                       source={t.source}
@@ -1644,7 +1654,7 @@ function Tickets({
                       onChange={() => run("refresh-state", async () => {})}
                     />
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("priority")}>
                     <TicketMetadata
                       ticket={t}
                       context={context}
@@ -1652,7 +1662,7 @@ function Tickets({
                       onChange={() => run("refresh-priority", async () => {})}
                     />
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("tags")}>
                     <TicketMetadata
                       ticket={t}
                       context={context}
@@ -1660,16 +1670,18 @@ function Tickets({
                       onChange={() => run("refresh-tags", async () => {})}
                     />
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("assigned")}>
                     <LocalAssigneeNames
                       names={t.assigned ? [t.assigned] : []}
                       emptyLabel="Не назначен"
                     />
                   </td>
-                  <td>
+                  <td hidden={columns.hidden("developer_name")}>
                     <LocalDeveloper ticket={t} context={context} />
                   </td>
-                  <td className="muted">{date(t.synced_at)}</td>
+                  <td className="muted" hidden={columns.hidden("synced_at")}>
+                    {date(t.synced_at)}
+                  </td>
                 </TicketTableRow>
               ))}
             </tbody>

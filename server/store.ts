@@ -102,6 +102,20 @@ export class Store {
       CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
     if (
+      !(this.db.prepare("PRAGMA table_info(llm_requests)").all() as any[]).some(
+        (c) => c.name === "origin",
+      )
+    )
+      this.db.exec(
+        "ALTER TABLE llm_requests ADD COLUMN origin TEXT NOT NULL DEFAULT 'unknown'",
+      );
+    if (
+      !(this.db.prepare("PRAGMA table_info(llm_requests)").all() as any[]).some(
+        (c) => c.name === "pull_request",
+      )
+    )
+      this.db.exec("ALTER TABLE llm_requests ADD COLUMN pull_request TEXT");
+    if (
       !(this.db.prepare("PRAGMA table_info(pr_reviews)").all() as any[]).some(
         (c) => c.name === "options",
       )

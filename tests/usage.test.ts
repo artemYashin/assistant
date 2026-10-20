@@ -20,7 +20,7 @@ function fixture(t: any) {
 test("usage deduplicates receipts, separates cache and preserves missing values", (t) => {
   const store = fixture(t),
     ledger = new UsageLedger(store),
-    id = ledger.begin("model", context);
+    id = ledger.begin("model", context, "chat");
   const data = {
     inputTokens: 100,
     outputTokens: 20,
@@ -31,8 +31,13 @@ test("usage deduplicates receipts, separates cache and preserves missing values"
   ledger.record(id, "duplicate", data);
   ledger.record(id, "b", { inputTokens: 50, outputTokens: -1 });
   ledger.finish(id, "completed");
-  ledger.begin("other", context);
+  const reviewId = ledger.begin("other", context, "pr_review");
   const report = ledger.report() as any;
+  assert.equal(report.requests.find((r: any) => r.id === id).origin, "chat");
+  assert.equal(
+    report.requests.find((r: any) => r.id === reviewId).origin,
+    "pr_review",
+  );
   assert.equal(ledger.tokens(id), 170);
   assert.equal(report.summary.model_calls, 2);
   assert.equal(report.summary.cache_read_tokens, 60);
@@ -47,7 +52,13 @@ test("usage survives restart and marks unfinished requests interrupted", (t) => 
   const dir = mkdtempSync(join(tmpdir(), "orbit-restart-"));
   const first = new Store(dir);
   const ledger = new UsageLedger(first);
-  const id = ledger.begin("model", context);
+  const pullRequest = {
+    monitor: "monitor",
+    repo: "repo",
+    number: 42,
+    title: "Fix login",
+  };
+  const id = ledger.begin("model", context, "pr_review", pullRequest);
   ledger.record(id, "e", { inputTokens: 42, outputTokens: 3 });
   first.close();
   const second = new Store(dir);
@@ -57,6 +68,8 @@ test("usage survives restart and marks unfinished requests interrupted", (t) => 
   });
   const report = new UsageLedger(second).report() as any;
   assert.equal(report.requests[0].status, "interrupted");
+  assert.equal(report.requests[0].origin, "pr_review");
+  assert.deepEqual(report.requests[0].pull_request, pullRequest);
   assert.equal(report.summary.input_tokens, 42);
 });
 function fakeAgent(

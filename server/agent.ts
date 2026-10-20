@@ -329,7 +329,12 @@ export class Agent {
     const model = review
       ? settings.reviewModel || settings.model
       : settings.model;
-    const id = ledger.begin(model, context);
+    const id = ledger.begin(
+      model,
+      context,
+      review ? "pr_review" : "chat",
+      reviewActions?.pullRequest,
+    );
     this.busy = true;
     this.activeId = id;
     const cards: string[] = [];

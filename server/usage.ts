@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Store, type Context } from "./store.js";
+export type UsagePullRequest = {
+  monitor: string;
+  repo: string;
+  number: number;
+  title: string;
+};
 export type UsageReceipt = {
   model?: string;
   inputTokens?: number;
@@ -15,11 +21,16 @@ const count = (value: unknown): number | null =>
     : null;
 export class UsageLedger {
   constructor(private store: Store) {}
-  begin(model: string, context: Context) {
+  begin(
+    model: string,
+    context: Context,
+    origin: "chat" | "pr_review" | "unknown" = "unknown",
+    pullRequest?: UsagePullRequest,
+  ) {
     const id = randomUUID();
     this.store.db
       .prepare(
-        "INSERT INTO llm_requests(id,created_at,model,client,project,status) VALUES (?,?,?,?,?,'running')",
+        "INSERT INTO llm_requests(id,created_at,model,client,project,origin,pull_request,status) VALUES (?,?,?,?,?,?,?,'running')",
       )
       .run(
         id,
@@ -27,6 +38,10 @@ export class UsageLedger {
         model || "По умолчанию",
         context.client,
         context.project,
+        origin,
+        origin === "pr_review" && pullRequest
+          ? JSON.stringify(pullRequest)
+          : null,
       );
     return id;
   }
@@ -84,6 +99,15 @@ export class UsageLedger {
         cte + " SELECT * FROM requests ORDER BY created_at DESC LIMIT 100",
       )
       .all(since);
-    return { summary, requests, days };
+    return {
+      summary,
+      requests: (requests as any[]).map((request) => ({
+        ...request,
+        pull_request: request.pull_request
+          ? JSON.parse(request.pull_request)
+          : null,
+      })),
+      days,
+    };
   }
 }
