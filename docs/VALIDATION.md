@@ -957,3 +957,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Trash retains editable local metadata and developer assignments. Verified Azure changes update the stored trash snapshot without restoring it or extending retention. Azure refresh preserves expanded rows. Added regression coverage for untracked/trash edits, local metadata, retention and restoration.
 - Preset name/save controls align left. Type/status filters use the full cached imported Azure catalog, independent of auto-import checkboxes, with configured values as fallback before catalog import.
 - Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser interactions and live Azure endpoints were not exercised.
+
+### Compact tables inside ticket details (2026-10-21)
+
+- Reduced imported rich-text table cell padding to 3px vertically and 6px horizontally, with specificity that prevents outer ticket-table styles from overriding it. Removed leading/trailing paragraph margins inside cells. Main ticket-list cell spacing is unchanged.
+- Pre-push validation: all 223 tests and production build passed. Vite retains its large-chunk warning. Browser visual behavior was not exercised.

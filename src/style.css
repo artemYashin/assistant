@@ -2385,9 +2385,15 @@ summary:focus-visible {
   table-layout: fixed;
   border-collapse: collapse;
 }
-.ticket-formatted :is(td, th) {
-  padding: 5px 8px;
+.ticket-detail .ticket-formatted :is(td, th) {
+  padding: 3px 6px;
   border: 1px solid var(--border);
+}
+.ticket-detail .ticket-formatted :is(td, th) > :first-child {
+  margin-top: 0;
+}
+.ticket-detail .ticket-formatted :is(td, th) > :last-child {
+  margin-bottom: 0;
 }
 .ticket-formatted > :first-child {
   margin-top: 0;
