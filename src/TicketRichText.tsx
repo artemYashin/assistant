@@ -183,9 +183,49 @@ export function TicketRichText({ value, card, reference }: any) {
         children = <strong>{children}</strong>;
       if (node.style.fontStyle === "italic") children = <em>{children}</em>;
       if (!allowed.has(tag)) return <Fragment key={index}>{children}</Fragment>;
+      const attributes: Record<string, unknown> = { key: index };
+      // List markers are content semantics, not editor layout. Keep only
+      // known marker styles and numeric counters, never arbitrary source CSS.
+      if (["ol", "ul", "li"].includes(tag)) {
+        const marker = node.style.listStyleType;
+        if (
+          [
+            "decimal",
+            "decimal-leading-zero",
+            "upper-alpha",
+            "lower-alpha",
+            "upper-latin",
+            "lower-latin",
+            "upper-roman",
+            "lower-roman",
+            "disc",
+            "circle",
+            "square",
+            "none",
+          ].includes(marker)
+        )
+          attributes.style = { listStyleType: marker };
+      }
+      if (tag === "ol") {
+        const type = node.getAttribute("type");
+        if (type && ["1", "a", "A", "i", "I"].includes(type))
+          attributes.type = type;
+        if (node.hasAttribute("reversed")) attributes.reversed = true;
+      }
+      const counterAttribute =
+        tag === "ol" ? "start" : tag === "li" ? "value" : null;
+      if (counterAttribute) {
+        const counter = node.getAttribute(counterAttribute)?.trim();
+        if (
+          counter &&
+          /^-?\d+$/.test(counter) &&
+          Number.isSafeInteger(Number(counter))
+        )
+          attributes[counterAttribute] = Number(counter);
+      }
       return createElement(
         tag,
-        { key: index },
+        attributes,
         ["br", "hr"].includes(tag) ? undefined : children,
       );
     });
