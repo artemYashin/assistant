@@ -7909,9 +7909,13 @@ summary > svg {
   gap: 6px;
 }
 .ticket-columns-dialog .ticket-column-option.is-dragging { opacity: .45; }
-.ticket-columns-dialog .ticket-column-option.is-drop-target {
-  border-color: #427eae;
+.ticket-columns-dialog .ticket-column-option.is-drop-before {
+  border-top-color: #427eae;
   box-shadow: inset 0 2px #427eae;
+}
+.ticket-columns-dialog .ticket-column-option.is-drop-after {
+  border-bottom-color: #427eae;
+  box-shadow: inset 0 -2px #427eae;
 }
 .ticket-columns-dialog .ticket-column-grip { cursor: grab; flex-shrink: 0; }
 .ticket-columns-dialog .ticket-column-grip:active { cursor: grabbing; }

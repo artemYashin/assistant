@@ -84,7 +84,10 @@ export function useTicketColumns(trash = false, namespace = "active") {
   const [draftOrder, setDraftOrder] = useState<string[]>([]);
   const [draftHidden, setDraftHidden] = useState<string[]>([]);
   const [dragged, setDragged] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    key: string;
+    edge: "before" | "after";
+  } | null>(null);
   const finishDrag = () => {
     setDragged(null);
     setDropTarget(null);
@@ -93,12 +96,12 @@ export function useTicketColumns(trash = false, namespace = "active") {
     finishDrag();
     dialog.current?.close();
   };
-  const reorder = (from: string, to: string) => {
+  const reorder = (from: string, to: string, edge: "before" | "after") => {
     setDraftOrder((current) => {
       if (from === to || !current.includes(from) || !current.includes(to))
         return current;
       const next = current.filter((key) => key !== from);
-      next.splice(current.indexOf(to), 0, from);
+      next.splice(next.indexOf(to) + (edge === "after" ? 1 : 0), 0, from);
       return next;
     });
   };
@@ -168,16 +171,44 @@ export function useTicketColumns(trash = false, namespace = "active") {
               return (
                 <div
                   key={key}
-                  className={`ticket-column-option${dragged === key ? " is-dragging" : ""}${dropTarget === key ? " is-drop-target" : ""}`}
+                  className={`ticket-column-option${dragged === key ? " is-dragging" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
                   onDragOver={(event) => {
-                    if (!dragged || dragged === key) return;
+                    if (!dragged || dragged === key) {
+                      setDropTarget(null);
+                      return;
+                    }
                     event.preventDefault();
                     event.dataTransfer.dropEffect = "move";
-                    setDropTarget(key);
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    setDropTarget({
+                      key,
+                      edge:
+                        event.clientY < rect.top + rect.height / 2
+                          ? "before"
+                          : "after",
+                    });
+                  }}
+                  onDragLeave={(event) => {
+                    if (
+                      !(event.relatedTarget instanceof Node) ||
+                      !event.currentTarget.contains(event.relatedTarget)
+                    ) {
+                      setDropTarget((current) =>
+                        current?.key === key ? null : current,
+                      );
+                    }
                   }}
                   onDrop={(event) => {
                     event.preventDefault();
-                    if (dragged) reorder(dragged, key);
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    if (dragged)
+                      reorder(
+                        dragged,
+                        key,
+                        event.clientY < rect.top + rect.height / 2
+                          ? "before"
+                          : "after",
+                      );
                     finishDrag();
                   }}
                 >
@@ -205,7 +236,12 @@ export function useTicketColumns(trash = false, namespace = "active") {
                           draftOrder.indexOf(key) +
                             (event.key === "ArrowUp" ? -1 : 1)
                         ];
-                      if (target) reorder(key, target);
+                      if (target)
+                        reorder(
+                          key,
+                          target,
+                          event.key === "ArrowUp" ? "before" : "after",
+                        );
                     }}
                   >
                     <GripVertical size={17} />

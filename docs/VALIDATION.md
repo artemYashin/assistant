@@ -1025,3 +1025,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Title and identity sizing now targets semantic classes rather than positional selectors. Removed the interim minimum-title/extra field-width overrides. The reported Azure width problem was not visually reproduced, so this is not a verified visual resolution.
 - Modal backdrop clicks dispatch the existing cancel path, preserving busy guards and React cleanup. Clicks inside and drags beginning inside do not dismiss dialogs.
 - Pre-push validation: all 228 tests and production build passed. Vite retains its large-chunk warning. Browser drag/drop, backdrop interactions and live Azure endpoints were not exercised.
+
+### Column drag insertion direction (2026-10-21)
+
+- Dragging over the upper/lower half of a column row now selects insertion before/after it, with the matching top/bottom indicator. Drop position is calculated again on release; insertion uses the target index after removing the dragged item. Stale indicators clear on leaving the row. Keyboard reordering preserves its direction.
+- All 228 tests and production build completed successfully after being started before the user's instruction to skip tests; no additional tests were started afterward. Vite retains its large-chunk warning. Browser drag interactions were not exercised.
