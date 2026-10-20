@@ -217,6 +217,8 @@ export class PullRequests {
         context: Context,
         review?: boolean,
         reviewActions?: ReviewActions,
+        chatSessionId?: string,
+        modelOverride?: string,
       ) => Promise<{ body: string; requestId: string }>;
     },
   ) {
@@ -351,7 +353,7 @@ export class PullRequests {
   ) {
     return this.store.db
       .prepare(
-        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at,(SELECT COUNT(*) FROM pr_reviews history WHERE history.monitor=p.monitor AND history.repo=p.repo AND history.number=p.number AND COALESCE(history.summary,'')!='') review_count FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target AND r.rowid=(SELECT MAX(latest.rowid) FROM pr_reviews latest WHERE latest.monitor=p.monitor AND latest.repo=p.repo AND latest.number=p.number AND latest.head=p.head AND latest.target=p.target) WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND ((?='' AND p.in_scope=1 AND m.enabled=1) OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
+        `SELECT p.*,m.client,m.project,m.azure_project,m.repository,m.enabled,r.id review_id,r.status review_status,r.summary,r.coverage,r.error,r.usage_id,r.finished_at,r.model,(SELECT COUNT(*) FROM pr_reviews history WHERE history.monitor=p.monitor AND history.repo=p.repo AND history.number=p.number AND COALESCE(history.summary,'')!='') review_count FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor LEFT JOIN pr_reviews r ON r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target AND r.rowid=(SELECT MAX(latest.rowid) FROM pr_reviews latest WHERE latest.monitor=p.monitor AND latest.repo=p.repo AND latest.number=p.number AND latest.head=p.head AND latest.target=p.target) WHERE (?='' OR m.client=?) AND (?='' OR m.project=?) AND ((?='' AND p.in_scope=1 AND m.enabled=1) OR (p.monitor=? AND p.repo=? AND p.number=?)) ORDER BY p.created_at DESC,p.number DESC LIMIT 300`,
       )
       .all(
         context.client,
@@ -388,7 +390,7 @@ export class PullRequests {
           last_saved_review:
             this.store.db
               .prepare(
-                "SELECT summary,coverage,finished_at,head,target FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1",
+                "SELECT summary,coverage,finished_at,head,target,model FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1",
               )
               .get(row.monitor, row.repo, row.number) || null,
           ticket_source: source,
@@ -1194,6 +1196,7 @@ export class PullRequests {
     restart = false,
   ) {
     const reviewOptions = reviewOptionsSchema.parse(options || {});
+    reviewOptions.model ||= this.store.settings().reviewModel || this.store.settings().model;
     const m = this.monitors().find((m) => m.id === monitor);
     const p = this.store.db
       .prepare(
@@ -1449,18 +1452,21 @@ export class PullRequests {
                 }
               : undefined,
         },
+        undefined,
+        options.model,
       );
       this.store.db.transaction(() => {
         if (questions.length) questionStore.create(job.id, questions);
         this.store.db
           .prepare(
-            "UPDATE pr_reviews SET status=?,summary=?,usage_id=?,finished_at=? WHERE id=?",
+            "UPDATE pr_reviews SET status=?,summary=?,usage_id=?,finished_at=?,model=? WHERE id=?",
           )
           .run(
             questions.length ? "awaiting_answers" : "completed",
             result.body,
             result.requestId,
             now(),
+            (this.store.db.prepare("SELECT COALESCE((SELECT group_concat(DISTINCT model) FROM llm_usage WHERE request_id=? AND model!='Не указана'), (SELECT model FROM llm_requests WHERE id=?)) model").get(result.requestId, result.requestId) as any)?.model || options.model || "По умолчанию в Copilot",
             job.id,
           );
       })();

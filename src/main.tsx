@@ -1,3 +1,5 @@
+import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
+import { ModelOverride } from "./ModelOverride.js";
 import { installDialogBackdropDismiss } from "./dialog-backdrop.js";
 import { TicketColorLegend } from "./TicketColorLegend.js";
 import { paginationItems } from "./pagination.js";
@@ -2529,6 +2531,7 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
             />
           </Field>
+          <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
           <Field
             label="Обновлять Teams, тикеты и PR каждые, минут"
             hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
@@ -2627,6 +2630,7 @@ function Assistant({
   const resize = useAssistantResize();
   const selectedTickets = useSelectedChatTickets();
   const [sessionId, setSessionId] = useState("");
+  const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
   const analysisPending = useRef(false);
   const promptInput = useRef<HTMLTextAreaElement>(null);
@@ -2895,6 +2899,7 @@ function Assistant({
     try {
       const r = await api("/conversation", "POST", {
         prompt: text,
+        model: chatModel,
         context,
         sessionId,
         selectedTickets: selectedTickets.map(({ id, source }) => ({
@@ -3200,6 +3205,9 @@ function Assistant({
             </div>
           </div>
         )}
+        <div className="composer-model">
+          <ModelOverride value={chatModel} onChange={setChatModel} disabled={working || clearing || !connected} />
+        </div>
         <form className="composer" onSubmit={send}>
           <textarea
             ref={promptInput}

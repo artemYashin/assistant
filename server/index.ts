@@ -1,3 +1,4 @@
+import { syncAllowed } from "./sync-schedule.js";
 import { Store } from "./store.js";
 import { createApp } from "./app.js";
 const store = new Store(process.env.DATA_DIR || "./data");
@@ -21,13 +22,22 @@ async function reviewTick() {
 }
 reviewTimer = setTimeout(reviewTick, 2000);
 let timer: ReturnType<typeof setTimeout>;
+let nextSyncAt = 0;
 async function tick() {
   if (stopped) return;
   try {
-    syncWork = sync();
-    await syncWork;
+    if (!syncAllowed(store.settings().syncSchedule)) {
+      nextSyncAt = 0;
+    } else if (Date.now() >= nextSyncAt) {
+      try {
+        syncWork = sync();
+        await syncWork;
+      } finally {
+        nextSyncAt = Date.now() + store.settings().syncSeconds * 1000;
+      }
+    }
   } catch {}
-  if (!stopped) timer = setTimeout(tick, store.settings().syncSeconds * 1000);
+  if (!stopped) timer = setTimeout(tick, 30000);
 }
 timer = setTimeout(tick, 10000);
 function stop() {

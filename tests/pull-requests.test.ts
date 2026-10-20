@@ -685,6 +685,7 @@ test("review options persist and disable questions without fetching tickets", as
     .prepare("SELECT options FROM pr_reviews WHERE id=?")
     .get(id) as any;
   assert.deepEqual(JSON.parse(row.options), {
+    model: store.settings().reviewModel || store.settings().model,
     reviewerComment: "",
     questionFrequency: "none",
     readTickets: false,
@@ -1047,4 +1048,33 @@ test("completed PR pages are bounded, cached and coalesce concurrent requests", 
     service.list(context, { monitor, repo: "repo", number: 1 }).length,
     0,
   );
+});
+
+
+test("review model override survives settings changes and is recorded in results", async (t) => {
+  const { store, service, calls } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  const id = service.requestReview(monitor, "repo", 1, {
+    model: "review-override",
+    readTickets: false,
+    questionFrequency: "none",
+  });
+  store.set("settings", { ...store.settings(), reviewModel: "changed-default" });
+  await service.reviewNext();
+  assert.equal(calls[0][5], "review-override");
+  assert.equal((store.db.prepare("SELECT model FROM pr_reviews WHERE id=?").get(id) as any).model, "review-override");
+  assert.equal((service.list(context)[0] as any).model, "review-override");
+});
+
+test("review resolves its default model when queued", async (t) => {
+  const { store, service, calls } = fixture(t);
+  store.set("settings", { ...store.settings(), reviewModel: "initial-default" });
+  mock(t, [pr()]);
+  await service.sync();
+  service.requestReview(service.monitors()[0].id, "repo", 1, { readTickets: false, questionFrequency: "none" });
+  store.set("settings", { ...store.settings(), reviewModel: "changed-default" });
+  await service.reviewNext();
+  assert.equal(calls[0][5], "initial-default");
 });

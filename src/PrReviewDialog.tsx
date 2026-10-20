@@ -1,3 +1,4 @@
+import { ModelOverride } from "./ModelOverride.js";
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, X } from "lucide-react";
 import { SingleSelect } from "./SingleSelect.js";
@@ -13,6 +14,7 @@ export function PrReviewDialog({
   onStarted: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [model, setModel] = useState("");
   const [frequency, setFrequency] = useState("medium");
   const [readTickets, setReadTickets] = useState(true);
   const [reviewerComment, setReviewerComment] = useState("");
@@ -52,6 +54,7 @@ export function PrReviewDialog({
               repo: pr.repo,
               number: pr.number,
               options: {
+                model,
                 questionFrequency: frequency,
                 readTickets,
                 reviewerComment,
@@ -65,6 +68,7 @@ export function PrReviewDialog({
           }
         }}
       >
+        <ModelOverride value={model} onChange={setModel} disabled={busy} />
         <SingleSelect
           label="Частота вопросов"
           value={frequency}

@@ -1,3 +1,4 @@
+import { syncScheduleSchema } from "./sync-schedule.js";
 import type { TicketAnalysisAttachment } from "./chat-ticket-attachment.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import Database from "better-sqlite3";
@@ -52,6 +53,7 @@ export const defaults = {
   statusColors: {} as Record<string, string>,
   typeColors: {} as Record<string, string>,
   syncSeconds: 600,
+  syncSchedule: syncScheduleSchema.parse({}),
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
@@ -144,6 +146,10 @@ export class Store {
         `);
         this.set("migration.reviewRuns", true);
       })();
+    }
+    if (!(this.db.prepare("PRAGMA table_info(pr_reviews)").all() as any[]).some(c => c.name === "model")) {
+      this.db.exec("ALTER TABLE pr_reviews ADD COLUMN model TEXT");
+      this.db.exec("UPDATE pr_reviews SET model=(SELECT model FROM llm_requests WHERE id=pr_reviews.usage_id)");
     }
     this.db
       .prepare(

@@ -18,6 +18,7 @@ export type ReviewQuestion = z.infer<
 >["questions"][number];
 export const reviewOptionsSchema = z
   .object({
+    model: z.string().trim().max(200).default(""),
     questionFrequency: z.enum(["none", "medium", "high"]).default("medium"),
     readTickets: z.boolean().default(true),
     reviewerComment: z.string().trim().max(4000).default(""),

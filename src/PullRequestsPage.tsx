@@ -153,6 +153,7 @@ function ReviewResult({ pr }: any) {
       trigger={<Eye size={16} aria-hidden="true" />}
     >
       <div className="pr-review-result">
+        <small className="muted">Модель: {result.model || "Не сохранена для этого ревью"}</small>
         {previous && (
           <p className="muted">
             Ревью предыдущей версии PR: {result.head?.slice(0, 10)} →{" "}
@@ -232,6 +233,7 @@ function ReviewHistory({ pr }: any) {
             {r.head.slice(0, 10)} → {r.target.slice(0, 10)} ·{" "}
             {statuses[r.status]}
           </small>
+          <div><small className="muted">Модель: {r.model || "Не сохранена для этого ревью"}</small></div>
           {r.summary && <ChatMarkdown text={r.summary} />}
           {r.error && <p className="error">{r.error}</p>}
         </section>

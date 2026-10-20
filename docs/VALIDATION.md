@@ -1067,3 +1067,20 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Short ticket sections can shrink back to content height instead of being forced to a 10vh minimum after dragging. Home and double-click restore automatic height; End retains maximum expansion.
 - Whitespace check passed. Tests skipped at the user's explicit request; build and browser interaction were not exercised.
+
+### Per-request model selection (2026-10-21)
+
+- Added a shared searchable model selector to the PR review launch dialog and chat composer. Empty selection uses settings; model options load on demand from Copilot. Overrides do not modify global settings.
+- Review options retain the selected/resolved model for follow-up runs. Completed review records retain reported usage model(s), falling back to the requested model; current and historical review popups show this information. Existing review records are backfilled from available request logs.
+- TypeScript and whitespace checks passed. Added regression coverage for queued model defaults and explicit overrides, but did not run tests (user preference: only before push). Live Copilot requests and browser interactions were not exercised.
+
+### Shared server model catalog cache (2026-10-21)
+
+- All consumers of /api/copilot/models, including settings, share a 24-hour in-memory cache. Concurrent loads share one request; errors are not cached. GitHub credential/client changes invalidate cached data, and stale in-flight account results are rejected.
+- Cache expires on server restart. Added cache expiry, concurrency, credential change and retry regression cases; tests remain unrun per the user's preference to run them only before push.
+
+### Automatic synchronization schedule and combined validation (2026-10-21)
+
+- Settings now offer always-on synchronization or selected weekday/time windows with an explicit IANA timezone (initially taken from the browser). Overnight windows belong to their starting weekday; equal times mean the whole selected day, and no weekdays pauses automatic synchronization.
+- The automatic scheduler checks the window locally every 30 seconds without contacting integrations outside allowed hours. Manual refreshes and explicitly queued PR reviews remain available. An already-running synchronization is allowed to finish.
+- TypeScript and whitespace checks passed. The full suite (243 tests) was launched under the initial authorization and finished successfully before the user's clarification to skip testing arrived. No further tests were run. This also validates the previously pending model override/cache regression cases. Browser interactions and production build were not exercised.

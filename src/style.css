@@ -8070,3 +8070,22 @@ summary > svg {
 .overview-tooltip-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 2px; }
 .overview-tooltip-row :is(b, strong) { font-size: 10px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .overview-tooltip-total { color: #2f6656; padding-bottom: 3px; margin-bottom: 3px; border-bottom: 1px solid #34495614; }
+
+.model-override { min-width: 0; margin-bottom: 12px; }
+.model-override > small { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+.composer-model { padding: 0 12px; }
+.composer-model .model-override { max-width: 260px; margin-bottom: 6px; }
+.composer-model .single-select { display: flex; align-items: center; gap: 7px; }
+.composer-model .multi-select-label { font-size: 11px; margin: 0; }
+.composer-model .multi-select-trigger { min-width: 0; padding: 5px 8px; min-height: 28px; font-size: 11px; }
+.composer-model .multi-select-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-model .multi-select-panel { top: auto; bottom: calc(100% + 5px); width: min(310px, 100%); }
+
+.sync-schedule-settings { padding: 14px; margin-bottom: 16px; border: 1px solid #dbe3e8; border-radius: 10px; background: #f6f8fa; }
+.sync-time-range { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.sync-time-range label { display: grid; gap: 5px; font-size: 12px; }
+.sync-time-range input { width: 160px; }
+.sync-time-range label:last-child input { width: 210px; }
+.sync-weekdays { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.sync-weekdays button { border: 1px solid #d3dce4; border-radius: 7px; padding: 6px 10px; color: #536573; background: white; }
+.sync-weekdays button[aria-pressed="true"] { background: #e0eee7; border-color: #8eb9a4; color: #235640; }

@@ -1,3 +1,4 @@
+import { syncScheduleSchema } from "./sync-schedule.js";
 import { azureBrowseSchema } from "./azure-browser.js";
 import {
   ticketAnalysisAttachment,
@@ -59,6 +60,7 @@ const settingsSchema = z
     azureProject: text,
     azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
     syncSeconds: z.number().int().min(60).max(3600),
+    syncSchedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
     teamsEnabled: z.boolean().default(false),
     azureAutoImport: z.boolean().default(false),
     azureTypes: z.array(text.min(1)).max(50).default([]),
@@ -539,6 +541,7 @@ export function createApp(
       const v = z
         .object({
           prompt: z.string().trim().min(1).max(16000),
+          model: z.string().trim().max(200).optional(),
           context: contextSchema,
           sessionId: z.string().uuid().optional(),
           selectedTickets: z
@@ -562,7 +565,7 @@ export function createApp(
         ? `${v.prompt}\n\nВыбранные пользователем тикеты в таблице: ${ids.map((id) => `#${id}`).join(", ")}. Это номера, а не содержимое тикетов. При необходимости прочитай данные доступными инструментами; сам выбор не является просьбой изменить тикеты.`
         : v.prompt;
       res.json(
-        await agent.chat(prompt, v.context, false, undefined, v.sessionId),
+        await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model),
       );
     },
   );

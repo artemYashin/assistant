@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   azureLookupSchema,
   azureLookupConsent,
@@ -349,7 +350,44 @@ export class Agent {
     );
     return { stopping: !!this.cancelActive };
   }
+  private modelCache?: {
+    key: string;
+    expires: number;
+    models: Awaited<ReturnType<CopilotClient["listModels"]>>;
+  };
+  private modelRequest?: {
+    key: string;
+    promise: Promise<Awaited<ReturnType<CopilotClient["listModels"]>>>;
+  };
+  private modelCacheKey() {
+    return createHash("sha256")
+      .update(JSON.stringify([this.store.settings().githubClientId, this.store.secret("github.token") || ""]))
+      .digest("hex");
+  }
   async models() {
+    const key = this.modelCacheKey();
+    if (this.modelCache?.key !== key) this.modelCache = undefined;
+    if (this.modelRequest?.key !== key) this.modelRequest = undefined;
+    if (this.modelCache && this.modelCache.expires > Date.now())
+      return this.modelCache.models;
+    if (this.modelRequest) return this.modelRequest.promise;
+    const request = {
+      key,
+      promise: this.loadModels().then((models) => {
+        if (this.modelCacheKey() !== key)
+          throw new AppError(409, "Подключение GitHub изменилось. Откройте список моделей заново.");
+        this.modelCache = { key, models, expires: Date.now() + 24 * 60 * 60 * 1000 };
+        return models;
+      }),
+    };
+    this.modelRequest = request;
+    try {
+      return await request.promise;
+    } finally {
+      if (this.modelRequest === request) this.modelRequest = undefined;
+    }
+  }
+  private async loadModels() {
     const client = this.client();
     try {
       await client.start();
@@ -369,6 +407,7 @@ export class Agent {
     review = false,
     reviewActions?: ReviewActions,
     chatSessionId?: string,
+    modelOverride?: string,
   ) {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
@@ -381,9 +420,9 @@ export class Agent {
     const client = this.client();
     const ledger = new UsageLedger(this.store);
     const settings = this.store.settings();
-    const model = review
+    const model = modelOverride?.trim() || (review
       ? settings.reviewModel || settings.model
-      : settings.model;
+      : settings.model);
     const id = ledger.begin(
       model,
       context,
