@@ -9176,3 +9176,33 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-edit-form > label { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 
 .ticket-formatted code:not(pre code) { background: var(--inline-code-background); padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+/* At most six columns, sized from the available page width (including the chat sidebar). */
+.memory-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(220px, calc((100% - 50px) / 6))), 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.memory-note { min-width: 0; padding: 10px; }
+.memory-note-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.memory-note .memory-note-id { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; }
+.memory-note .memory-note-delete { flex: 0 0 28px; width: 28px; height: 28px; padding: 5px; border: 1px solid #e7bcbc; border-radius: 6px; background: #fbe9e9; color: #b93838; transition: background .1s, border-color .1s; }
+.memory-note .memory-note-delete:hover:not(:disabled) { background: #f7d1d1; border-color: #d58b8b; }
+.memory-note-scope { min-width: 0; overflow-wrap: anywhere; }
+.memory-note-scope .badge { max-width: 100%; white-space: normal; }
+.memory-note .memory-proposal-fields { gap: 6px; margin: 6px 0 8px; }
+.memory-note .memory-proposal-field { padding: 8px; border-radius: 6px; }
+.memory-note .memory-proposal-field-label { margin-bottom: 4px; }
+.memory-note .memory-summary { font-size: 13px; line-height: 1.4; }
+.memory-note .memory-markdown { max-height: 220px; overflow: auto; scrollbar-width: thin; font-size: 12px; }
+.memory-note .memory-note-date { display: block; margin-top: 8px; color: var(--muted); }
+.memory-note .memory-edit-form { margin-top: 8px; }
+.memory-note .memory-edit-form input, .memory-note .memory-edit-form textarea { min-width: 0; width: 100%; }
+.memory-note .card-actions { flex-wrap: wrap; }
+.memory-list-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 16px 0 10px; }
+.memory-search { position: relative; flex: 1 1 220px; max-width: 420px; }
+.memory-search > svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.memory-search > input { width: 100%; padding-left: 34px; }
+.memory-list-toolbar > span, .memory-pagination > span { color: var(--muted); font-size: 12px; }
+.memory-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.memory-pagination > button { min-width: 32px; padding: 6px 10px; }

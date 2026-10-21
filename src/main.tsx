@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { Fragment, useCallback } from "react";
 import { useChatToggleShortcut } from "./useChatToggleShortcut.js";
 import { ExportMemoryButton } from "./ExportMemory.js";
 import { currentRepositoryBranch } from "./repository-branch.js";
@@ -1895,6 +1895,17 @@ function Memory({ memories, context, run, busy }: any) {
   const [scope, setScope] = useState("general"),
     [body, setBody] = useState(""),
     [summary, setSummary] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const filtered = memories.filter((memory: any) =>
+    (memory.summary || "").toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+  );
+  const pageSize = 36;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  useEffect(() => { setPage(1); setSearch(""); }, [context.client, context.project]);
+  useEffect(() => { setPage(currentPage); }, [currentPage]);
   const labels: any = {
     general: "Общая",
     client: "Заказчик",
@@ -1976,10 +1987,24 @@ function Memory({ memories, context, run, busy }: any) {
           Сохранить
         </button>
       </form>
+      <div className="memory-list-toolbar">
+        <label className="memory-search">
+          <Search size={16} aria-hidden="true" />
+          <input aria-label="Поиск памяти по названию" placeholder="Поиск по названию…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
+        </label>
+        <span>Найдено: {filtered.length}</span>
+      </div>
       <div className="memory-grid">
-        {memories.map((m: any) => (
+        {visible.map((m: any) => (
           <article className="panel memory-note" key={m.id}>
-            <div className="section-heading">
+            <div className="memory-note-heading">
+              <small className="memory-note-id" title={m.id}>ID: {m.id}</small>
+              <button className="icon-button memory-note-delete" title="Удалить запись" aria-label="Удалить запись" disabled={!!busy}
+                onClick={() => run(m.id, () => api(`/memories/${m.id}`, "DELETE"), "Запись удалена")}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+            <div className="memory-note-scope">
               <Badge
                 tone={
                   m.scope === "general"
@@ -1996,21 +2021,7 @@ function Memory({ memories, context, run, busy }: any) {
                     ? ` · ${m.client}`
                     : ""}
               </Badge>
-              <button
-                className="icon-button"
-                title="Удалить запись"
-                aria-label="Удалить запись"
-                disabled={!!busy}
-                onClick={() =>
-                  run(
-                    m.id,
-                    () => api(`/memories/${m.id}`, "DELETE"),
-                    "Запись удалена",
-                  )
-                }
-              >
-                <Trash2 size={15} />
-              </button>
+
             </div>
             <MemoryBody
               key={`${m.id}:${m.summary}:${m.body}`}
@@ -2026,10 +2037,24 @@ function Memory({ memories, context, run, busy }: any) {
             ).map((ref: string) => (
               <TicketCard key={ref} reference={ref} />
             ))}
-            <small title={m.id}>ID: {m.id}</small><small>{date(m.created_at)}</small>
+            <small className="memory-note-date">{date(m.created_at)}</small>
           </article>
         ))}
       </div>
+      {filtered.length > 0 && (
+        <nav className="memory-pagination" aria-label="Страницы памяти">
+          <button className="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Назад</button>
+          {Array.from(new Set([1, currentPage - 1, currentPage, currentPage + 1, pageCount]))
+            .filter(value => value >= 1 && value <= pageCount).sort((a, b) => a - b)
+            .map((value, index, pages) => <Fragment key={value}>
+              {index > 0 && value - pages[index - 1] > 1 && <span>…</span>}
+              <button className={value === currentPage ? "primary" : "secondary"} aria-current={value === currentPage ? "page" : undefined} onClick={() => setPage(value)}>{value}</button>
+            </Fragment>)}
+          <button className="secondary" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Далее</button>
+          <span>{currentPage} из {pageCount}</span>
+        </nav>
+      )}
+      {!!memories.length && !filtered.length && <Empty icon={Search} title="Ничего не найдено" description="Измените название в поисковом запросе." />}
       {!memories.length && (
         <Empty
           icon={BookOpen}

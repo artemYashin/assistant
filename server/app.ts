@@ -445,7 +445,7 @@ export function createApp(
   });
   app.get("/api/memories/export", (req, res) => res.json(store.memories(contextSchema.parse(req.query), true)));
   app.get("/api/memories", (req, res) =>
-    res.json(store.memories(contextSchema.parse(req.query))),
+    res.json(store.memories(contextSchema.parse(req.query), true)),
   );
   app.post("/api/memories", (req, res) => {
     const v = z

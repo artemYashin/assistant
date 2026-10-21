@@ -43,10 +43,7 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        {proposal ? <MemoryProposalContent summary={summary} body={body} /> : <>
-          <strong className="memory-summary">{summary}</strong>
-          <MemoryMarkdown body={body} />
-        </>}
+        <MemoryProposalContent summary={summary} body={body} />
         <button
           className="secondary"
           disabled={disabled}
@@ -82,9 +79,9 @@ export function MemoryBody({
         }
       }}
     >
-      <label>{proposal ? "Название" : "Краткое описание"} · 1–2 предложения<input value={short} onChange={event => setShort(event.target.value)} maxLength={320} required disabled={busy} /></label>
+      <label>Название · 1–2 предложения<input value={short} onChange={event => setShort(event.target.value)} maxLength={320} required disabled={busy} /></label>
       <label>
-        {proposal ? "Описание" : "Подробности"} · Markdown
+        Описание · Markdown
         <textarea
           autoFocus
           rows={5}
