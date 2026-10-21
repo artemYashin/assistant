@@ -1252,3 +1252,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Align repository tree content at the top so loading text stays under the column header instead of occupying a stretched grid row.
 - Remove the obsolete tracked source archive and ignore future root archive copies.
 - TypeScript, JavaScript syntax and whitespace checks passed. Added cancellation regression cases but did not run tests at the user's request. Live Docker/Azure cancellation and browser interactions were not exercised.
+
+### Stable file navigation and contextual repository search (2026-10-21)
+
+- Read files without changing the global operation progress panel. Keep the previous file visible while the replacement loads, with a small overlaid loading indicator.
+- Content search returns two surrounding lines on either side from the local snapshot, with line numbers and a marked matching line. Syntax highlighting runs in a bounded worker for the displayed search results; clicking still opens the matching line.
+- Add a draggable File Explorer divider with persisted width, keyboard adjustment and double-click reset. Narrow layouts keep stacked panels. Use thin scrollbars for the explorer and search dropdown.
+- TypeScript, JavaScript syntax and whitespace checks passed. Tests were skipped as requested. Browser interaction and live Docker/Azure checks were not performed.

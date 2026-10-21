@@ -46,11 +46,34 @@ function RepositoryView({ context }: { context: Context }) {
     finally { cancellingRef.current = false; setCancelling(false); setBusy(false); setFileBusy(false); }
   }
   const chooseBranch = (value: string) => { if (value !== branch) void cancelCurrent(value); };
+  const workspace = useRef<HTMLDivElement>(null);
+  const [treeWidth, setTreeWidth] = useState(() => {
+    try { const value = Number(localStorage.getItem("repository-tree-width")); return value >= 160 && value <= 600 ? value : 280; }
+    catch { return 280; }
+  });
+  const [resizing, setResizing] = useState(false);
+  useEffect(() => {
+    if (!resizing) return;
+    const move = (event: PointerEvent) => {
+      const rect = workspace.current?.getBoundingClientRect();
+      if (rect) setTreeWidth(Math.round(Math.max(160, Math.min(600, rect.width - 240, event.clientX - rect.left))));
+    };
+    const end = () => setResizing(false);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    window.addEventListener("blur", end);
+    return () => {
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end); window.removeEventListener("blur", end);
+    };
+  }, [resizing]);
+  useEffect(() => { if (!resizing) { try { localStorage.setItem("repository-tree-width", String(treeWidth)); } catch { /* Optional preference. */ } } }, [treeWidth, resizing]);
   const snapshot = useRef<Status | null>(null);
   snapshot.current = status;
   const request = useCallback<Request>((operation, extra = {}) => {
     const body = { ...context, branch, operation, ...(["tree", "file", "search"].includes(operation) && snapshot.current ? { revision: snapshot.current.sha } : {}), ...extra };
-    return operation === "tree" ? api("/code-browser", "POST", body) : execute(body);
+    return ["tree", "file"].includes(operation) ? api("/code-browser", "POST", body) : execute(body);
   }, [context.client, context.project, branch, execute]);
   useEffect(() => {
     let live = true;
@@ -92,10 +115,10 @@ function RepositoryView({ context }: { context: Context }) {
   }, [branch, refresh]);
   async function openFile(path: string, line?: number) {
     const current = ++fileRequest.current, scope = generation.current;
-    setFileBusy(true); setError(""); setLine(line); setFile(null);
+    setFileBusy(true); setError("");
     try {
       const next = await request("file", { path });
-      if (scope === generation.current && current === fileRequest.current) setFile(next);
+      if (scope === generation.current && current === fileRequest.current) { setFile(next); setLine(line); }
     } catch (e: any) { if (scope === generation.current && current === fileRequest.current) setError(e.message); }
     finally { if (scope === generation.current && current === fileRequest.current) setFileBusy(false); }
   }
@@ -110,7 +133,7 @@ function RepositoryView({ context }: { context: Context }) {
       <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={cancelling || !branches.length} /></div>
       <button className="secondary" title="Проверить обновления репозитория" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить</button>
       <button className="secondary repository-pull" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
-      {(busy || fileBusy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
+      {(busy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
     </div>
     <CodeProgress progress={progress} />
@@ -128,13 +151,20 @@ function RepositoryView({ context }: { context: Context }) {
     <div className="repository-browser">
     <RepositorySearch key={branch + ":" + (status?.sha || "")} context={context} branch={branch} revision={status?.sha || ""}
       disabled={busy || !status} onOpen={(path, line) => void openFile(path, line)} />
-    <div className={`repository-workspace${!file && !fileBusy ? " is-browsing" : ""}`} aria-busy={busy}>
+    <div ref={workspace} className={`repository-workspace${!file && !fileBusy ? " is-browsing" : ""}${resizing ? " is-resizing" : ""}`} style={{ "--repository-tree-width": treeWidth + "px" } as import("react").CSSProperties} aria-busy={busy}>
+      {(file || fileBusy) && <div className="repository-tree-resizer" role="separator" aria-label="Ширина списка файлов" aria-orientation="vertical" aria-valuemin={160} aria-valuemax={600} aria-valuenow={treeWidth} tabIndex={0}
+        onPointerDown={event => { if (event.button !== 0) return; event.preventDefault(); setResizing(true); }}
+        onKeyDown={event => {
+          if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setTreeWidth(value => Math.max(160, Math.min(600, value + (event.key === "ArrowLeft" ? -10 : 10)))); }
+          if (event.key === "Home") { event.preventDefault(); setTreeWidth(280); }
+        }} onDoubleClick={() => setTreeWidth(280)} />}
       <nav className="repository-tree" aria-label="Файлы репозитория">
         {!file && !fileBusy && <div className="repository-tree-columns" aria-hidden="true"><span>Имя</span><span>Тип</span><span>Размер</span></div>}
         {status && !busy ? <Directory key={branch + status.sha} path="" request={request} selected={file?.path} onFile={path => void openFile(path)} /> : <p className="muted">{busy ? "Подготавливаю снимок…" : "Выберите доступную ветку."}</p>}
       </nav>
       {(file || fileBusy) && <div className={`repository-file${!file ? " is-empty" : ""}`}>
-        {fileBusy ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong><button className="secondary" onClick={closeFile}>Закрыть</button></div> : file ? <>
+        {fileBusy && file && <span className="repository-file-loading" role="status"><LoaderCircle size={14} className="spin" />Загрузка…</span>}
+        {fileBusy && !file ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong><button className="secondary" onClick={closeFile}>Закрыть</button></div> : file ? <>
           <header><RepositoryFileIcon name={file.path} /><strong>{file.path}</strong><small>{file.size === undefined ? "" : repositoryFileSize(file.size)} · {file.sha.slice(0, 10)}</small>
             <button type="button" className="icon-button repository-close-file" onClick={closeFile} title="Закрыть файл" aria-label="Закрыть файл"><X size={16} /></button></header>
           {file.unavailable ? <p className="muted">{file.unavailable}</p> : <>

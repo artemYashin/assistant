@@ -4078,24 +4078,24 @@ summary > svg {
 .pr-diff-language .single-select { width: 100%; }
 .pr-diff-language .multi-select-panel { position: absolute; z-index: 5; }
 .pr-diff-language .multi-select-options { max-height: min(260px, 35vh); }
-:is(.pr-diff-line, .repository-source) .hljs-keyword,
-:is(.pr-diff-line, .repository-source) .hljs-selector-tag { color: #c21845; }
-:is(.pr-diff-line, .repository-source) .hljs-string,
-:is(.pr-diff-line, .repository-source) .hljs-regexp { color: #006b52; }
-:is(.pr-diff-line, .repository-source) .hljs-attr { color: #0759ca; }
-:is(.pr-diff-line, .repository-source) .hljs-number,
-:is(.pr-diff-line, .repository-source) .hljs-literal { color: #b04400; }
-:is(.pr-diff-line, .repository-source) .hljs-variable { color: #0759ca; }
-:is(.pr-diff-line, .repository-source) .hljs-title,
-:is(.pr-diff-line, .repository-source) .hljs-built_in,
-:is(.pr-diff-line, .repository-source) .hljs-type { color: #7c28cc; }
-:is(.pr-diff-line, .repository-source) .hljs-comment,
-:is(.pr-diff-line, .repository-source) .hljs-quote { color: #536b80; font-style: italic; }
-:is(.pr-diff-line, .repository-source) .hljs-meta,
-:is(.pr-diff-line, .repository-source) .hljs-name,
-:is(.pr-diff-line, .repository-source) .hljs-tag { color: #a44800; }
-:is(.pr-diff-line, .repository-source) .hljs-operator,
-:is(.pr-diff-line, .repository-source) .hljs-punctuation { color: #384651; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-keyword,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-selector-tag { color: #c21845; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-string,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-regexp { color: #006b52; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-attr { color: #0759ca; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-number,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-literal { color: #b04400; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-variable { color: #0759ca; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-title,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-built_in,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-type { color: #7c28cc; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-comment,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-quote { color: #536b80; font-style: italic; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-meta,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-name,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-tag { color: #a44800; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-operator,
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-punctuation { color: #384651; }
 .pr-diff-number {
   position: relative;
   color: #68727d;
@@ -8614,3 +8614,27 @@ summary > svg {
 .repository-autocomplete-name small { flex-shrink: 0; font-size: 10px; color: #718292; }
 .repository-autocomplete-path, .repository-autocomplete-hit code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.4; color: #7c8c99; }
 .repository-autocomplete-hit code { color: #506577; background: transparent; padding: 0; }
+
+.repository-file { position: relative; }
+.repository-file-loading { position: absolute; top: 45px; right: 12px; z-index: 2; display: flex; align-items: center; gap: 5px; padding: 5px 8px; background: #fffffff2; border: 1px solid #d6dfe7; border-radius: 5px; font-size: 11px; }
+.repository-search-code { display: block; overflow: hidden; margin-top: 4px; padding: 3px 0; background: #f7f9fb; border: 1px solid #e1e7ed; border-radius: 4px; }
+.repository-search-code-line { display: flex; min-width: 0; line-height: 1.5; }
+.repository-search-code-line[data-match="true"] { background: #dcecf9; }
+.repository-search-line-number { flex: 0 0 4em; padding-right: 8px; text-align: right; color: #8998a5; font: 10px/1.65 monospace; }
+.repository-autocomplete-hit .repository-search-code code { white-space: pre; min-width: 0; font-size: 11px; }
+
+.repository-workspace { position: relative; grid-template-columns: min(var(--repository-tree-width, 280px), 55%) minmax(0, 1fr); }
+.repository-workspace.is-browsing { grid-template-columns: minmax(0, 1fr); }
+.repository-tree-resizer { position: absolute; z-index: 3; top: 0; bottom: 0; left: min(var(--repository-tree-width, 280px), 55%); width: 9px; transform: translateX(-50%); cursor: col-resize; touch-action: none; }
+.repository-tree-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: #cdd8e1; transition: background .12s; }
+.repository-tree-resizer:hover::after, .repository-tree-resizer:focus-visible::after, .is-resizing .repository-tree-resizer::after { background: #4e92c5; width: 2px; }
+.repository-workspace.is-resizing { user-select: none; cursor: col-resize; }
+.repository-tree, .repository-autocomplete { scrollbar-width: thin; scrollbar-color: #a8b6c3 transparent; }
+.repository-tree::-webkit-scrollbar, .repository-autocomplete::-webkit-scrollbar { width: 6px; height: 6px; }
+.repository-tree::-webkit-scrollbar-thumb, .repository-autocomplete::-webkit-scrollbar-thumb { background: #a8b6c3; border-radius: 6px; }
+.repository-tree::-webkit-scrollbar-thumb:hover, .repository-autocomplete::-webkit-scrollbar-thumb:hover { background: #7c91a3; }
+.repository-tree::-webkit-scrollbar-track, .repository-autocomplete::-webkit-scrollbar-track { background: transparent; }
+@media (max-width: 900px) {
+  .repository-workspace { grid-template-columns: minmax(0, 1fr); }
+  .repository-tree-resizer { display: none; }
+}

@@ -263,6 +263,20 @@ export class RepositoryBrowser {
     report({ stage: 'searching' });
     const output = await run('rg', ['--json', '--hidden', '--no-ignore', '--fixed-strings', '--ignore-case', '--max-count', '20', '--', query, '.'], { signal, cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
     const matches = output.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)).filter(item => item.type === 'match');
-    return { sha: state.sha, results: matches.slice(offset, offset + 200).map(({ data }) => ({ path: data.path.text.replace(/^\.\//, ''), line: data.line_number, text: data.lines.text.slice(0, 500).trimEnd() })), more: matches.length > offset + 200, total: matches.length, coverage, perFileLimit: 20 };
+    const results = [];
+    let previousPath, lines;
+    for (const { data } of matches.slice(offset, offset + 200)) {
+      checkCancelled();
+      const filePath = data.path.text.replace(/^\.\//, '');
+      if (!safePath(filePath)) continue;
+      if (previousPath !== filePath) {
+        lines = (await fs.readFile(path.join(snapshot, 'files', filePath), 'utf8')).split(/\r?\n/);
+        previousPath = filePath;
+      }
+      const start = Math.max(0, data.line_number - 3);
+      results.push({ path: filePath, line: data.line_number, text: data.lines.text.slice(0, 500).trimEnd(),
+        context: lines.slice(start, data.line_number + 2).map((text, index) => ({ number: start + index + 1, text: text.slice(0, 500) })) });
+    }
+    return { sha: state.sha, results, more: matches.length > offset + 200, total: matches.length, coverage, perFileLimit: 20 };
   }
 }

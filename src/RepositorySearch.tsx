@@ -2,9 +2,11 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { LoaderCircle, Search, X } from "lucide-react";
 import { apiProgress } from "./api.js";
+import { diffLanguage } from "./diff-languages.js";
+import type { CodeToken } from "./diff-highlight.js";
 import { RepositoryFileIcon } from "./RepositoryFileKind.js";
 
-type Hit = { path: string; line?: number; text?: string };
+type Hit = { path: string; line?: number; text?: string; context?: { number: number; text: string }[] };
 type Results = { results: Hit[]; total: number; more: boolean; coverage?: { searchedFiles: number; skippedFiles: number }; perFileLimit?: number };
 type Task = { query: string; mode: string; version: number };
 export function RepositorySearch({ context, branch, revision, disabled, onOpen }: {
@@ -20,6 +22,18 @@ export function RepositorySearch({ context, branch, revision, disabled, onOpen }
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined), controller = useRef<AbortController | null>(null);
   const cache = useRef(new Map<string, Results>()), id = useId();
   const hits = results?.results.slice(0, 50) || [];
+  const [highlighted, setHighlighted] = useState<CodeToken[][][]>([]);
+  useEffect(() => {
+    setHighlighted([]);
+    if (!results?.results.some(hit => hit.context)) return;
+    const worker = new Worker(new URL("./repository-search-highlight.worker.ts", import.meta.url), { type: "module" });
+    const timer = window.setTimeout(() => worker.terminate(), 4000);
+    worker.onmessage = event => { setHighlighted(event.data); clearTimeout(timer); worker.terminate(); };
+    worker.postMessage(results.results.slice(0, 50).map(hit => ({
+      language: diffLanguage(hit.path), code: hit.context?.map(line => line.text).join("\n") || "",
+    })));
+    return () => { clearTimeout(timer); worker.terminate(); };
+  }, [results]);
   const visible = open && !!query.trim() && !disabled;
   useEffect(() => {
     alive.current = true;
@@ -127,7 +141,12 @@ export function RepositorySearch({ context, branch, revision, disabled, onOpen }
             <span className="repository-autocomplete-hit-body">
               <span className="repository-autocomplete-name"><strong>{hit.path.slice(slash + 1)}</strong>{hit.line && <small>строка {hit.line}</small>}</span>
               {slash >= 0 && <span className="repository-autocomplete-path" title={hit.path}>{hit.path.slice(0, slash)}</span>}
-              {hit.text !== undefined && <code>{hit.text.trim().slice(0, 220)}</code>}
+              {hit.context ? <span className="repository-search-code">{hit.context.map((row, rowIndex) =>
+                <span className="repository-search-code-line" data-match={row.number === hit.line} key={row.number}>
+                  <span className="repository-search-line-number">{row.number}</span><code>{highlighted[index]?.[rowIndex]?.length
+                    ? highlighted[index][rowIndex].map((token, tokenIndex) => <span className={token.className} key={tokenIndex}>{token.text}</span>)
+                    : row.text || " "}</code>
+                </span>)}</span> : hit.text !== undefined && <code>{hit.text.trim().slice(0, 220)}</code>}
             </span>
           </button>;
         })}
