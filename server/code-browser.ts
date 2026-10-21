@@ -1,6 +1,6 @@
 import { syncAllowed } from "./sync-schedule.js";
 import { readCodeStream, type CodeProgress } from "./code-progress.js";
-import { randomBytes, createHash } from "node:crypto";
+import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import type { Monitor } from "./pull-requests.js";
 
 export const codeBrowserSchema = z.object({
   client: z.string().min(1).max(200), project: z.string().min(1).max(200),
-  operation: z.enum(["branches", "status", "pull", "tree", "file", "search"]),
+  operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "cancel"]),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
   revision: z.string().regex(/^[0-9a-f]{40,64}$/).optional(),
@@ -23,10 +23,27 @@ type CodeSyncState = {
 export class CodeBrowser {
   private serviceKey?: Promise<string>;
   private syncing = false;
+  private active = new Map<string, { client: string; project: string; branch: string; operation: string; cancelled: boolean }>();
   private repositories = new Map<string, { id: string; expires: number }>();
   constructor(private store: Store) {}
   async request(raw: unknown, report?: (progress: CodeProgress) => void, background = false) {
     const input = codeBrowserSchema.parse(raw);
+    if (input.operation === "cancel") {
+      const ids: string[] = [];
+      for (const [id, active] of this.active) {
+        if (active.client === input.client && active.project === input.project && (active.branch === input.branch || active.operation === "branches")) {
+          active.cancelled = true; ids.push(id);
+        }
+      }
+      return this.requestInternal(input, report, background, undefined, ids);
+    }
+    const id = randomUUID();
+    this.active.set(id, { ...input, cancelled: false });
+    try { return await this.requestInternal(input, report, background, id); }
+    finally { this.active.delete(id); }
+  }
+  private async requestInternal(input: z.infer<typeof codeBrowserSchema>, report?: (progress: CodeProgress) => void, background = false, requestId?: string, cancelledRequestIds: string[] = []) {
+    const checkCancelled = () => { if (requestId && this.active.get(requestId)?.cancelled) throw new AppError(409, "Операция Git отменена."); };
     report?.({ stage: "connecting" });
     const settings = this.store.settings(input);
     const monitor = this.store.db.prepare("SELECT * FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? ORDER BY enabled DESC LIMIT 1")
@@ -67,13 +84,14 @@ export class CodeBrowser {
       })().catch(error => { this.serviceKey = undefined; throw error; });
     }
     const key = await this.serviceKey;
+    checkCancelled();
     const fetchTimeoutSeconds = monitor.fetch_timeout_seconds || 300;
     const deadline = AbortSignal.timeout((fetchTimeoutSeconds + 180) * 1000);
     let response: Response;
     try {
       response = await fetch(`${service.replace(/\/$/, "")}/v1/repository`, {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, Accept: "application/x-ndjson" },
-        body: JSON.stringify({ ...input, url, token, fetchTimeoutSeconds }), redirect: "error", signal: deadline,
+        body: JSON.stringify({ ...input, url, token, fetchTimeoutSeconds, requestId, cancelledRequestIds }), redirect: "error", signal: deadline,
       });
     } catch {
       throw new AppError(503, deadline.aborted ? "Истекло время ожидания сервиса кода. Увеличьте тайм-аут Git в настройках репозитория и повторите запрос." : "Нет соединения с сервисом кода. Проверьте, что контейнер code-browser запущен.");
@@ -89,6 +107,7 @@ export class CodeBrowser {
     }
     if (!response.ok) throw new AppError(response.status, data?.error || "Ошибка сервиса кода");
     if (!data) throw new AppError(502, "Некорректный ответ сервиса кода");
+    checkCancelled();
     const syncKey = "code-sync:" + monitor.id;
     if (!background && ["status", "pull"].includes(input.operation) && typeof data.sha === "string" && Number.isFinite(Date.parse(data.checkedAt))) {
       const previous = this.store.get<CodeSyncState | null>(syncKey, null);

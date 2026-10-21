@@ -1244,3 +1244,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Replaced the search result sidebar with a positioned dropdown anchored to the input. Path/content search runs after 600 ms; Enter can search immediately. Results use compact filename/path/snippet rows, bounded scrolling, keyboard selection and direct file/line navigation.
 - Keep the file tree visible. Serialize autocomplete requests, replace obsolete pending queries, ignore stale responses and retain up to ten query results per mounted snapshot. Limit displayed suggestions to 50 with an explicit refine-query hint and search coverage information.
 - TypeScript and whitespace checks passed. Tests were not run at the user's request; browser interactions were not exercised.
+
+### Cancel repository work and compact loading layout (2026-10-21)
+
+- Added explicit cancellation of running and queued work for the current repository branch. Stop the Git/ripgrep process group, wait for completion before advancing the queue, and reject delayed requests already marked cancelled. Retain completed cached data.
+- Allow branch selection during downloads; cancel previous branch work before switching and ignore stale UI responses. Remove the redundant branch-refresh icon; Check still refreshes the catalog.
+- Align repository tree content at the top so loading text stays under the column header instead of occupying a stretched grid row.
+- Remove the obsolete tracked source archive and ignore future root archive copies.
+- TypeScript, JavaScript syntax and whitespace checks passed. Added cancellation regression cases but did not run tests at the user's request. Live Docker/Azure cancellation and browser interactions were not exercised.

@@ -65,3 +65,36 @@ test('page reload uses cached branches and observes the running pull', async () 
   assert.deepEqual(await pull, await status);
   assert.equal(calls, 1);
 });
+
+test('cancel waits for running cleanup and removes queued work only in its scope', async () => {
+  const jobs = new RepositoryJobs();
+  let finish, stopped = false, queuedCalled = false;
+  const first = jobs.run('running', async (_report, signal) => {
+    await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }));
+    await new Promise(resolve => { finish = resolve; });
+    stopped = true;
+    throw signal.reason;
+  }, undefined, undefined, { scope: 'old' });
+  const queued = jobs.run('queued', async () => { queuedCalled = true; }, undefined, undefined, { scope: 'old' });
+  const other = jobs.run('other', async () => { assert.equal(stopped, true); return 'next'; }, undefined, undefined, { scope: 'new' });
+  const settled = Promise.allSettled([first, queued]);
+  await new Promise(resolve => setImmediate(resolve));
+  let cancelled = false;
+  const cancellation = jobs.cancel(job => job.scope === 'old').then(count => { cancelled = true; return count; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(cancelled, false);
+  finish();
+  assert.equal(await cancellation, 2);
+  assert.equal(await other, 'next');
+  assert.equal(queuedCalled, false);
+  assert.deepEqual((await settled).map(result => result.status), ['rejected', 'rejected']);
+});
+
+test('cancelled request cannot start after a delayed arrival', async () => {
+  const { RepositoryBrowser } = await import('./engine.mjs');
+  const browser = new RepositoryBrowser('/unused');
+  browser.perform = async () => { throw new Error('must not start'); };
+  const input = { url: 'https://example.test/repo', token: 'credential', branch: 'old' };
+  await browser.execute({ ...input, operation: 'cancel', cancelledRequestIds: ['late'] });
+  await assert.rejects(browser.execute({ ...input, operation: 'pull', requestId: 'late' }), /отменена/);
+});

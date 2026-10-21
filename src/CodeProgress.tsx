@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiProgress } from "./api.js";
 
 const labels: Record<string, string> = {
+  cancelled: "Операция отменена",
   recovering: "Восстановление после прерванной загрузки",
   connecting: "Подключение к репозиторию", queued: "Ожидание очереди", preparing: "Подготовка кеша",
   fetching: "Получение Git-данных", counting: "Подсчёт объектов", compressing: "Сжатие объектов",
@@ -33,7 +34,13 @@ export function useCodeProgress() {
       throw error;
     } finally { controllers.current.delete(controller); }
   }, []);
-  return { progress, execute };
+  const stop = useCallback(() => {
+    sequence.current++;
+    for (const controller of controllers.current) controller.abort();
+    controllers.current.clear();
+    setProgress(previous => previous ? { ...previous, stage: "cancelled", ended: Date.now() } : null);
+  }, []);
+  return { progress, execute, stop };
 }
 function formatBytes(value: number) {
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];

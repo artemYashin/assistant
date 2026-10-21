@@ -1,4 +1,4 @@
-import { RepositoryJobs, QueueError } from './jobs.mjs';
+import { RepositoryJobs, QueueError, CancelledError } from './jobs.mjs';
 import { recoverShallowLock } from './recovery.mjs';
 import { gitDiagnostic } from './diagnostics.mjs';
 import { gitProgressParser } from './progress.mjs';
@@ -17,10 +17,19 @@ export function safePath(value) {
   return typeof value === 'string' && !value.includes('\\') && !value.includes('\0') && !value.startsWith('/') &&
     value.split('/').every(p => p && p !== '.' && p !== '..' && p.toLowerCase() !== '.git');
 }
-function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0], onProgress, timeoutMessage } = {}) {
+export function run(command, args, { signal: abortSignal, cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0], onProgress, timeoutMessage } = {}) {
   return new Promise((resolve, reject) => {
+    if (abortSignal?.aborted) return reject(new CancelledError());
     const child = spawn(command, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
-    let chunks = [], size = 0, stderr = '', failure;
+    let chunks = [], size = 0, stderr = '', failure, killTimer;
+    const killGroup = signal => { try { process.kill(-child.pid, signal); } catch { child.kill(signal); } };
+    const cancel = () => {
+      failure = new CancelledError();
+      killGroup('SIGTERM');
+      killTimer = setTimeout(() => killGroup('SIGKILL'), 2000);
+    };
+    abortSignal?.addEventListener('abort', cancel, { once: true });
+    const cleanup = () => { clearTimeout(timer); clearTimeout(killTimer); abortSignal?.removeEventListener('abort', cancel); };
     const stop = message => { failure = new BrowserError(message, 422); try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } };
     const timer = setTimeout(() => stop(timeoutMessage || 'Операция превысила время ожидания. Повторите позже.'), timeout);
     child.stdout.on('data', chunk => {
@@ -30,9 +39,9 @@ function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout
     });
     const parseProgress = onProgress ? gitProgressParser(onProgress) : null;
     child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-16384); parseProgress?.(chunk); });
-    child.on('error', () => { clearTimeout(timer); reject(new BrowserError('Git/ripgrep недоступен в сервисе просмотра кода.', 503)); });
+    child.on('error', () => { cleanup(); reject(new BrowserError('Git/ripgrep недоступен в сервисе просмотра кода.', 503)); });
     child.on('close', (code, signal) => {
-      clearTimeout(timer);
+      cleanup();
       if (failure) return reject(failure);
       if (!accept.includes(code)) {
         const operation = command === 'rg' ? 'rg' : args.find(arg => !arg.startsWith('--git-dir='));
@@ -46,11 +55,12 @@ function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout
     child.stdin.end(input);
   });
 }
-async function diskSize(root) {
+async function diskSize(root, signal) {
+  if (signal?.aborted) throw new CancelledError();
   let total = 0;
   for (const item of await fs.readdir(root, { withFileTypes: true }).catch(() => [])) {
     const file = path.join(root, item.name);
-    total += item.isDirectory() ? await diskSize(file) : (await fs.lstat(file)).size;
+    total += item.isDirectory() ? await diskSize(file, signal) : (await fs.lstat(file)).size;
   }
   return total;
 }
@@ -60,12 +70,19 @@ export class RepositoryBrowser {
     if (!Number.isSafeInteger(maxCacheBytes) || maxCacheBytes <= 0) throw new Error('CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer');
     this.fetchDepth = fetchDepth;
     this.recoverLocks = recoverLocks; this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
-    this.jobs = new RepositoryJobs(); this.branchesCache = new Map();
+    this.cancelledRequests = new Map(); this.jobs = new RepositoryJobs(); this.branchesCache = new Map();
   }
   async execute(input, report = () => {}, signal) {
     // Reopening the page must get its branch selector without waiting behind its
     // own fetch. During that fetch the last known catalog remains sufficient.
     const identity = hash(JSON.stringify([input.url, input.token]));
+    for (const [id, expires] of this.cancelledRequests) if (expires < Date.now()) this.cancelledRequests.delete(id);
+    if (input.operation === 'cancel') {
+      for (const id of input.cancelledRequestIds || []) this.cancelledRequests.set(id, Date.now() + 10 * 60000);
+      const cancelled = await this.jobs.cancel(job => job.scope === identity && (job.branch === (input.branch || '') || job.operation === 'branches'));
+      return { cancelled };
+    }
+    if (input.requestId && this.cancelledRequests.has(input.requestId)) throw new BrowserError('Операция Git отменена.', 409);
     const branchKey = hash(input.url + input.token);
     const catalog = this.branchesCache.get(branchKey);
     if (input.operation === 'branches' && !input.refresh && catalog) return catalog.result;
@@ -81,10 +98,12 @@ export class RepositoryBrowser {
       const status = this.jobs.jobs.find(job => job.key === keyFor('status'));
       key = pull?.key || status?.key || key;
     }
-    try { return await this.jobs.run(key, progress => this.perform(input, progress), report, signal); }
-    catch (error) { if (error instanceof QueueError) throw new BrowserError(error.message, 429); throw error; }
+    try { return await this.jobs.run(key, (progress, jobSignal) => this.perform(input, progress, jobSignal), report, signal, { scope: identity, branch: input.branch || '', operation: input.operation }); }
+    catch (error) { if (error instanceof CancelledError) throw new BrowserError(error.message, 409); if (error instanceof QueueError) throw new BrowserError(error.message, 429); throw error; }
   }
-  async perform(input, report) {
+  async perform(input, report, signal) {
+    const checkCancelled = () => { if (signal?.aborted) throw new CancelledError(); };
+    checkCancelled();
     report({ stage: "preparing" });
     const fetchTimeoutSeconds = input.fetchTimeoutSeconds ?? 300;
     if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 1800) throw new BrowserError('Тайм-аут Git должен быть от 60 до 1800 секунд');
@@ -108,8 +127,8 @@ export class RepositoryBrowser {
       GIT_CONFIG_KEY_3: 'core.hooksPath', GIT_CONFIG_VALUE_3: '/dev/null',
       GIT_CONFIG_KEY_4: 'protocol.allow', GIT_CONFIG_VALUE_4: 'never',
       GIT_CONFIG_KEY_5: `protocol.${this.allowLocal && remote.protocol === 'file:' ? 'file' : 'https'}.allow`, GIT_CONFIG_VALUE_5: 'always' };
-    const git = (args, options = {}) => run('git', ['--git-dir=' + gitDir, ...args], { env, ...options });
-    if (!await fs.stat(gitDir).catch(() => null)) await run('git', ['init', '--bare', gitDir], { env });
+    const git = (args, options = {}) => run('git', ['--git-dir=' + gitDir, ...args], { env, signal, ...options });
+    if (!await fs.stat(gitDir).catch(() => null)) await run('git', ['init', '--bare', gitDir], { env, signal });
     if (operation === 'branches') {
       const key = hash(url + token); const cached = this.branchesCache.get(key);
       const catalogPath = path.join(repo, 'branches-' + hash(token) + '.json');
@@ -125,6 +144,7 @@ export class RepositoryBrowser {
       const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], networkOptions)).toString();
       const branches = output.split('\n').flatMap(line => /^[0-9a-f]{40,64}\trefs\/heads\//.test(line) ? [line.split('\t')[1].slice(11)] : []).sort();
       const result = { branches: branches.slice(0, 5000), more: branches.length > 5000, defaultBranch: /^ref: refs\/heads\/(.+)\tHEAD$/m.exec(output)?.[1] || branches[0] || '', checkedAt: new Date().toISOString() };
+      checkCancelled();
       const temporaryCatalog = catalogPath + '.' + randomUUID() + '.tmp';
       await fs.writeFile(temporaryCatalog, JSON.stringify(result));
       await fs.rename(temporaryCatalog, catalogPath);
@@ -139,7 +159,7 @@ export class RepositoryBrowser {
     const remoteRef = 'refs/orbit/remote/' + branchKey;
     if (!state || operation === 'pull' || (operation === 'status' && input.refresh)) {
       const quotaMessage = size => `Кеш кода занимает ${(size / 1024 ** 3).toFixed(2)} GiB при лимите ${(this.maxCacheBytes / 1024 ** 3).toFixed(2)} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.`;
-      const before = await diskSize(this.root);
+      const before = await diskSize(this.root, signal);
       if (before >= this.maxCacheBytes) throw new BrowserError(quotaMessage(before), 507);
       if (this.recoverLocks) {
         try { await recoverShallowLock(gitDir, { report }); }
@@ -147,7 +167,7 @@ export class RepositoryBrowser {
       }
       report({ stage: 'fetching' });
       await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=' + this.fetchDepth, url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
-      const after = await diskSize(this.root);
+      const after = await diskSize(this.root, signal);
       if (after > this.maxCacheBytes) throw new BrowserError(quotaMessage(after), 507);
       report({ stage: 'finalizing' });
       const remoteSha = (await git(['rev-parse', remoteRef])).toString().trim();
@@ -155,6 +175,7 @@ export class RepositoryBrowser {
       // Keep the displayed snapshot reachable even after fetching new commits.
       await git(['update-ref', 'refs/orbit/cached/' + branchKey, sha]);
       state = { sha, remoteSha, checkedAt: new Date().toISOString(), branch };
+      checkCancelled();
       const tmp = stateFile + '.tmp'; await fs.writeFile(tmp, JSON.stringify(state)); await fs.rename(tmp, stateFile);
     }
     if (operation === 'status' || operation === 'pull') {
@@ -163,7 +184,7 @@ export class RepositoryBrowser {
         try {
           await git(['merge-base', '--is-ancestor', state.sha, state.remoteSha]);
           behind = Number((await git(['rev-list', '--count', state.sha + '..' + state.remoteSha])).toString().trim());
-        } catch { /* Shallow or rewritten history: never invent a count. */ }
+        } catch { checkCancelled(); /* Shallow or rewritten history: never invent a count. */ }
       }
       return { ...state, behind, current: state.sha === state.remoteSha };
     }
@@ -217,10 +238,11 @@ export class RepositoryBrowser {
           if (!/^100(644|755)$/.test(file.mode) || !safePath(file.path) || file.size > FILE_LIMIT || selected.length >= 20000 || total + file.size > SNAPSHOT_LIMIT) continue;
           selected.push(file); total += file.size;
         }
-        if (await diskSize(this.root) + total > this.maxCacheBytes) throw new BrowserError('Недостаточно места в лимите кеша для поискового снимка.', 507);
+        if (await diskSize(this.root, signal) + total > this.maxCacheBytes) throw new BrowserError('Недостаточно места в лимите кеша для поискового снимка.', 507);
         const blobs = await git(['cat-file', '--batch'], { input: selected.map(f => f.oid).join('\n') + '\n', limit: SNAPSHOT_LIMIT + 4 * 1024 * 1024, timeout: 60000 });
         let cursor = 0, included = 0, processed = 0;
         for (const file of selected) {
+          checkCancelled();
           processed++;
           if (processed === 1 || processed % 50 === 0 || processed === selected.length) report({ stage: 'snapshot', percent: Math.floor((processed - 1) / selected.length * 100) });
           const end = blobs.indexOf(10, cursor); const header = blobs.subarray(cursor, end).toString().split(' ');
@@ -239,7 +261,7 @@ export class RepositoryBrowser {
       } catch (error) { await fs.rm(tmp, { recursive: true, force: true }); throw error; }
     }
     report({ stage: 'searching' });
-    const output = await run('rg', ['--json', '--hidden', '--no-ignore', '--fixed-strings', '--ignore-case', '--max-count', '20', '--', query, '.'], { cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
+    const output = await run('rg', ['--json', '--hidden', '--no-ignore', '--fixed-strings', '--ignore-case', '--max-count', '20', '--', query, '.'], { signal, cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
     const matches = output.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)).filter(item => item.type === 'match');
     return { sha: state.sha, results: matches.slice(offset, offset + 200).map(({ data }) => ({ path: data.path.text.replace(/^\.\//, ''), line: data.line_number, text: data.lines.text.slice(0, 500).trimEnd() })), more: matches.length > offset + 200, total: matches.length, coverage, perFileLimit: 20 };
   }

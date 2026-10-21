@@ -19,19 +19,33 @@ export function CodeBrowserPage({ context }: { context: Context }) {
   return <RepositoryView key={JSON.stringify(context)} context={context} />;
 }
 function RepositoryView({ context }: { context: Context }) {
-  const { progress, execute } = useCodeProgress();
+  const { progress, execute, stop } = useCodeProgress();
   const branchStorageKey = "repository-branch:" + JSON.stringify(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
-  const chooseBranch = (value: string) => {
-    try { sessionStorage.setItem(branchStorageKey, value); } catch { /* Storage can be unavailable. */ }
-    setBranch(value);
-  };
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
   const [status, setStatus] = useState<Status | null>(null), [busy, setBusy] = useState(true), [error, setError] = useState("");
   const [branchNote, setBranchNote] = useState("");
   const [branchReload, setBranchReload] = useState(0);
   const [file, setFile] = useState<File | null>(null), [fileBusy, setFileBusy] = useState(false), [line, setLine] = useState<number | undefined>();
   const generation = useRef(0), fileRequest = useRef(0);
+  const [cancelling, setCancelling] = useState(false);
+  const cancellingRef = useRef(false);
+  async function cancelCurrent(nextBranch?: string) {
+    if (cancellingRef.current) return;
+    cancellingRef.current = true;
+    setCancelling(true); setBusy(true); setError("");
+    generation.current++; fileRequest.current++;
+    stop();
+    try {
+      await api("/code-browser", "POST", { ...context, operation: "cancel", branch });
+      if (nextBranch) {
+        try { sessionStorage.setItem(branchStorageKey, nextBranch); } catch { /* Storage can be unavailable. */ }
+        setBranch(nextBranch);
+      }
+    } catch (e: any) { setError(e.message); }
+    finally { cancellingRef.current = false; setCancelling(false); setBusy(false); setFileBusy(false); }
+  }
+  const chooseBranch = (value: string) => { if (value !== branch) void cancelCurrent(value); };
   const snapshot = useRef<Status | null>(null);
   snapshot.current = status;
   const request = useCallback<Request>((operation, extra = {}) => {
@@ -40,16 +54,17 @@ function RepositoryView({ context }: { context: Context }) {
   }, [context.client, context.project, branch, execute]);
   useEffect(() => {
     let live = true;
+    const scope = generation.current;
     setBusy(true); setError(""); setFileBusy(false);
     void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
-      if (!live) return;
+      if (!live || scope !== generation.current) return;
       setBranches(data.branches); setBranch(current => {
         const preferred = current || rememberedBranch();
         return data.branches.includes(preferred) ? preferred : data.defaultBranch;
       });
       setBranchNote(data.more ? "Показаны первые 5 000 веток." : !data.branches.length ? "В репозитории пока нет веток." : "");
       if (!data.branches.length || data.branches.includes(branch)) setBusy(false);
-    }).catch(e => { if (live) { setError(e.message); setBusy(false); } });
+    }).catch(e => { if (live && scope === generation.current) { setError(e.message); setBusy(false); } });
     return () => { live = false; generation.current++; fileRequest.current++; };
   }, [context.client, context.project, branchReload, execute]);
   const refresh = useCallback(async (operation: "status" | "pull", force = false) => {
@@ -60,7 +75,8 @@ function RepositoryView({ context }: { context: Context }) {
     try {
       if (force) {
         const catalog = await request("branches", { refresh: true });
-        if (current === generation.current) setBranches(catalog.branches);
+        if (current !== generation.current) return;
+        setBranches(catalog.branches);
       }
       const next = await request(operation, { refresh: force });
       if (current === generation.current) {
@@ -91,10 +107,10 @@ function RepositoryView({ context }: { context: Context }) {
     <header className="repository-heading"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></header>
     <div className="repository-toolbar">
       <span className="repository-branch-label" aria-hidden="true">Ветка</span>
-      <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={busy || !branches.length} /></div>
+      <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={cancelling || !branches.length} /></div>
       <button className="secondary" title="Проверить обновления репозитория" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить</button>
-      <button className="icon-button" title="Обновить список веток" aria-label="Обновить список веток" disabled={busy} onClick={() => setBranchReload(n => n + 1)}><GitBranch size={16} /></button>
       <button className="secondary repository-pull" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
+      {(busy || fileBusy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
     </div>
     <CodeProgress progress={progress} />
