@@ -1172,3 +1172,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Suggestions use a fixed-position portal inside the active dialog, outside the editor layout. Placement follows scrolling/resizing and flips above the input when space below is limited. Selected tags are excluded from suggestions.
 - Enter/selection/blur commits the edit, Escape/cancel discards the draft. Existing tag/count limits and multiline paste validation are retained.
 - All 258 existing tests and production build passed. Final dropdown-placement adjustment passed TypeScript and whitespace checks. Browser interactions were not exercised; existing bundle-size advisories remain.
+
+### Context management and compact UI fixes (2026-10-21)
+
+- Added a dedicated customer/project management tab for creation and renaming. Configuration tabs use the header selection; removed the nested project catalog and duplicate context selectors.
+- Renaming transactionally updates scoped records and settings keys, preserves chat and memory bindings, and rejects name/settings collisions. Customer filter/preset browser storage is copied to the new customer scope when available.
+- Stabilized tag editor alignment when opening its input; compacted collapsed inline diff discussion headers; aligned PR branch arrows to branch values and positioned copy feedback outside normal layout.
+- All 259 tests passed, including scoped rename persistence and rollback coverage. TypeScript and production build passed. Browser visual interactions were not exercised.

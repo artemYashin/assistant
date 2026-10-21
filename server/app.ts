@@ -235,6 +235,12 @@ export function createApp(
     store.addContext(context);
     res.json(store.contexts());
   });
+  app.post("/api/contexts/rename", (req, res) => {
+    const input = z.object({ context: contextSchema.strict(), name: z.string().trim().min(1).max(200) }).strict().parse(req.body);
+    store.renameContext(input.context, input.name);
+    const { client, project } = store.settings();
+    res.json({ items: store.contexts(), context: { client, project } });
+  });
   app.put("/api/context", (req, res) => {
     const context = contextSchema.strict().parse(req.body);
     if (context.project && !context.client)

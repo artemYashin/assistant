@@ -421,6 +421,44 @@ export class Store {
       .prepare("INSERT OR IGNORE INTO contexts VALUES (?,?)")
       .run(context.client, context.project);
   }
+  renameContext(context: Context, name: string) {
+    name = name.trim();
+    if (!context.client || !name || name.length > 200)
+      throw new AppError(400, "Укажите название длиной до 200 символов");
+    const known = this.contexts();
+    if (!known.some(c => c.client === context.client && c.project === context.project))
+      throw new AppError(404, "Заказчик или проект не найден");
+    if (name === (context.project || context.client)) return;
+    if (known.some(c => context.project ? c.client === context.client && c.project === name : c.client === name))
+      throw new AppError(409, "Такое название уже используется");
+    this.db.transaction(() => {
+      this.addContext(context);
+      const tables = ["contexts", "memories", "memory_proposals", "conversations", "chat_sessions", "pr_projects", "llm_requests", "local_developers"];
+      for (const table of tables) {
+        if (context.project) this.db.prepare(`UPDATE ${table} SET project=? WHERE client=? AND project=?`).run(name, context.client, context.project);
+        else this.db.prepare(`UPDATE ${table} SET client=? WHERE client=?`).run(name, context.client);
+      }
+      const offsets: Record<string, number> = { "azure.context:": 0, "project.azure:": 1, "chat.active:": 0, "ticket-priorities:": 0, "developer-note:": 0, "developer-status-groups:": 1 };
+      const entries = this.db.prepare("SELECT key,value FROM kv").all() as { key: string; value: string }[];
+      for (const row of entries) {
+        const prefix = Object.keys(offsets).find(prefix => row.key.startsWith(prefix));
+        if (!prefix) continue;
+        const parts = JSON.parse(row.key.slice(prefix.length));
+        const i = offsets[prefix];
+        if (parts[i] !== context.client || (context.project && parts[i + 1] !== context.project)) continue;
+        parts[context.project ? i + 1 : i] = name;
+        const nextKey = prefix + JSON.stringify(parts);
+        if (this.db.prepare("SELECT 1 FROM kv WHERE key=?").get(nextKey))
+          throw new AppError(409, "Для этого названия уже существуют настройки");
+        this.db.prepare("UPDATE kv SET key=? WHERE key=?").run(nextKey, row.key);
+      }
+      const current = this.rawSettings();
+      if (current.client === context.client && (!context.project || current.project === context.project)) {
+        this.set("settings", { ...current, ...(context.project ? { project: name } : { client: name }) });
+      }
+      this.audit("context.renamed", JSON.stringify({ from: context, name }));
+    })();
+  }
   source(s = this.settings()) {
     return `${s.azureUrl.replace(/\/$/, "")}|${s.azureProject}`;
   }

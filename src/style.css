@@ -3066,10 +3066,12 @@ td > small {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-top: 17px;
   min-width: 0;
   color: #6c7868;
 }
 .pr-branch {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -3081,6 +3083,12 @@ td > small {
   flex-shrink: 0;
   font-size: 10px;
   color: #788471;
+}
+.pr-branch > small:first-child {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 0;
+  line-height: 14px;
 }
 .pr-branch code {
   display: block;
@@ -3137,6 +3145,22 @@ td > small {
 }
 .pr-branch > [role="status"]:empty {
   display: none;
+}
+.pr-branch > [role="status"]:not(:empty) {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 3;
+  width: max-content;
+  max-width: 220px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #24392f;
+  color: white;
+  font-size: 11px;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px #24392f22;
+  pointer-events: none;
 }
 
 .ticket-linked-prs {
@@ -4196,6 +4220,36 @@ summary > svg {
 .pr-diff-thread-accordion > summary:hover { background: #edf3fa; }
 .pr-diff-thread-accordion[open] { padding-bottom: 12px; }
 .pr-diff-thread-accordion[open] > summary { border-bottom: 1px solid #dbe3ec; }
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) > summary {
+  padding: 4px 8px;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .initials-avatar {
+  flex-basis: 22px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  font-size: 9px;
+}
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .pr-diff-thread-title {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .pr-diff-thread-author {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .pr-diff-thread-location {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .pr-diff-thread-location > svg,
+.pr-diff-inline-threads .pr-diff-thread-accordion:not([open]) .pr-diff-thread-status { display: none; }
 .pr-diff-locate-comment {
   margin-top: 10px;
   padding: 6px 10px;
@@ -4481,12 +4535,19 @@ summary > svg {
   display: grid;
   gap: 12px;
 }
- .local-tags-editor { display: grid; gap: 8px; min-width: 0; }
+.context-directory { display: grid; gap: 12px; margin-top: 20px; }
+.context-directory-client { border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #f8faf7; }
+.context-directory-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 0; }
+.context-directory-name > span { width: 65px; font-size: 11px; }
+.context-directory-name > strong { min-width: 0; overflow-wrap: anywhere; }
+.context-directory-name > input { flex: 1; min-width: 120px; max-width: 320px; }
+.context-directory-name > button { flex-shrink: 0; }
+.local-tags-editor { display: grid; gap: 8px; min-width: 0; }
 .local-tags-editor-label { font-size: 12px; font-weight: 600; color: #475d4b; }
 .local-tags-editor-field {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   align-content: flex-start;
   gap: 5px;
   min-height: 60px;
@@ -4520,10 +4581,10 @@ summary > svg {
 .local-tags-editor-remove:hover:not(:disabled) { background: #fbe7e3; color: #a9362c; }
 .local-tags-editor-entry { display: flex; align-items: center; gap: 4px; width: min(310px, 100%); }
 .local-tags-editor-input-wrap { position: relative; flex: 1; min-width: 0; }
-.local-tags-editor-input-wrap > input { width: 100%; min-width: 0; height: 30px; box-sizing: border-box; padding: 4px 28px 4px 8px; font-size: 12px; }
+.local-tags-editor-input-wrap > input { display: block; width: 100%; min-width: 0; height: 30px; box-sizing: border-box; padding: 4px 28px 4px 8px; font-size: 12px; }
 .local-tags-editor-toggle { position: absolute; right: 4px; top: 0; bottom: 0; display: inline-flex; align-items: center; padding: 2px; color: #52704a; }
 .local-tags-editor-cancel { display: inline-flex; flex-shrink: 0; padding: 4px; color: #677461; }
-.local-tags-editor-add { padding: 5px; }
+.local-tags-editor-add { min-height: 30px; box-sizing: border-box; padding: 5px; }
 .local-tags-suggestions {
   position: fixed;
   z-index: 30;
