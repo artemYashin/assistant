@@ -1,5 +1,4 @@
-import { MemoryBody } from "./MemoryBody.js";
-import { MemoryMarkdown } from "./MemoryMarkdown.js";
+import { MemoryBody, MemoryProposalContent } from "./MemoryBody.js";
 import { Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { api } from "./api.js";
@@ -68,7 +67,7 @@ export function MemoryProposalList({
                 {p.project ? ` / ${p.project}` : ""}
               </p>
             )}
-            {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.summary}:${p.body}`} id={p.id} body={p.body} summary={p.summary} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} /> : <><strong className="memory-summary">{p.summary}</strong><MemoryMarkdown body={p.body} /></>}
+            {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.summary}:${p.body}`} id={p.id} body={p.body} summary={p.summary} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} /> : <MemoryProposalContent summary={p.summary} body={p.body} />}
             {p.status === "pending" && <button type="button" className="secondary memory-refine-button" disabled={!!busy || !!editing || (p.scope !== "general" && p.client !== context.client) || (p.scope === "project" && p.project !== context.project)} title="Прикрепить к следующему сообщению ассистенту. Выберите соответствующего заказчика и проект." onClick={() => window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { id: p.id, body: p.summary, client: p.client, project: p.project, scope: p.scope } }))}><Sparkles size={15} />Refine with AI</button>}
             <p className="muted">Зачем сохранить: {p.reason}</p>
             <div className="card-actions memory-proposal-actions">

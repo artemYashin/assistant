@@ -3,6 +3,21 @@ import { useState } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { api } from "./api.js";
 
+export function MemoryProposalContent({ summary, body }: { summary: string; body: string }) {
+  return (
+    <div className="memory-proposal-fields">
+      <section className="memory-proposal-field" aria-label="Название">
+        <div className="memory-proposal-field-label">Название</div>
+        <strong className="memory-summary">{summary}</strong>
+      </section>
+      <section className="memory-proposal-field" aria-label="Описание">
+        <div className="memory-proposal-field-label">Описание</div>
+        <MemoryMarkdown body={body} />
+      </section>
+    </div>
+  );
+}
+
 export function MemoryBody({
   id,
   body,
@@ -28,8 +43,10 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        <strong className="memory-summary">{summary}</strong>
-        <MemoryMarkdown body={body} />
+        {proposal ? <MemoryProposalContent summary={summary} body={body} /> : <>
+          <strong className="memory-summary">{summary}</strong>
+          <MemoryMarkdown body={body} />
+        </>}
         <button
           className="secondary"
           disabled={disabled}
@@ -65,9 +82,9 @@ export function MemoryBody({
         }
       }}
     >
-      <label>Краткое описание · 1–2 предложения<input value={short} onChange={event => setShort(event.target.value)} maxLength={320} required disabled={busy} /></label>
+      <label>{proposal ? "Название" : "Краткое описание"} · 1–2 предложения<input value={short} onChange={event => setShort(event.target.value)} maxLength={320} required disabled={busy} /></label>
       <label>
-        Подробности · Markdown
+        {proposal ? "Описание" : "Подробности"} · Markdown
         <textarea
           autoFocus
           rows={5}
