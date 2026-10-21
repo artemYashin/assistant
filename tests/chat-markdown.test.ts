@@ -66,3 +66,15 @@ test("Azure references open locally only for the current source and include copy
   assert.match(html, /href="https:\/\/dev.azure.com\/other\/Project\/_workitems\/edit\/42"/);
   assert.equal((html.match(/class="chat-link-copy"/g) || []).length, 2);
 });
+
+test("PR cards render compact metadata and source-qualified navigation", async () => {
+  const { MemoryRouter } = await import("react-router-dom");
+  const params = new URLSearchParams({ card: "pr", monitor: "team", repo: "repo", number: "42", title: "Fix layout", author: "Alex", createdAt: "2026-10-22T10:00:00Z" });
+  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[PR](/pull-requests?${params})` })));
+  assert.match(html, /class="chat-pr-card"/);
+  assert.match(html, /Fix layout/);
+  assert.match(html, /Alex/);
+  assert.match(html, /22\.10\.2026/);
+  assert.match(html, /href="\/pull-requests\?monitor=team&amp;repo=repo&amp;number=42"/);
+  assert.doesNotMatch(html, /chat-link-copy/);
+});

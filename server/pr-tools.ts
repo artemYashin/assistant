@@ -38,11 +38,11 @@ export function prTools(
   };
   return [
     defineTool("list_pull_requests", {
-      description: "Read only locally synchronized PRs in the current customer/project. No Azure calls. Default identity/title only; select optional fields, filter status/conflicts/reviewStatus, or countOnly. Conflicts unknown is not conflict-free. Review status refers to the current head/target. Paginate with nextOffset; data may lag sync.",
+      description: "Read only locally synchronized PRs in the current customer/project. No Azure calls. Default identity/title only; request cardUrl to display a compact UI card with title/author/creation date, without bodies; select optional fields, filter status/conflicts/reviewStatus, or countOnly. Conflicts unknown is not conflict-free. Review status refers to the current head/target. Paginate with nextOffset; data may lag sync.",
       parameters: z.object({
         offset: z.number().int().nonnegative().default(0),
         limit: z.number().int().min(1).max(50).default(20),
-        fields: z.array(z.enum(["sourceBranch", "targetBranch", "author", "status", "conflicts", "reviewStatus", "draft", "syncedAt", "createdAt"])).max(9).default([]),
+        fields: z.array(z.enum(["sourceBranch", "targetBranch", "author", "status", "conflicts", "reviewStatus", "draft", "syncedAt", "createdAt", "cardUrl"])).max(10).default([]),
         status: z.enum(["active", "completed"]).optional(),
         conflicts: z.enum(["yes", "no", "unknown"]).optional(),
         reviewStatus: z.string().trim().min(1).max(50).optional(),
@@ -66,10 +66,18 @@ export function prTools(
         if (countOnly) return { scope: "local", total };
         // Only schema-enumerated columns may enter the projection.
         const allowed = new Set(["sourceBranch", "targetBranch", "author", "status", "conflicts", "reviewStatus", "draft", "syncedAt", "createdAt"]);
-        const columns = [...new Set(fields)].filter(field => allowed.has(field));
+        const columns = [...new Set([...fields, ...(fields.includes("cardUrl") ? ["author", "createdAt"] : [])])].filter(field => allowed.has(field));
         const rows = store.db.prepare(cte + ` SELECT monitor,repo,number,title${columns.map(field => `,${field}`).join("")} FROM scoped${where} ORDER BY createdAt DESC,monitor,repo,number LIMIT ? OFFSET ?`)
           .all(...scopeArgs, ...args, limit + 1, offset);
-        return { scope: "local", total, items: rows.slice(0, limit), hasMore: rows.length > limit, nextOffset: rows.length > limit ? offset + limit : null };
+        return { scope: "local", total, items: rows.slice(0, limit).map((value) => {
+          const row = value as Record<string, any>;
+          if (!fields.includes("cardUrl")) return row;
+          const cardUrl = `/pull-requests?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), card: "pr", title: String(row.title), author: String(row.author || ""), createdAt: String(row.createdAt || "") })}`;
+          const result: Record<string, any> = { ...row, cardUrl };
+          if (!fields.includes("author")) delete result.author;
+          if (!fields.includes("createdAt")) delete result.createdAt;
+          return result;
+        }), hasMore: rows.length > limit, nextOffset: rows.length > limit ? offset + limit : null };
       },
     }),
     defineTool("get_pull_request", {

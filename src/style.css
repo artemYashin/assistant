@@ -9048,3 +9048,12 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .voice-binding-key:hover { background: #edf4ef; }
 .voice-binding-key kbd { min-width: 22px; padding: 1px 5px; border: 1px solid #d5dfd8; border-radius: 4px; background: #f4f7f5; }
 .voice-binding small { display: block; margin-top: 5px; color: #a43e3e; }
+
+.chat-markdown .chat-pr-card { display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px; margin: 6px 0; border: 1px solid #d6e3e9; border-radius: 8px; background: #f3f7f9; }
+.chat-pr-card-icon { flex-shrink: 0; margin-top: 2px; color: #4e8caf; }
+.chat-pr-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; flex: 1; }
+.chat-pr-card-body > strong { font-size: 13px; line-height: 1.4; font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.chat-pr-card-meta { display: flex; align-items: center; gap: 5px; max-width: 100%; font-size: 11px; color: #71808a; }
+.chat-pr-card-meta > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.chat-pr-card-meta time { white-space: nowrap; }
+.chat-pr-card-body .chat-ticket-link { font-size: 11px; padding: 3px 7px; }

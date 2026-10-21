@@ -1,8 +1,10 @@
+import { chatPrCard } from "./chat-pr-card.js";
+import { Link } from "react-router-dom";
 import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
-import { Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
+import { GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -46,7 +48,7 @@ export function ChatMarkdown({
         remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations] : [remarkGfm, remarkTicketCitations]}
         skipHtml
         urlTransform={(url, key) =>
-          ticketAsset(url) || (key === "href" && chatTicketCitation(url)) ? url : key === "href" && chatTicketPath(url)
+          ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url))) ? url : key === "href" && chatTicketPath(url)
             ? chatTicketPath(url)!
             : key === "src" &&
                 images?.some((image) => image.source === url && image.preview)
@@ -65,6 +67,17 @@ export function ChatMarkdown({
           a: ({ href, children, node }) => {
             if (node?.children.some(child => child.type === "element" && child.tagName === "img")) return <span>{children}</span>;
             if (!href) return <span>{children}</span>;
+            const pr = chatPrCard(href);
+            if (pr) {
+              const date = new Date(pr.createdAt);
+              return <span className="chat-pr-card">
+                <GitPullRequest size={18} className="chat-pr-card-icon" aria-hidden="true" />
+                <span className="chat-pr-card-body"><strong title={pr.title}>#{pr.number} · {pr.title}</strong>
+                  <span className="chat-pr-card-meta"><span title={pr.author}>{pr.author}</span><span>·</span><time dateTime={Number.isNaN(date.getTime()) ? undefined : pr.createdAt}>{Number.isNaN(date.getTime()) ? "Дата не указана" : date.toLocaleDateString("ru-RU")}</time></span>
+                  <Link to={pr.href} className="chat-ticket-link">Перейти к pull request<ArrowUpRight size={13} aria-hidden="true" /></Link>
+                </span>
+              </span>;
+            }
             const citation = chatTicketCitation(href);
             const local = chatTicketPath(href) || azureTicketPath(href, azureSource);
             if (local) {
