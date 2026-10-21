@@ -60,7 +60,7 @@ function ToolInspection({ tool, context }: { tool: any; context: { client: strin
       .then(data => { if (active) setArgumentsData(data); }).catch(() => {});
     return () => { active = false; };
   }, [tool.id]);
-  const [full, setFull] = useState(false), [body, setBody] = useState<string | null>(null), [error, setError] = useState("");
+  const [full, setFull] = useState(true), [body, setBody] = useState<string | null>(null), [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!full || body !== null || !tool.hasFullResult) return;
@@ -79,7 +79,7 @@ function ToolInspection({ tool, context }: { tool: any; context: { client: strin
       <section><header><h3>Параметры</h3><small>{argumentsData?.full ? "Вызов модели" : "Сводка"}</small></header><pre>{argumentsData ? JSON.stringify(argumentsData.arguments, null, 2) : pretty(tool.arguments)}</pre></section>
       <section><header><h3>Результат</h3><label><input type="checkbox" checked={full} disabled={!tool.hasFullResult} onChange={e => setFull(e.target.checked)} />Полный</label></header>
         {error && <p role="alert">{error}</p>}
-        <pre>{full ? busy ? "Загрузка…" : body ?? "Результат недоступен" : pretty(tool.result)}</pre>
+        <pre>{full && tool.hasFullResult ? busy ? "Загрузка…" : body ?? (error ? "Результат недоступен" : "Загрузка…") : pretty(tool.result)}</pre>
         {!tool.hasFullResult && <small>Полный результат ещё не сохранён.</small>}
       </section>
     </div>

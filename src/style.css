@@ -8804,8 +8804,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .tool-viewer-columns > section + section { border-left: 1px solid #e1e7e3; }
 .chat-tools-dialog .tool-viewer-columns header { padding: 8px 12px; align-items: center; background: #fafcfb; border-bottom: 1px solid #edf1ee; min-height: 36px; }
 .tool-viewer-columns h3 { margin: 0; font-size: 11px; }
-.tool-viewer-columns label { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; white-space: nowrap; }
-.tool-viewer-columns input { width: 13px; height: 13px; margin: 0; }
+.tool-viewer-columns label { display: inline-flex; align-items: center; gap: 7px; padding: 5px 7px; min-height: 30px; border-radius: 5px; font-size: 11px; white-space: nowrap; cursor: pointer; }
+.tool-viewer-columns label:hover { background: #edf2ef; }
+.tool-viewer-columns input { width: 16px; height: 16px; margin: 0; cursor: inherit; }
 .tool-viewer-columns pre { flex: 1; overflow: auto; margin: 0; padding: 12px; font-size: 11px; line-height: 1.55; background: #fff; scrollbar-width: thin; }
 .tool-viewer-columns small { font-size: 10px; padding: 4px 8px; }
 .tool-viewer-error { padding: 8px 14px; margin: 0; }
