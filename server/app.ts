@@ -1,4 +1,4 @@
-import { CodeBrowser } from "./code-browser.js";
+import { CodeBrowser, codeBrowserSchema } from "./code-browser.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
 import { azureBrowseSchema } from "./azure-browser.js";
 import {
@@ -1070,7 +1070,21 @@ export function createApp(
   });
   app.post("/api/code-browser", async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
-    res.json(await codeBrowser.request(req.body));
+    if (req.headers.accept !== "application/x-ndjson") {
+      res.json(await codeBrowser.request(req.body));
+      return;
+    }
+    const input = codeBrowserSchema.parse(req.body);
+    res.setHeader("Content-Type", "application/x-ndjson");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+    const send = (event: unknown) => { if (!res.destroyed && !res.writableEnded) res.write(JSON.stringify(event) + "\n"); };
+    try {
+      const data = await codeBrowser.request(input, progress => send({ type: "progress", progress }));
+      send({ type: "result", data });
+    } catch (error) {
+      send({ type: "error", error: error instanceof AppError ? error.message : "Операция кода не завершена. Проверьте подключение и повторите запрос." });
+    } finally { res.end(); }
   });
   app.get("/api/pr/branches", async (req, res) => {
     const q = z

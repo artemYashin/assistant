@@ -1187,3 +1187,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added disposable-repository tests for tree/search, hidden files, branch freshness, snapshot pull, stale revisions, path/command rejection and absence of persisted credentials. Added backend tests for configured-repository resolution, cache use and credential isolation. All 264 tests passed before push, including the new service and backend coverage.
 - TypeScript, JavaScript syntax checks, production build and Compose configuration validation passed. Docker service startup, actual Azure Git fetch and browser visual interactions have NOT been exercised. Existing bundle-size advisories remain.
 - Also includes the pending compact View Diff filename/change-count layout.
+
+### Repository operation progress (2026-10-21)
+
+- Added opt-in NDJSON progress to the existing authenticated POST, with normal JSON compatibility. No polling/new Azure calls. UI shows current phase, available percentage and elapsed time; terminal success/error is tied to the final response, with stale callbacks ignored.
+- Git fetch enables progress; bounded parser forwards only allowlisted numeric progress. Backend validates event payloads. Search snapshot creation reports processing progress, other phases remain indeterminate. Raw stderr/credentials are not sent to the UI.
+- All 268 tests passed, including split/carriage-return progress parsing, secret filtering, interrupted/error streams, service stages and backend stream forwarding. Production build, whitespace checks and Compose config validation passed. Live Azure, Docker startup and browser visuals were not exercised.

@@ -8,6 +8,8 @@ const browser = new RepositoryBrowser(process.env.CODE_BROWSER_CACHE || '/cache'
 const server = createServer(async (req, res) => {
   const send = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
   if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true });
+  let streaming = false;
+  const event = data => { if (!res.destroyed && !res.writableEnded) res.write(JSON.stringify(data) + '\n'); };
   try {
     const key = (await readFile(process.env.CODE_BROWSER_KEY_FILE || '/control/key', 'utf8')).trim();
     const expected = Buffer.from('Bearer ' + key), actual = Buffer.from(req.headers.authorization || '');
@@ -20,9 +22,27 @@ const server = createServer(async (req, res) => {
     }
     let input; try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new BrowserError('Некорректный JSON'); }
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new BrowserError('Некорректный запрос');
-    send(200, await browser.execute(input));
+    streaming = req.headers.accept === 'application/x-ndjson';
+    if (streaming) {
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
+      res.flushHeaders();
+    }
+    let lastTime = 0, lastStage = '';
+    const report = progress => {
+      if (!streaming) return;
+      const now = Date.now();
+      if (progress.stage !== lastStage || now - lastTime >= 150 || progress.percent === 100) {
+        lastTime = now; lastStage = progress.stage;
+        event({ type: 'progress', progress });
+      }
+    };
+    const result = await browser.execute(input, report);
+    if (streaming) { event({ type: 'result', data: result }); res.end(); }
+    else send(200, result);
   } catch (error) {
-    send(error instanceof BrowserError ? error.status : 503, { error: error instanceof BrowserError ? error.message : 'Сервис просмотра кода недоступен. Проверьте его конфигурацию.' });
+    const message = error instanceof BrowserError ? error.message : 'Сервис просмотра кода недоступен. Проверьте его конфигурацию.';
+    if (streaming) { event({ type: 'error', error: message }); res.end(); }
+    else send(error instanceof BrowserError ? error.status : 503, { error: message });
   }
 });
 server.requestTimeout = 150000;

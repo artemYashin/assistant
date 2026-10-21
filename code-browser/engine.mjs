@@ -1,3 +1,4 @@
+import { gitProgressParser } from './progress.mjs';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
@@ -13,7 +14,7 @@ export function safePath(value) {
   return typeof value === 'string' && !value.includes('\\') && !value.includes('\0') && !value.startsWith('/') &&
     value.split('/').every(p => p && p !== '.' && p !== '..' && p.toLowerCase() !== '.git');
 }
-function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0] } = {}) {
+function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0], onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
     let chunks = [], size = 0, stderr = '', failure;
@@ -24,7 +25,8 @@ function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout
       if (size > limit) stop('Результат слишком большой. Уточните запрос или выберите меньший репозиторий.');
       else chunks.push(chunk);
     });
-    child.stderr.on('data', chunk => { if (stderr.length < 4096) stderr += chunk.toString(); });
+    const parseProgress = onProgress ? gitProgressParser(onProgress) : null;
+    child.stderr.on('data', chunk => { if (stderr.length < 4096) stderr += chunk.toString(); parseProgress?.(chunk); });
     child.on('error', () => { clearTimeout(timer); reject(new BrowserError('Git/ripgrep недоступен в сервисе просмотра кода.', 503)); });
     child.on('close', code => {
       clearTimeout(timer);
@@ -53,14 +55,16 @@ export class RepositoryBrowser {
     this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
     this.tail = Promise.resolve(); this.pending = 0; this.branchesCache = new Map();
   }
-  async execute(input) {
+  async execute(input, report = () => {}) {
     if (this.pending >= 5) throw new BrowserError('Сервис занят. Повторите через несколько секунд.', 429);
+    report({ stage: "queued" });
     this.pending++;
-    const task = this.tail.then(() => this.perform(input));
+    const task = this.tail.then(() => this.perform(input, report));
     this.tail = task.catch(() => {});
     try { return await task; } finally { this.pending--; }
   }
-  async perform(input) {
+  async perform(input, report) {
+    report({ stage: "preparing" });
     const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', offset = 0 } = input;
     if (!['branches', 'status', 'pull', 'tree', 'file', 'search'].includes(operation)) throw new BrowserError('Неизвестная операция');
     if (typeof url !== 'string' || url.length > 2000 || typeof filePath !== 'string' || filePath.length > 4096 ||
@@ -85,6 +89,7 @@ export class RepositoryBrowser {
     if (operation === 'branches') {
       const key = hash(url + token); const cached = this.branchesCache.get(key);
       if (cached && Date.now() - cached.time < 60000) return cached.result;
+      report({ stage: 'connecting' });
       const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], { timeout: 30000 })).toString();
       const branches = output.split('\n').flatMap(line => /^[0-9a-f]{40,64}\trefs\/heads\//.test(line) ? [line.split('\t')[1].slice(11)] : []).sort();
       const result = { branches: branches.slice(0, 5000), more: branches.length > 5000, defaultBranch: /^ref: refs\/heads\/(.+)\tHEAD$/m.exec(output)?.[1] || branches[0] || '', checkedAt: new Date().toISOString() };
@@ -99,11 +104,13 @@ export class RepositoryBrowser {
     const remoteRef = 'refs/orbit/remote/' + branchKey;
     if (!state || operation === 'pull' || (operation === 'status' && (input.refresh || Date.now() - Date.parse(state.checkedAt) >= 60000))) {
       if (await diskSize(this.root) >= this.maxCacheBytes) throw new BrowserError('Кеш кода достиг лимита. Очистите отдельный volume кеша или увеличьте CODE_BROWSER_MAX_CACHE_BYTES.', 507);
-      await git(['fetch', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { timeout: 120000 });
+      report({ stage: 'fetching' });
+      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { timeout: 120000, onProgress: report });
       if (await diskSize(this.root) > this.maxCacheBytes) {
         await fs.rm(repo, { recursive: true, force: true });
         throw new BrowserError('Репозиторий превысил лимит кеша; его копия удалена. Увеличьте лимит кеша.', 507);
       }
+      report({ stage: 'finalizing' });
       const remoteSha = (await git(['rev-parse', remoteRef])).toString().trim();
       const sha = operation === 'pull' || !state ? remoteSha : state.sha;
       // Keep the displayed snapshot reachable even after fetching new commits.
@@ -122,6 +129,7 @@ export class RepositoryBrowser {
       return { ...state, behind, current: state.sha === state.remoteSha };
     }
     if (input.revision && input.revision !== state.sha) throw new BrowserError('Снимок обновился в другом окне. Нажмите «Проверить обновления».', 409);
+    report({ stage: 'tree' });
     const manifest = (await git(['ls-tree', '-rzl', state.sha])).toString('utf8').split('\0').filter(Boolean).map(line => {
       const match = /^(\d+) (\w+) ([0-9a-f]+) +([\d-]+)\t([\s\S]+)$/.exec(line);
       if (!match) throw new BrowserError('Не удалось прочитать дерево Git', 502);
@@ -139,6 +147,7 @@ export class RepositoryBrowser {
       return { sha: state.sha, entries: sorted.slice(offset, offset + 200), more: sorted.length > offset + 200, total: sorted.length };
     }
     if (operation === 'file') {
+      report({ stage: 'file' });
       const file = manifest.find(file => file.path === filePath);
       if (!file) throw new BrowserError('Файл не найден в выбранном снимке', 404);
       if (file.type !== 'blob') return { sha: state.sha, path: filePath, unavailable: 'Это подмодуль; его содержимое автоматически не загружается.' };
@@ -151,6 +160,7 @@ export class RepositoryBrowser {
     }
     if (!query.trim()) throw new BrowserError('Введите поисковый запрос');
     if (mode === 'name') {
+      report({ stage: 'searching' });
       const found = manifest.filter(file => file.path.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
       return { sha: state.sha, results: found.slice(offset, offset + 200).map(file => ({ path: file.path })), more: found.length > offset + 200, total: found.length };
     }
@@ -158,6 +168,7 @@ export class RepositoryBrowser {
     const snapshots = path.join(repo, 'snapshots'), snapshot = path.join(snapshots, state.sha);
     let coverage = await fs.readFile(path.join(snapshot, 'coverage.json'), 'utf8').then(JSON.parse).catch(() => null);
     if (!coverage) {
+      report({ stage: 'snapshot' });
       await fs.mkdir(snapshots, { recursive: true });
       const tmp = path.join(snapshots, 'tmp-' + randomUUID()), content = path.join(tmp, 'files');
       await fs.mkdir(content, { recursive: true });
@@ -169,8 +180,10 @@ export class RepositoryBrowser {
         }
         if (await diskSize(this.root) + total > this.maxCacheBytes) throw new BrowserError('Недостаточно места в лимите кеша для поискового снимка.', 507);
         const blobs = await git(['cat-file', '--batch'], { input: selected.map(f => f.oid).join('\n') + '\n', limit: SNAPSHOT_LIMIT + 4 * 1024 * 1024, timeout: 60000 });
-        let cursor = 0, included = 0;
+        let cursor = 0, included = 0, processed = 0;
         for (const file of selected) {
+          processed++;
+          if (processed === 1 || processed % 50 === 0 || processed === selected.length) report({ stage: 'snapshot', percent: Math.floor((processed - 1) / selected.length * 100) });
           const end = blobs.indexOf(10, cursor); const header = blobs.subarray(cursor, end).toString().split(' ');
           if (end < 0 || header[0] !== file.oid || header[1] !== 'blob' || Number(header[2]) !== file.size) throw new BrowserError('Неполный снимок Git', 502);
           const bytes = blobs.subarray(end + 1, end + 1 + file.size); cursor = end + file.size + 2;
@@ -178,6 +191,7 @@ export class RepositoryBrowser {
           const dest = path.join(content, file.path);
           await fs.mkdir(path.dirname(dest), { recursive: true }); await fs.writeFile(dest, bytes); included++;
         }
+        report({ stage: 'snapshot', percent: 100 });
         coverage = { totalFiles: manifest.length, searchedFiles: included, skippedFiles: manifest.length - included };
         await fs.writeFile(path.join(tmp, 'coverage.json'), JSON.stringify(coverage)); await fs.rename(tmp, snapshot);
         const old = await Promise.all((await fs.readdir(snapshots)).filter(s => s !== state.sha).map(async name => ({ name, time: (await fs.stat(path.join(snapshots, name))).mtimeMs })));
@@ -185,6 +199,7 @@ export class RepositoryBrowser {
         for (const item of old.slice(1)) await fs.rm(path.join(snapshots, item.name), { recursive: true, force: true });
       } catch (error) { await fs.rm(tmp, { recursive: true, force: true }); throw error; }
     }
+    report({ stage: 'searching' });
     const output = await run('rg', ['--json', '--hidden', '--no-ignore', '--fixed-strings', '--ignore-case', '--max-count', '20', '--', query, '.'], { cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
     const matches = output.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)).filter(item => item.type === 'match');
     return { sha: state.sha, results: matches.slice(offset, offset + 200).map(({ data }) => ({ path: data.path.text.replace(/^\.\//, ''), line: data.line_number, text: data.lines.text.slice(0, 500).trimEnd() })), more: matches.length > offset + 200, total: matches.length, coverage, perFileLimit: 20 };

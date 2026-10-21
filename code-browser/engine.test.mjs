@@ -24,12 +24,13 @@ async function fixture(t) {
   git('branch', 'feature/nested');
   const browser = new RepositoryBrowser(path.join(root, 'cache'), { allowLocal: true });
   const url = pathToFileURL(work).href;
-  const request = (operation, extra = {}) => browser.execute({ url, token: 'fixture-secret', operation, branch: 'main', ...extra });
-  return { root, work, git, browser, request, first };
+  const events = [];
+  const request = (operation, extra = {}) => browser.execute({ url, token: 'fixture-secret', operation, branch: 'main', ...extra }, event => events.push(event));
+  return { root, work, git, browser, request, first, events };
 }
 
 test('isolated snapshots, branch selection, local tree and content search', async t => {
-  const { request, first } = await fixture(t);
+  const { request, first, events } = await fixture(t);
   const branches = await request('branches');
   assert.deepEqual(branches.branches, ['feature/nested', 'main']);
   assert.equal(branches.defaultBranch, 'main');
@@ -44,6 +45,10 @@ test('isolated snapshots, branch selection, local tree and content search', asyn
   assert.equal((await request('file', { path: 'outside' })).text, '/etc/passwd');
   assert.equal((await request('search', { query: 'HELLO', mode: 'name' })).total, 1);
   const found = await request('search', { query: 'hello', mode: 'content' });
+  assert.ok(events.some(e => e.stage === 'fetching'));
+  assert.ok(events.some(e => e.stage === 'snapshot' && e.percent === 100));
+  assert.ok(events.some(e => e.stage === 'searching'));
+  assert.equal(events[0].stage, 'queued');
   assert.equal(found.total, 2); assert.equal(found.coverage.skippedFiles, 3);
   assert.ok(found.results.some(r => r.path === '.hidden'));
   assert.ok(found.results.some(r => r.path === 'src/hello.ts' && r.line === 1));

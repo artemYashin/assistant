@@ -36,3 +36,9 @@ Tree paths and file reads are bound to the cached selected commit. Switching/pul
 `docker compose up -d --build` builds the new service with Git and ripgrep. No extra token is configured by the user; Orbit initializes the internal key. Local development can run the service with `CODE_BROWSER_CACHE`, `CODE_BROWSER_KEY_FILE` and `PORT`, and Orbit with `CODE_BROWSER_URL` and the same key-file path.
 
 Tests use disposable local Git repositories and a constructor-only local transport option; the HTTP service never enables that option. Live Azure access and Docker/browser verification must be reported separately from fixture tests.
+
+## Request progress
+
+Clients opt into `Accept: application/x-ndjson` on the existing POST. Orbit forwards only validated `{stage, percent?}` progress events and a terminal result/error; the normal JSON API remains supported. This uses one authenticated, CSRF-protected request, not polling or an extra Azure request. Git fetch uses `--progress`; a bounded parser recognizes known stage names/numeric percentages and never forwards raw stderr. Events are throttled by the service. Snapshot generation reports processed-file progress; phases without a denominator remain indeterminate.
+
+The UI displays current-phase progress and elapsed time, not a total percentage or estimated completion time. Callbacks are scoped to the latest UI request and ignored after navigation. Closing the page disconnects its stream; the existing bounded service operation can finish in the cache. There is no durable job history, automatic retry, cancellation or reconnect/resume in this version. Incomplete streams are reported as errors, never success.

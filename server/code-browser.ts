@@ -1,3 +1,4 @@
+import { readCodeStream, type CodeProgress } from "./code-progress.js";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
@@ -18,8 +19,9 @@ export class CodeBrowser {
   private serviceKey?: Promise<string>;
   private repositories = new Map<string, { id: string; expires: number }>();
   constructor(private store: Store) {}
-  async request(raw: unknown) {
+  async request(raw: unknown, report?: (progress: CodeProgress) => void) {
     const input = codeBrowserSchema.parse(raw);
+    report?.({ stage: "connecting" });
     const settings = this.store.settings(input);
     const monitor = this.store.db.prepare("SELECT * FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? ORDER BY enabled DESC LIMIT 1")
       .get(input.client, input.project, azureBase(settings.azureUrl), settings.azureProject) as Monitor | undefined;
@@ -59,11 +61,13 @@ export class CodeBrowser {
     let response: Response;
     try {
       response = await fetch(`${service.replace(/\/$/, "")}/v1/repository`, {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, ...(report ? { Accept: "application/x-ndjson" } : {}) },
         body: JSON.stringify({ ...input, url, token }), redirect: "error", signal: AbortSignal.timeout(150000),
       });
     } catch { throw new AppError(503, "Сервис просмотра кода недоступен или не успел ответить. Проверьте контейнер code-browser."); }
-    const data = await response.json().catch(() => null);
+    const data = response.ok && response.headers.get("content-type")?.includes("application/x-ndjson")
+      ? await readCodeStream(response, progress => report?.(progress))
+      : await response.json().catch(() => null);
     if (!response.ok) throw new AppError(response.status, data?.error || "Ошибка сервиса кода");
     if (!data) throw new AppError(502, "Некорректный ответ сервиса кода");
     return { ...data, repository: monitor.repository };

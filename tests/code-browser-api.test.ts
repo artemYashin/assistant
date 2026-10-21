@@ -43,6 +43,15 @@ test("code browser resolves configured repository and keeps credentials on serve
   assert.ok(!JSON.stringify(result).includes("private-pat"));
   await browser.request({ ...context, operation: "tree", branch: "main" });
   assert.equal(calls.length, 3); // No extra Azure resolution for local reads.
+  const progress: unknown[] = [];
+  globalThis.fetch = (async (_url: any, init?: RequestInit) => {
+    assert.equal(new Headers(init?.headers).get("Accept"), "application/x-ndjson");
+    return new Response('{"type":"progress","progress":{"stage":"receiving","percent":25}}\n{"type":"result","data":{"current":true}}\n', { headers: { "Content-Type": "application/x-ndjson" } });
+  }) as typeof fetch;
+  const streamed = await browser.request({ ...context, operation: "pull", branch: "main" }, value => progress.push(value));
+  assert.deepEqual(progress, [{ stage: "connecting" }, { stage: "receiving", percent: 25 }]);
+  assert.equal(streamed.current, true);
+
   await assert.rejects(browser.request({ client: "Other", project: "Portal", operation: "branches" }));
   assert.equal(calls.length, 3);
   assert.equal(codeBrowserSchema.safeParse({ ...context, operation: "push" }).success, false);

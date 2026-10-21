@@ -1,3 +1,4 @@
+import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Code2, Download, FileCode2, Folder, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { api } from "./api.js";
@@ -18,6 +19,7 @@ export function CodeBrowserPage({ context }: { context: Context }) {
   return <RepositoryView key={JSON.stringify(context)} context={context} />;
 }
 function RepositoryView({ context }: { context: Context }) {
+  const { progress, execute } = useCodeProgress();
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
   const [status, setStatus] = useState<Status | null>(null), [busy, setBusy] = useState(true), [error, setError] = useState("");
   const [branchNote, setBranchNote] = useState("");
@@ -28,18 +30,21 @@ function RepositoryView({ context }: { context: Context }) {
   const generation = useRef(0), fileRequest = useRef(0), searchRequest = useRef(0);
   const snapshot = useRef<Status | null>(null);
   snapshot.current = status;
-  const request = useCallback<Request>((operation, extra = {}) => api("/code-browser", "POST", { ...context, branch, operation, ...(["tree", "file", "search"].includes(operation) && snapshot.current ? { revision: snapshot.current.sha } : {}), ...extra }), [context.client, context.project, branch]);
+  const request = useCallback<Request>((operation, extra = {}) => {
+    const body = { ...context, branch, operation, ...(["tree", "file", "search"].includes(operation) && snapshot.current ? { revision: snapshot.current.sha } : {}), ...extra };
+    return operation === "tree" ? api("/code-browser", "POST", body) : execute(body);
+  }, [context.client, context.project, branch, execute]);
   useEffect(() => {
     let live = true;
     setBusy(true); setError(""); setFileBusy(false); setSearchBusy(false);
-    void api("/code-browser", "POST", { ...context, operation: "branches" }).then(data => {
+    void execute({ ...context, operation: "branches" }).then(data => {
       if (!live) return;
       setBranches(data.branches); setBranch(current => data.branches.includes(current) ? current : data.defaultBranch);
       setBranchNote(data.more ? "Показаны первые 5 000 веток." : !data.branches.length ? "В репозитории пока нет веток." : "");
       if (!data.branches.length || data.branches.includes(branch)) setBusy(false);
     }).catch(e => { if (live) { setError(e.message); setBusy(false); } });
     return () => { live = false; generation.current++; fileRequest.current++; searchRequest.current++; };
-  }, [context.client, context.project, branchReload]);
+  }, [context.client, context.project, branchReload, execute]);
   const refresh = useCallback(async (operation: "status" | "pull", force = false) => {
     const current = ++generation.current;
     fileRequest.current++; searchRequest.current++; setFileBusy(false); setSearchBusy(false);
@@ -88,6 +93,7 @@ function RepositoryView({ context }: { context: Context }) {
       <button className="primary" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
     </div>
+    <CodeProgress progress={progress} />
     {branchNote && <p className="muted">{branchNote}</p>}
     {status && <div className="repository-freshness">
       <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>
