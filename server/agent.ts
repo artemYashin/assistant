@@ -1,3 +1,4 @@
+import { cachedTicketBatchSchema, ticketLinksBatchSchema, readCachedTicketBatch, readTicketLinksBatch } from "./ticket-read-batch.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { openChatRuntime, chatRuntimeKey, type ChatRuntimeState } from "./chat-runtime.js";
 import { ticketLinksSchema, readTicketLinks } from "./ticket-links.js";
@@ -167,6 +168,16 @@ export function makeTools(
           ),
       }),
       handler: async (args) => store.addMemory(args.scope, args.body, context),
+    }),
+    defineTool("get_ticket_links_batch", {
+      description: "Read cached links/images for up to 20 tickets in one call. Shared search/kind/limit, per-ticket offset. No Azure calls. Returns per-ticket availability/nextOffset and pending requests when the response budget is reached.",
+      parameters: ticketLinksBatchSchema,
+      handler: async args => readTicketLinksBatch(store, args),
+    }),
+    defineTool("get_cached_ticket_content_batch", {
+      description: "Read cached descriptions/criteria/repro for up to 20 tickets in one call. Per-ticket offset, nextOffset and availability. Retry pending requests separately. No Azure calls. Same consent rule as single reads: up to three distinct tickets per turn without a warning; ask before more.",
+      parameters: cachedTicketBatchSchema,
+      handler: async args => readCachedTicketBatch(store, args),
     }),
     defineTool("get_ticket_links", {
       description: "Read only links/images from one ticket's LOCAL cached description, criteria and repro. Use when only links/images are needed. Optional literal search in labels/URLs, kind and pagination. No Azure calls; missing cache is unknown.",
@@ -1029,17 +1040,19 @@ export class Agent {
         );
         if (!review) {
           const cachedReadIds = new Set<number>();
-          const cached = config.tools?.find(tool => tool.name === "get_cached_ticket_content");
-          if (cached?.handler) {
+          for (const name of ["get_cached_ticket_content", "get_cached_ticket_content_batch"]) {
+            const cached = config.tools?.find(tool => tool.name === name);
+            if (!cached?.handler) continue;
             const handler = cached.handler;
             cached.handler = async (args, invocation) => {
               assertActive();
               if (this.store.source(settings) !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось");
-              const { id: ticketId } = cachedTicketSchema.parse(args);
-              if (!deepRead.confirmed && !cachedReadIds.has(ticketId) && cachedReadIds.size >= 3)
+              const ids = name.endsWith("_batch") ? cachedTicketBatchSchema.parse(args).tickets.map(item => item.id) : [cachedTicketSchema.parse(args).id];
+              if (!deepRead.confirmed && new Set([...cachedReadIds, ...ids]).size > 3)
                 throw new AppError(403, "Чтение описаний более трёх тикетов может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.");
               const result: any = await handler(args, invocation);
-              if (result.available) { cachedReadIds.add(ticketId); knownTickets.add(ticketId); }
+              for (const item of name.endsWith("_batch") ? result.results : [result])
+                if (item.available) { cachedReadIds.add(item.id); knownTickets.add(item.id); }
               return result;
             };
           }

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  get_ticket_links_batch: "Read links/images of multiple cached tickets in one call; per-ticket pagination, no Azure.",
+  get_cached_ticket_content_batch: "Read multiple cached ticket bodies in one call; per-ticket pagination, no Azure.",
   get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",
   cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
   sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
