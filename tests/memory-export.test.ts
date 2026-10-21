@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { posix } from "node:path";
+import JSZip from "jszip";
 import { Store } from "../server/store.js";
 import { memoryMarkdownFiles, type ExportMemory } from "../src/memory-export.js";
 const context = { client: "Customer", project: "Project" };
@@ -12,6 +14,30 @@ const rows: ExportMemory[] = [
   { scope: "project", body: "Project fact", ...context },
   { scope: "project", body: "Other secret", client: "Other", project: "Project" },
 ];
+test("split export keeps details out of indexes and all relative links resolve in the ZIP", async () => {
+  const entries = rows.map((row, i) => ({ ...row, id: `id-${i}`, summary: `Название [${i}]` }));
+  for (const separate of [false, true]) {
+    const files = memoryMarkdownFiles(entries, ["general", "project"], separate, context, false, true);
+    assert.equal(files.length, separate ? 4 : 3);
+    const zip = new JSZip();
+    for (const file of files) zip.file(file.name, file.text);
+    const restored = await JSZip.loadAsync(await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" }));
+    for (const file of files) {
+      assert.equal(await restored.file(file.name)!.async("string"), file.text);
+      assert.doesNotMatch(file.text, /Other secret|Customer fact/);
+      if (!file.name.startsWith("details/")) {
+        assert.doesNotMatch(file.text, /fn\(\)|Project fact|Memory ID:/);
+        assert.ok(file.text.includes("Название \\["));
+      }
+      for (const match of file.text.matchAll(/\]\(([^)]+\.md)\)/g)) {
+        const target = posix.normalize(posix.join(posix.dirname(file.name), match[1]));
+        assert.ok(restored.file(target), `Missing link target: ${target}`);
+      }
+    }
+    assert.ok(files.find(file => file.name === "details/general-001.md")!.text.includes(rows[0].body));
+    assert.deepEqual(memoryMarkdownFiles(entries, [], separate, context, true, true), []);
+  }
+});
 test("Markdown export preserves bodies, selection and context boundaries", () => {
   const files = memoryMarkdownFiles(rows, ["general", "client", "project"], false, context);
   assert.equal(files.length, 1);
