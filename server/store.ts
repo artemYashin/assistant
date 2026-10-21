@@ -38,6 +38,7 @@ export type Approval = {
   error: string | null;
 };
 export const defaults = {
+  assistantCodeAccess: true,
   voiceCurrentPress: "double",
   voiceNewPress: "double",
   voiceCurrentKey: "KeyM",

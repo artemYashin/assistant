@@ -54,6 +54,7 @@ const contextSchema = z.object({
 });
 const settingsSchema = z
   .object({
+    assistantCodeAccess: z.boolean().default(true),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
     voiceNewPress: z.enum(["single", "double"]).default("double"),
     voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),

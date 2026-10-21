@@ -13,6 +13,7 @@ export const codeBrowserSchema = z.object({
   operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "cancel"]),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
+  localOnly: z.boolean().default(false),
   revision: z.string().regex(/^[0-9a-f]{40,64}$/).optional(),
   offset: z.number().int().min(0).max(100000).default(0), refresh: z.boolean().default(false),
 }).strict();
@@ -57,6 +58,7 @@ export class CodeBrowser {
     const persistedKey = "code-repository:" + createHash("sha256").update(repoKey).digest("hex");
     let repository = this.repositories.get(repoKey) || this.store.get<{ id: string; expires: number } | undefined>(persistedKey, undefined);
     if (repository && !/^[0-9a-f-]{36}$/i.test(repository.id)) repository = undefined;
+    if (input.localOnly && !repository) throw new AppError(409, "Локальный репозиторий ещё не подготовлен. Откройте страницу кода и загрузите репозиторий.");
     if (!repository || (input.operation === "branches" && input.refresh)) {
       const data = await requestJson(`${base}/${encodeURIComponent(settings.azureProject)}/_apis/git/repositories/${encodeURIComponent(monitor.repository)}?api-version=${encodeURIComponent(settings.azureVersion)}`, {
         headers: { Authorization: `Basic ${Buffer.from(":" + token).toString("base64")}` },

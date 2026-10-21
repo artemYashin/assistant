@@ -2541,6 +2541,8 @@ function Settings({ settings, context, run, busy }: any) {
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
           <h2><Sparkles size={22} />AI Assistant</h2>
+          <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
+          <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
           <div className="voice-settings-block">
             <h3><Mic size={17} />Голосовой помощник</h3>
             <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>

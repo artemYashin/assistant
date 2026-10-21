@@ -151,3 +151,15 @@ test('branch catalog survives service restart and refresh is explicit', async t 
   assert.deepEqual(await restarted.execute(input), initial); // A failed check preserves the last catalog.
   assert.ok(browser.branchesCache.size);
 });
+
+test('local-only tools cannot fetch missing repositories, branches or updates', async t => {
+  const { request } = await fixture(t);
+  await assert.rejects(request('branches', { localOnly: true }), /не загружен/);
+  await request('branches');
+  await assert.rejects(request('file', { localOnly: true, path: 'src/hello.ts' }), /ещё не загружена/);
+  await request('status');
+  assert.match((await request('file', { localOnly: true, path: 'src/hello.ts' })).text, /hello/);
+  await assert.rejects(request('pull', { localOnly: true }), /только чтение/);
+  await assert.rejects(request('branches', { localOnly: true, refresh: true }), /только чтение/);
+  await assert.rejects(request('tree', { localOnly: true, branch: 'feature/nested' }), /ещё не загружена/);
+});

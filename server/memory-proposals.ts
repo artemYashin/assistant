@@ -93,7 +93,7 @@ export function memoryProposalTool(
   let calls = 0;
   return defineTool("propose_memory", {
     description:
-      "Propose a concise durable fact or rule for human approval. Use for useful inferred knowledge without an explicit save request. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
+      "Propose a concise durable fact or rule for human approval. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep code memory to function, file path and purpose in 1–3 short sentences, no code dumps. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
     parameters: proposalSchema,
     handler: async (args) => {
       assertActive();

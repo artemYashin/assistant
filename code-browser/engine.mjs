@@ -109,6 +109,7 @@ export class RepositoryBrowser {
     if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 1800) throw new BrowserError('Тайм-аут Git должен быть от 60 до 1800 секунд');
     const networkOptions = { timeout: fetchTimeoutSeconds * 1000, timeoutMessage: `Git не успел загрузить данные за ${fetchTimeoutSeconds / 60} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.` };
     const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', offset = 0 } = input;
+    if (input.localOnly && (input.refresh || !['branches', 'status', 'tree', 'file', 'search'].includes(operation))) throw new BrowserError('Разрешено только чтение локального снимка', 403);
     if (!['branches', 'status', 'pull', 'tree', 'file', 'search'].includes(operation)) throw new BrowserError('Неизвестная операция');
     if (typeof url !== 'string' || url.length > 2000 || typeof filePath !== 'string' || filePath.length > 4096 ||
       (input.revision !== undefined && (typeof input.revision !== 'string' || !/^[0-9a-f]{40,64}$/.test(input.revision)))) throw new BrowserError('Некорректный запрос');
@@ -128,6 +129,7 @@ export class RepositoryBrowser {
       GIT_CONFIG_KEY_4: 'protocol.allow', GIT_CONFIG_VALUE_4: 'never',
       GIT_CONFIG_KEY_5: `protocol.${this.allowLocal && remote.protocol === 'file:' ? 'file' : 'https'}.allow`, GIT_CONFIG_VALUE_5: 'always' };
     const git = (args, options = {}) => run('git', ['--git-dir=' + gitDir, ...args], { env, signal, ...options });
+    if (input.localOnly && !await fs.stat(gitDir).catch(() => null)) throw new BrowserError('Локальный репозиторий ещё не загружен. Откройте страницу кода.', 409);
     if (!await fs.stat(gitDir).catch(() => null)) await run('git', ['init', '--bare', gitDir], { env, signal });
     if (operation === 'branches') {
       const key = hash(url + token); const cached = this.branchesCache.get(key);
@@ -140,6 +142,7 @@ export class RepositoryBrowser {
           return saved;
         }
       }
+      if (input.localOnly) throw new BrowserError('Нет локального списка веток. Откройте страницу кода.', 409);
       report({ stage: 'connecting' });
       const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], networkOptions)).toString();
       const branches = output.split('\n').flatMap(line => /^[0-9a-f]{40,64}\trefs\/heads\//.test(line) ? [line.split('\t')[1].slice(11)] : []).sort();
@@ -156,6 +159,7 @@ export class RepositoryBrowser {
     await git(['check-ref-format', 'refs/heads/' + branch]);
     const branchKey = hash(branch), stateFile = path.join(repo, branchKey + '.json');
     let state = await fs.readFile(stateFile, 'utf8').then(JSON.parse).catch(() => null);
+    if (input.localOnly && !state) throw new BrowserError('Ветка ещё не загружена локально. Откройте её на странице кода.', 409);
     const remoteRef = 'refs/orbit/remote/' + branchKey;
     if (!state || operation === 'pull' || (operation === 'status' && input.refresh)) {
       const quotaMessage = size => `Кеш кода занимает ${(size / 1024 ** 3).toFixed(2)} GiB при лимите ${(this.maxCacheBytes / 1024 ** 3).toFixed(2)} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.`;

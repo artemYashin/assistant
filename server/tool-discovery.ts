@@ -3,6 +3,10 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  code_branches: "List cached branches of the current project repository; no network.",
+  code_tree: "Browse a local directory's file names/types/sizes without bodies.",
+  code_search: "Find files by name/path or grep code with short numbered snippets; local only.",
+  code_read_file: "Read line ranges or a full local file, paginated; no edits.",
   get_ticket_links_batch: "Read links/images of multiple cached tickets in one call; per-ticket pagination, no Azure.",
   get_cached_ticket_content_batch: "Read multiple cached ticket bodies in one call; per-ticket pagination, no Azure.",
   get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",
@@ -45,7 +49,7 @@ const catalog: Record<string, string> = {
   request_pull_request_review:
     "Queue PR review: monitor, repository and PR number.",
   list_memories: "Read general, customer and project memory.",
-  save_memory: "Save an explicitly requested fact: scope and text.",
+  save_memory: "Submit an explicitly requested fact for UI approval; never saves directly.",
   propose_memory: "Propose a useful fact for approval: scope, text and reason.",
   list_chats: "List locally synchronized Teams chats.",
   read_teams_messages: "Read locally stored messages by chat ID.",

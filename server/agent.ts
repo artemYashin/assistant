@@ -1,3 +1,4 @@
+import { codeTools } from "./code-tools.js";
 import { cachedTicketBatchSchema, ticketLinksBatchSchema, readCachedTicketBatch, readTicketLinksBatch } from "./ticket-read-batch.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { openChatRuntime, chatRuntimeKey, type ChatRuntimeState } from "./chat-runtime.js";
@@ -32,7 +33,7 @@ import type { ChatProgress } from "./chat-stream.js";
 import { localTicketTags, ticketMetadata } from "./ticket-metadata.js";
 import { workspaceContextTool } from "./workspace-context.js";
 import { localDeveloperTools } from "./local-developers.js";
-import { memoryProposalTool } from "./memory-proposals.js";
+import { MemoryProposals, memoryProposalTool } from "./memory-proposals.js";
 import {
   REVIEW_POLICY,
   questionPolicy,
@@ -156,7 +157,7 @@ export function makeTools(
     }),
     defineTool("save_memory", {
       description:
-        "Save a fact only if the user explicitly asks. Scope is constrained to the current context. Store the fact itself: for project/client scope, omit redundant introductory labels and the current project/client name because they are stored as metadata. Preserve names when they are essential to the fact (e.g. cross-project dependencies).",
+        "Submit a concise memory proposal for approval on the Approvals page, even on an explicit save request. Never writes memory directly. For code facts verify repository evidence first; prefer project scope and a short function/path/purpose summary.",
       parameters: z.object({
         scope: z.enum(["general", "client", "project"]),
         body: z
@@ -167,7 +168,7 @@ export function makeTools(
             "The fact or rule itself, without redundant 'In project X' or 'For client Y' prefixes for the current scoped context.",
           ),
       }),
-      handler: async (args) => store.addMemory(args.scope, args.body, context),
+      handler: async (args) => new MemoryProposals(store).propose({ ...args, reason: "Запрос ассистента на сохранение памяти; требуется подтверждение пользователя." }, context),
     }),
     defineTool("get_ticket_links_batch", {
       description: "Read cached links/images for up to 20 tickets in one call. Shared search/kind/limit, per-ticket offset. No Azure calls. Returns per-ticket availability/nextOffset and pending requests when the response budget is reached.",
@@ -175,7 +176,7 @@ export function makeTools(
       handler: async args => readTicketLinksBatch(store, args),
     }),
     defineTool("get_cached_ticket_content_batch", {
-      description: "Read cached descriptions/criteria/repro for up to 20 tickets in one call. Per-ticket offset, nextOffset and availability. Retry pending requests separately. No Azure calls. Same consent rule as single reads: up to three distinct tickets per turn without a warning; ask before more.",
+      description: "Read cached descriptions/criteria/repro for up to 20 tickets in one call. Per-ticket offset, nextOffset and availability. Retry pending requests separately. No Azure calls. Same consent rule as single reads: up to 30 distinct tickets per turn without a warning; ask before more.",
       parameters: cachedTicketBatchSchema,
       handler: async args => readCachedTicketBatch(store, args),
     }),
@@ -185,7 +186,7 @@ export function makeTools(
       handler: async args => readTicketLinks(store, args),
     }),
     defineTool("get_cached_ticket_content", {
-      description: "Read a ticket's LOCAL cached description, acceptance criteria and repro steps whenever full context helps answer accurately. Prior snippet search is optional; rereading is allowed when useful. Cache timestamps are omitted unless includeCacheInfo=true. No Azure calls/fallback. Up to three distinct tickets per user turn need no token warning. Follow nextOffset for full text; missing cache is not an empty description. Comments/images are not included.",
+      description: "Read a ticket's LOCAL cached description, acceptance criteria and repro steps whenever full context helps answer accurately. Prior snippet search is optional; rereading is allowed when useful. Cache timestamps are omitted unless includeCacheInfo=true. No Azure calls/fallback. Up to 30 distinct tickets per user turn need no token warning. Follow nextOffset for full text; missing cache is not an empty description. Comments/images are not included.",
       parameters: cachedTicketSchema,
       handler: async args => readCachedTicket(store, args),
     }),
@@ -1003,6 +1004,7 @@ export class Agent {
                   ),
                 ]
               : []),
+            ...(!review ? codeTools(this.store, context, assertActive) : []),
             ...(!review && this.pullRequests
               ? prTools(
                   this.store,
@@ -1048,8 +1050,8 @@ export class Agent {
               assertActive();
               if (this.store.source(settings) !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось");
               const ids = name.endsWith("_batch") ? cachedTicketBatchSchema.parse(args).tickets.map(item => item.id) : [cachedTicketSchema.parse(args).id];
-              if (!deepRead.confirmed && new Set([...cachedReadIds, ...ids]).size > 3)
-                throw new AppError(403, "Чтение описаний более трёх тикетов может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.");
+              if (!deepRead.confirmed && new Set([...cachedReadIds, ...ids]).size > 30)
+                throw new AppError(403, "Чтение описаний более 30 разных локальных тикетов за один запрос может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.");
               const result: any = await handler(args, invocation);
               for (const item of name.endsWith("_batch") ? result.results : [result])
                 if (item.available) { cachedReadIds.add(item.id); knownTickets.add(item.id); }
@@ -1152,27 +1154,6 @@ export class Agent {
               "\n" +
               questionPolicy(reviewActions?.questionFrequency),
           };
-        } else {
-          const saveTool = config.tools?.find(
-            (tool) => tool.name === "save_memory",
-          );
-          if (saveTool?.handler) {
-            const save = saveTool.handler;
-            saveTool.handler = async (args, invocation) => {
-              assertActive();
-              if (
-                !/запомни|(?:сохрани|добавь|запиши).{0,60}(?:памят|знани)|remember|(?:save|add|store).{0,60}memory/iu.test(
-                  prompt,
-                ) ||
-                /не\s+(?:запоминай|сохраняй)|do not|don't/iu.test(prompt)
-              )
-                throw new AppError(
-                  403,
-                  "Для прямого сохранения нужна явная просьба. Используйте propose_memory для предложения на подтверждение.",
-                );
-              return save(args, invocation);
-            };
-          }
         }
         const discovery = !review ? createToolDiscovery(
           config.tools || [],
