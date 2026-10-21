@@ -447,7 +447,7 @@ export class Agent {
     const analysisAllowed =
       !review && (deepRead.confirmed || singleReadAllowed);
     const fullDetails =
-      analysisAllowed && (wantsTicketDetails(readPrompt) || singleReadAllowed);
+      analysisAllowed && !wantsTicketDetails(readPrompt) && singleReadAllowed;
     const azureConsent = review
       ? undefined
       : azureLookupConsent(
@@ -811,6 +811,7 @@ export class Agent {
       if (
         !review &&
         singleTarget !== undefined &&
+        !wantsTicketDetails(readPrompt) &&
         !singleLocal &&
         singleTarget !== attachedTicket?.id &&
         (deepRead.needsConfirmation || asksTicketOpinion(readPrompt))
@@ -848,6 +849,22 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
+                  defineTool("show_ticket_details", {
+                    description: "Open the ticket detail viewer in the UI, with a switchable sidebar for multiple tickets. Use when the user asks to SHOW details, not to analyze content. Open immediately on an explicit display request; no confirmation needed. No ticket bodies are returned to the model. Any identified ticket ID can be viewed, like the header lookup, without importing. UI loads only the selected ticket on demand.",
+                    parameters: z.object({ ids: z.array(z.number().int().positive()).min(1).max(50) }).strict(),
+                    handler: async ({ ids }) => {
+                      assertActive();
+                      const source = this.store.source(settings);
+                      if (source !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось");
+                      if (!onProgress) throw new AppError(409, "Открытие деталки требует подключённого интерфейса чата");
+                      const tickets = [...new Set(ids)].map(id => {
+                        const row = this.store.db.prepare("SELECT title FROM tickets WHERE source=? AND id=?").get(source, id) as { title: string } | undefined;
+                        return { id, title: row?.title || `Тикет #${id}` };
+                      });
+                      emit({ stage: "show_tickets", tickets, source });
+                      return { requested: true, ids: tickets.map(t => t.id), note: "Detail viewer requested. The UI loads selected ticket content separately; do not claim content has loaded or repeat it in chat." };
+                    },
+                  }),
                   defineTool("get_ticket_states", {
                     description: "Read available Azure states for up to 25 LOCAL ticket IDs in one call before proposing a status change. This only reads states/current status, never descriptions or writes. Supply requestedState (e.g. RFT) to resolve its exact Azure name. Use resolvedState in the confirmation preview; if resolutionError is returned, ask the user to choose from states. Different work item types may have different states. IDs can come from conversation history. Ordinary ticket lists do not need this tool.",
                     parameters: z.object({ ids: z.array(z.number().int().positive()).min(1).max(25), requestedState: z.string().trim().min(1).max(200).optional() }).strict(),

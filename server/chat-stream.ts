@@ -1,4 +1,5 @@
 export type ChatProgress =
+  | { stage: "show_tickets"; tickets: { id: number; title: string }[]; source: string }
   | { stage: "preparing"; startedAt?: number }
   | { stage: "usage"; inputTokens: number; outputTokens: number; reports: number; partial: boolean }
   | { stage: "text"; messageId: string; text: string; replace?: boolean }

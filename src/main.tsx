@@ -2696,7 +2696,7 @@ function Assistant({
           setHistory(page.messages);
           setAttachment(page.attachment);
           setHasOlder(page.hasMore);
-          if (page.usage) setChatUsage(page.usage);
+          setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
         }
       })
       .catch((e) => {
@@ -2762,7 +2762,7 @@ function Assistant({
           setHistory(page.messages);
           setAttachment(page.attachment);
           setHasOlder(false);
-          if (page.usage) setChatUsage(page.usage);
+          setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
           setPrompt(
             `Проанализируй тикет #${page.attachment.id}: объясни требования, найди неоднозначности и риски, предложи проверки.`,
           );
@@ -2803,7 +2803,7 @@ function Assistant({
         setHistory(page.messages);
         setAttachment(page.attachment);
         setHasOlder(page.hasMore);
-          if (page.usage) setChatUsage(page.usage);
+          setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
         setPrompt("");
         setError("");
       }
@@ -2825,7 +2825,7 @@ function Assistant({
       if (generation === historyGeneration.current) {
         setHistory((h) => [...page.messages, ...h]);
         setHasOlder(page.hasMore);
-          if (page.usage) setChatUsage(page.usage);
+          setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
         requestAnimationFrame(() => {
           if (container && generation === historyGeneration.current)
             container.scrollTop = top + container.scrollHeight - height;
@@ -2897,6 +2897,8 @@ function Assistant({
         setHistory([]);
         setHasOlder(false);
         setSessionTitle("Новый чат");
+        setChatUsage({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+        chatStream.reset();
         setAttachment(null);
       }
     } catch (e: any) {
@@ -2936,7 +2938,8 @@ function Assistant({
         })),
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
-          if (event.stage === "usage") setChatUsage(event);
+          if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
+          else if (event.stage === "usage") setChatUsage(event);
           else chatStream.receive(event);
         }
       }, chatConnection.current!.signal);
@@ -2976,7 +2979,7 @@ function Assistant({
         const page = await api(`/conversation?${new URLSearchParams({ ...context, sessionId, page: "true" })}`);
         if (contextKey.current === captured && generation === historyGeneration.current) {
           setHistory(existing => [...existing.filter(message => message.sequence && message.sequence < (page.messages[0]?.sequence || 0)), ...page.messages]);
-          if (page.usage) setChatUsage(page.usage);
+          setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
           setHasOlder(page.hasMore);
         }
       } catch { /* Keep the received response if history refresh fails. */ }
@@ -3083,8 +3086,8 @@ function Assistant({
       </div>
       <div className="assistant-token-usage" title={`Токены текущего чата по отчётам SDK. ${chatUsage.partial ? "Для старых сообщений до обновления расход не привязан к чату." : "Включая контекст и инструменты."}`}>
         <span>Токены{chatUsage.partial ? " (частично)" : ""}</span>
-        <span>Вход <b>{chatUsage.reports ? chatUsage.inputTokens.toLocaleString() : "—"}</b></span>
-        <span>Выход <b>{chatUsage.reports ? chatUsage.outputTokens.toLocaleString() : "—"}</b></span>
+        <span>Вход <b>{!clearing && chatUsage.reports ? chatUsage.inputTokens.toLocaleString() : "—"}</b></span>
+        <span>Выход <b>{!clearing && chatUsage.reports ? chatUsage.outputTokens.toLocaleString() : "—"}</b></span>
       </div>
       <div className="conversation" aria-busy={clearing} ref={conversationView} onScroll={event => {
         const element = event.currentTarget;

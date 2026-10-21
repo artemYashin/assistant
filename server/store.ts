@@ -889,6 +889,9 @@ export class Store {
           "DELETE FROM conversations WHERE session_id=? AND client=? AND project=?",
         )
         .run(session.id, context.client, context.project);
+      // Preserve global accounting, but start the cleared conversation's tally anew.
+      this.db.prepare("UPDATE llm_requests SET chat_session_id=NULL WHERE chat_session_id=? AND client=? AND project=?")
+        .run(session.id, context.client, context.project);
       this.db
         .prepare(
           "UPDATE chat_sessions SET title='Новый чат',attachment=NULL,updated_at=? WHERE id=?",

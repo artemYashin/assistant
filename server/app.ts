@@ -1002,13 +1002,14 @@ export function createApp(
   app.get("/api/tickets/options", async (_req, res) =>
     res.json(await connectors.ticketOptions()),
   );
-  app.get("/api/tickets/:id/details", async (req, res) =>
+  app.get("/api/tickets/:id/details", async (req, res) => {
+    if (req.query.source !== undefined && req.query.source !== store.source()) throw new AppError(409, "Подключение Azure изменилось");
     res.json(
       await connectors.ticketDetails(
         z.coerce.number().int().positive().parse(req.params.id),
       ),
-    ),
-  );
+    );
+  });
   app.get("/api/ticket-cards/:ref", (req, res) => {
     const card = connectors.ticketCard(String(req.params.ref));
     res.json({

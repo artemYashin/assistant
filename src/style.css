@@ -8758,3 +8758,14 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 @media (max-width: 600px) {
   .repository-heading-status { width: 100%; }
 }
+
+.ticket-viewer-layout { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 12px; min-height: 0; }
+.ticket-viewer-layout.is-single { grid-template-columns: minmax(0, 1fr); }
+.ticket-viewer-list { display: flex; flex-direction: column; gap: 5px; padding: 6px; border: 1px solid #dce4df; border-radius: 9px; background: #f3f6f4; max-height: 70dvh; overflow: auto; align-self: start; }
+.ticket-viewer-list > button { display: flex; align-items: flex-start; gap: 7px; padding: 9px; text-align: left; border-radius: 6px; width: 100%; }
+.ticket-viewer-list > button > svg { flex-shrink: 0; margin-top: 2px; color: #648675; }
+.ticket-viewer-list > button > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 11px; overflow-wrap: anywhere; }
+.ticket-viewer-list > button:hover { background: #e8efeb; }
+.ticket-viewer-list > button[aria-current="true"] { background: #dcece3; box-shadow: inset 0 0 0 1px #b8d2c3; }
+.ticket-viewer-content { min-width: 0; }
+@media (max-width: 750px) { .ticket-viewer-layout { grid-template-columns: minmax(0, 1fr); } .ticket-viewer-list { max-height: 160px; } }

@@ -4,6 +4,7 @@ import type { ChatProgress } from "../server/chat-stream.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 
 const labels: Record<string, string> = {
+  show_ticket_details: "Открытие деталок тикетов",
   load_tools: "Подключение инструментов", list_tickets: "Поиск локальных тикетов",
   get_ticket: "Чтение тикета", list_local_tags: "Чтение локальных тегов",
   get_local_ticket_metadata: "Чтение локальных полей", get_ticket_states: "Проверка доступных статусов",

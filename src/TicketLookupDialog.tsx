@@ -10,6 +10,8 @@ export function TicketLookupDialog() {
   const input = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const request = useRef(0);
+  const [selection, setSelection] = useState<{ id: number; title: string }[]>([]);
+  const source = useRef("");
   const [open, setOpen] = useState(false);
   const [id, setId] = useState("");
   const [cardRef, setCardRef] = useState("");
@@ -20,10 +22,36 @@ export function TicketLookupDialog() {
   const reset = () => {
     request.current++;
     setOpen(false);
+    setSelection([]);
     setCardRef("");
     setBusy(false);
     setError("");
   };
+  async function selectTicket(ticketId: number) {
+    const current = ++request.current;
+    setId(String(ticketId)); setCardRef(""); setBusy(true); setError("");
+    try {
+      const result = await api(`/tickets/${ticketId}/details?${new URLSearchParams({ source: source.current })}`);
+      if (current === request.current) {
+        if (result.source !== source.current) throw new Error("Подключение Azure изменилось");
+        setCardRef(result.cardId);
+      }
+    } catch (e: any) { if (current === request.current) setError(e.message); }
+    finally { if (current === request.current) setBusy(false); }
+  }
+  useEffect(() => {
+    const show = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!Array.isArray(detail?.tickets) || !detail.tickets.length || typeof detail.source !== "string") return;
+      const tickets = detail.tickets.filter((t: any) => Number.isSafeInteger(t.id) && t.id > 0 && typeof t.title === "string").slice(0, 50);
+      if (!tickets.length) return;
+      source.current = detail.source;
+      setSelection(tickets); setOpen(true); dialog.current?.showModal();
+      void selectTicket(tickets[0].id);
+    };
+    window.addEventListener("orbit-show-ticket-details", show);
+    return () => window.removeEventListener("orbit-show-ticket-details", show);
+  }, []);
   // Internal links should reveal their destination rather than return to lookup.
   useEffect(() => {
     dialog.current?.close();
@@ -50,7 +78,7 @@ export function TicketLookupDialog() {
     [],
   );
   const backOrClose = () => {
-    if (cardRef) setCardRef("");
+    if (cardRef && !selection.length) setCardRef("");
     else {
       reset();
       dialog.current?.close();
@@ -74,7 +102,7 @@ export function TicketLookupDialog() {
       </button>
       <dialog
         ref={dialog}
-        className={`ticket-lookup-dialog${cardRef ? " is-detail" : " is-lookup"}`}
+        className={`ticket-lookup-dialog${cardRef || selection.length ? " is-detail" : " is-lookup"}`}
         aria-labelledby={titleId}
         onCancel={(event) => {
           if (event.target !== event.currentTarget) return;
@@ -88,25 +116,36 @@ export function TicketLookupDialog() {
       >
         <header className="ticket-lookup-dialog-heading">
           <h2 id={titleId}>
-            {cardRef ? `Тикет #${id}` : "Открыть тикет по номеру"}
+            {selection.length > 1 ? `Тикеты · ${selection.length}` : cardRef || selection.length ? `Тикет #${id}` : "Открыть тикет по номеру"}
           </h2>
           <button
             ref={closeButton}
             type="button"
             className="icon-button"
             aria-label={
-              cardRef
+              cardRef && !selection.length
                 ? "Закрыть деталку и вернуться к вводу номера"
                 : "Закрыть поиск тикета"
             }
-            title={cardRef ? "Вернуться к вводу номера" : "Закрыть"}
+            title={cardRef && !selection.length ? "Вернуться к вводу номера" : "Закрыть"}
             onClick={backOrClose}
           >
             <X size={20} />
           </button>
         </header>
         {open &&
-          (cardRef ? (
+          (selection.length ? (
+            <div className={`ticket-viewer-layout${selection.length === 1 ? " is-single" : ""}`}>
+              {selection.length > 1 && <nav className="ticket-viewer-list" aria-label="Выбранные тикеты">
+                {selection.map(ticket => <button type="button" key={ticket.id} aria-current={String(ticket.id) === id ? "true" : undefined} onClick={() => void selectTicket(ticket.id)}>
+                  <Ticket size={16} aria-hidden="true" /><span><b>#{ticket.id}</b><span>{ticket.title}</span></span>
+                </button>)}
+              </nav>}
+              <div className="ticket-viewer-content" aria-busy={busy}>
+                {busy ? <p role="status">Загружаю тикет…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary" onClick={() => void selectTicket(Number(id))}>Повторить</button></div> : cardRef ? <TicketCard key={cardRef} reference={cardRef} /> : null}
+              </div>
+            </div>
+          ) : cardRef ? (
             <TicketCard reference={cardRef} />
           ) : (
             <section className="panel ticket-lookup">

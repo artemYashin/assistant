@@ -99,4 +99,10 @@ test("tool history and token usage persist in the correct chat with selective di
   assert.throws(() => ledger.sessionUsage({ client: "Other", project: "" }, first.id));
   store.say("assistant", "Старая переписка", context, [], second.id);
   assert.equal(ledger.sessionUsage(context, second.id).partial, true);
+  const receiptsBefore = store.db.prepare("SELECT count(*) AS count FROM llm_usage").get();
+  store.clearHistory(context, first.id);
+  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+  assert.deepEqual(store.db.prepare("SELECT count(*) AS count FROM llm_usage").get(), receiptsBefore);
+  assert.equal(ledger.sessionUsage(context, second.id).partial, true);
+
 });

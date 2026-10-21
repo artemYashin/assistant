@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
   search_ticket_content: "Search cached ticket descriptions/criteria/repro; short excerpts only, no Azure calls.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
