@@ -15,6 +15,7 @@ import {
   Code2,
   Eye,
   GitMerge,
+  GitBranch,
   Copy,
   Check,
   FileText,
@@ -39,6 +40,7 @@ import { StatusBadge } from "./TicketControls.js";
 const statuses: Record<string, string> = {
   awaiting_answers: "Нужны ответы",
   queued: "В очереди по вашему запросу",
+  preparing_git: "Подготовка Git",
   running: "Ревью выполняется",
   completed: "Ревью готово",
   error: "Ошибка",
@@ -544,7 +546,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                     </span>
                   )}
                   <span
-                    className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
+                    className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["preparing_git", "running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
                   >
                     {statuses[p.review_status] || "Ревью не запускалось"}
                   </span>
@@ -578,7 +580,13 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               </div>
               <div className="pr-card-utilities">
                 {!readOnly && (
-                  <PrHealth value={p.health} inScope={!!p.in_scope} />
+                  <>
+                    <PrHealth value={p.health} inScope={!!p.in_scope} />
+                    <span className={`pr-local-source ${p.local_source?.status === "ready" ? "is-ready" : p.local_source?.status === "loading" ? "is-loading" : ["error", "stale"].includes(p.local_source?.status) ? "is-error" : ""}`} title={p.local_source?.error || p.local_source?.stage || p.source_branch}>
+                      {p.local_source?.status === "loading" ? <LoaderCircle size={13} className="spin" /> : <GitBranch size={13} />}
+                      {p.local_source?.status === "ready" ? "Локальная ветка готова" : p.local_source?.status === "loading" ? "Ветка загружается" : p.local_source?.status === "stale" ? "Ветка устарела" : p.local_source?.status === "error" ? "Локальная ветка не готова" : "Ветка не запрашивалась"}
+                    </span>
+                  </>
                 )}
                 <div
                   className="pr-card-info-actions"
@@ -655,7 +663,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                       !p.in_scope ||
                       !p.enabled ||
                       !!p.draft ||
-                      ["queued", "running", "awaiting_answers"].includes(
+                      ["preparing_git", "queued", "running", "awaiting_answers"].includes(
                         p.review_status,
                       )
                     }
@@ -669,6 +677,8 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         size={17}
                         aria-hidden="true"
                       />
+                    ) : p.review_status === "preparing_git" ? (
+                      <LoaderCircle className="spin" size={17} />
                     ) : p.review_status === "queued" ? (
                       <Clock size={17} aria-hidden="true" />
                     ) : p.review_status === "awaiting_answers" ? (
@@ -682,11 +692,14 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         ? "Ожидает ответов"
                         : p.review_status === "running"
                           ? "Ревью выполняется"
+                          : p.review_status === "preparing_git"
+                            ? "Подготовка Git"
                           : p.review_status === "queued"
                             ? "Ревью в очереди"
                             : "Запустить ревью"}
                   </button>
                 )}
+                {!readOnly && <button type="button" className="secondary" disabled={busy || !p.enabled || !p.in_scope || p.local_source?.status === "loading" || p.review_status === "preparing_git"} onClick={() => run(() => api("/pr/source", "POST", { monitor: p.monitor, repo: p.repo, number: p.number }))}><GitBranch size={16} />Загрузить source-ветку</button>}
                 <button
                   type="button"
                   className="secondary pr-diff-action"

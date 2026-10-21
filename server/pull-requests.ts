@@ -1,3 +1,4 @@
+import { PrSourcePreparation } from "./pr-source.js";
 import { z } from "zod";
 import { cachedPrLinks, prLinksKey } from "./pr-ticket-sources.js";
 import { ignoredReviewPath, reviewFileSettings } from "./review-files.js";
@@ -208,6 +209,7 @@ export class PullRequests {
       this.completedPending.delete(key);
     }
   }
+  private sourcePreparation: Pick<PrSourcePreparation, "prepare" | "status">;
   private working = false;
   private stopped = false;
   shutdown() {
@@ -226,7 +228,9 @@ export class PullRequests {
         modelOverride?: string,
       ) => Promise<{ body: string; requestId: string }>;
     },
+    sourcePreparation?: Pick<PrSourcePreparation, "prepare" | "status">,
   ) {
+    this.sourcePreparation = sourcePreparation || new PrSourcePreparation(store);
     this.store.db.exec(
       "CREATE TABLE IF NOT EXISTS pr_completed(monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,closed_at TEXT NOT NULL,expires_at INTEGER NOT NULL,hydrated INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(monitor,repo,number))",
     );
@@ -412,6 +416,7 @@ export class PullRequests {
         );
         return {
           ...row,
+          local_source: this.sourcePreparation.status(row),
           last_saved_review:
             this.store.db
               .prepare(
@@ -1324,6 +1329,13 @@ export class PullRequests {
       },
     };
   }
+  prepareSource(monitor: string, repo: string, number: number) {
+    const m = this.monitors().find(item => item.id === monitor);
+    const pr = this.store.db.prepare("SELECT * FROM pull_requests WHERE monitor=? AND repo=? AND number=?").get(monitor, repo, number) as any;
+    if (!m?.enabled || !pr || !pr.in_scope) throw new AppError(404, "Pull request недоступен для подготовки ветки.");
+    void this.sourcePreparation.prepare(m, pr).catch(() => {});
+    return this.sourcePreparation.status(pr);
+  }
   requestReview(
     monitor: string,
     repo: string,
@@ -1361,14 +1373,14 @@ export class PullRequests {
       .get(monitor, repo, number, p.head, p.target) as any;
     if (
       old &&
-      (["queued", "running", "awaiting_answers"].includes(old.status) ||
+      (["preparing_git", "queued", "running", "awaiting_answers"].includes(old.status) ||
         (old.status === "completed" && !restart))
     )
       return old.id;
     const id = old && old.status !== "completed" ? old.id : randomUUID();
     this.store.db
       .prepare(
-        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,?,?,?,?,?,'queued',?,?) ON CONFLICT(id) DO UPDATE SET status='queued',error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at,options=excluded.options",
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,?,?,?,?,?,'preparing_git',?,?) ON CONFLICT(id) DO UPDATE SET status='preparing_git',error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at,options=excluded.options",
       )
       .run(
         id,
@@ -1386,31 +1398,28 @@ export class PullRequests {
     if (this.stopped) return;
     if (
       this.working ||
-      this.agent.active() ||
       !this.store.secret("github.token")
     )
       return;
     const used = this.store.db
       .prepare("SELECT count(*) n FROM pr_review_attempts WHERE started_at>=?")
       .get(new Date(Date.now() - 86400000).toISOString()) as { n: number };
-    if (used.n >= this.store.settings().prDailyLimit) return;
+    const modelPaused = !!this.agent.active() || used.n >= this.store.settings().prDailyLimit;
     const job = this.store.db
       .prepare(
-        `SELECT r.* FROM pr_reviews r JOIN pr_projects m ON m.id=r.monitor JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number AND p.head=r.head AND p.target=r.target WHERE r.status='queued' AND m.enabled=1 AND m.error IS NULL AND p.in_scope=1 AND p.draft=0 ORDER BY r.created_at LIMIT 1`,
+        `SELECT r.* FROM pr_reviews r JOIN pr_projects m ON m.id=r.monitor JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number AND p.head=r.head AND p.target=r.target WHERE r.status IN ('preparing_git','queued') AND (?=0 OR r.status='preparing_git') AND m.enabled=1 AND m.error IS NULL AND p.in_scope=1 AND p.draft=0 ORDER BY CASE WHEN r.status='preparing_git' THEN 0 ELSE 1 END,r.created_at LIMIT 1`,
       )
-      .get() as any;
+      .get(Number(modelPaused)) as any;
     if (!job) return;
     this.working = true;
     try {
       const m = this.monitors().find((m) => m.id === job.monitor)!;
       this.store.db
         .prepare(
-          "UPDATE pr_reviews SET status='running',started_at=? WHERE id=?",
+          "UPDATE pr_reviews SET status='preparing_git',started_at=? WHERE id=?",
         )
         .run(now(), job.id);
-      this.store.db
-        .prepare("INSERT INTO pr_review_attempts VALUES (?,?,?)")
-        .run(randomUUID(), job.id, now());
+
       const credentials = this.credentials(m);
       const detail = await this.get(
         m,
@@ -1436,6 +1445,14 @@ export class PullRequests {
           .run(now(), job.id);
         return;
       }
+      await this.sourcePreparation.prepare(m, { monitor: job.monitor, repo: job.repo, number: job.number, head: job.head, source_branch: String(detail.sourceRefName || "") });
+      if (this.stopped) throw new AppError(409, "Приложение завершает работу");
+      if (this.agent.active() || used.n >= this.store.settings().prDailyLimit) {
+        this.store.db.prepare("UPDATE pr_reviews SET status='queued',started_at=NULL WHERE id=?").run(job.id);
+        return;
+      }
+      this.store.db.prepare("UPDATE pr_reviews SET status='running',started_at=? WHERE id=?").run(now(), job.id);
+      this.store.db.prepare("INSERT INTO pr_review_attempts VALUES (?,?,?)").run(randomUUID(), job.id, now());
       const changes = await this.changes(m, job.repo, job.head, job.target);
       this.store.db.prepare("UPDATE pr_reviews SET coverage=? WHERE id=?").run(
         JSON.stringify({
@@ -1570,6 +1587,7 @@ export class PullRequests {
           reviewId: job.id,
           readCode: options.readCode,
           maxTokens: options.maxTokens,
+          sourceRevision: job.head,
           branch: String(detail.sourceRefName || "").replace(/^refs\/heads\//, ""),
           continuationPrompt: `Continue the same PR review using the existing diff and previously read memory/code in this session. Updated questions and answers: ${JSON.stringify(answers)}. Reviewer comment: ${options.reviewerComment}`,
 

@@ -111,3 +111,15 @@ test("code citations preserve explicitly requested branch instead of configured 
   assert.equal(params.get("path"), "src/a.ts");
   assert.equal(params.get("endLine"), "2");
 });
+
+test("review code reads pin the PR monitor and commit from the very first request", async t => {
+  const store = setup(t), calls: any[] = [];
+  const revision = "c".repeat(40);
+  const browser = { request: async (input: any) => { calls.push(input); return { sha: revision, text: "const value = 1;" }; } };
+  const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, browser as any, "feature", () => true, { monitor: "pr-monitor", branch: "feature", revision });
+  await tools.find(tool => tool.name === "code_read_file")!.handler!({ path: "a.ts", startLine: 1 }, {} as any);
+  assert.equal(calls[0].monitor, "pr-monitor");
+  assert.equal(calls[0].revision, revision);
+  assert.equal(calls[0].branch, "feature");
+  assert.equal(calls[0].localOnly, true);
+});

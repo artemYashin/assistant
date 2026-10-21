@@ -1026,7 +1026,7 @@ export class Agent {
                 ]
               : []),
             ...(!review ? memoryRefinementTools(this.store, context, assertActive, () => emit({ stage: "data_synced", domain: "memory" })) : []),
-            ...(!review || reviewActions?.readCode ? codeTools(this.store, context, assertActive, undefined, repositoryBranch, review ? () => !!reviewActions?.readCode : undefined) : []),
+            ...(!review || reviewActions?.readCode ? codeTools(this.store, context, assertActive, undefined, repositoryBranch, review ? () => !!reviewActions?.readCode : undefined, reviewActions?.sourceRevision && reviewActions?.pullRequest && repositoryBranch ? { monitor: reviewActions.pullRequest.monitor, branch: repositoryBranch, revision: reviewActions.sourceRevision } : undefined) : []),
             ...(!review && this.pullRequests
               ? prTools(
                   this.store,

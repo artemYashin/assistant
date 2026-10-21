@@ -11,6 +11,7 @@ import type { Monitor } from "./pull-requests.js";
 export const codeBrowserSchema = z.object({
   client: z.string().min(1).max(200), project: z.string().min(1).max(200),
   operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "jobs", "cancel"]),
+  monitor: z.string().max(200).default(""),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
   localOnly: z.boolean().default(false),
@@ -48,8 +49,8 @@ export class CodeBrowser {
     const checkCancelled = () => { if (requestId && this.active.get(requestId)?.cancelled) throw new AppError(409, "Операция Git отменена."); };
     report?.({ stage: "connecting" });
     const settings = this.store.settings(input);
-    const monitor = this.store.db.prepare("SELECT * FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? ORDER BY enabled DESC LIMIT 1")
-      .get(input.client, input.project, azureBase(settings.azureUrl), settings.azureProject) as Monitor | undefined;
+    const monitor = this.store.db.prepare("SELECT * FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? AND (?='' OR id=?) ORDER BY enabled DESC LIMIT 1")
+      .get(input.client, input.project, azureBase(settings.azureUrl), settings.azureProject, input.monitor, input.monitor) as Monitor | undefined;
     if (!monitor?.repository) throw new AppError(400, "Настройте Git-репозиторий выбранного проекта в «Заказчики и проекты».");
     const token = this.store.secret("azure.pat");
     if (!token) throw new AppError(400, "Укажите PAT Azure с правом Code Read.");
@@ -111,6 +112,7 @@ export class CodeBrowser {
     if (!response.ok) throw new AppError(response.status, data?.error || "Ошибка сервиса кода");
     if (!data) throw new AppError(502, "Некорректный ответ сервиса кода");
     checkCancelled();
+    if (input.branch && typeof data.sha === "string") this.store.set(`code.snapshot:${monitor.id}:${input.branch.replace(/^refs\/heads\//, "")}`, { sha: data.sha, checkedAt: new Date().toISOString() });
     const syncKey = "code-sync:" + monitor.id;
     if (!background && ["status", "pull"].includes(input.operation) && typeof data.sha === "string" && Number.isFinite(Date.parse(data.checkedAt))) {
       const previous = this.store.get<CodeSyncState | null>(syncKey, null);

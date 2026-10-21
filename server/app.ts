@@ -1248,6 +1248,10 @@ export function createApp(
       .parse(req.body);
     res.json(await pullRequests.linkTicket(input));
   });
+  app.post("/api/pr/source", (req, res) => {
+    const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive() }).strict().parse(req.body);
+    res.json(pullRequests.prepareSource(input.monitor, input.repo, input.number));
+  });
   app.post("/api/pr/review", (req, res) => {
     const input = z
       .object({

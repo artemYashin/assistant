@@ -76,6 +76,7 @@ export function PrReviewDialog({
           }
         }}
       >
+        <p className="muted">Сначала проверим и при необходимости загрузим source-ветку до коммита PR. Ревью начнётся после подготовки Git.</p>
         <fieldset className="review-settings-block"><legend>Параметры ревью</legend>
         <div className="review-settings-row">
         <ModelOverride value={model} onChange={setModel} disabled={busy} />

@@ -41,14 +41,15 @@ function fixture(t: any) {
       };
     },
   };
-  const service = new PullRequests(store, agent);
+  const preparation = { status: () => ({ status: "ready" }), prepare: async (_monitor: any, _pr: any) => {} };
+  const service = new PullRequests(store, agent, preparation);
   service.save({
     ...context,
     repository: "repo",
     mode: "required",
     enabled: true,
   });
-  return { store, service, calls, agent, dir };
+  return { store, service, calls, agent, dir, preparation };
 }
 function mock(t: any, items: any[], extra?: (url: URL, init: any) => any) {
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
@@ -187,7 +188,7 @@ test("daily cap and foreground chat defer reviews; errors are not retried automa
   assert.equal(
     (
       store.db
-        .prepare("SELECT count(*) n FROM pr_reviews WHERE status='queued'")
+        .prepare("SELECT count(*) n FROM pr_reviews WHERE status IN ('preparing_git','queued')")
         .get() as any
     ).n,
     2,
@@ -279,6 +280,7 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
   await service.sync();
   const id = service.requestReview(service.monitors()[0].id, "repo", 1);
   assert.equal(service.requestReview(service.monitors()[0].id, "repo", 1), id);
+  store.db.prepare("UPDATE pr_reviews SET status='queued' WHERE id=?").run(id);
   store.set("migration.manualReviews", false);
   const reopened = new Store(dir);
   reopened.close();
@@ -299,7 +301,7 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
         .prepare("SELECT status FROM pr_reviews WHERE id=?")
         .get(id) as any
     ).status,
-    "queued",
+    "preparing_git",
   );
 });
 
@@ -689,6 +691,9 @@ test("review options persist and disable questions without fetching tickets", as
     reviewerComment: "",
     questionFrequency: "none",
     readTickets: false,
+    readCode: true,
+    maxTokens: 1000000,
+    memoryScopes: ["general", "client", "project", "project_review"],
   });
   await service.reviewNext();
   assert.equal(calls.length, 1);
@@ -1077,4 +1082,24 @@ test("review resolves its default model when queued", async (t) => {
   store.set("settings", { ...store.settings(), reviewModel: "changed-default" });
   await service.reviewNext();
   assert.equal(calls[0][5], "initial-default");
+});
+
+test("review waits for source preparation and never invokes the model after Git failure", async t => {
+  const { store, service, calls, preparation } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  let finish!: () => void;
+  const ready = new Promise<void>(resolve => { finish = resolve; });
+  preparation.prepare = async () => { await ready; };
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1);
+  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "preparing_git");
+  const running = service.reviewNext();
+  assert.equal(calls.length, 0);
+  finish(); await running;
+  assert.equal(calls.length, 1);
+  preparation.prepare = async () => { throw new Error("Git unavailable"); };
+  service.requestReview(service.monitors()[0].id, "repo", 1, {}, true);
+  await service.reviewNext();
+  assert.equal(calls.length, 1);
+  assert.equal((service.list(context)[0] as any).review_status, "error");
 });

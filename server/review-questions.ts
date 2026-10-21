@@ -44,6 +44,7 @@ export type ReviewActions = {
   readCode?: boolean;
   maxTokens?: number;
   branch?: string;
+  sourceRevision?: string;
   continuationPrompt?: string;
   memoryScopes?: ReviewOptions["memoryScopes"];
   questionFrequency?: ReviewOptions["questionFrequency"];
