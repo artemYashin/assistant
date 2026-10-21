@@ -10,6 +10,7 @@
   font-synthesis: none;
   font-size: 14px;
   --green: #285341;
+  --inline-code-background: #d8eadc;
   --green-dark: #163d32;
   --muted: #7b847d;
   --border: #e5e9e2;
@@ -2537,7 +2538,7 @@ summary:focus-visible {
 .chat-markdown code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 11px;
-  background: #edf1e9;
+  background: var(--inline-code-background);
   padding: 2px 4px;
   border-radius: 4px;
 }
@@ -9107,7 +9108,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-markdown > :first-child { margin-top: 0; }
 .memory-markdown > :last-child { margin-bottom: 0; }
 .memory-markdown pre { overflow-x: auto; padding: 12px; border: 1px solid #dce4df; border-radius: 8px; background: #f3f6f4; white-space: pre; }
-.memory-markdown code { font-size: 12px; background: #edf2ef; border-radius: 3px; padding: 1px 3px; }
+.memory-markdown code { font-size: 12px; background: var(--inline-code-background); border-radius: 3px; padding: 1px 3px; }
 .memory-markdown pre code { padding: 0; background: none; }
 .memory-markdown a { color: #2563eb; text-decoration: underline; }
 .memory-markdown blockquote { margin: 10px 0; padding: 8px 12px; border-left: 3px solid #b8c9bf; background: #f5f7f6; }
@@ -9168,3 +9169,5 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-memory-attachment > svg, .chat-memory-attachment > button { flex-shrink: 0; }
 .memory-summary { display: block; margin: 10px 0 6px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .memory-edit-form > label { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+.ticket-formatted code:not(pre code) { background: var(--inline-code-background); padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
