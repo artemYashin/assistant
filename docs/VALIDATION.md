@@ -1095,3 +1095,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Saved presets are now shared across a customer's projects and Azure connections, separately for active/Azure/trash tabs. Current filter state remains view-specific.
 - Initial migration merges legacy project presets without deleting the originals; conflicting names/IDs are disambiguated. Existing customer storage is not remigrated, so deleted presets stay deleted.
 - Both targeted migration tests, TypeScript and whitespace checks passed. Browser interactions and production build were not exercised.
+
+### Customer-scoped current ticket filters (2026-10-21)
+
+- Current search, sort and filter selections now share customer scope across projects and Azure connections, separately for each ticket tab, matching saved presets.
+- Initial migration prefers the opened project's valid saved filters, then other projects for the same customer. Original browser entries remain untouched; subsequent loads prefer the shared customer state.
+- TypeScript and whitespace checks passed. Tests skipped at the user's request; browser interactions and production build were not exercised.

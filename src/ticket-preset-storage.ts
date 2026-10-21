@@ -1,6 +1,6 @@
 import { parseTicketFilters } from "./useTicketFilters.js";
 
-// Current filters stay view-specific; saved presets belong to the customer.
+// Saved presets belong to the customer, with separate lists for each tab.
 export function customerPresetKey(storageKey: string) {
   const match = /^orbit\.ticket-filters\.(active|azure|trash):(.*)$/.exec(
     storageKey,

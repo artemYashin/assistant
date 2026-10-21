@@ -52,27 +52,62 @@ export function parseTicketFilters(saved: unknown): Filters {
   return result;
 }
 
+// Keep separate tabs, but share current filters across all customer projects.
+function customerFilterScope(legacyKey: string) {
+  const match = /^orbit\.ticket-filters\.(active|azure|trash):(.*)$/.exec(
+    legacyKey,
+  );
+  if (!match) return { key: legacyKey, legacyKeys: [legacyKey] };
+  try {
+    const [, customer] = JSON.parse(match[2]);
+    const key = `orbit.ticket-filters.customer.${match[1]}:${JSON.stringify(customer)}`;
+    const prefix = `orbit.ticket-filters.${match[1]}:`;
+    // Prefer the currently opened project's settings for the initial migration.
+    const legacyKeys = [legacyKey];
+    try {
+      for (const candidate of Object.keys(localStorage).sort()) {
+        if (candidate === legacyKey || !candidate.startsWith(prefix)) continue;
+        try {
+          const scope = JSON.parse(candidate.slice(prefix.length));
+          if (Array.isArray(scope) && scope[1] === customer)
+            legacyKeys.push(candidate);
+        } catch {
+          /* Ignore preset/expanded-state keys. */
+        }
+      }
+    } catch {
+      /* Browser storage may be unavailable. */
+    }
+    return { key, legacyKeys };
+  } catch {
+    return { key: legacyKey, legacyKeys: [legacyKey] };
+  }
+}
+
 export function useTicketFilters(
   storageKey: string,
   initialFilters: Partial<Filters> = {},
 ) {
+  const [{ key, legacyKeys }] = useState(() => customerFilterScope(storageKey));
   const [filters, setFilters] = useState<Filters>(() => {
-    try {
-      return parseTicketFilters(
-        JSON.parse(localStorage.getItem(storageKey) || "null") ??
-          initialFilters,
-      );
-    } catch {
-      return parseTicketFilters(initialFilters);
+    for (const candidate of [key, ...legacyKeys]) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(candidate) || "null");
+        if (saved && typeof saved === "object" && !Array.isArray(saved))
+          return parseTicketFilters(saved);
+      } catch {
+        /* Keep old entries and try another project if unreadable. */
+      }
     }
+    return parseTicketFilters(initialFilters);
   });
   useEffect(() => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(filters));
+      localStorage.setItem(key, JSON.stringify(filters));
     } catch {
       /* Filtering remains usable when browser storage is unavailable. */
     }
-  }, [storageKey, filters]);
+  }, [key, filters]);
   function set<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((previous) => ({ ...previous, [key]: value }));
   }
