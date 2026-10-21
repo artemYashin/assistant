@@ -1,3 +1,4 @@
+import { synchronizationTools } from "./sync-tools.js";
 import { cachedTicketSchema, readCachedTicket, contentSearchSchema, searchTicketContent } from "./ticket-content-search.js";
 import { createToolDiscovery } from "./tool-discovery.js";
 import { SYSTEM_POLICY } from "./chat-policy.js";
@@ -850,6 +851,7 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
+                  ...synchronizationTools(this.store, this.connectors, this.pullRequests, context, assertActive),
                   defineTool("close_ticket_details", {
                     description: "Close the open ticket detail viewer (single ticket or list) and automatically expand the assistant chat. Use immediately when the user asks to close ticket details, including voice requests. No data changes or Azure requests. No confirmation needed. Continue answering any remaining request.",
                     parameters: z.object({}).strict(),

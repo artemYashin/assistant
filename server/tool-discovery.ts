@@ -3,6 +3,9 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
+  sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
+  sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
