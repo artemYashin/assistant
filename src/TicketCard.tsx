@@ -1,3 +1,4 @@
+import { findCitationRange, highlightCitation, revealCitation } from "./ticket-citation-highlight.js";
 import { AzureAssignee } from "./AzureAssignee.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { openTicketAnalysis } from "./chat-ticket-analysis.js";
@@ -67,15 +68,12 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
     const section = [...citationRoot.current.querySelectorAll<HTMLDetailsElement>("details[data-citation-section]")].find(node => node.dataset.citationSection === citation.section);
     if (!section) { setCitationMissing(true); return; }
     section.open = true;
-    const normalize = (text: string) => text.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim();
-    const quote = normalize(citation.quote);
-    const candidates = [...section.querySelectorAll<HTMLElement>("p, li, td, th, blockquote, div")].filter(node => normalize(node.textContent || "").includes(quote));
-    const target = candidates.sort((a, b) => (a.textContent?.length || 0) - (b.textContent?.length || 0))[0];
-    setCitationMissing(!target);
-    const highlighted = target || section;
-    highlighted.classList.add("ticket-citation-highlight");
-    const frame = requestAnimationFrame(() => highlighted.scrollIntoView({ block: "center", behavior: "smooth" }));
-    return () => { cancelAnimationFrame(frame); highlighted.classList.remove("ticket-citation-highlight"); };
+    const range = findCitationRange(section, citation.quote);
+    setCitationMissing(!range);
+    if (!range) return;
+    const clearHighlight = highlightCitation(range);
+    const frame = requestAnimationFrame(() => revealCitation(range));
+    return () => { cancelAnimationFrame(frame); clearHighlight(); };
   }, [card, citation]);
   useEffect(() => {
     const update = (event: Event) => {
