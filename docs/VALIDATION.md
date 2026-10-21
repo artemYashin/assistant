@@ -1123,3 +1123,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - PR descriptions preserve soft line breaks and plain br elements without enabling arbitrary HTML. Branch arrows align centrally. Ticket-detail tags share table styles and local assignee names truncate to a single line with full names in the tooltip.
 - Full test run: 251 passed, 2 failed due to an obsolete Russian-text assertion after the prior English default-prompt migration. Updated that assertion and reran both affected migration tests successfully. New line-comment and description-break regression tests passed in the full run.
 - Production build (including TypeScript) and whitespace checks passed. Vite reports the existing large-chunk advisory. Live Azure writes and browser visual checks were not performed.
+
+### Edit local tags from ticket details (2026-10-21)
+
+- Ticket details now reuse the existing local tag editor for locally stored tickets, including trash. Metadata events update the displayed badges after saving. Unimported ticket tags and Azure tags remain read-only.
+- The tag list wraps within the sidebar while the edit button keeps its space.
+- TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; browser interactions were not exercised.

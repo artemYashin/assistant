@@ -7023,6 +7023,16 @@ summary > svg {
   display: block;
   overflow-wrap: anywhere;
 }
+.ticket-detail-sidebar .ticket-overview-tags .ticket-metadata-control {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.ticket-detail-sidebar .ticket-overview-tags .ticket-tag-list {
+  flex: 1;
+  min-width: 0;
+}
 .chat-history-item small {
   display: block;
   margin-top: 4px;

@@ -320,7 +320,18 @@ export function TicketCard({ reference }: { reference: string }) {
             <div className="ticket-overview-tags">
               <dt>Теги</dt>
               <dd>
-                {card.localMetadata?.tags?.length ? (
+                {card.locallyAvailable || card.locallyTracked ? (
+                  <TicketMetadata
+                    ticket={{
+                      id: card.id,
+                      source: card.source,
+                      ...card.localMetadata,
+                    }}
+                    context={card.localContext}
+                    field="tags"
+                    onChange={() => {}}
+                  />
+                ) : card.localMetadata?.tags?.length ? (
                   card.localMetadata.tags.map((tag: string) => (
                     <span className="badge" key={tag}>
                       {tag}
