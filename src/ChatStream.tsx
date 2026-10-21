@@ -37,11 +37,31 @@ export function useChatStream() {
     }
     if (!timer.current) timer.current = setTimeout(() => { timer.current = undefined; setLive(value.current); }, 50);
   }
-  return { live, reset, receive, partial: () => value.current.text, elapsed: () => Date.now() - value.current.startedAt };
+  return { live, reset, receive, tools: () => value.current.tools, partial: () => value.current.text, elapsed: () => Date.now() - value.current.startedAt };
 }
 export function formatChatDuration(milliseconds: number) {
   const seconds = Math.max(0, Math.floor(milliseconds / 1000));
   return seconds < 60 ? `${seconds} с` : `${Math.floor(seconds / 60)} мин ${seconds % 60} с`;
+}
+export type ToolTrace = {
+  toolId: string; name: string; names?: string[]; status: string;
+  startedAt?: number; offsetMs?: number; durationMs?: number;
+};
+function ToolRows({ tools, now }: { tools: ToolTrace[]; now?: number }) {
+  return <div className="chat-tool-rows">{tools.map(tool => <div key={tool.toolId} className={`chat-tool-state-${tool.status}`}>
+    {tool.status === "running" ? <LoaderCircle size={13} className="spin" /> : tool.status === "error" || tool.status === "interrupted" ? <AlertCircle size={13} /> : <Check size={13} />}
+    <span><span>{labels[tool.name] || tool.name} · {tool.status === "running" ? "выполняется" : tool.status === "error" ? "ошибка" : tool.status === "interrupted" ? "прерван" : "готово"}</span>
+      {!!tool.names?.length && <small className="chat-loaded-tools">{tool.names.map(name => labels[name] || name).join(", ")}</small>}
+      {tool.offsetMs !== undefined && <small className="chat-tool-offset">Начало +{formatChatDuration(tool.offsetMs)}{tool.startedAt ? ` · ${new Date(tool.startedAt).toLocaleTimeString()}` : ""}</small>}
+    </span>
+    <time title="Время выполнения">{tool.durationMs !== undefined ? formatChatDuration(tool.durationMs) : now && tool.startedAt ? formatChatDuration(now - tool.startedAt) : "—"}</time>
+  </div>)}</div>;
+}
+export function ChatToolHistory({ tools }: { tools?: ToolTrace[] }) {
+  if (!tools?.length) return null;
+  return <div className="chat-live-tools"><details className="chat-finished-tools">
+    <summary>Инструменты · {tools.length} вызовов</summary><ToolRows tools={tools} />
+  </details></div>;
 }
 export function ChatStream({ live }: { live: Live }) {
   const [now, setNow] = useState(Date.now());
@@ -50,17 +70,12 @@ export function ChatStream({ live }: { live: Live }) {
     return () => clearInterval(timer);
   }, []);
   const running = live.tools.filter(tool => tool.status === "running");
-  const finished = live.tools.filter(tool => tool.status !== "running");
-  const row = (tool: ToolProgress) => <div key={tool.toolId} className={`chat-tool-state-${tool.status}`}>
-    {tool.status === "running" ? <LoaderCircle size={13} className="spin" /> : tool.status === "error" ? <AlertCircle size={13} /> : <Check size={13} />}
-    <span>{labels[tool.name] || tool.name} · {tool.status === "running" ? "выполняется" : tool.status === "error" ? "ошибка" : "готово"}</span>
-    <time>{formatChatDuration(tool.durationMs ?? now - (tool.startedAt || now))}</time>
-  </div>;
+  const finished = live.tools.filter(tool => tool.status !== "running").sort((a, b) => (a.offsetMs || 0) - (b.offsetMs || 0));
   return <>
     <div className="chat-elapsed">Время работы: <time>{formatChatDuration(now - live.startedAt)}</time></div>
     {!!live.tools.length && <div className="chat-live-tools">
-      {!!running.length && <div role="status" className="chat-tool-rows chat-running-tools">{running.map(row)}</div>}
-      {!!finished.length && <details className="chat-finished-tools"><summary>Выполненные вызовы: {finished.length}</summary><div className="chat-tool-rows">{finished.map(row)}</div></details>}
+      {!!running.length && <div role="status" className="chat-running-tools"><ToolRows tools={running} now={now} /></div>}
+      {!!finished.length && <details className="chat-finished-tools"><summary>Выполненные вызовы: {finished.length}</summary><ToolRows tools={finished} /></details>}
     </div>}
     {live.text && <div className="bubble assistant chat-streaming" aria-label="Ответ формируется">
       <span className="bubble-author"><Sparkles size={13} /> Orbit</span>

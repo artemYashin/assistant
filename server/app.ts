@@ -512,6 +512,7 @@ export function createApp(
       const session = store.chatSession(context, id);
       res.json({
         ...store.conversationPage(context, session.id, before),
+        usage: new UsageLedger(store).sessionUsage(context, session.id),
         attachment: attachmentPreview(
           store.chatAttachment(context, session.id),
         ),

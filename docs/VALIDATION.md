@@ -1292,3 +1292,12 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Keep regular microphone-to-draft behavior. Voice auto-send preserves an existing typed draft, expands the assistant, and uses the existing authenticated transcription and chat endpoints. The overlay supports reduced motion, a recording timer and explicit finish/cancel actions. The shortcut only operates while the application is focused, not system-wide.
 - Remove the tool accordion's inherited 44 px minimum heading height and outer padding; use a full-width summary and 7 px row spacing. Scope error styling to avoid the global error panel styles.
 - Five focused shortcut/chat tests and production build passed. Existing bundle-size warning remains. Real microphone permissions, audio capture and browser visuals were not tested in this environment.
+
+### Persistent chat tool history, per-chat tokens and compact controls (2026-10-22)
+
+- Link new chat requests and reply messages to their chat session and existing tool traces. History shows ordered calls, requested schema names for load_tools, start offsets/times and durations after completion and reload, without exposing raw tool arguments/results to the message UI or sending telemetry back as model context.
+- Sum deduplicated SDK usage receipts within the exact current chat. Update counts during generation and history loads; identify older unlinked messages as partial coverage instead of attributing other chats' usage. Requests without usage reports show no invented counts.
+- Verified the initial SDK tool list contains only load_tools; loading list_local_tags publishes only that schema plus discovery. Added restart persistence and session isolation coverage.
+- Compact grey header/composer surfaces, single-line context and chat title, styled header controls, token totals, inline model selector and stop control replacing voice/send while busy. Remove the Teams approval footer; server approval enforcement is unchanged.
+- Double M now works in editable controls, removes only the matching first shortcut character (the second is prevented), blurs the field and focuses the voice overlay. Modifiers/IME/repeat protections remain; unrelated edited text is preserved.
+- All 39 focused tests passed (streaming, persisted tools, usage/isolation, selective discovery, voice shortcut). Production build and TypeScript checks passed; the existing bundle-size warning remains. Live browser/microphone and remote Copilot checks were not performed.

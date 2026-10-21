@@ -97,7 +97,7 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import { VoiceShortcut } from "./VoiceShortcut.js";
-import { ChatStream, useChatStream, formatChatDuration } from "./ChatStream.js";
+import { ChatStream, ChatToolHistory, useChatStream, formatChatDuration } from "./ChatStream.js";
 import type { ChatProgress } from "../server/chat-stream.js";
 import { api, apiProgress, setCsrf } from "./api.js";
 import "./style.css";
@@ -2634,6 +2634,7 @@ function Assistant({
   onApprovals,
   pending,
 }: any) {
+  const [chatUsage, setChatUsage] = useState({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
   const [shortcutBusy, setShortcutBusy] = useState(false);
   const resize = useAssistantResize();
   const chatStream = useChatStream();
@@ -2674,6 +2675,7 @@ function Assistant({
     let active = true;
     const generation = ++historyGeneration.current;
     setHistory([]);
+    setChatUsage({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
     chatStream.reset();
     setSessionId("");
     setAttachment(null);
@@ -2694,6 +2696,7 @@ function Assistant({
           setHistory(page.messages);
           setAttachment(page.attachment);
           setHasOlder(page.hasMore);
+          if (page.usage) setChatUsage(page.usage);
         }
       })
       .catch((e) => {
@@ -2759,6 +2762,7 @@ function Assistant({
           setHistory(page.messages);
           setAttachment(page.attachment);
           setHasOlder(false);
+          if (page.usage) setChatUsage(page.usage);
           setPrompt(
             `Проанализируй тикет #${page.attachment.id}: объясни требования, найди неоднозначности и риски, предложи проверки.`,
           );
@@ -2799,6 +2803,7 @@ function Assistant({
         setHistory(page.messages);
         setAttachment(page.attachment);
         setHasOlder(page.hasMore);
+          if (page.usage) setChatUsage(page.usage);
         setPrompt("");
         setError("");
       }
@@ -2820,6 +2825,7 @@ function Assistant({
       if (generation === historyGeneration.current) {
         setHistory((h) => [...page.messages, ...h]);
         setHasOlder(page.hasMore);
+          if (page.usage) setChatUsage(page.usage);
         requestAnimationFrame(() => {
           if (container && generation === historyGeneration.current)
             container.scrollTop = top + container.scrollHeight - height;
@@ -2929,8 +2935,12 @@ function Assistant({
           source,
         })),
       }, event => {
-        if (contextKey.current === captured && generation === historyGeneration.current) chatStream.receive(event);
+        if (contextKey.current === captured && generation === historyGeneration.current) {
+          if (event.stage === "usage") setChatUsage(event);
+          else chatStream.receive(event);
+        }
       }, chatConnection.current!.signal);
+      const toolSnapshot = chatStream.tools();
       if (
         contextKey.current === captured &&
         generation === historyGeneration.current
@@ -2943,8 +2953,10 @@ function Assistant({
             id: Date.now(),
             cards: r.cards || [],
             duration_ms: r.durationMs ?? chatStream.elapsed(),
+            tools: toolSnapshot,
           },
         ]);
+      chatStream.reset();
       onChange();
     } catch (e: any) {
       if (
@@ -2952,12 +2964,22 @@ function Assistant({
         generation === historyGeneration.current
       ) {
         const partial = chatStream.partial();
-        if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed() }]);
+        const toolSnapshot = chatStream.tools().map(tool => ({ ...tool, status: tool.status === "running" ? "interrupted" : tool.status }));
+        if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed(), tools: toolSnapshot }]);
         setError(e.message);
         setPrompt(current => voiceText ? [current, text].filter(Boolean).join("\n") : text);
       }
+      chatStream.reset();
       onChange();
     } finally {
+      try {
+        const page = await api(`/conversation?${new URLSearchParams({ ...context, sessionId, page: "true" })}`);
+        if (contextKey.current === captured && generation === historyGeneration.current) {
+          setHistory(existing => [...existing.filter(message => message.sequence && message.sequence < (page.messages[0]?.sequence || 0)), ...page.messages]);
+          if (page.usage) setChatUsage(page.usage);
+          setHasOlder(page.hasMore);
+        }
+      } catch { /* Keep the received response if history refresh fails. */ }
       chatStream.reset();
       setWorking(false);
     }
@@ -3036,12 +3058,9 @@ function Assistant({
         <div className="assistant-symbol">
           <Sparkles size={20} />
         </div>
-        <div>
-          <b>Ваш ассистент</b>
-          <small>
-            <span className={`dot ${connected ? "" : "offline"}`} />
-            {connected ? "GitHub Copilot" : "Ожидает подключения"}
-          </small>
+        <div className="assistant-heading-text">
+          <b title={[context.client, context.project].filter(Boolean).join(" / ")}>{[context.client, context.project].filter(Boolean).join(" / ") || "Общий контекст"}</b>
+          <small className="assistant-chat-title" title={sessionTitle}><span className={`dot ${connected ? "" : "offline"}`} title={connected ? "Copilot подключён" : "Нет подключения"} />{sessionTitle}</small>
         </div>
         <ChatTools context={context} />
         <ChatHistory
@@ -3062,17 +3081,10 @@ function Assistant({
           <PanelRightClose size={18} />
         </button>
       </div>
-      <div className="assistant-context">
-        <FolderOpen size={13} />
-        <div>
-          {[context.client, context.project].filter(Boolean).join(" / ") ||
-            "Общий контекст"}
-          <small>
-            Чат: {sessionTitle}. Память: общая
-            {context.client ? " + заказчика" : ""}
-            {context.project ? " + проекта" : ""}. История — выбранного чата.
-          </small>
-        </div>
+      <div className="assistant-token-usage" title={`Токены текущего чата по отчётам SDK. ${chatUsage.partial ? "Для старых сообщений до обновления расход не привязан к чату." : "Включая контекст и инструменты."}`}>
+        <span>Токены{chatUsage.partial ? " (частично)" : ""}</span>
+        <span>Вход <b>{chatUsage.reports ? chatUsage.inputTokens.toLocaleString() : "—"}</b></span>
+        <span>Выход <b>{chatUsage.reports ? chatUsage.outputTokens.toLocaleString() : "—"}</b></span>
       </div>
       <div className="conversation" aria-busy={clearing} ref={conversationView} onScroll={event => {
         const element = event.currentTarget;
@@ -3134,6 +3146,7 @@ function Assistant({
                 <Sparkles size={13} /> Orbit
               </span>
             )}
+            <ChatToolHistory tools={m.tools} />
             {m.role === "error" ? (
               <p>{m.body}</p>
             ) : (
@@ -3162,19 +3175,6 @@ function Assistant({
           <ShieldCheck size={16} />
           {pending} сообщ. ждут подтверждения
           <ChevronRight size={15} />
-        </button>
-      )}
-      {working && (
-        <button
-          className="chat-stop-button"
-          onClick={() =>
-            api("/conversation/stop", "POST", {}).catch((e) =>
-              setError(e.message),
-            )
-          }
-        >
-          <Square size={15} />
-          Остановить ответ
         </button>
       )}
       <div className="composer-wrap">
@@ -3240,9 +3240,6 @@ function Assistant({
             </div>
           </div>
         )}
-        <div className="composer-model">
-          <ModelOverride value={chatModel} onChange={setChatModel} disabled={working || clearing || !connected} />
-        </div>
         <form className="composer" onSubmit={send}>
           <textarea
             ref={promptInput}
@@ -3281,19 +3278,18 @@ function Assistant({
               <Trash2 size={17} />
             </button>
 
-            <small>
-              {recording
-                ? "Идёт запись · до 2 минут"
-                : transcribing
-                  ? "Распознаю локально…"
-                  : "Enter ↵"}
-            </small>
+            <div className="composer-model">
+              <ModelOverride value={chatModel} onChange={setChatModel} disabled={working || clearing || !connected || shortcutBusy} />
+            </div>
+            {working ? <button type="button" className="chat-stop-button" title="Остановить ответ" onClick={() => api("/conversation/stop", "POST", {}).catch(e => setError(e.message))}>
+              <Square size={15} /><span>Стоп</span>
+            </button> : <>
             <button
               type="button"
               className={`mic-button ${recording ? "recording" : ""}`}
               onClick={microphone}
               disabled={transcribing || working || shortcutBusy}
-              title={recording ? "Остановить запись" : "Голосовой ввод · M M вне полей ввода — запись с отправкой"}
+              title={recording ? "Остановить запись" : "Голосовой ввод · M M — запись с отправкой, даже из поля ввода"}
               aria-label={recording ? "Остановить запись" : "Голосовой ввод"}
             >
               {transcribing ? (
@@ -3320,11 +3316,10 @@ function Assistant({
             >
               <ArrowUp size={19} />
             </button>
+            </>}
           </div>
         </form>
-        <p className="composer-note">
-          <ShieldCheck size={12} /> Отправка в Teams — только с вашего апрува
-        </p>
+
       </div>
     </aside>
   );

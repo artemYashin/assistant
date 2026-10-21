@@ -2,8 +2,34 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Mic, X, Square, LoaderCircle, AlertCircle } from "lucide-react";
 import { api } from "./api.js";
-import { createVoiceShortcut, voiceRecordingIsLongEnough } from "./voice-shortcut.js";
+import { createVoiceShortcut, voiceRecordingIsLongEnough, shortcutTextWasInserted } from "./voice-shortcut.js";
 
+function captureTyping(target: Element | null, key: string): (() => void) | undefined {
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+    const before = target.value, start = target.selectionStart, end = target.selectionEnd;
+    if (start === null || end === null) return;
+    return () => {
+      if (!target.isConnected || !shortcutTextWasInserted(before, target.value, key, start, end)) return;
+      const prototype = target instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(target, before);
+      target.setSelectionRange(start, end);
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+  }
+  const editor = target?.closest<HTMLElement>('[contenteditable]:not([contenteditable="false"])');
+  const selection = window.getSelection();
+  if (!editor || !selection?.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+  const prefix = range.cloneRange(); prefix.selectNodeContents(editor); prefix.setEnd(range.startContainer, range.startOffset);
+  const start = prefix.toString().length, end = start + range.toString().length;
+  const before = editor.textContent || "", html = editor.innerHTML;
+  return () => {
+    if (!editor.isConnected || !shortcutTextWasInserted(before, editor.textContent || "", key, start, end)) return;
+    editor.innerHTML = html;
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+}
 type Phase = "idle" | "requesting" | "recording" | "transcribing" | "error";
 export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   enabled: boolean; onText: (text: string) => void; onBusy: (busy: boolean) => void; title: string;
@@ -87,15 +113,26 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   const actions = useRef({ start, finish, cancel }); actions.current = { start, finish, cancel };
   useEffect(() => {
     const doublePress = createVoiceShortcut();
+    let restoreTyping: (() => void) | undefined;
+    let previousTarget: EventTarget | null = null;
     const keydown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && phaseRef.current !== "idle") {
         event.preventDefault(); event.stopPropagation(); actions.current.cancel(); return;
       }
       const target = event.target instanceof Element ? event.target : null;
-      const editing = !!target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"]');
-      if (!doublePress(event, performance.now(), editing)) return;
-      if (phaseRef.current === "idle" && !latest.current.enabled) return;
+      if (event.repeat) return;
+      const matched = doublePress(event, performance.now());
+      if (!matched) {
+        restoreTyping = event.code === "KeyM" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
+          ? captureTyping(target, event.key) : undefined;
+        previousTarget = event.target;
+        return;
+      }
+      if (phaseRef.current === "idle" && !latest.current.enabled) { restoreTyping = undefined; return; }
       event.preventDefault(); event.stopPropagation();
+      if (previousTarget === event.target) restoreTyping?.();
+      restoreTyping = undefined;
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (phaseRef.current === "idle" || phaseRef.current === "error") void actions.current.start();
       else if (phaseRef.current === "transcribing") actions.current.cancel();
       else actions.current.finish();

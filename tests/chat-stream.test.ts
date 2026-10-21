@@ -49,3 +49,54 @@ test("assistant duration survives history reads without changing legacy messages
   assert.equal(messages.at(-2).duration_ms, null);
   assert.equal(messages.at(-1).duration_ms, 12345);
 });
+
+test("tool history and token usage persist in the correct chat with selective discovery", async t => {
+  const { Agent } = await import("../server/agent.js");
+  const { Approvals } = await import("../server/approvals.js");
+  const { UsageLedger } = await import("../server/usage.js");
+  const dir = mkdtempSync(join(tmpdir(), "orbit-chat-traces-"));
+  let store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "Customer", project: "Project" };
+  const first = store.createChat(context), second = store.createChat(context);
+  const handlers = new Map<string, (event: any) => void>();
+  let tools: any[] = [];
+  const client = {
+    start: async () => {}, stop: async () => {},
+    createSession: async (config: any) => {
+      assert.deepEqual(config.tools.map((tool: any) => tool.name), ["load_tools"]);
+      tools = config.tools;
+      return {
+        on: (name: string, handler: (event: any) => void) => { handlers.set(name, handler); },
+        abort: async () => {},
+        setTools: async (loaded: any[]) => { tools = loaded; },
+        sendAndWait: async () => {
+          await tools[0].handler({ names: ["list_local_tags"] }, {});
+          assert.deepEqual(tools.map(tool => tool.name), ["load_tools", "list_local_tags"]);
+          await tools[1].handler({ offset: 0 }, {});
+          const usage = { id: "event", data: { inputTokens: 123, outputTokens: 45, apiCallId: "one-call" } };
+          handlers.get("assistant.usage")!(usage);
+          handlers.get("assistant.usage")!(usage);
+          return { data: { content: "Тегов пока нет." } };
+        },
+      };
+    },
+  };
+  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const events: any[] = [];
+  await agent.chat("Покажи локальные теги", context, false, undefined, first.id, undefined, event => events.push(event));
+  assert.equal(events.find(event => event.stage === "usage").inputTokens, 123);
+  store.close(); store = new Store(dir);
+  const page = store.conversationPage(context, first.id);
+  const reply = page.messages.at(-1);
+  assert.deepEqual(reply.tools.map((tool: any) => tool.name), ["load_tools", "list_local_tags"]);
+  assert.deepEqual(reply.tools[0].names, ["list_local_tags"]);
+  assert.ok(reply.tools.every((tool: any) => tool.status === "completed" && tool.durationMs >= 0 && tool.offsetMs >= 0));
+  const ledger = new UsageLedger(store);
+  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 123, outputTokens: 45, reports: 1, partial: false });
+  assert.deepEqual(ledger.sessionUsage(context, second.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+  assert.equal(store.conversationPage(context, second.id).messages.length, 0);
+  assert.throws(() => ledger.sessionUsage({ client: "Other", project: "" }, first.id));
+  store.say("assistant", "Старая переписка", context, [], second.id);
+  assert.equal(ledger.sessionUsage(context, second.id).partial, true);
+});

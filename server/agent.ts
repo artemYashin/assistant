@@ -394,7 +394,7 @@ export class Agent {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
     const conversationId = review ? undefined : this.store.chatSession(context, chatSessionId).id;
-    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, ...message } = row; return message; });
+    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, request_id, ...message } = row; return message; });
     const attachedTicket = !review && conversationId ? this.store.chatAttachment(context, conversationId) : null;
     const deepRead = deepReadConsent(prompt, historySnapshot);
     const readPrompt =
@@ -410,6 +410,7 @@ export class Agent {
       context,
       review ? "pr_review" : "chat",
       reviewActions?.pullRequest,
+      conversationId,
     );
     this.busy = true;
     this.activeId = id;
@@ -794,12 +795,12 @@ export class Agent {
         (deepRead.needsConfirmation || asksTicketOpinion(readPrompt))
       ) {
         proposeAzure({ ids: [singleTarget] });
-        this.store.say("assistant", azureQuestion, context, [], conversationId, elapsed());
+        this.store.say("assistant", azureQuestion, context, [], conversationId, elapsed(), id);
         status = "completed";
         return { body: azureQuestion, requestId: id, cards, durationMs: elapsed() };
       }
       if (!review && deepRead.needsConfirmation && !singleReadAllowed && !(attachedTicket && (singleTarget === undefined || singleTarget === attachedTicket.id))) {
-        this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId, elapsed());
+        this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId, elapsed(), id);
         status = "completed";
         return { body: DEEP_READ_WARNING, requestId: id, cards, durationMs: elapsed() };
       }
@@ -1106,8 +1107,10 @@ export class Agent {
           tool.handler = async (args, invocation) => {
             const internal = Boolean((invocation as any)?.orbitBatchChild);
             const toolStartedAt = Date.now();
+            const requestedTools = tool.name === "load_tools" && Array.isArray((args as any)?.names)
+              ? (args as any).names.filter((name: unknown) => typeof name === "string").slice(0, 8).map((name: string) => name.slice(0, 100)) : undefined;
             const trace = ledger.toolTrace(id, tool.name, args, internal);
-            if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, status: "running" });
+            if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, names: requestedTools, offsetMs: toolStartedAt - startedAt, startedAt: toolStartedAt, status: "running" });
             try {
               assertActive();
               const result: any = await handler(args, invocation);
@@ -1116,10 +1119,10 @@ export class Agent {
                 result?.success === false ? "error" : "completed",
                 result,
               );
-              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: result?.success === false ? "error" : "completed" });
+              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, names: requestedTools, offsetMs: toolStartedAt - startedAt, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: result?.success === false ? "error" : "completed" });
               return result;
             } catch (error) {
-              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: "error" });
+              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, names: requestedTools, offsetMs: toolStartedAt - startedAt, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: "error" });
               const result = toolFailure(tool.name, args, error);
               ledger.finishToolTrace(trace, "error", result);
               return result;
@@ -1144,6 +1147,7 @@ export class Agent {
         session.on("assistant.usage", (event) => {
           try {
             ledger.record(id, event.id, event.data);
+            if (conversationId) emit({ stage: "usage", ...ledger.sessionUsage(context, conversationId) });
             if (ledger.tokens(id) >= settings.llmMaxTokens)
               cancel("Достигнут порог токенов по отчётам SDK.", "limited");
           } catch {
@@ -1209,7 +1213,7 @@ export class Agent {
         ? `${responseBody}\n\n---\n\n${azureQuestion}`
         : responseBody;
       status = "completed";
-      if (!review) this.store.say("assistant", body, context, cards, conversationId, elapsed());
+      if (!review) this.store.say("assistant", body, context, cards, conversationId, elapsed(), id);
       return { body, requestId: id, cards, durationMs: elapsed() };
     } catch (error) {
       reason =
@@ -1217,8 +1221,8 @@ export class Agent {
         (error instanceof AppError
           ? error.message
           : "Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.");
-      if (!review && partialText) this.store.say("assistant", partialText + "\n\n_Ответ прерван._", context, [], conversationId, elapsed());
-      if (!review) this.store.say("error", reason, context, [], conversationId, partialText ? undefined : elapsed());
+      if (!review && partialText) this.store.say("assistant", partialText + "\n\n_Ответ прерван._", context, [], conversationId, elapsed(), id);
+      if (!review) this.store.say("error", reason, context, [], conversationId, partialText ? undefined : elapsed(), partialText ? undefined : id);
       // Timeout or runtime failure can leave an agent loop alive unless explicitly aborted.
       if (!stopReason) void session?.abort().catch(() => {});
       throw new AppError(stopReason ? 409 : 502, reason);

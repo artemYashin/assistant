@@ -26,6 +26,7 @@ export class UsageLedger {
     context: Context,
     origin: "chat" | "pr_review" | "unknown" = "unknown",
     pullRequest?: UsagePullRequest,
+    chatSessionId?: string,
   ) {
     const id = randomUUID();
     this.store.db
@@ -43,7 +44,16 @@ export class UsageLedger {
           ? JSON.stringify(pullRequest)
           : null,
       );
+    if (origin === "chat" && chatSessionId) this.store.db.prepare("UPDATE llm_requests SET chat_session_id=? WHERE id=?").run(chatSessionId, id);
     return id;
+  }
+  sessionUsage(context: Context, sessionId: string) {
+    this.store.chatSession(context, sessionId);
+    const usage = this.store.db.prepare(
+      "SELECT coalesce(sum(u.input_tokens),0) AS inputTokens,coalesce(sum(u.output_tokens),0) AS outputTokens,count(u.receipt_id) AS reports FROM llm_requests r LEFT JOIN llm_usage u ON u.request_id=r.id WHERE r.chat_session_id=? AND r.client=? AND r.project=? AND r.origin='chat'",
+    ).get(sessionId, context.client, context.project) as { inputTokens: number; outputTokens: number; reports: number };
+    const legacy = !!this.store.db.prepare("SELECT 1 FROM conversations WHERE session_id=? AND role='assistant' AND request_id IS NULL LIMIT 1").get(sessionId);
+    return { ...usage, partial: legacy };
   }
   record(id: string, eventId: string, data: UsageReceipt) {
     const receipt = data.accounting
@@ -94,6 +104,7 @@ export class UsageLedger {
     ]) {
       if (args?.[key] !== undefined) summary[key] = args[key];
     }
+    if (name === "load_tools" && Array.isArray(args?.names)) summary.names = args.names.filter((name: unknown) => typeof name === "string").slice(0, 8).map((name: string) => name.slice(0, 100));
     summary.fields = Object.keys(args || {}).filter(
       (key) => !Object.hasOwn(summary, key),
     );

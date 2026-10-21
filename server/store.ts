@@ -185,6 +185,11 @@ export class Store {
       this.db.exec(
         "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
       );
+    for (const [table, column] of [["conversations", "request_id"], ["llm_requests", "chat_session_id"]]) {
+      if (!(this.db.prepare(`PRAGMA table_info(${table})`).all() as any[]).some(c => c.name === column))
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`);
+    }
+    this.db.exec("CREATE INDEX IF NOT EXISTS llm_request_chat ON llm_requests(chat_session_id)");
     if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(column => column.name === "duration_ms"))
       this.db.exec("ALTER TABLE conversations ADD COLUMN duration_ms INTEGER");
     if (
@@ -858,7 +863,18 @@ export class Store {
         before ?? Number.MAX_SAFE_INTEGER,
       ) as any[];
     return {
-      messages: rows.slice(0, 100).reverse(),
+      messages: rows.slice(0, 100).reverse().map(row => ({
+        ...row,
+        tools: row.request_id && row.role !== "user" ? this.db.prepare(
+          "SELECT t.id AS toolId,t.name,t.status,t.started_at,t.finished_at,t.arguments,r.created_at AS request_started_at,r.status AS request_status FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.request_id=? AND r.chat_session_id=? AND r.client=? AND r.project=? AND t.internal=0 ORDER BY t.started_at,t.rowid LIMIT 100",
+        ).all(row.request_id, session.id, context.client, context.project).map((tool: any) => ({
+          toolId: tool.toolId, name: tool.name,
+          status: tool.status === "running" && tool.request_status !== "running" ? "interrupted" : tool.status,
+          startedAt: Date.parse(tool.started_at), offsetMs: Math.max(0, Date.parse(tool.started_at) - Date.parse(tool.request_started_at)),
+          durationMs: tool.finished_at ? Math.max(0, Date.parse(tool.finished_at) - Date.parse(tool.started_at)) : undefined,
+          names: tool.name === "load_tools" ? JSON.parse(tool.arguments).names || [] : undefined,
+        })) : [],
+      })),
       hasMore: rows.length > 100,
     };
   }
@@ -893,6 +909,7 @@ export class Store {
     cards: string[] = [],
     id?: string,
     durationMs?: number,
+    requestId?: string,
   ) {
     const session = this.chatSession(context, id);
     this.db.transaction(() => {
@@ -906,7 +923,7 @@ export class Store {
       const now = new Date().toISOString();
       this.db
         .prepare(
-          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id,duration_ms) VALUES (?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id,duration_ms,request_id) VALUES (?,?,?,?,?,?,?,?,?,?)",
         )
         .run(
           randomUUID(),
@@ -918,6 +935,7 @@ export class Store {
           JSON.stringify(cards),
           session.id,
           durationMs === undefined ? null : Math.max(0, Math.round(durationMs)),
+          requestId || null,
         );
       this.db
         .prepare("UPDATE chat_sessions SET title=?,updated_at=? WHERE id=?")
