@@ -19,14 +19,14 @@ function ExternalLinkIcon({ href }: { href: string }) {
   return <Icon size={15} className={`chat-external-icon is-${brand}`} aria-hidden="true" />;
 }
 
-function CopyableLink({ href, children }: { href: string; children: ReactNode }) {
+function CopyableLink({ href, children, ticket = false }: { href: string; children: ReactNode; ticket?: boolean }) {
   const [status, setStatus] = useState("");
   return <span className="chat-copyable-link">{children}<button type="button" className="chat-link-copy" title={status || "Скопировать ссылку"} aria-label={status || "Скопировать ссылку"} onClick={async () => {
     try {
       await navigator.clipboard.writeText(shareTicketUrl(href));
       setStatus("Скопировано");
     } catch { setStatus("Не удалось скопировать ссылку"); }
-  }}>{status === "Скопировано" ? <Check size={13} /> : <Copy size={13} />}<span className="chat-copy-feedback" role="status">{status}</span></button></span>;
+  }}>{status === "Скопировано" ? <Check size={13} /> : ticket ? <Link2 size={13} /> : <Copy size={13} />}<span className="chat-copy-feedback" role="status">{status}</span></button></span>;
 }
 
 export function ChatMarkdown({
@@ -69,12 +69,15 @@ export function ChatMarkdown({
             const local = chatTicketPath(href) || azureTicketPath(href, azureSource);
             if (local) {
               const params = new URLSearchParams(local.split("?")[1]);
-              return <CopyableLink href={href}><a className="chat-ticket-link" href={local} onClick={event => {
+              if (citation) return <button type="button" className="chat-ticket-link" onClick={() => {
+                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: citation.source, tickets: [{ id: citation.id, title: `#${citation.id}` }], citation } }));
+              }}>Показать в тикете<ArrowUpRight size={14} aria-hidden="true" /></button>;
+              return <CopyableLink href={href} ticket><a className="chat-ticket-link" href={local} onClick={event => {
                 if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
                 event.preventDefault();
                 const id = Number(params.get("id"));
-                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: params.get("source"), tickets: [{ id, title: `#${id}` }], ...(citation ? { citation } : {}) } }));
-              }}>{citation ? "Показать в тикете" : children}<ArrowUpRight size={14} aria-hidden="true" /></a></CopyableLink>;
+                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: params.get("source"), tickets: [{ id, title: `#${id}` }] } }));
+              }}>{children}<ArrowUpRight size={14} aria-hidden="true" /></a></CopyableLink>;
             }
             return <CopyableLink href={href}><a href={href} className="chat-external-link" title={href} target="_blank" rel="noopener noreferrer">
               <ExternalLinkIcon href={href} /><span>{children}</span><ArrowUpRight size={13} className="chat-external-icon" aria-hidden="true" />
