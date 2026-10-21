@@ -4477,6 +4477,15 @@ summary > svg {
   border: 0;
   background: transparent;
 }
+.pr-health-trigger .pr-review-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pr-health-trigger .pr-review-status > svg {
+  display: block;
+  flex-shrink: 0;
+}
 .pr-info-popup {
   width: min(760px, 94vw);
 }
@@ -8488,3 +8497,29 @@ summary > svg {
 .repository-progress progress::-moz-progress-bar { background: #4381ac; border-radius: 4px; }
 .repository-progress progress:indeterminate { background: #dce7ee; }
 .repository-progress.is-error { background: #fff4ef; border-color: #ecd7ce; }
+
+.context-catalog-level { min-width: 0; padding: 14px; border: 1px solid #dbe3d7; border-radius: 9px; background: #f9fbf7; }
+.context-catalog-projects { margin-left: 20px; border-left: 3px solid #bfd1b3; background: #fff; }
+.context-catalog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.context-catalog-heading h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; font-size: 13px; }
+.context-catalog-heading small { font-size: 11px; color: #6a7b62; font-weight: 400; overflow-wrap: anywhere; }
+.context-catalog-heading > button { flex-shrink: 0; }
+.context-catalog-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.context-catalog-tabs > button { max-width: 100%; padding: 6px 10px; border: 1px solid #dae3d5; border-radius: 6px; font-size: 12px; background: #fff; overflow-wrap: anywhere; }
+.context-catalog-tabs > button[aria-pressed="true"] { background: #e9f1e4; border-color: #8ca67a; color: #36532a; }
+.context-directory-name > strong { flex: 1; }
+.context-directory-name > button { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+.context-directory-name > label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: min(240px, 100%); }
+.context-directory-name > label > input { width: 100%; min-width: 0; }
+.context-directory-name > label > span { flex-shrink: 0; font-size: 11px; }
+@media (max-width: 600px) { .context-catalog-projects { margin-left: 8px; } }
+
+.repository-fetch-settings { min-width: 0; margin: 0; padding: 12px 14px; border: 1px solid #d5dfd1; border-radius: 8px; background: #f8faf6; }
+.repository-fetch-settings legend { padding: 0 5px; font-size: 12px; font-weight: 600; }
+.repository-fetch-settings input { max-width: 120px; }
+.repository-fetch-settings p { margin: 8px 0 0; font-size: 12px; }
+.repository-error { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; padding: 12px 14px; border: 1px solid #e9c7be; border-radius: 8px; background: #fff4f0; color: #813d31; }
+.repository-error > svg { flex-shrink: 0; margin-top: 2px; }
+.repository-error > div { min-width: 0; flex: 1; }
+.repository-error strong { font-size: 13px; }
+.repository-error p { margin: 5px 0 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }

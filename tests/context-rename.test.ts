@@ -38,3 +38,31 @@ test("context rename preserves scoped data and rolls back conflicting settings",
   store.addContext({ ...moved, project: "Existing" });
   assert.throws(() => store.renameContext(moved, "Existing"));
 });
+
+test("legacy customer rename preserves repository, developers and scoped settings", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-legacy-rename-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const previous = { client: "Legacy", project: "Portal" };
+  store.addMemory("project", "Existing memory", previous); // No standalone registry row.
+  store.db.prepare("INSERT INTO local_developers(id,name,client,project) VALUES (?,?,?,?)").run("dev", "Alex", previous.client, previous.project);
+  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?)")
+    .run("monitor", previous.client, previous.project, "https://azure.test", "Azure", "all", 1, "repo");
+  const keys = [
+    'azure.context:["Legacy",""]',
+    'project.azure:["https://azure.test","Legacy","Portal"]',
+    'developer-note:["Legacy","Portal","dev"]',
+    'developer-status-groups:["source","Legacy","Portal"]',
+  ];
+  for (const key of keys) store.set(key, { preserved: key });
+  store.renameContext({ client: "Legacy", project: "" }, "Renamed");
+  store.renameContext({ client: "Renamed", project: "Portal" }, "Site");
+  assert.equal(store.memories({ client: "Renamed", project: "Site" }).length, 1);
+  assert.deepEqual(store.db.prepare("SELECT client,project,repository FROM pr_projects WHERE id='monitor'").get(), { client: "Renamed", project: "Site", repository: "repo" });
+  assert.deepEqual(store.db.prepare("SELECT client,project FROM local_developers WHERE id='dev'").get(), { client: "Renamed", project: "Site" });
+  for (const key of keys) {
+    const renamed = key.replace('"Legacy"', '"Renamed"').replace('"Portal"', '"Site"');
+    assert.deepEqual(store.get(renamed, null), { preserved: key });
+    assert.equal(store.get(key, null), null);
+  }
+});

@@ -16,7 +16,7 @@ Existing Azure PAT, HTTPS, Code Read and repository Read permission. A token wit
 
 Branch listings are cached for 60 seconds. Opening a branch refreshes its remote ref at most once per minute. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (200 commits); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
 
-One operation runs at a time with a bounded queue. Fetch timeout is 120 seconds. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in its own named volume; existing Orbit data volumes are unchanged.
+One operation runs at a time with a bounded queue. Git network timeout defaults to 300 seconds and is configurable per repository from 60 to 1800 seconds. The backend allows an additional 180 seconds for queue/processing; queued work expires after 60 seconds and never starts after that expiry. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in its own named volume; existing Orbit data volumes are unchanged.
 
 ## Search and limits
 

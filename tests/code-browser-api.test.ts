@@ -39,13 +39,16 @@ test("code browser resolves configured repository and keeps credentials on serve
   assert.equal(calls[1].url, "http://code-browser:8010/v1/repository");
   assert.equal(calls[1].body.url, "https://dev.azure.com/org/Azure%20Project/_git/11111111-2222-3333-4444-555555555555");
   assert.equal(calls[1].body.token, "private-pat");
+  assert.equal(calls[1].body.fetchTimeoutSeconds, 300);
   assert.match(calls[1].authorization!, /^Bearer [0-9a-f]{64}$/);
   assert.ok(!JSON.stringify(result).includes("private-pat"));
   await browser.request({ ...context, operation: "tree", branch: "main" });
   assert.equal(calls.length, 3); // No extra Azure resolution for local reads.
+  store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=900 WHERE id=?").run("monitor");
   const progress: unknown[] = [];
   globalThis.fetch = (async (_url: any, init?: RequestInit) => {
     assert.equal(new Headers(init?.headers).get("Accept"), "application/x-ndjson");
+    assert.equal(JSON.parse(String(init?.body)).fetchTimeoutSeconds, 900);
     return new Response('{"type":"progress","progress":{"stage":"receiving","percent":25}}\n{"type":"result","data":{"current":true}}\n', { headers: { "Content-Type": "application/x-ndjson" } });
   }) as typeof fetch;
   const streamed = await browser.request({ ...context, operation: "pull", branch: "main" }, value => progress.push(value));

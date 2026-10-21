@@ -1122,6 +1122,7 @@ export function createApp(
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),
         reviewFiles: reviewFileSettings.optional(),
+        fetchTimeoutSeconds: z.number().int().min(60).max(1800).optional(),
       })
       .strict()
       .parse(req.body);

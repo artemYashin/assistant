@@ -280,6 +280,8 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
+    if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "fetch_timeout_seconds"))
+      this.db.exec("ALTER TABLE pr_projects ADD COLUMN fetch_timeout_seconds INTEGER NOT NULL DEFAULT 300");
     for (const column of [
       "description",
       "ticket_error",
@@ -426,7 +428,7 @@ export class Store {
     if (!context.client || !name || name.length > 200)
       throw new AppError(400, "Укажите название длиной до 200 символов");
     const known = this.contexts();
-    if (!known.some(c => c.client === context.client && c.project === context.project))
+    if (!known.some(c => c.client === context.client && (!context.project || c.project === context.project)))
       throw new AppError(404, "Заказчик или проект не найден");
     if (name === (context.project || context.client)) return;
     if (known.some(c => context.project ? c.client === context.client && c.project === name : c.client === name))

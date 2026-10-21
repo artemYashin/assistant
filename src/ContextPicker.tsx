@@ -1,3 +1,4 @@
+import { copyRenamedContextStorage } from "./context-storage.js";
 import { Link } from "react-router-dom";
 import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
 import { PrioritySettings } from "./TicketMetadata.js";
@@ -6,6 +7,8 @@ import { SingleSelect } from "./SingleSelect.js";
 import {
   Users,
   Code2,
+  Cloud,
+  Folder,
   Pencil,
   Flag,
   GitBranch,
@@ -30,7 +33,10 @@ export function ContextPicker({
 }) {
   const [section, setSection] = useState<
     "browse" | "catalog" | "repository" | "developers" | "priorities"
-  >("browse");
+  >("catalog");
+  const [catalogClient, setCatalogClient] = useState("");
+  const [catalogProject, setCatalogProject] = useState("");
+  const [creating, setCreating] = useState(false);
   const [createKind, setCreateKind] = useState<"client" | "project">("client");
   const [items, setItems] = useState<Context[]>([]),
     [open, setOpen] = useState(false),
@@ -67,6 +73,10 @@ export function ContextPicker({
           .filter(Boolean),
       ),
     ].sort();
+  const selectedClient = clients.includes(catalogClient) ? catalogClient : clients.includes(context.client) ? context.client : clients[0] || "";
+  const clientProjects = projects(selectedClient);
+  const selectedProject = clientProjects.includes(catalogProject) ? catalogProject
+    : selectedClient === context.client && clientProjects.includes(context.project) ? context.project : clientProjects[0] || "";
   async function choose(next: Context) {
     setBusy(true);
     setError("");
@@ -88,6 +98,9 @@ export function ContextPicker({
       setName("");
       setProject("");
       setOwner(next.client);
+      setCatalogClient(next.client);
+      setCatalogProject(next.project);
+      setCreating(false);
       await choose(next);
 
     } catch (e: any) {
@@ -101,16 +114,10 @@ export function ContextPicker({
     setError("");
     try {
       const result = await api("/contexts/rename", "POST", { context: previous, name });
-      // Customer filter presets are stored in this browser, separately from SQLite.
-      try { if (!previous.project) {
-        for (const key of Object.keys(localStorage)) {
-          const match = /^(orbit\.ticket-(?:filters|presets)\.customer\.(?:active|azure|trash):)("(?:[^"\\]|\\.)*")(.*)$/.exec(key);
-          if (match && JSON.parse(match[2]) === previous.client) {
-            localStorage.setItem(match[1] + JSON.stringify(name) + match[3], localStorage.getItem(key)!);
-          }
-        }
-      }
-      } catch { /* Browser storage may be unavailable; server rename is already saved. */ }
+      try { copyRenamedContextStorage(localStorage, previous, name); }
+      catch { /* Browser storage may be unavailable; server rename is already saved. */ }
+      setCatalogClient(previous.project ? previous.client : name);
+      setCatalogProject(previous.project ? name : selectedProject);
       setItems(result.items);
       onChange(result.context);
       onSettingsChange();
@@ -155,7 +162,7 @@ export function ContextPicker({
         aria-label="Настройки заказчиков и проектов"
         title="Заказчики и проекты"
         aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
+        onClick={() => { setCatalogClient(context.client); setCatalogProject(context.project); setOpen(true); }}
       >
         <Settings size={17} />
       </button>
@@ -197,16 +204,11 @@ export function ContextPicker({
               className="context-manager-nav"
               aria-label="Разделы управления контекстом"
             >
-              <button
-                type="button"
-                aria-pressed={section === "browse"}
-                onClick={() => setSection("browse")}
-              >
-                <Users size={16} />
-                Проекты
-              </button>
               <button type="button" aria-pressed={section === "catalog"} onClick={() => setSection("catalog")}>
-                <Pencil size={16} />Заказчики и проекты
+                <Users size={16} />Заказчики и проекты
+              </button>
+              <button type="button" aria-pressed={section === "browse"} onClick={() => setSection("browse")}>
+                <Cloud size={16} />Подключение Azure
               </button>
               <button
                 type="button"
@@ -255,10 +257,29 @@ export function ContextPicker({
               </div>
             )}
             {section === "catalog" && <div className="context-manager-section">
-              <div className="context-create-kind">
-                <button type="button" aria-pressed={createKind === "client"} onClick={() => setCreateKind("client")}>Новый заказчик</button>
-                <button type="button" aria-pressed={createKind === "project"} onClick={() => { setCreateKind("project"); setOwner(context.client); }}>Новый проект</button>
-              </div>
+              <section className="context-catalog-level">
+                <div className="context-catalog-heading"><h3><Users size={16} />Заказчики</h3>
+                  <button type="button" className="text-button" disabled={busy} onClick={() => { setCreateKind("client"); setCreating(true); }}><Plus size={14} />Заказчик</button></div>
+                <div className="context-catalog-tabs" aria-label="Выбор заказчика для редактирования">
+                  {clients.map(client => <button type="button" key={client} disabled={busy} aria-pressed={selectedClient === client}
+                    onClick={() => { setCatalogClient(client); setCatalogProject(""); setCreating(false); }}>{client}</button>)}
+                </div>
+                {selectedClient ? <ContextName key={selectedClient} value={selectedClient} kind="Заказчик" busy={busy}
+                  onSave={name => rename({ client: selectedClient, project: "" }, name)} /> : <p className="muted">Добавьте первого заказчика.</p>}
+              </section>
+              {selectedClient && <section className="context-catalog-level context-catalog-projects">
+                <div className="context-catalog-heading"><h3><Folder size={16} />Проекты <small>{selectedClient}</small></h3>
+                  <button type="button" className="text-button" disabled={busy} onClick={() => { setCreateKind("project"); setOwner(selectedClient); setCreating(true); }}><Plus size={14} />Проект</button></div>
+                <div className="context-catalog-tabs" aria-label={`Проекты заказчика ${selectedClient}`}>
+                  {clientProjects.map(project => <button type="button" key={project} disabled={busy} aria-pressed={selectedProject === project}
+                    onClick={() => { setCatalogProject(project); setCreating(false); }}>{project}</button>)}
+                </div>
+                {selectedProject ? <ContextName key={JSON.stringify([selectedClient, selectedProject])} value={selectedProject} kind="Проект" busy={busy}
+                  onSave={name => rename({ client: selectedClient, project: selectedProject }, name)} /> : <p className="muted">У этого заказчика пока нет проектов.</p>}
+              </section>}
+              {creating && <div className="context-create-panel">
+                <div className="context-catalog-heading"><h3>{createKind === "client" ? "Новый заказчик" : "Новый проект"}</h3>
+                  <button type="button" className="icon-button" disabled={busy} aria-label="Отменить добавление" onClick={() => setCreating(false)}><X size={16} /></button></div>
               <form className="context-create-form" onSubmit={(e) => void add(e, createKind === "client"
                 ? { client: name.trim(), project: "" } : { client: owner, project: project.trim() })}>
                 {createKind === "project" && <SingleSelect label="Заказчик проекта" value={owner} onChange={setOwner} disabled={busy}
@@ -271,14 +292,7 @@ export function ContextPicker({
                   <Plus size={16} />Добавить и выбрать
                 </button>
               </form>
-              <div className="context-directory">
-                {clients.map(client => <section className="context-directory-client" key={client}>
-                  <ContextName key={client} value={client} kind="Заказчик" busy={busy} onSave={name => rename({ client, project: "" }, name)} />
-                  {projects(client).map(project => <ContextName key={project} value={project} kind="Проект" busy={busy}
-                    onSave={name => rename({ client, project }, name)} />)}
-                  {!projects(client).length && <p className="muted">Пока нет проектов</p>}
-                </section>)}
-              </div>
+              </div>}
             </div>}
             {section === "repository" && (
               <div className="context-manager-section">
@@ -303,15 +317,18 @@ export function ContextPicker({
 function ContextName({ value, kind, busy, onSave }: { value: string; kind: string; busy: boolean; onSave: (name: string) => Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
-  return <form className="context-directory-name" onSubmit={async e => {
+  if (!editing) return <div className="context-directory-name">
+    <span className="muted">{kind}</span><strong>{value}</strong>
+    <button type="button" className="secondary" disabled={busy} onClick={e => {
+      e.preventDefault(); setDraft(value); setEditing(true);
+    }}><Pencil size={14} />Переименовать</button>
+  </div>;
+  return <form className="context-directory-name is-editing" onSubmit={async e => {
     e.preventDefault();
     try { await onSave(draft.trim()); setEditing(false); } catch { /* Parent displays the error. */ }
   }}>
-    <span className="muted">{kind}</span>
-    {editing ? <><input aria-label={`Название: ${value}`} value={draft} onChange={e => setDraft(e.target.value)} maxLength={200} required disabled={busy} autoFocus />
-      <button className="primary" disabled={busy || !draft.trim()}>Сохранить</button>
-      <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>Отмена</button></>
-      : <><strong>{value}</strong><button type="button" className="icon-button" disabled={busy} aria-label={`Переименовать ${value}`}
-        onClick={() => { setDraft(value); setEditing(true); }}><Pencil size={14} /></button></>}
+    <label><span className="muted">{kind}</span><input aria-label={`Название: ${value}`} value={draft} onChange={e => setDraft(e.target.value)} maxLength={200} required disabled={busy} autoFocus /></label>
+    <button type="submit" className="primary" disabled={busy || !draft.trim()}>{busy ? "Сохраняю…" : "Сохранить"}</button>
+    <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>Отмена</button>
   </form>;
 }

@@ -1,6 +1,6 @@
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Code2, Download, FileCode2, Folder, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, Folder, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage } from "./diff-languages.js";
@@ -100,7 +100,10 @@ function RepositoryView({ context }: { context: Context }) {
       <span>{status.current ? "Совпадает с Azure на момент проверки" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или глубже 200 коммитов)"}</span>
       <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
     </div>}
-    {error && <p role="alert" className="error">{error}</p>}
+    {error && <div role="alert" className="repository-error">
+      <AlertCircle size={20} aria-hidden="true" /><div><strong>Не удалось выполнить операцию</strong><p>{error}</p></div>
+      <button className="icon-button" aria-label="Закрыть ошибку" onClick={() => setError("")}><X size={16} /></button>
+    </div>}
     <form className="repository-search" onSubmit={e => { e.preventDefault(); void search(); }}>
       <SingleSelect label="Поиск" value={mode} onChange={setMode} options={[{ value: "name", label: "По имени / пути" }, { value: "content", label: "По содержимому" }]} />
       <input aria-label="Поиск в репозитории" placeholder="Введите текст и нажмите Enter" maxLength={200} value={query} onChange={e => setQuery(e.target.value)} />

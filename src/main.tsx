@@ -2441,7 +2441,7 @@ function Settings({ settings, context, run, busy }: any) {
           <div className="form-grid">
             <Field
               label="Название проекта в Azure DevOps"
-              hint="Для выбранного проекта задаётся в меню «Заказчики и проекты» → «Проекты»."
+              hint="Для выбранного проекта задаётся в меню «Заказчики и проекты» → «Подключение Azure»."
             >
               <input
                 value={

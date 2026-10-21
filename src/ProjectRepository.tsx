@@ -8,6 +8,7 @@ export function ProjectRepository({
   onSaved?: () => void;
 }) {
   const [ignoredPaths, setIgnoredPaths] = useState("");
+  const [fetchTimeoutMinutes, setFetchTimeoutMinutes] = useState(5);
   const [diffBudget, setDiffBudget] = useState(160000);
   const [loaded, setLoaded] = useState(false);
   const [repo, setRepo] = useState(""),
@@ -21,6 +22,7 @@ export function ProjectRepository({
     setLoaded(false);
     setIgnoredPaths("");
     setDiffBudget(160000);
+    setFetchTimeoutMinutes(5);
     setMessage("");
     api("/pr/projects")
       .then((items: any[]) => {
@@ -36,6 +38,7 @@ export function ProjectRepository({
             (m) => m.client === context.client && m.project === context.project,
           );
         if (m) {
+          setFetchTimeoutMinutes((m.fetch_timeout_seconds || 300) / 60);
           const rules = JSON.parse(m.review_files || "{}");
           setIgnoredPaths((rules.ignoredPaths || []).join("\n"));
           setDiffBudget(rules.diffBudget || 160000);
@@ -71,6 +74,7 @@ export function ProjectRepository({
             repository: repo.trim(),
             mode: all ? "all" : "required",
             enabled,
+            fetchTimeoutSeconds: Math.round(fetchTimeoutMinutes * 60),
             reviewFiles: {
               ignoredPaths: ignoredPaths
                 .split("\n")
@@ -104,10 +108,18 @@ export function ProjectRepository({
         />
       </label>
       <p className="muted">
-        Проект Azure DevOps задаётся в разделе «Проекты», организация/коллекция
+        Проект Azure DevOps задаётся в разделе «Подключение Azure», организация/коллекция
         и PAT — в общих настройках Azure. Синхронизируются только активные PR
         этого репозитория. Смена репозитория сохраняет старые результаты ревью.
       </p>
+      <fieldset className="repository-fetch-settings">
+        <legend>Просмотр кода · загрузка репозитория</legend>
+        <label>Тайм-аут Git, минуты
+          <input type="number" min={1} max={30} step={1} required value={fetchTimeoutMinutes}
+            onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />
+        </label>
+        <p className="muted">От 1 до 30 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
+      </fieldset>
       <label>
         Исключить из ревью и View Diff (один путь или шаблон на строку)
         <textarea

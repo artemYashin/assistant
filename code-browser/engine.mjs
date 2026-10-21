@@ -14,12 +14,12 @@ export function safePath(value) {
   return typeof value === 'string' && !value.includes('\\') && !value.includes('\0') && !value.startsWith('/') &&
     value.split('/').every(p => p && p !== '.' && p !== '..' && p.toLowerCase() !== '.git');
 }
-function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0], onProgress } = {}) {
+function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout = 30000, accept = [0], onProgress, timeoutMessage } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
     let chunks = [], size = 0, stderr = '', failure;
     const stop = message => { failure = new BrowserError(message, 422); try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } };
-    const timer = setTimeout(() => stop('Операция превысила время ожидания. Повторите позже.'), timeout);
+    const timer = setTimeout(() => stop(timeoutMessage || 'Операция превысила время ожидания. Повторите позже.'), timeout);
     child.stdout.on('data', chunk => {
       size += chunk.length;
       if (size > limit) stop('Результат слишком большой. Уточните запрос или выберите меньший репозиторий.');
@@ -59,12 +59,23 @@ export class RepositoryBrowser {
     if (this.pending >= 5) throw new BrowserError('Сервис занят. Повторите через несколько секунд.', 429);
     report({ stage: "queued" });
     this.pending++;
-    const task = this.tail.then(() => this.perform(input, report));
-    this.tail = task.catch(() => {});
-    try { return await task; } finally { this.pending--; }
+    let expired = false, timer;
+    const waiting = new Promise((_, reject) => {
+      timer = setTimeout(() => { expired = true; reject(new BrowserError('Очередь сервиса занята больше минуты. Дождитесь текущей загрузки и повторите запрос.', 429)); }, 60000);
+    });
+    const task = this.tail.then(() => {
+      clearTimeout(timer);
+      if (expired) throw new BrowserError('Ожидание очереди истекло', 429);
+      return this.perform(input, report);
+    });
+    this.tail = task.catch(() => {}).finally(() => { this.pending--; });
+    return Promise.race([task, waiting]);
   }
   async perform(input, report) {
     report({ stage: "preparing" });
+    const fetchTimeoutSeconds = input.fetchTimeoutSeconds ?? 300;
+    if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 1800) throw new BrowserError('Тайм-аут Git должен быть от 60 до 1800 секунд');
+    const networkOptions = { timeout: fetchTimeoutSeconds * 1000, timeoutMessage: `Git не успел загрузить данные за ${fetchTimeoutSeconds / 60} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.` };
     const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', offset = 0 } = input;
     if (!['branches', 'status', 'pull', 'tree', 'file', 'search'].includes(operation)) throw new BrowserError('Неизвестная операция');
     if (typeof url !== 'string' || url.length > 2000 || typeof filePath !== 'string' || filePath.length > 4096 ||
@@ -90,7 +101,7 @@ export class RepositoryBrowser {
       const key = hash(url + token); const cached = this.branchesCache.get(key);
       if (cached && Date.now() - cached.time < 60000) return cached.result;
       report({ stage: 'connecting' });
-      const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], { timeout: 30000 })).toString();
+      const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], networkOptions)).toString();
       const branches = output.split('\n').flatMap(line => /^[0-9a-f]{40,64}\trefs\/heads\//.test(line) ? [line.split('\t')[1].slice(11)] : []).sort();
       const result = { branches: branches.slice(0, 5000), more: branches.length > 5000, defaultBranch: /^ref: refs\/heads\/(.+)\tHEAD$/m.exec(output)?.[1] || branches[0] || '', checkedAt: new Date().toISOString() };
       this.branchesCache.set(key, { time: Date.now(), result });
@@ -105,7 +116,7 @@ export class RepositoryBrowser {
     if (!state || operation === 'pull' || (operation === 'status' && (input.refresh || Date.now() - Date.parse(state.checkedAt) >= 60000))) {
       if (await diskSize(this.root) >= this.maxCacheBytes) throw new BrowserError('Кеш кода достиг лимита. Очистите отдельный volume кеша или увеличьте CODE_BROWSER_MAX_CACHE_BYTES.', 507);
       report({ stage: 'fetching' });
-      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { timeout: 120000, onProgress: report });
+      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
       if (await diskSize(this.root) > this.maxCacheBytes) {
         await fs.rm(repo, { recursive: true, force: true });
         throw new BrowserError('Репозиторий превысил лимит кеша; его копия удалена. Увеличьте лимит кеша.', 507);

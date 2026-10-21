@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { cachedPrLinks, prLinksKey } from "./pr-ticket-sources.js";
 import { ignoredReviewPath, reviewFileSettings } from "./review-files.js";
 import { policyChecks } from "./pr-health.js";
@@ -31,6 +32,7 @@ export type Monitor = {
   enabled: number;
   error?: string | null;
   review_files?: string;
+  fetch_timeout_seconds?: number;
 };
 const now = () => new Date().toISOString();
 const enc = encodeURIComponent;
@@ -291,19 +293,21 @@ export class PullRequests {
     mode: "required" | "all";
     enabled: boolean;
     reviewFiles?: { ignoredPaths: string[]; diffBudget: number };
+    fetchTimeoutSeconds?: number;
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
     const settings = this.store.settings(input);
     const azureProject = settings.azureProject.trim();
     if (!azureProject)
-      throw new AppError(400, "Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Проекты»");
+      throw new AppError(400, "Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Подключение Azure»");
     const source = azureBase(settings.azureUrl);
     if (!input.repository.trim())
       throw new AppError(400, "Укажите Git-репозиторий");
     const reviewFiles = input.reviewFiles
       ? reviewFileSettings.parse(input.reviewFiles)
       : undefined;
+    const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(1800).parse(input.fetchTimeoutSeconds);
     this.store.addContext(input);
     this.store.db
       .prepare(
@@ -329,6 +333,10 @@ export class PullRequests {
         Number(input.enabled),
         input.repository,
       );
+    if (fetchTimeout !== undefined) {
+      this.store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=? WHERE client=? AND project=? AND source=? AND azure_project=?")
+        .run(fetchTimeout, input.client, input.project, source, azureProject);
+    }
     if (reviewFiles)
       this.store.db
         .prepare(
