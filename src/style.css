@@ -8639,17 +8639,22 @@ summary > svg {
   .repository-tree-resizer { display: none; }
 }
 
-.chat-live-tools { margin: 8px 0; padding: 7px 9px; border: 1px solid #dce5df; border-radius: 7px; background: #f4f7f5; font-size: 11px; color: #647268; }
-.chat-tool-rows > div { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.chat-live-tools { margin: 8px 0; padding: 0; min-width: 0; border: 1px solid #dce5df; border-radius: 7px; background: #f4f7f5; font-size: 11px; color: #647268; }
+.chat-tool-rows { display: grid; gap: 7px; padding: 8px; min-width: 0; }
+.chat-tool-rows > div { display: flex; align-items: center; gap: 7px; padding: 0; min-width: 0; line-height: 1.45; }
+.chat-tool-rows > div > span { min-width: 0; overflow-wrap: anywhere; }
+.chat-running-tools + .chat-finished-tools { border-top: 1px solid #dce5df; }
 .chat-live-tools svg { flex-shrink: 0; }
-.chat-live-tools .error { color: #a04444; }
+.chat-live-tools .chat-tool-state-error { color: #a04444; }
 .chat-streaming { overflow-anchor: none; }
 
 .chat-elapsed { margin: 7px 0; color: #7a877f; font-size: 11px; }
 .chat-elapsed time, .chat-tool-rows time { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .chat-tool-rows time { margin-left: auto; color: #718078; font-size: 10px; }
-.chat-finished-tools { margin: 3px 0 0; border: 0; background: transparent; }
-.chat-finished-tools > summary { padding: 3px 0; font-size: 11px; color: #718078; cursor: pointer; }
+.chat-finished-tools { width: 100%; margin: 0; padding: 0; border: 0; background: transparent; }
+.chat-finished-tools > summary { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 0; margin: 0; padding: 8px; line-height: 1.4; font-size: 11px; color: #718078; cursor: pointer; }
+.chat-finished-tools > summary::before, .chat-finished-tools[open] > summary::before { flex-shrink: 0; margin: 0; }
+.chat-finished-tools[open] > summary { border-bottom: 1px solid #e3eae5; border-radius: 6px 6px 0 0; }
 .chat-finished-tools .chat-tool-rows { max-height: 160px; overflow: auto; }
 
 .chat-stop-button { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; gap: 6px; width: fit-content; max-width: calc(100% - 32px); margin: 8px 16px 0; padding: 7px 10px; border: 1px solid #b8323a; border-radius: 6px; background: #c53d45; color: #fff; font-size: 12px; font-weight: 600; line-height: 1.4; transition: background .12s, border-color .12s; }
@@ -8657,3 +8662,34 @@ summary > svg {
 .chat-stop-button:active { background: #92212a; }
 .chat-stop-button:focus-visible { outline: 2px solid #c53d45; outline-offset: 3px; }
 .chat-stop-button svg { flex-shrink: 0; }
+
+.voice-shortcut-dialog { position: fixed; inset: auto 16px max(32px, 7vh); width: min(330px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 48px); margin: 0 auto; padding: 0; border: 1px solid #ffffff25; border-radius: 24px; overflow: auto; background: #152337f2; color: #edf4ff; box-shadow: 0 24px 80px #08152666, 0 0 40px #4e71b71c; }
+.voice-shortcut-dialog[open] { animation: voice-arrive .22s ease-out; }
+.voice-shortcut-dialog::backdrop { background: #15223830; backdrop-filter: blur(3px); }
+.voice-shortcut-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 27px 22px 18px; text-align: center; }
+.voice-shortcut-close { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #ffffff18; border-radius: 50%; background: #ffffff0a; color: #c9d7eb; }
+.voice-shortcut-close:hover { background: #ffffff22; color: #fff; }
+.voice-shortcut-close:focus-visible { outline: 2px solid #9ccaff; outline-offset: 3px; }
+.voice-shortcut-card > strong { font-size: 17px; font-weight: 600; letter-spacing: -.2px; }
+.voice-orb { position: relative; display: grid; place-items: center; width: 100px; height: 100px; margin: 2px 0 4px; isolation: isolate; }
+.voice-orb > span { position: absolute; inset: 9px; border-radius: 42% 58% 55% 45%; background: linear-gradient(135deg, #4dcce1, #6a7aee 55%, #bd79d5); opacity: .75; animation: voice-orbit 6s linear infinite; box-shadow: 0 0 24px #7797f64d; }
+.voice-orb > span:nth-child(2) { inset: 3px 10px; opacity: .45; animation-direction: reverse; animation-duration: 8s; filter: blur(5px); }
+.voice-orb > span:nth-child(3) { inset: 16px; background: linear-gradient(160deg, #96e6ee, #597dda); opacity: .55; animation-duration: 4s; }
+.voice-orb > svg { position: relative; z-index: 1; color: #fff; filter: drop-shadow(0 2px 5px #162e6a66); }
+.voice-shortcut-wave { height: 22px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.voice-shortcut-wave > i { display: block; width: 3px; height: 6px; border-radius: 3px; background: #9bc9fa; }
+.is-recording .voice-shortcut-wave > i { animation: voice-wave .85s ease-in-out infinite alternate; }
+.voice-shortcut-card p { margin: 0; max-width: 100%; }
+.voice-shortcut-target { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #aebfd4; font-size: 11px; }
+.voice-shortcut-help { color: #c6d5e8; font-size: 12px; line-height: 1.5; }
+.voice-shortcut-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding-top: 7px; border-top: 1px solid #ffffff15; }
+.voice-shortcut-footer time { color: #aebfd4; font: 12px monospace; font-variant-numeric: tabular-nums; }
+.voice-shortcut-footer button, .voice-shortcut-card > button.secondary { display: inline-flex; align-items: center; gap: 5px; width: fit-content; padding: 6px 9px; border: 1px solid #9ac6ff30; border-radius: 7px; color: #dfecff; background: #83b9ff18; font-size: 11px; }
+.voice-shortcut-footer button:hover, .voice-shortcut-card > button.secondary:hover { background: #83b9ff30; }
+.is-error .voice-orb > span { background: linear-gradient(135deg, #bc737d, #8f6fae); animation-play-state: paused; }
+@keyframes voice-orbit { to { transform: rotate(360deg); } }
+@keyframes voice-wave { from { transform: scaleY(.7); } to { transform: scaleY(3); } }
+@keyframes voice-arrive { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .voice-shortcut-dialog[open], .voice-orb > span, .is-recording .voice-shortcut-wave > i { animation: none; }
+}

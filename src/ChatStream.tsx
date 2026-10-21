@@ -51,7 +51,7 @@ export function ChatStream({ live }: { live: Live }) {
   }, []);
   const running = live.tools.filter(tool => tool.status === "running");
   const finished = live.tools.filter(tool => tool.status !== "running");
-  const row = (tool: ToolProgress) => <div key={tool.toolId} className={tool.status}>
+  const row = (tool: ToolProgress) => <div key={tool.toolId} className={`chat-tool-state-${tool.status}`}>
     {tool.status === "running" ? <LoaderCircle size={13} className="spin" /> : tool.status === "error" ? <AlertCircle size={13} /> : <Check size={13} />}
     <span>{labels[tool.name] || tool.name} · {tool.status === "running" ? "выполняется" : tool.status === "error" ? "ошибка" : "готово"}</span>
     <time>{formatChatDuration(tool.durationMs ?? now - (tool.startedAt || now))}</time>
@@ -59,7 +59,7 @@ export function ChatStream({ live }: { live: Live }) {
   return <>
     <div className="chat-elapsed">Время работы: <time>{formatChatDuration(now - live.startedAt)}</time></div>
     {!!live.tools.length && <div className="chat-live-tools">
-      <div role="status" className="chat-tool-rows">{running.map(row)}</div>
+      {!!running.length && <div role="status" className="chat-tool-rows chat-running-tools">{running.map(row)}</div>}
       {!!finished.length && <details className="chat-finished-tools"><summary>Выполненные вызовы: {finished.length}</summary><div className="chat-tool-rows">{finished.map(row)}</div></details>}
     </div>}
     {live.text && <div className="bubble assistant chat-streaming" aria-label="Ответ формируется">

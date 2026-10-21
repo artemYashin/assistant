@@ -1284,3 +1284,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - All 16 targeted tests passed across chat streaming/terminal errors, duration persistence, local tag scope/pagination/trash, metadata operations and tool discovery.
 - Production build and whitespace checks passed. The existing bundle-size warning remains; live Copilot streaming and browser interactions were not tested.
+
+### Double-M voice mode and tool accordion spacing (2026-10-22)
+
+- Add a physical double-M shortcut (450 ms interval) outside editable controls. Start capture in a floating modal overlay; a second double press stops and transcribes directly into the current assistant session. Recordings shorter than two seconds are discarded. Silence does not submit.
+- Escape, close, backdrop dismissal and cancellation during transcription invalidate the pending attempt and stop media tracks. Late microphone permission and transcription results cannot submit after cancellation or a context/session change. A two-minute cap discards the recording with an explanation rather than sending automatically.
+- Keep regular microphone-to-draft behavior. Voice auto-send preserves an existing typed draft, expands the assistant, and uses the existing authenticated transcription and chat endpoints. The overlay supports reduced motion, a recording timer and explicit finish/cancel actions. The shortcut only operates while the application is focused, not system-wide.
+- Remove the tool accordion's inherited 44 px minimum heading height and outer padding; use a full-width summary and 7 px row spacing. Scope error styling to avoid the global error panel styles.
+- Five focused shortcut/chat tests and production build passed. Existing bundle-size warning remains. Real microphone permissions, audio capture and browser visuals were not tested in this environment.

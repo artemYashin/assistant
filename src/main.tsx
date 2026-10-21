@@ -96,6 +96,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
+import { VoiceShortcut } from "./VoiceShortcut.js";
 import { ChatStream, useChatStream, formatChatDuration } from "./ChatStream.js";
 import type { ChatProgress } from "../server/chat-stream.js";
 import { api, apiProgress, setCsrf } from "./api.js";
@@ -2633,6 +2634,7 @@ function Assistant({
   onApprovals,
   pending,
 }: any) {
+  const [shortcutBusy, setShortcutBusy] = useState(false);
   const resize = useAssistantResize();
   const chatStream = useChatStream();
   const conversationView = useRef<HTMLDivElement>(null);
@@ -2721,6 +2723,7 @@ function Assistant({
         working ||
         clearing ||
         recording ||
+        shortcutBusy ||
         transcribing ||
         analysisPending.current
       ) {
@@ -2774,9 +2777,9 @@ function Assistant({
     };
     window.addEventListener(analyzeTicketEvent, handle);
     return () => window.removeEventListener(analyzeTicketEvent, handle);
-  }, [key, working, clearing, recording, transcribing, onExpand]);
+  }, [key, working, clearing, shortcutBusy, recording, transcribing, onExpand]);
   async function chooseChat(id?: string) {
-    if (working || clearing || recording || transcribing) return;
+    if (working || clearing || shortcutBusy || recording || transcribing) return;
     const captured = key;
     const generation = ++historyGeneration.current;
     setClearing(true);
@@ -2867,7 +2870,7 @@ function Assistant({
     }
   }
   async function clearHistory() {
-    if (working || clearing || recording || transcribing) return;
+    if (working || clearing || shortcutBusy || recording || transcribing) return;
     if (
       !window.confirm(
         "Очистить сообщения выбранного чата? Другие чаты, память и тикеты останутся.",
@@ -2900,10 +2903,10 @@ function Assistant({
       setClearing(false);
     }
   }
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    if (!prompt.trim() || working || clearing || !sessionId) return;
-    const text = prompt;
+  async function send(e?: React.FormEvent, voiceText?: string) {
+    e?.preventDefault();
+    const text = voiceText ?? prompt;
+    if (!text.trim() || working || clearing || !sessionId || (!voiceText && shortcutBusy)) return;
     const captured = key;
     const generation = historyGeneration.current;
     setWorking(true);
@@ -2911,7 +2914,7 @@ function Assistant({
     followStream.current = true;
     chatConnection.current = new AbortController();
     setError("");
-    setPrompt("");
+    if (!voiceText) setPrompt("");
     if (!history.length)
       setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
     setHistory((h) => [...h, { role: "user", body: text, id: Date.now() }]);
@@ -2951,7 +2954,7 @@ function Assistant({
         const partial = chatStream.partial();
         if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed() }]);
         setError(e.message);
-        setPrompt(text);
+        setPrompt(current => voiceText ? [current, text].filter(Boolean).join("\n") : text);
       }
       onChange();
     } finally {
@@ -3026,6 +3029,8 @@ function Assistant({
       hidden={!open}
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
+      <VoiceShortcut key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
+        title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />
       {resize.handle}
       <div className="assistant-heading">
         <div className="assistant-symbol">
@@ -3043,7 +3048,7 @@ function Assistant({
           context={context}
           activeId={sessionId}
           disabled={
-            working || clearing || recording || transcribing || !sessionId
+            working || clearing || shortcutBusy || recording || transcribing || !sessionId
           }
           onSelect={chooseChat}
         />
@@ -3193,7 +3198,7 @@ function Assistant({
                 aria-label="Убрать анализ тикета из контекста"
                 title="Убрать прикреплённый тикет. Переписка сохранится."
                 disabled={
-                  working || clearing || recording || transcribing || !sessionId
+                  working || clearing || shortcutBusy || recording || transcribing || !sessionId
                 }
                 onClick={() => void detachAnalysis()}
               >
@@ -3287,8 +3292,8 @@ function Assistant({
               type="button"
               className={`mic-button ${recording ? "recording" : ""}`}
               onClick={microphone}
-              disabled={transcribing || working}
-              title={recording ? "Остановить запись" : "Голосовой ввод"}
+              disabled={transcribing || working || shortcutBusy}
+              title={recording ? "Остановить запись" : "Голосовой ввод · M M вне полей ввода — запись с отправкой"}
               aria-label={recording ? "Остановить запись" : "Голосовой ввод"}
             >
               {transcribing ? (

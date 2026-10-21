@@ -6,10 +6,12 @@ export async function api<T = any>(
   path: string,
   method = "GET",
   body?: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   const isForm = body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     method,
+    signal,
     credentials: "same-origin",
     headers: {
       ...(isForm ? {} : { "Content-Type": "application/json" }),
