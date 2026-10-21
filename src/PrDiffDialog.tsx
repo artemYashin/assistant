@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Code2, FileCode2, LoaderCircle, X } from "lucide-react";
+import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, X } from "lucide-react";
 import { api } from "./api.js";
 import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
 
@@ -8,6 +8,8 @@ type Loaded = {
   notes: string[];
   base: string;
   head: string;
+  target: string;
+  canComment?: boolean;
   title: string;
   limits?: {
     totalCharacters: number;
@@ -27,6 +29,11 @@ type Loaded = {
   sourceBranch?: string;
   targetBranch?: string;
 };
+type CommentThread = {
+  id: number; status: string | number; path: string;
+  line: number | null; leftLine: number | null;
+  comments: { id: number; author: string; content: string; createdAt: string }[];
+};
 export function PrDiffDialog({
   pr,
   onClose,
@@ -37,6 +44,10 @@ export function PrDiffDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [threads, setThreads] = useState<CommentThread[]>([]);
+  const [commentsError, setCommentsError] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsVersion, setCommentsVersion] = useState(0);
   const [data, setData] = useState<Loaded | null>(null),
     [error, setError] = useState(""),
     [selected, setSelected] = useState(0),
@@ -63,7 +74,26 @@ export function PrDiffDialog({
       live = false;
     };
   }, [pr.monitor, pr.repo, pr.number, commit, revision]);
+  useEffect(() => {
+    let live = true;
+    if (!data || commit) { setThreads([]); return; }
+    setCommentsLoading(true);
+    setCommentsError("");
+    api(`/pr/line-comments?${new URLSearchParams({
+      monitor: pr.monitor, repo: pr.repo, number: String(pr.number), head: data.head, base: data.base,
+    })}`).then((result) => { if (live) setThreads(result); })
+      .catch((e) => { if (live) setCommentsError(e.message); })
+      .finally(() => { if (live) setCommentsLoading(false); });
+    return () => { live = false; };
+  }, [data, commit, pr.monitor, pr.repo, pr.number, commentsVersion]);
   const file = data?.files[selected];
+  const unplacedThreads = threads.filter((thread) => !data?.files.some((f) =>
+    f.hunks.some((h) => h.rows.some((r) =>
+      thread.line
+        ? f.after === thread.path && r.right?.number === thread.line
+        : f.before === thread.path && !!thread.leftLine && r.left?.number === thread.leftLine,
+    )),
+  ));
   return (
     <dialog
       ref={dialog}
@@ -110,6 +140,16 @@ export function PrDiffDialog({
       )}
       {data && (
         <>
+          {!commit && <div className="pr-diff-comments-status">
+            <span role="status">{commentsLoading ? "Загружаю комментарии…" : `Обсуждения: ${threads.length}`}</span>
+            <button className="text-button" disabled={commentsLoading}
+              onClick={() => setCommentsVersion((v) => v + 1)}>Обновить комментарии</button>
+            {commentsError && <p className="error" role="alert">Комментарии не обновлены: {commentsError}</p>}
+          </div>}
+          {!!unplacedThreads.length && <details className="pr-diff-accounting">
+            <summary>Комментарии вне показанных строк · {unplacedThreads.length}</summary>
+            <CommentThreads threads={unplacedThreads} showPath />
+          </details>}
           <p className="pr-diff-meta">
             {commit ? "Родитель" : "Merge base"}{" "}
             <code>{data.base.slice(0, 12)}</code> →{" "}
@@ -272,6 +312,7 @@ export function PrDiffDialog({
                                 <tr key={j}>
                                   <DiffCell
                                     line={r.left}
+                                    threads={threads.filter((t) => !t.line && !!r.left && t.path === file.before && t.leftLine === r.left.number)}
                                     kind={
                                       r.kind === "change"
                                         ? "removed"
@@ -280,6 +321,15 @@ export function PrDiffDialog({
                                   />
                                   <DiffCell
                                     line={r.right}
+                                    threads={threads.filter((t) => !!r.right && t.path === file.after && t.line === r.right.number)}
+                                    onComment={!commit && data.canComment ? async (content) => {
+                                      await api("/pr/line-comment", "POST", {
+                                        monitor: pr.monitor, repo: pr.repo, number: pr.number,
+                                        head: data.head, base: data.base, target: data.target,
+                                        path: file.after, line: r.right!.number, content,
+                                      });
+                                      setCommentsVersion((v) => v + 1);
+                                    } : undefined}
                                     kind={
                                       r.kind === "change" ? "added" : "context"
                                     }
@@ -308,23 +358,99 @@ export function PrDiffDialog({
 function DiffCell({
   line,
   kind,
+  onComment,
+  threads = [],
 }: {
   line?: DiffLine;
   kind: "context" | "added" | "removed";
+  onComment?: (content: string) => Promise<void>;
+  threads?: CommentThread[];
 }) {
+  const [editing, setEditing] = useState(false);
+  const [content, setContent] = useState("");
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
   return (
     <td className={line ? `diff-${kind}` : "diff-empty"}>
       {line && (
         <div className="pr-diff-line">
-          <span className="pr-diff-number">{line.number}</span>
+          <span className="pr-diff-number">
+            {line.number}
+            {onComment && (
+              <button type="button" className="pr-diff-comment-trigger"
+                aria-label={`Комментарий к строке ${line.number}`}
+                title="Добавить комментарий в Azure"
+                aria-expanded={editing}
+                onClick={() => setEditing(true)}>
+                <MessageSquarePlus size={14} />
+              </button>
+            )}
+          </span>
           <span aria-hidden="true">
             {kind === "added" ? "+" : kind === "removed" ? "−" : " "}
           </span>
           <code>{line.text || " "}</code>
         </div>
       )}
+      <CommentThreads threads={threads} />
+      {sent && <p className="pr-diff-comment-sent" role="status">Комментарий отправлен в Azure.</p>}
+      {editing && onComment && (
+        <form className="pr-diff-comment-form" onSubmit={async (event) => {
+          event.preventDefault();
+          if (pending.current || !content.trim()) return;
+          pending.current = true;
+          setBusy(true);
+          setError("");
+          try {
+            await onComment(content);
+            setContent("");
+            setSent(true);
+            setEditing(false);
+          } catch (e: any) {
+            setError(e.message);
+          } finally {
+            pending.current = false;
+            setBusy(false);
+          }
+        }}>
+          <label>
+            Комментарий к строке {line?.number}
+            <textarea autoFocus rows={3} maxLength={20000} value={content}
+              disabled={busy} onChange={(event) => setContent(event.target.value)} />
+          </label>
+          {error && <p className="error" role="alert">{error}</p>}
+          <div>
+            <button type="submit" disabled={busy || !content.trim()}>
+              {busy ? "Отправляю…" : "Отправить в Azure"}
+            </button>
+            <button type="button" className="secondary" disabled={busy}
+              onClick={() => setEditing(false)}>Отмена</button>
+          </div>
+        </form>
+      )}
     </td>
   );
+}
+
+function CommentThreads({ threads, showPath = false }: { threads: CommentThread[]; showPath?: boolean }) {
+  const statuses: Record<string, string> = {
+    active: "Открыто", fixed: "Решено", closed: "Закрыто", wontFix: "Без изменений",
+    byDesign: "По замыслу", pending: "Ожидает", unknown: "",
+    "1": "Открыто", "2": "Решено", "3": "Без изменений", "4": "Закрыто", "5": "По замыслу", "6": "Ожидает",
+  };
+  return <>{threads.map((thread) => <div className="pr-diff-thread" key={thread.id}>
+    <div className="pr-diff-thread-heading">
+      <strong>Обсуждение #{thread.id}</strong>
+      <span>{statuses[String(thread.status)] || ""}</span>
+    </div>
+    {showPath && <div className="muted">{thread.path || "Общий комментарий к PR"}{(thread.line || thread.leftLine) ? ` · строка ${thread.line || thread.leftLine}` : ""}</div>}
+    {thread.comments.map((comment) => <article key={comment.id}>
+      <header><strong>{comment.author}</strong>{comment.createdAt && <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString("ru-RU")}</time>}</header>
+      <p>{comment.content}</p>
+    </article>)}
+  </div>)}</>;
 }
 
 function DiffFileName({ path }: { path: string }) {

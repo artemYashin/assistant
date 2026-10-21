@@ -1114,3 +1114,12 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - PR completion explicitly sets mergeCommitMessage to 'Merged PR <number>: <title>', using the fresh Azure snapshot so renamed PRs are reflected. Existing commits are unchanged.
 - Added regression coverage for renamed PR titles. TypeScript and whitespace checks passed; tests skipped at the user's request. Live Azure merge and production build were not exercised.
+
+### PR creation refresh, inline comments and detail presentation (2026-10-21)
+
+- Creating a PR now synchronizes its monitored repository and refreshes the visible list immediately. Refresh failures preserve the successful creation result; monitoring/reviewer filters still apply.
+- View Diff supports creating Azure discussion threads on right-side lines in active PRs. Writes validate current source/target commits, iteration/common base, changed file and line existence, and send the original comment text with file, line and iteration tracking. Individual commit views remain read-only.
+- Opening PR diff retrieves Azure threads for the displayed iteration, renders authors, dates, replies and discussion status beside matching lines, and keeps out-of-view discussions in a separate block. Comment reload has its own retry action; posting reloads comments without replaying the write.
+- PR descriptions preserve soft line breaks and plain br elements without enabling arbitrary HTML. Branch arrows align centrally. Ticket-detail tags share table styles and local assignee names truncate to a single line with full names in the tooltip.
+- Full test run: 251 passed, 2 failed due to an obsolete Russian-text assertion after the prior English default-prompt migration. Updated that assertion and reran both affected migration tests successfully. New line-comment and description-break regression tests passed in the full run.
+- Production build (including TypeScript) and whitespace checks passed. Vite reports the existing large-chunk advisory. Live Azure writes and browser visual checks were not performed.

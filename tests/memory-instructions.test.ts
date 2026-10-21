@@ -25,7 +25,7 @@ for (const custom of [false, true]) {
         custom ? instructions : defaults.instructions,
       );
       assert.equal(after.settings().client, "Customer");
-      assert.match(defaults.instructions, /через подтверждения/);
+      assert.match(defaults.instructions, /propose useful durable facts, agreements and preferences for approval/);
     } finally {
       after.close();
     }

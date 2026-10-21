@@ -18,7 +18,7 @@ import { IntegrationsAuth } from "./auth.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
 import { Store, AppError, type Context } from "./store.js";
-import { azureBase } from "./http.js";
+import { azureBase, requestJson } from "./http.js";
 import type { Agent } from "./agent.js";
 export type Monitor = {
   id: string;
@@ -651,9 +651,11 @@ export class PullRequests {
         }
       : body;
   }
-  async sync() {
+  async sync(monitor?: string) {
     this.purgeCompleted();
-    for (const m of this.monitors().filter((m) => m.enabled)) {
+    for (const m of this.monitors().filter(
+      (m) => m.enabled && (!monitor || m.id === monitor),
+    )) {
       try {
         if (!m.repository)
           throw new AppError(400, "Выберите Git-репозиторий проекта");
@@ -994,9 +996,116 @@ export class PullRequests {
     return {
       ...result,
       title: detail.title,
+      canComment: detail.status === "active",
       sourceBranch: detail.sourceRefName,
       targetBranch: detail.targetRefName,
     };
+  }
+  async commentOnLine(input: {
+    monitor: string; repo: string; number: number;
+    head: string; base: string; target: string;
+    path: string; line: number; content: string;
+  }) {
+    const m = this.monitors().find((entry) => entry.id === input.monitor);
+    const known = this.store.db.prepare(
+      "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+    ).get(input.monitor, input.repo, input.number);
+    if (!m || !known) throw new AppError(404, "PR не найден");
+    const credentials = this.credentials(m);
+    const root = `git/repositories/${enc(input.repo)}/pullrequests/${input.number}`;
+    const check = async () => {
+      const pr = await this.get(m, root, credentials);
+      if (pr.pullRequestId !== input.number || pr.repository?.id !== input.repo)
+        throw new AppError(502, "Azure вернул другой PR");
+      if (pr.status !== "active") throw new AppError(409, "PR уже закрыт");
+      if (pr.lastMergeSourceCommit?.commitId !== input.head ||
+          pr.lastMergeTargetCommit?.commitId !== input.target)
+        throw new AppError(409, "Изменения PR обновились. Откройте diff заново перед комментированием.");
+    };
+    await check();
+    const iterations = await this.get(m, `${root}/iterations`, credentials);
+    const iteration = Array.isArray(iterations.value)
+      ? iterations.value.reduce((a: any, b: any) => !a || b.id > a.id ? b : a, null)
+      : null;
+    if (!Number.isInteger(iteration?.id) || iteration.sourceRefCommit?.commitId !== input.head ||
+        iteration.commonRefCommit?.commitId !== input.base)
+      throw new AppError(409, "Не удалось сопоставить версию diff с Azure. Обновите diff.");
+    let change: any;
+    for (let skip = 0; skip < 10000; skip += 1000) {
+      const page = await this.get(m,
+        `${root}/iterations/${iteration.id}/changes?$compareTo=0&$top=1000&$skip=${skip}`, credentials);
+      if (!Array.isArray(page.changeEntries))
+        throw new AppError(502, "Azure не вернул изменения файлов");
+      change = page.changeEntries.find((entry: any) => entry.item?.path === input.path);
+      if (change || page.changeEntries.length < 1000) break;
+    }
+    if (!Number.isInteger(change?.changeTrackingId) || /delete/i.test(change.changeType || ""))
+      throw new AppError(409, "Файл не найден в правой части изменений PR");
+    const file = await this.get(m,
+      `git/repositories/${enc(input.repo)}/items?path=${enc(input.path)}&versionDescriptor.versionType=commit&versionDescriptor.version=${enc(input.head)}&includeContent=true`, credentials);
+    if (typeof file.content !== "string" || input.line > file.content.split("\n").length)
+      throw new AppError(409, "Строка не найдена в файле выбранной версии");
+    await check();
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    const result = await requestJson(
+      `${m.source}/${enc(m.azure_project)}/_apis/${root}/threads?api-version=${enc(credentials.version)}`,
+      {
+        method: "POST", redirect: "error", signal: AbortSignal.timeout(30000),
+        headers: {
+          Authorization: `Basic ${Buffer.from(":" + credentials.pat).toString("base64")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comments: [{ parentCommentId: 0, content: input.content, commentType: 1 }],
+          status: 1,
+          threadContext: {
+            filePath: input.path,
+            rightFileStart: { line: input.line, offset: 1 },
+            rightFileEnd: { line: input.line, offset: 1 },
+          },
+          pullRequestThreadContext: {
+            changeTrackingId: change.changeTrackingId,
+            iterationContext: { firstComparingIteration: 0, secondComparingIteration: iteration.id },
+          },
+        }),
+      }, "Azure PR comment (Code: Read & Write)",
+    );
+    if (!Number.isInteger(result.id))
+      throw new AppError(502, "Azure не подтвердил комментарий. Проверьте PR перед повторной отправкой.");
+    return { id: result.id };
+  }
+  async lineComments(monitor: string, repo: string, number: number, head: string, base: string) {
+    const m = this.monitors().find((entry) => entry.id === monitor);
+    const known = this.store.db.prepare(
+      "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+    ).get(monitor, repo, number);
+    if (!m || !known) throw new AppError(404, "PR не найден");
+    const credentials = this.credentials(m);
+    const root = `git/repositories/${enc(repo)}/pullrequests/${number}`;
+    const iterations = await this.get(m, `${root}/iterations`, credentials);
+    const iteration = Array.isArray(iterations.value)
+      ? [...iterations.value].reverse().find((i: any) =>
+          i.sourceRefCommit?.commitId === head && i.commonRefCommit?.commitId === base)
+      : null;
+    if (!Number.isInteger(iteration?.id))
+      throw new AppError(409, "Не удалось сопоставить комментарии с версией diff. Откройте diff заново.");
+    const result = await this.get(m,
+      `${root}/threads?$iteration=${iteration.id}&$baseIteration=0`, credentials);
+    if (!Array.isArray(result.value)) throw new AppError(502, "Azure не вернул комментарии PR");
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    return result.value.filter((thread: any) => !thread.isDeleted).map((thread: any) => ({
+      id: thread.id,
+      status: thread.status,
+      path: thread.threadContext?.filePath || "",
+      line: thread.threadContext?.rightFileStart?.line || null,
+      leftLine: thread.threadContext?.leftFileStart?.line || null,
+      comments: (thread.comments || []).filter((c: any) => !c.isDeleted && c.content && c.commentType !== "system" && c.commentType !== 3).map((c: any) => ({
+        id: c.id, author: c.author?.displayName || "Azure", content: c.content,
+        createdAt: c.publishedDate || "",
+      })),
+    })).filter((thread: any) => thread.comments.length);
   }
   async changes(m: Monitor, repo: string, head: string, target: string) {
     const credentials = this.credentials(m),

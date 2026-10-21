@@ -1061,7 +1061,21 @@ export function createApp(
     res.json(await prCreate.branches(q.monitor, q.q));
   });
   app.post("/api/pr/create", async (req, res) => {
-    res.json(await prCreate.create(req.body));
+    const result = await prCreate.create(req.body);
+    // Creation has already succeeded: a refresh failure must not invite a
+    // second creation attempt or hide the confirmed PR number.
+    let refreshError = "";
+    try {
+      await pullRequests.sync(req.body.monitor);
+      const monitor = pullRequests.monitors().find(
+        (m) => m.id === req.body.monitor,
+      );
+      refreshError = monitor?.error ||
+        (!monitor?.enabled ? "Мониторинг репозитория выключен." : "");
+    } catch {
+      refreshError = "Не удалось обновить список PR. Повторите синхронизацию.";
+    }
+    res.json({ ...result, refreshError });
   });
   app.get("/api/pr/projects", (_req, res) => res.json(pullRequests.monitors()));
   app.post("/api/pr/projects", (req, res) => {
@@ -1230,6 +1244,26 @@ export function createApp(
     res.json(
       await pullRequests.viewDiff(input.monitor, input.repo, input.number),
     );
+  });
+  app.post("/api/pr/line-comment", async (req, res) => {
+    const input = z.object({
+      monitor: text.min(1), repo: text.min(1),
+      number: z.number().int().positive(),
+      head: z.string().regex(/^[a-f0-9]{40}$/i),
+      base: z.string().regex(/^[a-f0-9]{40}$/i),
+      target: z.string().regex(/^[a-f0-9]{40}$/i),
+      path: z.string().min(2).max(2000).startsWith("/"),
+      line: z.number().int().positive(),
+      content: z.string().min(1).max(20000).refine((value) => !!value.trim()),
+    }).strict().parse(req.body);
+    res.json(await pullRequests.commentOnLine(input));
+  });
+  app.get("/api/pr/line-comments", async (req, res) => {
+    const input = z.object({
+      monitor: text.min(1), repo: text.min(1), number: z.coerce.number().int().positive(),
+      head: z.string().regex(/^[a-f0-9]{40}$/i), base: z.string().regex(/^[a-f0-9]{40}$/i),
+    }).parse(req.query);
+    res.json(await pullRequests.lineComments(input.monitor, input.repo, input.number, input.head, input.base));
   });
   app.get("/api/pr/image", async (req, res) => {
     const input = z

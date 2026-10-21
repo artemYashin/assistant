@@ -4,18 +4,21 @@ import { ArrowUpRight } from "lucide-react";
 import { chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { remarkDescriptionBreaks } from "./remark-description-breaks.js";
 
 export function ChatMarkdown({
   text,
   images,
+  preserveLineBreaks = false,
 }: {
   text: string;
   images?: { source: string; preview: string | null }[];
+  preserveLineBreaks?: boolean;
 }) {
   return (
     <div className="chat-markdown">
       <Markdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks] : [remarkGfm]}
         skipHtml
         urlTransform={(url, key) =>
           key === "href" && chatTicketPath(url)

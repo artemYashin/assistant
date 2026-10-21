@@ -115,7 +115,7 @@ function PrDescription({ pr }: any) {
       </summary>
       {open &&
         (pr.description ? (
-          <ChatMarkdown text={pr.description} images={pr.images} />
+          <ChatMarkdown text={pr.description} images={pr.images} preserveLineBreaks />
         ) : (
           <p className="muted">Описание не указано.</p>
         ))}
@@ -338,6 +338,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
     <>
       {creating && (
         <PrCreateDialog
+          onCreated={() => setVersion((v) => v + 1)}
           monitors={monitors.filter(
             (m) =>
               (!context.client || m.client === context.client) &&

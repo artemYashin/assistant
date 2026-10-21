@@ -3064,7 +3064,7 @@ td > small {
 
 .pr-branches {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   color: #6c7868;
@@ -4022,10 +4022,59 @@ summary > svg {
   padding: 0;
 }
 .pr-diff-number {
+  position: relative;
   color: #68727d;
   text-align: right;
   user-select: none;
 }
+.pr-diff-comment-trigger {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  display: inline-flex;
+  padding: 2px;
+  border: 0;
+  border-radius: 4px;
+  color: white;
+  background: #2563a6;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.pr-diff-line:hover .pr-diff-comment-trigger,
+.pr-diff-comment-trigger:focus-visible,
+.pr-diff-comment-trigger[aria-expanded="true"] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .pr-diff-comment-trigger { opacity: 1; }
+}
+.pr-diff-comment-form {
+  margin: 8px;
+  padding: 12px;
+  border: 1px solid #bccfe1;
+  border-radius: 8px;
+  background: #f4f8fc;
+  font: 13px/1.4 system-ui, sans-serif;
+}
+.pr-diff-comment-form textarea { width: 100%; box-sizing: border-box; }
+.pr-diff-comment-form > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.pr-diff-comment-sent { margin: 4px 8px; font: 12px/1.4 system-ui, sans-serif; color: #25633f; }
+.pr-diff-comments-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+.pr-diff-thread {
+  margin: 8px;
+  padding: 10px 12px;
+  border: 1px solid #c3d3e2;
+  border-radius: 8px;
+  background: #f5f8fc;
+  color: #273746;
+  font: 12px/1.5 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.pr-diff-thread-heading, .pr-diff-thread article > header { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.pr-diff-thread-heading > span, .pr-diff-thread time { color: #677584; font-size: 11px; }
+.pr-diff-thread article { margin-top: 8px; }
+.pr-diff-thread article + article { padding-top: 8px; border-top: 1px solid #dbe3ec; }
+.pr-diff-thread p { margin: 4px 0 0; white-space: pre-wrap; }
 .pr-diff-table .pr-diff-hunk td {
   padding: 8px 12px;
   font:
@@ -5360,10 +5409,12 @@ summary > svg {
 .ticket-overview .local-developer-name {
   min-width: 0;
   max-width: none;
-  white-space: normal;
+  white-space: nowrap;
 }
 .ticket-overview .local-assignee-label {
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .developer-board-toolbar {
@@ -6707,7 +6758,8 @@ summary > svg {
   }
 }
 
-.ticket-table-fit .ticket-tag-list > .badge {
+.ticket-table-fit .ticket-tag-list > .badge,
+.ticket-detail-sidebar .ticket-overview-tags .badge {
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
@@ -6716,7 +6768,8 @@ summary > svg {
   border: 1px solid #d6e0d0;
   padding: 4px 7px;
 }
-.ticket-table-fit .azure-ticket-tags > .badge {
+.ticket-table-fit .azure-ticket-tags > .badge,
+.ticket-detail-sidebar .ticket-overview-tags .azure-ticket-tag {
   color: #41576a;
   background: #edf2f7;
   border-color: #d5dfe9;

@@ -69,9 +69,11 @@ function BranchSelect({
 export function PrCreateDialog({
   monitors,
   onClose,
+  onCreated,
 }: {
   monitors: any[];
   onClose: () => void;
+  onCreated: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [monitor, setMonitor] = useState(monitors[0]?.id || "");
@@ -117,7 +119,10 @@ export function PrCreateDialog({
             {result.number}.
           </p>
           <p className="muted">
-            Список обновится при синхронизации. Фильтр «Только required
+            {result.refreshError
+              ? `PR подтверждён, но список не обновлён: ${result.refreshError} `
+              : "Список обновлён. "}
+            Фильтр «Только required
             reviewer» может скрывать ваш PR.
           </p>
           <button onClick={onClose}>Готово</button>
@@ -142,6 +147,7 @@ export function PrCreateDialog({
                   draft,
                 }),
               );
+              onCreated();
             } catch (e: any) {
               setError(e.message);
             } finally {
