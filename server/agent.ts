@@ -1,4 +1,4 @@
-import { contentSearchSchema, searchTicketContent } from "./ticket-content-search.js";
+import { cachedTicketSchema, readCachedTicket, contentSearchSchema, searchTicketContent } from "./ticket-content-search.js";
 import { createToolDiscovery } from "./tool-discovery.js";
 import { SYSTEM_POLICY } from "./chat-policy.js";
 export { SYSTEM_POLICY } from "./chat-policy.js";
@@ -15,8 +15,6 @@ import {
 import { listTicketAnalysis } from "./ticket-analysis.js";
 import {
   deepReadConsent,
-  asksCachedContentSearch,
-  DEEP_READ_WARNING,
   wantsTicketDetails,
   singleTicketTarget,
   asksTicketOpinion,
@@ -138,7 +136,7 @@ export function makeTools(
     }),
     defineTool("get_ticket", {
       description:
-        "Read a LOCAL saved ticket summary by ID by default: title, type, status, assignee, created_at/changed_at (Azure creation/modification dates), sync time and local metadata/developers. Missing local tickets never trigger an Azure fallback. Azure summaries require a separate user choice followed by lookup_azure_tickets; full content requires separate token-warning consent. Never claim locally stored status was verified live.",
+        "Read a LOCAL saved ticket summary by ID by default: title, type, status, assignee, created_at/changed_at (Azure creation/modification dates), sync time and local metadata/developers. Missing local tickets never trigger an Azure fallback. Azure summaries require a separate user choice followed by lookup_azure_tickets; Full content for one local ticket needs no token warning; reading additional distinct tickets in the same request requires token-warning consent. Use list_tickets(detail=full, ids=[id]) for explicit full reads. Never claim locally stored status was verified live.",
       parameters: z.object({ id: z.number().int().positive() }),
       handler: async ({ id }) => {
         if (!getTicket) throw new AppError(400, "Чтение тикетов недоступно");
@@ -164,6 +162,11 @@ export function makeTools(
           ),
       }),
       handler: async (args) => store.addMemory(args.scope, args.body, context),
+    }),
+    defineTool("get_cached_ticket_content", {
+      description: "Read a candidate's LOCAL cached description, acceptance criteria and repro steps after snippet search. No Azure calls/fallback. Up to three distinct tickets per user turn need no token warning. Follow nextOffset for full text; missing cache is not an empty description. Comments/images are not included.",
+      parameters: cachedTicketSchema,
+      handler: async args => readCachedTicket(store, args),
     }),
     defineTool("search_ticket_content", {
       description: "Search LOCAL cached descriptions, acceptance criteria and repro steps by literal substring. Use when title/tag searches are insufficient. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
@@ -513,6 +516,16 @@ export class Agent {
     const assertActive = () => {
       if (stopReason) throw new AppError(409, stopReason);
     };
+    const fullReadIds = new Set<number>();
+    const authorizeFullRead = (ids: number[]) => {
+      if (deepRead.confirmed) return;
+      const distinct = new Set([...fullReadIds, ...ids]);
+      if (distinct.size > 1)
+        throw new AppError(403, "Чтение ещё одного тикета может увеличить расход токенов. Предупредите пользователя и спросите, продолжить ли чтение остальных тикетов; обычного согласия достаточно.");
+      if (ids.some(ticketId => !this.store.hasLocalTicket(ticketId, this.store.source(settings))))
+        throw new AppError(403, "Тикета нет локально. Сначала предложите пользователю запросить его в Azure или импортировать.");
+      for (const ticketId of ids) fullReadIds.add(ticketId);
+    };
     const getTicket = async (ticketId: number) => {
       assertActive();
       if (fetched.has(ticketId)) return fetched.get(ticketId);
@@ -560,6 +573,7 @@ export class Agent {
           `Тикет #${ticketId} отсутствует в локальной базе. Azure не запрашивался. Спросите пользователя: только запросить сведения или запросить и добавить в локальный список.`,
         );
       }
+      if (fullDetails) authorizeFullRead([ticketId]);
       const detail = fullDetails
         ? await this.connectors!.ticketDetails(ticketId)
         : { ...local!, source: this.store.source(settings), origin: "local" };
@@ -806,11 +820,7 @@ export class Agent {
         status = "completed";
         return { body: azureQuestion, requestId: id, cards, durationMs: elapsed() };
       }
-      if (!review && deepRead.needsConfirmation && !asksCachedContentSearch(prompt) && !singleReadAllowed && !(attachedTicket && (singleTarget === undefined || singleTarget === attachedTicket.id))) {
-        this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId, elapsed(), id);
-        status = "completed";
-        return { body: DEEP_READ_WARNING, requestId: id, cards, durationMs: elapsed() };
-      }
+
 
       const work = async () => {
         clientStarted = true;
@@ -971,6 +981,21 @@ export class Agent {
           review ? undefined : changeStatuses,
         );
         if (!review) {
+          const cachedReadIds = new Set<number>();
+          const cached = config.tools?.find(tool => tool.name === "get_cached_ticket_content");
+          if (cached?.handler) {
+            const handler = cached.handler;
+            cached.handler = async (args, invocation) => {
+              assertActive();
+              if (this.store.source(settings) !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось");
+              const { id: ticketId } = cachedTicketSchema.parse(args);
+              if (!deepRead.confirmed && !cachedReadIds.has(ticketId) && cachedReadIds.size >= 3)
+                throw new AppError(403, "Чтение описаний более трёх тикетов может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.");
+              const result: any = await handler(args, invocation);
+              if (result.available) { cachedReadIds.add(ticketId); knownTickets.add(ticketId); }
+              return result;
+            };
+          }
           const list = config.tools?.find(
             (tool) => tool.name === "list_tickets",
           );
@@ -981,23 +1006,13 @@ export class Agent {
               if (this.store.source(settings) !== this.store.source())
                 throw new AppError(409, "Подключение Azure изменилось");
               const parsed = ticketListSchema.parse(args);
-              if (
-                parsed.detail === "full" &&
-                singleReadAllowed &&
-                !deepRead.confirmed &&
-                (!parsed.ids ||
-                  parsed.ids.some((ticketId) => ticketId !== singleTarget))
-              )
-                throw new AppError(
-                  403,
-                  "Для чтения нескольких тикетов требуется отдельное подтверждение расхода токенов",
-                );
+              if (parsed.detail === "full" && parsed.ids) authorizeFullRead(parsed.ids);
               const result =
                 parsed.detail === "full"
                   ? await listTicketAnalysis(
                       this.store,
                       parsed,
-                      analysisAllowed,
+                      deepRead.confirmed || !!parsed.ids?.length,
                       async (ticketId) => {
                         assertActive();
                         if (this.store.source(settings) !== this.store.source())

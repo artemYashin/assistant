@@ -127,7 +127,17 @@ function RepositoryView({ context }: { context: Context }) {
     setFile(null); setFileBusy(false); setLine(undefined);
   }
   return <section className="repository-page">
-    <header className="repository-heading"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></header>
+    <header className="repository-heading">
+      <div className="repository-heading-title"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></div>
+      <div className="repository-heading-status">
+    {status && <div className="repository-freshness" title="Сравнение с Azure на момент последней проверки">
+      <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>
+      <span>{status.current ? "Совпадает с Azure" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
+      <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
+    </div>}
+        <CodeProgress progress={progress} />
+      </div>
+    </header>
     <div className="repository-toolbar">
       <span className="repository-branch-label" aria-hidden="true">Ветка</span>
       <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={cancelling || !branches.length} /></div>
@@ -136,13 +146,8 @@ function RepositoryView({ context }: { context: Context }) {
       {(busy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
     </div>
-    <CodeProgress progress={progress} />
     {branchNote && <p className="muted">{branchNote}</p>}
-    {status && <div className="repository-freshness">
-      <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>
-      <span>{status.current ? "Совпадает с Azure на момент проверки" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
-      <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
-    </div>}
+
     {status?.syncError && <p className="repository-sync-warning" role="status">Фоновая проверка: {status.syncError}</p>}
     {error && <div role="alert" className="repository-error">
       <AlertCircle size={20} aria-hidden="true" /><div><strong>Не удалось выполнить операцию</strong><p>{error}</p></div>

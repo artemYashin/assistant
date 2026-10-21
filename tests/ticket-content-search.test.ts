@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
 import { IntegrationsAuth } from "../server/auth.js";
-import { searchTicketContent } from "../server/ticket-content-search.js";
+import { readCachedTicket, searchTicketContent } from "../server/ticket-content-search.js";
 
 test("imports cache content, search is bounded/paged/source scoped, sync clears and trash expires", async t => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-content-"));
@@ -21,6 +21,23 @@ test("imports cache content, search is bounded/paged/source scoped, sync clears 
     return path === "workitemsbatch" ? { value: items } : items[0];
   };
   await connector.trackTicket(1); await connector.trackTicket(2);
+  const detail = readCachedTicket(store, { id: 1 });
+  assert.equal(detail.available, true);
+  assert.ok(detail.content?.includes("Протокол обмена"));
+  assert.deepEqual(detail.missingSections, ["criteria", "repro"]);
+  assert.equal(readCachedTicket(store, { id: 999 }).available, false);
+  const longText = "x".repeat(7500);
+  store.db.prepare("UPDATE ticket_content_cache SET body=? WHERE source=? AND id=2").run(longText, store.source());
+  let offset = 0, collected = "";
+  do {
+    const page = readCachedTicket(store, { id: 2, offset });
+    collected += page.content;
+    if (page.nextOffset === null) break;
+    assert.ok(page.nextOffset! > offset);
+    offset = page.nextOffset!;
+  } while (true);
+  assert.equal(collected, "description:\n" + longText);
+  await connector.trackTicket(2);
   const first = searchTicketContent(store, { search: "ПРОТОКОЛ", limit: 1 });
   assert.equal(first.tickets[0].id, 1);
   assert.ok(first.tickets[0].snippet.length < 250);

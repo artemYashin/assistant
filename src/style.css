@@ -8730,3 +8730,31 @@ summary > svg {
 .assistant-token-usage { box-shadow: 0 3px 8px #20382a08; position: relative; z-index: 1; }
 .composer { box-shadow: 0 -3px 8px #20382a09; }
 .voice-shortcut-card:focus { outline: none; }
+
+/* Repository panels fill the available viewport; only their contents scroll. */
+main:has(> .repository-page) { display: flex; flex-direction: column; height: calc(100dvh - var(--topbar-height)); min-height: 380px; padding-bottom: 0; box-sizing: border-box; }
+main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; padding: 8px 0; }
+.repository-page { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.repository-page > :not(.repository-browser) { flex-shrink: 0; }
+.repository-heading { align-items: flex-start; justify-content: space-between; gap: 8px 16px; margin-bottom: 8px; }
+.repository-heading-title { min-width: 0; flex: 1; }
+.repository-heading-title > .muted { display: block; font-size: 11px; margin-top: 4px; overflow-wrap: anywhere; }
+.repository-heading-status { display: flex; flex-direction: column; gap: 4px; width: 270px; max-width: 100%; min-width: 0; }
+.repository-heading-status:empty { display: none; }
+.repository-heading-status .repository-freshness { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 3px 6px; padding: 0; font-size: 10px; }
+.repository-heading-status .repository-freshness > span,
+.repository-heading-status .repository-freshness > time { grid-column: 2; overflow-wrap: anywhere; }
+.repository-heading-status .repository-progress { width: 100%; margin: 0; font-size: 11px; }
+.repository-browser { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.repository-browser > .repository-search { flex-shrink: 0; }
+.repository-workspace { flex: 1; min-height: 0; overflow: hidden; grid-template-rows: minmax(0, 1fr); }
+.repository-tree { min-height: 0; max-height: none; }
+.repository-file { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.repository-file > :not(.repository-source) { flex-shrink: 0; }
+.repository-source { flex: 1; min-height: 0; max-height: none; }
+@media (max-width: 900px) {
+  .repository-workspace:not(.is-browsing) { grid-template-rows: minmax(70px, 30%) minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .repository-heading-status { width: 100%; }
+}

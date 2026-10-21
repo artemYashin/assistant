@@ -32,3 +32,27 @@ export function searchTicketContent(store: Store, input: unknown) {
     coverage: { total: coverage.total, cached: coverage.cached || 0 },
     note: "Local cached descriptions/acceptance criteria/repro steps only; may be stale or incomplete. Literal substring matches, not verified semantic relationships. No Azure calls." };
 }
+
+export const cachedTicketSchema = z.object({
+  id: z.number().int().positive(),
+  offset: z.number().int().nonnegative().default(0),
+});
+
+/** Complete cached text, paged to avoid silently truncating oversized tickets. */
+export function readCachedTicket(store: Store, input: unknown) {
+  const { id, offset } = cachedTicketSchema.parse(input);
+  const source = store.source();
+  if (!store.hasLocalTicket(id, source))
+    return { id, available: false, reason: "Ticket is not local. No Azure request was made." };
+  const rows = store.db.prepare("SELECT section,body,updated_at FROM ticket_content_cache WHERE source=? AND id=? ORDER BY section")
+    .all(source, id) as { section: string; body: string; updated_at: string }[];
+  if (!rows.length)
+    return { id, available: false, reason: "No cached content yet. No Azure request was made. Ask before fetching missing content from Azure." };
+  const content = rows.map(row => `${row.section}:\n${row.body}`).join("\n\n");
+  const end = Math.min(content.length, offset + 3000);
+  return { id, available: true, origin: "local_cache", content: content.slice(offset, end),
+    offset, nextOffset: end < content.length ? end : null,
+    missingSections: ["description", "criteria", "repro"].filter(section => !rows.some(row => row.section === section)),
+    cachedAt: rows.map(row => ({ section: row.section, at: row.updated_at })),
+    note: "Cached text may be stale. No Azure calls. Continue with nextOffset for remaining text; missing sections are unknown, not empty." };
+}

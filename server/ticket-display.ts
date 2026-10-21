@@ -61,7 +61,7 @@ export function deepReadConsent(prompt: string, history: unknown[]) {
     warned &&
     request?.role === "user" &&
     request.body &&
-    allowsFullTicketRead(request.body)
+    (allowsFullTicketRead(request.body) || /(?:найди|поищи|поиск|find|search).{0,80}(?:тикет|задач|ticket|work item)/iu.test(request.body))
   )
     return { confirmed: true, needsConfirmation: false, request: request.body };
   return {
