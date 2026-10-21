@@ -1,9 +1,11 @@
+import { localTicketScope } from "./local-ticket-scope.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { z } from "zod";
 import { AppError, Store } from "./store.js";
 
 export const ticketListSchema = z.object({
+  lifecycle: z.enum(["all", "active", "deleted"]).default("all").describe("Include retained local trash by default; deleted=true marks trash results."),
   fields: z.array(z.enum(["type", "state", "assigned", "priority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(13).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
   contentOffset: z.number().int().nonnegative().default(0),
@@ -20,6 +22,7 @@ export const ticketListSchema = z.object({
 
 export function listLocalTickets(store: Store, input: unknown) {
   const {
+    lifecycle,
     detail,
     fields,
     ids,
@@ -39,13 +42,14 @@ export function listLocalTickets(store: Store, input: unknown) {
     );
   const clauses = ["source = ?"];
   const params: (string | number)[] = [store.source()];
+  if (lifecycle !== "all") clauses.push(lifecycle === "deleted" ? "deleted=1" : "deleted=0");
   if (ids) {
     clauses.push(`id IN (${ids.map(() => "?").join(",")})`);
     params.push(...ids);
   }
   if (search) {
     clauses.push(
-      "(instr(lower(title), lower(?)) > 0 OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=tickets.source AND a.id=tickets.id AND instr(lower(tag.value), lower(?)) > 0))",
+      "(instr(lower(title), lower(?)) > 0 OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND instr(lower(tag.value), lower(?)) > 0))",
     );
     params.push(search, search);
   }
@@ -61,36 +65,36 @@ export function listLocalTickets(store: Store, input: unknown) {
   }
   if (priority !== undefined) {
     clauses.push(
-      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=tickets.source AND m.id=tickets.id),1)=?",
+      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=local_tickets.source AND m.id=local_tickets.id),1)=?",
     );
     params.push(priority);
   }
   if (tag) {
     clauses.push(
-      "EXISTS (SELECT 1 FROM ticket_metadata m,json_each(m.tags) tag WHERE m.source=tickets.source AND m.id=tickets.id AND tag.value=? COLLATE NOCASE)",
+      "EXISTS (SELECT 1 FROM ticket_metadata m,json_each(m.tags) tag WHERE m.source=local_tickets.source AND m.id=local_tickets.id AND tag.value=? COLLATE NOCASE)",
     );
     params.push(tag);
   }
   if (azureTag) {
     clauses.push(
-      "EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=tickets.source AND a.id=tickets.id AND tag.value=? COLLATE NOCASE)",
+      "EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND tag.value=? COLLATE NOCASE)",
     );
     params.push(azureTag);
   }
   const where = clauses.join(" AND ");
   const { total } = store.db
-    .prepare(`SELECT COUNT(*) AS total FROM tickets WHERE ${where}`)
+    .prepare(`${localTicketScope()} SELECT COUNT(*) AS total FROM local_tickets WHERE ${where}`)
     .get(...params) as { total: number };
   const rows = store.db
     .prepare(
-      `SELECT id, title, type, state, assigned, changed_at, synced_at FROM tickets WHERE ${where} AND id > ? ORDER BY id LIMIT ?`,
+      `${localTicketScope()} SELECT id, title, type, state, assigned, changed_at, synced_at, deleted FROM local_tickets WHERE ${where} AND id > ? ORDER BY id LIMIT ?`,
     )
     .all(...params, afterId, limit + 1) as Record<string, any>[];
   const tickets: Record<string, any>[] = [];
   let size = 0;
   for (const row of rows.slice(0, limit)) {
     const wanted = new Set(fields);
-    const ticket: Record<string, any> = { id: row.id, title: row.title };
+    const ticket: Record<string, any> = { id: row.id, title: row.title, ...(row.deleted ? { deleted: true } : {}) };
     for (const field of ["type", "state", "assigned", "changed_at", "synced_at"])
       if (wanted.has(field as typeof fields[number])) ticket[field] = row[field];
     if (fields.some(field => ["notes", "priority", "tags"].includes(field))) {
@@ -120,7 +124,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const hasMore = rows.length > tickets.length;
   return {
     scope: "local",
-    filters: { ids, search, type, state, priority, tag, azureTag },
+    filters: { lifecycle, ids, search, type, state, priority, tag, azureTag },
     total,
     tickets,
     hasMore,

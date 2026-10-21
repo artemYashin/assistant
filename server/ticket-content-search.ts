@@ -1,7 +1,9 @@
+import { localTicketScope } from "./local-ticket-scope.js";
 import { z } from "zod";
 import { Store } from "./store.js";
 
 export const contentSearchSchema = z.object({
+  lifecycle: z.enum(["all", "active", "deleted"]).default("all"),
   search: z.string().trim().min(2).max(200),
   id: z.number().int().positive().optional(),
   afterId: z.number().int().nonnegative().default(0),
@@ -10,24 +12,25 @@ export const contentSearchSchema = z.object({
 
 /** Local literal search only; never downloads ticket bodies or returns full content. */
 export function searchTicketContent(store: Store, input: unknown) {
-  const { search, id, afterId, limit } = contentSearchSchema.parse(input);
+  const { search, id, afterId, limit, lifecycle } = contentSearchSchema.parse(input);
   const source = store.source();
-  const rows = store.db.prepare(`SELECT t.id,t.title,c.section,c.body,c.updated_at
-    FROM tickets t JOIN ticket_content_cache c ON c.source=t.source AND c.id=t.id
-    WHERE t.source=? AND t.id>? AND (? IS NULL OR t.id=?) AND instr(c.search_text,?)>0
+  const lifecycleClause = lifecycle === "all" ? "" : lifecycle === "deleted" ? " AND t.deleted=1" : " AND t.deleted=0";
+  const rows = store.db.prepare(`${localTicketScope()} SELECT t.id,t.title,t.deleted,c.section,c.body,c.updated_at
+    FROM local_tickets t JOIN ticket_content_cache c ON c.source=t.source AND c.id=t.id
+    WHERE t.source=? AND t.id>? AND (? IS NULL OR t.id=?) AND instr(c.search_text,?)>0 ${lifecycleClause}
     ORDER BY t.id,c.section LIMIT ?`).all(source, afterId, id ?? null, id ?? null, search.toLocaleLowerCase(), (limit + 1) * 3) as any[];
   const matches = new Map<number, any>();
   for (const row of rows) {
     if (matches.has(row.id)) continue;
     const at = row.body.toLocaleLowerCase().indexOf(search.toLocaleLowerCase());
     const start = Math.max(0, at - 80), end = Math.min(row.body.length, at + search.length + 120);
-    matches.set(row.id, { id: row.id, title: row.title, section: row.section,
+    matches.set(row.id, { id: row.id, title: row.title, ...(row.deleted ? { deleted: true } : {}), section: row.section,
       snippet: (start ? "…" : "") + row.body.slice(start, end) + (end < row.body.length ? "…" : "") });
   }
   const tickets = [...matches.values()].slice(0, limit);
-  const coverage = store.db.prepare(`SELECT count(*) AS total,
+  const coverage = store.db.prepare(`${localTicketScope()} SELECT count(*) AS total,
     sum(EXISTS(SELECT 1 FROM ticket_content_cache c WHERE c.source=t.source AND c.id=t.id)) AS cached
-    FROM tickets t WHERE source=? AND (? IS NULL OR t.id=?)`).get(source, id ?? null, id ?? null) as any;
+    FROM local_tickets t WHERE source=? AND (? IS NULL OR t.id=?) ${lifecycleClause}`).get(source, id ?? null, id ?? null) as any;
   const hasMore = matches.size > limit;
   return { tickets, hasMore, nextAfterId: hasMore ? tickets.at(-1)!.id : null,
     coverage: { total: coverage.total, cached: coverage.cached || 0 },
@@ -52,7 +55,8 @@ export function readCachedTicket(store: Store, input: unknown) {
     return { id, available: false, reason: "No cached content yet. No Azure request was made. Ask before fetching missing content from Azure." };
   const content = rows.map(row => `${row.section}:\n${row.body}`).join("\n\n");
   const end = Math.min(content.length, offset + 3000);
-  return { id, available: true, origin: "local_cache", content: content.slice(offset, end),
+  const lifecycle = store.db.prepare(`${localTicketScope()} SELECT deleted FROM local_tickets WHERE source=? AND id=?`).get(source, id) as { deleted: number } | undefined;
+  return { id, available: true, deleted: lifecycle?.deleted ? true : undefined, origin: "local_cache", content: content.slice(offset, end),
     offset, nextOffset: end < content.length ? end : null,
     missingSections: ["description", "criteria", "repro"].filter(section => !rows.some(row => row.section === section)),
     cachedAt: includeCacheInfo ? rows.map(row => ({ section: row.section, at: row.updated_at })) : undefined,

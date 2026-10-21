@@ -46,3 +46,14 @@ test("shortcut text rollback only removes its own first keystroke and restores s
   assert.equal(press(m, 400), false);
   assert.equal(press(m, 500), true);
 });
+
+test("custom bindings replace defaults and never match mixed keys", () => {
+  const press = createVoiceShortcut(["KeyV", "KeyB"]);
+  assert.equal(press(m, 0), false);
+  assert.equal(press(m, 100), false);
+  assert.equal(press({ ...m, code: "KeyV" }, 200), false);
+  assert.equal(press({ ...m, code: "KeyB" }, 300), false);
+  assert.equal(press({ ...m, code: "KeyB" }, 400), true);
+  assert.equal(press({ ...m, code: "KeyV" }, 500), false);
+  assert.equal(press({ ...m, code: "KeyV" }, 600), true);
+});

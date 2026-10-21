@@ -1,3 +1,4 @@
+import { localTicketScope } from "./local-ticket-scope.js";
 import { openChatRuntime, chatRuntimeKey, type ChatRuntimeState } from "./chat-runtime.js";
 import { ticketLinksSchema, readTicketLinks } from "./ticket-links.js";
 import { ticketCitationTool } from "./ticket-citation.js";
@@ -178,13 +179,13 @@ export function makeTools(
       handler: async args => readCachedTicket(store, args),
     }),
     defineTool("search_ticket_content", {
-      description: "Search LOCAL cached descriptions, acceptance criteria and repro steps by literal substring. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
+      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria and repro steps by literal substring. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
       parameters: contentSearchSchema,
       handler: async args => searchTicketContent(store, args),
     }),
     defineTool("list_tickets", {
       description:
-        "List LOCAL tracked tickets for the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns only id/title. Use fields to request only required extras (including localUrl for navigation). Filters do not require returning their fields. Dates/notes/assignees/tags are opt-in; summary never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
+        "List LOCAL tickets including retained trash (deleted=true); lifecycle filters active/deleted/all. For the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns only id/title. Use fields to request only required extras (including localUrl for navigation). Filters do not require returning their fields. Dates/notes/assignees/tags are opt-in; summary never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
       parameters: ticketListSchema,
       handler: async (args) => listLocalTickets(store, args),
     }),
@@ -576,7 +577,7 @@ export class Agent {
       const local = !fullDetails
         ? (this.store.db
             .prepare(
-              "SELECT id,title,type,state,assigned,changed_at,synced_at FROM tickets WHERE source=? AND id=?",
+              `${localTicketScope()} SELECT id,title,type,state,assigned,changed_at,synced_at,deleted FROM local_tickets WHERE source=? AND id=?`,
             )
             .get(this.store.source(settings), ticketId) as
             Record<string, any> | undefined)

@@ -1147,6 +1147,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               document.getElementById("assistant-toggle")?.focus();
             }}
             context={context}
+            voiceCurrentKey={settings?.voiceCurrentKey}
+            voiceNewKey={settings?.voiceNewKey}
             connected={settings?.githubConnected}
             azureSource={settings?.azureUrl ? `${settings.azureUrl.replace(/\/$/, "")}|${settings.azureProject}` : undefined}
             onChange={() => setRefresh((n) => n + 1)}
@@ -2179,6 +2181,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "assistant", label: "Как вам помогать", icon: Sparkles },
+    { id: "ai", label: "AI Assistant", icon: Mic },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
@@ -2508,6 +2511,17 @@ function Settings({ settings, context, run, busy }: any) {
           </Field>
           <TicketImportSettings form={form} set={set} save={save} />
         </section>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
+          <h2><Mic size={22} />AI Assistant</h2>
+          <p className="muted">Двойное нажатие раскрывает чат и включает голосовой ввод, даже если курсор находится в поле ввода. Клавиши соответствуют латинским буквам на клавиатуре независимо от раскладки.</p>
+          <div className="form-grid">
+            {(["voiceCurrentKey", "voiceNewKey"] as const).map((field) => <Field key={field} label={field === "voiceCurrentKey" ? "Текущий чат" : "Новый чат"} hint="Нажмите выбранную клавишу дважды. Enter завершает запись и отправляет сообщение; Esc отменяет.">
+              <select value={form[field] ?? (field === "voiceCurrentKey" ? "KeyM" : "KeyN")} onChange={event => set(field, event.target.value)}>
+                {Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map(letter => <option key={letter} value={`Key${letter}`} disabled={`Key${letter}` === (form[field === "voiceCurrentKey" ? "voiceNewKey" : "voiceCurrentKey"] ?? (field === "voiceCurrentKey" ? "KeyN" : "KeyM"))}>{letter} {letter}</option>)}
+              </select>
+            </Field>)}
+          </div>
+        </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-assistant-panel`} aria-labelledby={`${settingsTabId}-assistant`} hidden={settingsTab !== "assistant"}>
           <h2>
             <Sparkles size={22} />
@@ -2650,6 +2664,8 @@ function LoginCode({ flow }: any) {
   );
 }
 function Assistant({
+  voiceCurrentKey,
+  voiceNewKey,
   azureSource,
   open,
   onExpand,
@@ -3106,7 +3122,7 @@ function Assistant({
       hidden={!open}
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
-      <VoiceShortcut key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
+      <VoiceShortcut currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
         autoStart={voiceStartSession === sessionId} onAutoStarted={() => setVoiceStartSession("")}
         onNewChat={() => { void chooseChat(undefined, true).catch(e => setError(e.message)); }}
         title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />

@@ -53,6 +53,8 @@ const contextSchema = z.object({
 });
 const settingsSchema = z
   .object({
+    voiceCurrentKey: z.string().regex(/^Key[A-Z]$/).default("KeyM"),
+    voiceNewKey: z.string().regex(/^Key[A-Z]$/).default("KeyN"),
     githubClientId: text,
     model: text,
     reviewModel: text.default(""),
@@ -82,7 +84,7 @@ const settingsSchema = z
     project: text,
     azurePat: z.string().max(2000).optional(),
   })
-  .strict();
+  .strict().refine(value => value.voiceCurrentKey !== value.voiceNewKey, { message: "Выберите разные клавиши для текущего и нового чата", path: ["voiceNewKey"] });
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 function sessionToken(req: Request) {
   return (

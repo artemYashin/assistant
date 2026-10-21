@@ -1,10 +1,10 @@
 export const VOICE_DOUBLE_PRESS_MS = 450;
 export const VOICE_MIN_RECORDING_MS = 2000;
-export function createVoiceShortcut() {
+export function createVoiceShortcut(codes: string[] = ["KeyM", "KeyN"]) {
   let previous: number | undefined;
   let previousCode = "";
   return (event: { code: string; repeat: boolean; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean; isComposing: boolean }, now: number, _editing = false) => {
-    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !["KeyM", "KeyN"].includes(event.code)) { previous = undefined; return false; }
+    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !codes.includes(event.code)) { previous = undefined; return false; }
     if (event.repeat) return false;
     const matched = previousCode === event.code && previous !== undefined && now - previous <= VOICE_DOUBLE_PRESS_MS;
     previous = matched ? undefined : now;

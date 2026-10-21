@@ -31,7 +31,8 @@ function captureTyping(target: Element | null, key: string): (() => void) | unde
   };
 }
 type Phase = "idle" | "requesting" | "recording" | "transcribing" | "error";
-export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoStart = false, onAutoStarted }: {
+export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpen, currentKey = "KeyM", newKey = "KeyN", autoStart = false, onAutoStarted }: {
+  onOpen: () => void; currentKey?: string; newKey?: string;
   onNewChat: () => void; autoStart?: boolean; onAutoStarted: () => void;
   enabled: boolean; onText: (text: string) => void; onBusy: (busy: boolean) => void; title: string;
 }) {
@@ -41,8 +42,8 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
   const deadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const transcription = useRef<AbortController | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const latest = useRef({ enabled, onText, onBusy, onNewChat });
-  latest.current = { enabled, onText, onBusy, onNewChat };
+  const latest = useRef({ enabled, onText, onBusy, onNewChat, onOpen });
+  latest.current = { enabled, onText, onBusy, onNewChat, onOpen };
   function change(next: Phase) {
     phaseRef.current = next; setPhase(next);
     latest.current.onBusy(next !== "idle");
@@ -119,7 +120,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
     }
   }, [autoStart, enabled, onAutoStarted]);
   useEffect(() => {
-    const doublePress = createVoiceShortcut();
+    const doublePress = createVoiceShortcut([currentKey, newKey]);
     let restoreTyping: (() => void) | undefined;
     let previousTarget: EventTarget | null = null;
     const keydown = (event: KeyboardEvent) => {
@@ -135,7 +136,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
       if (event.repeat) return;
       const matched = doublePress(event, performance.now());
       if (!matched) {
-        restoreTyping = ["KeyM", "KeyN"].includes(event.code) && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
+        restoreTyping = [currentKey, newKey].includes(event.code) && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
           ? captureTyping(target, event.key) : undefined;
         previousTarget = event.target;
         return;
@@ -147,7 +148,8 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (phaseRef.current === "idle" || phaseRef.current === "error") {
         if (!latest.current.enabled) return;
-        if (event.code === "KeyN") latest.current.onNewChat();
+        latest.current.onOpen();
+        if (event.code === newKey) latest.current.onNewChat();
         else void actions.current.start();
       }
       else if (phaseRef.current === "transcribing") actions.current.cancel();
@@ -158,7 +160,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
       window.removeEventListener("keydown", keydown, true);
       attempt.current++; release(); latest.current.onBusy(false);
     };
-  }, []);
+  }, [currentKey, newKey]);
   useEffect(() => {
     if (phase === "idle") dialog.current?.close();
     else if (!dialog.current?.open) { dialog.current?.showModal(); dialog.current?.querySelector<HTMLElement>(".voice-shortcut-card")?.focus(); }
@@ -178,7 +180,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoS
       <strong id="voice-shortcut-title">{phase === "recording" ? "Слушаю вас" : phase === "requesting" ? "Включаю микрофон…" : phase === "transcribing" ? "Распознаю речь…" : "Не получилось записать"}</strong>
       <div className="voice-shortcut-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ animationDelay: `${i * -0.13}s` }} />)}</div>
       <p className="voice-shortcut-target" title={title}>В текущий чат · {title}</p>
-      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? "Enter или M M — закончить и отправить" : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
+      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? `Enter или ${currentKey.slice(3)} ${currentKey.slice(3)} — закончить и отправить` : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
       {phase === "recording" && <div className="voice-shortcut-footer"><time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</time>
         <button type="button" onClick={() => finish()}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}

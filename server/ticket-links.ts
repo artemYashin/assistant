@@ -1,3 +1,4 @@
+import { localTicketScope } from "./local-ticket-scope.js";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
@@ -38,7 +39,8 @@ export function readTicketLinks(store: Store, input: unknown) {
       if (!seen.has(key)) { seen.add(key); links.push(item); }
     });
   }
-  return { id, available: true, origin: "local_cache", links: links.slice(offset, offset + limit), total: links.length,
+  const lifecycle = store.db.prepare(`${localTicketScope()} SELECT deleted FROM local_tickets WHERE source=? AND id=?`).get(source, id) as { deleted: number } | undefined;
+  return { id, available: true, deleted: lifecycle?.deleted ? true : undefined, origin: "local_cache", links: links.slice(offset, offset + limit), total: links.length,
     nextOffset: offset + limit < links.length ? offset + limit : null,
     cachedAt: includeCacheInfo ? rows.map(row => ({ section: row.section, at: row.updated_at })) : undefined,
     note: "Only links/images from cached description, criteria and repro. No full bodies, comments or Azure calls. No matches does not prove missing designs; broaden search or inspect a short content snippet." };
