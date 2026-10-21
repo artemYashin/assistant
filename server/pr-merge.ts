@@ -318,6 +318,7 @@ export class PrMerge {
           status: "completed",
           lastMergeSourceCommit: { commitId: plan.head },
           completionOptions: {
+            mergeCommitMessage: `Merged PR ${plan.number}: ${String(pr.title || plan.title || "Pull request").replace(/\s+/g, " ").trim()}`,
             mergeStrategy: strategy,
             deleteSourceBranch: false,
             transitionWorkItems: false,

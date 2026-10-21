@@ -1109,3 +1109,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Workspace directory now loads on demand; history and relevant memory remain included. PR review retains its small dedicated question/memory tool set. Real token savings and latency have not been measured against Copilot.
 - TypeScript and whitespace checks passed. Added discovery tests and adapted SDK business-logic mocks; tests not run yet per the user's preference to run them before push. Live SDK tool-publication behavior and production build were not exercised.
 - Push preparation: tests explicitly skipped at the user's request. No further tests or live model requests were run.
+
+### PR title in merge commit messages (2026-10-21)
+
+- PR completion explicitly sets mergeCommitMessage to 'Merged PR <number>: <title>', using the fresh Azure snapshot so renamed PRs are reflected. Existing commits are unchanged.
+- Added regression coverage for renamed PR titles. TypeScript and whitespace checks passed; tests skipped at the user's request. Live Azure merge and production build were not exercised.

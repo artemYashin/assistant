@@ -31,6 +31,7 @@ function fixture(t: any, bypass = false) {
     )
     .run();
   let denialStatus = 403;
+  let title = "Test";
   let merged = false,
     failMerge = false,
     failTicket = false,
@@ -61,6 +62,7 @@ function fixture(t: any, bypass = false) {
       const body = JSON.parse(init.body);
       writes.push(body);
       assert.equal(body.completionOptions.transitionWorkItems, false);
+      assert.equal(body.completionOptions.mergeCommitMessage, `Merged PR 1: ${title}`);
       assert.equal(body.completionOptions.bypassPolicy, bypass);
       if (!bypass) assert.equal(body.completionOptions.bypassReason, undefined);
       assert.equal(body.completionOptions.deleteSourceBranch, false);
@@ -81,7 +83,7 @@ function fixture(t: any, bypass = false) {
         lastMergeSourceCommit: { commitId: head },
         lastMergeTargetCommit: { commitId: "target" },
         description: "Fix #42",
-        title: "Test",
+        title,
       };
     return new Response(JSON.stringify(data), {
       headers: { "Content-Type": "application/json" },
@@ -94,6 +96,7 @@ function fixture(t: any, bypass = false) {
     store,
     writes,
     key: { monitor: "monitor", repo: "repo", number: 1 },
+    setTitle: (value: string) => { title = value; },
     setFailMerge: (status = 403) => {
       failMerge = true;
       denialStatus = status;
@@ -288,4 +291,13 @@ test("policy bypass is explicit, requires a reason and preserves merge verificat
     result,
   );
   assert.equal(f.writes.length, 1);
+});
+
+
+test("merge commit uses the current PR title after the dialog was opened", async (t) => {
+  const f = fixture(t);
+  const plan = await f.service.prepare(f.key, false);
+  f.setTitle("Исправление авторизации — updated title");
+  await f.service.execute(plan.id, [], "noFastForward");
+  assert.equal(f.writes[0].completionOptions.mergeCommitMessage, "Merged PR 1: Исправление авторизации — updated title");
 });
