@@ -1103,3 +1103,25 @@ test("Azure status batch accepts clarified intent and confirmed link IDs without
   await agent.chat("Давай, погнали", context);
   assert.equal(writes, 1);
 });
+
+test("tool viewer scopes sessions, reports request usage and lazily returns exact arguments", (t) => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  const first = store.createChat(context), second = store.createChat(context);
+  const request = ledger.begin("model", context, "chat", undefined, first.id);
+  ledger.begin("model", context, "chat", undefined, second.id);
+  const args = { ids: [42], metadata: { tags: ["UI"], notes: "Exact note" } };
+  const trace = ledger.toolTrace(request, "update_local_ticket_metadata", args, false);
+  ledger.record(request, "receipt", { inputTokens: 100, outputTokens: 20 });
+  const history = ledger.chatTools(context, first.id).requests;
+  assert.equal(history.length, 1);
+  assert.equal(history[0].id, request);
+  assert.equal(history[0].inputTokens, 100);
+  assert.equal(history[0].outputTokens, 20);
+  assert.equal(history[0].tools[0].full_arguments, undefined);
+  assert.deepEqual(ledger.toolArguments(trace, context), { arguments: args, full: true });
+  assert.throws(() => ledger.toolArguments(trace, { ...context, client: "Other" }), /не найден/);
+  assert.throws(() => ledger.chatTools({ ...context, client: "Other" }, first.id), /не найден/);
+  store.db.prepare("UPDATE llm_tool_traces SET full_arguments=NULL WHERE id=?").run(trace);
+  assert.equal(ledger.toolArguments(trace, context).full, false);
+  assert.deepEqual(ledger.toolArguments(trace, context).arguments, JSON.parse(history[0].tools[0].arguments));
+});

@@ -131,6 +131,9 @@ export class UsageLedger {
         status,
         new Date().toISOString(),
       );
+    const fullArgs = JSON.stringify(args ?? {});
+    this.store.db.prepare("UPDATE llm_tool_traces SET full_arguments=? WHERE id=?").run(
+      fullArgs.length <= 100000 ? fullArgs : JSON.stringify({ truncated: true, preview: fullArgs.slice(0, 100000) }), id);
     return id;
   }
   finishToolTrace(id: string, status: string, result: any) {
@@ -172,6 +175,12 @@ export class UsageLedger {
         id,
       );
   }
+  toolArguments(id: string, context: Context) {
+    const row = this.store.db.prepare("SELECT t.arguments,t.full_arguments FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin='chat' AND r.client=? AND r.project=?")
+      .get(id, context.client, context.project) as any;
+    if (!row) throw new AppError(404, "Вызов инструмента не найден");
+    return { arguments: JSON.parse(row.full_arguments ?? row.arguments), full: row.full_arguments !== null };
+  }
   toolResult(id: string, context: Context) {
     const row = this.store.db.prepare(
       "SELECT t.full_result FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin='chat' AND r.client=? AND r.project=?",
@@ -180,12 +189,13 @@ export class UsageLedger {
     if (row.full_result === null) throw new AppError(404, "Полный результат не сохранён или вызов ещё выполняется");
     return { result: JSON.parse(row.full_result) };
   }
-  chatTools(context: Context) {
+  chatTools(context: Context, sessionId?: string) {
+    if (sessionId) this.store.chatSession(context, sessionId);
     const requests = this.store.db
       .prepare(
-        "SELECT id,created_at,finished_at,status,reason,tool_calls FROM llm_requests WHERE origin='chat' AND client=? AND project=? ORDER BY created_at DESC LIMIT 20",
+        "SELECT r.id,r.created_at,r.finished_at,r.status,r.reason,r.tool_calls,(SELECT sum(input_tokens) FROM llm_usage WHERE request_id=r.id) AS inputTokens,(SELECT sum(output_tokens) FROM llm_usage WHERE request_id=r.id) AS outputTokens FROM llm_requests r WHERE origin='chat' AND client=? AND project=? AND (? IS NULL OR chat_session_id=?) ORDER BY created_at DESC LIMIT 20",
       )
-      .all(context.client, context.project) as any[];
+      .all(context.client, context.project, sessionId || null, sessionId || null) as any[];
     return {
       requests: requests.map((request) => ({
         ...request,

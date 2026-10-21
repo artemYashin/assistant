@@ -3061,7 +3061,7 @@ function Assistant({
           <b title={[context.client, context.project].filter(Boolean).join(" / ")}>{[context.client, context.project].filter(Boolean).join(" / ") || "Общий контекст"}</b>
           <small className="assistant-chat-title" title={sessionTitle}><span className={`dot ${connected ? "" : "offline"}`} title={connected ? "Copilot подключён" : "Нет подключения"} />{sessionTitle}</small>
         </div>
-        <ChatTools context={context} />
+        <ChatTools context={context} sessionId={sessionId} />
         <ChatHistory
           context={context}
           activeId={sessionId}

@@ -460,6 +460,9 @@ export function createApp(
     store.db.prepare("DELETE FROM memories WHERE id=?").run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/conversation/tools/:id/arguments", (req, res) =>
+    res.json(new UsageLedger(store).toolArguments(String(req.params.id), contextSchema.parse(req.query))),
+  );
   app.get("/api/conversation/tools/:id/result", (req, res) =>
     res.json(
       new UsageLedger(store).toolResult(
@@ -469,7 +472,7 @@ export function createApp(
     ),
   );
   app.get("/api/conversation/tools", (req, res) =>
-    res.json(new UsageLedger(store).chatTools(contextSchema.parse(req.query))),
+    res.json(new UsageLedger(store).chatTools(contextSchema.parse(req.query), z.string().uuid().optional().parse(req.query.sessionId))),
   );
   app.get("/api/conversation/sessions", (req, res) =>
     res.json(store.chatSessions(contextSchema.parse(req.query))),

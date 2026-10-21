@@ -114,6 +114,8 @@ export class Store {
       ).some((c) => c.name === "full_result")
     )
       this.db.exec("ALTER TABLE llm_tool_traces ADD COLUMN full_result TEXT");
+    if (!(this.db.prepare("PRAGMA table_info(llm_tool_traces)").all() as any[]).some(c => c.name === "full_arguments"))
+      this.db.exec("ALTER TABLE llm_tool_traces ADD COLUMN full_arguments TEXT");
     if (
       !(this.db.prepare("PRAGMA table_info(llm_requests)").all() as any[]).some(
         (c) => c.name === "origin",
