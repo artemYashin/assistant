@@ -40,18 +40,18 @@ export function ImagePreview({
         }}
       >
         {children ??
-          (thumbnail && !failed ? (
+          (thumbnail ? (
             <span
               className={`image-thumbnail${loading ? " is-loading" : ""}`}
               aria-busy={loading}
             >
-              {loading && (
+              {(loading || failed) && (
                 <span className="image-thumbnail-placeholder" role="status">
-                  <LoaderCircle size={20} className="spin" aria-hidden="true" />
-                  <span>Загрузка изображения…</span>
+                  {loading && <LoaderCircle size={20} className="spin" aria-hidden="true" />}
+                  <span>{failed ? `${alt} · повторить просмотр` : "Загрузка изображения…"}</span>
                 </span>
               )}
-              <img
+              {!failed && <img
                 key={src}
                 src={src}
                 alt={alt}
@@ -66,7 +66,7 @@ export function ImagePreview({
                 }}
                 onLoad={() => setImageState({ src, status: "loaded" })}
                 onError={() => setImageState({ src, status: "failed" })}
-              />
+              />}
             </span>
           ) : (
             <span>

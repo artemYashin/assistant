@@ -8093,8 +8093,6 @@ summary > svg {
   vertical-align: middle;
 }
 .image-thumbnail.is-loading {
-  width: 300px;
-  height: 150px;
   overflow: hidden;
   border: 1px solid #dfe5e9;
   border-radius: 8px;
@@ -8833,8 +8831,8 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 }
 .conversation .chat-markdown .image-thumbnail img {
   display: block;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: var(--chat-image-max-height, 30dvh);
   object-fit: contain;
@@ -8843,3 +8841,31 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 
 .ticket-citation-sections { display: contents; }
 ::highlight(ticket-citation) { background-color: #ffe59a; color: #302715; text-decoration: underline; text-decoration-color: #b58929; }
+
+/* Reserve identical space before, during and after loading, including failures. */
+.image-preview-trigger .image-thumbnail {
+  display: block;
+  box-sizing: border-box;
+  width: 520px;
+  max-width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border: 1px solid #d5dfd9;
+  border-radius: 8px;
+  background-color: #f5f7f6;
+}
+.image-preview-trigger .image-thumbnail > img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.conversation .chat-markdown .image-thumbnail {
+  height: var(--chat-image-max-height, 30dvh);
+}
