@@ -15,15 +15,15 @@ test("chat renders emphasis, lists, code, quotes and GFM tables", () => {
   assert.match(html, /<em>italic<\/em>/);
   assert.match(html, /<em><strong>both<\/strong><\/em>/);
   assert.match(html, /<ul>/);
-  assert.match(html, /<blockquote>/);
+  assert.match(html, /<blockquote class="chat-quote-card">/);
   assert.match(html, /<pre><code/);
   assert.match(html, /<table>/);
 });
-test("chat ignores raw HTML, blocks executable links and does not auto-fetch images", () => {
+test("chat ignores raw HTML, blocks executable links and loads image previews lazily", () => {
   const html = render(
     "<script>alert(1)</script>\n\n[bad](javascript:alert)\n\n[good](https://example.com)\n\n![preview](https://example.com/image.png)",
   );
-  assert.doesNotMatch(html, /<script|javascript:|<img/);
+  assert.doesNotMatch(html, /<script|javascript:/);
   assert.match(html, /href="https:\/\/example.com"/);
   assert.match(html, /noopener noreferrer/);
 });
@@ -55,4 +55,14 @@ test("ticket navigation is an internal router link and retains its Azure source"
   assert.match(html, /class="chat-ticket-link"/);
   assert.match(html, /href="\/tickets\?id=42&amp;source=/);
   assert.doesNotMatch(html, /target="_blank"/);
+});
+
+test("Azure references open locally only for the current source and include copy actions", () => {
+  const html = renderToStaticMarkup(createElement(ChatMarkdown, {
+    azureSource: "https://dev.azure.com/org|Project",
+    text: "[Ticket](https://dev.azure.com/org/Project/_workitems/edit/42) [Other](https://dev.azure.com/other/Project/_workitems/edit/42)",
+  }));
+  assert.match(html, /href="\/tickets\?id=42&amp;source=/);
+  assert.match(html, /href="https:\/\/dev.azure.com\/other\/Project\/_workitems\/edit\/42"/);
+  assert.equal((html.match(/class="chat-link-copy"/g) || []).length, 2);
 });

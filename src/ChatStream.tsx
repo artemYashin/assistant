@@ -65,7 +65,7 @@ export function ChatToolHistory({ tools }: { tools?: ToolTrace[] }) {
     <summary>Инструменты · {tools.length} вызовов</summary><ToolRows tools={tools} />
   </details></div>;
 }
-export function ChatStream({ live }: { live: Live }) {
+export function ChatStream({ live, azureSource }: { live: Live; azureSource?: string }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -81,7 +81,7 @@ export function ChatStream({ live }: { live: Live }) {
     </div>}
     {live.text && <div className="bubble assistant chat-streaming" aria-label="Ответ формируется">
       <span className="bubble-author"><Sparkles size={13} /> Orbit</span>
-      <ChatMarkdown text={live.text} />
+      <ChatMarkdown text={live.text} azureSource={azureSource} />
     </div>}
   </>;
 }

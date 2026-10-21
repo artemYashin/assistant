@@ -1,7 +1,8 @@
 import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
-import { Link } from "react-router-dom";
-import { ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
+import { Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -18,12 +19,24 @@ function ExternalLinkIcon({ href }: { href: string }) {
   return <Icon size={15} className={`chat-external-icon is-${brand}`} aria-hidden="true" />;
 }
 
+function CopyableLink({ href, children }: { href: string; children: ReactNode }) {
+  const [status, setStatus] = useState("");
+  return <span className="chat-copyable-link">{children}<button type="button" className="chat-link-copy" title={status || "Скопировать ссылку"} aria-label={status || "Скопировать ссылку"} onClick={async () => {
+    try {
+      await navigator.clipboard.writeText(shareTicketUrl(href));
+      setStatus("Скопировано");
+    } catch { setStatus("Не удалось скопировать ссылку"); }
+  }}>{status === "Скопировано" ? <Check size={13} /> : <Copy size={13} />}<span className="chat-copy-feedback" role="status">{status}</span></button></span>;
+}
+
 export function ChatMarkdown({
   text,
   images,
+  azureSource,
   preserveLineBreaks = false,
 }: {
   text: string;
+  azureSource?: string;
   images?: { source: string; preview: string | null }[];
   preserveLineBreaks?: boolean;
 }) {
@@ -49,28 +62,24 @@ export function ChatMarkdown({
               {children}
             </blockquote>
           ),
-          a: ({ href, children, node }) =>
-            node?.children.some(
-              (child) => child.type === "element" && child.tagName === "img",
-            ) ? (
-              <span>{children}</span>
-            ) : href && chatTicketCitation(href) ? (
-              <button type="button" className="chat-ticket-link" onClick={() => {
-                const citation = chatTicketCitation(href)!;
-                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: citation.source, tickets: [{ id: citation.id, title: `#${citation.id}` }], citation } }));
-              }}>Показать в тикете<ArrowUpRight size={14} aria-hidden="true" /></button>
-            ) : href && chatTicketPath(href) ? (
-              <Link className="chat-ticket-link" to={chatTicketPath(href)!}>
-                {children}
-                <ArrowUpRight size={14} aria-hidden="true" />
-              </Link>
-            ) : href ? (
-              <a href={href} className="chat-external-link" title={href} target="_blank" rel="noopener noreferrer">
-                <ExternalLinkIcon href={href} /><span>{children}</span><ArrowUpRight size={13} className="chat-external-icon" aria-hidden="true" />
-              </a>
-            ) : (
-              <span>{children}</span>
-            ),
+          a: ({ href, children, node }) => {
+            if (node?.children.some(child => child.type === "element" && child.tagName === "img")) return <span>{children}</span>;
+            if (!href) return <span>{children}</span>;
+            const citation = chatTicketCitation(href);
+            const local = chatTicketPath(href) || azureTicketPath(href, azureSource);
+            if (local) {
+              const params = new URLSearchParams(local.split("?")[1]);
+              return <CopyableLink href={href}><a className="chat-ticket-link" href={local} onClick={event => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                const id = Number(params.get("id"));
+                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: params.get("source"), tickets: [{ id, title: `#${id}` }], ...(citation ? { citation } : {}) } }));
+              }}>{citation ? "Показать в тикете" : children}<ArrowUpRight size={14} aria-hidden="true" /></a></CopyableLink>;
+            }
+            return <CopyableLink href={href}><a href={href} className="chat-external-link" title={href} target="_blank" rel="noopener noreferrer">
+              <ExternalLinkIcon href={href} /><span>{children}</span><ArrowUpRight size={13} className="chat-external-icon" aria-hidden="true" />
+            </a></CopyableLink>;
+          },
           img: ({ src, alt }) => {
             if (typeof src === "string" && ticketAsset(src)) return <ImagePreview src={src} alt={alt || "Изображение"} />;
             const preview = images?.find(

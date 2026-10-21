@@ -1,5 +1,5 @@
 import { zoomAtPoint } from "./image-zoom.js";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Expand, LoaderCircle, Minus, Plus, X } from "lucide-react";
 
@@ -20,6 +20,7 @@ export function ImagePreview({
   const [imageState, setImageState] = useState<{
     src: string;
     status: "loaded" | "failed";
+    ratio?: number;
   } | null>(null);
   const failed = imageState?.src === src && imageState.status === "failed";
   const loading = imageState?.src !== src;
@@ -44,6 +45,7 @@ export function ImagePreview({
             <span
               className={`image-thumbnail${loading ? " is-loading" : ""}`}
               aria-busy={loading}
+              style={{ "--image-ratio": imageState?.src === src ? imageState.ratio ?? 1.7333 : 1.7333 } as CSSProperties}
             >
               {(loading || failed) && (
                 <span className="image-thumbnail-placeholder" role="status">
@@ -61,10 +63,10 @@ export function ImagePreview({
                     setImageState((old) =>
                       old?.src === src && old.status === "loaded"
                         ? old
-                        : { src, status: "loaded" },
+                        : { src, status: "loaded", ratio: node.naturalWidth / node.naturalHeight },
                     );
                 }}
-                onLoad={() => setImageState({ src, status: "loaded" })}
+                onLoad={event => setImageState({ src, status: "loaded", ratio: event.currentTarget.naturalWidth / event.currentTarget.naturalHeight })}
                 onError={() => setImageState({ src, status: "failed" })}
               />}
             </span>

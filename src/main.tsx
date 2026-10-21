@@ -50,7 +50,7 @@ import {
   saveChatPreference,
 } from "./AssistantResize.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
@@ -1148,6 +1148,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             }}
             context={context}
             connected={settings?.githubConnected}
+            azureSource={settings?.azureUrl ? `${settings.azureUrl.replace(/\/$/, "")}|${settings.azureProject}` : undefined}
             onChange={() => setRefresh((n) => n + 1)}
             onSettings={() => setPage("settings")}
             onApprovals={() => setPage("approvals")}
@@ -2171,6 +2172,14 @@ function Teams({ chats, run, busy }: any) {
   );
 }
 function Settings({ settings, context, run, busy }: any) {
+  const [settingsTab, setSettingsTab] = useState("copilot");
+  const settingsTabId = useId();
+  const settingsTabs = [
+    { id: "copilot", label: "Copilot", icon: Github },
+    { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
+    { id: "azure", label: "Azure DevOps", icon: Ticket },
+    { id: "assistant", label: "Как вам помогать", icon: Sparkles },
+  ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
     [msFlow, setMsFlow] = useState<any>(null),
@@ -2238,8 +2247,31 @@ function Settings({ settings, context, run, busy }: any) {
         title="Настройте Orbit под себя"
         subtitle="Подключения, предпочтения и правила вашего рабочего пространства."
       />
-      <div className="settings-stack">
-        <section className="panel settings-card">
+      <div className="settings-stack settings-tabs-layout">
+        <div className="settings-tab-list" role="tablist" aria-label="Разделы настроек">
+          {settingsTabs.map(({ id, label, icon: Icon, disabled }) => (
+            <button key={id} id={`${settingsTabId}-${id}`} type="button" role="tab"
+              aria-selected={settingsTab === id} aria-controls={`${settingsTabId}-${id}-panel`}
+              disabled={disabled} tabIndex={settingsTab === id ? 0 : -1}
+              className={`settings-tab is-${id}`} title={disabled ? "Интеграция Teams пока недоступна" : undefined}
+              onClick={() => setSettingsTab(id)}
+              onKeyDown={event => {
+                const available = settingsTabs.filter(tab => !tab.disabled);
+                const at = available.findIndex(tab => tab.id === id);
+                const next = event.key === "ArrowRight" ? (at + 1) % available.length
+                  : event.key === "ArrowLeft" ? (at + available.length - 1) % available.length
+                  : event.key === "Home" ? 0 : event.key === "End" ? available.length - 1 : -1;
+                if (next < 0) return;
+                event.preventDefault();
+                setSettingsTab(available[next].id);
+                document.getElementById(`${settingsTabId}-${available[next].id}`)?.focus();
+              }}>
+              <Icon size={17} aria-hidden="true" /><span>{label}</span>
+              {disabled && <small>Скоро</small>}
+            </button>
+          ))}
+        </div>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-copilot-panel`} aria-labelledby={`${settingsTabId}-copilot`} hidden={settingsTab !== "copilot"}>
           <div className="section-heading">
             <h2>
               <Github size={22} />
@@ -2320,6 +2352,7 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("prDailyLimit", Number(e.target.value))}
             />
           </Field>
+          <div className="form-grid settings-model-grid">
           {(["model", "reviewModel"] as const).map((key) => (
             <Field
               key={key}
@@ -2350,8 +2383,9 @@ function Settings({ settings, context, run, busy }: any) {
               </select>
             </Field>
           ))}
+          </div>
         </section>
-        <section className="panel settings-card">
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-teams-panel`} aria-labelledby={`${settingsTabId}-teams`} hidden={settingsTab !== "teams"}>
           <div className="section-heading">
             <h2>
               <MessageSquare size={22} />
@@ -2413,7 +2447,7 @@ function Settings({ settings, context, run, busy }: any) {
             Разрешение API не отменяет подтверждение каждого сообщения в Orbit.
           </div>
         </section>
-        <section className="panel settings-card">
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-azure-panel`} aria-labelledby={`${settingsTabId}-azure`} hidden={settingsTab !== "azure"}>
           <div className="section-heading">
             <h2>
               <Ticket size={22} />
@@ -2474,7 +2508,7 @@ function Settings({ settings, context, run, busy }: any) {
           </Field>
           <TicketImportSettings form={form} set={set} save={save} />
         </section>
-        <section className="panel settings-card">
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-assistant-panel`} aria-labelledby={`${settingsTabId}-assistant`} hidden={settingsTab !== "assistant"}>
           <h2>
             <Sparkles size={22} />
             Как вам помогать
@@ -2566,7 +2600,7 @@ function Settings({ settings, context, run, busy }: any) {
         {connectionError && <div className="error">{connectionError}</div>}
         <div className="save-bar">
           <span>
-            <LockKeyhole size={16} /> Ключи зашифрованы на сервере
+            <LockKeyhole size={16} /> Сохраняются изменения всех вкладок
           </span>
           <button
             className="primary"
@@ -2616,6 +2650,7 @@ function LoginCode({ flow }: any) {
   );
 }
 function Assistant({
+  azureSource,
   open,
   onExpand,
   onCollapse,
@@ -3178,7 +3213,7 @@ function Assistant({
             {m.role === "error" ? (
               <p>{m.body}</p>
             ) : (
-              <ChatMarkdown text={m.body} />
+              <ChatMarkdown text={m.body} azureSource={azureSource} />
             )}
             {typeof m.duration_ms === "number" && <div className="chat-elapsed">Время работы: <time>{formatChatDuration(m.duration_ms)}</time></div>}
             {(typeof m.cards === "string"
@@ -3189,7 +3224,7 @@ function Assistant({
             ))}
           </div>
         ))}
-        {working && <ChatStream live={chatStream.live} />}
+        {working && <ChatStream live={chatStream.live} azureSource={azureSource} />}
         {working && (
           <div className="thinking">
             <LoaderCircle size={14} className="spin" />
