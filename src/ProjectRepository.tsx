@@ -9,6 +9,7 @@ export function ProjectRepository({
   onSaved?: () => void;
 }) {
   const [ignoredPaths, setIgnoredPaths] = useState("");
+  const [mainBranch, setMainBranch] = useState("");
   const [fetchDepth, setFetchDepth] = useState(1);
   const [codeSyncMinutes, setCodeSyncMinutes] = useState(30);
   const [fetchTimeoutMinutes, setFetchTimeoutMinutes] = useState(5);
@@ -28,6 +29,7 @@ export function ProjectRepository({
     setFetchTimeoutMinutes(5);
     setCodeSyncMinutes(30);
     setFetchDepth(1);
+    setMainBranch("");
     setMessage("");
     api("/pr/projects")
       .then((items: any[]) => {
@@ -45,6 +47,7 @@ export function ProjectRepository({
         if (m) {
           setCodeSyncMinutes(m.code_sync_minutes ?? 30);
           setFetchDepth(m.fetch_depth ?? 1);
+          setMainBranch(m.main_branch || "");
           setFetchTimeoutMinutes((m.fetch_timeout_seconds || 300) / 60);
           const rules = JSON.parse(m.review_files || "{}");
           setIgnoredPaths((rules.ignoredPaths || []).join("\n"));
@@ -83,6 +86,7 @@ export function ProjectRepository({
             enabled,
             codeSyncMinutes,
             fetchDepth,
+            mainBranch,
             fetchTimeoutSeconds: Math.round(fetchTimeoutMinutes * 60),
             reviewFiles: {
               ignoredPaths: ignoredPaths
@@ -123,6 +127,10 @@ export function ProjectRepository({
       </p>
       <fieldset className="repository-fetch-settings">
         <legend>Просмотр кода · загрузка репозитория</legend>
+        <label>Основная ветка для ассистента
+          <input value={mainBranch} onChange={event => setMainBranch(event.target.value)} maxLength={500} placeholder="По умолчанию — основная ветка репозитория" />
+        </label>
+        <p className="muted">Например, dev или main. Чат использует её, если вы явно не попросили другую ветку. Выбор ветки в просмотре кода на чат не влияет.</p>
         <label>Глубина истории Git, коммитов
           <input type="number" min={1} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
         </label>

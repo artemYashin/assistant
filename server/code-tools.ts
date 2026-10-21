@@ -1,12 +1,19 @@
+import { azureBase } from "./http.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
 import { CodeBrowser } from "./code-browser.js";
 import { AppError, type Store, type Context } from "./store.js";
 
-const branch = z.string().min(1).max(500).optional().describe("Exact branch name; omit to use the selected code-browser branch, or repository default. Explicit user choice takes precedence.");
+const branch = z.string().min(1).max(500).optional().describe("Exact branch name; omit to use the configured main branch, or repository default. Explicit user choice takes precedence.");
 const path = z.string().max(4096);
 const page = { offset: z.number().int().min(0).max(100000).default(0), limit: z.number().int().min(1).max(40).default(15) };
-export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store), selectedBranch?: string) {
+export function configuredCodeBranch(store: Store, context: Context): string | undefined {
+  const settings = store.settings(context);
+  if (!context.client || !context.project || !settings.azureUrl) return undefined;
+  const monitor = store.db.prepare("SELECT main_branch FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? ORDER BY enabled DESC LIMIT 1").get(context.client, context.project, azureBase(settings.azureUrl), settings.azureProject) as { main_branch: string } | undefined;
+  return monitor?.main_branch || undefined;
+}
+export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store), selectedBranch = configuredCodeBranch(store, context)) {
   if (!store.settings().assistantCodeAccess) return [];
   const revisions = new Map<string, string>();
   const read = async (operation: string, args: Record<string, unknown>) => {
@@ -64,11 +71,12 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       handler: async () => read("jobs", {}),
     }),
     defineTool("code_branches", {
-      description: "List cached branch names for the current project's repository. No network fetch. Choose the relevant branch, clarify ambiguity; listed branches may not have been downloaded yet.",
-      parameters: z.object({ ...page }),
-      handler: async ({ offset, limit }) => {
+      description: "List cached branch names for the current project's repository. No network fetch. Use search for a case-insensitive name substring before pagination. Exact matches come first. Choose the relevant branch, clarify ambiguity; listed branches may not have been downloaded yet.",
+      parameters: z.object({ ...page, search: z.string().max(500).default("") }),
+      handler: async ({ offset, limit, search }) => {
         const data = await read("branches", {});
-        return { repository: data.repository, defaultBranch: data.defaultBranch, selectedBranch: selectedBranch || data.defaultBranch, branches: data.branches.slice(offset, offset + limit), nextOffset: offset + limit < data.branches.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
+        const names = data.branches.filter((name: string) => name.toLocaleLowerCase().includes((search || "").toLocaleLowerCase())).sort((a: string, b: string) => Number(b === search) - Number(a === search));
+        return { repository: data.repository, defaultBranch: data.defaultBranch, selectedBranch: selectedBranch || data.defaultBranch, branches: names.slice(offset, offset + limit), total: names.length, nextOffset: offset + limit < names.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
       },
     }),
     defineTool("code_tree", {

@@ -6,7 +6,7 @@ const catalog: Record<string, string> = {
   cite_code: "Create clickable file/line-range references opening highlighted code in the repository viewer.",
   show_code_branches: "Display branch buttons with copy and navigation to code page; cached names only.",
   code_work_status: "Read current Git jobs, download progress and queue without starting work.",
-  code_branches: "List cached branches of the current project repository; no network.",
+  code_branches: "Search cached branch names by substring, or list with pagination; no network.",
   code_tree: "Browse a local directory's file names/types/sizes without bodies.",
   code_search: "Find files by name/path or grep code with short numbered snippets; local only.",
   code_read_file: "Read line ranges or a full local file, paginated; no edits.",

@@ -9122,3 +9122,21 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-export-dialog .check-option span { flex: 1; overflow-wrap: anywhere; }
 .memory-export-dialog .check-option small { flex-shrink: 0; }
 .memory-export-files { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 8px; }
+.chat-code-snippet { min-width: 0; max-width: 100%; margin: 10px 0; border: 1px solid #d5dfd9; border-radius: 8px; overflow: hidden; background: #f5f7f6; }
+.chat-code-snippet > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 9px; background: #eaf0ec; font-size: 11px; }
+.chat-code-snippet > header button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #cedbd2; border-radius: 5px; background: #fff; font-size: 11px; }
+.chat-code-snippet > header button:hover { background: #dcebe2; }
+.chat-markdown .chat-code-snippet pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; overflow: auto; max-height: 50vh; }
+.chat-code-line-number { display: inline-block; min-width: 3em; padding: 0 10px; color: #84968a; user-select: none; text-align: right; }
+.chat-code-line { padding-right: 12px; }
+.composer textarea { padding-right: 40px; }
+.composer-clear-draft { position: absolute; top: 7px; right: 7px; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: #f1f4f2; color: #738178; cursor: pointer; transition: background .1s, color .1s; }
+.composer-clear-draft:hover { background: #e3eae6; color: #344c3e; }
+.composer-clear-draft:focus-visible { outline: 2px solid #6b9f81; outline-offset: 2px; }
+.composer-bottom .composer-clear-history { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; min-height: 32px; padding: 5px 7px; font-size: 11px; white-space: nowrap; }
+.clear-chat-dialog { width: min(420px, calc(100vw - 32px)); }
+.clear-chat-dialog p { font-size: 13px; line-height: 1.5; }
+.clear-chat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 8px 10px; border-radius: 7px; background: #f2f5f3; font-weight: 600; }
+.clear-chat-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.clear-chat-confirm { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid #b83c3c; border-radius: 7px; background: #c44141; color: #fff; }
+.clear-chat-confirm:hover:not(:disabled) { background: #aa3030; }

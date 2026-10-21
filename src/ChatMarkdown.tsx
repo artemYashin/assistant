@@ -1,3 +1,4 @@
+import { ChatCodeSnippet } from "./ChatCodeSnippet.js";
 import { chatCodeBranch } from "./chat-code-branch.js";
 import { chatPrCard } from "./chat-pr-card.js";
 import { Link } from "react-router-dom";
@@ -59,6 +60,13 @@ export function ChatMarkdown({
                 : ""
         }
         components={{
+          pre: ({ node, children }) => {
+            const code = node?.children.find(child => child.type === "element" && child.tagName === "code");
+            if (code?.type !== "element") return <pre>{children}</pre>;
+            const text = code.children.map(child => child.type === "text" ? child.value : "").join("");
+            const language = String(code.properties?.className || "").replace(/^language-/, "");
+            return <ChatCodeSnippet text={text} language={language} />;
+          },
           blockquote: ({ children }) => (
             <blockquote className="chat-quote-card">
               <Quote className="chat-quote-icon" size={17} aria-hidden="true" />

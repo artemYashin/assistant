@@ -88,3 +88,12 @@ test("branch links render navigation with copy-name action", async () => {
   assert.match(html, /Скопировать имя ветки/);
   assert.match(html, /href="\/code\?client=Client&amp;project=Project&amp;branch=feature%2Fa%26b"/);
 });
+
+test("code snippets render copy control, language and line numbers", () => {
+  const html = render("```ts\nconst value = 1;\nvalue++;\n```");
+  assert.match(html, /chat-code-snippet/);
+  assert.match(html, /Скопировать код/);
+  assert.match(html, /chat-code-line-number/);
+  assert.match(html, />ts<\/span>/);
+  assert.match(html, /value\+\+;/);
+});

@@ -2759,6 +2759,10 @@ function Assistant({
   const [attachment, setAttachment] = useState<any>(null);
   const analysisPending = useRef(false);
   const promptInput = useRef<HTMLTextAreaElement>(null);
+  const clearChatDialog = useRef<HTMLDialogElement>(null);
+  const [clearChatError, setClearChatError] = useState("");
+  const clearChatLock = useRef(false);
+  useEffect(() => { clearChatDialog.current?.close(); setClearChatError(""); }, [context.client, context.project, sessionId]);
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [sessionTitle, setSessionTitle] = useState("Новый чат");
@@ -2990,12 +2994,9 @@ function Assistant({
   }
   async function clearHistory() {
     if (working || clearing || shortcutBusy || recording || transcribing) return;
-    if (
-      !window.confirm(
-        "Очистить сообщения выбранного чата? Другие чаты, память и тикеты останутся.",
-      )
-    )
-      return;
+    if (clearChatLock.current || !sessionId) return;
+    clearChatLock.current = true;
+    setClearChatError("");
     const captured = key;
     const generation = historyGeneration.current;
     setClearing(true);
@@ -3013,14 +3014,16 @@ function Assistant({
         setChatUsage({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
         chatStream.reset();
         setAttachment(null);
+        clearChatDialog.current?.close();
       }
     } catch (e: any) {
       if (
         contextKey.current === captured &&
         generation === historyGeneration.current
       )
-        setError(e.message);
+        setClearChatError(e.message);
     } finally {
+      clearChatLock.current = false;
       setClearing(false);
     }
   }
@@ -3396,10 +3399,14 @@ function Assistant({
               }
             }}
           />
+          {prompt.length > 0 && <button type="button" className="composer-clear-draft" title="Очистить текст сообщения" aria-label="Очистить текст сообщения" onClick={() => {
+            setPrompt("");
+            promptInput.current?.focus();
+          }}><X size={14} aria-hidden="true" /></button>}
           <div className="composer-bottom">
             <button
               type="button"
-              className="icon-button"
+              className="secondary composer-clear-history"
               aria-label="Очистить историю чата"
               title="Очистить историю текущего чата"
               disabled={
@@ -3409,9 +3416,9 @@ function Assistant({
                 transcribing ||
                 !history.length
               }
-              onClick={() => void clearHistory()}
+              onClick={() => { setClearChatError(""); clearChatDialog.current?.showModal(); }}
             >
-              <Trash2 size={17} />
+              <Trash2 size={15} /><span>Очистить чат</span>
             </button>
 
             <div className="composer-model">
@@ -3457,6 +3464,17 @@ function Assistant({
         </form>
 
       </div>
+      <dialog ref={clearChatDialog} className="developer-dialog clear-chat-dialog" aria-labelledby="clear-chat-title" onCancel={event => { if (clearing) event.preventDefault(); }}>
+        <div className="section-heading"><h2 id="clear-chat-title"><Trash2 size={20} />Очистить чат?</h2><button type="button" className="icon-button" aria-label="Закрыть" disabled={clearing} onClick={() => clearChatDialog.current?.close()}><X size={17} /></button></div>
+        <p className="clear-chat-name" title={sessionTitle}>{sessionTitle}</p>
+        <p>Все сообщения этого чата будут удалены. Восстановить историю не получится.</p>
+        <p className="muted">Другие чаты, память и тикеты сохранятся.</p>
+        {clearChatError && <p className="error" role="alert">{clearChatError}</p>}
+        <div className="clear-chat-actions">
+          <button type="button" className="secondary" autoFocus disabled={clearing} onClick={() => clearChatDialog.current?.close()}>Отмена</button>
+          <button type="button" className="clear-chat-confirm" disabled={clearing || working || recording || transcribing || shortcutBusy} onClick={() => void clearHistory()}><Trash2 size={15} />{clearing ? "Очищаю…" : "Очистить чат"}</button>
+        </div>
+      </dialog>
     </aside>
   );
 }

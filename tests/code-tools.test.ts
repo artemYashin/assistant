@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
-import { codeTools } from "../server/code-tools.js";
+import { codeTools, configuredCodeBranch } from "../server/code-tools.js";
 import { makeTools } from "../server/agent.js";
 import { Approvals } from "../server/approvals.js";
 import { MemoryProposals } from "../server/memory-proposals.js";
@@ -50,7 +50,7 @@ test("save_memory only creates a proposal until UI approval", async t => {
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM memories").get() as any).n, 1);
 });
 
-test("code reads default to UI branch, allow explicit override and pin revisions per branch", async t => {
+test("code reads default to configured branch, allow explicit override and pin revisions per branch", async t => {
   const store = setup(t), calls: any[] = [];
   const fake = { request: async (input: any) => {
     calls.push(input);
@@ -82,4 +82,21 @@ test("code citations validate ranges and preserve scoped branch/file links", asy
   assert.equal(params.get("line"), "2");
   assert.equal(params.get("endLine"), "3");
   await assert.rejects(cite([{ path: "file.ts", startLine: 4 }]), /Диапазон/);
+});
+
+test("branch search filters before pagination and prioritizes exact matches", async t => {
+  const store = setup(t);
+  const tools = codeTools(store, { client: "C", project: "P" }, () => {}, { request: async () => ({ branches: ["feature/dev-ui", "main", "dev", "DEV-test"], defaultBranch: "main" }) } as any);
+  const result: any = await tools.find(tool => tool.name === "code_branches")!.handler!({ search: "dev", offset: 0, limit: 2 } as any, {} as any);
+  assert.deepEqual(result.branches, ["dev", "feature/dev-ui"]);
+  assert.equal(result.total, 3);
+  assert.equal(result.nextOffset, 2);
+});
+
+test("main branch is resolved from current project repository settings", t => {
+  const store = setup(t);
+  store.set("settings", { ...store.settings(), azureUrl: "https://dev.azure.com/org", azureProject: "AzureProject" });
+  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,main_branch) VALUES (?,?,?,?,?,?,?,?)").run("repo", "C", "P", "https://dev.azure.com/org", "AzureProject", "all", 1, "dev");
+  assert.equal(configuredCodeBranch(store, { client: "C", project: "P" }), "dev");
+  assert.equal(configuredCodeBranch(store, { client: "C", project: "Other" }), undefined);
 });
