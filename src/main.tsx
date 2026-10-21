@@ -1946,6 +1946,14 @@ function Memory({ memories, context, run, busy }: any) {
         subtitle="Память доступна ассистенту с учётом выбранного заказчика и проекта."
       ><ExportMemoryButton key={JSON.stringify(context)} context={context} /></PageHeading>
       <div className="memory-create-toolbar">
+        <button type="button" className="primary" disabled={!!busy} onClick={() => {
+          setCreateError("");
+          if ((scope !== "general" && !context.client) || (scope === "project" && !context.project)) setScope("general");
+          createDialog.current?.showModal();
+        }}><Plus size={16} />Добавить память</button>
+      </div>
+      <dialog ref={createDialog} className="developer-dialog memory-create-dialog" aria-label="Добавить память" onCancel={event => { if (busy) event.preventDefault(); }}>
+        <div className="developer-dialog-heading"><strong>Добавить память · {labels[scope]}</strong><button type="button" className="icon-button" aria-label="Закрыть" disabled={!!busy} onClick={() => createDialog.current?.close()}><X size={18} /></button></div>
       <div className="memory-scopes" role="group" aria-label="Раздел для новой записи">
         {[
           {
@@ -1973,6 +1981,7 @@ function Memory({ memories, context, run, busy }: any) {
             type="button"
             aria-pressed={scope === s.id}
             title={s.description}
+            disabled={!!busy || (s.id !== "general" && !context.client) || (s.id === "project" && !context.project)}
             onClick={() => setScope(s.id)}
           >
             <s.icon size={16} />
@@ -1981,10 +1990,6 @@ function Memory({ memories, context, run, busy }: any) {
           </button>
         ))}
       </div>
-      <button type="button" className="primary" disabled={!!busy || (scope !== "general" && !context.client) || (scope === "project" && !context.project)} onClick={() => { setCreateError(""); createDialog.current?.showModal(); }}><Plus size={16} />Добавить память</button>
-      </div>
-      <dialog ref={createDialog} className="developer-dialog memory-create-dialog" aria-label="Добавить память" onCancel={event => { if (busy) event.preventDefault(); }}>
-        <div className="developer-dialog-heading"><strong>Добавить память · {labels[scope]}</strong><button type="button" className="icon-button" aria-label="Закрыть" disabled={!!busy} onClick={() => createDialog.current?.close()}><X size={18} /></button></div>
         {scope !== "general" && <p className="muted">{context.client}{scope === "project" ? ` / ${context.project}` : ""}</p>}
       <form
         className="memory-form"
@@ -2041,14 +2046,16 @@ function Memory({ memories, context, run, busy }: any) {
       <section className="memory-bank-toolbar" aria-label="Банк памяти">
       <h2><BookOpen size={16} />Банк памяти</h2>
       <div className="memory-list-toolbar">
-        <label className="memory-search">
-          <Search size={16} aria-hidden="true" />
-          <input aria-label="Поиск памяти по названию" placeholder="Поиск по названию…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
-        </label>
         <MultiSelect label="Разделы памяти" placeholder="Выберите разделы" options={Object.entries(labels).map(([value, label]) => ({ value, label: String(label) }))} value={scopeFilters} onChange={value => { setScopeFilters(value); setPage(1); }} />
-        <span>Найдено: {filtered.length}</span>
+        <div className="memory-search-group">
+          <span className="memory-search-label">Поиск по названию</span>
+          <label className="memory-search">
+            <Search size={16} aria-hidden="true" />
+            <input aria-label="Поиск памяти по названию" placeholder="Поиск по названию…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
+          </label>
+          <span className="memory-search-count" role="status">Найдено: {filtered.length}</span>
+        </div>
       </div>
-      </section>
       <div className="memory-grid">
         {visible.map((m: any) => (
           <article className="panel memory-note" key={m.id}>
@@ -2117,6 +2124,7 @@ function Memory({ memories, context, run, busy }: any) {
           description="Добавьте запись здесь или скажите ассистенту: «Запомни для этого проекта…»."
         />
       )}
+      </section>
     </>
   );
 }
