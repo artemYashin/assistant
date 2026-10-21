@@ -55,6 +55,7 @@ const contextSchema = z.object({
 const settingsSchema = z
   .object({
     assistantCodeAccess: z.boolean().default(true),
+    memoryLanguage: z.string().trim().min(1).max(100).default("English"),
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
     voiceNewPress: z.enum(["single", "double"]).default("double"),
@@ -633,6 +634,7 @@ export function createApp(
   app.get("/api/memory-proposals", (_req, res) =>
     res.json(memoryProposals.list()),
   );
+  app.patch("/api/memory-proposals/:id", (req, res) => res.json(memoryProposals.edit(String(req.params.id), req.body)));
   app.delete("/api/memory-proposals/:id", (req, res) => {
     const result = store.db
       .prepare("DELETE FROM memory_proposals WHERE id=?")

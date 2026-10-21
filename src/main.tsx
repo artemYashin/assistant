@@ -2186,6 +2186,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
+    { id: "memory", label: "Память", icon: BookOpen },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
@@ -2647,6 +2648,15 @@ function Settings({ settings, context, run, busy }: any) {
               отредактировать перед отправкой.
             </span>
           </div>
+          </div>
+        </section>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-memory-panel`} aria-labelledby={`${settingsTabId}-memory`} hidden={settingsTab !== "memory"}>
+          <div className="section-heading"><h2><BookOpen size={22} />Память</h2></div>
+          <div className="settings-group">
+            <h3>Язык записей</h3>
+            <Field label="Предпочтительный язык памяти" hint="Ассистент будет использовать этот язык для новых предложений. Существующие записи не переводятся; язык ответов в чате не меняется.">
+              <input value={form.memoryLanguage ?? "English"} onChange={event => set("memoryLanguage", event.target.value)} maxLength={100} required placeholder="English" />
+            </Field>
           </div>
         </section>
         {connectionError && <div className="error">{connectionError}</div>}

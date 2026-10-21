@@ -1,3 +1,5 @@
+import { MemoryBody } from "./MemoryBody.js";
+import { MemoryMarkdown } from "./MemoryMarkdown.js";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { api } from "./api.js";
@@ -13,6 +15,7 @@ export function MemoryProposalList({
   items: any[];
   onChange: () => void;
 }) {
+  const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(""),
     [error, setError] = useState("");
   async function decide(id: string, approve: boolean) {
@@ -63,21 +66,21 @@ export function MemoryProposalList({
                 {p.project ? ` / ${p.project}` : ""}
               </p>
             )}
-            <p className="memory-proposal-body">{p.body}</p>
+            {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.body}`} id={p.id} body={p.body} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} /> : <MemoryMarkdown body={p.body} />}
             <p className="muted">Зачем сохранить: {p.reason}</p>
-            <div className="card-actions">
+            <div className="card-actions memory-proposal-actions">
               {p.status === "pending" && (
                 <>
                   <button
                     className="primary"
-                    disabled={!!busy}
+                    disabled={!!busy || !!editing}
                     onClick={() => void decide(p.id, true)}
                   >
                     Подтвердить сохранение
                   </button>
                   <button
                     className="secondary"
-                    disabled={!!busy}
+                    disabled={!!busy || !!editing}
                     onClick={() => void decide(p.id, false)}
                   >
                     Отклонить
@@ -85,8 +88,8 @@ export function MemoryProposalList({
                 </>
               )}
               <button
-                className="secondary"
-                disabled={!!busy}
+                className="secondary memory-proposal-delete"
+                disabled={!!busy || !!editing}
                 title="Убрать предложение из списка. Сохранённая память останется без изменений."
                 onClick={async () => {
                   setBusy(p.id);

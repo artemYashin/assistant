@@ -9100,3 +9100,18 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-code-link > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-code-link > svg { flex-shrink: 0; }
 .chat-markdown .chat-code-link:hover, .chat-markdown .chat-branch-link:hover { background: #e3efe8; border-color: #9cbaa9; }
+
+.memory-proposal-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.memory-proposal-actions .memory-proposal-delete { margin-left: auto; }
+.memory-markdown { margin: 12px 0; min-width: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55; }
+.memory-markdown > :first-child { margin-top: 0; }
+.memory-markdown > :last-child { margin-bottom: 0; }
+.memory-markdown pre { overflow-x: auto; padding: 12px; border: 1px solid #dce4df; border-radius: 8px; background: #f3f6f4; white-space: pre; }
+.memory-markdown code { font-size: 12px; background: #edf2ef; border-radius: 3px; padding: 1px 3px; }
+.memory-markdown pre code { padding: 0; background: none; }
+.memory-markdown a { color: #2563eb; text-decoration: underline; }
+.memory-markdown blockquote { margin: 10px 0; padding: 8px 12px; border-left: 3px solid #b8c9bf; background: #f5f7f6; }
+.memory-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.memory-markdown th, .memory-markdown td { border: 1px solid #dce4df; padding: 5px 8px; }
+.memory-markdown img { max-width: 100%; }
+.memory-note .memory-markdown p { font-size: inherit; color: inherit; white-space: normal; margin: 0 0 10px; }

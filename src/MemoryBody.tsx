@@ -1,3 +1,4 @@
+import { MemoryMarkdown } from "./MemoryMarkdown.js";
 import { useState } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { api } from "./api.js";
@@ -7,11 +8,15 @@ export function MemoryBody({
   body,
   disabled,
   onSaved,
+  proposal = false,
+  onEditingChange,
 }: {
   id: string;
   body: string;
   disabled: boolean;
   onSaved: () => void;
+  proposal?: boolean;
+  onEditingChange?: (editing: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(body);
@@ -20,7 +25,7 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        <p className="memory-note-text">{body}</p>
+        <MemoryMarkdown body={body} />
         <button
           className="secondary"
           disabled={disabled}
@@ -28,6 +33,7 @@ export function MemoryBody({
             setDraft(body);
             setError("");
             setEditing(true);
+            onEditingChange?.(true);
           }}
         >
           <Pencil size={15} /> Редактировать
@@ -43,9 +49,10 @@ export function MemoryBody({
         setBusy(true);
         setError("");
         try {
-          await api(`/memories/${id}`, "PATCH", { body: draft });
+          await api(`/${proposal ? "memory-proposals" : "memories"}/${id}`, "PATCH", { body: draft });
           onSaved();
           setEditing(false);
+          onEditingChange?.(false);
         } catch (e: any) {
           setError(e.message);
         } finally {
@@ -81,7 +88,7 @@ export function MemoryBody({
           type="button"
           className="secondary"
           disabled={busy}
-          onClick={() => setEditing(false)}
+          onClick={() => { setEditing(false); onEditingChange?.(false); }}
         >
           <X size={15} /> Отмена
         </button>

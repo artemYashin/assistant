@@ -39,6 +39,7 @@ export type Approval = {
 };
 export const defaults = {
   assistantCodeAccess: true,
+  memoryLanguage: "English",
   assistantCodeWaitSeconds: 20,
   voiceCurrentPress: "double",
   voiceNewPress: "double",

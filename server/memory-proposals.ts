@@ -58,6 +58,17 @@ export class MemoryProposals {
       note: "Запись ещё не сохранена в память. Ожидает подтверждения в интерфейсе.",
     };
   }
+  edit(id: string, input: unknown) {
+    const { body } = proposalSchema.pick({ body: true }).parse(input);
+    return this.store.db.transaction(() => {
+      const proposal = this.store.db.prepare("SELECT status FROM memory_proposals WHERE id=?").get(id) as any;
+      if (!proposal) throw new AppError(404, "Предложение не найдено");
+      if (proposal.status !== "pending") throw new AppError(409, "Предложение уже обработано. Сохранённую запись можно изменить на странице памяти.");
+      this.store.db.prepare("UPDATE memory_proposals SET body=? WHERE id=?").run(body, id);
+      this.store.audit("memory.proposal_edited", id);
+      return { ok: true };
+    })();
+  }
   decide(id: string, approve: boolean) {
     return this.store.db.transaction(() => {
       const p = this.store.db
@@ -93,6 +104,7 @@ export function memoryProposalTool(
   let calls = 0;
   return defineTool("propose_memory", {
     description:
+      `Preferred memory language: ${JSON.stringify(store.settings().memoryLanguage)}. Omit redundant project/branch labels unless essential to the fact. ` +
       "Propose a concise durable fact or rule for human approval. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep code memory to function, file path and purpose in 1–3 short sentences, no code dumps. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
     parameters: proposalSchema,
     handler: async (args) => {
