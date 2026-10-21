@@ -42,3 +42,22 @@ Tests use disposable local Git repositories and a constructor-only local transpo
 Clients opt into `Accept: application/x-ndjson` on the existing POST. Orbit forwards only validated `{stage, percent?}` progress events and a terminal result/error; the normal JSON API remains supported. This uses one authenticated, CSRF-protected request, not polling or an extra Azure request. Git fetch uses `--progress`; a bounded parser recognizes known stage names/numeric percentages and never forwards raw stderr. Events are throttled by the service. Snapshot generation reports processed-file progress; phases without a denominator remain indeterminate.
 
 The UI displays current-phase progress and elapsed time, not a total percentage or estimated completion time. Callbacks are scoped to the latest UI request and ignored after navigation. Closing the page disconnects its stream; the existing bounded service operation can finish in the cache. There is no durable job history, automatic retry, cancellation or reconnect/resume in this version. Incomplete streams are reported as errors, never success.
+
+### Interrupted fetch recovery
+
+The Docker service holds an exclusive kernel `flock` on `/cache/.service.lock`
+for its lifetime. Another instance using the same volume exits rather than
+serving concurrent cache mutations. The lock file itself is never removed.
+Automatic recovery is enabled only by this locked Docker entrypoint; direct
+`node service.mjs` launches leave recovery disabled.
+
+Before a fetch, the serialized worker checks for `git/shallow.lock`. It removes
+only this regular file, only after inspecting `/proc` and finding no running
+Git processes, and checking that the file has not changed during inspection.
+Missing/unreadable process information, a live Git process, or a symlink blocks
+recovery with a readable error. Other lock files, refs, history and application
+data are not removed. Recovery is streamed as a progress stage and logged;
+the requested fetch then proceeds normally. No time-based lock expiry is used.
+The cache volume is private to this service: do not mount it in unrelated Git
+writers or run maintenance Git commands there concurrently. Recreate the old
+container when upgrading so all service instances use the exclusive entrypoint.

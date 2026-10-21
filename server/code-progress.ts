@@ -2,7 +2,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 export const codeProgressSchema = z.object({
-  stage: z.enum(["connecting", "queued", "preparing", "fetching", "counting", "compressing", "receiving", "resolving", "unpacking", "finalizing", "tree", "file", "snapshot", "searching"]),
+  stage: z.enum(["recovering", "connecting", "queued", "preparing", "fetching", "counting", "compressing", "receiving", "resolving", "unpacking", "finalizing", "tree", "file", "snapshot", "searching"]),
   percent: z.number().int().min(0).max(100).optional(),
 }).strict();
 export type CodeProgress = z.infer<typeof codeProgressSchema>;

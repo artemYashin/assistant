@@ -1206,3 +1206,8 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Preserve the bounded tail of Git stderr so errors after lengthy progress output are retained. Show operation/exit status and classify common access, TLS, redirect, network, disk and memory failures.
 - Redact configured PAT/basic credentials and HTTP URLs before displaying or logging diagnostics. Expected merge-base non-ancestor results are not logged. Multiline errors remain readable in the code page.
 - Added diagnostic classification/redaction tests, not executed: tests explicitly skipped at the user's request. JavaScript syntax and whitespace checks passed. Live Azure/Docker verification remains pending.
+
+### Recover interrupted repository downloads (2026-10-21)
+
+- Docker entrypoint holds an exclusive cache-wide flock. Serialized fetch operations can recover a leftover regular shallow.lock after checking for running Git processes and verifying the lock did not change. Unsafe/uncertain cases preserve the lock and return a readable error. UI supports a recovery progress stage.
+- Added coverage for stale-lock recovery, live processes, unavailable process inspection and symlinks. Tests were not run at the user's request. Whitespace checks passed; Docker startup and live recovery were not exercised.

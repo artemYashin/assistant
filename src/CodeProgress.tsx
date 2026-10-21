@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiProgress } from "./api.js";
 
 const labels: Record<string, string> = {
+  recovering: "Восстановление после прерванной загрузки",
   connecting: "Подключение к репозиторию", queued: "Ожидание очереди", preparing: "Подготовка кеша",
   fetching: "Получение Git-данных", counting: "Подсчёт объектов", compressing: "Сжатие объектов",
   receiving: "Скачивание объектов", resolving: "Обработка изменений", unpacking: "Распаковка объектов",

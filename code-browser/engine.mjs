@@ -1,3 +1,4 @@
+import { recoverShallowLock } from './recovery.mjs';
 import { gitDiagnostic } from './diagnostics.mjs';
 import { gitProgressParser } from './progress.mjs';
 import { spawn } from 'node:child_process';
@@ -53,8 +54,8 @@ async function diskSize(root) {
   return total;
 }
 export class RepositoryBrowser {
-  constructor(root, { allowLocal = false, maxCacheBytes = 2 * 1024 ** 3 } = {}) {
-    this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
+  constructor(root, { allowLocal = false, recoverLocks = false, maxCacheBytes = 2 * 1024 ** 3 } = {}) {
+    this.recoverLocks = recoverLocks; this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
     this.tail = Promise.resolve(); this.pending = 0; this.branchesCache = new Map();
   }
   async execute(input, report = () => {}) {
@@ -117,6 +118,10 @@ export class RepositoryBrowser {
     const remoteRef = 'refs/orbit/remote/' + branchKey;
     if (!state || operation === 'pull' || (operation === 'status' && (input.refresh || Date.now() - Date.parse(state.checkedAt) >= 60000))) {
       if (await diskSize(this.root) >= this.maxCacheBytes) throw new BrowserError('Кеш кода достиг лимита. Очистите отдельный volume кеша или увеличьте CODE_BROWSER_MAX_CACHE_BYTES.', 507);
+      if (this.recoverLocks) {
+        try { await recoverShallowLock(gitDir, { report }); }
+        catch (error) { throw new BrowserError(error.message, 409); }
+      }
       report({ stage: 'fetching' });
       await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
       if (await diskSize(this.root) > this.maxCacheBytes) {
