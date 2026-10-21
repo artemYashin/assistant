@@ -7389,6 +7389,12 @@ summary > svg {
 .image-preview-trigger {
   cursor: zoom-in;
 }
+.image-preview-trigger:has(.image-thumbnail) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-block: 6px;
+}
 .ticket-attachment-preview {
   display: block;
   width: fit-content;
@@ -8809,8 +8815,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 @media (max-width: 750px) { .tool-viewer-layout { grid-template-columns: minmax(145px, 34%) minmax(0, 1fr); } .tool-viewer-columns { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(80px, 1fr) minmax(80px, 1fr); } .tool-viewer-columns > section + section { border-left: 0; border-top: 1px solid #e1e7e3; } }
 
 /* Chat thumbnails stay within the visible message viewport; the viewer remains full-size. */
-.conversation .chat-markdown .image-preview-trigger {
-  display: inline-block;
+.conversation .chat-markdown .image-preview-trigger:has(.image-thumbnail) {
+  display: block;
+  width: fit-content;
   max-width: 100%;
   margin: 6px 0;
   vertical-align: middle;
