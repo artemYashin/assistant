@@ -9133,12 +9133,12 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-export-files { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .memory-export-files > button { max-width: 100%; padding: 6px 9px; font-size: 12px; overflow-wrap: anywhere; text-align: left; }
 .memory-export-files > button > svg { flex-shrink: 0; }
-.chat-code-snippet { min-width: 0; max-width: 100%; margin: 10px 0; border: 1px solid #d5dfd9; border-radius: 8px; overflow: hidden; background: #f5f7f6; }
-.chat-code-snippet > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 9px; background: #eaf0ec; font-size: 11px; }
-.chat-code-snippet > header button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #cedbd2; border-radius: 5px; background: #fff; font-size: 11px; }
-.chat-code-snippet > header button:hover { background: #dcebe2; }
+.chat-code-snippet { min-width: 0; max-width: 100%; margin: 10px 0; border: 1px solid #3b4855; border-radius: 8px; overflow: hidden; background: #1e2630; color: #e6edf3; color-scheme: dark; }
+.chat-code-snippet > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 9px; background: #293440; color: #c9d5df; font-size: 11px; }
+.chat-code-snippet > header button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #526170; border-radius: 5px; background: #344250; color: #e6edf3; font-size: 11px; }
+.chat-code-snippet > header button:hover { background: #435465; }
 .chat-markdown .chat-code-snippet pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; overflow: auto; max-height: 50vh; }
-.chat-code-line-number { display: inline-block; min-width: 3em; padding: 0 10px; color: #84968a; user-select: none; text-align: right; }
+.chat-code-line-number { display: inline-block; min-width: 3em; padding: 0 10px; color: #91a2b3; user-select: none; text-align: right; }
 .chat-code-line { padding-right: 12px; }
 .composer textarea { padding-right: 40px; }
 .composer-clear-draft { position: absolute; top: 7px; right: 7px; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: #f1f4f2; color: #738178; cursor: pointer; transition: background .1s, color .1s; }
@@ -9155,6 +9155,11 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-code-snippet > pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; overflow: auto; max-height: 50vh; white-space: pre; }
 .chat-code-snippet > pre > code { display: block; padding: 0; border: 0; background: transparent; font-size: 12px; line-height: 1.6; white-space: pre; }
 .memory-markdown .chat-code-snippet > pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; }
+/* Keep Markdown container styles from replacing the shared snippet's dark surface. */
+:is(.chat-markdown, .memory-markdown, .ticket-formatted) pre,
+.chat-code-snippet > pre { background: #1e2630; color: #e6edf3; border-color: #3b4855; color-scheme: dark; }
+:is(.chat-markdown, .memory-markdown, .ticket-formatted) pre code,
+.chat-code-snippet > pre > code { background: transparent; color: #e6edf3; }
 .chat-timeline { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .chat-timeline-tool.chat-live-tools { margin: 0; width: 100%; }
 .chat-timeline-message { min-width: 0; }
@@ -9193,12 +9198,12 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
   gap: 10px;
   align-items: stretch;
 }
-.memory-note { min-width: 0; padding: 10px; display: flex; flex-direction: column; align-items: stretch; }
+.memory-note { min-width: 0; padding: 14px; display: flex; flex-direction: column; align-items: stretch; }
 .memory-note > button { align-self: flex-start; margin-top: auto; }
-.memory-description > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: #61766a; border-radius: 4px; }
+.memory-description > summary { cursor: pointer; min-height: 0; margin: 0; padding: 7px 10px; font-size: 12px; line-height: 1.4; font-weight: 600; color: #61766a; border-radius: 5px; }
 .memory-description > summary:hover { color: #355c44; }
 .memory-description > summary:focus-visible { outline: 2px solid #81a88b; outline-offset: 3px; }
-.memory-description[open] > summary { margin-bottom: 8px; }
+.memory-description[open] > summary { margin: 0; border-bottom: 1px solid #dce4df; border-radius: 5px 5px 0 0; }
 .memory-delete-dialog > p { margin: 0; font-size: 13px; }
 .memory-delete-title { padding: 10px; background: #f5f7f6; border: 1px solid #dce4df; border-radius: 6px; overflow-wrap: anywhere; max-height: 160px; overflow: auto; font-size: 13px; }
 .memory-delete-dialog .card-actions { justify-content: flex-end; gap: 8px; margin: 0; }
@@ -9212,6 +9217,8 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-note-scope .badge { max-width: 100%; white-space: normal; }
 .memory-note .memory-proposal-fields { gap: 6px; margin: 6px 0 8px; }
 .memory-note .memory-proposal-field { padding: 8px; border-radius: 6px; }
+.memory-note .memory-description { padding: 0; }
+.memory-note .memory-description > .memory-markdown { margin: 0; padding: 12px 14px; }
 .memory-note .memory-proposal-field-label { margin-bottom: 4px; }
 .memory-note .memory-summary { font-size: 13px; line-height: 1.4; }
 .memory-note .memory-markdown { max-height: 220px; overflow: auto; scrollbar-width: thin; font-size: 12px; }
