@@ -1,3 +1,5 @@
+import { useSearchParams } from "react-router-dom";
+import { chatCodeBranch } from "./chat-code-branch.js";
 import { RepositorySearch } from "./RepositorySearch.js";
 import { RepositoryFileIcon, repositoryFileKind, repositoryFileSize } from "./RepositoryFileKind.js";
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
@@ -15,10 +17,13 @@ type File = { sha: string; path: string; text?: string; unavailable?: string; lf
 type Request = (operation: string, extra?: Record<string, unknown>) => Promise<any>;
 
 export function CodeBrowserPage({ context }: { context: Context }) {
+  const [params] = useSearchParams();
+  const link = chatCodeBranch(`/code?${params}`);
+  if (link && (link.client !== context.client || link.project !== context.project)) return <section className="panel"><h1>Код репозитория</h1><p>Выберите заказчика {link.client} и проект {link.project} в хедере, чтобы открыть ветку {link.branch}.</p></section>;
   if (!context.client || !context.project) return <section className="panel"><h1>Код репозитория</h1><p>Выберите заказчика и проект в хедере и настройте его Git-репозиторий.</p></section>;
-  return <RepositoryView key={JSON.stringify(context)} context={context} />;
+  return <RepositoryView key={JSON.stringify([context, link?.branch])} context={context} requestedBranch={link?.branch} />;
 }
-function RepositoryView({ context }: { context: Context }) {
+function RepositoryView({ context, requestedBranch }: { context: Context; requestedBranch?: string }) {
   const { progress, execute, stop } = useCodeProgress();
   const branchStorageKey = "repository-branch:" + JSON.stringify(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
@@ -81,8 +86,9 @@ function RepositoryView({ context }: { context: Context }) {
     setBusy(true); setError(""); setFileBusy(false);
     void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
       if (!live || scope !== generation.current) return;
+      if (requestedBranch && !data.branches.includes(requestedBranch)) { setError("Ветка из ссылки отсутствует в локальном списке. Обновите список веток кнопкой проверки."); setBusy(false); return; }
       setBranches(data.branches); setBranch(current => {
-        const preferred = current || rememberedBranch();
+        const preferred = current || requestedBranch || rememberedBranch();
         return data.branches.includes(preferred) ? preferred : data.defaultBranch;
       });
       setBranchNote(data.more ? "Показаны первые 5 000 веток." : !data.branches.length ? "В репозитории пока нет веток." : "");

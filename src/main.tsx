@@ -2541,8 +2541,14 @@ function Settings({ settings, context, run, busy }: any) {
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
           <h2><Sparkles size={22} />AI Assistant</h2>
-          <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
-          <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
+          <div className="assistant-code-settings">
+            <h3>Code Repository</h3>
+            <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
+            <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
+            <Field label="Ожидание подготовки Git, секунд" hint="До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.">
+              <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
+            </Field>
+          </div>
           <div className="voice-settings-block">
             <h3><Mic size={17} />Голосовой помощник</h3>
             <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>

@@ -1,10 +1,11 @@
+import { chatCodeBranch } from "./chat-code-branch.js";
 import { chatPrCard } from "./chat-pr-card.js";
 import { Link } from "react-router-dom";
 import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
-import { GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
+import { GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -21,11 +22,11 @@ function ExternalLinkIcon({ href }: { href: string }) {
   return <Icon size={15} className={`chat-external-icon is-${brand}`} aria-hidden="true" />;
 }
 
-function CopyableLink({ href, children, ticket = false }: { href: string; children: ReactNode; ticket?: boolean }) {
+function CopyableLink({ href, children, ticket = false, copyValue }: { href: string; children: ReactNode; ticket?: boolean; copyValue?: string }) {
   const [status, setStatus] = useState("");
-  return <span className="chat-copyable-link">{children}<button type="button" className="chat-link-copy" title={status || "Скопировать ссылку"} aria-label={status || "Скопировать ссылку"} onClick={async () => {
+  return <span className="chat-copyable-link">{children}<button type="button" className="chat-link-copy" title={status || (copyValue ? "Скопировать имя ветки" : "Скопировать ссылку")} aria-label={status || (copyValue ? "Скопировать имя ветки" : "Скопировать ссылку")} onClick={async () => {
     try {
-      await navigator.clipboard.writeText(shareTicketUrl(href));
+      await navigator.clipboard.writeText(copyValue ?? shareTicketUrl(href));
       setStatus("Скопировано");
     } catch { setStatus("Не удалось скопировать ссылку"); }
   }}>{status === "Скопировано" ? <Check size={13} /> : ticket ? <Link2 size={13} /> : <Copy size={13} />}<span className="chat-copy-feedback" role="status">{status}</span></button></span>;
@@ -48,7 +49,7 @@ export function ChatMarkdown({
         remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations] : [remarkGfm, remarkTicketCitations]}
         skipHtml
         urlTransform={(url, key) =>
-          ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url))) ? url : key === "href" && chatTicketPath(url)
+          ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url))) ? url : key === "href" && chatTicketPath(url)
             ? chatTicketPath(url)!
             : key === "src" &&
                 images?.some((image) => image.source === url && image.preview)
@@ -67,6 +68,8 @@ export function ChatMarkdown({
           a: ({ href, children, node }) => {
             if (node?.children.some(child => child.type === "element" && child.tagName === "img")) return <span>{children}</span>;
             if (!href) return <span>{children}</span>;
+            const codeBranch = chatCodeBranch(href);
+            if (codeBranch) return <CopyableLink href={codeBranch.href} copyValue={codeBranch.branch}><Link className="chat-ticket-link chat-branch-link" to={codeBranch.href} title={codeBranch.branch}><GitBranch size={14} aria-hidden="true" /><span>{codeBranch.branch}</span></Link></CopyableLink>;
             const pr = chatPrCard(href);
             if (pr) {
               const date = new Date(pr.createdAt);

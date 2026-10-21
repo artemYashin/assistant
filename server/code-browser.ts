@@ -10,10 +10,11 @@ import type { Monitor } from "./pull-requests.js";
 
 export const codeBrowserSchema = z.object({
   client: z.string().min(1).max(200), project: z.string().min(1).max(200),
-  operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "cancel"]),
+  operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "jobs", "cancel"]),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
   localOnly: z.boolean().default(false),
+  localReadWaitMs: z.number().int().min(0).max(120000).optional(),
   revision: z.string().regex(/^[0-9a-f]{40,64}$/).optional(),
   offset: z.number().int().min(0).max(100000).default(0), refresh: z.boolean().default(false),
 }).strict();
@@ -93,7 +94,7 @@ export class CodeBrowser {
     try {
       response = await fetch(`${service.replace(/\/$/, "")}/v1/repository`, {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, Accept: "application/x-ndjson" },
-        body: JSON.stringify({ ...input, url, token, fetchTimeoutSeconds, requestId, cancelledRequestIds }), redirect: "error", signal: deadline,
+        body: JSON.stringify({ ...input, url, token, fetchDepth: monitor.fetch_depth ?? 1, fetchTimeoutSeconds, requestId, cancelledRequestIds }), redirect: "error", signal: deadline,
       });
     } catch {
       throw new AppError(503, deadline.aborted ? "Истекло время ожидания сервиса кода. Увеличьте тайм-аут Git в настройках репозитория и повторите запрос." : "Нет соединения с сервисом кода. Проверьте, что контейнер code-browser запущен.");

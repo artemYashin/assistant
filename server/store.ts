@@ -39,6 +39,7 @@ export type Approval = {
 };
 export const defaults = {
   assistantCodeAccess: true,
+  assistantCodeWaitSeconds: 20,
   voiceCurrentPress: "double",
   voiceNewPress: "double",
   voiceCurrentKey: "KeyM",
@@ -295,6 +296,8 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
+    if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "fetch_depth"))
+      this.db.exec("ALTER TABLE pr_projects ADD COLUMN fetch_depth INTEGER NOT NULL DEFAULT 1");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "code_sync_minutes"))
       this.db.exec("ALTER TABLE pr_projects ADD COLUMN code_sync_minutes INTEGER NOT NULL DEFAULT 30");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "fetch_timeout_seconds"))

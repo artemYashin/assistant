@@ -9,6 +9,7 @@ export function ProjectRepository({
   onSaved?: () => void;
 }) {
   const [ignoredPaths, setIgnoredPaths] = useState("");
+  const [fetchDepth, setFetchDepth] = useState(1);
   const [codeSyncMinutes, setCodeSyncMinutes] = useState(30);
   const [fetchTimeoutMinutes, setFetchTimeoutMinutes] = useState(5);
   const [diffBudget, setDiffBudget] = useState(160000);
@@ -26,6 +27,7 @@ export function ProjectRepository({
     setDiffBudget(160000);
     setFetchTimeoutMinutes(5);
     setCodeSyncMinutes(30);
+    setFetchDepth(1);
     setMessage("");
     api("/pr/projects")
       .then((items: any[]) => {
@@ -42,6 +44,7 @@ export function ProjectRepository({
           );
         if (m) {
           setCodeSyncMinutes(m.code_sync_minutes ?? 30);
+          setFetchDepth(m.fetch_depth ?? 1);
           setFetchTimeoutMinutes((m.fetch_timeout_seconds || 300) / 60);
           const rules = JSON.parse(m.review_files || "{}");
           setIgnoredPaths((rules.ignoredPaths || []).join("\n"));
@@ -79,6 +82,7 @@ export function ProjectRepository({
             mode: all ? "all" : "required",
             enabled,
             codeSyncMinutes,
+            fetchDepth,
             fetchTimeoutSeconds: Math.round(fetchTimeoutMinutes * 60),
             reviewFiles: {
               ignoredPaths: ignoredPaths
@@ -119,16 +123,20 @@ export function ProjectRepository({
       </p>
       <fieldset className="repository-fetch-settings">
         <legend>Просмотр кода · загрузка репозитория</legend>
+        <label>Глубина истории Git, коммитов
+          <input type="number" min={1} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
+        </label>
+        <p className="muted">По умолчанию 1. Большая глубина сохраняет больше истории и может улучшить повторное использование объектов между ветками, но увеличивает загрузку. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
         <label>Частота синхронизации Git, минуты
           <input type="number" min={0} max={1440} step={1} required value={codeSyncMinutes}
             onChange={event => setCodeSyncMinutes(Number(event.target.value))} />
         </label>
         <p className="muted">По умолчанию 30 минут; 0 — только вручную. Фоновая проверка обновляет список веток и проверяет последнюю открытую ветку уже загруженного репозитория. Учитываются разрешённые часы и дни общей синхронизации. Открытый снимок обновляется кнопкой Pull.</p>
         <label>Тайм-аут Git, минуты
-          <input type="number" min={1} max={30} step={1} required value={fetchTimeoutMinutes}
+          <input type="number" min={1} max={120} step={1} required value={fetchTimeoutMinutes}
             onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />
         </label>
-        <p className="muted">От 1 до 30 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
+        <p className="muted">От 1 до 120 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
       </fieldset>
       <label>
         Исключить из ревью и View Diff (один путь или шаблон на строку)

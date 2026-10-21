@@ -14,7 +14,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
     if (!store.settings().assistantCodeAccess) throw new AppError(403, "Доступ ассистента к коду отключён в настройках.");
     if (!context.client || !context.project) throw new AppError(400, "Выберите заказчика и проект.");
     const name = String(args.branch || "");
-    const data = await browser.request({ ...args, ...context, operation, localOnly: true, refresh: false, ...(revisions.has(name) ? { revision: revisions.get(name) } : {}) });
+    const data = await browser.request({ ...args, ...context, operation, localOnly: true, localReadWaitMs: store.settings().assistantCodeWaitSeconds * 1000, refresh: false, ...(revisions.has(name) ? { revision: revisions.get(name) } : {}) });
     assertActive();
     if (data.sha) revisions.set(name, data.sha);
     return data;
@@ -29,6 +29,20 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
     return { sha: data.sha, [key]: items, total: data.total, nextOffset: more ? offset + items.length : null, ...(data.coverage ? { coverage: data.coverage, perFileLimit: data.perFileLimit } : {}) };
   };
   return [
+    defineTool("show_code_branches", {
+      description: "Show compact clickable branch buttons in chat. Returns exact localUrl for each cached branch; render each as a Markdown link. Copy button is provided by UI. No network. Paginate or filter names.",
+      parameters: z.object({ ...page, search: z.string().max(200).default("") }),
+      handler: async ({ offset, limit, search }) => {
+        const data = await read("branches", {});
+        const names = data.branches.filter((name: string) => name.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+        return { branches: names.slice(offset, offset + limit).map((branch: string) => ({ branch, localUrl: `/code?${new URLSearchParams({ ...context, branch })}` })), nextOffset: offset + limit < names.length ? offset + limit : null, total: names.length, catalogTruncated: data.more };
+      },
+    }),
+    defineTool("code_work_status", {
+      description: "Inspect current Git preparation/download/search jobs and queue for the current repository. Read-only, does not wait behind downloads or initiate synchronization. Empty jobs means idle, not proof that a branch is downloaded.",
+      parameters: z.object({}),
+      handler: async () => read("jobs", {}),
+    }),
     defineTool("code_branches", {
       description: "List cached branch names for the current project's repository. No network fetch. Choose the relevant branch, clarify ambiguity; listed branches may not have been downloaded yet.",
       parameters: z.object({ ...page }),

@@ -163,3 +163,56 @@ test('local-only tools cannot fetch missing repositories, branches or updates', 
   await assert.rejects(request('branches', { localOnly: true, refresh: true }), /только чтение/);
   await assert.rejects(request('tree', { localOnly: true, branch: 'feature/nested' }), /ещё не загружена/);
 });
+
+test('local readers wait for preparation and never cancel downloads on timeout', async t => {
+  const { browser, request } = await fixture(t, { localReadWaitMs: 40 });
+  await request('status');
+  let release;
+  const preparation = browser.jobs.run('preparation', () => new Promise(resolve => { release = resolve; }));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const waiting = request('file', { localOnly: true, path: 'src/hello.ts' });
+  setTimeout(() => release({}), 5);
+  assert.match((await waiting).text, /hello/);
+  await preparation;
+  let releaseSlow;
+  const slow = browser.jobs.run('slow', () => new Promise(resolve => { releaseSlow = resolve; }));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  await assert.rejects(request('file', { localOnly: true, localReadWaitMs: 0, path: 'src/hello.ts' }), /\(0 с\)/);
+  await assert.rejects(request('file', { localOnly: true, path: 'src/hello.ts' }), /подготавливает код/);
+  assert.equal(browser.jobs.jobs[0].controller.signal.aborted, false);
+  assert.equal(browser.jobs.jobs.length, 1);
+  releaseSlow({}); await slow;
+});
+
+test('job status bypasses queue and only exposes current repository jobs', async t => {
+  const { browser, request } = await fixture(t);
+  await request('status');
+  const perform = browser.perform.bind(browser);
+  let release;
+  browser.perform = async (input, report, signal) => {
+    if (input.operation === 'pull') await new Promise(resolve => { release = resolve; });
+    return perform(input, report, signal);
+  };
+  const pull = request('pull');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  try {
+    const state = await request('jobs', { localOnly: true });
+    assert.equal(state.jobs[0].operation, 'pull');
+    assert.equal(state.jobs[0].running, true);
+    assert.deepEqual((await request('jobs', { token: 'another-token' })).jobs, []);
+    assert.doesNotMatch(JSON.stringify(state), /fixture-secret|controller/);
+  } finally { release(); await pull; }
+});
+test('per-project fetch depth controls downloaded history', async t => {
+  const { request, git, work, root } = await fixture(t);
+  for (let i = 0; i < 3; i++) {
+    await fs.writeFile(path.join(work, 'extra'), String(i)); git('add', '.'); git('commit', '-m', `commit ${i}`);
+  }
+  const state = await request('status', { fetchDepth: 2 });
+  const [cacheId] = await fs.readdir(path.join(root, 'cache'));
+  const count = execFileSync('git', ['--git-dir=' + path.join(root, 'cache', cacheId, 'git'), 'rev-list', '--count', state.sha], { encoding: 'utf8' }).trim();
+  assert.equal(count, '2');
+  assert.equal((await request('status', { fetchTimeoutSeconds: 7200 })).sha, state.sha);
+  await assert.rejects(request('status', { fetchTimeoutSeconds: 7201 }), /Тайм-аут Git/);
+  await assert.rejects(request('pull', { fetchDepth: 0 }), /Глубина/);
+});

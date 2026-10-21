@@ -55,6 +55,7 @@ const contextSchema = z.object({
 const settingsSchema = z
   .object({
     assistantCodeAccess: z.boolean().default(true),
+    assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
     voiceNewPress: z.enum(["single", "double"]).default("double"),
     voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),
@@ -1145,7 +1146,8 @@ export function createApp(
         enabled: z.boolean(),
         reviewFiles: reviewFileSettings.optional(),
         codeSyncMinutes: z.number().int().min(0).max(1440).optional(),
-        fetchTimeoutSeconds: z.number().int().min(60).max(1800).optional(),
+        fetchDepth: z.number().int().min(1).max(1000).optional(),
+        fetchTimeoutSeconds: z.number().int().min(60).max(7200).optional(),
       })
       .strict()
       .parse(req.body);

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  show_code_branches: "Display branch buttons with copy and navigation to code page; cached names only.",
+  code_work_status: "Read current Git jobs, download progress and queue without starting work.",
   code_branches: "List cached branches of the current project repository; no network.",
   code_tree: "Browse a local directory's file names/types/sizes without bodies.",
   code_search: "Find files by name/path or grep code with short numbered snippets; local only.",

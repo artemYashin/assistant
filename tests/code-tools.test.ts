@@ -30,6 +30,10 @@ test("code tools are scoped, local-only, paginated and disabled at invocation ti
   const search = await invoke("code_search", { branch: "main", query: "line", mode: "content", offset: 0, limit: 2 });
   assert.equal(search.results.length, 2); assert.equal(search.nextOffset, 2);
   assert.equal(calls[1].revision, "a".repeat(40));
+  assert.equal(calls[0].localReadWaitMs, 20000);
+  store.set("settings", { ...store.settings(), assistantCodeWaitSeconds: 35 });
+  await invoke("code_read_file", { branch: "main", path: "a.ts", startLine: 1 });
+  assert.equal(calls.at(-1).localReadWaitMs, 35000);
   assert.ok(calls.every(call => call.localOnly && !call.refresh && call.client === "Client" && call.project === "Project"));
   store.set("settings", { ...store.settings(), assistantCodeAccess: false });
   assert.deepEqual(codeTools(store, { client: "Client", project: "Project" }, () => {}), []);

@@ -65,9 +65,10 @@ async function diskSize(root, signal) {
   return total;
 }
 export class RepositoryBrowser {
-  constructor(root, { allowLocal = false, recoverLocks = false, fetchDepth = 1, maxCacheBytes = 20 * 1024 ** 3 } = {}) {
+  constructor(root, { allowLocal = false, recoverLocks = false, fetchDepth = 1, localReadWaitMs = 20000, maxCacheBytes = 20 * 1024 ** 3 } = {}) {
     if (!Number.isInteger(fetchDepth) || fetchDepth < 1 || fetchDepth > 1000) throw new Error('CODE_BROWSER_FETCH_DEPTH must be an integer from 1 to 1000');
     if (!Number.isSafeInteger(maxCacheBytes) || maxCacheBytes <= 0) throw new Error('CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer');
+    this.localReadWaitMs = localReadWaitMs;
     this.fetchDepth = fetchDepth;
     this.recoverLocks = recoverLocks; this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
     this.cancelledRequests = new Map(); this.jobs = new RepositoryJobs(); this.branchesCache = new Map();
@@ -83,13 +84,22 @@ export class RepositoryBrowser {
       return { cancelled };
     }
     if (input.requestId && this.cancelledRequests.has(input.requestId)) throw new BrowserError('Операция Git отменена.', 409);
+    if (input.operation === 'jobs') {
+      return { jobs: this.jobs.jobs.filter(job => job.scope === identity).map(job => ({
+        operation: job.operation, branch: job.branch, running: job.running,
+        queuePosition: this.jobs.jobs.indexOf(job), ...job.progress,
+      })) };
+    }
     const branchKey = hash(input.url + input.token);
     const catalog = this.branchesCache.get(branchKey);
     if (input.operation === 'branches' && !input.refresh && catalog) return catalog.result;
+    const waitMs = input.localReadWaitMs ?? this.localReadWaitMs;
+    if (!Number.isInteger(waitMs) || waitMs < 0 || waitMs > 120000) throw new BrowserError("Ожидание подготовки кода должно быть от 0 до 120 секунд");
+    if (input.localOnly) await this.waitForLocalRead(report, signal, waitMs);
     const keyFor = operation => identity + ':' + hash(JSON.stringify({
       operation, branch: input.branch || '', path: input.path || '', query: input.query || '',
       mode: input.mode || 'name', offset: input.offset || 0, revision: input.revision || '',
-      refresh: operation === 'branches' ? !!input.refresh : false,
+      refresh: operation === 'branches' ? !!input.refresh : false, localOnly: !!input.localOnly,
     }));
     let key = keyFor(input.operation);
     if (input.operation === 'status') {
@@ -101,12 +111,37 @@ export class RepositoryBrowser {
     try { return await this.jobs.run(key, (progress, jobSignal) => this.perform(input, progress, jobSignal), report, signal, { scope: identity, branch: input.branch || '', operation: input.operation }); }
     catch (error) { if (error instanceof CancelledError) throw new BrowserError(error.message, 409); if (error instanceof QueueError) throw new BrowserError(error.message, 429); throw error; }
   }
+  async waitForLocalRead(report, signal, waitMs) {
+    const deadline = Date.now() + waitMs;
+    const message = `Git ещё подготавливает код. Время ожидания ассистента (${waitMs / 1000} с) истекло; загрузка продолжается. Повторите запрос после её завершения.`;
+    while (this.jobs.jobs.length) {
+      if (signal?.aborted) throw new CancelledError();
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw new BrowserError(message, 409);
+      const job = this.jobs.jobs[0];
+      report({ stage: 'queued', queuePosition: Math.min(4, this.jobs.jobs.length), queueLength: Math.min(5, this.jobs.jobs.length + 1) });
+      await new Promise((resolve, reject) => {
+        let timer;
+        const finish = (error) => { clearTimeout(timer); signal?.removeEventListener('abort', abort); error ? reject(error) : resolve(); };
+        const abort = () => finish(new CancelledError());
+        timer = setTimeout(() => finish(new BrowserError(message, 409)), remaining);
+        signal?.addEventListener('abort', abort, { once: true });
+        // Do not cancel or restart work owned by the code page/background sync.
+        job.promise.then(() => finish(), () => finish());
+      });
+      // Let the job queue remove its completed head before checking it again.
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    if (signal?.aborted) throw new CancelledError();
+  }
   async perform(input, report, signal) {
     const checkCancelled = () => { if (signal?.aborted) throw new CancelledError(); };
     checkCancelled();
     report({ stage: "preparing" });
+    const fetchDepth = input.fetchDepth ?? this.fetchDepth;
+    if (!Number.isInteger(fetchDepth) || fetchDepth < 1 || fetchDepth > 1000) throw new BrowserError("Глубина Git должна быть от 1 до 1000 коммитов");
     const fetchTimeoutSeconds = input.fetchTimeoutSeconds ?? 300;
-    if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 1800) throw new BrowserError('Тайм-аут Git должен быть от 60 до 1800 секунд');
+    if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 7200) throw new BrowserError('Тайм-аут Git должен быть от 60 до 7200 секунд');
     const networkOptions = { timeout: fetchTimeoutSeconds * 1000, timeoutMessage: `Git не успел загрузить данные за ${fetchTimeoutSeconds / 60} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.` };
     const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', offset = 0 } = input;
     if (input.localOnly && (input.refresh || !['branches', 'status', 'tree', 'file', 'search'].includes(operation))) throw new BrowserError('Разрешено только чтение локального снимка', 403);
@@ -170,7 +205,7 @@ export class RepositoryBrowser {
         catch (error) { throw new BrowserError(error.message, 409); }
       }
       report({ stage: 'fetching' });
-      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=' + this.fetchDepth, url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
+      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=' + fetchDepth, url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
       const after = await diskSize(this.root, signal);
       if (after > this.maxCacheBytes) throw new BrowserError(quotaMessage(after), 507);
       report({ stage: 'finalizing' });

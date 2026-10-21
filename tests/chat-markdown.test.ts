@@ -78,3 +78,13 @@ test("PR cards render compact metadata and source-qualified navigation", async (
   assert.match(html, /href="\/pull-requests\?monitor=team&amp;repo=repo&amp;number=42"/);
   assert.doesNotMatch(html, /chat-link-copy/);
 });
+
+test("branch links render navigation with copy-name action", async () => {
+  const { MemoryRouter } = await import("react-router-dom");
+  const params = new URLSearchParams({ client: "Client", project: "Project", branch: "feature/a&b" });
+  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[branch](/code?${params})` })));
+  assert.match(html, /chat-branch-link/);
+  assert.match(html, /feature\/a&amp;b/);
+  assert.match(html, /Скопировать имя ветки/);
+  assert.match(html, /href="\/code\?client=Client&amp;project=Project&amp;branch=feature%2Fa%26b"/);
+});

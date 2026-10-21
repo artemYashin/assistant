@@ -32,6 +32,7 @@ export type Monitor = {
   enabled: number;
   error?: string | null;
   review_files?: string;
+  fetch_depth?: number;
   fetch_timeout_seconds?: number;
   code_sync_minutes?: number;
 };
@@ -294,6 +295,7 @@ export class PullRequests {
     mode: "required" | "all";
     enabled: boolean;
     reviewFiles?: { ignoredPaths: string[]; diffBudget: number };
+    fetchDepth?: number;
     fetchTimeoutSeconds?: number;
     codeSyncMinutes?: number;
   }) {
@@ -310,7 +312,8 @@ export class PullRequests {
       ? reviewFileSettings.parse(input.reviewFiles)
       : undefined;
     const codeSyncMinutes = input.codeSyncMinutes === undefined ? undefined : z.number().int().min(0).max(1440).parse(input.codeSyncMinutes);
-    const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(1800).parse(input.fetchTimeoutSeconds);
+    const fetchDepth = input.fetchDepth === undefined ? undefined : z.number().int().min(1).max(1000).parse(input.fetchDepth);
+    const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(7200).parse(input.fetchTimeoutSeconds);
     this.store.addContext(input);
     this.store.db
       .prepare(
@@ -339,6 +342,9 @@ export class PullRequests {
     if (codeSyncMinutes !== undefined) {
       this.store.db.prepare("UPDATE pr_projects SET code_sync_minutes=? WHERE client=? AND project=? AND source=? AND azure_project=?")
         .run(codeSyncMinutes, input.client, input.project, source, azureProject);
+    }
+    if (fetchDepth !== undefined) {
+      this.store.db.prepare("UPDATE pr_projects SET fetch_depth=? WHERE client=? AND project=? AND source=? AND azure_project=?").run(fetchDepth, input.client, input.project, source, azureProject);
     }
     if (fetchTimeout !== undefined) {
       this.store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=? WHERE client=? AND project=? AND source=? AND azure_project=?")

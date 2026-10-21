@@ -53,6 +53,6 @@ const server = createServer(async (req, res) => {
     else send(error instanceof BrowserError ? error.status : 503, { error: message });
   }
 });
-server.requestTimeout = 35 * 60 * 1000;
+server.requestTimeout = 125 * 60 * 1000;
 server.headersTimeout = 10000;
 server.listen(Number(process.env.PORT) || 8010, '0.0.0.0');
