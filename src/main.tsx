@@ -2184,7 +2184,6 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "copilot", label: "Copilot", icon: Github },
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
-    { id: "assistant", label: "Как вам помогать", icon: Sparkles },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
@@ -2514,6 +2513,31 @@ function Settings({ settings, context, run, busy }: any) {
             />
           </Field>
           <TicketImportSettings form={form} set={set} save={save} />
+          <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
+          <Field
+            label="Обновлять Teams, тикеты и PR каждые, минут"
+            hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
+          >
+            <input
+              type="number"
+              min="1"
+              max="60"
+              step="any"
+              list="sync-intervals"
+              value={form.syncSeconds / 60}
+              onChange={(e) =>
+                set("syncSeconds", Math.round(Number(e.target.value) * 60))
+              }
+            />
+            <datalist id="sync-intervals">
+              <option value="5" />
+              <option value="10" />
+              <option value="15" />
+              <option value="30" />
+              <option value="60" />
+            </datalist>
+          </Field>
+
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
           <h2><Sparkles size={22} />AI Assistant</h2>
@@ -2529,12 +2553,6 @@ function Settings({ settings, context, run, busy }: any) {
             </div>)}
             <small className="muted">Enter — закончить и отправить запись; Esc — отменить. Для назначения модификатора нажмите и отпустите его; для сочетания удерживайте его и нажмите нужную клавишу. Некоторые системные сочетания перехватывает ОС или браузер.</small>
           </div>
-        </section>
-        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-assistant-panel`} aria-labelledby={`${settingsTabId}-assistant`} hidden={settingsTab !== "assistant"}>
-          <h2>
-            <Sparkles size={22} />
-            Как вам помогать
-          </h2>
           <Field
             label="Инструкции ассистенту"
             hint="Предпочтения дополняют системные правила. Отключить обязательное подтверждение отправки здесь нельзя."
@@ -2585,30 +2603,6 @@ function Settings({ settings, context, run, busy }: any) {
               value={form.llmMaxTokens}
               onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
             />
-          </Field>
-          <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
-          <Field
-            label="Обновлять Teams, тикеты и PR каждые, минут"
-            hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
-          >
-            <input
-              type="number"
-              min="1"
-              max="60"
-              step="any"
-              list="sync-intervals"
-              value={form.syncSeconds / 60}
-              onChange={(e) =>
-                set("syncSeconds", Math.round(Number(e.target.value) * 60))
-              }
-            />
-            <datalist id="sync-intervals">
-              <option value="5" />
-              <option value="10" />
-              <option value="15" />
-              <option value="30" />
-              <option value="60" />
-            </datalist>
           </Field>
           <div className="inline-note">
             <AudioLines size={18} />
