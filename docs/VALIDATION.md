@@ -1179,3 +1179,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Renaming transactionally updates scoped records and settings keys, preserves chat and memory bindings, and rejects name/settings collisions. Customer filter/preset browser storage is copied to the new customer scope when available.
 - Stabilized tag editor alignment when opening its input; compacted collapsed inline diff discussion headers; aligned PR branch arrows to branch values and positioned copy feedback outside normal layout.
 - All 259 tests passed, including scoped rename persistence and rollback coverage. TypeScript and production build passed. Browser visual interactions were not exercised.
+
+### Isolated repository browser (2026-10-21)
+
+- Added a design document, internal Git/ripgrep service, named cache/control volumes and header-accessible code page. Existing data volumes and repository contents are not modified.
+- API operations are read-only except updating the service's local cache. HTTPS/PAT is server-only; subprocesses use argument arrays, bounded outputs/timeouts, disabled redirects/helpers/hooks and no checkout/execution. Snapshots exclude symlinks, submodules, binary/oversized files; partial coverage is displayed.
+- Added disposable-repository tests for tree/search, hidden files, branch freshness, snapshot pull, stale revisions, path/command rejection and absence of persisted credentials. Added backend tests for configured-repository resolution, cache use and credential isolation. All 264 tests passed before push, including the new service and backend coverage.
+- TypeScript, JavaScript syntax checks, production build and Compose configuration validation passed. Docker service startup, actual Azure Git fetch and browser visual interactions have NOT been exercised. Existing bundle-size advisories remain.
+- Also includes the pending compact View Diff filename/change-count layout.

@@ -248,7 +248,7 @@ export function PrDiffDialog({
                     onClick={() => { setSelected(i); setLineTarget(null); }}
                   >
                     <FileCode2 size={16} />
-                    <span>
+                    <span className="pr-diff-file-label">
                       <DiffFileName
                         path={
                           f.after === "/dev/null"

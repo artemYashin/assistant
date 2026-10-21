@@ -1,3 +1,4 @@
+import { CodeBrowserPage } from "./CodeBrowserPage.js";
 import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
 import { ModelOverride } from "./ModelOverride.js";
 import { installDialogBackdropDismiss } from "./dialog-backdrop.js";
@@ -503,7 +504,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
       ),
     );
   const heading =
-    page === "settings"
+    page === "code" ? "Код репозитория" : page === "settings"
       ? "Настройки"
       : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return (
@@ -671,6 +672,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 {notice}
               </div>
             )}
+            {page === "code" && <CodeBrowserPage key={JSON.stringify([context, refresh, settings?.azureUrl, settings?.azureProject])} context={context} />}
             {page === "overview" && (
               <>
                 <div className="page-heading">

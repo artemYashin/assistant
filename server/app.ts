@@ -1,3 +1,4 @@
+import { CodeBrowser } from "./code-browser.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
 import { azureBrowseSchema } from "./azure-browser.js";
 import {
@@ -104,6 +105,7 @@ export function createApp(
   const pullRequests = new PullRequests(store, agent);
   const prMerge = new PrMerge(store, connectors);
   const prCreate = new PrCreate(store);
+  const codeBrowser = new CodeBrowser(store);
   agent.setPullRequests(pullRequests);
   const app = express();
   app.disable("x-powered-by");
@@ -1065,6 +1067,10 @@ export function createApp(
       })
       .parse(req.query);
     res.json(await pullRequests.completed(input.monitor, input.page));
+  });
+  app.post("/api/code-browser", async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json(await codeBrowser.request(req.body));
   });
   app.get("/api/pr/branches", async (req, res) => {
     const q = z
