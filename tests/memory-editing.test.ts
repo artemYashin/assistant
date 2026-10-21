@@ -34,3 +34,25 @@ test("memory renders formatting and code without executing HTML", () => {
   assert.match(html, /<pre><code/);
   assert.doesNotMatch(html, /<script/);
 });
+
+test("AI refinement edits the same draft with scope and stale-body protection", async t => {
+  const { memoryRefinementTools } = await import("../server/memory-proposals.js");
+  const dir = mkdtempSync(join(tmpdir(), "memory-refine-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "C", project: "P" };
+  const service = new MemoryProposals(store);
+  const { id } = service.propose({ scope: "project", body: "Long draft", reason: "Useful" }, context);
+  let changes = 0;
+  const tools = memoryRefinementTools(store, context, () => {}, () => { changes++; });
+  const edit = (body: string, expectedBody: string) => tools.find(tool => tool.name === "edit_memory_proposal")!.handler!({ id, body, expectedBody } as any, {} as any) as Promise<any>;
+  await edit("Short draft", "Long draft");
+  assert.equal(service.forContext(id!, context).body, "Short draft");
+  assert.equal(service.list().length, 1);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM memories").get() as any).n, 0);
+  assert.equal(changes, 1);
+  await assert.rejects(edit("Stale replacement", "Long draft"), /изменилось/);
+  assert.throws(() => service.forContext(id!, { client: "C", project: "Other" }), /недоступно/);
+  service.decide(id!, true);
+  await assert.rejects(edit("Too late", "Short draft"), /обработано/);
+});

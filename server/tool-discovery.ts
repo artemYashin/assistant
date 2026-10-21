@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  read_memory_proposal: "Read a pending memory proposal for refinement in the current scope.",
+  edit_memory_proposal: "Edit an existing pending memory proposal at user request, without approving it or creating a duplicate.",
   cite_code: "Create clickable file/line-range references opening highlighted code in the repository viewer.",
   show_code_branches: "Display branch buttons with copy and navigation to code page; cached names only.",
   code_work_status: "Read current Git jobs, download progress and queue without starting work.",

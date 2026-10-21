@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+import { useChatToggleShortcut } from "./useChatToggleShortcut.js";
 import { ExportMemoryButton } from "./ExportMemory.js";
 import { currentRepositoryBranch } from "./repository-branch.js";
 import { SingleSelect } from "./SingleSelect.js";
@@ -397,6 +399,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     ),
     [refresh, setRefresh] = useState(0),
     [query, setQuery] = useState("");
+  const toggleAssistant = useCallback(() => setAssistantOpen(value => !value), []);
+  useChatToggleShortcut(settings?.chatToggleKey ?? "KeyC", settings?.chatTogglePress ?? "single", toggleAssistant);
   useEffect(
     () => saveChatPreference("orbit.chat.open", String(assistantOpen)),
     [assistantOpen],
@@ -1009,6 +1013,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   subtitle="Проверьте предложения ассистента перед сохранением в память или отправкой сообщения."
                 />
                 <MemoryProposalList
+                  context={context}
                   items={memoryProposals}
                   onChange={() => setRefresh((n) => n + 1)}
                 />
@@ -2630,13 +2635,24 @@ function Settings({ settings, context, run, busy }: any) {
               <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
             </Field>
           </div>
+          <div className="settings-group">
+            <h3>Горячие клавиши</h3>
+            <div className="voice-settings-row">
+              <strong>Открыть или закрыть боковой чат</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding value={form.chatToggleKey ?? "KeyC"} otherKey={form.voiceCurrentKey ?? "KeyM"} otherKeys={[form.voiceNewKey ?? "KeyN"]} onChange={value => set("chatToggleKey", value)} />
+                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.chatTogglePress ?? "single"} onChange={value => set("chatTogglePress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
+              </div>
+            </div>
+            <p className="muted">По умолчанию C. Буквы и цифры не срабатывают при вводе текста. В открытых диалогах горячая клавиша отключена.</p>
+          </div>
           <div className="settings-group voice-settings-block">
             <h3><Mic size={17} />Голосовой помощник</h3>
             <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>
             {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
               <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} onChange={value => set(`voice${kind}Key`, value)} />
+                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} otherKeys={[form.chatToggleKey ?? "KeyC"]} onChange={value => set(`voice${kind}Key`, value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
               </div>
             </div>)}
@@ -2757,6 +2773,19 @@ function Assistant({
   const [sessionId, setSessionId] = useState("");
   const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
+  const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string } | null>(null);
+  useEffect(() => { setMemoryProposalAttachment(null); }, [context.client, context.project, sessionId]);
+  useEffect(() => {
+    const handle = (event: Event) => {
+      const proposal = (event as CustomEvent).detail;
+      if (!proposal?.id || typeof proposal.body !== "string") return;
+      if ((proposal.scope !== "general" && proposal.client !== context.client) || (proposal.scope === "project" && proposal.project !== context.project)) return;
+      setMemoryProposalAttachment({ id: proposal.id, body: proposal.body });
+      onExpand();
+    };
+    window.addEventListener("orbit:refine-memory", handle);
+    return () => window.removeEventListener("orbit:refine-memory", handle);
+  }, [context.client, context.project, onExpand]);
   const analysisPending = useRef(false);
   const promptInput = useRef<HTMLTextAreaElement>(null);
   const clearChatDialog = useRef<HTMLDialogElement>(null);
@@ -3050,6 +3079,7 @@ function Assistant({
         sessionId,
         viewedTicket: currentViewedTicket(),
         repositoryBranch: currentRepositoryBranch(context),
+        memoryProposalId: memoryProposalAttachment?.id,
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,
@@ -3066,6 +3096,10 @@ function Assistant({
           else chatStream.receive(event);
         }
       }, chatConnection.current!.signal);
+      if (contextKey.current === captured && generation === historyGeneration.current) {
+        setMemoryProposalAttachment(current => current?.id === memoryProposalAttachment?.id ? null : current);
+        setAttachment(null);
+      }
       const toolSnapshot = chatStream.tools();
       if (
         contextKey.current === captured &&
@@ -3330,7 +3364,7 @@ function Assistant({
               <button
                 type="button"
                 className="icon-button"
-                aria-label="Убрать анализ тикета из контекста"
+                aria-label="Не прикреплять тикет к сообщению"
                 title="Убрать прикреплённый тикет. Переписка сохранится."
                 disabled={
                   working || clearing || shortcutBusy || recording || transcribing || !sessionId
@@ -3379,6 +3413,10 @@ function Assistant({
           <span title="Номер открытого тикета будет передан ассистенту с вашим сообщением. Полное описание автоматически не передаётся.">
             <Eye size={13} aria-hidden="true" /> Открыт тикет <b>#{viewedTicket.id}</b>
           </span>
+        </div>}
+        {memoryProposalAttachment && <div className="chat-memory-attachment">
+          <Sparkles size={15} aria-hidden="true" /><div><strong>Редактирование предложения в память</strong><span title={memoryProposalAttachment.body}>{memoryProposalAttachment.body}</span><small>Прикреплено к следующему сообщению · можно ответить голосом</small></div>
+          <button type="button" className="icon-button" title="Убрать прикреплённое предложение" aria-label="Убрать прикреплённое предложение" onClick={() => setMemoryProposalAttachment(null)}><X size={15} /></button>
         </div>}
         <form className="composer" onSubmit={send}>
           <textarea

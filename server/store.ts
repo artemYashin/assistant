@@ -41,6 +41,8 @@ export const defaults = {
   assistantCodeAccess: true,
   memoryLanguage: "English",
   assistantCodeWaitSeconds: 20,
+  chatToggleKey: "KeyC",
+  chatTogglePress: "single",
   voiceCurrentPress: "double",
   voiceNewPress: "double",
   voiceCurrentKey: "KeyM",
@@ -297,6 +299,8 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
+    if (!(this.db.prepare("PRAGMA table_info(chat_sessions)").all() as any[]).some(c => c.name === "attachment_sent"))
+      this.db.exec("ALTER TABLE chat_sessions ADD COLUMN attachment_sent INTEGER NOT NULL DEFAULT 0");
     if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(c => c.name === "timeline"))
       this.db.exec("ALTER TABLE conversations ADD COLUMN timeline TEXT");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "main_branch"))
@@ -852,12 +856,17 @@ export class Store {
   chatAttachment(
     context: Context,
     id: string,
+    pendingOnly = false,
   ): TicketAnalysisAttachment | null {
     this.chatSession(context, id);
     const row = this.db
-      .prepare("SELECT attachment FROM chat_sessions WHERE id=?")
-      .get(id) as { attachment: string | null };
-    return row.attachment ? JSON.parse(row.attachment) : null;
+      .prepare("SELECT attachment,attachment_sent FROM chat_sessions WHERE id=?")
+      .get(id) as { attachment: string | null; attachment_sent: number };
+    return row.attachment && !(pendingOnly && row.attachment_sent) ? JSON.parse(row.attachment) : null;
+  }
+  markChatAttachmentSent(context: Context, id: string) {
+    this.chatSession(context, id);
+    this.db.prepare("UPDATE chat_sessions SET attachment_sent=1 WHERE id=?").run(id);
   }
   detachChatTicket(context: Context, id: string) {
     this.chatSession(context, id);
@@ -865,7 +874,7 @@ export class Store {
     this.set(`chat.context:${id}`, null);
     this.db
       .prepare(
-        "UPDATE chat_sessions SET attachment=NULL,updated_at=? WHERE id=?",
+        "UPDATE chat_sessions SET attachment=NULL,attachment_sent=0,updated_at=? WHERE id=?",
       )
       .run(new Date().toISOString(), id);
     return { ok: true };
@@ -914,7 +923,7 @@ export class Store {
         .run(session.id, context.client, context.project);
       this.db
         .prepare(
-          "UPDATE chat_sessions SET title='Новый чат',attachment=NULL,updated_at=? WHERE id=?",
+          "UPDATE chat_sessions SET title='Новый чат',attachment=NULL,attachment_sent=0,updated_at=? WHERE id=?",
         )
         .run(new Date().toISOString(), session.id);
       return { deleted: result.changes };

@@ -58,12 +58,19 @@ export class MemoryProposals {
       note: "Запись ещё не сохранена в память. Ожидает подтверждения в интерфейсе.",
     };
   }
-  edit(id: string, input: unknown) {
+  forContext(id: string, context: Context) {
+    const p = this.store.db.prepare("SELECT * FROM memory_proposals WHERE id=?").get(id) as any;
+    if (!p || (p.scope !== "general" && p.client !== context.client) || (p.scope === "project" && p.project !== context.project)) throw new AppError(404, "Предложение недоступно в выбранном заказчике и проекте");
+    if (p.status !== "pending") throw new AppError(409, "Предложение уже обработано");
+    return p;
+  }
+  edit(id: string, input: unknown, expectedBody?: string) {
     const { body } = proposalSchema.pick({ body: true }).parse(input);
     return this.store.db.transaction(() => {
-      const proposal = this.store.db.prepare("SELECT status FROM memory_proposals WHERE id=?").get(id) as any;
+      const proposal = this.store.db.prepare("SELECT status,body FROM memory_proposals WHERE id=?").get(id) as any;
       if (!proposal) throw new AppError(404, "Предложение не найдено");
       if (proposal.status !== "pending") throw new AppError(409, "Предложение уже обработано. Сохранённую запись можно изменить на странице памяти.");
+      if (expectedBody !== undefined && proposal.body !== expectedBody) throw new AppError(409, "Предложение изменилось. Прочитайте актуальный текст перед редактированием.");
       this.store.db.prepare("UPDATE memory_proposals SET body=? WHERE id=?").run(body, id);
       this.store.audit("memory.proposal_edited", id);
       return { ok: true };
@@ -114,4 +121,20 @@ export function memoryProposalTool(
       return new MemoryProposals(store).propose(args, context);
     },
   });
+}
+
+export function memoryRefinementTools(store: Store, context: Context, assertActive: () => void, onEdited: () => void) {
+  const service = new MemoryProposals(store);
+  return [
+    defineTool("read_memory_proposal", {
+      description: "Read a pending memory proposal in current scope to refine it. Does not read or change saved memory.",
+      parameters: z.object({ id: z.string().uuid() }),
+      handler: async ({ id }) => { assertActive(); return service.forContext(id, context); },
+    }),
+    defineTool("edit_memory_proposal", {
+      description: "Refine an existing pending memory proposal at the user's request. Supply complete replacement Markdown and exact previous body from attachment/read_memory_proposal to avoid overwriting concurrent edits. Does not approve or save to memory. No extra confirmation needed for this draft edit.",
+      parameters: z.object({ id: z.string().uuid(), body: z.string().trim().min(1).max(8000), expectedBody: z.string().max(8000) }),
+      handler: async ({ id, body, expectedBody }) => { assertActive(); service.forContext(id, context); service.edit(id, { body }, expectedBody); onEdited(); return { id, status: "pending", updated: true }; },
+    }),
+  ];
 }

@@ -9160,3 +9160,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-code-reference .chat-copyable-link > a { overflow-wrap: normal; min-width: 0; }
 .chat-code-reference .chat-link-copy { flex: 0 0 20px; }
 .chat-markdown .chat-code-reference .chat-code-link { min-width: 0; }
+.memory-refine-button { margin-top: 8px; }
+.chat-memory-attachment { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid #cbded2; border-radius: 8px; background: #eaf3ed; font-size: 12px; }
+.chat-memory-attachment > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.chat-memory-attachment span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chat-memory-attachment small { font-size: 10px; color: #61766a; }
+.chat-memory-attachment > svg, .chat-memory-attachment > button { flex-shrink: 0; }

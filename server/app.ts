@@ -57,6 +57,8 @@ const settingsSchema = z
     assistantCodeAccess: z.boolean().default(true),
     memoryLanguage: z.string().trim().min(1).max(100).default("English"),
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
+    chatToggleKey: z.string().max(80).regex(voiceBindingPattern).default("KeyC"),
+    chatTogglePress: z.enum(["single", "double"]).default("single"),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
     voiceNewPress: z.enum(["single", "double"]).default("double"),
     voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),
@@ -90,7 +92,7 @@ const settingsSchema = z
     project: text,
     azurePat: z.string().max(2000).optional(),
   })
-  .strict().refine(value => value.voiceCurrentKey !== value.voiceNewKey, { message: "Выберите разные клавиши для текущего и нового чата", path: ["voiceNewKey"] });
+  .strict().refine(value => ![value.voiceCurrentKey, value.voiceNewKey].includes(value.chatToggleKey), { message: "Клавиша открытия чата должна отличаться от голосовых горячих клавиш", path: ["chatToggleKey"] }).refine(value => value.voiceCurrentKey !== value.voiceNewKey, { message: "Выберите разные клавиши для текущего и нового чата", path: ["voiceNewKey"] });
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 function sessionToken(req: Request) {
   return (
@@ -526,7 +528,7 @@ export function createApp(
         ...store.conversationPage(context, session.id, before),
         usage: new UsageLedger(store).sessionUsage(context, session.id),
         attachment: attachmentPreview(
-          store.chatAttachment(context, session.id),
+          store.chatAttachment(context, session.id, true),
         ),
       });
     } else res.json(store.history(context, id));
@@ -566,6 +568,7 @@ export function createApp(
           model: z.string().trim().max(200).optional(),
           context: contextSchema,
           sessionId: z.string().uuid().optional(),
+          memoryProposalId: z.string().uuid().optional(),
           repositoryBranch: z.string().min(1).max(500).optional(),
           viewedTicket: z.object({ id: z.number().int().positive().safe(), source: z.string().min(1).max(2000) }).optional(),
           selectedTickets: z
@@ -590,7 +593,7 @@ export function createApp(
         ? `${v.prompt}\n\nВыбранные пользователем тикеты в таблице: ${ids.map((id) => `#${id}`).join(", ")}. Это номера, а не содержимое тикетов. При необходимости прочитай данные доступными инструментами; сам выбор не является просьбой изменить тикеты.`
         : v.prompt;
       if (!req.headers.accept?.includes("application/x-ndjson")) {
-        res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model, undefined, v.viewedTicket, v.repositoryBranch));
+        res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model, undefined, v.viewedTicket, v.repositoryBranch, v.memoryProposalId));
         return;
       }
       res.status(200).set({ "Content-Type": "application/x-ndjson", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" });
@@ -599,7 +602,7 @@ export function createApp(
       const heartbeat = setInterval(() => { if (!res.destroyed && !res.writableEnded) res.write("\n"); }, 15000);
       try {
         const result = await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model,
-          progress => write({ type: "progress", progress }), v.viewedTicket, v.repositoryBranch);
+          progress => write({ type: "progress", progress }), v.viewedTicket, v.repositoryBranch, v.memoryProposalId);
         write({ type: "result", data: result });
       } catch (error) {
         write({ type: "error", error: error instanceof AppError ? error.message : "Не удалось завершить ответ ассистента" });

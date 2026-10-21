@@ -1,13 +1,13 @@
 import { voiceBinding, voiceBindingLabel, modifierCode } from "../server/voice-binding.js";
 import { useRef, useState } from "react";
 
-export function VoiceBinding({ value, otherKey, onChange }: { value: string; otherKey: string; onChange: (value: string) => void }) {
+export function VoiceBinding({ value, otherKey, otherKeys = [], onChange }: { value: string; otherKey: string; otherKeys?: string[]; onChange: (value: string) => void }) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState("");
   const pending = useRef("");
   function cancel() { setListening(false); pending.current = ""; setError(""); }
   function save(binding: string) {
-    if (binding === otherKey) { setError("Эта клавиша уже используется для другого чата"); return; }
+    if (binding === otherKey || otherKeys.includes(binding)) { setError("Эта клавиша уже используется для другого действия"); return; }
     onChange(binding); setError(""); setListening(false); pending.current = "";
   }
   return <div className="voice-binding" data-voice-binding onBlur={event => {

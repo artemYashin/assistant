@@ -97,3 +97,22 @@ test("UI pages retain older messages while model context stays limited", (t) => 
   );
   assert.equal(store.history(context, session.id).length, 40);
 });
+
+test("consumed ticket attachment hides its badge but keeps chat context", t => {
+  const store = fixture(t);
+  const attachment = { id: 123, title: "Ticket", description: "Retained content" } as any;
+  const session = store.createChat(context, attachment);
+  assert.equal(store.chatAttachment(context, session.id, true)?.id, 123);
+  store.markChatAttachmentSent(context, session.id);
+  assert.equal(store.chatAttachment(context, session.id, true), null);
+  assert.equal(store.chatAttachment(context, session.id)?.description, "Retained content");
+  store.detachChatTicket(context, session.id);
+  assert.equal(store.chatAttachment(context, session.id), null);
+});
+test("removing a pending ticket attachment leaves no content to send", t => {
+  const store = fixture(t);
+  const session = store.createChat(context, { id: 124, title: "Accidental attachment" } as any);
+  store.detachChatTicket(context, session.id);
+  assert.equal(store.chatAttachment(context, session.id, true), null);
+  assert.equal(store.chatAttachment(context, session.id), null);
+});
