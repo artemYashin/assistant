@@ -102,7 +102,7 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import { VoiceShortcut } from "./VoiceShortcut.js";
-import { ChatStream, ChatToolHistory, useChatStream, formatChatDuration } from "./ChatStream.js";
+import { ChatStream, ChatTimeline, ChatToolHistory, useChatStream, formatChatDuration } from "./ChatStream.js";
 import type { ChatProgress } from "../server/chat-stream.js";
 import { api, apiProgress, setCsrf } from "./api.js";
 import "./style.css";
@@ -3080,6 +3080,7 @@ function Assistant({
             cards: r.cards || [],
             duration_ms: r.durationMs ?? chatStream.elapsed(),
             tools: toolSnapshot,
+            timeline: r.timeline,
           },
         ]);
       chatStream.reset();
@@ -3091,7 +3092,7 @@ function Assistant({
       ) {
         const partial = chatStream.partial();
         const toolSnapshot = chatStream.tools().map(tool => ({ ...tool, status: tool.status === "running" ? "interrupted" : tool.status }));
-        if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed(), tools: toolSnapshot }]);
+        if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed(), tools: toolSnapshot, timeline: chatStream.timeline() }]);
         setError(e.message);
         setPrompt(current => voiceText ? [current, text].filter(Boolean).join("\n") : text);
       }
@@ -3280,11 +3281,11 @@ function Assistant({
                 <Sparkles size={13} /> Orbit
               </span>
             )}
-            <ChatToolHistory tools={m.tools} />
+            {!m.timeline?.length && <ChatToolHistory tools={m.tools} />}
             {m.role === "error" ? (
-              <p>{m.body}</p>
+              <>{m.timeline?.length > 0 && <ChatTimeline items={m.timeline} azureSource={azureSource} />}<p>{m.body}</p></>
             ) : (
-              <ChatMarkdown text={m.body} azureSource={azureSource} />
+              m.timeline?.length ? <ChatTimeline items={m.timeline} azureSource={azureSource} /> : <ChatMarkdown text={m.body} azureSource={azureSource} />
             )}
             {typeof m.duration_ms === "number" && <div className="chat-elapsed">Время работы: <time>{formatChatDuration(m.duration_ms)}</time></div>}
             {(typeof m.cards === "string"

@@ -1,3 +1,4 @@
+import { updateChatTimeline, type ChatTimelineItem } from "../server/chat-stream.js";
 import { useEffect, useRef, useState } from "react";
 import { Check, LoaderCircle, AlertCircle, Sparkles } from "lucide-react";
 import type { ChatProgress } from "../server/chat-stream.js";
@@ -21,14 +22,15 @@ const labels: Record<string, string> = {
   list_inbox: "Чтение входящих", propose_teams_message: "Подготовка черновика Teams",
 };
 type ToolProgress = Extract<ChatProgress, { stage: "tool" }>;
-type Live = { startedAt: number; messageId: string; text: string; tools: ToolProgress[] };
-const empty = (): Live => ({ startedAt: Date.now(), messageId: "", text: "", tools: [] });
+type Live = { startedAt: number; messageId: string; text: string; tools: ToolProgress[]; timeline: ChatTimelineItem[] };
+const empty = (): Live => ({ startedAt: Date.now(), messageId: "", text: "", tools: [], timeline: [] });
 export function useChatStream() {
   const [live, setLive] = useState<Live>(empty);
   const value = useRef<Live>(empty()), timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   function reset() { clearTimeout(timer.current); timer.current = undefined; value.current = empty(); setLive(value.current); }
   function receive(event: ChatProgress) {
+    value.current = { ...value.current, timeline: updateChatTimeline(value.current.timeline, event) };
     if (event.stage === "text") {
       value.current = { ...value.current, messageId: event.messageId,
         text: event.replace || event.messageId !== value.current.messageId ? event.text : value.current.text + event.text };
@@ -39,7 +41,7 @@ export function useChatStream() {
     }
     if (!timer.current) timer.current = setTimeout(() => { timer.current = undefined; setLive(value.current); }, 50);
   }
-  return { live, reset, receive, tools: () => value.current.tools, partial: () => value.current.text, elapsed: () => Date.now() - value.current.startedAt };
+  return { live, reset, receive, tools: () => value.current.tools, timeline: () => value.current.timeline, partial: () => value.current.text, elapsed: () => Date.now() - value.current.startedAt };
 }
 export function formatChatDuration(milliseconds: number) {
   const seconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -71,17 +73,13 @@ export function ChatStream({ live, azureSource }: { live: Live; azureSource?: st
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const running = live.tools.filter(tool => tool.status === "running");
-  const finished = live.tools.filter(tool => tool.status !== "running").sort((a, b) => (a.offsetMs || 0) - (b.offsetMs || 0));
   return <>
     <div className="chat-elapsed">Время работы: <time>{formatChatDuration(now - live.startedAt)}</time></div>
-    {!!live.tools.length && <div className="chat-live-tools">
-      {!!running.length && <div role="status" className="chat-running-tools"><ToolRows tools={running} now={now} /></div>}
-      {!!finished.length && <details className="chat-finished-tools"><summary>Выполненные вызовы: {finished.length}</summary><ToolRows tools={finished} /></details>}
-    </div>}
-    {live.text && <div className="bubble assistant chat-streaming" aria-label="Ответ формируется">
-      <span className="bubble-author"><Sparkles size={13} /> Orbit</span>
-      <ChatMarkdown text={live.text} azureSource={azureSource} />
-    </div>}
+    <ChatTimeline items={live.timeline} azureSource={azureSource} now={now} />
   </>;
+}
+export function ChatTimeline({ items, azureSource, now }: { items: ChatTimelineItem[]; azureSource?: string; now?: number }) {
+  return <div className="chat-timeline">{items.map(item => item.kind === "text"
+    ? item.text && <div className="chat-timeline-message" key={`text:${item.id}`}><ChatMarkdown text={item.text} azureSource={azureSource} /></div>
+    : <div className="chat-live-tools chat-timeline-tool" key={`tool:${item.id}`}><ToolRows tools={[{ ...item.tool, status: !now && item.tool.status === "running" ? "interrupted" : item.tool.status }]} now={now} /></div>)}</div>;
 }

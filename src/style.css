@@ -9140,3 +9140,11 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .clear-chat-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .clear-chat-confirm { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid #b83c3c; border-radius: 7px; background: #c44141; color: #fff; }
 .clear-chat-confirm:hover:not(:disabled) { background: #aa3030; }
+/* Shared snippet layout in chat, memories, ticket bodies and PR Markdown. */
+.chat-code-snippet > pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; overflow: auto; max-height: 50vh; white-space: pre; }
+.chat-code-snippet > pre > code { display: block; padding: 0; border: 0; background: transparent; font-size: 12px; line-height: 1.6; white-space: pre; }
+.memory-markdown .chat-code-snippet > pre { margin: 0; padding: 10px 0; border: 0; border-radius: 0; }
+.chat-timeline { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.chat-timeline-tool.chat-live-tools { margin: 0; width: 100%; }
+.chat-timeline-message { min-width: 0; }
+.chat-timeline > .chat-timeline-message + .chat-timeline-tool { margin-top: 2px; }

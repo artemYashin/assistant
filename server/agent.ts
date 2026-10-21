@@ -1,3 +1,4 @@
+import { updateChatTimeline, type ChatTimelineItem } from "./chat-stream.js";
 import { codeTools, configuredCodeBranch } from "./code-tools.js";
 import { cachedTicketBatchSchema, ticketLinksBatchSchema, readCachedTicketBatch, readTicketLinksBatch } from "./ticket-read-batch.js";
 import { localTicketScope } from "./local-ticket-scope.js";
@@ -429,7 +430,7 @@ export class Agent {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
     const conversationId = review ? undefined : this.store.chatSession(context, chatSessionId).id;
-    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, request_id, ...message } = row; return message; });
+    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, request_id, timeline, ...message } = row; return message; });
     const runtimeHistorySnapshot = review ? [] : this.store.db.prepare(
       "SELECT rowid AS sequence,role,body FROM conversations WHERE session_id=? AND client=? AND project=? ORDER BY rowid",
     ).all(conversationId, context.client, context.project) as { sequence: number; role: string; body: string }[];
@@ -459,7 +460,8 @@ export class Agent {
     const elapsed = () => Math.max(0, Date.now() - startedAt);
     const cards: string[] = [];
     let partialMessageId = "", partialText = "";
-    const emit = (event: ChatProgress) => { if (!review) { try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ } } };
+    let timeline: ChatTimelineItem[] = [];
+    const emit = (event: ChatProgress) => { if (!review) { timeline = updateChatTimeline(timeline, event); try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ } } };
     emit({ stage: "preparing", startedAt });
     const singleTarget = !review
       ? singleTicketTarget(readPrompt, historySnapshot)
@@ -1304,16 +1306,18 @@ export class Agent {
         ? `${responseBody}\n\n---\n\n${azureQuestion}`
         : responseBody;
       status = "completed";
-      if (!review) this.store.say("assistant", body, context, cards, conversationId, elapsed(), id);
-      return { body, requestId: id, cards, durationMs: elapsed() };
+      if (!review) timeline = updateChatTimeline(timeline, { stage: "text", messageId: partialMessageId || "final", text: body, replace: true });
+      if (!review) this.store.say("assistant", body, context, cards, conversationId, elapsed(), id, timeline);
+      return { body, requestId: id, cards, durationMs: elapsed(), timeline };
     } catch (error) {
       reason =
         stopReason ||
         (error instanceof AppError
           ? error.message
           : "Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.");
-      if (!review && partialText) this.store.say("assistant", partialText + "\n\n_Ответ прерван._", context, [], conversationId, elapsed(), id);
-      if (!review) this.store.say("error", reason, context, [], conversationId, partialText ? undefined : elapsed(), partialText ? undefined : id);
+      if (!review && timeline.length) timeline = updateChatTimeline(timeline, { stage: "text", messageId: "interrupted", text: "_Ответ прерван._", replace: true });
+      if (!review && partialText) this.store.say("assistant", partialText + "\n\n_Ответ прерван._", context, [], conversationId, elapsed(), id, timeline);
+      if (!review) this.store.say("error", reason, context, [], conversationId, partialText ? undefined : elapsed(), partialText ? undefined : id, partialText ? undefined : timeline);
       // Timeout or runtime failure can leave an agent loop alive unless explicitly aborted.
       if (!stopReason) void session?.abort().catch(() => {});
       throw new AppError(stopReason ? 409 : 502, reason);

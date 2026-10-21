@@ -1,6 +1,6 @@
 import { ImagePreview } from "./ImagePreview.js";
 import { createElement, Fragment, type ReactNode } from "react";
-import { ticketText } from "./ticket-text.js";
+import { ChatCodeSnippet } from "./ChatCodeSnippet.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 
 export function TicketRichText({ value, card, reference }: any) {
@@ -27,12 +27,13 @@ export function TicketRichText({ value, card, reference }: any) {
       return null;
     }
   };
-  if (!/<\/?[a-z][^>]*>/i.test(raw)) {
+  const outsideCode = raw.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?^ {0,3}\1[ \t]*$/gm, "");
+  if (!/<\/?[a-z][^>]*>/i.test(outsideCode)) {
     const images = [...raw.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => ({
       source: m[1],
       preview: preview(m[1]),
     }));
-    return <ChatMarkdown text={ticketText(raw)} images={images} />;
+    return <ChatMarkdown text={raw} images={images} />;
   }
   // Parse in an inert template. Rebuild only semantic elements, never Azure's
   // layout styles, event handlers or arbitrary attributes.
@@ -139,6 +140,13 @@ export function TicketRichText({ value, card, reference }: any) {
         ) : (
           <span key={index}>[{alt}: предпросмотр недоступен]</span>
         );
+      }
+      if (tag === "pre") {
+        const code = node.querySelector("code") || node;
+        const language = [...code.classList].find(value => value.startsWith("language-"))?.slice(9) || "";
+        const copy = node.cloneNode(true) as HTMLElement;
+        copy.querySelectorAll("br").forEach(br => br.replaceWith("\n"));
+        return <ChatCodeSnippet key={index} text={copy.textContent || ""} language={language} />;
       }
       let children: ReactNode = renderChildren(node, pre || tag === "pre");
       if (tag === "a") {

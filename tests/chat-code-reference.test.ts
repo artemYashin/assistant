@@ -22,3 +22,13 @@ test("branch cards have copy control and code cards keep line navigation", () =>
   assert.match(html, /a.ts:2/);
   assert.match(html, /endLine=3/);
 });
+
+test("code buttons show filename or symbol while retaining full navigation path", () => {
+  const url = base + "&path=src%2Fdeep%2Fservice.ts&line=4&endLine=8";
+  const render = (href: string) => renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[ref](${href})` })));
+  assert.match(render(url), /<span>service.ts:4/);
+  const symbol = render(url + "&label=loadUser");
+  assert.match(symbol, /<span>loadUser:4/);
+  assert.match(symbol, /src\/deep\/service.ts/);
+  assert.equal(chatCodeBranch(url + "&label=loadUser")?.label, "loadUser");
+});

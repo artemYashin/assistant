@@ -1,4 +1,4 @@
-import { ChatCodeSnippet } from "./ChatCodeSnippet.js";
+import { MarkdownCodeBlock } from "./MarkdownCodeBlock.js";
 import { chatCodeBranch } from "./chat-code-branch.js";
 import { chatPrCard } from "./chat-pr-card.js";
 import { Link } from "react-router-dom";
@@ -60,13 +60,7 @@ export function ChatMarkdown({
                 : ""
         }
         components={{
-          pre: ({ node, children }) => {
-            const code = node?.children.find(child => child.type === "element" && child.tagName === "code");
-            if (code?.type !== "element") return <pre>{children}</pre>;
-            const text = code.children.map(child => child.type === "text" ? child.value : "").join("");
-            const language = String(code.properties?.className || "").replace(/^language-/, "");
-            return <ChatCodeSnippet text={text} language={language} />;
-          },
+          pre: MarkdownCodeBlock,
           blockquote: ({ children }) => (
             <blockquote className="chat-quote-card">
               <Quote className="chat-quote-icon" size={17} aria-hidden="true" />
@@ -78,7 +72,7 @@ export function ChatMarkdown({
             if (!href) return <span>{children}</span>;
             const codeBranch = chatCodeBranch(href);
             if (codeBranch) {
-              if (codeBranch.path) return <span className="chat-code-reference"><Link className="chat-ticket-link chat-code-link" to={codeBranch.href} title={`${codeBranch.branch} · ${codeBranch.path}`}><FileCode2 size={14} aria-hidden="true" /><span>{codeBranch.path}:{codeBranch.startLine}{codeBranch.endLine !== codeBranch.startLine ? `–${codeBranch.endLine}` : ""}</span></Link></span>;
+              if (codeBranch.path) return <span className="chat-code-reference"><Link className="chat-ticket-link chat-code-link" to={codeBranch.href} title={`${codeBranch.branch} · ${codeBranch.path}`}><FileCode2 size={14} aria-hidden="true" /><span>{codeBranch.label || codeBranch.path.split("/").pop()}:{codeBranch.startLine}{codeBranch.endLine !== codeBranch.startLine ? `–${codeBranch.endLine}` : ""}</span></Link></span>;
               return <span className="chat-code-reference"><CopyableLink href={codeBranch.href} copyValue={codeBranch.branch}><Link className="chat-ticket-link chat-branch-link" to={codeBranch.href} title={codeBranch.branch}><GitBranch size={14} aria-hidden="true" /><span>{codeBranch.branch}</span></Link></CopyableLink></span>;
             }
             const pr = chatPrCard(href);

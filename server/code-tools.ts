@@ -43,7 +43,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
   return [
     defineTool("cite_code", {
       description: "Create clickable code references after inspecting code. Returns localUrl links opening the branch/file and highlighting a line range. Render each exact URL as a Markdown link on its own line. Batch multiple references. Reads local files to validate line ranges; no network or bodies returned.",
-      parameters: z.object({ references: z.array(z.object({ branch, path: path.min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive().optional() })).min(1).max(20) }),
+      parameters: z.object({ references: z.array(z.object({ branch, path: path.min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive().optional(), label: z.string().trim().min(1).max(200).optional().describe("Optional function/object name for the button; otherwise filename is shown") })).min(1).max(20) }),
       handler: async ({ references }) => {
         const results = [];
         for (const ref of references) {
@@ -51,7 +51,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
           if (data.unavailable) throw new AppError(400, "Файл недоступен для цитирования");
           const endLine = ref.endLine ?? ref.startLine;
           if (endLine < ref.startLine || endLine > String(data.text).split(/\r?\n/).length) throw new AppError(400, "Диапазон строк вне файла");
-          results.push({ branch: data.branch, label: `${ref.path}:${ref.startLine}${endLine === ref.startLine ? "" : `–${endLine}`}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, line: String(ref.startLine), endLine: String(endLine) })}` });
+          results.push({ branch: data.branch, label: `${ref.label || ref.path.split("/").pop()}:${ref.startLine}${endLine === ref.startLine ? "" : `–${endLine}`}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, ...(ref.label ? { label: ref.label } : {}), line: String(ref.startLine), endLine: String(endLine) })}` });
         }
         return { references: results };
       },
