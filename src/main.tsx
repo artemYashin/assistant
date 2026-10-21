@@ -1,3 +1,4 @@
+import { currentViewedTicket, useViewedTicket } from "./viewed-ticket.js";
 import { CodeBrowserPage } from "./CodeBrowserPage.js";
 import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
 import { ModelOverride } from "./ModelOverride.js";
@@ -5,7 +6,7 @@ import { installDialogBackdropDismiss } from "./dialog-backdrop.js";
 import { TicketColorLegend } from "./TicketColorLegend.js";
 import { paginationItems } from "./pagination.js";
 import { TicketDataRow } from "./TicketDataRow.js";
-import { Cloud } from "lucide-react";
+import { Cloud, Eye } from "lucide-react";
 import { useAzureTicketBrowser } from "./useAzureTicketBrowser.js";
 import { ImportAzureTickets } from "./ImportAzureTickets.js";
 import { useTicketFilterOptions } from "./useTicketFilterOptions.js";
@@ -2636,6 +2637,7 @@ function Assistant({
   }, [chatStream.live]);
   useEffect(() => () => chatConnection.current?.abort(), []);
   const selectedTickets = useSelectedChatTickets();
+  const viewedTicket = useViewedTicket();
   const [sessionId, setSessionId] = useState("");
   const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
@@ -2921,11 +2923,7 @@ function Assistant({
         model: chatModel,
         context,
         sessionId,
-        viewedTicket: (() => {
-          const cards = [...document.querySelectorAll<HTMLElement>("dialog[open] .ticket-detail[data-viewed-ticket-id]")];
-          const card = cards.reverse().find(element => !element.closest("dialog:not([open])") && element.getClientRects().length > 0);
-          return card ? { id: Number(card.dataset.viewedTicketId), source: card.dataset.viewedTicketSource } : undefined;
-        })(),
+        viewedTicket: currentViewedTicket(),
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,
@@ -3237,6 +3235,11 @@ function Assistant({
             </div>
           </div>
         )}
+        {viewedTicket && <div className="chat-viewed-ticket" aria-live="polite">
+          <span title="Номер открытого тикета будет передан ассистенту с вашим сообщением. Полное описание автоматически не передаётся.">
+            <Eye size={13} aria-hidden="true" /> Открыт тикет <b>#{viewedTicket.id}</b>
+          </span>
+        </div>}
         <form className="composer" onSubmit={send}>
           <textarea
             ref={promptInput}
