@@ -1374,9 +1374,10 @@ export function createApp(
     );
   });
   let syncing = false;
+  let syncingPrs = false;
   async function sync() {
     store.purgeTicketTrash();
-    if (syncing) throw new AppError(409, "Синхронизация уже выполняется");
+    if (syncing || syncingPrs) throw new AppError(409, "Синхронизация уже выполняется");
     syncing = true;
     const errors: string[] = [];
     store.set("sync.status", {
@@ -1426,6 +1427,20 @@ export function createApp(
     }
   }
   app.post("/api/sync", async (_req, res) => res.json(await sync()));
+  app.post("/api/pr/sync", async (_req, res) => {
+    if (syncing || syncingPrs) throw new AppError(409, "Синхронизация уже выполняется");
+    syncingPrs = true;
+    try {
+      await pullRequests.sync();
+      const errors = pullRequests.monitors()
+        .filter(m => m.enabled && m.error)
+        .map(m => `${m.azure_project}: ${m.error}`);
+      if (errors.length) throw new AppError(502, errors.join("; "));
+      res.json({ ok: true });
+    } finally {
+      syncingPrs = false;
+    }
+  });
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 20 * 1024 * 1024, files: 1 },

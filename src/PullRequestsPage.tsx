@@ -418,9 +418,9 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               <button
                 className="secondary"
                 disabled={busy}
-                onClick={() => void run(() => api("/sync", "POST", {}))}
+                onClick={() => void run(() => api("/pr/sync", "POST", {}))}
               >
-                Синхронизировать сейчас
+                Синхронизировать PR
               </button>
               <button className="primary" onClick={() => setCreating(true)}>
                 ＋ Создать PR

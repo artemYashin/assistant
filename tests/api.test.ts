@@ -144,3 +144,21 @@ test("agent has no send or approval capability, disables builtins and rejects un
   );
   assert.equal(allowed.permissionDecision, "allow");
 });
+
+test("ticket and PR sync buttons use independent synchronization routes", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-sync-api-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const { app, connectors, pullRequests } = createApp(store);
+  const calls: string[] = [];
+  connectors.syncTickets = async (importMine) => { calls.push(`tickets:${importMine}`); return { count: 0 }; };
+  connectors.syncTeams = async () => { throw new Error("Teams must not be synchronized"); };
+  pullRequests.sync = async () => { calls.push("prs"); };
+  const headers = { Host: "localhost:43871", Origin: "http://localhost:43871", "X-Orbit-Request": "1" };
+  const setup = await request(app).post("/api/auth/setup").set(headers).send({ password: "correct-password-long" }).expect(200);
+  const auth = { ...headers, Cookie: setup.headers["set-cookie"][0].split(";")[0], "X-CSRF-Token": setup.body.csrf };
+  await request(app).post("/api/pr/sync").set(auth).send({}).expect(200);
+  assert.deepEqual(calls, ["prs"]);
+  await request(app).post("/api/tickets/import").set(auth).send({}).expect(200);
+  assert.deepEqual(calls, ["prs", "tickets:true"]);
+});
