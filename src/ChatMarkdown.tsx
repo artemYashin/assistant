@@ -1,7 +1,7 @@
 import { ImagePreview } from "./ImagePreview.js";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
-import { chatTicketPath } from "./routing.js";
+import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { remarkDescriptionBreaks } from "./remark-description-breaks.js";
@@ -23,7 +23,7 @@ export function ChatMarkdown({
         remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks] : [remarkGfm]}
         skipHtml
         urlTransform={(url, key) =>
-          ticketAsset(url) ? url : key === "href" && chatTicketPath(url)
+          ticketAsset(url) || (key === "href" && chatTicketCitation(url)) ? url : key === "href" && chatTicketPath(url)
             ? chatTicketPath(url)!
             : key === "src" &&
                 images?.some((image) => image.source === url && image.preview)
@@ -38,6 +38,11 @@ export function ChatMarkdown({
               (child) => child.type === "element" && child.tagName === "img",
             ) ? (
               <span>{children}</span>
+            ) : href && chatTicketCitation(href) ? (
+              <button type="button" className="chat-ticket-link" onClick={() => {
+                const citation = chatTicketCitation(href)!;
+                window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: citation.source, tickets: [{ id: citation.id, title: `#${citation.id}` }], citation } }));
+              }}>{children}<ArrowUpRight size={14} aria-hidden="true" /></button>
             ) : href && chatTicketPath(href) ? (
               <Link className="chat-ticket-link" to={chatTicketPath(href)!}>
                 {children}

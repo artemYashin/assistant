@@ -1,4 +1,5 @@
 export type ChatProgress =
+  | { stage: "data_synced"; domain: "tickets" | "prs" | "teams" }
   | { stage: "close_ticket_details" }
   | { stage: "show_tickets"; tickets: { id: number; title: string }[]; source: string }
   | { stage: "preparing"; startedAt?: number }

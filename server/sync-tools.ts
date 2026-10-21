@@ -4,13 +4,13 @@ import { Store, AppError, type Context } from "./store.js";
 import type { Connectors } from "./connectors.js";
 import type { PullRequests } from "./pull-requests.js";
 
-export function synchronizationTools(store: Store, connectors: Connectors | undefined, prs: PullRequests | undefined, context: Context, assertActive: () => void) {
+export function synchronizationTools(store: Store, connectors: Connectors | undefined, prs: PullRequests | undefined, context: Context, assertActive: () => void, onSynced: (domain: "tickets" | "prs" | "teams") => void) {
   const source = store.source();
   const runs = new Map<string, Promise<unknown>>();
   const once = (name: string, action: () => Promise<unknown>) => {
     assertActive();
     if (source !== store.source()) throw new AppError(409, "Подключение изменилось. Повторите запрос синхронизации.");
-    if (!runs.has(name)) runs.set(name, action());
+    if (!runs.has(name)) runs.set(name, action().finally(() => onSynced(name as "tickets" | "prs" | "teams")));
     return runs.get(name)!;
   };
   return [

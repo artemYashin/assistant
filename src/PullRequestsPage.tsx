@@ -316,10 +316,13 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
       setPrs([]);
     }
     void load();
+    const synced = () => void load();
+    window.addEventListener("orbit:data-synced", synced);
     const timer = setInterval(load, 5000);
     return () => {
       live = false;
       clearInterval(timer);
+      window.removeEventListener("orbit:data-synced", synced);
     };
   }, [query, version, completedItems, readOnly]);
   async function run(fn: () => Promise<any>) {

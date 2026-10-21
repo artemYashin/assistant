@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
   sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
   sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",

@@ -12,6 +12,7 @@ export function TicketLookupDialog() {
   const request = useRef(0);
   const [selection, setSelection] = useState<{ id: number; title: string }[]>([]);
   const source = useRef("");
+  const [citation, setCitation] = useState<{ section: string; quote: string } | undefined>();
   const [open, setOpen] = useState(false);
   const [id, setId] = useState("");
   const [cardRef, setCardRef] = useState("");
@@ -23,6 +24,7 @@ export function TicketLookupDialog() {
     request.current++;
     setOpen(false);
     setSelection([]);
+    setCitation(undefined);
     setCardRef("");
     setBusy(false);
     setError("");
@@ -46,6 +48,7 @@ export function TicketLookupDialog() {
       const tickets = detail.tickets.filter((t: any) => Number.isSafeInteger(t.id) && t.id > 0 && typeof t.title === "string").slice(0, 50);
       if (!tickets.length) return;
       source.current = detail.source;
+      setCitation(detail.citation);
       setSelection(tickets); setOpen(true); dialog.current?.showModal();
       void selectTicket(tickets[0].id);
     };
@@ -147,11 +150,11 @@ export function TicketLookupDialog() {
                 </button>)}
               </nav>}
               <div className="ticket-viewer-content" aria-busy={busy}>
-                {busy ? <p role="status">Загружаю тикет…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary" onClick={() => void selectTicket(Number(id))}>Повторить</button></div> : cardRef ? <TicketCard key={cardRef} reference={cardRef} /> : null}
+                {busy ? <p role="status">Загружаю тикет…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary" onClick={() => void selectTicket(Number(id))}>Повторить</button></div> : cardRef ? <TicketCard key={cardRef} reference={cardRef} citation={citation} /> : null}
               </div>
             </div>
           ) : cardRef ? (
-            <TicketCard reference={cardRef} />
+            <TicketCard reference={cardRef} citation={citation} />
           ) : (
             <section className="panel ticket-lookup">
               <form

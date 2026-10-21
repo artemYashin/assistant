@@ -45,3 +45,11 @@ export function chatTicketPath(value: string): string | null {
     return null;
   return ticketPath(Number(id), source);
 }
+
+export function chatTicketCitation(value: string) {
+  if (!chatTicketPath(value)) return null;
+  const params = new URLSearchParams(value.slice("/tickets?".length));
+  const section = params.get("section"), quote = params.get("quote");
+  if (!section || !["description", "criteria", "repro"].includes(section) || !quote || quote.length > 600) return null;
+  return { id: Number(params.get("id")), source: params.get("source")!, section, quote };
+}

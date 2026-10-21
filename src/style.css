@@ -8840,3 +8840,6 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
   object-fit: contain;
   margin: 0;
 }
+
+.ticket-citation-sections { display: contents; }
+.ticket-citation-highlight { background: #fff2c7 !important; outline: 2px solid #d9b965; outline-offset: 2px; border-radius: 4px; scroll-margin-block: 24px; }

@@ -403,6 +403,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   }, [location.pathname, location.search]);
   useEffect(() => {
     const changed = () => setRefresh((n) => n + 1);
+    window.addEventListener("orbit:data-synced", changed);
     window.addEventListener("orbit:ticket-state", changed);
     window.addEventListener("orbit:ticket-assignee", changed);
     window.addEventListener("orbit:ticket-metadata", changed);
@@ -410,6 +411,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     window.addEventListener("orbit:ticket-removed", changed);
     window.addEventListener("orbit:ticket-tracked", changed);
     return () => {
+      window.removeEventListener("orbit:data-synced", changed);
       window.removeEventListener("orbit:ticket-state", changed);
       window.removeEventListener("orbit:ticket-assignee", changed);
       window.removeEventListener("orbit:ticket-metadata", changed);
@@ -2948,7 +2950,8 @@ function Assistant({
         })),
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
-          if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
+          if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
+          else if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
           else if (event.stage === "close_ticket_details") {
             window.dispatchEvent(new Event("orbit-close-ticket-details"));
             onExpand();

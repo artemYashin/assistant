@@ -37,7 +37,9 @@ import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "./api.js";
 import { ticketText as text } from "./ticket-text.js";
-export function TicketCard({ reference }: { reference: string }) {
+export function TicketCard({ reference, citation }: { reference: string; citation?: { section: string; quote: string } }) {
+  const citationRoot = useRef<HTMLDivElement>(null);
+  const [citationMissing, setCitationMissing] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [trackingError, setTrackingError] = useState("");
   const trackingPending = useRef(false);
@@ -60,6 +62,21 @@ export function TicketCard({ reference }: { reference: string }) {
   }, []);
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
+  useEffect(() => {
+    if (!card || !citation || !citationRoot.current) return;
+    const section = [...citationRoot.current.querySelectorAll<HTMLDetailsElement>("details[data-citation-section]")].find(node => node.dataset.citationSection === citation.section);
+    if (!section) { setCitationMissing(true); return; }
+    section.open = true;
+    const normalize = (text: string) => text.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim();
+    const quote = normalize(citation.quote);
+    const candidates = [...section.querySelectorAll<HTMLElement>("p, li, td, th, blockquote, div")].filter(node => normalize(node.textContent || "").includes(quote));
+    const target = candidates.sort((a, b) => (a.textContent?.length || 0) - (b.textContent?.length || 0))[0];
+    setCitationMissing(!target);
+    const highlighted = target || section;
+    highlighted.classList.add("ticket-citation-highlight");
+    const frame = requestAnimationFrame(() => highlighted.scrollIntoView({ block: "center", behavior: "smooth" }));
+    return () => { cancelAnimationFrame(frame); highlighted.classList.remove("ticket-citation-highlight"); };
+  }, [card, citation]);
   useEffect(() => {
     const update = (event: Event) => {
       const { id, source, comment } = (event as CustomEvent).detail;
@@ -583,6 +600,8 @@ export function TicketCard({ reference }: { reference: string }) {
                 {w}
               </p>
             ))}
+            <div ref={citationRoot} className="ticket-citation-sections">
+            {citationMissing && <p role="status" className="muted">Точный фрагмент не найден в текущей версии тикета. Возможно, текст изменился.</p>}
             {[
               ["System.Description", "Описание"],
               ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
@@ -593,6 +612,7 @@ export function TicketCard({ reference }: { reference: string }) {
                 <details
                   className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : key === "System.Description" ? " ticket-section-description" : ""}`}
                   key={key}
+                  data-citation-section={key === "System.Description" ? "description" : key === "Microsoft.VSTS.TCM.ReproSteps" ? "repro" : "criteria"}
                   open
                 >
                   <summary>
@@ -614,6 +634,7 @@ export function TicketCard({ reference }: { reference: string }) {
                   </TicketSectionScroll>
                 </details>
               ))}
+            </div>
             <details
               className="ticket-section ticket-section-prs"
               open={!!card.linkedPullRequests?.length}
