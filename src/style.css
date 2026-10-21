@@ -8704,7 +8704,7 @@ summary > svg {
 .assistant-heading-text > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .assistant-heading .assistant-chat-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; font-size: 10px; color: #738179; }
 .assistant-chat-title .dot { display: inline-block; margin-right: 5px; }
-.assistant-heading > button.icon-button { display: grid; place-items: center; width: 28px; height: 28px; padding: 5px; border: 1px solid #dbe3df; border-radius: 6px; background: #fff; color: #60736a; }
+.assistant-heading > button.icon-button { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; padding: 7px; border: 1px solid #dbe3df; border-radius: 6px; background: #fff; color: #60736a; }
 .assistant-heading > button.icon-button:hover { background: #e3ebe6; border-color: #becfc4; }
 .assistant-token-usage { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; padding: 4px 12px 8px; border-bottom: 1px solid #dce4df; background: #f1f4f3; font-size: 10px; color: #77867c; flex-shrink: 0; }
 .assistant-token-usage b { font-weight: 600; color: #465d50; font-variant-numeric: tabular-nums; }
@@ -9057,7 +9057,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-pr-card-meta > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .chat-pr-card-meta time { white-space: nowrap; }
 .chat-pr-card-body .chat-ticket-link { font-size: 11px; padding: 3px 7px; }
-.voice-settings-controls { display: grid; grid-template-columns: minmax(0, 1fr) 210px; align-items: center; gap: 12px; padding: 10px 12px 30px; border: 1px solid #d7e2db; border-radius: 10px; background: #fff; }
+.voice-settings-controls { display: grid; grid-template-columns: minmax(0, 1fr) 210px; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #d7e2db; border-radius: 10px; background: #fff; }
 .voice-binding { position: relative; min-width: 0; display: flex; align-items: center; gap: 6px; }
 .voice-binding-key { max-width: 100%; min-width: 0; flex: 1; font-size: 12px; justify-content: flex-start; }
 .voice-binding-key kbd { overflow-wrap: anywhere; }
@@ -9069,3 +9069,5 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .voice-press-select .multi-select-trigger { min-height: 38px; }
 .voice-press-select .multi-select-panel { min-width: 100%; }
 @media (max-width: 560px) { .voice-settings-controls { grid-template-columns: minmax(0, 1fr); gap: 30px; } }
+
+.assistant-heading > button.assistant-chats-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; padding-inline: 10px; font-size: 12px; font-weight: 500; }

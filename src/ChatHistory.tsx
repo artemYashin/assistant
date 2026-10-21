@@ -22,14 +22,14 @@ export function ChatHistory({
     <>
       <button
         type="button"
-        className="icon-button"
+        className="icon-button assistant-chats-button"
         title="История чатов"
         aria-label="История чатов"
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >
-        <History size={18} />
+        <History size={18} /><span>Чаты</span>
       </button>
       {open &&
         createPortal(
