@@ -31,7 +31,7 @@ export async function api<T = any>(
 }
 
 // One POST carries both progress events and the final result; no polling or retry.
-export async function apiProgress(path: string, body: unknown, onProgress: (value: { stage: string; percent?: number }) => void, signal: AbortSignal) {
+export async function apiProgress(path: string, body: unknown, onProgress: (value: { stage: string; percent?: number; startedAt?: number; queuePosition?: number; queueLength?: number }) => void, signal: AbortSignal) {
   const response = await fetch(`/api${path}`, {
     method: "POST", credentials: "same-origin", signal,
     headers: { "Content-Type": "application/json", Accept: "application/x-ndjson", "X-Orbit-Request": "1", ...(csrf ? { "X-CSRF-Token": csrf } : {}) },

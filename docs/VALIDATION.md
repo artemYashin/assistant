@@ -1211,3 +1211,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Docker entrypoint holds an exclusive cache-wide flock. Serialized fetch operations can recover a leftover regular shallow.lock after checking for running Git processes and verifying the lock did not change. Unsafe/uncertain cases preserve the lock and return a readable error. UI supports a recovery progress stage.
 - Added coverage for stale-lock recovery, live processes, unavailable process inspection and symlinks. Tests were not run at the user's request. Whitespace checks passed; Docker startup and live recovery were not exercised.
+
+### Compact repository UI, shared jobs and context rename (2026-10-21)
+
+- Compact branch/actions toolbar and integrated search with path/content switches; centered file placeholder; compact progress with horizontal queue positions.
+- In-flight repository operations share execution and replay progress to reconnecting observers. Status can join Pull; cached branch catalogs bypass the queue during repository work. Selected branch survives page reload within the tab.
+- Context rename preserves unknown/malformed scoped keys rather than failing their JSON parsing; valid settings retain collision checks and transactional migration.
+- Added regression coverage for queue reconnection, disconnects, retries, reload during Pull and malformed context keys. Tests were not run at the user's request. TypeScript, JavaScript syntax and whitespace checks passed. Docker/live Azure/browser checks were not performed.

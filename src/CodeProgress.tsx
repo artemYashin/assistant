@@ -9,20 +9,22 @@ const labels: Record<string, string> = {
   finalizing: "Сохранение снимка", tree: "Чтение дерева файлов", file: "Чтение файла",
   snapshot: "Подготовка файлов для поиска", searching: "Поиск", done: "Готово", error: "Операция не завершена",
 };
-type Progress = { stage: string; percent?: number; started: number; ended?: number; operation: string };
+type Progress = { stage: string; percent?: number; started: number; ended?: number; operation: string; queuePosition?: number; queueLength?: number };
 export function useCodeProgress() {
   const [progress, setProgress] = useState<Progress | null>(null);
   const sequence = useRef(0), controllers = useRef(new Set<AbortController>());
   useEffect(() => () => { sequence.current++; for (const controller of controllers.current) controller.abort(); controllers.current.clear(); }, []);
   const execute = useCallback(async (body: Record<string, unknown>) => {
-    const id = ++sequence.current, started = Date.now(), operation = String(body.operation);
+    const id = ++sequence.current, operation = String(body.operation);
+    let started = Date.now();
     const controller = new AbortController(); controllers.current.add(controller);
     setProgress({ stage: "connecting", started, operation });
     try {
       const result = await apiProgress("/code-browser", body, value => {
         if (id !== sequence.current || !value || !labels[value.stage]) return;
         const percent = Number.isInteger(value.percent) && value.percent! >= 0 && value.percent! <= 100 ? value.percent : undefined;
-        setProgress({ stage: value.stage, percent, started, operation });
+        if (value.startedAt && Number.isFinite(value.startedAt)) started = value.startedAt;
+        setProgress({ stage: value.stage, percent, started, operation, queuePosition: value.queuePosition, queueLength: value.queueLength });
       }, controller.signal);
       if (id === sequence.current) setProgress({ stage: "done", started, ended: Date.now(), operation });
       return result;
@@ -47,6 +49,10 @@ export function CodeProgress({ progress }: { progress: Progress | null }) {
   return <div className={`repository-progress${progress.stage === "error" ? " is-error" : ""}`}>
     <div><span role="status">{labels[progress.stage]}</span><small>{progress.percent !== undefined && !progress.ended ? `${progress.percent}% · ` : ""}{elapsed}</small></div>
     {!progress.ended && <progress aria-label={labels[progress.stage]} max={100} value={progress.percent} />}
-    {!progress.ended && <small>Прогресс текущего этапа</small>}
+    {!progress.ended && !!progress.queueLength && <div className="repository-queue" aria-label="Очередь операций">
+      {Array.from({ length: progress.queueLength }, (_, index) => <span key={index} className={index === progress.queuePosition ? "is-current" : ""}>
+        {index === 0 ? "В работе" : `Очередь №${index}`}{index === progress.queuePosition ? " · вы" : ""}
+      </span>)}
+    </div>}
   </div>;
 }

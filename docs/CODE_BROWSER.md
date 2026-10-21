@@ -41,7 +41,7 @@ Tests use disposable local Git repositories and a constructor-only local transpo
 
 Clients opt into `Accept: application/x-ndjson` on the existing POST. Orbit forwards only validated `{stage, percent?}` progress events and a terminal result/error; the normal JSON API remains supported. This uses one authenticated, CSRF-protected request, not polling or an extra Azure request. Git fetch uses `--progress`; a bounded parser recognizes known stage names/numeric percentages and never forwards raw stderr. Events are throttled by the service. Snapshot generation reports processed-file progress; phases without a denominator remain indeterminate.
 
-The UI displays current-phase progress and elapsed time, not a total percentage or estimated completion time. Callbacks are scoped to the latest UI request and ignored after navigation. Closing the page disconnects its stream; the existing bounded service operation can finish in the cache. There is no durable job history, automatic retry, cancellation or reconnect/resume in this version. Incomplete streams are reported as errors, never success.
+The UI displays current-phase progress and elapsed time, not a total percentage or estimated completion time. Callbacks are scoped to the latest UI request and ignored after navigation. Closing the page disconnects its stream; the existing bounded service operation can finish in the cache. There is no durable job history, automatic retry or job cancellation. Reloading the page can reconnect to in-flight work in the same service process (see below). Incomplete streams are reported as errors, never success.
 
 ### Interrupted fetch recovery
 
@@ -61,3 +61,15 @@ the requested fetch then proceeds normally. No time-based lock expiry is used.
 The cache volume is private to this service: do not mount it in unrelated Git
 writers or run maintenance Git commands there concurrently. Recreate the old
 container when upgrading so all service instances use the exclusive entrypoint.
+
+### Reconnect after a page reload
+
+In-flight work is shared by repository URL, credential identity, branch and request
+parameters. Repeated requests attach to the same promise and receive its latest
+progress immediately. A status request can also attach to an existing Pull.
+The last branch catalog can be read without queueing while that repository has
+work in progress, and the browser remembers the selected branch in session storage.
+Progress carries the original start time and the observer's current queue position.
+The queue is bounded to five distinct jobs; duplicate observers do not take slots.
+Disconnecting an observer does not cancel the job. State lives in the service
+process: a container restart does not resume a running job.

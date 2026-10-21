@@ -20,6 +20,12 @@ export function CodeBrowserPage({ context }: { context: Context }) {
 }
 function RepositoryView({ context }: { context: Context }) {
   const { progress, execute } = useCodeProgress();
+  const branchStorageKey = "repository-branch:" + JSON.stringify(context);
+  const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
+  const chooseBranch = (value: string) => {
+    try { sessionStorage.setItem(branchStorageKey, value); } catch { /* Storage can be unavailable. */ }
+    setBranch(value);
+  };
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
   const [status, setStatus] = useState<Status | null>(null), [busy, setBusy] = useState(true), [error, setError] = useState("");
   const [branchNote, setBranchNote] = useState("");
@@ -39,7 +45,10 @@ function RepositoryView({ context }: { context: Context }) {
     setBusy(true); setError(""); setFileBusy(false); setSearchBusy(false);
     void execute({ ...context, operation: "branches" }).then(data => {
       if (!live) return;
-      setBranches(data.branches); setBranch(current => data.branches.includes(current) ? current : data.defaultBranch);
+      setBranches(data.branches); setBranch(current => {
+        const preferred = current || rememberedBranch();
+        return data.branches.includes(preferred) ? preferred : data.defaultBranch;
+      });
       setBranchNote(data.more ? "Показаны первые 5 000 веток." : !data.branches.length ? "В репозитории пока нет веток." : "");
       if (!data.branches.length || data.branches.includes(branch)) setBusy(false);
     }).catch(e => { if (live) { setError(e.message); setBusy(false); } });
@@ -87,10 +96,11 @@ function RepositoryView({ context }: { context: Context }) {
   return <section className="repository-page">
     <header className="repository-heading"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></header>
     <div className="repository-toolbar">
-      <SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={setBranch} disabled={busy || !branches.length} />
-      <button className="secondary" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить обновления</button>
+      <span className="repository-branch-label" aria-hidden="true">Ветка</span>
+      <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={busy || !branches.length} /></div>
+      <button className="secondary" title="Проверить обновления репозитория" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить</button>
       <button className="icon-button" title="Обновить список веток" aria-label="Обновить список веток" disabled={busy} onClick={() => setBranchReload(n => n + 1)}><GitBranch size={16} /></button>
-      <button className="primary" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
+      <button className="secondary repository-pull" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
     </div>
     <CodeProgress progress={progress} />
@@ -104,9 +114,13 @@ function RepositoryView({ context }: { context: Context }) {
       <AlertCircle size={20} aria-hidden="true" /><div><strong>Не удалось выполнить операцию</strong><p>{error}</p></div>
       <button className="icon-button" aria-label="Закрыть ошибку" onClick={() => setError("")}><X size={16} /></button>
     </div>}
+    <div className="repository-browser">
     <form className="repository-search" onSubmit={e => { e.preventDefault(); void search(); }}>
-      <SingleSelect label="Поиск" value={mode} onChange={setMode} options={[{ value: "name", label: "По имени / пути" }, { value: "content", label: "По содержимому" }]} />
-      <input aria-label="Поиск в репозитории" placeholder="Введите текст и нажмите Enter" maxLength={200} value={query} onChange={e => setQuery(e.target.value)} />
+      <div className="repository-search-modes" role="group" aria-label="Режим поиска">
+        <button type="button" aria-pressed={mode === "name"} onClick={() => setMode("name")}>По пути</button>
+        <button type="button" aria-pressed={mode === "content"} onClick={() => setMode("content")}>По содержимому</button>
+      </div>
+      <input aria-label="Поиск в репозитории" placeholder={mode === "name" ? "Имя файла или путь…" : "Текст в коде…"} maxLength={200} value={query} onChange={e => setQuery(e.target.value)} />
       <button className="secondary" disabled={busy || !status || searchBusy || !query.trim()}><Search size={15} />{searchBusy ? "Ищу…" : "Найти"}</button>
       {results && <button className="text-button" type="button" onClick={() => { searchRequest.current++; setSearchBusy(false); setResults(null); }}>К дереву</button>}
     </form>
@@ -122,16 +136,17 @@ function RepositoryView({ context }: { context: Context }) {
           {!results.total && <p className="muted">Совпадений нет.</p>}
         </> : status && !busy ? <Directory key={branch + status.sha} path="" request={request} selected={file?.path} onFile={path => void openFile(path)} /> : <p className="muted">{busy ? "Подготавливаю снимок…" : "Выберите доступную ветку."}</p>}
       </nav>
-      <div className="repository-file">
-        {fileBusy ? <p role="status">Загружаю файл…</p> : file ? <>
+      <div className={`repository-file${!file ? " is-empty" : ""}`}>
+        {fileBusy ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong></div> : file ? <>
           <header><FileCode2 size={16} /><strong>{file.path}</strong><small>{file.size === undefined ? "" : `${Math.ceil(file.size / 1024)} KiB`} · {file.sha.slice(0, 10)}</small></header>
           {file.unavailable ? <p className="muted">{file.unavailable}</p> : <>
             {file.symlink && <p className="muted">Символическая ссылка. Ниже — её цель; переход по ссылке отключён.</p>}
             {file.lfs && <p className="muted">Git LFS pointer. Большой объект не загружается.</p>}
             <FileContent key={file.sha + file.path} file={file} targetLine={line} />
           </>}
-        </> : <div className="repository-placeholder"><FileCode2 size={32} /><p>Выберите файл в дереве или результатах поиска.</p></div>}
+        </> : <div className="repository-placeholder"><span className="repository-placeholder-icon"><Code2 size={24} aria-hidden="true" /></span><strong>Откройте файл</strong><p>Выберите его в дереве слева или найдите через поиск.</p></div>}
       </div>
+    </div>
     </div>
   </section>;
 }

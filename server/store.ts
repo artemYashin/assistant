@@ -445,8 +445,14 @@ export class Store {
       for (const row of entries) {
         const prefix = Object.keys(offsets).find(prefix => row.key.startsWith(prefix));
         if (!prefix) continue;
-        const parts = JSON.parse(row.key.slice(prefix.length));
+        // Old or unrelated entries may share a prefix without using the current
+        // JSON tuple format. Preserve those entries instead of aborting the rename.
+        let parts: unknown;
+        try { parts = JSON.parse(row.key.slice(prefix.length)); }
+        catch { continue; }
         const i = offsets[prefix];
+        const length = prefix === "developer-note:" ? 3 : i + 2;
+        if (!Array.isArray(parts) || parts.length !== length || !parts.every(part => typeof part === "string")) continue;
         if (parts[i] !== context.client || (context.project && parts[i + 1] !== context.project)) continue;
         parts[context.project ? i + 1 : i] = name;
         const nextKey = prefix + JSON.stringify(parts);

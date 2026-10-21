@@ -28,16 +28,22 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
       res.flushHeaders();
     }
-    let lastTime = 0, lastStage = '';
+    let lastTime = 0, lastStage = '', lastQueue = '';
     const report = progress => {
       if (!streaming) return;
       const now = Date.now();
-      if (progress.stage !== lastStage || now - lastTime >= 150 || progress.percent === 100) {
-        lastTime = now; lastStage = progress.stage;
+      const queue = `${progress.queuePosition}:${progress.queueLength}`;
+      if (progress.stage !== lastStage || queue !== lastQueue || now - lastTime >= 150 || progress.percent === 100) {
+        lastTime = now; lastStage = progress.stage; lastQueue = queue;
         event({ type: 'progress', progress });
       }
     };
-    const result = await browser.execute(input, report);
+    const disconnected = new AbortController();
+    const detach = () => disconnected.abort();
+    res.once('close', detach);
+    let result;
+    try { result = await browser.execute(input, report, disconnected.signal); }
+    finally { res.off('close', detach); }
     if (streaming) { event({ type: 'result', data: result }); res.end(); }
     else send(200, result);
   } catch (error) {

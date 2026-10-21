@@ -66,3 +66,28 @@ test("legacy customer rename preserves repository, developers and scoped setting
     assert.equal(store.get(key, null), null);
   }
 });
+
+test("rename preserves unrecognized scoped keys without parsing failures or data loss", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-rename-legacy-keys-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  store.addContext({ client: "Customer", project: "Portal" });
+  const unknownKeys = [
+    'azure.context:legacy',
+    'project.azure:["incomplete"',
+    'chat.active:null',
+    'ticket-priorities:{"0":"Customer","1":"Portal"}',
+    'developer-note:["Customer","Portal"]',
+    'developer-status-groups:["source","Customer","Portal",null]',
+  ];
+  for (const key of unknownKeys) store.set(key, { preserve: key });
+  store.set('azure.context:["Customer","Portal"]', { azureProject: "Remote project" });
+  store.set('ticket-priorities:["Customer","Portal"]', 4);
+  store.renameContext({ client: "Customer", project: "" }, "Renamed");
+  store.renameContext({ client: "Renamed", project: "Portal" }, "Website");
+  assert.ok(store.contexts().some(c => c.client === "Renamed" && c.project === "Website"));
+  assert.deepEqual(store.get('azure.context:["Renamed","Website"]', null), { azureProject: "Remote project" });
+  assert.equal(store.get('ticket-priorities:["Renamed","Website"]', 0), 4);
+  for (const key of unknownKeys) assert.deepEqual(store.get(key, null), { preserve: key });
+  assert.equal(store.get('azure.context:["Customer","Portal"]', null), null);
+});

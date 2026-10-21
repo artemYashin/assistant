@@ -1,3 +1,4 @@
+import { RepositoryJobs, QueueError } from './jobs.mjs';
 import { recoverShallowLock } from './recovery.mjs';
 import { gitDiagnostic } from './diagnostics.mjs';
 import { gitProgressParser } from './progress.mjs';
@@ -56,23 +57,29 @@ async function diskSize(root) {
 export class RepositoryBrowser {
   constructor(root, { allowLocal = false, recoverLocks = false, maxCacheBytes = 2 * 1024 ** 3 } = {}) {
     this.recoverLocks = recoverLocks; this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
-    this.tail = Promise.resolve(); this.pending = 0; this.branchesCache = new Map();
+    this.jobs = new RepositoryJobs(); this.branchesCache = new Map();
   }
-  async execute(input, report = () => {}) {
-    if (this.pending >= 5) throw new BrowserError('Сервис занят. Повторите через несколько секунд.', 429);
-    report({ stage: "queued" });
-    this.pending++;
-    let expired = false, timer;
-    const waiting = new Promise((_, reject) => {
-      timer = setTimeout(() => { expired = true; reject(new BrowserError('Очередь сервиса занята больше минуты. Дождитесь текущей загрузки и повторите запрос.', 429)); }, 60000);
-    });
-    const task = this.tail.then(() => {
-      clearTimeout(timer);
-      if (expired) throw new BrowserError('Ожидание очереди истекло', 429);
-      return this.perform(input, report);
-    });
-    this.tail = task.catch(() => {}).finally(() => { this.pending--; });
-    return Promise.race([task, waiting]);
+  async execute(input, report = () => {}, signal) {
+    // Reopening the page must get its branch selector without waiting behind its
+    // own fetch. During that fetch the last known catalog remains sufficient.
+    const identity = hash(JSON.stringify([input.url, input.token]));
+    const branchKey = hash(input.url + input.token);
+    const catalog = this.branchesCache.get(branchKey);
+    if (input.operation === 'branches' && catalog &&
+      (Date.now() - catalog.time < 60000 || this.jobs.jobs.some(job => job.key.startsWith(identity + ':')))) return catalog.result;
+    const keyFor = operation => identity + ':' + hash(JSON.stringify({
+      operation, branch: input.branch || '', path: input.path || '', query: input.query || '',
+      mode: input.mode || 'name', offset: input.offset || 0, revision: input.revision || '',
+    }));
+    let key = keyFor(input.operation);
+    if (input.operation === 'status') {
+      // A Pull already returns the status of the updated snapshot.
+      const pull = this.jobs.jobs.find(job => job.key === keyFor('pull'));
+      const status = this.jobs.jobs.find(job => job.key === keyFor('status'));
+      key = pull?.key || status?.key || key;
+    }
+    try { return await this.jobs.run(key, progress => this.perform(input, progress), report, signal); }
+    catch (error) { if (error instanceof QueueError) throw new BrowserError(error.message, 429); throw error; }
   }
   async perform(input, report) {
     report({ stage: "preparing" });

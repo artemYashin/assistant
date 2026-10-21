@@ -3,6 +3,9 @@ import { AppError } from "./store.js";
 
 export const codeProgressSchema = z.object({
   stage: z.enum(["recovering", "connecting", "queued", "preparing", "fetching", "counting", "compressing", "receiving", "resolving", "unpacking", "finalizing", "tree", "file", "snapshot", "searching"]),
+  startedAt: z.number().int().positive().optional(),
+  queuePosition: z.number().int().min(0).max(4).optional(),
+  queueLength: z.number().int().min(1).max(5).optional(),
   percent: z.number().int().min(0).max(100).optional(),
 }).strict();
 export type CodeProgress = z.infer<typeof codeProgressSchema>;
