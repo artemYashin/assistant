@@ -31,7 +31,8 @@ function captureTyping(target: Element | null, key: string): (() => void) | unde
   };
 }
 type Phase = "idle" | "requesting" | "recording" | "transcribing" | "error";
-export function VoiceShortcut({ enabled, onText, onBusy, title }: {
+export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, autoStart = false, onAutoStarted }: {
+  onNewChat: () => void; autoStart?: boolean; onAutoStarted: () => void;
   enabled: boolean; onText: (text: string) => void; onBusy: (busy: boolean) => void; title: string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle"), [error, setError] = useState(""), [seconds, setSeconds] = useState(0);
@@ -40,8 +41,8 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   const deadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const transcription = useRef<AbortController | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const latest = useRef({ enabled, onText, onBusy });
-  latest.current = { enabled, onText, onBusy };
+  const latest = useRef({ enabled, onText, onBusy, onNewChat });
+  latest.current = { enabled, onText, onBusy, onNewChat };
   function change(next: Phase) {
     phaseRef.current = next; setPhase(next);
     latest.current.onBusy(next !== "idle");
@@ -112,6 +113,12 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   }
   const actions = useRef({ start, finish, cancel }); actions.current = { start, finish, cancel };
   useEffect(() => {
+    if (autoStart && enabled && phaseRef.current === "idle") {
+      onAutoStarted();
+      void actions.current.start();
+    }
+  }, [autoStart, enabled, onAutoStarted]);
+  useEffect(() => {
     const doublePress = createVoiceShortcut();
     let restoreTyping: (() => void) | undefined;
     let previousTarget: EventTarget | null = null;
@@ -128,7 +135,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       if (event.repeat) return;
       const matched = doublePress(event, performance.now());
       if (!matched) {
-        restoreTyping = event.code === "KeyM" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
+        restoreTyping = ["KeyM", "KeyN"].includes(event.code) && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
           ? captureTyping(target, event.key) : undefined;
         previousTarget = event.target;
         return;
@@ -138,7 +145,11 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       if (previousTarget === event.target) restoreTyping?.();
       restoreTyping = undefined;
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      if (phaseRef.current === "idle" || phaseRef.current === "error") void actions.current.start();
+      if (phaseRef.current === "idle" || phaseRef.current === "error") {
+        if (!latest.current.enabled) return;
+        if (event.code === "KeyN") latest.current.onNewChat();
+        else void actions.current.start();
+      }
       else if (phaseRef.current === "transcribing") actions.current.cancel();
       else actions.current.finish();
     };

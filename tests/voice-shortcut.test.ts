@@ -12,7 +12,7 @@ test("MM needs two separate presses within the interval and resets after a match
   assert.equal(press(m, 1000, false), true);
 });
 test("modifiers, composition and other keys cannot trigger voice recording", () => {
-  for (const interrupt of [{ ...m, metaKey: true }, { ...m, ctrlKey: true }, { ...m, altKey: true }, { ...m, shiftKey: true }, { ...m, isComposing: true }, { ...m, code: "KeyN" }]) {
+  for (const interrupt of [{ ...m, metaKey: true }, { ...m, ctrlKey: true }, { ...m, altKey: true }, { ...m, shiftKey: true }, { ...m, isComposing: true }, { ...m, code: "KeyX" }]) {
     const press = createVoiceShortcut();
     press(m, 0, false);
     assert.equal(press(interrupt, 100, false), false);
@@ -34,4 +34,15 @@ test("shortcut text rollback only removes its own first keystroke and restores s
   assert.equal(shortcutTextWasInserted("hello", "hmlo", "m", 1, 3), true);
   assert.equal(shortcutTextWasInserted("hello", "hello edited", "m", 5, 5), false);
   assert.equal(shortcutTextWasInserted("привет", "приветь", "ь", 6, 6), true);
+});
+
+ test("NN starts a separate shortcut and mixed M/N presses do not match", () => {
+  const press = createVoiceShortcut();
+  const n = { ...m, code: "KeyN" };
+  assert.equal(press(m, 0), false);
+  assert.equal(press(n, 100), false);
+  assert.equal(press(n, 200), true);
+  assert.equal(press(n, 300), false);
+  assert.equal(press(m, 400), false);
+  assert.equal(press(m, 500), true);
 });

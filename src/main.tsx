@@ -2626,6 +2626,7 @@ function Assistant({
 }: any) {
   const [chatUsage, setChatUsage] = useState({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
   const [shortcutBusy, setShortcutBusy] = useState(false);
+  const [voiceStartSession, setVoiceStartSession] = useState("");
   const resize = useAssistantResize();
   const chatStream = useChatStream();
   const conversationView = useRef<HTMLDivElement>(null);
@@ -2784,7 +2785,7 @@ function Assistant({
     window.addEventListener(analyzeTicketEvent, handle);
     return () => window.removeEventListener(analyzeTicketEvent, handle);
   }, [key, working, clearing, shortcutBusy, recording, transcribing, onExpand]);
-  async function chooseChat(id?: string) {
+  async function chooseChat(id?: string, startVoice = false) {
     if (working || clearing || shortcutBusy || recording || transcribing) return;
     const captured = key;
     const generation = ++historyGeneration.current;
@@ -2801,6 +2802,7 @@ function Assistant({
         generation === historyGeneration.current
       ) {
         setSessionId(session.id);
+        if (startVoice) { setVoiceStartSession(session.id); onExpand(); }
         setSessionTitle(session.title);
         setHistory(page.messages);
         setAttachment(page.attachment);
@@ -3062,6 +3064,8 @@ function Assistant({
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
       <VoiceShortcut key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
+        autoStart={voiceStartSession === sessionId} onAutoStarted={() => setVoiceStartSession("")}
+        onNewChat={() => { void chooseChat(undefined, true).catch(e => setError(e.message)); }}
         title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />
       {resize.handle}
       <div className="assistant-heading">
