@@ -1200,3 +1200,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added per-repository Git network timeout (default 300 seconds, configurable 60–1800 seconds), persisted on the monitor and retained through rename. Backend waits an additional 180 seconds; queued operations expire after 60 seconds without subsequently running. Streaming is used internally even for JSON clients to avoid waiting for response headers during a long fetch. Repository errors have a dedicated visible panel and timeout/connection guidance.
 - Conflict-check badges center their icons against the text.
 - All 271 tests passed, including legacy rename/settings preservation, browser preference migration, timeout persistence and forwarding. Production build, Compose configuration and whitespace checks passed. Live Azure, Docker startup and browser visual checks were not performed.
+
+### Git failure diagnostics (2026-10-21)
+
+- Preserve the bounded tail of Git stderr so errors after lengthy progress output are retained. Show operation/exit status and classify common access, TLS, redirect, network, disk and memory failures.
+- Redact configured PAT/basic credentials and HTTP URLs before displaying or logging diagnostics. Expected merge-base non-ancestor results are not logged. Multiline errors remain readable in the code page.
+- Added diagnostic classification/redaction tests, not executed: tests explicitly skipped at the user's request. JavaScript syntax and whitespace checks passed. Live Azure/Docker verification remains pending.

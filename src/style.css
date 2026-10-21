@@ -8523,3 +8523,5 @@ summary > svg {
 .repository-error > div { min-width: 0; flex: 1; }
 .repository-error strong { font-size: 13px; }
 .repository-error p { margin: 5px 0 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+
+.repository-error p { white-space: pre-wrap; }

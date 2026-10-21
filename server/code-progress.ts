@@ -29,7 +29,7 @@ export async function readCodeStream(response: Response, report: (progress: Code
           const parsed = codeProgressSchema.safeParse(event.progress);
           if (parsed.success) report(parsed.data);
         } else if (event.type === "error") {
-          throw new AppError(502, typeof event.error === "string" ? event.error.slice(0, 1000) : "Ошибка сервиса кода");
+          throw new AppError(502, typeof event.error === "string" ? event.error.slice(0, 3000) : "Ошибка сервиса кода");
         } else if (event.type === "result") {
           result = event.data; finished = true;
         }

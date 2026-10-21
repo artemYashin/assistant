@@ -1,3 +1,4 @@
+import { gitDiagnostic } from './diagnostics.mjs';
 import { gitProgressParser } from './progress.mjs';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -26,15 +27,16 @@ function run(command, args, { cwd, env, input, limit = 16 * 1024 * 1024, timeout
       else chunks.push(chunk);
     });
     const parseProgress = onProgress ? gitProgressParser(onProgress) : null;
-    child.stderr.on('data', chunk => { if (stderr.length < 4096) stderr += chunk.toString(); parseProgress?.(chunk); });
+    child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-16384); parseProgress?.(chunk); });
     child.on('error', () => { clearTimeout(timer); reject(new BrowserError('Git/ripgrep недоступен в сервисе просмотра кода.', 503)); });
-    child.on('close', code => {
+    child.on('close', (code, signal) => {
       clearTimeout(timer);
       if (failure) return reject(failure);
       if (!accept.includes(code)) {
-        // Do not return remote-controlled diagnostics or credentials.
-        const denied = /401|403|authentication failed|could not read Username|access denied/i.test(stderr);
-        return reject(new BrowserError(denied ? 'Azure отклонил доступ. Проверьте PAT Code Read и право Read на репозиторий.' : 'Операция Git/ripgrep не выполнена. Проверьте ветку, доступность сервера и настройки репозитория.', denied ? 403 : 502));
+        const operation = command === 'rg' ? 'rg' : args.find(arg => !arg.startsWith('--git-dir='));
+        const message = gitDiagnostic(stderr, env, operation, code, signal);
+        if (!(operation === 'merge-base' && code === 1)) console.error('[code-browser]', message);
+        return reject(new BrowserError(message, /401|403|authentication failed|access denied/i.test(stderr) ? 403 : 502));
       }
       resolve(Buffer.concat(chunks));
     });
