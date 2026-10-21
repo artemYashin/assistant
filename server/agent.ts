@@ -1,3 +1,4 @@
+import { contentSearchSchema, searchTicketContent } from "./ticket-content-search.js";
 import { createToolDiscovery } from "./tool-discovery.js";
 import { SYSTEM_POLICY } from "./chat-policy.js";
 export { SYSTEM_POLICY } from "./chat-policy.js";
@@ -14,6 +15,7 @@ import {
 import { listTicketAnalysis } from "./ticket-analysis.js";
 import {
   deepReadConsent,
+  asksCachedContentSearch,
   DEEP_READ_WARNING,
   wantsTicketDetails,
   singleTicketTarget,
@@ -163,9 +165,14 @@ export function makeTools(
       }),
       handler: async (args) => store.addMemory(args.scope, args.body, context),
     }),
+    defineTool("search_ticket_content", {
+      description: "Search LOCAL cached descriptions, acceptance criteria and repro steps by literal substring. Use when title/tag searches are insufficient. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
+      parameters: contentSearchSchema,
+      handler: async args => searchTicketContent(store, args),
+    }),
     defineTool("list_tickets", {
       description:
-        "List LOCAL tracked tickets for the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns local basics including created_at/changed_at (Azure creation/modification dates) and synced_at (local sync time), and never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
+        "List LOCAL tracked tickets for the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns only id/title. Use fields to request only required extras (including localUrl for navigation). Filters do not require returning their fields. Dates/notes/assignees/tags are opt-in; summary never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
       parameters: ticketListSchema,
       handler: async (args) => listLocalTickets(store, args),
     }),
@@ -450,7 +457,7 @@ export class Agent {
     let azureResult: Promise<any> | undefined;
     const proposeAzure = (input: unknown) => {
       const plan = azureLookupSchema.parse(input);
-      const local = listLocalTickets(this.store, plan);
+      const local = listLocalTickets(this.store, { ...plan, fields: ["state", "localUrl"] });
       const preview = local.tickets
         .slice(0, 20)
         .map(
@@ -799,7 +806,7 @@ export class Agent {
         status = "completed";
         return { body: azureQuestion, requestId: id, cards, durationMs: elapsed() };
       }
-      if (!review && deepRead.needsConfirmation && !singleReadAllowed && !(attachedTicket && (singleTarget === undefined || singleTarget === attachedTicket.id))) {
+      if (!review && deepRead.needsConfirmation && !asksCachedContentSearch(prompt) && !singleReadAllowed && !(attachedTicket && (singleTarget === undefined || singleTarget === attachedTicket.id))) {
         this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId, elapsed(), id);
         status = "completed";
         return { body: DEEP_READ_WARNING, requestId: id, cards, durationMs: elapsed() };

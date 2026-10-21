@@ -245,7 +245,20 @@ export class Connectors {
       "Azure DevOps",
     );
   }
+  private cacheTicketContent(item: any, s: Settings, complete = false) {
+    const fields = item.fields || {};
+    const sections = { description: "System.Description", criteria: "Microsoft.VSTS.Common.AcceptanceCriteria", repro: "Microsoft.VSTS.TCM.ReproSteps" };
+    const save = this.store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?) ON CONFLICT(source,id,section) DO UPDATE SET body=excluded.body,search_text=excluded.search_text,updated_at=excluded.updated_at");
+    this.store.db.transaction(() => {
+      for (const [section, field] of Object.entries(sections)) {
+        if (!complete && !Object.hasOwn(fields, field)) continue;
+        const body = plainText(String(fields[field] || ""));
+        save.run(this.store.source(s), item.id, section, body, body.toLocaleLowerCase(), new Date().toISOString());
+      }
+    })();
+  }
   private saveTicket(item: any, s: Settings) {
+    this.cacheTicketContent(item, s);
     if (
       this.store.db
         .prepare(
@@ -999,6 +1012,7 @@ export class Connectors {
     }
     for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
       add(match[1], "Изображение в комментарии", true);
+    if (this.store.hasLocalTicket(id, this.store.source(s))) this.cacheTicketContent(item, s, true);
     const cardId = randomUUID();
     const card = {
       id,
@@ -1327,7 +1341,7 @@ export class Connectors {
         method: "POST",
         body: JSON.stringify({
           ids: missing,
-          fields: browseFields,
+          fields: [...browseFields, "System.Description", "Microsoft.VSTS.Common.AcceptanceCriteria", "Microsoft.VSTS.TCM.ReproSteps"],
           errorPolicy: "Omit",
         }),
       },
@@ -1410,6 +1424,7 @@ export class Connectors {
           ids,
           errorPolicy: "Omit",
           fields: [
+            ...(add ? ["System.Description", "Microsoft.VSTS.Common.AcceptanceCriteria", "Microsoft.VSTS.TCM.ReproSteps"] : []),
             "System.Id",
             "System.TeamProject",
             "System.Title",
@@ -1565,6 +1580,9 @@ export class Connectors {
           body: JSON.stringify({
             ids: list.slice(i, i + 200),
             fields: [
+              "System.Description",
+              "Microsoft.VSTS.Common.AcceptanceCriteria",
+              "Microsoft.VSTS.TCM.ReproSteps",
               "System.Title",
               "System.State",
               "System.AssignedTo",
@@ -1585,7 +1603,7 @@ export class Connectors {
         result.value.length !== list.slice(i, i + 200).length
       )
         throw new AppError(502, "Azure вернул неполный список тикетов");
-      for (const item of result.value) this.saveTicket(item, s);
+      for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); }
     }
     if (list.length || importMine || (automatic && s.azureAutoImport))
       this.store.set(

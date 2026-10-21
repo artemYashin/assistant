@@ -58,7 +58,7 @@ test("local metadata is independent, validates priorities, merges fields, and fi
   assert.equal(listLocalTickets(store, { priority: 4, tag: "ui" }).total, 1);
   assert.equal(listLocalTickets(store, { priority: 2 }).total, 0);
   assert.equal(
-    listLocalTickets(store, { tag: "UI" }).tickets[0].notes,
+    listLocalTickets(store, { tag: "UI", fields: ["notes"] }).tickets[0].notes,
     "Not ready",
   );
   store.db.prepare("UPDATE tickets SET state='Resolved' WHERE id=42").run();

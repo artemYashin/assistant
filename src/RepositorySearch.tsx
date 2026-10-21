@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { LoaderCircle, Search, X } from "lucide-react";
+import { FolderSearch, FileText, LoaderCircle, Search, X } from "lucide-react";
 import { apiProgress } from "./api.js";
 import { diffLanguage } from "./diff-languages.js";
 import type { CodeToken } from "./diff-highlight.js";
@@ -108,8 +108,8 @@ export function RepositorySearch({ context, branch, revision, disabled, onOpen }
   }
   return <form className="repository-search" onSubmit={e => { e.preventDefault(); setOpen(true); schedule(true); }}>
     <div className="repository-search-modes" role="group" aria-label="Режим поиска">
-      <button type="button" aria-pressed={mode === "name"} onClick={() => { if (mode !== "name") { invalidate(); setMode("name"); } setOpen(true); input.current?.focus(); }}>По пути</button>
-      <button type="button" aria-pressed={mode === "content"} onClick={() => { if (mode !== "content") { invalidate(); setMode("content"); } setOpen(true); input.current?.focus(); }}>По содержимому</button>
+      <button type="button" aria-pressed={mode === "name"} onClick={() => { if (mode !== "name") { invalidate(); setMode("name"); } setOpen(true); input.current?.focus(); }}><FolderSearch size={13} aria-hidden="true" />По пути</button>
+      <button type="button" aria-pressed={mode === "content"} onClick={() => { if (mode !== "content") { invalidate(); setMode("content"); } setOpen(true); input.current?.focus(); }}><FileText size={13} aria-hidden="true" />По содержимому</button>
     </div>
     <div className="repository-search-input" ref={anchor}>
       <Search size={14} aria-hidden="true" />

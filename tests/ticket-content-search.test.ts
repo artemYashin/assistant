@@ -1,0 +1,41 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Store } from "../server/store.js";
+import { Connectors } from "../server/connectors.js";
+import { IntegrationsAuth } from "../server/auth.js";
+import { searchTicketContent } from "../server/ticket-content-search.js";
+
+test("imports cache content, search is bounded/paged/source scoped, sync clears and trash expires", async t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-content-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  store.set("settings", { ...store.settings(), azureUrl: "https://ado.test/Collection", azureProject: "Project" });
+  const connector = new Connectors(store, new IntegrationsAuth(store));
+  let description = "<p>" + "before ".repeat(100) + "Протокол обмена" + " after".repeat(100) + "</p>";
+  (connector as any).azure = async (path: string, init: any) => {
+    const ids = path === "workitemsbatch" ? JSON.parse(init.body).ids : [Number(path.split("/")[1])];
+    const items = ids.map((id: number) => ({ id, fields: { "System.TeamProject": store.settings().azureProject, "System.Title": `Ticket ${id}`, ...(description ? { "System.Description": description } : {}) } }));
+    return path === "workitemsbatch" ? { value: items } : items[0];
+  };
+  await connector.trackTicket(1); await connector.trackTicket(2);
+  const first = searchTicketContent(store, { search: "ПРОТОКОЛ", limit: 1 });
+  assert.equal(first.tickets[0].id, 1);
+  assert.ok(first.tickets[0].snippet.length < 250);
+  assert.equal(first.tickets[0].body, undefined);
+  assert.equal(first.hasMore, true);
+  assert.equal(searchTicketContent(store, { search: "протокол", afterId: first.nextAfterId }).tickets[0].id, 2);
+  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run("other", 9, "description", "Протокол", "протокол", "now");
+  assert.equal(searchTicketContent(store, { search: "протокол" }).tickets.length, 2);
+  store.removeLocalTicket(1);
+  assert.equal(searchTicketContent(store, { search: "протокол" }).tickets.length, 1);
+  assert.ok(store.db.prepare("SELECT 1 FROM ticket_content_cache WHERE source=? AND id=1").get(store.source()));
+  store.purgeTicketTrash(Date.now() + 31 * 86400000);
+  assert.equal(store.db.prepare("SELECT 1 FROM ticket_content_cache WHERE source=? AND id=1").get(store.source()), undefined);
+  description = "";
+  await connector.syncTickets();
+  assert.equal(searchTicketContent(store, { search: "протокол" }).tickets.length, 0);
+  assert.equal(searchTicketContent(store, { search: "протокол" }).coverage.cached, 1);
+});

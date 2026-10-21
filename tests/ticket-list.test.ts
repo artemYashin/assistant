@@ -166,9 +166,30 @@ test("summary ticket tool includes Azure dates without reading full content", as
     store, new Approvals(store, async () => ({ id: "unused" })),
     { client: "", project: "" },
   ).tools!.find((tool) => tool.name === "list_tickets")!;
-  const result: any = await tool.handler!({ ids: [42] }, {} as any);
+  const result: any = await tool.handler!({ ids: [42], fields: ["created_at", "changed_at", "synced_at"] }, {} as any);
   assert.equal(result.tickets[0].created_at, "2026-09-01T09:00:00.000Z");
   assert.equal(result.tickets[0].changed_at, "2026-10-20T10:00:00Z");
   assert.equal(result.tickets[0].synced_at, "2026-10-21T11:00:00Z");
   assert.equal(result.tickets[0].description, undefined);
+});
+
+
+test("ticket summaries return only selected fields without changing filters", async (t) => {
+  const { listLocalTickets, ticketListSchema } = await import("../server/ticket-list.js");
+  const store = fixture(t);
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Feature", "Active", "Alice", "Bug", "", "yesterday", "today");
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,?,?,?,?)")
+    .run(store.source(), 42, "Private note", 2, JSON.stringify(["UI"]));
+  const minimal = listLocalTickets(store, { tag: "UI", state: "Active" });
+  assert.equal(minimal.total, 1);
+  assert.deepEqual(minimal.tickets, [{ id: 42, title: "Feature" }]);
+  const selected = listLocalTickets(store, { tag: "UI", fields: ["tags", "state"] });
+  assert.deepEqual(selected.tickets, [{ id: 42, title: "Feature", state: "Active", tags: ["UI"] }]);
+  assert.equal(selected.total, minimal.total);
+  assert.equal(selected.nextAfterId, minimal.nextAfterId);
+  const notes = listLocalTickets(store, { ids: [42], fields: ["notes"] });
+  assert.equal(notes.tickets[0].notes, "Private note");
+  assert.equal(notes.tickets[0].notesTruncated, undefined);
+  assert.equal(ticketListSchema.safeParse({ fields: ["description"] }).success, false);
 });

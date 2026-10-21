@@ -54,7 +54,7 @@ test("Azure tags import, sync, search and trash lifecycle stay separate from loc
   assert.deepEqual(store.azureTags(42), ["API", "Customer"]);
   const context = { client: "C", project: "P" };
   saveTicketMetadata(store, 42, store.source(), context, { tags: ["Local"] });
-  const page = listLocalTickets(store, { search: "customer", azureTag: "api" });
+  const page = listLocalTickets(store, { search: "customer", azureTag: "api", fields: ["azureTags", "tags"] });
   assert.equal(page.total, 1);
   assert.deepEqual(page.tickets[0].azureTags, ["API", "Customer"]);
   assert.deepEqual(page.tickets[0].tags, ["Local"]);
@@ -82,7 +82,7 @@ test("Azure tags import, sync, search and trash lifecycle stay separate from loc
   store.removeLocalTicket(42);
   assert.deepEqual(store.ticketTrash()[0].azureTags, ["Retained"]);
   store.restoreLocalTicket(42);
-  assert.deepEqual(listLocalTickets(store, {}).tickets[0].azureTags, [
+  assert.deepEqual(listLocalTickets(store, { fields: ["azureTags"] }).tickets[0].azureTags, [
     "Retained",
   ]);
   store.removeLocalTicket(42);

@@ -36,7 +36,7 @@ test("deep read consent requires a separate yes after the actual token warning",
     { role: "user", body: request },
     { role: "assistant", body: DEEP_READ_WARNING },
   ];
-  for (const reply of ["Да", "да, давай", "Продолжай", "yes"]) {
+  for (const reply of ["Да", "да, давай", "Продолжай", "yes", "Давай, погнали", "Да похуй", "пофиг, читай", "окей"]) {
     assert.equal(deepReadConsent(reply, history).confirmed, true);
     assert.equal(deepReadConsent(reply, history).request, request);
   }
@@ -104,4 +104,22 @@ test("single-ticket exception excludes counts and multi-ticket selections", () =
     ]),
     42,
   );
+});
+
+
+test("token warning may be phrased conversationally", () => {
+  const history = [
+    { role: "user", body: "Проведи глубокий анализ тикетов #42 и #43" },
+    { role: "assistant", body: "Чтение описаний может потратить много токенов. Продолжить?" },
+  ];
+  assert.equal(deepReadConsent("Да похуй", history).confirmed, true);
+  for (const reply of ["Нет, не читай", "Да, но другие тикеты", "А сколько токенов?", "Не продолжай"])
+    assert.equal(deepReadConsent(reply, history).confirmed, false);
+});
+
+
+test("cached description search does not require full-read consent", async () => {
+  const { asksCachedContentSearch } = await import("../server/ticket-display.js");
+  assert.equal(asksCachedContentSearch("Найди в описаниях слово протокол"), true);
+  assert.equal(asksCachedContentSearch("Проведи глубокий анализ и найди в описаниях ошибки"), false);
 });

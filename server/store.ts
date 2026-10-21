@@ -90,6 +90,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pr_projects (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, source TEXT NOT NULL, azure_project TEXT NOT NULL, mode TEXT NOT NULL, enabled INTEGER NOT NULL, error TEXT, synced_at TEXT, UNIQUE(client,project,source,azure_project));
       CREATE TABLE IF NOT EXISTS pull_requests (monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, title TEXT NOT NULL, author TEXT NOT NULL, url TEXT NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, draft INTEGER NOT NULL, in_scope INTEGER NOT NULL DEFAULT 1, synced_at TEXT NOT NULL, PRIMARY KEY(monitor,repo,number));
       CREATE TABLE IF NOT EXISTS pr_reviews (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL, summary TEXT, coverage TEXT, error TEXT, usage_id TEXT, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, UNIQUE(monitor,repo,number,head,target));
+      CREATE TABLE IF NOT EXISTS ticket_content_cache (source TEXT NOT NULL,id INTEGER NOT NULL,section TEXT NOT NULL,body TEXT NOT NULL,search_text TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(source,id,section));
       CREATE TABLE IF NOT EXISTS ticket_cards (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
       CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, name TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
@@ -546,6 +547,8 @@ export class Store {
         .prepare("SELECT source,id FROM ticket_trash WHERE removed_at<=?")
         .all(now - 30 * 86400000) as any[];
       for (const row of expired) {
+        this.db.prepare("DELETE FROM ticket_content_cache WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)").run(row.source,row.id,row.source,row.id);
+        this.db.prepare("DELETE FROM ticket_cards WHERE json_extract(data,'$.source')=? AND json_extract(data,'$.id')=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)").run(row.source,row.id,row.source,row.id);
         this.db
           .prepare(
             "DELETE FROM ticket_tracking_dates WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",

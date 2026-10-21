@@ -119,6 +119,11 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       if (event.key === "Escape" && phaseRef.current !== "idle") {
         event.preventDefault(); event.stopPropagation(); actions.current.cancel(); return;
       }
+      if (event.key === "Enter" && phaseRef.current !== "idle" && !event.isComposing) {
+        event.preventDefault(); event.stopPropagation();
+        if (!event.repeat && phaseRef.current === "recording") actions.current.finish();
+        return;
+      }
       const target = event.target instanceof Element ? event.target : null;
       if (event.repeat) return;
       const matched = doublePress(event, performance.now());
@@ -145,7 +150,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   }, []);
   useEffect(() => {
     if (phase === "idle") dialog.current?.close();
-    else if (!dialog.current?.open) dialog.current?.showModal();
+    else if (!dialog.current?.open) { dialog.current?.showModal(); dialog.current?.querySelector<HTMLElement>(".voice-shortcut-card")?.focus(); }
   }, [phase]);
   useEffect(() => {
     if (phase !== "recording") return;
@@ -154,7 +159,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
   }, [phase]);
   return createPortal(<dialog ref={dialog} className="voice-shortcut-dialog" aria-labelledby="voice-shortcut-title"
     onCancel={event => { event.preventDefault(); cancel(); }} onClose={() => { if (phaseRef.current !== "idle") cancel(); }}>
-    <div className={`voice-shortcut-card is-${phase}`}>
+    <div className={`voice-shortcut-card is-${phase}`} tabIndex={-1}>
       <button type="button" className="voice-shortcut-close" onClick={cancel} aria-label="Отменить запись и отправку" title="Отменить · Esc"><X size={19} /></button>
       <div className="voice-orb" aria-hidden="true"><span /><span /><span />
         {phase === "transcribing" || phase === "requesting" ? <LoaderCircle size={27} className="spin" /> : phase === "error" ? <AlertCircle size={27} /> : <Mic size={27} />}
@@ -162,7 +167,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       <strong id="voice-shortcut-title">{phase === "recording" ? "Слушаю вас" : phase === "requesting" ? "Включаю микрофон…" : phase === "transcribing" ? "Распознаю речь…" : "Не получилось записать"}</strong>
       <div className="voice-shortcut-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ animationDelay: `${i * -0.13}s` }} />)}</div>
       <p className="voice-shortcut-target" title={title}>В текущий чат · {title}</p>
-      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? "M M — закончить и отправить" : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
+      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? "Enter или M M — закончить и отправить" : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
       {phase === "recording" && <div className="voice-shortcut-footer"><time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</time>
         <button type="button" onClick={finish}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}

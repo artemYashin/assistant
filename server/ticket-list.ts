@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AppError, Store } from "./store.js";
 
 export const ticketListSchema = z.object({
+  fields: z.array(z.enum(["type", "state", "assigned", "priority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(13).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
   contentOffset: z.number().int().nonnegative().default(0),
   ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
@@ -20,6 +21,7 @@ export const ticketListSchema = z.object({
 export function listLocalTickets(store: Store, input: unknown) {
   const {
     detail,
+    fields,
     ids,
     search,
     type,
@@ -87,28 +89,28 @@ export function listLocalTickets(store: Store, input: unknown) {
   const tickets: Record<string, any>[] = [];
   let size = 0;
   for (const row of rows.slice(0, limit)) {
+    const wanted = new Set(fields);
+    const ticket: Record<string, any> = { id: row.id, title: row.title };
+    for (const field of ["type", "state", "assigned", "changed_at", "synced_at"])
+      if (wanted.has(field as typeof fields[number])) ticket[field] = row[field];
+    if (fields.some(field => ["notes", "priority", "tags"].includes(field))) {
+      const metadata = ticketMetadata(store, row.id);
+      for (const field of ["notes", "priority", "tags"] as const)
+        if (wanted.has(field)) ticket[field] = metadata[field];
+    }
+    if (wanted.has("added_at")) ticket.added_at = store.ticketAddedAt(row.id);
+    if (wanted.has("created_at")) ticket.created_at = store.ticketCreatedAt(row.id);
+    if (wanted.has("azureTags")) ticket.azureTags = store.azureTags(row.id);
+    if (wanted.has("localDevelopers")) ticket.localDevelopers = new LocalDevelopers(store)
+      .assigned(row.id).map(({ id, name }) => ({ id, name }));
+    if (wanted.has("localUrl")) ticket.localUrl = `/tickets?${new URLSearchParams({ id: String(row.id), source: store.source() })}`;
     const shortenedFields: string[] = [];
-    const ticket = Object.fromEntries(
-      Object.entries(row).map(([key, value]) => {
-        if (typeof value === "string" && value.length > 300) {
-          shortenedFields.push(key);
-          return [key, value.slice(0, 300) + "…"];
-        }
-        return [key, value];
-      }),
-    );
-    const metadata = ticketMetadata(store, row.id);
-    Object.assign(ticket, metadata, {
-      added_at: store.ticketAddedAt(row.id),
-      created_at: store.ticketCreatedAt(row.id),
-      azureTags: store.azureTags(row.id),
-      notes: metadata.notes.slice(0, 300),
-      notesTruncated: metadata.notes.length > 300,
-    });
-    ticket.localDevelopers = new LocalDevelopers(store)
-      .assigned(row.id)
-      .map(({ id, name }) => ({ id, name }));
-    ticket.localUrl = `/tickets?${new URLSearchParams({ id: String(row.id), source: store.source() })}`;
+    for (const [key, value] of Object.entries(ticket)) {
+      if (key !== "localUrl" && typeof value === "string" && value.length > 300) {
+        ticket[key] = value.slice(0, 300) + "…";
+        shortenedFields.push(key);
+      }
+    }
     if (shortenedFields.length) ticket.shortenedFields = shortenedFields;
     const length = JSON.stringify(ticket).length + 1;
     if (tickets.length && size + length > 18000) break;

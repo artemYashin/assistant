@@ -1,3 +1,5 @@
+import { isActionConfirmation } from "./metadata-context.js";
+
 /** Full content is opt-in for this turn; merely mentioning an ID is not enough. */
 export function wantsTicketDetails(prompt: string) {
   // UI selection adds reference IDs, not an instruction to show full cards.
@@ -45,14 +47,18 @@ export function deepReadConsent(prompt: string, history: unknown[]) {
   const rows = history as { role?: string; body?: string }[];
   const warning = rows.at(-1),
     request = rows.at(-2);
-  const yes =
-    /^(?:да(?:[,\s]+(?:давай|делай|продолжай|согласен|согласна))*|давай(?:\s+(?:делай|продолжай))?|продолжай|подтверждаю|согласен|согласна|yes|proceed|go ahead|confirm)[.!\s]*$/iu.test(
-      reply,
-    );
+  // Token-cost consent is conversational, not a required passphrase.
+  const yes = isActionConfirmation(reply) ||
+    /^(?:(?:да|ага|угу|ок|окей)[,\s]+)?(?:похуй|пофиг|всё равно|все равно|неважно|не важно|токены не проблема|расход не проблема)(?:[,\s]+(?:давай|читай|продолжай|погнали))?[.!\s]*$/iu.test(reply);
+  const warned = warning?.body === DEEP_READ_WARNING ||
+    (warning?.role === "assistant" &&
+      /токен|tokens?/iu.test(warning.body || "") &&
+      /расход|потрат|затрат|много|cost|usage|consume/iu.test(warning.body || "") &&
+      /продолж|прочита|чтени|загруз|описани|анализ|read|load|analy/iu.test(warning.body || ""));
   if (
     yes &&
     warning?.role === "assistant" &&
-    warning.body === DEEP_READ_WARNING &&
+    warned &&
     request?.role === "user" &&
     request.body &&
     allowsFullTicketRead(request.body)
@@ -115,4 +121,11 @@ export function asksTicketOpinion(prompt: string) {
       text,
     )
   );
+}
+
+/** Cached snippets do not load full bodies into model context. */
+export function asksCachedContentSearch(prompt: string) {
+  return /(?:найди|найти|поищи|поиск|search|find)/iu.test(prompt) &&
+    /(?:описани|критери|содержим|description|criteria|content)/iu.test(prompt) &&
+    !/(?:глубок.{0,8}анализ|полное содержимое|deep analysis|full content)/iu.test(prompt);
 }

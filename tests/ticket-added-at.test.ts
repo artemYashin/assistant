@@ -42,7 +42,7 @@ test("first local addition is captured once and survives sync, trash and restora
   insert(store, 42);
   assert.equal(store.ticketAddedAt(42), first);
   assert.equal(
-    listLocalTickets(store, { ids: [42] }).tickets[0].added_at,
+    listLocalTickets(store, { ids: [42], fields: ["added_at"] }).tickets[0].added_at,
     first,
   );
   store.removeLocalTicket(42);

@@ -8465,7 +8465,7 @@ summary > svg {
 .repository-browser { border: 1px solid #d6dfe7; border-radius: 8px; overflow: hidden; background: #fff; }
 .repository-search { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; padding: 8px 10px; border-bottom: 1px solid #d6dfe7; background: #f6f8fa; }
 .repository-search-modes { display: inline-flex; flex-shrink: 0; padding: 2px; gap: 2px; border: 1px solid #dbe2e8; border-radius: 6px; background: #eaf0f4; }
-.repository-search-modes > button { padding: 4px 8px; min-height: 26px; font-size: 11px; line-height: 18px; border: 0; border-radius: 4px; color: #526477; background: transparent; white-space: nowrap; }
+.repository-search-modes > button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 8px; min-height: 26px; font-size: 11px; line-height: 18px; border: 0; border-radius: 4px; color: #526477; background: transparent; white-space: nowrap; }
 .repository-search-modes > button[aria-pressed="true"] { background: #fff; color: #284a68; box-shadow: 0 1px 3px #243b531a; }
 .repository-search-modes > button:hover { color: #173f61; background: #f7fafc; }
 .repository-search > input { flex: 1; min-width: 140px; width: auto; height: 32px; min-height: 32px; padding: 5px 9px; font-size: 12px; border-radius: 6px; }
@@ -8724,3 +8724,9 @@ summary > svg {
 .composer { position: relative; }
 .composer-bottom .single-select { position: static; }
 .composer-bottom .composer-model .multi-select-panel { top: auto; bottom: calc(100% + 6px); left: 0; right: 0; width: auto; }
+
+.repository-search-modes > button > svg { flex-shrink: 0; }
+
+.assistant-token-usage { box-shadow: 0 3px 8px #20382a08; position: relative; z-index: 1; }
+.composer { box-shadow: 0 -3px 8px #20382a09; }
+.voice-shortcut-card:focus { outline: none; }
