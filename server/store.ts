@@ -848,6 +848,8 @@ export class Store {
   }
   detachChatTicket(context: Context, id: string) {
     this.chatSession(context, id);
+    this.set(`chat.runtime:${id}`, null);
+    this.set(`chat.context:${id}`, null);
     this.db
       .prepare(
         "UPDATE chat_sessions SET attachment=NULL,updated_at=? WHERE id=?",
@@ -886,6 +888,8 @@ export class Store {
   clearHistory(context: Context, id?: string) {
     const session = this.chatSession(context, id);
     return this.db.transaction(() => {
+      this.set(`chat.runtime:${session.id}`, null);
+      this.set(`chat.context:${session.id}`, null);
       const result = this.db
         .prepare(
           "DELETE FROM conversations WHERE session_id=? AND client=? AND project=?",

@@ -8870,3 +8870,58 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .conversation .chat-markdown .image-thumbnail {
   height: var(--chat-image-max-height, 30dvh);
 }
+
+.chat-markdown blockquote.chat-quote-card {
+  position: relative;
+  margin: 10px 0;
+  padding: 12px 32px 12px 12px;
+  border: 1px solid #d9dfe2;
+  border-radius: 8px;
+  background: #f4f6f7;
+  color: #465158;
+}
+.chat-quote-icon { position: absolute; top: 10px; right: 10px; color: #8a969e; pointer-events: none; }
+.chat-markdown .chat-quote-card > :first-child + p { margin-top: 0; }
+.chat-markdown .chat-quote-card > :last-child { margin-bottom: 0; }
+.chat-markdown .chat-quote-card > p:has(> .chat-ticket-link) { margin-top: 10px; }
+
+.assistant-context-usage { display: flex; flex-wrap: wrap; align-items: center; flex-basis: 100%; gap: 4px 10px; }
+.assistant-context-usage progress { width: 100%; height: 4px; border: 0; border-radius: 3px; overflow: hidden; accent-color: #638674; }
+.assistant-context-usage progress::-webkit-progress-bar { background: #dce5df; }
+.assistant-context-usage progress::-webkit-progress-value { background: #638674; }
+
+/* Navigation controls override the ordinary blue Markdown link rules. */
+.chat-markdown :is(a, button).chat-ticket-link,
+.chat-markdown a.chat-ticket-link:visited {
+  color: #36532a;
+  text-decoration: none;
+}
+.chat-markdown :is(a, button).chat-ticket-link:hover { color: #294320; background: #e2ecd9; }
+.chat-markdown :is(a, button).chat-ticket-link:focus-visible { outline-color: #789761; }
+.chat-external-icon { display: none; }
+.conversation .chat-markdown a.chat-external-link,
+.conversation .chat-markdown a.chat-external-link:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 9px;
+  margin: 3px 0;
+  border: 1px solid #d5dfd9;
+  border-radius: 7px;
+  background: #f1f5f2;
+  color: #365b46;
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  vertical-align: middle;
+  transition: background 100ms, border-color 100ms;
+}
+.conversation .chat-markdown a.chat-external-link:hover { background: #e7eee9; border-color: #b4c9bc; color: #274b36; }
+.conversation .chat-markdown a.chat-external-link:focus-visible { outline-color: #789761; }
+.conversation .chat-external-link > span { min-width: 0; overflow-wrap: anywhere; }
+.conversation .chat-external-icon { display: block; flex-shrink: 0; }
+.conversation .chat-external-icon.is-figma { color: #9b59c8; }
+.conversation .chat-external-icon.is-azure { color: #277db5; }
+.conversation .chat-external-icon.is-github { color: #48505a; }

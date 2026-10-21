@@ -2626,7 +2626,7 @@ function Assistant({
   onApprovals,
   pending,
 }: any) {
-  const [chatUsage, setChatUsage] = useState({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+  const [chatUsage, setChatUsage] = useState<{ inputTokens: number; outputTokens: number; reports: number; partial: boolean; contextUsage?: { currentTokens: number; tokenLimit: number; model: string; updatedAt: string } | null }>({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
   const [shortcutBusy, setShortcutBusy] = useState(false);
   const [voiceStartSession, setVoiceStartSession] = useState("");
   const resize = useAssistantResize();
@@ -3107,6 +3107,12 @@ function Assistant({
         <span>Токены{chatUsage.partial ? " (частично)" : ""}</span>
         <span>Вход <b>{!clearing && chatUsage.reports ? chatUsage.inputTokens.toLocaleString() : "—"}</b></span>
         <span>Выход <b>{!clearing && chatUsage.reports ? chatUsage.outputTokens.toLocaleString() : "—"}</b></span>
+        {!clearing && chatUsage.contextUsage ? <span className="assistant-context-usage" title={`Последний отчёт SDK · ${chatUsage.contextUsage.model} · ${new Date(chatUsage.contextUsage.updatedAt).toLocaleString()}. Заполненность контекста, включая сообщения, инструкции и инструменты; не лимит подписки. После смены модели обновится по новому отчёту.`}>
+          <span>Контекст <b>{chatUsage.contextUsage.currentTokens.toLocaleString()} / {chatUsage.contextUsage.tokenLimit.toLocaleString()}</b></span>
+          <span>Осталось <b>{Math.max(0, chatUsage.contextUsage.tokenLimit - chatUsage.contextUsage.currentTokens).toLocaleString()}</b></span>
+          <span><b>{Math.round(chatUsage.contextUsage.currentTokens / chatUsage.contextUsage.tokenLimit * 100)}%</b></span>
+          <progress aria-label="Заполненность контекста" max={chatUsage.contextUsage.tokenLimit} value={chatUsage.contextUsage.currentTokens} />
+        </span> : <span className="assistant-context-usage">Контекст — ожидаем отчёт SDK</span>}
       </div>
       <div className="conversation" aria-busy={clearing} ref={conversationView} onScroll={event => {
         const element = event.currentTarget;

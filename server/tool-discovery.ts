@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",
   cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
   sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
@@ -10,7 +11,7 @@ const catalog: Record<string, string> = {
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
-  search_ticket_content: "Search cached ticket descriptions/criteria/repro; short excerpts only, no Azure calls.",
+  search_ticket_content: "Search cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts, no Azure.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
     "Search/page local summaries; filters or exact IDs; full detail requires consent.",

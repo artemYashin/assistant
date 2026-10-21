@@ -53,7 +53,14 @@ export class UsageLedger {
       "SELECT coalesce(sum(u.input_tokens),0) AS inputTokens,coalesce(sum(u.output_tokens),0) AS outputTokens,count(u.receipt_id) AS reports FROM llm_requests r LEFT JOIN llm_usage u ON u.request_id=r.id WHERE r.chat_session_id=? AND r.client=? AND r.project=? AND r.origin='chat'",
     ).get(sessionId, context.client, context.project) as { inputTokens: number; outputTokens: number; reports: number };
     const legacy = !!this.store.db.prepare("SELECT 1 FROM conversations WHERE session_id=? AND role='assistant' AND request_id IS NULL LIMIT 1").get(sessionId);
-    return { ...usage, partial: legacy };
+    const snapshot = this.store.get<any>(`chat.context:${sessionId}`, null);
+    const contextUsage = snapshot?.source === this.store.source() ? snapshot : null;
+    return { ...usage, partial: legacy, contextUsage };
+  }
+  recordContext(sessionId: string, context: Context, data: { currentTokens: number; tokenLimit: number }, model: string) {
+    this.store.chatSession(context, sessionId);
+    if (!Number.isSafeInteger(data.currentTokens) || data.currentTokens < 0 || !Number.isSafeInteger(data.tokenLimit) || data.tokenLimit <= 0) return;
+    this.store.set(`chat.context:${sessionId}`, { currentTokens: data.currentTokens, tokenLimit: data.tokenLimit, model, source: this.store.source(), updatedAt: new Date().toISOString() });
   }
   record(id: string, eventId: string, data: UsageReceipt) {
     const receipt = data.accounting

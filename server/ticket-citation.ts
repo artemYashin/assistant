@@ -12,7 +12,7 @@ export function ticketCitationTool(store: Store, assertActive: () => void) {
       const source = store.source();
       const row = store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=? AND section=?").get(source, id, section) as { body: string } | undefined;
       if (!row || !normalize(row.body).includes(normalize(quote))) throw new AppError(400, "Цитата не найдена в кэше этого раздела. Прочитайте точный текст и повторите.");
-      return { id, section, quote, originalUrl: `/tickets?${new URLSearchParams({ id: String(id), source, section, quote })}`, note: "Use a blockquote followed by [Перейти в оригинал](originalUrl), translated to the user's language. UI opens current content; it may have changed since caching." };
+      return { id, section, quote, originalUrl: `/tickets?${new URLSearchParams({ id: String(id), source, section, quote })}`, note: "Use a blockquote with [Показать в тикете](originalUrl) in its final paragraph, translated to the user's language. UI opens current content; it may have changed since caching." };
     },
   });
 }

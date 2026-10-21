@@ -3,18 +3,19 @@ import { Store } from "./store.js";
 
 export const contentSearchSchema = z.object({
   search: z.string().trim().min(2).max(200),
+  id: z.number().int().positive().optional(),
   afterId: z.number().int().nonnegative().default(0),
   limit: z.number().int().min(1).max(30).default(15),
 });
 
 /** Local literal search only; never downloads ticket bodies or returns full content. */
 export function searchTicketContent(store: Store, input: unknown) {
-  const { search, afterId, limit } = contentSearchSchema.parse(input);
+  const { search, id, afterId, limit } = contentSearchSchema.parse(input);
   const source = store.source();
   const rows = store.db.prepare(`SELECT t.id,t.title,c.section,c.body,c.updated_at
     FROM tickets t JOIN ticket_content_cache c ON c.source=t.source AND c.id=t.id
-    WHERE t.source=? AND t.id>? AND instr(c.search_text,?)>0
-    ORDER BY t.id,c.section LIMIT ?`).all(source, afterId, search.toLocaleLowerCase(), (limit + 1) * 3) as any[];
+    WHERE t.source=? AND t.id>? AND (? IS NULL OR t.id=?) AND instr(c.search_text,?)>0
+    ORDER BY t.id,c.section LIMIT ?`).all(source, afterId, id ?? null, id ?? null, search.toLocaleLowerCase(), (limit + 1) * 3) as any[];
   const matches = new Map<number, any>();
   for (const row of rows) {
     if (matches.has(row.id)) continue;
@@ -26,7 +27,7 @@ export function searchTicketContent(store: Store, input: unknown) {
   const tickets = [...matches.values()].slice(0, limit);
   const coverage = store.db.prepare(`SELECT count(*) AS total,
     sum(EXISTS(SELECT 1 FROM ticket_content_cache c WHERE c.source=t.source AND c.id=t.id)) AS cached
-    FROM tickets t WHERE source=?`).get(source) as any;
+    FROM tickets t WHERE source=? AND (? IS NULL OR t.id=?)`).get(source, id ?? null, id ?? null) as any;
   const hasMore = matches.size > limit;
   return { tickets, hasMore, nextAfterId: hasMore ? tickets.at(-1)!.id : null,
     coverage: { total: coverage.total, cached: coverage.cached || 0 },
@@ -35,12 +36,13 @@ export function searchTicketContent(store: Store, input: unknown) {
 
 export const cachedTicketSchema = z.object({
   id: z.number().int().positive(),
+  includeCacheInfo: z.boolean().default(false),
   offset: z.number().int().nonnegative().default(0),
 });
 
 /** Complete cached text, paged to avoid silently truncating oversized tickets. */
 export function readCachedTicket(store: Store, input: unknown) {
-  const { id, offset } = cachedTicketSchema.parse(input);
+  const { id, offset, includeCacheInfo } = cachedTicketSchema.parse(input);
   const source = store.source();
   if (!store.hasLocalTicket(id, source))
     return { id, available: false, reason: "Ticket is not local. No Azure request was made." };
@@ -53,6 +55,6 @@ export function readCachedTicket(store: Store, input: unknown) {
   return { id, available: true, origin: "local_cache", content: content.slice(offset, end),
     offset, nextOffset: end < content.length ? end : null,
     missingSections: ["description", "criteria", "repro"].filter(section => !rows.some(row => row.section === section)),
-    cachedAt: rows.map(row => ({ section: row.section, at: row.updated_at })),
+    cachedAt: includeCacheInfo ? rows.map(row => ({ section: row.section, at: row.updated_at })) : undefined,
     note: "Cached text may be stale. No Azure calls. Continue with nextOffset for remaining text; missing sections are unknown, not empty." };
 }
