@@ -20,8 +20,20 @@ export function highlightLines(code: string, language: string): CodeToken[][] {
       node.children.forEach((child) => visit(child, next));
     }
   };
-  visit(highlighter.highlight(language, code), []);
+  visit(language === "auto" ? highlighter.highlightAuto(code) : highlighter.highlight(language, code), []);
   return lines;
+}
+
+export function highlightSnippet(code: string, language: string): CodeToken[][] {
+  const plain = () => code.split("\n").map(text => [{ text, className: "" }]);
+  const selected = language.trim().toLowerCase();
+  if (code.length > 120_000 || (!selected && code.length > 12_000)) return plain();
+  if (selected && !highlighter.registered(selected)) return plain();
+  try {
+    return highlightLines(code, selected || "auto");
+  } catch {
+    return plain();
+  }
 }
 
 export function highlightDiff(file: ReturnType<typeof splitDiff>[number], language: string): HighlightedFile {
