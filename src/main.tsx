@@ -1,3 +1,4 @@
+import { currentRepositoryBranch } from "./repository-branch.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { VoiceBinding } from "./VoiceBinding.js";
 import { currentViewedTicket, useViewedTicket } from "./viewed-ticket.js";
@@ -3034,6 +3035,7 @@ function Assistant({
         context,
         sessionId,
         viewedTicket: currentViewedTicket(),
+        repositoryBranch: currentRepositoryBranch(context),
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,

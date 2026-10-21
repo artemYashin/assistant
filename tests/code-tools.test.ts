@@ -49,3 +49,23 @@ test("save_memory only creates a proposal until UI approval", async t => {
   new MemoryProposals(store).decide(result.id, true);
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM memories").get() as any).n, 1);
 });
+
+test("code reads default to UI branch, allow explicit override and pin revisions per branch", async t => {
+  const store = setup(t), calls: any[] = [];
+  const fake = { request: async (input: any) => {
+    calls.push(input);
+    if (input.operation === "branches") return { defaultBranch: "main" };
+    return { sha: input.branch === "dev" ? "d".repeat(40) : "a".repeat(40), text: "code" };
+  } };
+  const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, fake as any, "dev");
+  const read = (args: any) => tools.find(tool => tool.name === "code_read_file")!.handler!({ path: "file.ts", startLine: 1, ...args }, {} as any) as Promise<any>;
+  assert.equal((await read({})).branch, "dev");
+  assert.equal((await read({ branch: "feature" })).branch, "feature");
+  assert.equal(calls[1].revision, undefined);
+  await read({});
+  assert.equal(calls[2].revision, "d".repeat(40));
+  const defaults = codeTools(store, { client: "Client", project: "Project" }, () => {}, fake as any);
+  const result: any = await defaults.find(tool => tool.name === "code_read_file")!.handler!({ path: "file.ts", startLine: 1 }, {} as any);
+  assert.equal(result.branch, "main");
+  assert.ok(calls.every(call => call.localOnly && !call.refresh));
+});

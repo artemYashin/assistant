@@ -1,3 +1,4 @@
+import { repositoryBranchKey } from "./repository-branch.js";
 import { useSearchParams } from "react-router-dom";
 import { chatCodeBranch } from "./chat-code-branch.js";
 import { RepositorySearch } from "./RepositorySearch.js";
@@ -25,9 +26,10 @@ export function CodeBrowserPage({ context }: { context: Context }) {
 }
 function RepositoryView({ context, requestedBranch }: { context: Context; requestedBranch?: string }) {
   const { progress, execute, stop } = useCodeProgress();
-  const branchStorageKey = "repository-branch:" + JSON.stringify(context);
+  const branchStorageKey = repositoryBranchKey(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
+  useEffect(() => { if (branch) { try { sessionStorage.setItem(branchStorageKey, branch); } catch { /* Optional storage. */ } } }, [branch, branchStorageKey]);
   const [status, setStatus] = useState<Status | null>(null), [busy, setBusy] = useState(true), [error, setError] = useState("");
   const [branchNote, setBranchNote] = useState("");
   const [branchReload, setBranchReload] = useState(0);

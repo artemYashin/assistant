@@ -3,21 +3,26 @@ import { z } from "zod";
 import { CodeBrowser } from "./code-browser.js";
 import { AppError, type Store, type Context } from "./store.js";
 
-const branch = z.string().min(1).max(500);
+const branch = z.string().min(1).max(500).optional().describe("Exact branch name; omit to use the selected code-browser branch, or repository default. Explicit user choice takes precedence.");
 const path = z.string().max(4096);
 const page = { offset: z.number().int().min(0).max(100000).default(0), limit: z.number().int().min(1).max(40).default(15) };
-export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store)) {
+export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store), selectedBranch?: string) {
   if (!store.settings().assistantCodeAccess) return [];
   const revisions = new Map<string, string>();
   const read = async (operation: string, args: Record<string, unknown>) => {
     assertActive();
     if (!store.settings().assistantCodeAccess) throw new AppError(403, "Доступ ассистента к коду отключён в настройках.");
     if (!context.client || !context.project) throw new AppError(400, "Выберите заказчика и проект.");
-    const name = String(args.branch || "");
+    let name = String(args.branch || "");
+    if (["tree", "search", "file"].includes(operation)) {
+      name ||= selectedBranch || (await browser.request({ ...context, operation: "branches", localOnly: true, refresh: false })).defaultBranch;
+      if (!name) throw new AppError(400, "Выберите ветку репозитория.");
+      args = { ...args, branch: name };
+    }
     const data = await browser.request({ ...args, ...context, operation, localOnly: true, localReadWaitMs: store.settings().assistantCodeWaitSeconds * 1000, refresh: false, ...(revisions.has(name) ? { revision: revisions.get(name) } : {}) });
     assertActive();
     if (data.sha) revisions.set(name, data.sha);
-    return data;
+    return name ? { ...data, branch: name } : data;
   };
   const paged = (data: any, key: string, offset: number, limit: number) => {
     const items: any[] = [];
@@ -26,7 +31,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       items.push(item);
     }
     const more = data.more || data[key].length > items.length;
-    return { sha: data.sha, [key]: items, total: data.total, nextOffset: more ? offset + items.length : null, ...(data.coverage ? { coverage: data.coverage, perFileLimit: data.perFileLimit } : {}) };
+    return { branch: data.branch, sha: data.sha, [key]: items, total: data.total, nextOffset: more ? offset + items.length : null, ...(data.coverage ? { coverage: data.coverage, perFileLimit: data.perFileLimit } : {}) };
   };
   return [
     defineTool("show_code_branches", {
@@ -48,7 +53,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       parameters: z.object({ ...page }),
       handler: async ({ offset, limit }) => {
         const data = await read("branches", {});
-        return { repository: data.repository, defaultBranch: data.defaultBranch, branches: data.branches.slice(offset, offset + limit), nextOffset: offset + limit < data.branches.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
+        return { repository: data.repository, defaultBranch: data.defaultBranch, selectedBranch: selectedBranch || data.defaultBranch, branches: data.branches.slice(offset, offset + limit), nextOffset: offset + limit < data.branches.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
       },
     }),
     defineTool("code_tree", {
@@ -67,7 +72,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       handler: async ({ startLine, endLine, full, ...args }) => {
         if (endLine !== undefined && endLine < startLine) throw new AppError(400, "endLine должен быть не меньше startLine");
         const data = await read("file", args);
-        if (data.unavailable) return { sha: data.sha, path: args.path, unavailable: data.unavailable };
+        if (data.unavailable) return { branch: data.branch, sha: data.sha, path: args.path, unavailable: data.unavailable };
         const lines = String(data.text).split(/\r?\n/);
         const end = Math.min(lines.length, endLine ?? (full ? lines.length : startLine + 79));
         const result: { line: number; text: string; truncated?: boolean }[] = [];
@@ -81,7 +86,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
           result.push(item); size += bytes;
         }
         const last = result.at(-1)?.line ?? startLine - 1;
-        return { sha: data.sha, path: args.path, totalLines: lines.length, lines: result, nextLine: result.length && last < end ? last + 1 : null, symlink: data.symlink, lfs: data.lfs };
+        return { branch: data.branch, sha: data.sha, path: args.path, totalLines: lines.length, lines: result, nextLine: result.length && last < end ? last + 1 : null, symlink: data.symlink, lfs: data.lfs };
       },
     }),
   ];
