@@ -34,6 +34,21 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
     return { branch: data.branch, sha: data.sha, [key]: items, total: data.total, nextOffset: more ? offset + items.length : null, ...(data.coverage ? { coverage: data.coverage, perFileLimit: data.perFileLimit } : {}) };
   };
   return [
+    defineTool("cite_code", {
+      description: "Create clickable code references after inspecting code. Returns localUrl links opening the branch/file and highlighting a line range. Render each exact URL as a Markdown link on its own line. Batch multiple references. Reads local files to validate line ranges; no network or bodies returned.",
+      parameters: z.object({ references: z.array(z.object({ branch, path: path.min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive().optional() })).min(1).max(20) }),
+      handler: async ({ references }) => {
+        const results = [];
+        for (const ref of references) {
+          const data = await read("file", { branch: ref.branch, path: ref.path });
+          if (data.unavailable) throw new AppError(400, "Файл недоступен для цитирования");
+          const endLine = ref.endLine ?? ref.startLine;
+          if (endLine < ref.startLine || endLine > String(data.text).split(/\r?\n/).length) throw new AppError(400, "Диапазон строк вне файла");
+          results.push({ branch: data.branch, label: `${ref.path}:${ref.startLine}${endLine === ref.startLine ? "" : `–${endLine}`}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, line: String(ref.startLine), endLine: String(endLine) })}` });
+        }
+        return { references: results };
+      },
+    }),
     defineTool("show_code_branches", {
       description: "Show compact clickable branch buttons in chat. Returns exact localUrl for each cached branch; render each as a Markdown link. Copy button is provided by UI. No network. Paginate or filter names.",
       parameters: z.object({ ...page, search: z.string().max(200).default("") }),

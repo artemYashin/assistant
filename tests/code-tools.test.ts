@@ -65,7 +65,21 @@ test("code reads default to UI branch, allow explicit override and pin revisions
   await read({});
   assert.equal(calls[2].revision, "d".repeat(40));
   const defaults = codeTools(store, { client: "Client", project: "Project" }, () => {}, fake as any);
-  const result: any = await defaults.find(tool => tool.name === "code_read_file")!.handler!({ path: "file.ts", startLine: 1 }, {} as any);
+  const result: any = await defaults.find(tool => tool.name === "code_read_file")!.handler!({ path: "file.ts", startLine: 1 } as any, {} as any);
   assert.equal(result.branch, "main");
   assert.ok(calls.every(call => call.localOnly && !call.refresh));
+});
+
+test("code citations validate ranges and preserve scoped branch/file links", async t => {
+  const store = setup(t);
+  const fake = { request: async () => ({ sha: "a".repeat(40), text: "first\nsecond\nthird" }) };
+  const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, fake as any, "dev");
+  const cite = (references: any[]) => tools.find(tool => tool.name === "cite_code")!.handler!({ references } as any, {} as any) as Promise<any>;
+  const result = await cite([{ path: "src/some file.ts", startLine: 2, endLine: 3 }]);
+  const params = new URL(result.references[0].localUrl, "https://orbit.local").searchParams;
+  assert.equal(params.get("branch"), "dev");
+  assert.equal(params.get("path"), "src/some file.ts");
+  assert.equal(params.get("line"), "2");
+  assert.equal(params.get("endLine"), "3");
+  await assert.rejects(cite([{ path: "file.ts", startLine: 4 }]), /Диапазон/);
 });

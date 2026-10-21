@@ -22,9 +22,9 @@ export function CodeBrowserPage({ context }: { context: Context }) {
   const link = chatCodeBranch(`/code?${params}`);
   if (link && (link.client !== context.client || link.project !== context.project)) return <section className="panel"><h1>Код репозитория</h1><p>Выберите заказчика {link.client} и проект {link.project} в хедере, чтобы открыть ветку {link.branch}.</p></section>;
   if (!context.client || !context.project) return <section className="panel"><h1>Код репозитория</h1><p>Выберите заказчика и проект в хедере и настройте его Git-репозиторий.</p></section>;
-  return <RepositoryView key={JSON.stringify([context, link?.branch])} context={context} requestedBranch={link?.branch} />;
+  return <RepositoryView key={JSON.stringify([context, link?.href])} context={context} requestedBranch={link?.branch} reference={link || undefined} />;
 }
-function RepositoryView({ context, requestedBranch }: { context: Context; requestedBranch?: string }) {
+function RepositoryView({ context, requestedBranch, reference }: { context: Context; requestedBranch?: string; reference?: NonNullable<ReturnType<typeof chatCodeBranch>> }) {
   const { progress, execute, stop } = useCodeProgress();
   const branchStorageKey = repositoryBranchKey(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
@@ -121,12 +121,20 @@ function RepositoryView({ context, requestedBranch }: { context: Context; reques
     setStatus(null); setFile(null);
     if (branch) void refresh("status");
   }, [branch, refresh]);
-  async function openFile(path: string, line?: number) {
+  const openedReference = useRef(false);
+  const [endLine, setEndLine] = useState<number>();
+  useEffect(() => {
+    if (!openedReference.current && reference?.path && status && !busy && branch === reference.branch) {
+      openedReference.current = true;
+      void openFile(reference.path, reference.startLine, reference.endLine);
+    }
+  }, [status, busy, branch, reference]);
+  async function openFile(path: string, line?: number, lastLine?: number) {
     const current = ++fileRequest.current, scope = generation.current;
     setFileBusy(true); setError("");
     try {
       const next = await request("file", { path });
-      if (scope === generation.current && current === fileRequest.current) { setFile(next); setLine(line); }
+      if (scope === generation.current && current === fileRequest.current) { setFile(next); setLine(line); setEndLine(lastLine); }
     } catch (e: any) { if (scope === generation.current && current === fileRequest.current) setError(e.message); }
     finally { if (scope === generation.current && current === fileRequest.current) setFileBusy(false); }
   }
@@ -183,7 +191,7 @@ function RepositoryView({ context, requestedBranch }: { context: Context; reques
           {file.unavailable ? <p className="muted">{file.unavailable}</p> : <>
             {file.symlink && <p className="muted">Символическая ссылка. Ниже — её цель; переход по ссылке отключён.</p>}
             {file.lfs && <p className="muted">Git LFS pointer. Большой объект не загружается.</p>}
-            <FileContent key={file.sha + file.path} file={file} targetLine={line} />
+            <FileContent key={file.sha + file.path} file={file} targetLine={line} endLine={endLine} />
           </>}
         </> : <div className="repository-placeholder"><span className="repository-placeholder-icon"><Code2 size={24} aria-hidden="true" /></span><strong>Откройте файл</strong><p>Выберите его в дереве слева или найдите через поиск.</p></div>}
       </div>}
@@ -222,7 +230,7 @@ function Directory({ path, request, selected, onFile }: { path: string; request:
     {!loading && !error && !entries.length && <li className="muted">Пустая папка</li>}
   </ul>;
 }
-function FileContent({ file, targetLine }: { file: File; targetLine?: number }) {
+function FileContent({ file, targetLine, endLine }: { file: File; targetLine?: number; endLine?: number }) {
   const [tokens, setTokens] = useState<CodeToken[][]>([]);
   const [start, setStart] = useState(Math.floor(((targetLine || 1) - 1) / 500) * 500);
   const root = useRef<HTMLDivElement>(null);
@@ -241,7 +249,7 @@ function FileContent({ file, targetLine }: { file: File; targetLine?: number }) 
     <div className="repository-file-pages"><button className="text-button" disabled={!start} onClick={() => setStart(Math.max(0, start - 500))}>←</button>
       <span>Строки {start + 1}–{Math.min(start + 500, lines.length)} из {lines.length}</span>
       <button className="text-button" disabled={start + 500 >= lines.length} onClick={() => setStart(start + 500)}>→</button></div>
-    <div className="repository-source" ref={root}><pre>{lines.slice(start, start + 500).map((text, i) => <div className="repository-source-line" key={i} data-target={start + i + 1 === targetLine}>
+    <div className="repository-source" ref={root}><pre>{lines.slice(start, start + 500).map((text, i) => <div className="repository-source-line" key={i} data-target={targetLine !== undefined && start + i + 1 >= targetLine && start + i + 1 <= (endLine ?? targetLine)}>
       <span className="repository-line-number">{start + i + 1}</span><code>{tokens[start + i]?.length ? tokens[start + i].map((token, j) => <span className={token.className} key={j}>{token.text}</span>) : text || " "}</code>
     </div>)}</pre></div>
   </>;

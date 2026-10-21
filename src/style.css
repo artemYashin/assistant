@@ -9094,3 +9094,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .settings-tabs-layout .settings-group .settings-model-grid { margin-top: 0; }
 .settings-group > .inline-note { margin-top: 12px; }
 @media (max-width: 600px) { .settings-card > .settings-group { padding: 12px; } }
+
+.chat-markdown .chat-code-reference { display: block; width: fit-content; max-width: 100%; margin: 5px 0; }
+.chat-markdown .chat-code-link, .chat-markdown .chat-branch-link { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 8px; border: 1px solid #ceded5; border-radius: 7px; background: #f0f6f3; font-size: 12px; line-height: 1.4; }
+.chat-code-link > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-code-link > svg { flex-shrink: 0; }
+.chat-markdown .chat-code-link:hover, .chat-markdown .chat-branch-link:hover { background: #e3efe8; border-color: #9cbaa9; }

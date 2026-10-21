@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  cite_code: "Create clickable file/line-range references opening highlighted code in the repository viewer.",
   show_code_branches: "Display branch buttons with copy and navigation to code page; cached names only.",
   code_work_status: "Read current Git jobs, download progress and queue without starting work.",
   code_branches: "List cached branches of the current project repository; no network.",

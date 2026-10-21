@@ -5,7 +5,7 @@ import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
-import { GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
+import { FileCode2, GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -69,7 +69,10 @@ export function ChatMarkdown({
             if (node?.children.some(child => child.type === "element" && child.tagName === "img")) return <span>{children}</span>;
             if (!href) return <span>{children}</span>;
             const codeBranch = chatCodeBranch(href);
-            if (codeBranch) return <CopyableLink href={codeBranch.href} copyValue={codeBranch.branch}><Link className="chat-ticket-link chat-branch-link" to={codeBranch.href} title={codeBranch.branch}><GitBranch size={14} aria-hidden="true" /><span>{codeBranch.branch}</span></Link></CopyableLink>;
+            if (codeBranch) {
+              if (codeBranch.path) return <span className="chat-code-reference"><Link className="chat-ticket-link chat-code-link" to={codeBranch.href} title={`${codeBranch.branch} · ${codeBranch.path}`}><FileCode2 size={14} aria-hidden="true" /><span>{codeBranch.path}:{codeBranch.startLine}{codeBranch.endLine !== codeBranch.startLine ? `–${codeBranch.endLine}` : ""}</span></Link></span>;
+              return <span className="chat-code-reference"><CopyableLink href={codeBranch.href} copyValue={codeBranch.branch}><Link className="chat-ticket-link chat-branch-link" to={codeBranch.href} title={codeBranch.branch}><GitBranch size={14} aria-hidden="true" /><span>{codeBranch.branch}</span></Link></CopyableLink></span>;
+            }
             const pr = chatPrCard(href);
             if (pr) {
               const date = new Date(pr.createdAt);
