@@ -14,7 +14,7 @@ Existing Azure PAT, HTTPS, Code Read and repository Read permission. A token wit
 
 ## Freshness and efficiency
 
-Branch listings are cached for 60 seconds. Opening a branch refreshes its remote ref at most once per minute. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (200 commits); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
+Branch listings are cached for 60 seconds. Opening a cached branch uses its saved snapshot regardless of age; only the first opening downloads it automatically. Reloading the page does not fetch objects. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (one commit by default; CODE_BROWSER_FETCH_DEPTH accepts 1–1000); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
 
 One operation runs at a time with a bounded queue. Git network timeout defaults to 300 seconds and is configurable per repository from 60 to 1800 seconds. The backend allows an additional 180 seconds for queue/processing; queued work expires after 60 seconds and never starts after that expiry. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in its own named volume; existing Orbit data volumes are unchanged.
 
@@ -22,7 +22,7 @@ One operation runs at a time with a bounded queue. Git network timeout defaults 
 
 Filename search uses Git's tree manifest. Content search uses literal, case-insensitive ripgrep over an immutable snapshot of regular UTF-8 files, including hidden and gitignored tracked files. Symlinks and submodules are not followed. LFS pointer files are displayed as pointers. Binary, oversized and omitted files are explicitly reported. File preview limit: 2 MiB. Search snapshot: 20,000 regular files / 128 MiB; two most recent snapshots per repository are retained. Tree manifest: bounded to 16 MiB. Results are bounded/paginated; partial search coverage is returned to the UI. Snapshot writes are atomic and only use validated relative paths.
 
-There is no background polling or automatic pull. Git object storage persists; fetch is rejected once the configured total cache limit is reached (default 2 GiB), and an oversized fetch is discarded. The first fetch can take time. There is no execution/build of repository contents.
+There is no background polling or automatic pull. Git object storage persists; fetch is rejected once the configured total cache limit is reached (default 20 GiB). An oversized completed fetch is retained, but the displayed snapshot is not advanced; increase the quota and retry to reuse downloaded objects. This is a pre/post-operation quota, not a hard filesystem limit. The first fetch can take time. There is no execution/build of repository contents.
 
 ## API
 
@@ -80,3 +80,16 @@ are replayed to reconnecting observers. Object percentages are not byte
 percentages; no total download size or ETA is inferred from them. The UI hides
 rates after 15 seconds without progress and shows an inactivity hint, which does
 not diagnose host sleep, network failure or a stopped container.
+
+
+### Cache capacity and download volume
+
+Compose passes CODE_BROWSER_MAX_CACHE_BYTES (default 21474836480 = 20 GiB)
+and CODE_BROWSER_FETCH_DEPTH (default 1) from the project's .env to the service.
+After changing them, recreate the container with
+`docker compose up -d --build code-browser`. Existing named volumes are retained.
+This does not reserve disk space: ensure Docker's disk has sufficient free space.
+Lowering history depth reduces newly requested history, but does not automatically
+remove objects from an existing cache. All files at the selected commit are still
+downloaded, so a large current tree may remain large. Partial/blobless clone is
+not used, preserving local-only file browsing and content search.

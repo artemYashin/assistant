@@ -4,7 +4,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { RepositoryBrowser, BrowserError } from './engine.mjs';
 const browser = new RepositoryBrowser(process.env.CODE_BROWSER_CACHE || '/cache', {
   recoverLocks: process.env.CODE_BROWSER_EXCLUSIVE_CACHE === '1',
-  maxCacheBytes: Number(process.env.CODE_BROWSER_MAX_CACHE_BYTES) || 2 * 1024 ** 3,
+  maxCacheBytes: Number(process.env.CODE_BROWSER_MAX_CACHE_BYTES ?? 20 * 1024 ** 3),
+  fetchDepth: Number(process.env.CODE_BROWSER_FETCH_DEPTH ?? 1),
 });
 const server = createServer(async (req, res) => {
   const send = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };

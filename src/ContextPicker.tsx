@@ -1,13 +1,11 @@
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { copyRenamedContextStorage } from "./context-storage.js";
-import { Link } from "react-router-dom";
 import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
 import { PrioritySettings } from "./TicketMetadata.js";
 import { DeveloperDirectory } from "./DeveloperDirectory.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   Users,
-  Code2,
   Cloud,
   Folder,
   Pencil,
@@ -167,7 +165,6 @@ export function ContextPicker({
       >
         <Settings size={17} />
       </button>
-      <Link className="icon-button" to="/code" title="Код репозитория" aria-label="Код репозитория"><Code2 size={18} /></Link>
       {open &&
         createPortal(
           <dialog

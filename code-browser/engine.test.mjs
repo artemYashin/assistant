@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -7,7 +8,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RepositoryBrowser, safePath } from './engine.mjs';
 
-async function fixture(t) {
+async function fixture(t, options = {}) {
   const root = await fs.mkdtemp(path.join(tmpdir(), 'orbit-code-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const work = path.join(root, 'origin'); await fs.mkdir(work);
@@ -22,7 +23,7 @@ async function fixture(t) {
   git('add', '.'); git('commit', '-m', 'initial');
   const first = git('rev-parse', 'HEAD');
   git('branch', 'feature/nested');
-  const browser = new RepositoryBrowser(path.join(root, 'cache'), { allowLocal: true });
+  const browser = new RepositoryBrowser(path.join(root, 'cache'), { allowLocal: true, ...options });
   const url = pathToFileURL(work).href;
   const events = [];
   const request = (operation, extra = {}) => browser.execute({ url, token: 'fixture-secret', operation, branch: 'main', ...extra }, event => events.push(event));
@@ -58,7 +59,7 @@ test('isolated snapshots, branch selection, local tree and content search', asyn
 });
 
 test('checking does not advance displayed code, pull is local only, stale revision rejected', async t => {
-  const { request, git, work, first } = await fixture(t);
+  const { request, git, work, first } = await fixture(t, { fetchDepth: 200 });
   await request('status');
   await fs.writeFile(path.join(work, 'src/hello.ts'), 'new version\n');
   git('add', '.'); git('commit', '-m', 'next'); const head = git('rev-parse', 'HEAD');
@@ -101,4 +102,40 @@ test('cache never persists PAT or credential headers', async t => {
     }
   }
   await inspect(path.join(root, 'cache'));
+});
+
+test('oversized fetch preserves objects and can continue after increasing quota', async t => {
+  const { request, root, work, git, browser } = await fixture(t, { maxCacheBytes: 64 * 1024 });
+  await fs.writeFile(path.join(work, 'random.bin'), randomBytes(256 * 1024));
+  git('add', '.'); git('commit', '-m', 'large binary');
+  await assert.rejects(request('status'), /Скачанные данные сохранены/);
+  const repos = await fs.readdir(path.join(root, 'cache'));
+  assert.equal(repos.length, 1);
+  const gitDir = path.join(root, 'cache', repos[0], 'git');
+  const head = git('rev-parse', 'HEAD');
+  assert.equal(execFileSync('git', ['--git-dir=' + gitDir, 'cat-file', '-t', head], { encoding: 'utf8' }).trim(), 'commit');
+  browser.maxCacheBytes = 8 * 1024 ** 2;
+  assert.equal((await request('status')).sha, head);
+  // The lightweight default downloads one commit, with all current files.
+  assert.equal(execFileSync('git', ['--git-dir=' + gitDir, 'rev-list', '--count', head], { encoding: 'utf8' }).trim(), '1');
+  assert.match((await request('file', { path: 'src/hello.ts' })).text, /hello World/);
+});
+
+test('reopening an old cached branch works without contacting its origin', async t => {
+  const { request, root, work, first, events } = await fixture(t);
+  const initial = await request('status');
+  const [repo] = await fs.readdir(path.join(root, 'cache'));
+  const dir = path.join(root, 'cache', repo);
+  const stateName = (await fs.readdir(dir)).find(name => name.endsWith('.json'));
+  const statePath = path.join(dir, stateName);
+  await fs.writeFile(statePath, JSON.stringify({ ...JSON.parse(await fs.readFile(statePath, 'utf8')), checkedAt: '2000-01-01T00:00:00.000Z' }));
+  await fs.rename(work, work + '-offline');
+  events.length = 0;
+  const reopened = await request('status');
+  assert.equal(reopened.sha, first);
+  assert.equal(reopened.checkedAt, '2000-01-01T00:00:00.000Z');
+  assert.equal(reopened.remoteSha, initial.remoteSha);
+  assert.ok(!events.some(event => event.stage === 'fetching'));
+  assert.match((await request('file', { path: 'src/hello.ts' })).text, /hello World/);
+  await assert.rejects(request('status', { refresh: true }));
 });

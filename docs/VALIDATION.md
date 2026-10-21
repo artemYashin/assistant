@@ -1224,3 +1224,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Parse reported Git receiving bytes, transfer rate and object counts using bounded numeric fields. Shared jobs retain transfer metrics and the last progress timestamp for reconnecting observers. UI shows received size/object count, hides stale rates and marks lack of updates after 15 seconds. Total transfer bytes are not inferred from object percentages.
 - Standardized customer/project configuration save controls with a shared button and right-aligned footer, including Azure, repository, priorities, grouping and rename forms. Removed the redundant queue observer label.
 - Updated parser coverage for units and chunked transfer output. Tests were not run at the user's request. TypeScript, JavaScript syntax and whitespace checks passed. Live Git/Docker and browser interaction checks were not performed.
+
+### Preserve repository cache and refine file explorer (2026-10-21)
+
+- Raise default cache quota to 20 GiB, wire quota/history depth through Compose and .env, and default to one commit of history. Over-quota fetches preserve downloaded objects and report usage/limit instead of deleting the repository.
+- Opening a cached branch no longer automatically fetches after 60 seconds. Explicit checks/Pull still contact the origin; initial downloads remain automatic. The displayed check timestamp stays unchanged on local reopening.
+- Move repository navigation to the sidebar. Align folder/file disclosure slots, add extension-specific icons/colors and close-file action; without a selected file the explorer spans the panel and shows locally available type/size metadata.
+- 24 targeted tests passed for repository operations, quota preservation, offline reopening, progress/queue/recovery, backend streams and context rename. Production build, Compose configuration and whitespace checks passed. Existing bundle-size advisories remain. Live Azure/Docker and visual browser checks were not performed.

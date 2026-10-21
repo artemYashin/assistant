@@ -32,6 +32,9 @@ services:
       retries: 3
   code-browser:
     build: ./code-browser
+    environment:
+      CODE_BROWSER_MAX_CACHE_BYTES: "${CODE_BROWSER_MAX_CACHE_BYTES:-21474836480}"
+      CODE_BROWSER_FETCH_DEPTH: "${CODE_BROWSER_FETCH_DEPTH:-1}"
     volumes:
       - repository-cache:/cache
       - repo-control:/control:ro

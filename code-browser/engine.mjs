@@ -55,7 +55,10 @@ async function diskSize(root) {
   return total;
 }
 export class RepositoryBrowser {
-  constructor(root, { allowLocal = false, recoverLocks = false, maxCacheBytes = 2 * 1024 ** 3 } = {}) {
+  constructor(root, { allowLocal = false, recoverLocks = false, fetchDepth = 1, maxCacheBytes = 20 * 1024 ** 3 } = {}) {
+    if (!Number.isInteger(fetchDepth) || fetchDepth < 1 || fetchDepth > 1000) throw new Error('CODE_BROWSER_FETCH_DEPTH must be an integer from 1 to 1000');
+    if (!Number.isSafeInteger(maxCacheBytes) || maxCacheBytes <= 0) throw new Error('CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer');
+    this.fetchDepth = fetchDepth;
     this.recoverLocks = recoverLocks; this.root = root; this.allowLocal = allowLocal; this.maxCacheBytes = maxCacheBytes;
     this.jobs = new RepositoryJobs(); this.branchesCache = new Map();
   }
@@ -123,18 +126,18 @@ export class RepositoryBrowser {
     const branchKey = hash(branch), stateFile = path.join(repo, branchKey + '.json');
     let state = await fs.readFile(stateFile, 'utf8').then(JSON.parse).catch(() => null);
     const remoteRef = 'refs/orbit/remote/' + branchKey;
-    if (!state || operation === 'pull' || (operation === 'status' && (input.refresh || Date.now() - Date.parse(state.checkedAt) >= 60000))) {
-      if (await diskSize(this.root) >= this.maxCacheBytes) throw new BrowserError('Кеш кода достиг лимита. Очистите отдельный volume кеша или увеличьте CODE_BROWSER_MAX_CACHE_BYTES.', 507);
+    if (!state || operation === 'pull' || (operation === 'status' && input.refresh)) {
+      const quotaMessage = size => `Кеш кода занимает ${(size / 1024 ** 3).toFixed(2)} GiB при лимите ${(this.maxCacheBytes / 1024 ** 3).toFixed(2)} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.`;
+      const before = await diskSize(this.root);
+      if (before >= this.maxCacheBytes) throw new BrowserError(quotaMessage(before), 507);
       if (this.recoverLocks) {
         try { await recoverShallowLock(gitDir, { report }); }
         catch (error) { throw new BrowserError(error.message, 409); }
       }
       report({ stage: 'fetching' });
-      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=200', url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
-      if (await diskSize(this.root) > this.maxCacheBytes) {
-        await fs.rm(repo, { recursive: true, force: true });
-        throw new BrowserError('Репозиторий превысил лимит кеша; его копия удалена. Увеличьте лимит кеша.', 507);
-      }
+      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=' + this.fetchDepth, url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
+      const after = await diskSize(this.root);
+      if (after > this.maxCacheBytes) throw new BrowserError(quotaMessage(after), 507);
       report({ stage: 'finalizing' });
       const remoteSha = (await git(['rev-parse', remoteRef])).toString().trim();
       const sha = operation === 'pull' || !state ? remoteSha : state.sha;

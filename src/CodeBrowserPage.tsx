@@ -1,6 +1,7 @@
+import { RepositoryFileIcon, repositoryFileKind, repositoryFileSize } from "./RepositoryFileKind.js";
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, Folder, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage } from "./diff-languages.js";
@@ -81,6 +82,10 @@ function RepositoryView({ context }: { context: Context }) {
     } catch (e: any) { if (scope === generation.current && current === fileRequest.current) setError(e.message); }
     finally { if (scope === generation.current && current === fileRequest.current) setFileBusy(false); }
   }
+  function closeFile() {
+    fileRequest.current++;
+    setFile(null); setFileBusy(false); setLine(undefined);
+  }
   async function search(more = false) {
     const current = ++searchRequest.current, scope = generation.current;
     const search = more ? searched : { query: query.trim(), mode };
@@ -107,7 +112,7 @@ function RepositoryView({ context }: { context: Context }) {
     {branchNote && <p className="muted">{branchNote}</p>}
     {status && <div className="repository-freshness">
       <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>
-      <span>{status.current ? "Совпадает с Azure на момент проверки" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или глубже 200 коммитов)"}</span>
+      <span>{status.current ? "Совпадает с Azure на момент проверки" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
       <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
     </div>}
     {error && <div role="alert" className="repository-error">
@@ -124,8 +129,9 @@ function RepositoryView({ context }: { context: Context }) {
       <button className="secondary" disabled={busy || !status || searchBusy || !query.trim()}><Search size={15} />{searchBusy ? "Ищу…" : "Найти"}</button>
       {results && <button className="text-button" type="button" onClick={() => { searchRequest.current++; setSearchBusy(false); setResults(null); }}>К дереву</button>}
     </form>
-    <div className="repository-workspace" aria-busy={busy}>
+    <div className={`repository-workspace${!file && !fileBusy ? " is-browsing" : ""}`} aria-busy={busy}>
       <nav className="repository-tree" aria-label="Файлы репозитория">
+        {!results && !file && !fileBusy && <div className="repository-tree-columns" aria-hidden="true"><span>Имя</span><span>Тип</span><span>Размер</span></div>}
         {results ? <>
           <p className="muted">{results.total} {results.perFileLimit ? "найденных строк" : "файлов"} · {searched.query}</p>
           {results.coverage && <p className="repository-coverage">Поиск: {results.coverage.searchedFiles} файлов. Пропущено: {results.coverage.skippedFiles} (бинарные, большие, ссылки или лимит снимка). До {results.perFileLimit} совпавших строк на файл.</p>}
@@ -136,16 +142,17 @@ function RepositoryView({ context }: { context: Context }) {
           {!results.total && <p className="muted">Совпадений нет.</p>}
         </> : status && !busy ? <Directory key={branch + status.sha} path="" request={request} selected={file?.path} onFile={path => void openFile(path)} /> : <p className="muted">{busy ? "Подготавливаю снимок…" : "Выберите доступную ветку."}</p>}
       </nav>
-      <div className={`repository-file${!file ? " is-empty" : ""}`}>
-        {fileBusy ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong></div> : file ? <>
-          <header><FileCode2 size={16} /><strong>{file.path}</strong><small>{file.size === undefined ? "" : `${Math.ceil(file.size / 1024)} KiB`} · {file.sha.slice(0, 10)}</small></header>
+      {(file || fileBusy) && <div className={`repository-file${!file ? " is-empty" : ""}`}>
+        {fileBusy ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong><button className="secondary" onClick={closeFile}>Закрыть</button></div> : file ? <>
+          <header><RepositoryFileIcon name={file.path} /><strong>{file.path}</strong><small>{file.size === undefined ? "" : repositoryFileSize(file.size)} · {file.sha.slice(0, 10)}</small>
+            <button type="button" className="icon-button repository-close-file" onClick={closeFile} title="Закрыть файл" aria-label="Закрыть файл"><X size={16} /></button></header>
           {file.unavailable ? <p className="muted">{file.unavailable}</p> : <>
             {file.symlink && <p className="muted">Символическая ссылка. Ниже — её цель; переход по ссылке отключён.</p>}
             {file.lfs && <p className="muted">Git LFS pointer. Большой объект не загружается.</p>}
             <FileContent key={file.sha + file.path} file={file} targetLine={line} />
           </>}
         </> : <div className="repository-placeholder"><span className="repository-placeholder-icon"><Code2 size={24} aria-hidden="true" /></span><strong>Откройте файл</strong><p>Выберите его в дереве слева или найдите через поиск.</p></div>}
-      </div>
+      </div>}
     </div>
     </div>
   </section>;
@@ -165,10 +172,13 @@ function Directory({ path, request, selected, onFile }: { path: string; request:
   useEffect(() => { live.current = true; void load(); return () => { live.current = false; }; }, [path, request]);
   return <ul className="repository-directory">
     {entries.map(entry => <li key={entry.path}>
-      <button type="button" className={entry.path === selected ? "is-selected" : ""} title={entry.path} aria-expanded={entry.type === "directory" ? expanded.has(entry.path) : undefined}
+      <button type="button" className={`repository-entry repository-entry-${repositoryFileKind(entry.name, entry.type).tone}${entry.path === selected ? " is-selected" : ""}`} title={entry.path} aria-expanded={entry.type === "directory" ? expanded.has(entry.path) : undefined}
         onClick={() => entry.type === "directory" ? setExpanded(current => { const next = new Set(current); next.has(entry.path) ? next.delete(entry.path) : next.add(entry.path); return next; }) : onFile(entry.path)}>
-        {entry.type === "directory" ? <>{expanded.has(entry.path) ? <ChevronDown size={13} /> : <ChevronRight size={13} />}<Folder size={15} /></> : <FileCode2 size={15} />}
-        <span>{entry.name}</span>{entry.type === "symlink" || entry.type === "submodule" ? <small>↗</small> : null}
+        <span className="repository-disclosure" aria-hidden="true">{entry.type === "directory" && (expanded.has(entry.path) ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}</span>
+        <RepositoryFileIcon name={entry.name} type={entry.type} />
+        <span className="repository-entry-name">{entry.name}</span>
+        <span className="repository-entry-type">{repositoryFileKind(entry.name, entry.type).label}</span>
+        <span className="repository-entry-size">{entry.type === "directory" || entry.type === "submodule" ? "—" : repositoryFileSize(entry.size)}</span>
       </button>
       {entry.type === "directory" && expanded.has(entry.path) && <Directory path={entry.path} request={request} selected={selected} onFile={onFile} />}
     </li>)}
