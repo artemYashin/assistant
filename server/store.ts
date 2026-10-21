@@ -59,7 +59,7 @@ export const defaults = {
   llmMaxTokens: 100000,
   llmMaxToolCalls: 20,
   instructions:
-    "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. По моей просьбе сохраняй факты в память. Также сам замечай полезные для будущей работы факты, договорённости, правила и предпочтения в нашем разговоре и предлагай сохранить их через подтверждения, даже если я не просил запомнить. Формулируй записи кратко и понятно, выбирай подходящую область памяти и не дублируй уже известное.",
+    "Reply in the user's language, concisely and clearly. Help track commitments, deadlines and overlooked tickets. Save memory when explicitly asked; otherwise propose useful durable facts, agreements and preferences for approval. Use clear standalone wording, appropriate scope and avoid duplicates.",
   client: "",
   project: "",
 };
@@ -164,6 +164,12 @@ export class Store {
       )
         this.set("settings", { ...saved, instructions: defaults.instructions });
       this.set("migration.proactiveMemoryInstructions", true);
+    }
+    if (!this.get("migration.englishChatInstructions", false)) {
+      const saved = this.get<any>("settings", {});
+      if (saved.instructions === "Отвечай по-русски, кратко и по делу. Помогай видеть обязательства, сроки и упущенные тикеты. По моей просьбе сохраняй факты в память. Также сам замечай полезные для будущей работы факты, договорённости, правила и предпочтения в нашем разговоре и предлагай сохранить их через подтверждения, даже если я не просил запомнить. Формулируй записи кратко и понятно, выбирай подходящую область памяти и не дублируй уже известное.")
+        this.set("settings", { ...saved, instructions: defaults.instructions });
+      this.set("migration.englishChatInstructions", true);
     }
     if (!this.get("migration.sync600", false)) {
       const saved = this.get<any>("settings", {});

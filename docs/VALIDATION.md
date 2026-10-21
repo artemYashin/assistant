@@ -1101,3 +1101,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Current search, sort and filter selections now share customer scope across projects and Azure connections, separately for each ticket tab, matching saved presets.
 - Initial migration prefers the opened project's valid saved filters, then other projects for the same customer. Original browser entries remain untouched; subsequent loads prefer the shared customer state.
 - TypeScript and whitespace checks passed. Tests skipped at the user's request; browser interactions and production build were not exercised.
+
+### Compact English policy and on-demand chat tools (2026-10-21)
+
+- Chat starts with load_tools and an English capability catalog, rather than the full tool schemas. Requested tools are added through SDK session.setTools, retained for the turn and still use the existing handlers, guards, limits and trace logging. Parallel discovery is serialized; failed publications remain retryable.
+- Reduced chat policy from roughly 17,000 to 6,291 characters, preserving local-first reads, consent boundaries, batch confirmations, status verification, local/Azure separation and UI approval for Teams sends. Responses explicitly follow the user's language. Translated review instructions and prompt wrappers; only the exact previous default user instructions are migrated, preserving custom preferences.
+- Workspace directory now loads on demand; history and relevant memory remain included. PR review retains its small dedicated question/memory tool set. Real token savings and latency have not been measured against Copilot.
+- TypeScript and whitespace checks passed. Added discovery tests and adapted SDK business-logic mocks; tests not run yet per the user's preference to run them before push. Live SDK tool-publication behavior and production build were not exercised.
+- Push preparation: tests explicitly skipped at the user's request. No further tests or live model requests were run.

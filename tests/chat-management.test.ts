@@ -1,3 +1,4 @@
+import { withToolDiscovery } from "./sdk-discovery-helper.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
@@ -119,7 +120,7 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
     stop: async () => {},
     createSession: async (c: any) => {
       config = c;
-      return session;
+      return withToolDiscovery(c, session);
     },
   };
   const agent = new Agent(

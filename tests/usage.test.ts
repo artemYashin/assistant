@@ -1,3 +1,4 @@
+import { withToolDiscovery } from "./sdk-discovery-helper.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -98,7 +99,7 @@ function fakeAgent(
     start: async () => {},
     createSession: async (c: any) => {
       config = c;
-      return session;
+      return withToolDiscovery(c, session);
     },
     stop: async () => {
       stops++;
@@ -331,7 +332,7 @@ test("status tool requires current user instruction and deduplicates repeated wr
     start: async () => {},
     createSession: async (c: any) => {
       config = c;
-      return session;
+      return withToolDiscovery(c, session);
     },
     stop: async () => {},
     forceStop: async () => {},
@@ -453,7 +454,7 @@ test("failed status change invalidates cached ticket without retrying the write"
     start: async () => {},
     createSession: async (c: any) => {
       config = c;
-      return session;
+      return withToolDiscovery(c, session);
     },
     stop: async () => {},
     forceStop: async () => {},
@@ -523,7 +524,7 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
     start: async () => {},
     createSession: async (c: any) => {
       config = c;
-      return session;
+      return withToolDiscovery(c, session);
     },
     stop: async () => {},
     forceStop: async () => {},
@@ -757,7 +758,7 @@ test("23 confirmed local tag edits use two model calls and trace child operation
   const report = new UsageLedger(store).chatTools(context);
   assert.equal(report.requests[0].tool_calls, 2);
   assert.equal(
-    report.requests[0].tools.filter((tool: any) => !tool.internal).length,
+    report.requests[0].tools.filter((tool: any) => !tool.internal && tool.name !== "load_tools").length,
     2,
   );
   assert.equal(
