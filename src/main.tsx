@@ -2787,6 +2787,11 @@ function Assistant({
   }, [key, working, clearing, shortcutBusy, recording, transcribing, onExpand]);
   async function chooseChat(id?: string, startVoice = false) {
     if (working || clearing || shortcutBusy || recording || transcribing) return;
+    if (!id && startVoice && sessionId && !history.length && !hasOlder && !attachment) {
+      setVoiceStartSession(sessionId);
+      onExpand();
+      return;
+    }
     const captured = key;
     const generation = ++historyGeneration.current;
     setClearing(true);
