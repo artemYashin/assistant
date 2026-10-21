@@ -6,6 +6,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { remarkDescriptionBreaks } from "./remark-description-breaks.js";
 
+const ticketAsset = (url: string) => /^\/api\/ticket-cards\/[a-zA-Z0-9-]+\/attachments\/[0-9a-f-]{36}$/i.test(url);
+
 export function ChatMarkdown({
   text,
   images,
@@ -21,7 +23,7 @@ export function ChatMarkdown({
         remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks] : [remarkGfm]}
         skipHtml
         urlTransform={(url, key) =>
-          key === "href" && chatTicketPath(url)
+          ticketAsset(url) ? url : key === "href" && chatTicketPath(url)
             ? chatTicketPath(url)!
             : key === "src" &&
                 images?.some((image) => image.source === url && image.preview)
@@ -49,6 +51,7 @@ export function ChatMarkdown({
               <span>{children}</span>
             ),
           img: ({ src, alt }) => {
+            if (typeof src === "string" && ticketAsset(src)) return <ImagePreview src={src} alt={alt || "Изображение"} />;
             const preview = images?.find(
               (image) => image.source === src,
             )?.preview;
@@ -71,7 +74,7 @@ export function ChatMarkdown({
               <ImagePreview
                 src={src}
                 alt={alt || "Изображение"}
-                thumbnail={false}
+                thumbnail={true}
               />
             ) : (
               <span>{alt || "Изображение"}</span>

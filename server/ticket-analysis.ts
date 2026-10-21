@@ -1,5 +1,5 @@
 import { AppError, Store } from "./store.js";
-import { plainText } from "./connectors.js";
+import { ticketContentText as plainText } from "./connectors.js";
 import { listLocalTickets, ticketListSchema } from "./ticket-list.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 

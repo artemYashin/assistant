@@ -5,7 +5,7 @@ import {
   type StatusChange,
 } from "./ticket-status-batch.js";
 import { changeTicketState } from "./ticket-status.js";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { Store, AppError, type Settings } from "./store.js";
 import { IntegrationsAuth } from "./auth.js";
 import { requestJson, azureBase } from "./http.js";
@@ -61,6 +61,36 @@ export function plainText(value: string) {
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&")
     .trim();
+}
+/** Preserve link destinations while stripping presentation-only HTML. */
+export function ticketContentText(value: string, base?: string, rewrite: (url: string) => string = url => url) {
+  const links: string[] = [];
+  const url = (raw: string) => {
+    try {
+      const parsed = new URL(plainText(raw), base);
+      return /^https?:$/.test(parsed.protocol) ? rewrite(parsed.href).replace(/\(/g, "%28").replace(/\)/g, "%29") : "";
+    } catch { return ""; }
+  };
+  const attr = (tag: string, name: string) => {
+    const match = new RegExp("\\s" + name + "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))", "i").exec(tag);
+    return match ? match[1] ?? match[2] ?? match[3] : "";
+  };
+  const label = (text: string) => plainText(text).replace(/[\[\]\\]/g, " ");
+  const stash = (text: string) => { const key = `ORBITLINKPLACEHOLDER${links.length}END`; links.push(text); return key; };
+  const markdown = value.replace(/(!?)\[([^\]\n]*)\]\((https?:[^\s)]+)\)/gi, (match, image, title, target) => {
+    const href = url(target);
+    return href ? stash(`${image}[${label(title)}](${href})`) : match;
+  });
+  const html = markdown.replace(/<img\b[^>]*>/gi, tag => {
+    const src = url(attr(tag, "src"));
+    return src ? stash(`![${label(attr(tag, "alt")) || "Изображение"}](${src})`) : "";
+  }).replace(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi, (_, attrs, body) => {
+    const href = url("" + attr(" " + attrs, "href"));
+    return href ? stash(`[${label(body)}](${href})`) : body;
+  });
+  let text = plainText(html);
+  for (let i = links.length - 1; i >= 0; i--) text = text.replaceAll(`ORBITLINKPLACEHOLDER${i}END`, links[i]);
+  return text;
 }
 export class Connectors {
   private browseSnapshots = new Map<string, {
@@ -247,14 +277,26 @@ export class Connectors {
   }
   private cacheTicketContent(item: any, s: Settings, complete = false) {
     const fields = item.fields || {};
+    const source = this.store.source(s), base = azureBase(s.azureUrl);
+    const reference = `cache-${createHash("sha256").update(source).digest("hex").slice(0, 24)}-${item.id}`;
+    const rewrite = (url: string) => {
+      const u = new URL(url), b = new URL(base);
+      const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(u.pathname)?.[1];
+      return id && u.origin === b.origin && u.pathname.startsWith(b.pathname.replace(/\/$/, "") + "/")
+        ? `/api/ticket-cards/${reference}/attachments/${id.toLowerCase()}` : url;
+    };
     const sections = { description: "System.Description", criteria: "Microsoft.VSTS.Common.AcceptanceCriteria", repro: "Microsoft.VSTS.TCM.ReproSteps" };
     const save = this.store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?) ON CONFLICT(source,id,section) DO UPDATE SET body=excluded.body,search_text=excluded.search_text,updated_at=excluded.updated_at");
     this.store.db.transaction(() => {
       for (const [section, field] of Object.entries(sections)) {
         if (!complete && !Object.hasOwn(fields, field)) continue;
-        const body = plainText(String(fields[field] || ""));
+        const body = ticketContentText(String(fields[field] || ""), base + "/", rewrite);
         save.run(this.store.source(s), item.id, section, body, body.toLocaleLowerCase(), new Date().toISOString());
       }
+      const cached = this.store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=?").all(source, item.id) as { body: string }[];
+      const pattern = new RegExp(`/api/ticket-cards/${reference}/attachments/([0-9a-f-]{36})`, "gi");
+      const ids = new Set(cached.flatMap(row => [...row.body.matchAll(pattern)].map(match => match[1].toLowerCase())));
+      this.store.db.prepare("INSERT INTO ticket_cards(id,data) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data").run(reference, JSON.stringify({ id: item.id, source, base, project: s.azureProject, attachments: [...ids].map(id => ({ id, name: "Вложение тикета", image: true })) }));
     })();
   }
   private saveTicket(item: any, s: Settings) {

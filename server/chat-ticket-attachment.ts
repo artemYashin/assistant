@@ -1,4 +1,4 @@
-import { plainText } from "./connectors.js";
+import { ticketContentText as plainText } from "./connectors.js";
 import { AppError } from "./store.js";
 
 export function ticketAnalysisAttachment(card: any, source: string) {
@@ -26,7 +26,7 @@ export function ticketAnalysisAttachment(card: any, source: string) {
     comments: (card.comments || []).map((comment: any) => ({
       author: comment.author || "",
       date: comment.date || "",
-      text: comment.text || plainText(String(comment.richText || "")),
+      text: plainText(String(comment.richText || comment.text || "")),
     })),
     attachments: (card.attachments || []).map((file: any) => ({
       name: file.name,
