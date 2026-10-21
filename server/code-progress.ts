@@ -3,6 +3,11 @@ import { AppError } from "./store.js";
 
 export const codeProgressSchema = z.object({
   stage: z.enum(["recovering", "connecting", "queued", "preparing", "fetching", "counting", "compressing", "receiving", "resolving", "unpacking", "finalizing", "tree", "file", "snapshot", "searching"]),
+  receivedBytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  bytesPerSecond: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  receivedObjects: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  totalObjects: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  updatedAt: z.number().int().positive().optional(),
   startedAt: z.number().int().positive().optional(),
   queuePosition: z.number().int().min(0).max(4).optional(),
   queueLength: z.number().int().min(1).max(5).optional(),

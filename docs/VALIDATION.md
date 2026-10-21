@@ -1218,3 +1218,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - In-flight repository operations share execution and replay progress to reconnecting observers. Status can join Pull; cached branch catalogs bypass the queue during repository work. Selected branch survives page reload within the tab.
 - Context rename preserves unknown/malformed scoped keys rather than failing their JSON parsing; valid settings retain collision checks and transactional migration.
 - Added regression coverage for queue reconnection, disconnects, retries, reload during Pull and malformed context keys. Tests were not run at the user's request. TypeScript, JavaScript syntax and whitespace checks passed. Docker/live Azure/browser checks were not performed.
+
+### Git transfer metrics and consistent save actions (2026-10-21)
+
+- Parse reported Git receiving bytes, transfer rate and object counts using bounded numeric fields. Shared jobs retain transfer metrics and the last progress timestamp for reconnecting observers. UI shows received size/object count, hides stale rates and marks lack of updates after 15 seconds. Total transfer bytes are not inferred from object percentages.
+- Standardized customer/project configuration save controls with a shared button and right-aligned footer, including Azure, repository, priorities, grouping and rename forms. Removed the redundant queue observer label.
+- Updated parser coverage for units and chunked transfer output. Tests were not run at the user's request. TypeScript, JavaScript syntax and whitespace checks passed. Live Git/Docker and browser interaction checks were not performed.

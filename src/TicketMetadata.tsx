@@ -1,3 +1,4 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useRef, useState } from "react";
 import { NotebookPen, Pencil, X } from "lucide-react";
 import { api } from "./api.js";
@@ -293,15 +294,10 @@ export function PrioritySettings({ context }: any) {
           label: String(i + 2),
         }))}
       />
-      <div className="card-actions">
-        <button
-          type="button"
-          className="primary"
-          disabled={busy || !ready}
-          onClick={() => void save()}
-        >
-          Сохранить
-        </button>
+
+      {saved && <p role="status">Сохранено</p>}
+      {error && <p className="error">{error}</p>}
+      <div className="context-save-actions">
         <button
           type="button"
           className="secondary"
@@ -310,9 +306,8 @@ export function PrioritySettings({ context }: any) {
         >
           Сбросить переопределение
         </button>
+        <ContextSaveButton busy={busy} disabled={!ready} onClick={() => void save()} />
       </div>
-      {saved && <p role="status">Сохранено</p>}
-      {error && <p className="error">{error}</p>}
     </section>
   );
 }

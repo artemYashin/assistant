@@ -1,3 +1,4 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { copyRenamedContextStorage } from "./context-storage.js";
 import { Link } from "react-router-dom";
 import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
@@ -328,7 +329,9 @@ function ContextName({ value, kind, busy, onSave }: { value: string; kind: strin
     try { await onSave(draft.trim()); setEditing(false); } catch { /* Parent displays the error. */ }
   }}>
     <label><span className="muted">{kind}</span><input aria-label={`Название: ${value}`} value={draft} onChange={e => setDraft(e.target.value)} maxLength={200} required disabled={busy} autoFocus /></label>
-    <button type="submit" className="primary" disabled={busy || !draft.trim()}>{busy ? "Сохраняю…" : "Сохранить"}</button>
-    <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>Отмена</button>
+    <div className="context-save-actions">
+      <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>Отмена</button>
+      <ContextSaveButton type="submit" busy={busy} disabled={!draft.trim()} />
+    </div>
   </form>;
 }

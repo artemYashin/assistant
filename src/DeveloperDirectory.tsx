@@ -1,6 +1,7 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { ProjectDeveloperStatusSettings } from "./DeveloperStatusSettings.js";
-import { Users, Settings2, Plus, Save, X } from "lucide-react";
+import { Users, Settings2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 export function DeveloperDirectory({
@@ -152,19 +153,8 @@ function DeveloperRow({ person, busy, action }: any) {
         disabled={busy}
         onChange={(e) => setName(e.target.value)}
       />
-      <button
-        className="icon-button"
-        title="Сохранить имя"
-        aria-label={`Сохранить имя ${person.name}`}
-        disabled={busy || !name.trim() || name.trim() === person.name}
-        onClick={() =>
-          void action(() =>
-            api(`/local-developers/${person.id}`, "PUT", { name: name.trim() }),
-          )
-        }
-      >
-        <Save size={16} />
-      </button>
+      <div className="context-save-actions">
+
       <button
         className="icon-button"
         title="Убрать из справочника"
@@ -176,6 +166,10 @@ function DeveloperRow({ person, busy, action }: any) {
       >
         <X size={16} />
       </button>
+      <ContextSaveButton busy={busy} disabled={!name.trim() || name.trim() === person.name}
+        aria-label={`Сохранить имя ${person.name}`}
+        onClick={() => void action(() => api(`/local-developers/${person.id}`, "PUT", { name: name.trim() }))} />
+      </div>
     </div>
   );
 }

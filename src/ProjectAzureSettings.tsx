@@ -1,3 +1,4 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 
@@ -105,15 +106,11 @@ export function ProjectAzureSettings({
         Название Project, содержащего Boards и Repos. PAT задаётся в общих
         настройках приложения.
       </p>
-      <button
-        className="primary"
-        disabled={
-          !loaded || busy || (!inherit && (!project.trim() || !url.trim()))
-        }
-      >
-        {busy ? "Сохраняю…" : "Сохранить"}
-      </button>
+
       {message && <p role="status">{message}</p>}
+      <div className="context-save-actions">
+        <ContextSaveButton type="submit" busy={busy} disabled={!loaded || (!inherit && (!project.trim() || !url.trim()))} />
+      </div>
     </form>
   );
 }

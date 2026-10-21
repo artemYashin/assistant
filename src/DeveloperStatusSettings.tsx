@@ -1,5 +1,6 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useId, useState } from "react";
-import { RefreshCw, Save } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { api } from "./api.js";
 import {
   developerGroup,
@@ -177,20 +178,14 @@ export function DeveloperStatusSettings({
         Не настроенные статусы считаются активными. Тикеты из корзины остаются в
         завершённых до удаления через 30 дней.
       </small>
-      <button
-        type="button"
-        className="primary"
-        disabled={busy}
-        onClick={() => void save()}
-      >
-        <Save size={15} /> {busy ? "Подождите…" : "Сохранить группировку"}
-      </button>
+
       {saved && <p role="status">Настройки сохранены</p>}
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
+      <div className="context-save-actions"><ContextSaveButton busy={busy} onClick={() => void save()} /></div>
     </div>
   );
 }

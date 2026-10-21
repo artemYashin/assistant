@@ -6,7 +6,8 @@ export class RepositoryJobs {
     this.limit = limit; this.waitMs = waitMs; this.jobs = [];
   }
   publish(job, event) {
-    job.progress = { ...event, startedAt: job.startedAt };
+    const { receivedBytes, bytesPerSecond, receivedObjects, totalObjects } = job.progress;
+    job.progress = { receivedBytes, bytesPerSecond, receivedObjects, totalObjects, ...event, startedAt: job.startedAt, updatedAt: Date.now() };
     this.notify(job);
   }
   notify(job) {

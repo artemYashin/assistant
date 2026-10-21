@@ -8548,3 +8548,13 @@ summary > svg {
 .repository-queue > span { font-size: 10px; line-height: 16px; padding: 1px 6px; border-radius: 4px; color: #6c7d8a; background: #e8eef3; }
 .repository-queue > span.is-current { color: #315c7c; background: #dceaf5; }
 .repository-progress > div:first-child { flex-wrap: wrap; gap: 8px; }
+
+.repository-progress > .repository-transfer { justify-content: flex-start; flex-wrap: wrap; gap: 4px 12px; margin-top: 5px; font-size: 11px; color: #52697c; }
+.repository-transfer strong { font-weight: 600; color: #34536c; }
+.repository-progress .repository-progress-stale { display: block; max-width: 340px; margin-top: 5px; color: #866a38; }
+.context-save-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; width: 100%; grid-column: 1 / -1; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e7dd; }
+.context-save-actions > .context-save-button { order: 1; }
+.context-save-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 34px; padding: 7px 12px; font-size: 12px; border-radius: 6px; }
+.context-directory-name.is-editing > .context-save-actions { flex-basis: 100%; }
+.developer-directory-row > .context-save-actions { margin-top: 0; padding-top: 6px; }
+.developer-directory-row:has(> .context-save-actions) { grid-template-columns: 28px minmax(0, 1fr); }

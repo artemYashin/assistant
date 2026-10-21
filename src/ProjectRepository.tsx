@@ -1,3 +1,4 @@
+import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 export function ProjectRepository({
@@ -170,10 +171,9 @@ export function ProjectRepository({
         />
         Синхронизировать PR
       </label>
-      <button className="secondary" disabled={busy || !loaded}>
-        {busy ? "Сохраняю…" : "Сохранить репозиторий проекта"}
-      </button>
+
       {message && <p role="status">{message}</p>}
+      <div className="context-save-actions"><ContextSaveButton type="submit" busy={busy} disabled={!loaded} /></div>
     </form>
   );
 }

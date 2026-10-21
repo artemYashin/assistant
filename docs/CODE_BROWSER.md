@@ -73,3 +73,10 @@ Progress carries the original start time and the observer's current queue positi
 The queue is bounded to five distinct jobs; duplicate observers do not take slots.
 Disconnecting an observer does not cancel the job. State lives in the service
 process: a container restart does not resume a running job.
+
+Git receiving progress includes reported transfer bytes, bytes per second and
+received/total object counts. These numeric fields and the last update timestamp
+are replayed to reconnecting observers. Object percentages are not byte
+percentages; no total download size or ETA is inferred from them. The UI hides
+rates after 15 seconds without progress and shows an inactivity hint, which does
+not diagnose host sleep, network failure or a stopped container.
