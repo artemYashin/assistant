@@ -9,7 +9,7 @@ const catalog: Record<string, string> = {
   code_branches: "Search cached branch names by substring, or list with pagination; no network.",
   code_tree: "Browse a local directory's file names/types/sizes without bodies.",
   code_search: "Find files by name/path or grep code with short numbered snippets; local only.",
-  code_read_file: "Read line ranges or a full local file, paginated; no edits.",
+  code_read_file: "Read focused code ranges around search hits; returns totalLines. Full-file reads opt-in when needed; no edits.",
   get_ticket_links_batch: "Read links/images of multiple cached tickets in one call; per-ticket pagination, no Azure.",
   get_cached_ticket_content_batch: "Read multiple cached ticket bodies in one call; per-ticket pagination, no Azure.",
   get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",

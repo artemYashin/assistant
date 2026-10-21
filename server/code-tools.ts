@@ -90,8 +90,8 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       handler: async ({ limit, ...args }) => paged(await read("search", args), "results", args.offset, limit),
     }),
     defineTool("code_read_file", {
-      description: "Read a local file with line numbers. Default 80 lines from startLine; set endLine for a range, or full=true for the complete file (large files still paginated by nextLine). Prefer relevant snippets, but read full files when it reduces repeated calls or improves accuracy. Binary/oversized files may be unavailable; symlinks are not followed. No writes/network.",
-      parameters: z.object({ branch, path: path.min(1), startLine: z.number().int().min(1).default(1), endLine: z.number().int().min(1).optional(), full: z.boolean().default(false) }),
+      description: "Read a local file with line numbers. Default 80 lines from startLine; set endLine for a range, or full=true for the complete file (large files still paginated by nextLine). Start from code_search hit lines and read the relevant function/range, usually 40–100 lines. Every read returns totalLines: for files over ~200 lines prefer focused ranges, expanding only for missing context. Reuse prior reads; do not automatically read the whole file or exhaust nextLine. Use full=true when the whole file is genuinely needed (e.g. small cohesive file or explicit whole-file analysis), not merely because a match was found. Binary/oversized files may be unavailable; symlinks are not followed. No writes/network.",
+      parameters: z.object({ branch, path: path.min(1), startLine: z.number().int().min(1).default(1), endLine: z.number().int().min(1).optional(), full: z.boolean().default(false).describe("Opt in only when the whole file is needed; prefer search-driven ranges, especially above ~200 lines") }),
       handler: async ({ startLine, endLine, full, ...args }) => {
         if (endLine !== undefined && endLine < startLine) throw new AppError(400, "endLine должен быть не меньше startLine");
         const data = await read("file", args);
