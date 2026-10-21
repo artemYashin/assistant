@@ -4162,10 +4162,19 @@ summary > svg {
   padding-bottom: 7px;
   border-bottom: 1px solid #e0e7ee;
 }
-.pr-diff-thread-heading > strong { font-size: 11px; font-weight: 600; color: #435d73; }
-.pr-diff-thread-heading > span { margin-left: auto; }
-.pr-diff-thread-heading, .pr-diff-thread article > header { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-.pr-diff-thread-heading > span, .pr-diff-thread time { color: #677584; font-size: 11px; }
+.pr-diff-thread-heading, .pr-diff-thread article > header { display: flex; gap: 10px; align-items: center; }
+.pr-diff-thread article > header { flex-wrap: wrap; }
+.pr-diff-thread time { color: #677584; font-size: 11px; margin-left: auto; }
+.pr-diff-thread .initials-avatar { flex: 0 0 28px; width: 28px; height: 28px; min-width: 28px; font-size: 10px; }
+.pr-diff-thread article .initials-avatar { flex-basis: 22px; width: 22px; height: 22px; min-width: 22px; font-size: 9px; }
+.pr-diff-thread-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pr-diff-thread-author { color: #243c50; font-size: 13px; font-weight: 650; }
+.pr-diff-thread-location { display: flex; align-items: center; gap: 4px; color: #37627e; font: 11px/1.5 ui-monospace, monospace; }
+.pr-diff-thread-location > svg { flex-shrink: 0; }
+.pr-diff-thread-location > span:first-of-type { min-width: 0; overflow-wrap: anywhere; }
+.pr-diff-thread-line { flex-shrink: 0; color: #215f9e; font-weight: 600; }
+.pr-diff-thread-status { margin-left: auto; flex-shrink: 0; color: #486379; background: #e7eef5; border: 1px solid #d5e0eb; border-radius: 4px; padding: 2px 6px; font-size: 10px; }
+.pr-diff-thread-status:empty { display: none; }
 .pr-diff-thread article { margin-top: 8px; }
 .pr-diff-thread article + article { padding-top: 8px; border-top: 1px solid #dbe3ec; }
 .pr-diff-thread p { margin: 4px 0 0; white-space: pre-wrap; }
@@ -4187,8 +4196,22 @@ summary > svg {
 .pr-diff-thread-accordion > summary:hover { background: #edf3fa; }
 .pr-diff-thread-accordion[open] { padding-bottom: 12px; }
 .pr-diff-thread-accordion[open] > summary { border-bottom: 1px solid #dbe3ec; }
-.pr-diff-thread-accordion > summary > strong { flex: 1; min-width: 0; }
-.pr-diff-locate-comment { margin-top: 10px; padding: 5px 9px; }
+.pr-diff-locate-comment {
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-color: #bfd5e9;
+  background: #e8f2fc;
+  color: #17558f;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.pr-diff-locate-comment:hover:not(:disabled) { background: #d6e9fb; border-color: #87b2d8; }
+.pr-diff-locate-comment:focus-visible { outline: 2px solid #3676b0; outline-offset: 2px; }
+.pr-diff-locate-comment > svg { flex-shrink: 0; }
+.pr-diff-locate-comment > span { padding-left: 8px; border-left: 1px solid #bfd5e9; font-weight: 400; }
+.pr-diff-inline-threads { padding: 2px 10px 4px; }
 .pr-diff-table td.pr-diff-comment-target {
   box-shadow: inset 0 0 0 2px #2c70c8;
   background: #e2efff;
@@ -4458,6 +4481,40 @@ summary > svg {
   display: grid;
   gap: 12px;
 }
+.local-tags-editor { display: grid; gap: 10px; min-width: 0; }
+.local-tags-editor-label { font-size: 12px; font-weight: 600; color: #475d4b; }
+.local-tags-editor-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-height: 130px;
+  max-height: 35vh;
+  overflow: auto;
+  padding: 12px;
+  background: #fbfcfa;
+  border: 1px solid #ced9c9;
+  border-radius: 7px;
+}
+.local-tags-editor-field:focus-within { border-color: #6d976c; box-shadow: 0 0 0 2px #6d976c1a; }
+.local-tags-editor-row { display: flex; align-items: center; gap: 4px; max-width: 100%; min-height: 32px; }
+.local-tags-editor-row > input { min-width: 0; width: min(380px, 100%); height: 32px; box-sizing: border-box; padding: 5px 8px; font-size: 12px; }
+.local-tags-editor-chip {
+  padding: 4px 7px;
+  color: #435342;
+  background: #edf2e9;
+  border: 1px solid #d6e0d0;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.local-tags-editor-chip:hover:not(:disabled) { background: #dfead8; border-color: #abc39f; }
+.local-tags-editor-remove { display: inline-flex; padding: 3px; color: #6e7b69; border-radius: 4px; }
+.local-tags-editor-remove:hover:not(:disabled) { background: #fbe7e3; color: #a9362c; }
+.local-tags-editor-chip:focus-visible, .local-tags-editor-remove:focus-visible { outline: 2px solid #467746; outline-offset: 2px; }
 .ticket-metadata-dialog textarea {
   width: 100%;
   resize: vertical;

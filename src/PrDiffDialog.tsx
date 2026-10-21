@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, X } from "lucide-react";
+import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
+import { InitialsAvatar } from "./InitialsAvatar.js";
 import { api } from "./api.js";
 import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
 import { SingleSelect } from "./SingleSelect.js";
@@ -300,6 +301,7 @@ export function PrDiffDialog({
                                   <DiffCell
                                     line={r.left}
                                     side="left"
+                                    threads={threads.filter((t) => !t.line && !!r.left && t.path === file.before && t.leftLine === r.left.number)}
                                     highlighted={lineTarget?.file === selected && lineTarget.side === "left" && lineTarget.line === r.left?.number}
                                     tokens={r.left && tokens?.left[r.left.number]}
                                     kind={
@@ -311,6 +313,7 @@ export function PrDiffDialog({
                                   <DiffCell
                                     line={r.right}
                                     side="right"
+                                    threads={threads.filter((t) => !!r.right && t.path === file.after && t.line === r.right.number)}
                                     highlighted={lineTarget?.file === selected && lineTarget.side === "right" && lineTarget.line === r.right?.number}
                                     tokens={r.right && tokens?.right[r.right.number]}
                                     onComment={!commit && data.canComment ? async (content) => {
@@ -368,6 +371,7 @@ function DiffCell({
   tokens,
   side,
   highlighted = false,
+  threads = [],
 }: {
   line?: DiffLine;
   kind: "context" | "added" | "removed";
@@ -375,6 +379,7 @@ function DiffCell({
   side: "left" | "right";
   highlighted?: boolean;
   tokens?: CodeToken[];
+  threads?: CommentThread[];
 }) {
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState("");
@@ -407,9 +412,12 @@ function DiffCell({
           ) : line.text || " "}</code>
         </div>
       )}
+      {!!threads.length && <div className="pr-diff-inline-threads">
+        <CommentThreads threads={threads} inline />
+      </div>}
       {sent && <p className="pr-diff-comment-sent" role="status">Комментарий отправлен в Azure.</p>}
       {editing && onComment && (
-        <form className={`pr-diff-comment-form${!sent ? " pr-diff-line-pointer" : ""}`} onSubmit={async (event) => {
+        <form className={`pr-diff-comment-form${!threads.length && !sent ? " pr-diff-line-pointer" : ""}`} onSubmit={async (event) => {
           event.preventDefault();
           if (pending.current || !content.trim()) return;
           pending.current = true;
@@ -450,28 +458,37 @@ function DiffCell({
   );
 }
 
-function CommentThreads({ threads, canLocate, onLocate }: {
+function CommentThreads({ threads, canLocate, onLocate, inline = false }: {
   threads: CommentThread[];
-  canLocate: (thread: CommentThread) => boolean;
-  onLocate: (thread: CommentThread) => void;
+  canLocate?: (thread: CommentThread) => boolean;
+  onLocate?: (thread: CommentThread) => void;
+  inline?: boolean;
 }) {
   const statuses: Record<string, string> = {
     active: "Открыто", fixed: "Решено", closed: "Закрыто", wontFix: "Без изменений",
     byDesign: "По замыслу", pending: "Ожидает", unknown: "",
     "1": "Открыто", "2": "Решено", "3": "Без изменений", "4": "Закрыто", "5": "По замыслу", "6": "Ожидает",
   };
-  return <>{threads.map((thread) => <details className="pr-diff-thread pr-diff-thread-accordion" key={thread.id}>
+  return <>{threads.map((thread, index) => <details
+    className={`pr-diff-thread pr-diff-thread-accordion${inline && index === 0 ? " pr-diff-line-pointer" : ""}`}
+    open={inline || undefined} key={thread.id}>
     <summary className="pr-diff-thread-heading">
-      <MessageSquarePlus size={15} aria-hidden="true" />
-      <strong>{thread.comments[0]?.author} · {thread.path || "Общий комментарий"}
-        {(thread.line || thread.leftLine) ? ` · строка ${thread.line || thread.leftLine}` : ""}</strong>
-      <span>{statuses[String(thread.status)] || ""}</span>
+      <InitialsAvatar name={thread.comments[0]?.author || "Azure"} />
+      <span className="pr-diff-thread-title">
+        <span className="pr-diff-thread-author">{thread.comments[0]?.author || "Azure"}</span>
+        <span className="pr-diff-thread-location">
+          <FileCode2 size={13} aria-hidden="true" />
+          <span title={thread.path}>{inline ? `Строка ${thread.line || thread.leftLine}` : thread.path || "Общий комментарий к PR"}</span>
+          {!inline && (thread.line || thread.leftLine) && <span className="pr-diff-thread-line">:{thread.line || thread.leftLine}</span>}
+        </span>
+      </span>
+      <span className="pr-diff-thread-status">{statuses[String(thread.status)] || ""}</span>
     </summary>
-    {canLocate(thread) ? <button type="button" className="secondary pr-diff-locate-comment"
-      onClick={() => onLocate(thread)}>Показать строку {thread.line || thread.leftLine} · {thread.line ? "После" : "До"}</button>
-      : thread.path && <p className="muted">Эта строка не входит в показанный diff.</p>}
+    {!inline && (canLocate?.(thread) ? <button type="button" className="secondary pr-diff-locate-comment"
+      onClick={() => onLocate?.(thread)}><CornerUpLeft size={14} aria-hidden="true" />Показать строку {thread.line || thread.leftLine}<span>{thread.line ? "После" : "До"}</span></button>
+      : thread.path && <p className="muted">Эта строка не входит в показанный diff.</p>)}
     {thread.comments.map((comment) => <article key={comment.id}>
-      <header><strong>{comment.author}</strong>{comment.createdAt && <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString("ru-RU")}</time>}</header>
+      <header><InitialsAvatar name={comment.author} /><strong>{comment.author}</strong>{comment.createdAt && <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString("ru-RU")}</time>}</header>
       <p>{comment.content}</p>
     </article>)}
   </details>)}</>;

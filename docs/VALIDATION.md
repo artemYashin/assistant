@@ -1158,3 +1158,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Moved discussions below the diff into individual accordions. Their line actions select the matching file, scroll/focus the appropriate side and highlight the referenced line. Unavailable lines are labeled rather than navigating to unrelated code. New-comment composition remains next to the code.
 - Increased syntax palette saturation; calculated minimum contrast across white/added/removed backgrounds is 4.84:1 for the changed token colors.
 - TypeScript and whitespace checks passed. Tests explicitly skipped at the user's request. Browser visual/scroll checks were not performed.
+
+### Shared local tag editor and restored inline discussions (2026-10-21)
+
+- All local-tag entry points now share an editor with a searchable existing-tag selector and green chips that switch to editable inputs on click. Enter advances/adds a tag; blur restores chip presentation. Supports removal and multiline paste; existing save validation enforces 30 tags/60 characters.
+- Existing tags are read locally for the current Azure source from active tickets and unexpired trash. Suggestion errors do not block manual entry. Notes/tags no longer depend on the unrelated priority-settings request to enable saving. Azure tags remain read-only.
+- Restored discussions beside code lines as well as in the lower list. Added stable initial avatars, separate author/path presentation, centered headings, status badges and a styled line-navigation button.
+- All 258 existing tests, TypeScript and production build passed; whitespace checks passed. Browser interactions and live Azure writes were not exercised. Existing bundle-size advisories remain.

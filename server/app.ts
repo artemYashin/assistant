@@ -820,6 +820,15 @@ export function createApp(
     const context = metadataContext.parse(req.query);
     res.json({ count: priorityCount(store, context) });
   });
+  app.get("/api/local-ticket-tags", (req, res) => {
+    const source = z.string().min(1).max(2000).parse(req.query.source);
+    if (source !== store.source()) throw new AppError(409, "Подключение изменилось. Откройте редактор заново.");
+    const rows = store.db.prepare(
+      "SELECT m.tags FROM ticket_metadata m WHERE m.source=? AND (EXISTS (SELECT 1 FROM tickets t WHERE t.source=m.source AND t.id=m.id) OR EXISTS (SELECT 1 FROM ticket_trash t WHERE t.source=m.source AND t.id=m.id AND t.removed_at>?))",
+    ).all(source, new Date(Date.now() - 30 * 86400000).toISOString()) as { tags: string }[];
+    const tags = [...new Set(rows.flatMap((row) => JSON.parse(row.tags) as string[]))];
+    res.json(tags.sort((a, b) => a.localeCompare(b)));
+  });
   app.put("/api/ticket-priorities", (req, res) => {
     const { context, count } = z
       .object({

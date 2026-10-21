@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NotebookPen, Pencil, X } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
+import { LocalTagsEditor } from "./LocalTagsEditor.js";
 
 export function TicketMetadata({
   ticket,
@@ -90,6 +91,10 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
   useEffect(() => {
     ref.current?.showModal();
     let live = true;
+    if (field !== "priority") {
+      setReady(true);
+      return;
+    }
     api("/ticket-priorities?" + new URLSearchParams(context))
       .then((v) => {
         if (live) {
@@ -188,6 +193,8 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
               }),
             )}
           />
+        ) : field === "tags" ? (
+          <LocalTagsEditor value={value} onChange={setValue} source={ticket.source} disabled={busy} />
         ) : (
           <label>
             {field === "tags"
