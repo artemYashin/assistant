@@ -1,3 +1,4 @@
+import { VoiceBinding } from "./VoiceBinding.js";
 import { currentViewedTicket, useViewedTicket } from "./viewed-ticket.js";
 import { CodeBrowserPage } from "./CodeBrowserPage.js";
 import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
@@ -1147,6 +1148,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               document.getElementById("assistant-toggle")?.focus();
             }}
             context={context}
+            voiceCurrentPress={settings?.voiceCurrentPress}
+            voiceNewPress={settings?.voiceNewPress}
             voiceCurrentKey={settings?.voiceCurrentKey}
             voiceNewKey={settings?.voiceNewKey}
             connected={settings?.githubConnected}
@@ -2181,7 +2184,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "assistant", label: "Как вам помогать", icon: Sparkles },
-    { id: "ai", label: "AI Assistant", icon: Mic },
+    { id: "ai", label: "AI Assistant", icon: Sparkles },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
@@ -2512,14 +2515,20 @@ function Settings({ settings, context, run, busy }: any) {
           <TicketImportSettings form={form} set={set} save={save} />
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
-          <h2><Mic size={22} />AI Assistant</h2>
-          <p className="muted">Двойное нажатие раскрывает чат и включает голосовой ввод, даже если курсор находится в поле ввода. Клавиши соответствуют латинским буквам на клавиатуре независимо от раскладки.</p>
-          <div className="form-grid">
-            {(["voiceCurrentKey", "voiceNewKey"] as const).map((field) => <Field key={field} label={field === "voiceCurrentKey" ? "Текущий чат" : "Новый чат"} hint="Нажмите выбранную клавишу дважды. Enter завершает запись и отправляет сообщение; Esc отменяет.">
-              <select value={form[field] ?? (field === "voiceCurrentKey" ? "KeyM" : "KeyN")} onChange={event => set(field, event.target.value)}>
-                {Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map(letter => <option key={letter} value={`Key${letter}`} disabled={`Key${letter}` === (form[field === "voiceCurrentKey" ? "voiceNewKey" : "voiceCurrentKey"] ?? (field === "voiceCurrentKey" ? "KeyN" : "KeyM"))}>{letter} {letter}</option>)}
-              </select>
-            </Field>)}
+          <h2><Sparkles size={22} />AI Assistant</h2>
+          <div className="voice-settings-block">
+            <h3><Mic size={17} />Голосовой помощник</h3>
+            <p className="muted">Открывает сайдбар и начинает запись. Сочетания работают и в полях ввода, независимо от раскладки. При одинарном нажатии выбранная клавиша запускает запись вместо ввода символа.</p>
+            {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
+              <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} onChange={value => set(`voice${kind}Key`, value)} />
+                <select aria-label={`Нажатие: ${kind === "Current" ? "текущий" : "новый"} чат`} value={form[`voice${kind}Press`] ?? "double"} onChange={event => set(`voice${kind}Press`, event.target.value)}>
+                  <option value="double">Двойное нажатие</option><option value="single">Одинарное нажатие</option>
+                </select>
+              </div>
+            </div>)}
+            <small className="muted">Enter — закончить и отправить запись; Esc — отменить. При выборе клавиши Esc отменяет её запись.</small>
           </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-assistant-panel`} aria-labelledby={`${settingsTabId}-assistant`} hidden={settingsTab !== "assistant"}>
@@ -2664,6 +2673,8 @@ function LoginCode({ flow }: any) {
   );
 }
 function Assistant({
+  voiceCurrentPress,
+  voiceNewPress,
   voiceCurrentKey,
   voiceNewKey,
   azureSource,
@@ -3122,7 +3133,7 @@ function Assistant({
       hidden={!open}
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
-      <VoiceShortcut currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
+      <VoiceShortcut currentPress={voiceCurrentPress} newPress={voiceNewPress} currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
         autoStart={voiceStartSession === sessionId} onAutoStarted={() => setVoiceStartSession("")}
         onNewChat={() => { void chooseChat(undefined, true).catch(e => setError(e.message)); }}
         title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />

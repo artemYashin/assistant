@@ -57,3 +57,16 @@ test("custom bindings replace defaults and never match mixed keys", () => {
   assert.equal(press({ ...m, code: "KeyV" }, 500), false);
   assert.equal(press({ ...m, code: "KeyV" }, 600), true);
 });
+
+test("single press fires immediately, ignores holding, and coexists with double press", () => {
+  const press = createVoiceShortcut(["Digit1", "KeyN"], ["Digit1"]);
+  const one = { ...m, code: "Digit1" };
+  const n = { ...m, code: "KeyN" };
+  assert.equal(press(one, 0), true);
+  assert.equal(press({ ...one, repeat: true }, 50), false);
+  assert.equal(press(n, 100), false);
+  assert.equal(press(n, 200), true);
+  assert.equal(press(n, 300), false);
+  assert.equal(press(one, 350), true);
+  assert.equal(press(n, 400), false);
+});

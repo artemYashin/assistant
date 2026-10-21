@@ -53,8 +53,10 @@ const contextSchema = z.object({
 });
 const settingsSchema = z
   .object({
-    voiceCurrentKey: z.string().regex(/^Key[A-Z]$/).default("KeyM"),
-    voiceNewKey: z.string().regex(/^Key[A-Z]$/).default("KeyN"),
+    voiceCurrentPress: z.enum(["single", "double"]).default("double"),
+    voiceNewPress: z.enum(["single", "double"]).default("double"),
+    voiceCurrentKey: z.string().regex(/^(Key[A-Z]|Digit[0-9])$/).default("KeyM"),
+    voiceNewKey: z.string().regex(/^(Key[A-Z]|Digit[0-9])$/).default("KeyN"),
     githubClientId: text,
     model: text,
     reviewModel: text.default(""),

@@ -38,6 +38,8 @@ export type Approval = {
   error: string | null;
 };
 export const defaults = {
+  voiceCurrentPress: "double",
+  voiceNewPress: "double",
   voiceCurrentKey: "KeyM",
   voiceNewKey: "KeyN",
   githubClientId: "",
