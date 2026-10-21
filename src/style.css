@@ -9116,13 +9116,23 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-markdown th, .memory-markdown td { border: 1px solid #dce4df; padding: 5px 8px; }
 .memory-markdown img { max-width: 100%; }
 .memory-note .memory-markdown p { font-size: inherit; color: inherit; white-space: normal; margin: 0 0 10px; }
-.memory-export-dialog { width: min(560px, calc(100vw - 32px)); }
-.memory-export-dialog fieldset { border: 1px solid #dce4df; border-radius: 8px; padding: 12px; margin: 14px 0; min-width: 0; }
+.memory-export-dialog { width: min(560px, calc(100vw - 32px)); padding: 16px; }
+.memory-export-dialog[open] { gap: 8px; }
+.memory-export-dialog > .section-heading { margin-bottom: 0; }
+.memory-export-dialog > .section-heading h2 { margin: 0; font-size: 17px; }
+.memory-export-dialog > p { margin: 0; font-size: 12px; line-height: 1.5; }
+.memory-export-dialog fieldset { border: 1px solid #dce4df; border-radius: 8px; padding: 6px 10px; margin: 0; min-width: 0; }
 .memory-export-dialog legend { font-size: 13px; font-weight: 600; padding: 0 5px; }
-.memory-export-dialog .check-option { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+.memory-export-dialog .check-option { display: flex; align-items: center; gap: 8px; margin: 0; padding: 5px 0; font-size: 12px; line-height: 1.4; }
 .memory-export-dialog .check-option span { flex: 1; overflow-wrap: anywhere; }
 .memory-export-dialog .check-option small { flex-shrink: 0; }
-.memory-export-files { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 8px; }
+.memory-export-downloads { min-width: 0; padding: 10px; border: 1px solid #dce4df; border-radius: 8px; background: #f3f6f4; }
+.memory-export-downloads h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 12px; font-weight: 600; }
+.memory-export-downloads > p { margin: 0; font-size: 12px; }
+.memory-export-downloads > small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.4; }
+.memory-export-files { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.memory-export-files > button { max-width: 100%; padding: 6px 9px; font-size: 12px; overflow-wrap: anywhere; text-align: left; }
+.memory-export-files > button > svg { flex-shrink: 0; }
 .chat-code-snippet { min-width: 0; max-width: 100%; margin: 10px 0; border: 1px solid #d5dfd9; border-radius: 8px; overflow: hidden; background: #f5f7f6; }
 .chat-code-snippet > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 9px; background: #eaf0ec; font-size: 11px; }
 .chat-code-snippet > header button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #cedbd2; border-radius: 5px; background: #fff; font-size: 11px; }

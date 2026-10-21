@@ -38,9 +38,11 @@ export function ExportMemoryButton({ context }: { context: { client: string; pro
           <label className="check-option"><input type="radio" name="memory-export-format" checked={separate} onChange={() => setSeparate(true)} />Отдельный MD-файл для каждого раздела</label>
           <label className="check-option"><input type="checkbox" checked={includeContext} onChange={event => setIncludeContext(event.target.checked)} />Добавить названия заказчика и проекта в заголовки разделов</label>
         </fieldset>
-        <div className="memory-export-files">{files.map(file => <button className="secondary" type="button" key={file.name} onClick={() => download(file)}><Download size={15} />{file.name}</button>)}</div>
-        {!files.length && <p className="muted">Выберите раздел с сохранёнными записями.</p>}
-        {separate && files.length > 0 && <small className="muted">Нажмите на имя файла, чтобы скачать его. Пустые разделы не экспортируются.</small>}
+        <section className="memory-export-downloads" aria-label="Файлы">
+          <h3><FileText size={15} />Файлы</h3>
+          {files.length > 0 ? <div className="memory-export-files">{files.map(file => <button className="secondary" type="button" key={file.name} onClick={() => download(file)}><Download size={15} />{file.name}</button>)}</div> : <p className="muted">Выберите раздел с сохранёнными записями.</p>}
+          {separate && files.length > 0 && <small className="muted">Нажмите на имя файла, чтобы скачать его. Пустые разделы не экспортируются.</small>}
+        </section>
       </>}
     </dialog>
   </>;
