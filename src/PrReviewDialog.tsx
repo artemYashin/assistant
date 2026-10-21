@@ -6,10 +6,12 @@ import { api } from "./api.js";
 
 export function PrReviewDialog({
   pr,
+  defaultMaxTokens = 1_000_000,
   onClose,
   onStarted,
 }: {
   pr: any;
+  defaultMaxTokens?: number;
   onClose: () => void;
   onStarted: () => void;
 }) {
@@ -17,6 +19,8 @@ export function PrReviewDialog({
   const [model, setModel] = useState("");
   const [frequency, setFrequency] = useState("medium");
   const [memoryScopes, setMemoryScopes] = useState(["general", "client", "project", "project_review"]);
+  const [readCode, setReadCode] = useState(true);
+  const [maxTokens, setMaxTokens] = useState(defaultMaxTokens);
   const [readTickets, setReadTickets] = useState(true);
   const [reviewerComment, setReviewerComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,6 +63,8 @@ export function PrReviewDialog({
                 questionFrequency: frequency,
                 readTickets,
                 memoryScopes,
+                readCode,
+                maxTokens,
                 reviewerComment,
               },
               restart: pr.review_status === "completed",
@@ -92,8 +98,13 @@ export function PrReviewDialog({
               ? "Только важные уточнения, без которых нельзя оценить риск. До 3 вопросов."
               : "Более подробные уточнения требований и граничных случаев. До 8 вопросов."}
         </p>
+        <label className="review-token-limit">Максимум токенов на ревью
+          <input type="number" min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
+        </label>
+        <small className="muted">Входящие + исходящие за всё ревью, включая продолжения после ответов. Остановка по отчётам модели.</small>
         </fieldset>
         <fieldset className="review-settings-block"><legend>Контекст ревью</legend>
+        <label className="pr-review-ticket-option review-code-option"><input type="checkbox" checked={readCode} disabled={busy} onChange={event => setReadCode(event.target.checked)} />Разрешить поиск и чтение кода репозитория</label>
         <label className="pr-review-ticket-option">
           <input
             type="checkbox"
@@ -116,7 +127,7 @@ export function PrReviewDialog({
             <input type="checkbox" checked={memoryScopes.includes(value)} disabled={busy} onChange={event => setMemoryScopes(previous => event.target.checked ? [...previous, value] : previous.filter(scope => scope !== value))} />{label}
           </label>)}
         </div>
-        <small className="muted">Память «Ревью проекта» используется только для ревью и не добавляется автоматически в чат. Можно отключить все разделы.</small>
+        <small className="muted">Сначала передаются только названия; подробности ревьюер читает по необходимости. Память «Ревью проекта» используется только для ревью и не добавляется автоматически в чат. Можно отключить все разделы.</small>
         </fieldset>
         <label className="review-question-field">
           <strong>Комментарий ревьюеру</strong>

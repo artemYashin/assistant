@@ -1331,7 +1331,7 @@ export class PullRequests {
     options?: Partial<ReviewOptions>,
     restart = false,
   ) {
-    const reviewOptions = reviewOptionsSchema.parse(options || {});
+    const reviewOptions = reviewOptionsSchema.parse({ ...options, maxTokens: options?.maxTokens ?? this.store.settings().reviewMaxTokens });
     reviewOptions.model ||= this.store.settings().reviewModel || this.store.settings().model;
     const m = this.monitors().find((m) => m.id === monitor);
     const p = this.store.db
@@ -1465,9 +1465,8 @@ export class PullRequests {
           .run(job.id);
         return;
       }
-      const options = reviewOptionsSchema.parse(
-        JSON.parse(job.options || "{}"),
-      );
+      const savedOptions = JSON.parse(job.options || "{}");
+      const options = reviewOptionsSchema.parse({ ...savedOptions, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
       const requirements: any[] = [];
       if (options.readTickets) {
         const links = await this.get(
@@ -1568,6 +1567,12 @@ export class PullRequests {
           },
           questionFrequency: options.questionFrequency,
           memoryScopes: options.memoryScopes,
+          reviewId: job.id,
+          readCode: options.readCode,
+          maxTokens: options.maxTokens,
+          branch: String(detail.sourceRefName || "").replace(/^refs\/heads\//, ""),
+          continuationPrompt: `Continue the same PR review using the existing diff and previously read memory/code in this session. Updated questions and answers: ${JSON.stringify(answers)}. Reviewer comment: ${options.reviewerComment}`,
+
           askQuestions:
             options.questionFrequency !== "none" && answers.length < 3
               ? (batch) => {

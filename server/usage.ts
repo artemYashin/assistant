@@ -47,6 +47,14 @@ export class UsageLedger {
     if (origin === "chat" && chatSessionId) this.store.db.prepare("UPDATE llm_requests SET chat_session_id=? WHERE id=?").run(chatSessionId, id);
     return id;
   }
+  registerReviewRequest(reviewId: string, requestId: string) {
+    const key = `review.requests:${reviewId}`;
+    const ids = this.store.get<string[]>(key, []);
+    if (!ids.includes(requestId)) this.store.set(key, [...ids, requestId]);
+  }
+  reviewTokens(reviewId: string) {
+    return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + this.tokens(id), 0);
+  }
   sessionUsage(context: Context, sessionId: string) {
     this.store.chatSession(context, sessionId);
     const usage = this.store.db.prepare(

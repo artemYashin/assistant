@@ -197,7 +197,7 @@ test("watchdog stops a model that never returns usage or a response", async (t) 
   );
 });
 
-test("manual PR review has no tools or chat history and still accounts usage", async (t) => {
+test("manual PR review has only memory reads, no chat history and still accounts usage", async (t) => {
   const store = fixture(t);
   store.say("user", "private chat history", context);
   store.addMemory("general", "General knowledge", context);
@@ -212,7 +212,7 @@ test("manual PR review has no tools or chat history and still accounts usage", a
     assert.match(s.prompt, /Client knowledge/);
     assert.match(s.prompt, /Project knowledge/);
     assert.doesNotMatch(s.prompt, /Other project secret|private chat history/);
-    assert.deepEqual(c.tools, []);
+    assert.deepEqual(c.tools.map((tool: any) => tool.name), ["read_memory"]);
     assert.deepEqual(c.excludedTools, ["builtin:*", "mcp:*"]);
     assert.equal(
       (await c.hooks.onPreToolUse({ toolName: "propose_teams_message" }))
@@ -365,13 +365,14 @@ test("status tool requires current user instruction and deduplicates repeated wr
   assert.equal(writes, 2);
 });
 
-test("review feedback tools are limited to questions and memory proposals with ordinary usage guard", async (t) => {
+test("review feedback tools are limited to memory reads, questions and proposals", async (t) => {
   const store = fixture(t);
   let questions: any[] = [];
   const { agent } = fakeAgent(store, async (_s, c) => {
     assert.deepEqual(c.tools.map((tool: any) => tool.name).sort(), [
       "ask_review_questions",
       "propose_memory",
+      "read_memory",
     ]);
     assert.equal(
       (await c.hooks.onPreToolUse({ toolName: "save_memory" }))
@@ -1124,4 +1125,43 @@ test("tool viewer scopes sessions, reports request usage and lazily returns exac
   store.db.prepare("UPDATE llm_tool_traces SET full_arguments=NULL WHERE id=?").run(trace);
   assert.equal(ledger.toolArguments(trace, context).full, false);
   assert.deepEqual(ledger.toolArguments(trace, context).arguments, JSON.parse(history[0].tools[0].arguments));
+});
+
+test("review token totals span attempts and remain separate from chat and other reviews", t => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  assert.equal(store.settings().reviewMaxTokens, 1_000_000);
+  store.set("settings", { ...store.settings(), reviewMaxTokens: 1_500_000, llmMaxTokens: 1000 });
+  assert.equal(store.settings().reviewMaxTokens, 1_500_000);
+  for (const [review, input, output] of [["r1", 1200, 300], ["r1", 500, 100], ["r2", 9999, 9999]] as const) {
+    const id = ledger.begin("model", context, "pr_review");
+    ledger.registerReviewRequest(review, id);
+    ledger.registerReviewRequest(review, id);
+    ledger.record(id, id, { inputTokens: input, outputTokens: output });
+  }
+  assert.equal(ledger.reviewTokens("r1"), 2100);
+  assert.equal(ledger.reviewTokens("r2"), 19998);
+  assert.equal(ledger.reviewTokens("new"), 0);
+});
+
+test("review uses its independent default budget rather than the chat token threshold", async t => {
+  const store = fixture(t);
+  store.set("settings", { ...store.settings(), llmMaxTokens: 1000, reviewMaxTokens: 1500000 });
+  const { agent } = fakeAgent(store, async (session) => {
+    session.emit({ inputTokens: 1500, outputTokens: 200 });
+    return { data: { content: "Review completed above chat limit" } };
+  });
+  const result = await agent.chat("Review", context, true);
+  assert.match(result.body, /completed above chat limit/);
+});
+
+test("review budget stops cumulative follow-ups even when each attempt is below the limit", async t => {
+  const store = fixture(t);
+  const { agent } = fakeAgent(store, async session => {
+    session.emit({ inputTokens: 1500, outputTokens: 200 });
+    return { data: { content: "Review" } };
+  });
+  await agent.chat("First", context, true, { reviewId: "budget-review", maxTokens: 3000 });
+  await assert.rejects(() => agent.chat("Second", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /порог токенов/);
+  assert.equal(new UsageLedger(store).reviewTokens("budget-review"), 3400);
+  await assert.rejects(() => agent.chat("Third", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью/);
 });

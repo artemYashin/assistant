@@ -99,3 +99,46 @@ test("context occupancy is separate from cumulative usage, scoped and cleared wi
   store.clearHistory(context, chat.id);
   assert.equal(ledger.sessionUsage(context, chat.id).contextUsage, null);
 });
+
+test("review resumes one SDK transcript with lazy memory and optional read-only code tools", async t => {
+  const { Agent } = await import("../server/agent.js");
+  const { Approvals } = await import("../server/approvals.js");
+  const dir = mkdtempSync(join(tmpdir(), "orbit-review-runtime-")), store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "A", project: "B" };
+  store.addMemory("project_review", "Full secret review details", context, "Review summary");
+  store.addMemory("general", "Excluded memory", context, "Excluded summary");
+  const memory = store.reviewMemory(context, ["project_review"])[0];
+  const excluded = store.memoryCatalog(context)[0];
+  const prompts: string[] = [];
+  const configs: any[] = [];
+  let creates = 0, resumes = 0;
+  const session = { sessionId: "review-sdk", on: () => () => {}, abort: async () => {},
+    sendAndWait: async ({ prompt }: any) => {
+      prompts.push(prompt);
+      const tools = configs.at(-1).tools;
+      const read = tools.find((tool: any) => tool.name === "read_memory");
+      assert.ok(read);
+      assert.match(JSON.stringify(await read.handler({ id: memory.id }, {})), /Full secret review details/);
+      assert.doesNotMatch(JSON.stringify(await read.handler({ id: excluded.id }, {})), /Excluded memory/);
+      assert.equal(tools.some((tool: any) => tool.name === "change_ticket_status"), false);
+      return { data: { content: "Review result" } };
+    } };
+  const client: any = { start: async () => {}, stop: async () => {}, forceStop: async () => {},
+    createSession: async (config: any) => { creates++; configs.push(config); return session; },
+    resumeSession: async (id: string, config: any) => { assert.equal(id, session.sessionId); resumes++; configs.push(config); return session; } };
+  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client);
+  const options = { reviewId: "review-one", memoryScopes: ["project_review"] as const, readCode: true, branch: "feature/test", continuationPrompt: "Answer to the question" };
+  await agent.chat("Original multi-file diff", context, true, { ...options, memoryScopes: [...options.memoryScopes] });
+  await agent.chat("Original multi-file diff again", context, true, { ...options, memoryScopes: [...options.memoryScopes] });
+  assert.equal(creates, 1); assert.equal(resumes, 1);
+  assert.match(prompts[0], /Review summary/);
+  assert.doesNotMatch(prompts[0], /Full secret review details|Excluded summary/);
+  assert.match(prompts[1], /Answer to the question/);
+  assert.doesNotMatch(prompts[1], /Original multi-file diff/);
+  assert.ok(configs[0].tools.some((tool: any) => tool.name === "code_search"));
+  assert.equal(configs[0].infiniteSessions.enabled, false);
+  await agent.chat("Different review", context, true, { ...options, reviewId: "review-two", memoryScopes: [...options.memoryScopes], readCode: false });
+  assert.equal(creates, 2);
+  assert.ok(configs[2].tools.every((tool: any) => !tool.name.startsWith("code_")));
+});

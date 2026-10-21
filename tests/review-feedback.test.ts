@@ -53,6 +53,7 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
     ...store.settings(),
     azureUrl: "https://ado.test/org",
     azureProject: "P",
+    reviewMaxTokens: 1500000,
   });
   store.setSecret("azure.pat", "pat");
   store.setSecret("github.token", "token");
@@ -80,6 +81,9 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
       "now",
     );
   const review = service.requestReview(monitor, "repo", 1);
+  const options = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(review) as any).options);
+  assert.equal(options.maxTokens, 1500000);
+  assert.equal(options.readCode, true);
   store.db
     .prepare("UPDATE pr_reviews SET status='awaiting_answers' WHERE id=?")
     .run(review);

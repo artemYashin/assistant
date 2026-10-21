@@ -2709,7 +2709,7 @@ function Settings({ settings, context, run, busy }: any) {
             </Field>
           </div>
           <Field
-            label="Порог входных + выходных токенов на запрос"
+            label="Порог входных + выходных токенов чата на запрос"
             hint="От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит."
           >
             <input
@@ -2719,6 +2719,9 @@ function Settings({ settings, context, run, busy }: any) {
               value={form.llmMaxTokens}
               onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
             />
+          </Field>
+          <Field label="Лимит токенов ревью по умолчанию" hint="Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.">
+            <input type="number" min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
           </Field>
           </div>
           <div className="settings-group assistant-code-settings">

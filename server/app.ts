@@ -87,6 +87,7 @@ const settingsSchema = z
     prDailyLimit: z.number().int().min(1).max(100).default(20),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
     llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
+    reviewMaxTokens: z.number().int().min(1000).max(100000000).default(1000000),
     llmMaxToolCalls: z.number().int().min(1).max(100).default(30),
     instructions: z.string().max(12000),
     client: text,
@@ -1253,7 +1254,7 @@ export function createApp(
         monitor: text.min(1),
         repo: text.min(1),
         number: z.number().int().positive(),
-        options: reviewOptionsSchema.optional(),
+        options: reviewOptionsSchema.extend({ maxTokens: reviewOptionsSchema.shape.maxTokens.removeDefault().optional() }).optional(),
         restart: z.boolean().default(false),
       })
       .strict()

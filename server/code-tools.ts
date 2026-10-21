@@ -13,12 +13,12 @@ export function configuredCodeBranch(store: Store, context: Context): string | u
   const monitor = store.db.prepare("SELECT main_branch FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=? ORDER BY enabled DESC LIMIT 1").get(context.client, context.project, azureBase(settings.azureUrl), settings.azureProject) as { main_branch: string } | undefined;
   return monitor?.main_branch || undefined;
 }
-export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store), selectedBranch = configuredCodeBranch(store, context)) {
-  if (!store.settings().assistantCodeAccess) return [];
+export function codeTools(store: Store, context: Context, assertActive: () => void, browser = new CodeBrowser(store), selectedBranch = configuredCodeBranch(store, context), allowAccess = () => store.settings().assistantCodeAccess) {
+  if (!allowAccess()) return [];
   const revisions = new Map<string, string>();
   const read = async (operation: string, args: Record<string, unknown>) => {
     assertActive();
-    if (!store.settings().assistantCodeAccess) throw new AppError(403, "Доступ ассистента к коду отключён в настройках.");
+    if (!allowAccess()) throw new AppError(403, "Доступ ассистента к коду отключён в настройках.");
     if (!context.client || !context.project) throw new AppError(400, "Выберите заказчика и проект.");
     let name = String(args.branch || "");
     if (["tree", "search", "file"].includes(operation)) {

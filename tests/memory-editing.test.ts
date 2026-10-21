@@ -112,7 +112,8 @@ test("project review memory is isolated from automatic chat context and scoped t
   assert.deepEqual(store.memoryCatalog(context).map(row => row.scope).sort(), ["client", "general", "project"]);
   const review = store.reviewMemory(context);
   assert.equal(review.length, 4);
-  assert.ok(review.some(row => row.scope === "project_review" && row.body === "Full project_review"));
+  assert.ok(review.every(row => !("body" in row)));
+  assert.ok(review.some(row => row.scope === "project_review" && row.summary === "Summary project_review"));
   assert.equal(store.reviewMemory(context, ["project_review"]).length, 1);
   assert.deepEqual(store.reviewMemory(context, []), []);
   const id = review.find(row => row.scope === "project_review")!.id;

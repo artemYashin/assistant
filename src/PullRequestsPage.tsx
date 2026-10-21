@@ -354,7 +354,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
         />
       )}
       {reviewing && (
-        <PrReviewDialog
+        <PrReviewDialog defaultMaxTokens={settings.reviewMaxTokens ?? 1_000_000}
           pr={reviewing}
           onClose={() => setReviewing(null)}
           onStarted={() => {

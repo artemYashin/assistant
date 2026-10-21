@@ -68,6 +68,7 @@ export const defaults = {
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
+  reviewMaxTokens: 1000000,
   llmMaxToolCalls: 30,
   instructions:
     "Reply in the user's language, concisely and clearly. Help track commitments, deadlines and overlooked tickets. Save memory when explicitly asked; otherwise propose useful durable facts, agreements and preferences for approval. Use clear standalone wording, appropriate scope and avoid duplicates.",
@@ -528,7 +529,7 @@ export class Store {
   reviewMemory(context: Context, scopes: string[] = ["general", "client", "project", "project_review"]) {
     return (this.memories(context, true) as any[])
       .filter(row => scopes.includes(row.scope))
-      .map(({ id, scope, summary, body }) => ({ id, scope, summary, body }));
+      .map(({ id, scope, summary }) => ({ id, scope, summary }));
   }
   memoryDetail(id: string, context: Context) {
     const row = this.db.prepare("SELECT id,scope,summary,body,client,project FROM memories WHERE id=?").get(id) as any;
