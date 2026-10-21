@@ -104,10 +104,10 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       if (id === attempt.current) fail(e.name === "NotAllowedError" ? "Разрешите доступ к микрофону в настройках браузера." : e.message || "Не удалось включить микрофон.");
     }
   }
-  function finish() {
+  function finish(explicitSend = false) {
     if (phaseRef.current === "requesting") { cancel(); return; }
     if (phaseRef.current !== "recording") return;
-    if (!voiceRecordingIsLongEnough(started.current, performance.now())) { cancel(); return; }
+    if (!explicitSend && !voiceRecordingIsLongEnough(started.current, performance.now())) { cancel(); return; }
     change("transcribing"); clearTimeout(deadline.current); recorder.current?.stop();
   }
   const actions = useRef({ start, finish, cancel }); actions.current = { start, finish, cancel };
@@ -121,7 +121,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       }
       if (event.key === "Enter" && phaseRef.current !== "idle" && !event.isComposing) {
         event.preventDefault(); event.stopPropagation();
-        if (!event.repeat && phaseRef.current === "recording") actions.current.finish();
+        if (!event.repeat && phaseRef.current === "recording") actions.current.finish(true);
         return;
       }
       const target = event.target instanceof Element ? event.target : null;
@@ -169,7 +169,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title }: {
       <p className="voice-shortcut-target" title={title}>В текущий чат · {title}</p>
       <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? "Enter или M M — закончить и отправить" : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
       {phase === "recording" && <div className="voice-shortcut-footer"><time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</time>
-        <button type="button" onClick={finish}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : "Отправить"}</button></div>}
+        <button type="button" onClick={() => finish()}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}
     </div>
   </dialog>, document.body);

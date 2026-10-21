@@ -2629,6 +2629,17 @@ function Assistant({
   const resize = useAssistantResize();
   const chatStream = useChatStream();
   const conversationView = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = conversationView.current;
+    if (!element) return;
+    // Measure the visible message viewport, never the scrollable content height.
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.height > 0)
+        element.style.setProperty("--chat-image-max-height", `${entry.contentRect.height * 0.3}px`);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const followStream = useRef(true);
   const chatConnection = useRef<AbortController | null>(null);
   useEffect(() => {
