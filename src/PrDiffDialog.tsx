@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, X } from "lucide-react";
 import { api } from "./api.js";
 import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
+import { SingleSelect } from "./SingleSelect.js";
+import { diffLanguage, diffLanguages, diffLanguageStorageKey, validDiffLanguage } from "./diff-languages.js";
+import type { CodeToken, HighlightedFile } from "./diff-highlight.js";
 
 type Loaded = {
   files: ReturnType<typeof splitDiff>;
@@ -44,6 +47,13 @@ export function PrDiffDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [language, setLanguage] = useState(() => {
+    try { return validDiffLanguage(localStorage.getItem(diffLanguageStorageKey)); }
+    catch { return "auto"; }
+  });
+  const [highlighted, setHighlighted] = useState<{
+    file: Loaded["files"][number]; language: string; value: HighlightedFile;
+  } | null>(null);
   const [threads, setThreads] = useState<CommentThread[]>([]);
   const [commentsError, setCommentsError] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -87,6 +97,27 @@ export function PrDiffDialog({
     return () => { live = false; };
   }, [data, commit, pr.monitor, pr.repo, pr.number, commentsVersion]);
   const file = data?.files[selected];
+  const effectiveLanguage = language === "auto"
+    ? diffLanguage(file?.after === "/dev/null" ? file.before : file?.after || "") : language;
+  useEffect(() => {
+    setHighlighted(null);
+    if (!file || effectiveLanguage === "plaintext") return;
+    let worker: Worker;
+    try {
+      worker = new Worker(new URL("./diff-highlight.worker.ts", import.meta.url), { type: "module" });
+    } catch { return; }
+    const timer = setTimeout(() => worker.terminate(), 4000);
+    worker.onmessage = (event: MessageEvent<HighlightedFile>) => {
+      setHighlighted({ file, language: effectiveLanguage, value: event.data });
+      clearTimeout(timer);
+      worker.terminate();
+    };
+    worker.onerror = () => { clearTimeout(timer); worker.terminate(); };
+    worker.postMessage({ file, language: effectiveLanguage });
+    return () => { clearTimeout(timer); worker.terminate(); };
+  }, [file, effectiveLanguage]);
+  const tokens = highlighted?.file === file && highlighted?.language === effectiveLanguage
+    ? highlighted.value : undefined;
   const unplacedThreads = threads.filter((thread) => !data?.files.some((f) =>
     f.hunks.some((h) => h.rows.some((r) =>
       thread.line
@@ -282,6 +313,17 @@ export function PrDiffDialog({
                       ? `${file.before} → ${file.after}`
                       : file.after}
                   </h3>
+                  <div className="pr-diff-language">
+                    <SingleSelect label="Подсветка кода" value={language}
+                      options={[
+                        { value: "auto", label: `Авто · ${diffLanguages.find((l) => l.value === diffLanguage(file.after === "/dev/null" ? file.before : file.after))?.label || "обычный текст"}` },
+                        { value: "plaintext", label: "Без подсветки" }, ...diffLanguages,
+                      ]}
+                      onChange={(value) => {
+                        setLanguage(value);
+                        try { localStorage.setItem(diffLanguageStorageKey, value); } catch { /* Storage may be disabled. */ }
+                      }} />
+                  </div>
                   {!file.hunks.length ? (
                     <p>Текст не изменился (например, файл переименован).</p>
                   ) : (
@@ -312,6 +354,7 @@ export function PrDiffDialog({
                                 <tr key={j}>
                                   <DiffCell
                                     line={r.left}
+                                    tokens={r.left && tokens?.left[r.left.number]}
                                     threads={threads.filter((t) => !t.line && !!r.left && t.path === file.before && t.leftLine === r.left.number)}
                                     kind={
                                       r.kind === "change"
@@ -321,6 +364,7 @@ export function PrDiffDialog({
                                   />
                                   <DiffCell
                                     line={r.right}
+                                    tokens={r.right && tokens?.right[r.right.number]}
                                     threads={threads.filter((t) => !!r.right && t.path === file.after && t.line === r.right.number)}
                                     onComment={!commit && data.canComment ? async (content) => {
                                       await api("/pr/line-comment", "POST", {
@@ -360,11 +404,13 @@ function DiffCell({
   kind,
   onComment,
   threads = [],
+  tokens,
 }: {
   line?: DiffLine;
   kind: "context" | "added" | "removed";
   onComment?: (content: string) => Promise<void>;
   threads?: CommentThread[];
+  tokens?: CodeToken[];
 }) {
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState("");
@@ -391,7 +437,9 @@ function DiffCell({
           <span aria-hidden="true">
             {kind === "added" ? "+" : kind === "removed" ? "−" : " "}
           </span>
-          <code>{line.text || " "}</code>
+          <code>{tokens?.length ? tokens.map((token, index) =>
+            <span className={token.className || undefined} key={index}>{token.text}</span>,
+          ) : line.text || " "}</code>
         </div>
       )}
       <CommentThreads threads={threads} />

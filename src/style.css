@@ -4021,6 +4021,28 @@ summary > svg {
   background: none;
   padding: 0;
 }
+.pr-diff-language { width: min(280px, 100%); margin: 0 0 10px; }
+.pr-diff-language .single-select { width: 100%; }
+.pr-diff-language .multi-select-panel { position: absolute; z-index: 5; }
+.pr-diff-language .multi-select-options { max-height: min(260px, 35vh); }
+.pr-diff-line .hljs-keyword,
+.pr-diff-line .hljs-selector-tag { color: #963048; }
+.pr-diff-line .hljs-string,
+.pr-diff-line .hljs-regexp,
+.pr-diff-line .hljs-attr { color: #145574; }
+.pr-diff-line .hljs-number,
+.pr-diff-line .hljs-literal,
+.pr-diff-line .hljs-variable { color: #70429c; }
+.pr-diff-line .hljs-title,
+.pr-diff-line .hljs-built_in,
+.pr-diff-line .hljs-type { color: #62409c; }
+.pr-diff-line .hljs-comment,
+.pr-diff-line .hljs-quote { color: #59666a; font-style: italic; }
+.pr-diff-line .hljs-meta,
+.pr-diff-line .hljs-name,
+.pr-diff-line .hljs-tag { color: #85501b; }
+.pr-diff-line .hljs-operator,
+.pr-diff-line .hljs-punctuation { color: #384651; }
 .pr-diff-number {
   position: relative;
   color: #68727d;

@@ -1136,3 +1136,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Comment creation opts into bounded, sanitized Azure JSON error messages. HTTP 400 no longer misleadingly suggests a PAT problem. No automatic write retries were introduced.
 - Styled the comment submit button with the primary treatment, send icon, loading spinner, hover/focus and disabled states.
 - All six targeted HTTP/comment tests passed, including diagnostic redaction and iteration mapping. TypeScript and whitespace checks passed. Live Azure writes and browser visual checks were not exercised.
+
+### Syntax highlighting in PR and commit diff (2026-10-21)
+
+- Added a custom language selector with extension-based Auto, explicit common languages and plain text. The selection persists in browser localStorage across files and dialog reopenings.
+- Lowlight tokenizes left/right code independently per hunk, preserving multiline scopes within the available fragment. Git markers, line numbers and Azure discussion positions are unchanged. Tokens render as React text spans, without raw HTML injection.
+- A dedicated, lazily loaded worker highlights only the selected file. Work is bounded by character/line limits and a four-second worker timeout; failures fall back to plain text. Worker cancellation prevents stale results after switching files/languages. No additional Azure or LLM requests are made.
+- Limitation: missing context before a diff hunk can affect multiline syntax interpretation; full source files are not fetched.
+- All 258 tests passed, including extension detection, text preservation, multiline comments, side-specific numbering and oversized-fragment fallback. Production build and whitespace checks passed; the highlighter is a separate 174 KB worker asset. Existing main/Excel bundle-size advisories remain. Browser visual interaction was not exercised.
