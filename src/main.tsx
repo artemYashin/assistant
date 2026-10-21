@@ -2287,6 +2287,8 @@ function Settings({ settings, context, run, busy }: any) {
               {settings.githubConnected ? "Вход выполнен" : "Не подключён"}
             </Badge>
           </div>
+          <div className="settings-group">
+            <h3>Подключение</h3>
           <p>
             Модель работает через официальный Copilot SDK с вашей подпиской.
             Доступ зависит от политики вашей организации.
@@ -2346,18 +2348,9 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <LoginCode flow={githubFlow} />
           {modelsLoading && <p role="status">Загружаем доступные модели…</p>}
-          <Field
-            label="Лимит ручных PR-ревью за 24 часа"
-            hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
-          >
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={form.prDailyLimit}
-              onChange={(e) => set("prDailyLimit", Number(e.target.value))}
-            />
-          </Field>
+          </div>
+          <div className="settings-group">
+            <h3>Модели</h3>
           <div className="form-grid settings-model-grid">
           {(["model", "reviewModel"] as const).map((key) => (
             <Field
@@ -2390,6 +2383,22 @@ function Settings({ settings, context, run, busy }: any) {
             </Field>
           ))}
           </div>
+          </div>
+          <div className="settings-group">
+            <h3>PR-ревью</h3>
+          <Field
+            label="Лимит ручных PR-ревью за 24 часа"
+            hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
+          >
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={form.prDailyLimit}
+              onChange={(e) => set("prDailyLimit", Number(e.target.value))}
+            />
+          </Field>
+          </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-teams-panel`} aria-labelledby={`${settingsTabId}-teams`} hidden={settingsTab !== "teams"}>
           <div className="section-heading">
@@ -2401,6 +2410,8 @@ function Settings({ settings, context, run, busy }: any) {
               {settings.microsoftConnected ? "Вход выполнен" : "Не подключён"}
             </Badge>
           </div>
+          <div className="settings-group">
+            <h3>Подключение</h3>
           <p>
             Зарегистрируйте приложение в Microsoft Entra ID и включите public
             client flows. Делегированные разрешения: <code>Chat.Read</code>,{" "}
@@ -2436,6 +2447,10 @@ function Settings({ settings, context, run, busy }: any) {
             <MessageSquare size={16} />
             Войти через Microsoft
           </button>
+          <LoginCode flow={msFlow} />
+          </div>
+          <div className="settings-group">
+            <h3>Фоновая работа и отправка</h3>
           <label className="check-option">
             <input
               type="checkbox"
@@ -2447,10 +2462,10 @@ function Settings({ settings, context, run, busy }: any) {
           <p className="muted">
             Teams необязателен: задачи и PR работают напрямую с Azure DevOps.
           </p>
-          <LoginCode flow={msFlow} />
           <div className="inline-note">
             <ShieldCheck size={17} />
             Разрешение API не отменяет подтверждение каждого сообщения в Orbit.
+          </div>
           </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-azure-panel`} aria-labelledby={`${settingsTabId}-azure`} hidden={settingsTab !== "azure"}>
@@ -2463,6 +2478,8 @@ function Settings({ settings, context, run, busy }: any) {
               {settings.azurePatSet ? "PAT сохранён" : "Не настроен"}
             </Badge>
           </div>
+          <div className="settings-group">
+            <h3>Подключение и доступ</h3>
           <Field
             label="URL организации или коллекции"
             hint="Services: https://dev.azure.com/организация. Server: HTTPS-адрес до коллекции, без проекта. Адрес браузерного прокси *.mcas.ms может возвращать страницу входа вместо API."
@@ -2512,7 +2529,13 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
+          </div>
+          <div className="settings-group">
+            <h3>Импорт тикетов и оформление</h3>
           <TicketImportSettings form={form} set={set} save={save} />
+          </div>
+          <div className="settings-group">
+            <h3>Автоматическая синхронизация</h3>
           <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
           <Field
             label="Обновлять Teams, тикеты и PR каждые, минут"
@@ -2538,29 +2561,12 @@ function Settings({ settings, context, run, busy }: any) {
             </datalist>
           </Field>
 
+          </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>
-          <h2><Sparkles size={22} />AI Assistant</h2>
-          <div className="assistant-code-settings">
-            <h3>Code Repository</h3>
-            <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
-            <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
-            <Field label="Ожидание подготовки Git, секунд" hint="До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.">
-              <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
-            </Field>
-          </div>
-          <div className="voice-settings-block">
-            <h3><Mic size={17} />Голосовой помощник</h3>
-            <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>
-            {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
-              <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
-              <div className="voice-settings-controls">
-                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} onChange={value => set(`voice${kind}Key`, value)} />
-                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
-              </div>
-            </div>)}
-            <small className="muted">Enter — закончить и отправить запись; Esc — отменить. Для назначения модификатора нажмите и отпустите его; для сочетания удерживайте его и нажмите нужную клавишу. Некоторые системные сочетания перехватывает ОС или браузер.</small>
-          </div>
+          <div className="section-heading"><h2><Sparkles size={22} />AI Assistant</h2></div>
+          <div className="settings-group">
+            <h3>Общие настройки</h3>
           <Field
             label="Инструкции ассистенту"
             hint="Предпочтения дополняют системные правила. Отключить обязательное подтверждение отправки здесь нельзя."
@@ -2612,6 +2618,26 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
             />
           </Field>
+          </div>
+          <div className="settings-group assistant-code-settings">
+            <h3>Code Repository</h3>
+            <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
+            <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
+            <Field label="Ожидание подготовки Git, секунд" hint="До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.">
+              <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
+            </Field>
+          </div>
+          <div className="settings-group voice-settings-block">
+            <h3><Mic size={17} />Голосовой помощник</h3>
+            <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>
+            {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
+              <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} onChange={value => set(`voice${kind}Key`, value)} />
+                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
+              </div>
+            </div>)}
+            <small className="muted">Enter — закончить и отправить запись; Esc — отменить. Для назначения модификатора нажмите и отпустите его; для сочетания удерживайте его и нажмите нужную клавишу. Некоторые системные сочетания перехватывает ОС или браузер.</small>
           <div className="inline-note">
             <AudioLines size={18} />
             <span>
@@ -2619,6 +2645,7 @@ function Settings({ settings, context, run, busy }: any) {
               запускает загрузку модели. Распознанный текст можно
               отредактировать перед отправкой.
             </span>
+          </div>
           </div>
         </section>
         {connectionError && <div className="error">{connectionError}</div>}
