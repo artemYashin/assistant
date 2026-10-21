@@ -96,7 +96,9 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
-import { api, setCsrf } from "./api.js";
+import { ChatStream, useChatStream, formatChatDuration } from "./ChatStream.js";
+import type { ChatProgress } from "../server/chat-stream.js";
+import { api, apiProgress, setCsrf } from "./api.js";
 import "./style.css";
 import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
@@ -2632,6 +2634,15 @@ function Assistant({
   pending,
 }: any) {
   const resize = useAssistantResize();
+  const chatStream = useChatStream();
+  const conversationView = useRef<HTMLDivElement>(null);
+  const followStream = useRef(true);
+  const chatConnection = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const element = conversationView.current;
+    if (element && followStream.current) element.scrollTop = element.scrollHeight;
+  }, [chatStream.live]);
+  useEffect(() => () => chatConnection.current?.abort(), []);
   const selectedTickets = useSelectedChatTickets();
   const [sessionId, setSessionId] = useState("");
   const [chatModel, setChatModel] = useState("");
@@ -2661,6 +2672,7 @@ function Assistant({
     let active = true;
     const generation = ++historyGeneration.current;
     setHistory([]);
+    chatStream.reset();
     setSessionId("");
     setAttachment(null);
     setHasOlder(false);
@@ -2895,13 +2907,16 @@ function Assistant({
     const captured = key;
     const generation = historyGeneration.current;
     setWorking(true);
+    chatStream.reset();
+    followStream.current = true;
+    chatConnection.current = new AbortController();
     setError("");
     setPrompt("");
     if (!history.length)
       setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
     setHistory((h) => [...h, { role: "user", body: text, id: Date.now() }]);
     try {
-      const r = await api("/conversation", "POST", {
+      const r = await apiProgress<ChatProgress>("/conversation", {
         prompt: text,
         model: chatModel,
         context,
@@ -2910,7 +2925,9 @@ function Assistant({
           id,
           source,
         })),
-      });
+      }, event => {
+        if (contextKey.current === captured && generation === historyGeneration.current) chatStream.receive(event);
+      }, chatConnection.current!.signal);
       if (
         contextKey.current === captured &&
         generation === historyGeneration.current
@@ -2922,6 +2939,7 @@ function Assistant({
             body: r.body,
             id: Date.now(),
             cards: r.cards || [],
+            duration_ms: r.durationMs ?? chatStream.elapsed(),
           },
         ]);
       onChange();
@@ -2930,11 +2948,14 @@ function Assistant({
         contextKey.current === captured &&
         generation === historyGeneration.current
       ) {
+        const partial = chatStream.partial();
+        if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed() }]);
         setError(e.message);
         setPrompt(text);
       }
       onChange();
     } finally {
+      chatStream.reset();
       setWorking(false);
     }
   }
@@ -3048,7 +3069,10 @@ function Assistant({
           </small>
         </div>
       </div>
-      <div className="conversation" aria-busy={clearing}>
+      <div className="conversation" aria-busy={clearing} ref={conversationView} onScroll={event => {
+        const element = event.currentTarget;
+        followStream.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+      }}>
         {hasOlder && (
           <button
             type="button"
@@ -3110,6 +3134,7 @@ function Assistant({
             ) : (
               <ChatMarkdown text={m.body} />
             )}
+            {typeof m.duration_ms === "number" && <div className="chat-elapsed">Время работы: <time>{formatChatDuration(m.duration_ms)}</time></div>}
             {(typeof m.cards === "string"
               ? JSON.parse(m.cards)
               : m.cards || []
@@ -3118,10 +3143,11 @@ function Assistant({
             ))}
           </div>
         ))}
+        {working && <ChatStream live={chatStream.live} />}
         {working && (
           <div className="thinking">
             <LoaderCircle size={14} className="spin" />
-            Собираю контекст и готовлю ответ…
+            {chatStream.live.text ? "Формирую ответ…" : chatStream.live.tools.some(tool => tool.status === "running") ? "Выполняю инструменты…" : "Собираю контекст и готовлю ответ…"}
           </div>
         )}
         <div ref={bottom} />
@@ -3135,7 +3161,7 @@ function Assistant({
       )}
       {working && (
         <button
-          className="pending-bar"
+          className="chat-stop-button"
           onClick={() =>
             api("/conversation/stop", "POST", {}).catch((e) =>
               setError(e.message),

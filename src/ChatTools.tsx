@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Activity, RefreshCw, X } from "lucide-react";
+import { formatChatDuration } from "./ChatStream.js";
 import { api } from "./api.js";
 
 const statuses: Record<string, string> = {
@@ -137,7 +138,7 @@ export function ChatTools({
                     <small>
                       {new Date(tool.started_at).toLocaleTimeString()}
                       {tool.finished_at
-                        ? ` · ${Date.parse(tool.finished_at) - Date.parse(tool.started_at)} мс`
+                        ? ` · ${formatChatDuration(Date.parse(tool.finished_at) - Date.parse(tool.started_at))}`
                         : ""}
                     </small>
                     <h4>Параметры</h4>

@@ -57,7 +57,7 @@ export const defaults = {
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
-  llmMaxToolCalls: 20,
+  llmMaxToolCalls: 30,
   instructions:
     "Reply in the user's language, concisely and clearly. Help track commitments, deadlines and overlooked tickets. Save memory when explicitly asked; otherwise propose useful durable facts, agreements and preferences for approval. Use clear standalone wording, appropriate scope and avoid duplicates.",
   client: "",
@@ -185,6 +185,8 @@ export class Store {
       this.db.exec(
         "ALTER TABLE conversations ADD COLUMN cards TEXT NOT NULL DEFAULT '[]'",
       );
+    if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(column => column.name === "duration_ms"))
+      this.db.exec("ALTER TABLE conversations ADD COLUMN duration_ms INTEGER");
     if (
       !(
         this.db.prepare("PRAGMA table_info(conversations)").all() as any[]
@@ -890,6 +892,7 @@ export class Store {
     context: Context,
     cards: string[] = [],
     id?: string,
+    durationMs?: number,
   ) {
     const session = this.chatSession(context, id);
     this.db.transaction(() => {
@@ -903,7 +906,7 @@ export class Store {
       const now = new Date().toISOString();
       this.db
         .prepare(
-          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id) VALUES (?,?,?,?,?,?,?,?)",
+          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id,duration_ms) VALUES (?,?,?,?,?,?,?,?,?)",
         )
         .run(
           randomUUID(),
@@ -914,6 +917,7 @@ export class Store {
           now,
           JSON.stringify(cards),
           session.id,
+          durationMs === undefined ? null : Math.max(0, Math.round(durationMs)),
         );
       this.db
         .prepare("UPDATE chat_sessions SET title=?,updated_at=? WHERE id=?")

@@ -8638,3 +8638,22 @@ summary > svg {
   .repository-workspace { grid-template-columns: minmax(0, 1fr); }
   .repository-tree-resizer { display: none; }
 }
+
+.chat-live-tools { margin: 8px 0; padding: 7px 9px; border: 1px solid #dce5df; border-radius: 7px; background: #f4f7f5; font-size: 11px; color: #647268; }
+.chat-tool-rows > div { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.chat-live-tools svg { flex-shrink: 0; }
+.chat-live-tools .error { color: #a04444; }
+.chat-streaming { overflow-anchor: none; }
+
+.chat-elapsed { margin: 7px 0; color: #7a877f; font-size: 11px; }
+.chat-elapsed time, .chat-tool-rows time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chat-tool-rows time { margin-left: auto; color: #718078; font-size: 10px; }
+.chat-finished-tools { margin: 3px 0 0; border: 0; background: transparent; }
+.chat-finished-tools > summary { padding: 3px 0; font-size: 11px; color: #718078; cursor: pointer; }
+.chat-finished-tools .chat-tool-rows { max-height: 160px; overflow: auto; }
+
+.chat-stop-button { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; gap: 6px; width: fit-content; max-width: calc(100% - 32px); margin: 8px 16px 0; padding: 7px 10px; border: 1px solid #b8323a; border-radius: 6px; background: #c53d45; color: #fff; font-size: 12px; font-weight: 600; line-height: 1.4; transition: background .12s, border-color .12s; }
+.chat-stop-button:hover { background: #ab2932; border-color: #99222b; }
+.chat-stop-button:active { background: #92212a; }
+.chat-stop-button:focus-visible { outline: 2px solid #c53d45; outline-offset: 3px; }
+.chat-stop-button svg { flex-shrink: 0; }

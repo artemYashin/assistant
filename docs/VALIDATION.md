@@ -1259,3 +1259,28 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Content search returns two surrounding lines on either side from the local snapshot, with line numbers and a marked matching line. Syntax highlighting runs in a bounded worker for the displayed search results; clicking still opens the matching line.
 - Add a draggable File Explorer divider with persisted width, keyboard adjustment and double-click reset. Narrow layouts keep stacked panels. Use thin scrollbars for the explorer and search dropdown.
 - TypeScript, JavaScript syntax and whitespace checks passed. Tests were skipped as requested. Browser interaction and live Docker/Azure checks were not performed.
+
+### Assistant streaming and local tag catalog (2026-10-21)
+
+- Enable Copilot SDK message deltas for streamed chat requests and forward text/tool lifecycle events over authenticated POST NDJSON. Preserve the buffered API, existing stop action and final authoritative response/cards; keep partial text on stopped or failed generation. Only assistant message text is streamed, not reasoning events or tool arguments/results.
+- Render text updates in 50 ms batches with separate readable tool statuses and bottom-follow scrolling that stops when the user scrolls up. Generation continues server-side on viewer disconnect; final history remains persisted.
+- Add discoverable list_local_tags with optional substring filtering and pagination. Reuse the editor's local tag catalog and correct its retained-trash cutoff to numeric timestamps. No Azure calls and no mandatory invocation policy.
+- TypeScript and whitespace checks passed. Added regression cases for stream result/error framing, buffered compatibility, tag scope/trash expiry and pagination. Tests have not been run (standing request: only before a push). Live model streaming and browser interactions have not been exercised.
+
+### Assistant elapsed time (2026-10-22)
+
+- Display a live request timer and per-tool elapsed seconds, freezing tool durations on completion/error. Completed calls remain in a collapsible list during generation; the existing tool journal shows readable durations afterwards.
+- Persist total response duration in an additive nullable conversation column and display it in chat history. Legacy messages have no invented duration. Timing metadata is omitted from the model's conversation context.
+- TypeScript and whitespace checks passed. Added a persistence regression case; tests and live browser/model checks have not been run.
+
+### Chat stop control and flexible local searches
+
+- Replace the full-width amber stop control with a fit-content red button with hover/focus states.
+- Clarify abstract local search behavior: derive keywords/wording variants from conversation context, refine from actual results, broaden/narrow queries, deduplicate and distinguish keyword similarity from verified feature relationships. Allow six distinct formulations while reserving tool budget. Consent and mutation rules remain in place.
+- Raise the default tool-call budget from 20 to 30 in stored defaults and settings validation. Explicit existing saved limits are preserved.
+- TypeScript and whitespace checks passed. Tests and live model/browser checks were not run.
+
+### Pre-push verification for the assistant changes
+
+- All 16 targeted tests passed across chat streaming/terminal errors, duration persistence, local tag scope/pagination/trash, metadata operations and tool discovery.
+- Production build and whitespace checks passed. The existing bundle-size warning remains; live Copilot streaming and browser interactions were not tested.

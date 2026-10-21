@@ -22,7 +22,8 @@ import {
 } from "./ticket-display.js";
 import { LocalDevelopers } from "./local-developers.js";
 import { ticketMetadataTools } from "./ticket-metadata-tools.js";
-import { ticketMetadata } from "./ticket-metadata.js";
+import type { ChatProgress } from "./chat-stream.js";
+import { localTicketTags, ticketMetadata } from "./ticket-metadata.js";
 import { workspaceContextTool } from "./workspace-context.js";
 import { localDeveloperTools } from "./local-developers.js";
 import { memoryProposalTool } from "./memory-proposals.js";
@@ -79,6 +80,14 @@ export function makeTools(
   localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
 ) {
   return [
+    defineTool("list_local_tags", {
+      description: "List existing LOCAL ticket tag names for the current Azure connection, including retained trash. Optional case-insensitive substring search; paginated, continue with nextOffset to read all tags. No Azure calls or changes.",
+      parameters: z.object({ search: z.string().max(60).optional(), offset: z.number().int().min(0).default(0) }).strict(),
+      handler: async ({ search, offset = 0 }) => {
+        const tags = localTicketTags(store).filter(tag => !search || tag.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+        return { tags: tags.slice(offset, offset + 200), total: tags.length, nextOffset: offset + 200 < tags.length ? offset + 200 : null };
+      },
+    }),
     defineTool("get_local_ticket_metadata", {
       description:
         "Read LOCAL notes, priority and tags for a ticket. No Azure requests. Independent of Azure fields. Continue reading notes with nextOffset until null.",
@@ -156,7 +165,7 @@ export function makeTools(
     }),
     defineTool("list_tickets", {
       description:
-        "List LOCAL tracked tickets for the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For weak or empty search results, try a shorter distinctive phrase or an exact feature code observed in matching titles, up to four distinct search formulations total; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns local basics including created_at/changed_at (Azure creation/modification dates) and synced_at (local sync time), and never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
+        "List LOCAL tracked tickets for the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns local basics including created_at/changed_at (Azure creation/modification dates) and synced_at (local sync time), and never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
       parameters: ticketListSchema,
       handler: async (args) => listLocalTickets(store, args),
     }),
@@ -380,11 +389,12 @@ export class Agent {
     reviewActions?: ReviewActions,
     chatSessionId?: string,
     modelOverride?: string,
+    onProgress?: (progress: ChatProgress) => void,
   ) {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
     const conversationId = review ? undefined : this.store.chatSession(context, chatSessionId).id;
-    const historySnapshot = review ? [] : this.store.history(context, conversationId);
+    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, ...message } = row; return message; });
     const attachedTicket = !review && conversationId ? this.store.chatAttachment(context, conversationId) : null;
     const deepRead = deepReadConsent(prompt, historySnapshot);
     const readPrompt =
@@ -403,7 +413,12 @@ export class Agent {
     );
     this.busy = true;
     this.activeId = id;
+    const startedAt = Date.now();
+    const elapsed = () => Math.max(0, Date.now() - startedAt);
     const cards: string[] = [];
+    let partialMessageId = "", partialText = "";
+    const emit = (event: ChatProgress) => { if (!review) { try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ } } };
+    emit({ stage: "preparing", startedAt });
     const singleTarget = !review
       ? singleTicketTarget(readPrompt, historySnapshot)
       : undefined;
@@ -779,14 +794,14 @@ export class Agent {
         (deepRead.needsConfirmation || asksTicketOpinion(readPrompt))
       ) {
         proposeAzure({ ids: [singleTarget] });
-        this.store.say("assistant", azureQuestion, context, [], conversationId);
+        this.store.say("assistant", azureQuestion, context, [], conversationId, elapsed());
         status = "completed";
-        return { body: azureQuestion, requestId: id, cards };
+        return { body: azureQuestion, requestId: id, cards, durationMs: elapsed() };
       }
       if (!review && deepRead.needsConfirmation && !singleReadAllowed && !(attachedTicket && (singleTarget === undefined || singleTarget === attachedTicket.id))) {
-        this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId);
+        this.store.say("assistant", DEEP_READ_WARNING, context, [], conversationId, elapsed());
         status = "completed";
-        return { body: DEEP_READ_WARNING, requestId: id, cards };
+        return { body: DEEP_READ_WARNING, requestId: id, cards, durationMs: elapsed() };
       }
 
       const work = async () => {
@@ -1090,7 +1105,9 @@ export class Agent {
           if (!handler) continue;
           tool.handler = async (args, invocation) => {
             const internal = Boolean((invocation as any)?.orbitBatchChild);
+            const toolStartedAt = Date.now();
             const trace = ledger.toolTrace(id, tool.name, args, internal);
+            if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, status: "running" });
             try {
               assertActive();
               const result: any = await handler(args, invocation);
@@ -1099,8 +1116,10 @@ export class Agent {
                 result?.success === false ? "error" : "completed",
                 result,
               );
+              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: result?.success === false ? "error" : "completed" });
               return result;
             } catch (error) {
+              if (!internal) emit({ stage: "tool", toolId: trace, name: tool.name, startedAt: toolStartedAt, durationMs: Date.now() - toolStartedAt, status: "error" });
               const result = toolFailure(tool.name, args, error);
               ledger.finishToolTrace(trace, "error", result);
               return result;
@@ -1108,7 +1127,19 @@ export class Agent {
           };
         }
         if (discovery) config.tools = [discovery];
+        if (!review && onProgress) config.streaming = true;
         session = await client.createSession(config);
+        session.on("assistant.message_delta", event => {
+          if (review || stopReason || event.data.parentToolCallId || event.agentId) return;
+          if (partialMessageId !== event.data.messageId) { partialMessageId = event.data.messageId; partialText = ""; }
+          partialText += event.data.deltaContent;
+          emit({ stage: "text", messageId: partialMessageId, text: event.data.deltaContent });
+        });
+        session.on("assistant.message", event => {
+          if (review || stopReason || event.data.parentToolCallId || event.agentId || !event.data.content) return;
+          partialMessageId = event.data.messageId; partialText = event.data.content;
+          emit({ stage: "text", messageId: partialMessageId, text: partialText, replace: true });
+        });
         assertActive();
         session.on("assistant.usage", (event) => {
           try {
@@ -1178,15 +1209,16 @@ export class Agent {
         ? `${responseBody}\n\n---\n\n${azureQuestion}`
         : responseBody;
       status = "completed";
-      if (!review) this.store.say("assistant", body, context, cards, conversationId);
-      return { body, requestId: id, cards };
+      if (!review) this.store.say("assistant", body, context, cards, conversationId, elapsed());
+      return { body, requestId: id, cards, durationMs: elapsed() };
     } catch (error) {
       reason =
         stopReason ||
         (error instanceof AppError
           ? error.message
           : "Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.");
-      if (!review) this.store.say("error", reason, context, [], conversationId);
+      if (!review && partialText) this.store.say("assistant", partialText + "\n\n_Ответ прерван._", context, [], conversationId, elapsed());
+      if (!review) this.store.say("error", reason, context, [], conversationId, partialText ? undefined : elapsed());
       // Timeout or runtime failure can leave an agent loop alive unless explicitly aborted.
       if (!stopReason) void session?.abort().catch(() => {});
       throw new AppError(stopReason ? 409 : 502, reason);

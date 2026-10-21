@@ -67,3 +67,10 @@ export function saveTicketMetadata(
     .run(source, id, value.notes, value.priority, JSON.stringify(value.tags));
   return value;
 }
+
+export function localTicketTags(store: Store, source = store.source()) {
+  const rows = store.db.prepare(
+    "SELECT m.tags FROM ticket_metadata m WHERE m.source=? AND (EXISTS (SELECT 1 FROM tickets t WHERE t.source=m.source AND t.id=m.id) OR EXISTS (SELECT 1 FROM ticket_trash t WHERE t.source=m.source AND t.id=m.id AND t.removed_at>?))",
+  ).all(source, Date.now() - 30 * 86400000) as { tags: string }[];
+  return [...new Set(rows.flatMap(row => JSON.parse(row.tags) as string[]))].sort((a, b) => a.localeCompare(b));
+}

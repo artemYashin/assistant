@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
     "Search/page local summaries; filters or exact IDs; full detail requires consent.",
   get_ticket: "Read one ticket by ID; local summary by default.",

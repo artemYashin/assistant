@@ -11,6 +11,7 @@ import { PrCreate } from "./pr-create.js";
 import { reviewFileSettings } from "./review-files.js";
 import {
   ticketMetadata,
+  localTicketTags,
   saveTicketMetadata,
   priorityCount,
   metadataContext,
@@ -75,7 +76,7 @@ const settingsSchema = z
     prDailyLimit: z.number().int().min(1).max(100).default(20),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
     llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
-    llmMaxToolCalls: z.number().int().min(1).max(100).default(20),
+    llmMaxToolCalls: z.number().int().min(1).max(100).default(30),
     instructions: z.string().max(12000),
     client: text,
     project: text,
@@ -572,9 +573,21 @@ export function createApp(
       const prompt = ids.length
         ? `${v.prompt}\n\nВыбранные пользователем тикеты в таблице: ${ids.map((id) => `#${id}`).join(", ")}. Это номера, а не содержимое тикетов. При необходимости прочитай данные доступными инструментами; сам выбор не является просьбой изменить тикеты.`
         : v.prompt;
-      res.json(
-        await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model),
-      );
+      if (!req.headers.accept?.includes("application/x-ndjson")) {
+        res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model));
+        return;
+      }
+      res.status(200).set({ "Content-Type": "application/x-ndjson", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" });
+      res.flushHeaders();
+      const write = (event: unknown) => { if (!res.destroyed && !res.writableEnded) res.write(JSON.stringify(event) + "\n"); };
+      const heartbeat = setInterval(() => { if (!res.destroyed && !res.writableEnded) res.write("\n"); }, 15000);
+      try {
+        const result = await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model,
+          progress => write({ type: "progress", progress }));
+        write({ type: "result", data: result });
+      } catch (error) {
+        write({ type: "error", error: error instanceof AppError ? error.message : "Не удалось завершить ответ ассистента" });
+      } finally { clearInterval(heartbeat); res.end(); }
     },
   );
   app.get("/api/chats", (_req, res) =>
@@ -831,11 +844,7 @@ export function createApp(
   app.get("/api/local-ticket-tags", (req, res) => {
     const source = z.string().min(1).max(2000).parse(req.query.source);
     if (source !== store.source()) throw new AppError(409, "Подключение изменилось. Откройте редактор заново.");
-    const rows = store.db.prepare(
-      "SELECT m.tags FROM ticket_metadata m WHERE m.source=? AND (EXISTS (SELECT 1 FROM tickets t WHERE t.source=m.source AND t.id=m.id) OR EXISTS (SELECT 1 FROM ticket_trash t WHERE t.source=m.source AND t.id=m.id AND t.removed_at>?))",
-    ).all(source, new Date(Date.now() - 30 * 86400000).toISOString()) as { tags: string }[];
-    const tags = [...new Set(rows.flatMap((row) => JSON.parse(row.tags) as string[]))];
-    res.json(tags.sort((a, b) => a.localeCompare(b)));
+    res.json(localTicketTags(store, source));
   });
   app.put("/api/ticket-priorities", (req, res) => {
     const { context, count } = z
