@@ -9233,3 +9233,20 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-list-toolbar > span, .memory-pagination > span { color: var(--muted); font-size: 12px; }
 .memory-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .memory-pagination > button { min-width: 32px; padding: 6px 10px; }
+.memory-create-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.memory-create-toolbar > .primary { margin-left: auto; }
+.memory-create-toolbar .memory-scopes { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 4px; border: 1px solid #dce4df; border-radius: 9px; background: #f3f6f4; }
+.memory-create-toolbar .memory-scopes button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 6px; border-color: transparent; background: transparent; }
+.memory-create-toolbar .memory-scopes button.selected { border-color: #b6cdbd; background: #e4eee7; }
+.memory-create-toolbar .memory-scopes b { margin: 0; font-size: 12px; }
+.memory-create-dialog { width: min(560px, calc(100vw - 32px)); }
+.memory-create-dialog > p { margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+.memory-create-dialog .memory-form { margin: 0; }
+.memory-create-dialog .field { margin: 0 0 12px; }
+.memory-create-dialog .card-actions { justify-content: flex-end; gap: 8px; margin: 0; }
+.memory-bank-toolbar { padding: 12px; margin-bottom: 12px; border: 1px solid #dce4df; border-radius: 9px; background: #f5f7f6; }
+.memory-bank-toolbar > h2 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 13px; }
+.memory-bank-toolbar .memory-list-toolbar { margin: 0; align-items: flex-end; }
+.memory-bank-toolbar .multi-select { flex: 0 1 260px; min-width: min(220px, 100%); }
+.memory-bank-toolbar .memory-search { max-width: none; }
+.memory-bank-toolbar .memory-list-toolbar > span { align-self: center; }

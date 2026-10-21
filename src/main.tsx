@@ -1895,6 +1895,9 @@ function Memory({ memories, context, run, busy }: any) {
   const [scope, setScope] = useState("general"),
     [body, setBody] = useState(""),
     [summary, setSummary] = useState("");
+  const createDialog = useRef<HTMLDialogElement>(null);
+  const [createError, setCreateError] = useState("");
+  const [scopeFilters, setScopeFilters] = useState<string[]>(["general", "client", "project"]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; summary: string } | null>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -1904,7 +1907,7 @@ function Memory({ memories, context, run, busy }: any) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const filtered = memories.filter((memory: any) =>
-    (memory.summary || "").toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+    scopeFilters.includes(memory.scope) && (memory.summary || "").toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
   );
   const pageSize = 36;
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -1942,7 +1945,8 @@ function Memory({ memories, context, run, busy }: any) {
         title="Важное остаётся с вами"
         subtitle="Память доступна ассистенту с учётом выбранного заказчика и проекта."
       ><ExportMemoryButton key={JSON.stringify(context)} context={context} /></PageHeading>
-      <div className="memory-scopes">
+      <div className="memory-create-toolbar">
+      <div className="memory-scopes" role="group" aria-label="Раздел для новой записи">
         {[
           {
             id: "general",
@@ -1966,40 +1970,60 @@ function Memory({ memories, context, run, busy }: any) {
           <button
             className={scope === s.id ? "selected" : ""}
             key={s.id}
+            type="button"
+            aria-pressed={scope === s.id}
+            title={s.description}
             onClick={() => setScope(s.id)}
           >
-            <s.icon size={21} />
+            <s.icon size={16} />
             <b>{s.title}</b>
-            <small>{s.description}</small>
+
           </button>
         ))}
       </div>
+      <button type="button" className="primary" disabled={!!busy || (scope !== "general" && !context.client) || (scope === "project" && !context.project)} onClick={() => { setCreateError(""); createDialog.current?.showModal(); }}><Plus size={16} />Добавить память</button>
+      </div>
+      <dialog ref={createDialog} className="developer-dialog memory-create-dialog" aria-label="Добавить память" onCancel={event => { if (busy) event.preventDefault(); }}>
+        <div className="developer-dialog-heading"><strong>Добавить память · {labels[scope]}</strong><button type="button" className="icon-button" aria-label="Закрыть" disabled={!!busy} onClick={() => createDialog.current?.close()}><X size={18} /></button></div>
+        {scope !== "general" && <p className="muted">{context.client}{scope === "project" ? ` / ${context.project}` : ""}</p>}
       <form
-        className="panel memory-form"
+        className="memory-form"
         onSubmit={(e) => {
           e.preventDefault();
+          if (busy) return;
+          setCreateError("");
           run(
             "memory",
             async () => {
-              await api("/memories", "POST", { scope, body, summary, context });
-              setBody("");
-              setSummary("");
+              try {
+                await api("/memories", "POST", { scope, body, summary, context });
+                setBody("");
+                setSummary("");
+                createDialog.current?.close();
+              } catch (error: any) {
+                setCreateError(error.message);
+                throw error;
+              }
             },
             "Сохранено в память",
           );
         }}
       >
-        <Field label="Краткое описание · 1–2 предложения"><input value={summary} onChange={event => setSummary(event.target.value)} maxLength={320} required placeholder="Для чего нужна эта запись" /></Field>
-        <Field label={`Запомнить · ${labels[scope]}`}>
+        <Field label="Название · 1–2 предложения"><input autoFocus disabled={!!busy} value={summary} onChange={event => setSummary(event.target.value)} maxLength={320} required placeholder="Для чего нужна эта запись" /></Field>
+        <Field label="Описание · Markdown">
           <textarea
             placeholder="Например: по этому проекту договорились отправлять статус каждую пятницу…"
-            rows={3}
+            rows={5}
+            disabled={!!busy}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             required
             maxLength={8000}
           />
         </Field>
+        {createError && <p className="error" role="alert">{createError}</p>}
+        <div className="card-actions">
+        <button type="button" className="secondary" disabled={!!busy} onClick={() => createDialog.current?.close()}>Отмена</button>
         <button
           className="primary"
           disabled={
@@ -2011,14 +2035,20 @@ function Memory({ memories, context, run, busy }: any) {
           <Plus size={16} />
           Сохранить
         </button>
+        </div>
       </form>
+      </dialog>
+      <section className="memory-bank-toolbar" aria-label="Банк памяти">
+      <h2><BookOpen size={16} />Банк памяти</h2>
       <div className="memory-list-toolbar">
         <label className="memory-search">
           <Search size={16} aria-hidden="true" />
           <input aria-label="Поиск памяти по названию" placeholder="Поиск по названию…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
         </label>
+        <MultiSelect label="Разделы памяти" placeholder="Выберите разделы" options={Object.entries(labels).map(([value, label]) => ({ value, label: String(label) }))} value={scopeFilters} onChange={value => { setScopeFilters(value); setPage(1); }} />
         <span>Найдено: {filtered.length}</span>
       </div>
+      </section>
       <div className="memory-grid">
         {visible.map((m: any) => (
           <article className="panel memory-note" key={m.id}>
@@ -2079,7 +2109,7 @@ function Memory({ memories, context, run, busy }: any) {
           <span>{currentPage} из {pageCount}</span>
         </nav>
       )}
-      {!!memories.length && !filtered.length && <Empty icon={Search} title="Ничего не найдено" description="Измените название в поисковом запросе." />}
+      {!!memories.length && !filtered.length && <Empty icon={Search} title="Ничего не найдено" description="Измените поисковый запрос или выбранные разделы памяти." />}
       {!memories.length && (
         <Empty
           icon={BookOpen}
