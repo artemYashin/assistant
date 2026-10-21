@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { memorySummarySchema, legacyMemorySummary } from "./memory-summary.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
 import type { TicketAnalysisAttachment } from "./chat-ticket-attachment.js";
 import { ticketMetadata } from "./ticket-metadata.js";
@@ -299,6 +301,14 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
+    for (const table of ["memories", "memory_proposals"]) {
+      if (!(this.db.prepare(`PRAGMA table_info(${table})`).all() as any[]).some(c => c.name === "summary")) {
+        this.db.transaction(() => {
+          this.db.exec(`ALTER TABLE ${table} ADD COLUMN summary TEXT NOT NULL DEFAULT ''`);
+          for (const row of this.db.prepare(`SELECT id,body FROM ${table}`).all() as any[]) this.db.prepare(`UPDATE ${table} SET summary=? WHERE id=?`).run(legacyMemorySummary(row.body), row.id);
+        })();
+      }
+    }
     if (!(this.db.prepare("PRAGMA table_info(chat_sessions)").all() as any[]).some(c => c.name === "attachment_sent"))
       this.db.exec("ALTER TABLE chat_sessions ADD COLUMN attachment_sent INTEGER NOT NULL DEFAULT 0");
     if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(c => c.name === "timeline"))
@@ -512,7 +522,17 @@ export class Store {
         context.project,
       );
   }
-  addMemory(scope: string, body: string, context: Context) {
+  memoryCatalog(context: Context) {
+    return (this.memories(context, true) as any[]).map(row => ({ id: row.id, scope: row.scope, summary: row.summary, revision: createHash("sha256").update(row.summary + "\n" + row.body).digest("hex").slice(0, 12) }));
+  }
+  memoryDetail(id: string, context: Context) {
+    const row = this.db.prepare("SELECT id,scope,summary,body,client,project FROM memories WHERE id=?").get(id) as any;
+    if (!row || (row.scope !== "general" && row.client !== context.client) || (row.scope === "project" && row.project !== context.project)) throw new AppError(404, "Запись памяти недоступна в текущем контексте");
+    const { client, project, ...detail } = row;
+    return detail;
+  }
+  addMemory(scope: string, body: string, context: Context, summary?: string) {
+    const short = summary === undefined ? legacyMemorySummary(body) : memorySummarySchema.parse(summary);
     if (
       !["general", "client", "project"].includes(scope) ||
       !body.trim() ||
@@ -525,7 +545,7 @@ export class Store {
       throw new AppError(400, "Выберите проект");
     const id = randomUUID();
     this.db
-      .prepare("INSERT INTO memories VALUES (?,?,?,?,?,?)")
+      .prepare("INSERT INTO memories(id,scope,client,project,body,created_at,summary) VALUES (?,?,?,?,?,?,?)")
       .run(
         id,
         scope,
@@ -533,9 +553,10 @@ export class Store {
         scope === "project" ? context.project : "",
         body.trim(),
         new Date().toISOString(),
+        short,
       );
     this.audit("memory.saved", `${scope}: ${id}`);
-    return { id, scope, body };
+    return { id, scope, summary: short, body };
   }
   azureTags(id: number, source = this.source()): string[] {
     const row = this.db

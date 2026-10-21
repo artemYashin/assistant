@@ -56,3 +56,46 @@ test("AI refinement edits the same draft with scope and stale-body protection", 
   service.decide(id!, true);
   await assert.rejects(edit("Too late", "Short draft"), /обработано/);
 });
+
+test("memory catalog omits details, reads are scoped, revisions track body changes", t => {
+  const dir = mkdtempSync(join(tmpdir(), "memory-catalog-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "C", project: "P" };
+  const saved = store.addMemory("project", "Detailed implementation and code", context, "Gradient helpers and usage.");
+  store.addMemory("general", "General detail", context, "Common preferences.");
+  store.addMemory("client", "Customer detail", context, "Customer conventions.");
+  store.addMemory("project", "Hidden", { client: "C", project: "Other" }, "Other project.");
+  const catalog = store.memoryCatalog(context);
+  assert.equal(catalog.length, 3);
+  assert.equal(JSON.stringify(catalog).includes("Detailed implementation"), false);
+  assert.equal(store.memoryDetail(saved.id, context).body, "Detailed implementation and code");
+  assert.throws(() => store.memoryDetail(saved.id, { client: "C", project: "Other" }), /недоступна/);
+  const revision = catalog.find(row => row.id === saved.id)!.revision;
+  store.db.prepare("UPDATE memories SET body=? WHERE id=?").run("Updated detail", saved.id);
+  assert.notEqual(store.memoryCatalog(context).find(row => row.id === saved.id)!.revision, revision);
+  assert.throws(() => store.addMemory("general", "Body", context, "First. Second. Third."));
+});
+test("proposal approval preserves summary and full Markdown separately", t => {
+  const dir = mkdtempSync(join(tmpdir(), "memory-summary-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const service = new MemoryProposals(store), context = { client: "C", project: "P" };
+  const proposal = service.propose({ scope: "project", summary: "Gradient functions.", body: "Details\n```ts\ngradient();\n```", reason: "Useful" }, context);
+  service.edit(proposal.id!, { summary: "Gradient usage.", body: "Short details" });
+  service.decide(proposal.id!, true);
+  const catalog = store.memoryCatalog(context);
+  assert.equal(catalog[0].summary, "Gradient usage.");
+  assert.equal(store.memoryDetail(catalog[0].id, context).body, "Short details");
+});
+test("legacy memory migration preserves bodies and creates short summaries", t => {
+  const dir = mkdtempSync(join(tmpdir(), "memory-migration-"));
+  let store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const saved = store.addMemory("general", "Original fact. More detail. Third sentence.", { client: "", project: "" });
+  store.db.exec("ALTER TABLE memories DROP COLUMN summary; ALTER TABLE memory_proposals DROP COLUMN summary");
+  store.close(); store = new Store(dir);
+  const detail = store.memoryDetail(saved.id, { client: "", project: "" });
+  assert.equal(detail.body, "Original fact. More detail. Third sentence.");
+  assert.equal(detail.summary, "Original fact. More detail.");
+});

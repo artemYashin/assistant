@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  read_memory: "Read full details of one relevant memory by its catalog ID.",
   read_memory_proposal: "Read a pending memory proposal for refinement in the current scope.",
   edit_memory_proposal: "Edit an existing pending memory proposal at user request, without approving it or creating a duplicate.",
   cite_code: "Create clickable file/line-range references opening highlighted code in the repository viewer.",
@@ -53,7 +54,7 @@ const catalog: Record<string, string> = {
     "Read PR details/saved review: monitor, repository, PR number and section.",
   request_pull_request_review:
     "Queue PR review: monitor, repository and PR number.",
-  list_memories: "Read general, customer and project memory.",
+  list_memories: "List memory IDs and short summaries in current scope; read_memory loads selected details.",
   save_memory: "Submit an explicitly requested fact for UI approval; never saves directly.",
   propose_memory: "Propose a useful fact for approval: scope, text and reason.",
   list_chats: "List locally synchronized Teams chats.",

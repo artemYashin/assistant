@@ -6,6 +6,7 @@ import { api } from "./api.js";
 export function MemoryBody({
   id,
   body,
+  summary,
   disabled,
   onSaved,
   proposal = false,
@@ -13,6 +14,7 @@ export function MemoryBody({
 }: {
   id: string;
   body: string;
+  summary: string;
   disabled: boolean;
   onSaved: () => void;
   proposal?: boolean;
@@ -20,17 +22,20 @@ export function MemoryBody({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(body);
+  const [short, setShort] = useState(summary);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!editing)
     return (
       <>
+        <strong className="memory-summary">{summary}</strong>
         <MemoryMarkdown body={body} />
         <button
           className="secondary"
           disabled={disabled}
           onClick={() => {
             setDraft(body);
+            setShort(summary);
             setError("");
             setEditing(true);
             onEditingChange?.(true);
@@ -49,7 +54,7 @@ export function MemoryBody({
         setBusy(true);
         setError("");
         try {
-          await api(`/${proposal ? "memory-proposals" : "memories"}/${id}`, "PATCH", { body: draft });
+          await api(`/${proposal ? "memory-proposals" : "memories"}/${id}`, "PATCH", { body: draft, summary: short });
           onSaved();
           setEditing(false);
           onEditingChange?.(false);
@@ -60,8 +65,9 @@ export function MemoryBody({
         }
       }}
     >
+      <label>Краткое описание · 1–2 предложения<input value={short} onChange={event => setShort(event.target.value)} maxLength={320} required disabled={busy} /></label>
       <label>
-        Текст памяти
+        Подробности · Markdown
         <textarea
           autoFocus
           rows={5}
@@ -80,7 +86,7 @@ export function MemoryBody({
       <div className="card-actions">
         <button
           className="primary"
-          disabled={busy || disabled || !draft.trim()}
+          disabled={busy || disabled || !draft.trim() || !short.trim()}
         >
           <Check size={15} /> {busy ? "Сохраняю…" : "Сохранить"}
         </button>

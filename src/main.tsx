@@ -1893,7 +1893,8 @@ function Tickets({
 }
 function Memory({ memories, context, run, busy }: any) {
   const [scope, setScope] = useState("general"),
-    [body, setBody] = useState("");
+    [body, setBody] = useState(""),
+    [summary, setSummary] = useState("");
   const labels: any = {
     general: "Общая",
     client: "Заказчик",
@@ -1944,13 +1945,15 @@ function Memory({ memories, context, run, busy }: any) {
           run(
             "memory",
             async () => {
-              await api("/memories", "POST", { scope, body, context });
+              await api("/memories", "POST", { scope, body, summary, context });
               setBody("");
+              setSummary("");
             },
             "Сохранено в память",
           );
         }}
       >
+        <Field label="Краткое описание · 1–2 предложения"><input value={summary} onChange={event => setSummary(event.target.value)} maxLength={320} required placeholder="Для чего нужна эта запись" /></Field>
         <Field label={`Запомнить · ${labels[scope]}`}>
           <textarea
             placeholder="Например: по этому проекту договорились отправлять статус каждую пятницу…"
@@ -2010,9 +2013,10 @@ function Memory({ memories, context, run, busy }: any) {
               </button>
             </div>
             <MemoryBody
-              key={`${m.id}:${m.body}`}
+              key={`${m.id}:${m.summary}:${m.body}`}
               id={m.id}
               body={m.body}
+              summary={m.summary}
               disabled={!!busy}
               onSaved={() => run("refresh-memory", async () => {})}
             />
@@ -2022,7 +2026,7 @@ function Memory({ memories, context, run, busy }: any) {
             ).map((ref: string) => (
               <TicketCard key={ref} reference={ref} />
             ))}
-            <small>{date(m.created_at)}</small>
+            <small title={m.id}>ID: {m.id}</small><small>{date(m.created_at)}</small>
           </article>
         ))}
       </div>
@@ -3059,10 +3063,12 @@ function Assistant({
   async function send(e?: React.FormEvent, voiceText?: string) {
     e?.preventDefault();
     const text = voiceText ?? prompt;
+    const sentMemoryProposal = memoryProposalAttachment;
     if (!text.trim() || working || clearing || !sessionId || (!voiceText && shortcutBusy)) return;
     const captured = key;
     const generation = historyGeneration.current;
     setWorking(true);
+    setMemoryProposalAttachment(null);
     chatStream.reset();
     followStream.current = true;
     chatConnection.current = new AbortController();
@@ -3079,7 +3085,7 @@ function Assistant({
         sessionId,
         viewedTicket: currentViewedTicket(),
         repositoryBranch: currentRepositoryBranch(context),
-        memoryProposalId: memoryProposalAttachment?.id,
+        memoryProposalId: sentMemoryProposal?.id,
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,
@@ -3097,7 +3103,6 @@ function Assistant({
         }
       }, chatConnection.current!.signal);
       if (contextKey.current === captured && generation === historyGeneration.current) {
-        setMemoryProposalAttachment(current => current?.id === memoryProposalAttachment?.id ? null : current);
         setAttachment(null);
       }
       const toolSnapshot = chatStream.tools();
@@ -3124,6 +3129,7 @@ function Assistant({
         contextKey.current === captured &&
         generation === historyGeneration.current
       ) {
+        if (sentMemoryProposal) setMemoryProposalAttachment(current => current ?? sentMemoryProposal);
         const partial = chatStream.partial();
         const toolSnapshot = chatStream.tools().map(tool => ({ ...tool, status: tool.status === "running" ? "interrupted" : tool.status }));
         if (partial) setHistory(h => [...h, { role: "assistant", body: partial + "\n\n_Ответ прерван._", id: Date.now(), duration_ms: chatStream.elapsed(), tools: toolSnapshot, timeline: chatStream.timeline() }]);

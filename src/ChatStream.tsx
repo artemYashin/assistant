@@ -5,6 +5,7 @@ import type { ChatProgress } from "../server/chat-stream.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 
 const labels: Record<string, string> = {
+  read_memory: "Чтение подробностей памяти",
   read_memory_proposal: "Чтение предложения в память",
   edit_memory_proposal: "Редактирование предложения в память",
   close_ticket_details: "Закрытие деталки и открытие чата",

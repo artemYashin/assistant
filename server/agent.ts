@@ -1,3 +1,4 @@
+import { memorySummarySchema } from "./memory-summary.js";
 import { updateChatTimeline, type ChatTimelineItem } from "./chat-stream.js";
 import { codeTools, configuredCodeBranch } from "./code-tools.js";
 import { cachedTicketBatchSchema, ticketLinksBatchSchema, readCachedTicketBatch, readTicketLinksBatch } from "./ticket-read-batch.js";
@@ -152,15 +153,21 @@ export function makeTools(
       },
     }),
     defineTool("list_memories", {
-      description: "Read general, current client and project memory.",
+      description: "List the memory catalog: IDs, short summaries and revisions for general/current client/project. Full details are omitted; use read_memory by ID only when relevant.",
       parameters: z.object({}),
-      handler: async () => store.memories(context),
+      handler: async () => store.memoryCatalog(context),
+    }),
+    defineTool("read_memory", {
+      description: "Read full Markdown details of one memory by catalog ID in current scope. Use only when its summary is relevant; reuse prior details if the revision has not changed.",
+      parameters: z.object({ id: z.string().uuid() }),
+      handler: async ({ id }) => store.memoryDetail(id, context),
     }),
     defineTool("save_memory", {
       description:
         "Submit a concise memory proposal for approval on the Approvals page, even on an explicit save request. Never writes memory directly. For code facts verify repository evidence first; prefer project scope and a short function/path/purpose summary. Include Markdown fenced code snippets with a language tag when useful or requested; preserve code formatting and distinguish source excerpts from illustrative examples.",
       parameters: z.object({
         scope: z.enum(["general", "client", "project"]),
+        summary: memorySummarySchema,
         body: z
           .string()
           .min(1)
@@ -836,7 +843,7 @@ export class Agent {
     };
     try {
       const history = historySnapshot,
-        memory = this.store.memories(context);
+        memory = this.store.memoryCatalog(context);
       const confirmation = confirmedChatRequest(prompt, history);
       mutationPrompt = confirmation.prompt;
       const metadataRequest = confirmation.contextual

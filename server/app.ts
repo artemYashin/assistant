@@ -1,3 +1,4 @@
+import { memorySummarySchema } from "./memory-summary.js";
 import { voiceBindingPattern } from "./voice-binding.js";
 import { CodeBrowser, codeBrowserSchema } from "./code-browser.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
@@ -450,19 +451,20 @@ export function createApp(
     const v = z
       .object({
         scope: z.enum(["general", "client", "project"]),
+        summary: memorySummarySchema.optional(),
         body: z.string().trim().min(1).max(8000),
         context: contextSchema,
       })
       .parse(req.body);
-    res.json(store.addMemory(v.scope, v.body, v.context));
+    res.json(store.addMemory(v.scope, v.body, v.context, v.summary));
   });
   app.patch("/api/memories/:id", (req, res) => {
-    const { body } = z
-      .object({ body: z.string().trim().min(1).max(8000) })
+    const { body, summary } = z
+      .object({ body: z.string().trim().min(1).max(8000), summary: memorySummarySchema.optional() })
       .parse(req.body);
     const result = store.db
-      .prepare("UPDATE memories SET body=? WHERE id=?")
-      .run(body, String(req.params.id));
+      .prepare("UPDATE memories SET body=?,summary=COALESCE(?,summary) WHERE id=?")
+      .run(body, summary ?? null, String(req.params.id));
     if (!result.changes) throw new AppError(404, "Запись памяти не найдена");
     store.audit("memory.updated", String(req.params.id));
     res.json({ ok: true, body });
