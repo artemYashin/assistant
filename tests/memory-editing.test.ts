@@ -99,3 +99,29 @@ test("legacy memory migration preserves bodies and creates short summaries", t =
   assert.equal(detail.body, "Original fact. More detail. Third sentence.");
   assert.equal(detail.summary, "Original fact. More detail.");
 });
+
+test("project review memory is isolated from automatic chat context and scoped to its project", t => {
+  const dir = mkdtempSync(join(tmpdir(), "memory-review-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "C", project: "P" };
+  for (const scope of ["general", "client", "project", "project_review"]) store.addMemory(scope, `Full ${scope}`, context, `Summary ${scope}`);
+  store.addMemory("project_review", "Other project", { ...context, project: "Other" });
+  store.addMemory("project_review", "Other customer", { client: "Other", project: "P" });
+  assert.equal(store.memories(context, true).length, 4);
+  assert.deepEqual(store.memoryCatalog(context).map(row => row.scope).sort(), ["client", "general", "project"]);
+  const review = store.reviewMemory(context);
+  assert.equal(review.length, 4);
+  assert.ok(review.some(row => row.scope === "project_review" && row.body === "Full project_review"));
+  assert.equal(store.reviewMemory(context, ["project_review"]).length, 1);
+  assert.deepEqual(store.reviewMemory(context, []), []);
+  const id = review.find(row => row.scope === "project_review")!.id;
+  assert.throws(() => store.memoryDetail(id, { ...context, project: "Other" }));
+  assert.throws(() => store.addMemory("project_review", "Invalid", { client: "C", project: "" }));
+  const proposals = new MemoryProposals(store);
+  const proposal = proposals.propose({ scope: "project_review", summary: "Review rule", body: "Check compatibility", reason: "Review guidance" }, context);
+  assert.throws(() => proposals.forContext(proposal.id!, { ...context, project: "Other" }));
+  proposals.decide(proposal.id!, true);
+  assert.equal(store.reviewMemory(context, ["project_review"]).length, 2);
+  assert.equal(store.memoryCatalog(context).length, 3);
+});

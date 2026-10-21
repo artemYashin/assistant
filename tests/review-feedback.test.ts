@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { PullRequests } from "../server/pull-requests.js";
-import { ReviewQuestions } from "../server/review-questions.js";
+import { ReviewQuestions, reviewOptionsSchema } from "../server/review-questions.js";
 import { MemoryProposals } from "../server/memory-proposals.js";
 const context = { client: "Customer", project: "Project" };
 function fixture(t: any) {
@@ -122,4 +122,12 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
     ).status,
     "completed",
   );
+});
+
+test("review memory selection defaults to all scopes and preserves explicit opt-out", () => {
+  assert.deepEqual(reviewOptionsSchema.parse({}).memoryScopes, ["general", "client", "project", "project_review"]);
+  assert.deepEqual(reviewOptionsSchema.parse({ memoryScopes: [] }).memoryScopes, []);
+  const options = reviewOptionsSchema.parse({ memoryScopes: ["project_review"], reviewerComment: "Focus on errors" });
+  assert.deepEqual(reviewOptionsSchema.parse(JSON.parse(JSON.stringify(options))), options);
+  assert.throws(() => reviewOptionsSchema.parse({ memoryScopes: ["unknown"] }));
 });

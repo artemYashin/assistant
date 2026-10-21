@@ -1897,7 +1897,7 @@ function Memory({ memories, context, run, busy }: any) {
     [summary, setSummary] = useState("");
   const createDialog = useRef<HTMLDialogElement>(null);
   const [createError, setCreateError] = useState("");
-  const [scopeFilters, setScopeFilters] = useState<string[]>(["general", "client", "project"]);
+  const [scopeFilters, setScopeFilters] = useState<string[]>(["general", "client", "project", "project_review"]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; summary: string } | null>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -1919,6 +1919,7 @@ function Memory({ memories, context, run, busy }: any) {
     general: "Общая",
     client: "Заказчик",
     project: "Проект",
+    project_review: "Ревью проекта",
   };
   return (
     <>
@@ -1948,7 +1949,7 @@ function Memory({ memories, context, run, busy }: any) {
       <div className="memory-create-toolbar">
         <button type="button" className="primary" disabled={!!busy} onClick={() => {
           setCreateError("");
-          if ((scope !== "general" && !context.client) || (scope === "project" && !context.project)) setScope("general");
+          if ((scope !== "general" && !context.client) || (["project", "project_review"].includes(scope) && !context.project)) setScope("general");
           createDialog.current?.showModal();
         }}><Plus size={16} />Добавить память</button>
       </div>
@@ -1974,6 +1975,7 @@ function Memory({ memories, context, run, busy }: any) {
             title: "Проект",
             description: context.project || "Выберите проект сверху",
           },
+          { id: "project_review", icon: Sparkles, title: "Ревью проекта", description: "Только для ревью pull request, не для контекста чата" },
         ].map((s) => (
           <button
             className={scope === s.id ? "selected" : ""}
@@ -1981,7 +1983,7 @@ function Memory({ memories, context, run, busy }: any) {
             type="button"
             aria-pressed={scope === s.id}
             title={s.description}
-            disabled={!!busy || (s.id !== "general" && !context.client) || (s.id === "project" && !context.project)}
+            disabled={!!busy || (s.id !== "general" && !context.client) || (["project", "project_review"].includes(s.id) && !context.project)}
             onClick={() => setScope(s.id)}
           >
             <s.icon size={16} />
@@ -1990,7 +1992,7 @@ function Memory({ memories, context, run, busy }: any) {
           </button>
         ))}
       </div>
-        {scope !== "general" && <p className="muted">{context.client}{scope === "project" ? ` / ${context.project}` : ""}</p>}
+        {scope !== "general" && <p className="muted">{context.client}{["project", "project_review"].includes(scope) ? ` / ${context.project}` : ""}</p>}
       <form
         className="memory-form"
         onSubmit={(e) => {
@@ -2034,7 +2036,7 @@ function Memory({ memories, context, run, busy }: any) {
           disabled={
             !!busy ||
             (scope !== "general" && !context.client) ||
-            (scope === "project" && !context.project)
+            (["project", "project_review"].includes(scope) && !context.project)
           }
         >
           <Plus size={16} />
@@ -2871,7 +2873,7 @@ function Assistant({
     const handle = (event: Event) => {
       const proposal = (event as CustomEvent).detail;
       if (!proposal?.id || typeof proposal.body !== "string") return;
-      if ((proposal.scope !== "general" && proposal.client !== context.client) || (proposal.scope === "project" && proposal.project !== context.project)) return;
+      if ((proposal.scope !== "general" && proposal.client !== context.client) || (["project", "project_review"].includes(proposal.scope) && proposal.project !== context.project)) return;
       setMemoryProposalAttachment({ id: proposal.id, body: proposal.body });
       onExpand();
     };

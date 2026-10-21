@@ -1567,6 +1567,7 @@ export class PullRequests {
             title: String(detail.title || "").slice(0, 2000),
           },
           questionFrequency: options.questionFrequency,
+          memoryScopes: options.memoryScopes,
           askQuestions:
             options.questionFrequency !== "none" && answers.length < 3
               ? (batch) => {

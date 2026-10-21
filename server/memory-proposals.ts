@@ -6,7 +6,7 @@ import { Store, AppError, type Context } from "./store.js";
 
 const proposalSchema = z.object({
   summary: memorySummarySchema.optional(),
-  scope: z.enum(["general", "client", "project"]),
+  scope: z.enum(["general", "client", "project", "project_review"]),
   body: z.string().trim().min(1).max(8000),
   reason: z.string().trim().min(1).max(1000),
 });
@@ -23,10 +23,10 @@ export class MemoryProposals {
     const p = proposalSchema.parse(input);
     if (p.scope !== "general" && !context.client)
       throw new AppError(400, "Выберите заказчика для этой области памяти");
-    if (p.scope === "project" && !context.project)
+    if (["project", "project_review"].includes(p.scope) && !context.project)
       throw new AppError(400, "Выберите проект для проектной памяти");
     const client = p.scope === "general" ? "" : context.client;
-    const project = p.scope === "project" ? context.project : "";
+    const project = ["project", "project_review"].includes(p.scope) ? context.project : "";
     const existing = this.store.db
       .prepare(
         "SELECT id FROM memories WHERE scope=? AND client=? AND project=? AND body=?",
@@ -63,7 +63,7 @@ export class MemoryProposals {
   }
   forContext(id: string, context: Context) {
     const p = this.store.db.prepare("SELECT * FROM memory_proposals WHERE id=?").get(id) as any;
-    if (!p || (p.scope !== "general" && p.client !== context.client) || (p.scope === "project" && p.project !== context.project)) throw new AppError(404, "Предложение недоступно в выбранном заказчике и проекте");
+    if (!p || (p.scope !== "general" && p.client !== context.client) || (["project", "project_review"].includes(p.scope) && p.project !== context.project)) throw new AppError(404, "Предложение недоступно в выбранном заказчике и проекте");
     if (p.status !== "pending") throw new AppError(409, "Предложение уже обработано");
     return p;
   }
@@ -116,7 +116,7 @@ export function memoryProposalTool(
   return defineTool("propose_memory", {
     description:
       `Preferred memory language: ${JSON.stringify(store.settings().memoryLanguage)}. Omit redundant project/branch labels unless essential to the fact. ` +
-      "Propose a concise durable fact or rule for human approval. Supply summary (one or two sentences, max 320 characters) for the always-visible catalog and body for on-demand Markdown details. For large code examples prefer a concise behavior/path description instead of a long snippet. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep a brief function/path/purpose explanation; include useful Markdown fenced code snippets with a language tag, especially for usage examples or explicit requests to remember code. Preserve indentation and identifiers. Label illustrative examples as examples, not verified source. Prefer relevant excerpts over unrelated whole files; there is no prose-only or sentence-count restriction. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
+      "Propose a concise durable fact or rule for human approval. Supply summary (one or two sentences, max 320 characters) for the always-visible catalog and body for on-demand Markdown details. For large code examples prefer a concise behavior/path description instead of a long snippet. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep a brief function/path/purpose explanation; include useful Markdown fenced code snippets with a language tag, especially for usage examples or explicit requests to remember code. Preserve indentation and identifiers. Label illustrative examples as examples, not verified source. Prefer relevant excerpts over unrelated whole files; there is no prose-only or sentence-count restriction. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Use project_review for project-specific PR review guidance; it is not automatically included in chat context. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
     parameters: proposalSchema.extend({ summary: memorySummarySchema.describe("One or two short sentences identifying this memory; always visible in the catalog. No code blocks.") }),
     handler: async (args) => {
       assertActive();

@@ -450,7 +450,7 @@ export function createApp(
   app.post("/api/memories", (req, res) => {
     const v = z
       .object({
-        scope: z.enum(["general", "client", "project"]),
+        scope: z.enum(["general", "client", "project", "project_review"]),
         summary: memorySummarySchema.optional(),
         body: z.string().trim().min(1).max(8000),
         context: contextSchema,

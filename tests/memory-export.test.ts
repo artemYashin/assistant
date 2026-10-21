@@ -62,3 +62,14 @@ test("export includes more than the page limit but excludes other customers and 
   assert.equal(exported.length, 205);
   assert.ok(exported.every(row => row.client === context.client));
 });
+
+test("review memory exports as a separate scope without leaking other projects", () => {
+  const memories: ExportMemory[] = [
+    { scope: "project_review", summary: "Review rules", body: "Check errors", ...context },
+    { scope: "project_review", summary: "Other", body: "Secret", client: context.client, project: "Other" },
+  ];
+  const files = memoryMarkdownFiles(memories, ["project_review"], true, context, true, true);
+  assert.deepEqual(files.map(file => file.name), ["orbit-memory-project_review.md", "details/project_review-001.md"]);
+  assert.ok(files[1].text.includes("Check errors"));
+  assert.ok(files.every(file => !file.text.includes("Secret")));
+});

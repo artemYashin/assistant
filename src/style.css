@@ -9265,3 +9265,22 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-code-snippet .hljs-operator, .chat-code-snippet .hljs-punctuation { color: #cbd5df; }
 .chat-code-snippet .hljs-addition { color: #a5dfb0; background: #264532; }
 .chat-code-snippet .hljs-deletion { color: #ffb3bb; background: #512e36; }
+
+.pr-review-dialog { width: min(650px, calc(100vw - 32px)); padding: 16px; }
+.pr-review-dialog[open], .pr-review-dialog form { gap: 10px; }
+.pr-review-dialog .developer-dialog-heading h2 { margin: 0; font-size: 17px; }
+.review-settings-block { min-width: 0; margin: 0; padding: 8px 10px; border: 1px solid #dce4df; border-radius: 8px; background: #f5f7f6; }
+.review-settings-block legend { padding: 0 5px; font-size: 12px; font-weight: 600; }
+.review-settings-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; }
+.review-settings-row > * { min-width: 0; }
+.pr-review-dialog .multi-select-trigger { padding: 7px 9px; font-size: 12px; }
+.pr-review-dialog .multi-select-label { margin-bottom: 4px; font-size: 12px; }
+.pr-review-dialog form .muted { font-size: 11px; line-height: 1.45; }
+.pr-review-dialog .review-settings-block > p { margin-top: 6px; }
+.pr-review-dialog .pr-review-ticket-option { font-size: 12px; gap: 7px; }
+.review-memory-heading { border-top: 1px solid #dce4df; margin-top: 8px; padding-top: 7px; font-size: 12px; font-weight: 600; }
+.review-memory-options { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 3px; }
+.review-memory-options .check-option { align-items: center; gap: 6px; padding: 4px 0; }
+.pr-review-dialog .review-question-field { margin: 0; gap: 5px; font-size: 12px; }
+.pr-review-dialog .review-question-field small { font-size: 11px; }
+@media (max-width: 520px) { .review-settings-row { grid-template-columns: 1fr; } }

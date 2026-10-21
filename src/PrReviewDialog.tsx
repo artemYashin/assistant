@@ -16,6 +16,7 @@ export function PrReviewDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const [model, setModel] = useState("");
   const [frequency, setFrequency] = useState("medium");
+  const [memoryScopes, setMemoryScopes] = useState(["general", "client", "project", "project_review"]);
   const [readTickets, setReadTickets] = useState(true);
   const [reviewerComment, setReviewerComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,6 +58,7 @@ export function PrReviewDialog({
                 model,
                 questionFrequency: frequency,
                 readTickets,
+                memoryScopes,
                 reviewerComment,
               },
               restart: pr.review_status === "completed",
@@ -68,6 +70,8 @@ export function PrReviewDialog({
           }
         }}
       >
+        <fieldset className="review-settings-block"><legend>Параметры ревью</legend>
+        <div className="review-settings-row">
         <ModelOverride value={model} onChange={setModel} disabled={busy} />
         <SingleSelect
           label="Частота вопросов"
@@ -80,6 +84,7 @@ export function PrReviewDialog({
             { value: "high", label: "Высокая" },
           ]}
         />
+        </div>
         <p className="muted">
           {frequency === "none"
             ? "Ревью без вопросов; нехватка данных будет отмечена в отчёте."
@@ -87,6 +92,8 @@ export function PrReviewDialog({
               ? "Только важные уточнения, без которых нельзя оценить риск. До 3 вопросов."
               : "Более подробные уточнения требований и граничных случаев. До 8 вопросов."}
         </p>
+        </fieldset>
+        <fieldset className="review-settings-block"><legend>Контекст ревью</legend>
         <label className="pr-review-ticket-option">
           <input
             type="checkbox"
@@ -101,10 +108,20 @@ export function PrReviewDialog({
           Изображения и файлы не анализируются. Если данные недоступны или
           превышают лимит, ревью остановится с объяснением.
         </p>
+        <div className="review-memory-heading">Используемая память</div>
+        <div className="review-memory-options" role="group" aria-label="Используемая память">
+          {[
+            ["general", "Общая"], ["client", "Заказчика"], ["project", "Проекта"], ["project_review", "Ревью проекта"],
+          ].map(([value, label]) => <label className="check-option" key={value}>
+            <input type="checkbox" checked={memoryScopes.includes(value)} disabled={busy} onChange={event => setMemoryScopes(previous => event.target.checked ? [...previous, value] : previous.filter(scope => scope !== value))} />{label}
+          </label>)}
+        </div>
+        <small className="muted">Память «Ревью проекта» используется только для ревью и не добавляется автоматически в чат. Можно отключить все разделы.</small>
+        </fieldset>
         <label className="review-question-field">
           <strong>Комментарий ревьюеру</strong>
           <textarea
-            rows={4}
+            rows={3}
             maxLength={4000}
             value={reviewerComment}
             disabled={busy}

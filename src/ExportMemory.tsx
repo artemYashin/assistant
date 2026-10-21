@@ -6,7 +6,7 @@ import { memoryMarkdownFiles, type ExportMemory, type MemoryScope } from "./memo
 export function ExportMemoryButton({ context }: { context: { client: string; project: string } }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [rows, setRows] = useState<ExportMemory[]>([]);
-  const [selected, setSelected] = useState<MemoryScope[]>(["general", "client", "project"]);
+  const [selected, setSelected] = useState<MemoryScope[]>(["general", "client", "project", "project_review"]);
   const [separate, setSeparate] = useState(false), [includeContext, setIncludeContext] = useState(true);
   const [splitDetails, setSplitDetails] = useState(false);
   const [packing, setPacking] = useState(false), [downloadError, setDownloadError] = useState("");
@@ -45,9 +45,9 @@ export function ExportMemoryButton({ context }: { context: { client: string; pro
       <div className="section-heading"><h2><FileText size={20} />Экспорт памяти</h2><button type="button" className="icon-button" aria-label="Закрыть" onClick={() => dialog.current?.close()}><X size={18} /></button></div>
       <p className="muted">Общая память и записи выбранного заказчика и проекта. Только сохранённые записи, без неподтверждённых предложений.</p>
       {busy ? <p role="status">Загрузка записей…</p> : error ? <p className="error" role="alert">{error}</p> : <>
-        <fieldset><legend>Разделы памяти</legend>{(["general", "client", "project"] as MemoryScope[]).map(scope => {
+        <fieldset><legend>Разделы памяти</legend>{(["general", "client", "project", "project_review"] as MemoryScope[]).map(scope => {
           const count = rows.filter(row => row.scope === scope).length;
-          const label = scope === "general" ? "Общая память" : scope === "client" ? `Заказчик: ${context.client || "не выбран"}` : `Проект: ${context.project || "не выбран"}`;
+          const label = scope === "general" ? "Общая память" : scope === "client" ? `Заказчик: ${context.client || "не выбран"}` : `${scope === "project_review" ? "Ревью проекта" : "Проект"}: ${context.project || "не выбран"}`;
           return <label className="check-option" key={scope}><input type="checkbox" checked={selected.includes(scope)} disabled={!count} onChange={event => setSelected(previous => event.target.checked ? [...previous, scope] : previous.filter(item => item !== scope))} /><span>{label}</span><small>{count} записей</small></label>;
         })}</fieldset>
         <fieldset><legend>Формат файлов</legend>

@@ -512,7 +512,7 @@ export class Store {
   memories(context: Context, exportAll = false) {
     return this.db
       .prepare(
-        "SELECT * FROM memories WHERE scope='general' OR (scope='client' AND client=? AND ?!='') OR (scope='project' AND client=? AND project=? AND ?!='') ORDER BY created_at DESC" + (exportAll ? "" : " LIMIT 200"),
+        "SELECT * FROM memories WHERE scope='general' OR (scope='client' AND client=? AND ?!='') OR (scope IN ('project','project_review') AND client=? AND project=? AND ?!='') ORDER BY created_at DESC" + (exportAll ? "" : " LIMIT 200"),
       )
       .all(
         context.client,
@@ -523,25 +523,30 @@ export class Store {
       );
   }
   memoryCatalog(context: Context) {
-    return (this.memories(context, true) as any[]).map(row => ({ id: row.id, scope: row.scope, summary: row.summary, revision: createHash("sha256").update(row.summary + "\n" + row.body).digest("hex").slice(0, 12) }));
+    return (this.memories(context, true) as any[]).filter(row => row.scope !== "project_review").map(row => ({ id: row.id, scope: row.scope, summary: row.summary, revision: createHash("sha256").update(row.summary + "\n" + row.body).digest("hex").slice(0, 12) }));
+  }
+  reviewMemory(context: Context, scopes: string[] = ["general", "client", "project", "project_review"]) {
+    return (this.memories(context, true) as any[])
+      .filter(row => scopes.includes(row.scope))
+      .map(({ id, scope, summary, body }) => ({ id, scope, summary, body }));
   }
   memoryDetail(id: string, context: Context) {
     const row = this.db.prepare("SELECT id,scope,summary,body,client,project FROM memories WHERE id=?").get(id) as any;
-    if (!row || (row.scope !== "general" && row.client !== context.client) || (row.scope === "project" && row.project !== context.project)) throw new AppError(404, "Запись памяти недоступна в текущем контексте");
+    if (!row || (row.scope !== "general" && row.client !== context.client) || (["project", "project_review"].includes(row.scope) && row.project !== context.project)) throw new AppError(404, "Запись памяти недоступна в текущем контексте");
     const { client, project, ...detail } = row;
     return detail;
   }
   addMemory(scope: string, body: string, context: Context, summary?: string) {
     const short = summary === undefined ? legacyMemorySummary(body) : memorySummarySchema.parse(summary);
     if (
-      !["general", "client", "project"].includes(scope) ||
+      !["general", "client", "project", "project_review"].includes(scope) ||
       !body.trim() ||
       body.length > 8000
     )
       throw new AppError(400, "Неверная запись памяти");
     if (scope !== "general" && !context.client)
       throw new AppError(400, "Выберите заказчика");
-    if (scope === "project" && !context.project)
+    if (["project", "project_review"].includes(scope) && !context.project)
       throw new AppError(400, "Выберите проект");
     const id = randomUUID();
     this.db
@@ -550,7 +555,7 @@ export class Store {
         id,
         scope,
         scope === "general" ? "" : context.client,
-        scope === "project" ? context.project : "",
+        ["project", "project_review"].includes(scope) ? context.project : "",
         body.trim(),
         new Date().toISOString(),
         short,
