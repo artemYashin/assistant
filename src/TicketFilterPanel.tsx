@@ -1,3 +1,7 @@
+import {
+  customerPresetKey,
+  migrateCustomerPresets,
+} from "./ticket-preset-storage.js";
 import { useId, useState, type ReactNode } from "react";
 import { Bookmark, ChevronDown, ChevronUp } from "lucide-react";
 import { TicketFilterPresets } from "./TicketFilterPresets.js";
@@ -16,6 +20,13 @@ export function TicketFilterPanel({
   disabled?: boolean;
   children: ReactNode;
 }) {
+  const [presetStorageKey] = useState(() => {
+    try {
+      return migrateCustomerPresets(localStorage, storageKey);
+    } catch {
+      return customerPresetKey(storageKey);
+    }
+  });
   const [expanded, setExpanded] = useState(() => {
     try {
       return localStorage.getItem(storageKey + ".expanded") !== "false";
@@ -59,7 +70,7 @@ export function TicketFilterPanel({
       </button>
       <div id={id}>
         <TicketFilterPresets
-          storageKey={storageKey + ".presets"}
+          storageKey={presetStorageKey}
           filters={filters}
           onApply={onApply}
           disabled={disabled}

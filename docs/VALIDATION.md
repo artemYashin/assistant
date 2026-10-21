@@ -1089,3 +1089,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 
 - Removed the review dialog's static dropdown positioning so menus overlay the form instead of expanding it. Options scroll within a bounded height.
 - Whitespace check passed. Tests and browser visual checks were not run for this CSS-only adjustment.
+
+### Customer-scoped ticket filter presets (2026-10-21)
+
+- Saved presets are now shared across a customer's projects and Azure connections, separately for active/Azure/trash tabs. Current filter state remains view-specific.
+- Initial migration merges legacy project presets without deleting the originals; conflicting names/IDs are disambiguated. Existing customer storage is not remigrated, so deleted presets stay deleted.
+- Both targeted migration tests, TypeScript and whitespace checks passed. Browser interactions and production build were not exercised.
