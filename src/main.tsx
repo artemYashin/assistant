@@ -1895,6 +1895,12 @@ function Memory({ memories, context, run, busy }: any) {
   const [scope, setScope] = useState("general"),
     [body, setBody] = useState(""),
     [summary, setSummary] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; summary: string } | null>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (deleteTarget) deleteDialog.current?.showModal();
+    else deleteDialog.current?.close();
+  }, [deleteTarget]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const filtered = memories.filter((memory: any) =>
@@ -1913,6 +1919,25 @@ function Memory({ memories, context, run, busy }: any) {
   };
   return (
     <>
+      <dialog ref={deleteDialog} className="developer-dialog memory-delete-dialog" aria-label="Удалить запись памяти" onClose={() => setDeleteTarget(null)} onCancel={event => { if (busy) event.preventDefault(); }}>
+        <div className="developer-dialog-heading">
+          <strong>Удалить запись памяти?</strong>
+          <button type="button" className="icon-button" aria-label="Закрыть" disabled={!!busy} onClick={() => setDeleteTarget(null)}><X size={18} /></button>
+        </div>
+        <p>Вы действительно хотите удалить эту запись?</p>
+        <div className="memory-delete-title">{deleteTarget?.summary}</div>
+        <div className="card-actions">
+          <button type="button" className="secondary" autoFocus disabled={!!busy} onClick={() => setDeleteTarget(null)}>Отмена</button>
+          <button type="button" className="memory-delete-confirm" disabled={!!busy || !deleteTarget} onClick={() => {
+            if (!deleteTarget) return;
+            const id = deleteTarget.id;
+            run(id, async () => {
+              await api(`/memories/${id}`, "DELETE");
+              setDeleteTarget(null);
+            }, "Запись удалена");
+          }}><Trash2 size={16} />{busy ? "Удаление…" : "Удалить"}</button>
+        </div>
+      </dialog>
       <PageHeading
         title="Важное остаётся с вами"
         subtitle="Память доступна ассистенту с учётом выбранного заказчика и проекта."
@@ -2000,7 +2025,7 @@ function Memory({ memories, context, run, busy }: any) {
             <div className="memory-note-heading">
               <small className="memory-note-id" title={m.id}>ID: {m.id}</small>
               <button className="icon-button memory-note-delete" title="Удалить запись" aria-label="Удалить запись" disabled={!!busy}
-                onClick={() => run(m.id, () => api(`/memories/${m.id}`, "DELETE"), "Запись удалена")}>
+                onClick={() => setDeleteTarget({ id: m.id, summary: m.summary })}>
                 <Trash2 size={16} />
               </button>
             </div>

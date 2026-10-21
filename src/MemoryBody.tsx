@@ -3,17 +3,20 @@ import { useState } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { api } from "./api.js";
 
-export function MemoryProposalContent({ summary, body }: { summary: string; body: string }) {
+export function MemoryProposalContent({ summary, body, collapsible = false }: { summary: string; body: string; collapsible?: boolean }) {
   return (
     <div className="memory-proposal-fields">
       <section className="memory-proposal-field" aria-label="Название">
         <div className="memory-proposal-field-label">Название</div>
         <strong className="memory-summary">{summary}</strong>
       </section>
-      <section className="memory-proposal-field" aria-label="Описание">
+      {collapsible ? <details className="memory-proposal-field memory-description">
+        <summary>Описание</summary>
+        <MemoryMarkdown body={body} />
+      </details> : <section className="memory-proposal-field" aria-label="Описание">
         <div className="memory-proposal-field-label">Описание</div>
         <MemoryMarkdown body={body} />
-      </section>
+      </section>}
     </div>
   );
 }
@@ -43,7 +46,7 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        <MemoryProposalContent summary={summary} body={body} />
+        <MemoryProposalContent summary={summary} body={body} collapsible={!proposal} />
         <button
           className="secondary"
           disabled={disabled}

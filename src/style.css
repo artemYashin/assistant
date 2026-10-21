@@ -9187,13 +9187,23 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 
 .ticket-formatted code:not(pre code) { background: var(--inline-code-background); padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 
-/* At most six columns, sized from the available page width (including the chat sidebar). */
+/* Two columns when there is room, one on narrow pages or beside a wide chat. */
 .memory-grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(220px, calc((100% - 50px) / 6))), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(320px, calc((100% - 10px) / 2))), 1fr));
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
-.memory-note { min-width: 0; padding: 10px; }
+.memory-note { min-width: 0; padding: 10px; display: flex; flex-direction: column; align-items: stretch; }
+.memory-note > button { align-self: flex-start; margin-top: auto; }
+.memory-description > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: #61766a; border-radius: 4px; }
+.memory-description > summary:hover { color: #355c44; }
+.memory-description > summary:focus-visible { outline: 2px solid #81a88b; outline-offset: 3px; }
+.memory-description[open] > summary { margin-bottom: 8px; }
+.memory-delete-dialog > p { margin: 0; font-size: 13px; }
+.memory-delete-title { padding: 10px; background: #f5f7f6; border: 1px solid #dce4df; border-radius: 6px; overflow-wrap: anywhere; max-height: 160px; overflow: auto; font-size: 13px; }
+.memory-delete-dialog .card-actions { justify-content: flex-end; gap: 8px; margin: 0; }
+.memory-delete-confirm { display: inline-flex; align-items: center; gap: 6px; background: #b93838; border: 1px solid #b93838; color: white; padding: 8px 12px; border-radius: 6px; }
+.memory-delete-confirm:hover:not(:disabled) { background: #992e2e; }
 .memory-note-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
 .memory-note .memory-note-id { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; }
 .memory-note .memory-note-delete { flex: 0 0 28px; width: 28px; height: 28px; padding: 5px; border: 1px solid #e7bcbc; border-radius: 6px; background: #fbe9e9; color: #b93838; transition: background .1s, border-color .1s; }
