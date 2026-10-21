@@ -4481,40 +4481,66 @@ summary > svg {
   display: grid;
   gap: 12px;
 }
-.local-tags-editor { display: grid; gap: 10px; min-width: 0; }
+ .local-tags-editor { display: grid; gap: 8px; min-width: 0; }
 .local-tags-editor-label { font-size: 12px; font-weight: 600; color: #475d4b; }
 .local-tags-editor-field {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  min-height: 130px;
-  max-height: 35vh;
-  overflow: auto;
-  padding: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
+  gap: 5px;
+  min-height: 60px;
+  padding: 10px;
   background: #fbfcfa;
   border: 1px solid #ced9c9;
   border-radius: 7px;
 }
 .local-tags-editor-field:focus-within { border-color: #6d976c; box-shadow: 0 0 0 2px #6d976c1a; }
-.local-tags-editor-row { display: flex; align-items: center; gap: 4px; max-width: 100%; min-height: 32px; }
-.local-tags-editor-row > input { min-width: 0; width: min(380px, 100%); height: 32px; box-sizing: border-box; padding: 5px 8px; font-size: 12px; }
 .local-tags-editor-chip {
-  padding: 4px 7px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   color: #435342;
   background: #edf2e9;
   border: 1px solid #d6e0d0;
   border-radius: 4px;
+}
+.local-tags-editor-chip > button:first-child {
+  min-width: 0;
+  padding: 4px 3px 4px 7px;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
   text-align: left;
+  color: inherit;
 }
-.local-tags-editor-chip:hover:not(:disabled) { background: #dfead8; border-color: #abc39f; }
-.local-tags-editor-remove { display: inline-flex; padding: 3px; color: #6e7b69; border-radius: 4px; }
+.local-tags-editor-chip:hover { background: #dfead8; border-color: #abc39f; }
+.local-tags-editor-remove { display: inline-flex; flex-shrink: 0; padding: 4px; margin-right: 2px; color: #58744d; border-radius: 3px; }
 .local-tags-editor-remove:hover:not(:disabled) { background: #fbe7e3; color: #a9362c; }
-.local-tags-editor-chip:focus-visible, .local-tags-editor-remove:focus-visible { outline: 2px solid #467746; outline-offset: 2px; }
+.local-tags-editor-entry { display: flex; align-items: center; gap: 4px; width: min(310px, 100%); }
+.local-tags-editor-input-wrap { position: relative; flex: 1; min-width: 0; }
+.local-tags-editor-input-wrap > input { width: 100%; min-width: 0; height: 30px; box-sizing: border-box; padding: 4px 28px 4px 8px; font-size: 12px; }
+.local-tags-editor-toggle { position: absolute; right: 4px; top: 0; bottom: 0; display: inline-flex; align-items: center; padding: 2px; color: #52704a; }
+.local-tags-editor-cancel { display: inline-flex; flex-shrink: 0; padding: 4px; color: #677461; }
+.local-tags-editor-add { padding: 5px; }
+.local-tags-suggestions {
+  position: fixed;
+  z-index: 30;
+  display: block;
+  box-sizing: border-box;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid #cbd8c5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 6px 24px #233a2028;
+}
+.local-tags-suggestions > button { display: block; width: 100%; padding: 7px 9px; text-align: left; font-size: 12px; border-radius: 4px; overflow-wrap: anywhere; }
+.local-tags-suggestions > button:hover, .local-tags-suggestions > button[aria-selected="true"] { background: #e8f1e2; color: #294d28; }
+.local-tags-suggestions > p { margin: 4px 6px; font-size: 11px; color: #697765; }
+.local-tags-editor button:focus-visible { outline: 2px solid #467746; outline-offset: 2px; }
 .ticket-metadata-dialog textarea {
   width: 100%;
   resize: vertical;

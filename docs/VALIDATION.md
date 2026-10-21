@@ -1165,3 +1165,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Existing tags are read locally for the current Azure source from active tickets and unexpired trash. Suggestion errors do not block manual entry. Notes/tags no longer depend on the unrelated priority-settings request to enable saving. Azure tags remain read-only.
 - Restored discussions beside code lines as well as in the lower list. Added stable initial avatars, separate author/path presentation, centered headings, status badges and a styled line-navigation button.
 - All 258 existing tests, TypeScript and production build passed; whitespace checks passed. Browser interactions and live Azure writes were not exercised. Existing bundle-size advisories remain.
+
+### Compact tag chips with overlay autocomplete (2026-10-21)
+
+- Replaced the separate existing-tag dropdown with inline editing: horizontal wrapping chips have an internal remove button; Add opens a focused combobox with optional existing-tag suggestions, free text, keyboard selection and an explicit cancel button.
+- Suggestions use a fixed-position portal inside the active dialog, outside the editor layout. Placement follows scrolling/resizing and flips above the input when space below is limited. Selected tags are excluded from suggestions.
+- Enter/selection/blur commits the edit, Escape/cancel discards the draft. Existing tag/count limits and multiline paste validation are retained.
+- All 258 existing tests and production build passed. Final dropdown-placement adjustment passed TypeScript and whitespace checks. Browser interactions were not exercised; existing bundle-size advisories remain.
