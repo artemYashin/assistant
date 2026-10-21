@@ -2931,6 +2931,10 @@ function Assistant({
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
           if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
+          else if (event.stage === "close_ticket_details") {
+            window.dispatchEvent(new Event("orbit-close-ticket-details"));
+            onExpand();
+          }
           else if (event.stage === "usage") setChatUsage(event);
           else chatStream.receive(event);
         }

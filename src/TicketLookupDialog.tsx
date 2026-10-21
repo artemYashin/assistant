@@ -59,11 +59,16 @@ export function TicketLookupDialog() {
   }, [location.key]);
   useEffect(() => {
     const close = () => {
+      dialog.current?.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach(child => child.close());
       reset();
       dialog.current?.close();
     };
     window.addEventListener(analysisChatReadyEvent, close);
-    return () => window.removeEventListener(analysisChatReadyEvent, close);
+    window.addEventListener("orbit-close-ticket-details", close);
+    return () => {
+      window.removeEventListener(analysisChatReadyEvent, close);
+      window.removeEventListener("orbit-close-ticket-details", close);
+    };
   }, []);
   useEffect(() => {
     if (!open) return;

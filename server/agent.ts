@@ -850,6 +850,17 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
+                  defineTool("close_ticket_details", {
+                    description: "Close the open ticket detail viewer (single ticket or list) and automatically expand the assistant chat. Use immediately when the user asks to close ticket details, including voice requests. No data changes or Azure requests. No confirmation needed. Continue answering any remaining request.",
+                    parameters: z.object({}).strict(),
+                    handler: async () => {
+                      assertActive();
+                      if (!onProgress) throw new AppError(409, "Закрытие деталки требует подключённого интерфейса чата");
+                      emit({ stage: "close_ticket_details" });
+                      viewedTicket = undefined;
+                      return { requested: true, detailViewer: "close", assistantPanel: "expand", note: "UI close/expand requested. The previously viewed ticket is no longer current UI context." };
+                    },
+                  }),
                   defineTool("show_ticket_details", {
                     description: "Open the ticket detail viewer in the UI, with a switchable sidebar for multiple tickets. Use when the user asks to SHOW details, not to analyze content. Open immediately on an explicit display request; no confirmation needed. No ticket bodies are returned to the model. Any identified ticket ID can be viewed, like the header lookup, without importing. UI loads only the selected ticket on demand.",
                     parameters: z.object({ ids: z.array(z.number().int().positive()).min(1).max(50) }).strict(),
