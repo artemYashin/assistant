@@ -68,11 +68,11 @@ export class RepositoryBrowser {
     const identity = hash(JSON.stringify([input.url, input.token]));
     const branchKey = hash(input.url + input.token);
     const catalog = this.branchesCache.get(branchKey);
-    if (input.operation === 'branches' && catalog &&
-      (Date.now() - catalog.time < 60000 || this.jobs.jobs.some(job => job.key.startsWith(identity + ':')))) return catalog.result;
+    if (input.operation === 'branches' && !input.refresh && catalog) return catalog.result;
     const keyFor = operation => identity + ':' + hash(JSON.stringify({
       operation, branch: input.branch || '', path: input.path || '', query: input.query || '',
       mode: input.mode || 'name', offset: input.offset || 0, revision: input.revision || '',
+      refresh: operation === 'branches' ? !!input.refresh : false,
     }));
     let key = keyFor(input.operation);
     if (input.operation === 'status') {
@@ -112,11 +112,22 @@ export class RepositoryBrowser {
     if (!await fs.stat(gitDir).catch(() => null)) await run('git', ['init', '--bare', gitDir], { env });
     if (operation === 'branches') {
       const key = hash(url + token); const cached = this.branchesCache.get(key);
-      if (cached && Date.now() - cached.time < 60000) return cached.result;
+      const catalogPath = path.join(repo, 'branches-' + hash(token) + '.json');
+      if (!input.refresh) {
+        if (cached) return cached.result;
+        const saved = await fs.readFile(catalogPath, 'utf8').then(JSON.parse).catch(() => null);
+        if (saved && Array.isArray(saved.branches) && saved.branches.every(b => typeof b === 'string') && typeof saved.defaultBranch === 'string') {
+          this.branchesCache.set(key, { time: Date.now(), result: saved });
+          return saved;
+        }
+      }
       report({ stage: 'connecting' });
       const output = (await git(['ls-remote', '--symref', url, 'HEAD', 'refs/heads/*'], networkOptions)).toString();
       const branches = output.split('\n').flatMap(line => /^[0-9a-f]{40,64}\trefs\/heads\//.test(line) ? [line.split('\t')[1].slice(11)] : []).sort();
       const result = { branches: branches.slice(0, 5000), more: branches.length > 5000, defaultBranch: /^ref: refs\/heads\/(.+)\tHEAD$/m.exec(output)?.[1] || branches[0] || '', checkedAt: new Date().toISOString() };
+      const temporaryCatalog = catalogPath + '.' + randomUUID() + '.tmp';
+      await fs.writeFile(temporaryCatalog, JSON.stringify(result));
+      await fs.rename(temporaryCatalog, catalogPath);
       this.branchesCache.set(key, { time: Date.now(), result });
       if (this.branchesCache.size > 30) this.branchesCache.delete(this.branchesCache.keys().next().value);
       return result;

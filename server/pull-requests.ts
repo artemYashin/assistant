@@ -33,6 +33,7 @@ export type Monitor = {
   error?: string | null;
   review_files?: string;
   fetch_timeout_seconds?: number;
+  code_sync_minutes?: number;
 };
 const now = () => new Date().toISOString();
 const enc = encodeURIComponent;
@@ -294,6 +295,7 @@ export class PullRequests {
     enabled: boolean;
     reviewFiles?: { ignoredPaths: string[]; diffBudget: number };
     fetchTimeoutSeconds?: number;
+    codeSyncMinutes?: number;
   }) {
     if (!input.client || !input.project)
       throw new AppError(400, "Выберите заказчика и проект ассистента");
@@ -307,6 +309,7 @@ export class PullRequests {
     const reviewFiles = input.reviewFiles
       ? reviewFileSettings.parse(input.reviewFiles)
       : undefined;
+    const codeSyncMinutes = input.codeSyncMinutes === undefined ? undefined : z.number().int().min(0).max(1440).parse(input.codeSyncMinutes);
     const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(1800).parse(input.fetchTimeoutSeconds);
     this.store.addContext(input);
     this.store.db
@@ -333,6 +336,10 @@ export class PullRequests {
         Number(input.enabled),
         input.repository,
       );
+    if (codeSyncMinutes !== undefined) {
+      this.store.db.prepare("UPDATE pr_projects SET code_sync_minutes=? WHERE client=? AND project=? AND source=? AND azure_project=?")
+        .run(codeSyncMinutes, input.client, input.project, source, azureProject);
+    }
     if (fetchTimeout !== undefined) {
       this.store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=? WHERE client=? AND project=? AND source=? AND azure_project=?")
         .run(fetchTimeout, input.client, input.project, source, azureProject);

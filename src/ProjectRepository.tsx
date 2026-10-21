@@ -9,6 +9,7 @@ export function ProjectRepository({
   onSaved?: () => void;
 }) {
   const [ignoredPaths, setIgnoredPaths] = useState("");
+  const [codeSyncMinutes, setCodeSyncMinutes] = useState(30);
   const [fetchTimeoutMinutes, setFetchTimeoutMinutes] = useState(5);
   const [diffBudget, setDiffBudget] = useState(160000);
   const [loaded, setLoaded] = useState(false);
@@ -24,6 +25,7 @@ export function ProjectRepository({
     setIgnoredPaths("");
     setDiffBudget(160000);
     setFetchTimeoutMinutes(5);
+    setCodeSyncMinutes(30);
     setMessage("");
     api("/pr/projects")
       .then((items: any[]) => {
@@ -39,6 +41,7 @@ export function ProjectRepository({
             (m) => m.client === context.client && m.project === context.project,
           );
         if (m) {
+          setCodeSyncMinutes(m.code_sync_minutes ?? 30);
           setFetchTimeoutMinutes((m.fetch_timeout_seconds || 300) / 60);
           const rules = JSON.parse(m.review_files || "{}");
           setIgnoredPaths((rules.ignoredPaths || []).join("\n"));
@@ -75,6 +78,7 @@ export function ProjectRepository({
             repository: repo.trim(),
             mode: all ? "all" : "required",
             enabled,
+            codeSyncMinutes,
             fetchTimeoutSeconds: Math.round(fetchTimeoutMinutes * 60),
             reviewFiles: {
               ignoredPaths: ignoredPaths
@@ -115,6 +119,11 @@ export function ProjectRepository({
       </p>
       <fieldset className="repository-fetch-settings">
         <legend>Просмотр кода · загрузка репозитория</legend>
+        <label>Частота синхронизации Git, минуты
+          <input type="number" min={0} max={1440} step={1} required value={codeSyncMinutes}
+            onChange={event => setCodeSyncMinutes(Number(event.target.value))} />
+        </label>
+        <p className="muted">По умолчанию 30 минут; 0 — только вручную. Фоновая проверка обновляет список веток и проверяет последнюю открытую ветку уже загруженного репозитория. Учитываются разрешённые часы и дни общей синхронизации. Открытый снимок обновляется кнопкой Pull.</p>
         <label>Тайм-аут Git, минуты
           <input type="number" min={1} max={30} step={1} required value={fetchTimeoutMinutes}
             onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />

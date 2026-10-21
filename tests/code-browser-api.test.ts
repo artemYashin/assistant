@@ -44,6 +44,9 @@ test("code browser resolves configured repository and keeps credentials on serve
   assert.ok(!JSON.stringify(result).includes("private-pat"));
   await browser.request({ ...context, operation: "tree", branch: "main" });
   assert.equal(calls.length, 3); // No extra Azure resolution for local reads.
+  await new CodeBrowser(store).request({ ...context, operation: "tree", branch: "main" });
+  assert.equal(calls.length, 4); // Persisted ID avoids Azure resolution after backend restart.
+  assert.equal(calls[3].url, "http://code-browser:8010/v1/repository");
   store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=900 WHERE id=?").run("monitor");
   const progress: unknown[] = [];
   globalThis.fetch = (async (_url: any, init?: RequestInit) => {
@@ -56,7 +59,7 @@ test("code browser resolves configured repository and keeps credentials on serve
   assert.equal(streamed.current, true);
 
   await assert.rejects(browser.request({ client: "Other", project: "Portal", operation: "branches" }));
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
   assert.equal(codeBrowserSchema.safeParse({ ...context, operation: "push" }).success, false);
   assert.equal(codeBrowserSchema.safeParse({ ...context, operation: "tree", url: "https://untrusted.invalid" }).success, false);
   assert.equal(codeBrowserSchema.safeParse({ ...context, operation: "tree", token: "other" }).success, false);

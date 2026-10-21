@@ -9,7 +9,7 @@ import type { CodeToken } from "./diff-highlight.js";
 
 type Context = { client: string; project: string };
 type Entry = { name: string; path: string; type: string; size: number };
-type Status = { sha: string; remoteSha: string; checkedAt: string; behind: number | null; current: boolean; repository: string };
+type Status = { sha: string; remoteSha: string; checkedAt: string; behind: number | null; current: boolean; repository: string; syncError?: string };
 type File = { sha: string; path: string; text?: string; unavailable?: string; lfs?: boolean; symlink?: boolean; size?: number };
 type Result = { path: string; line?: number; text?: string };
 type SearchResult = { results: Result[]; more: boolean; total: number; coverage?: { searchedFiles: number; skippedFiles: number }; perFileLimit?: number };
@@ -44,7 +44,7 @@ function RepositoryView({ context }: { context: Context }) {
   useEffect(() => {
     let live = true;
     setBusy(true); setError(""); setFileBusy(false); setSearchBusy(false);
-    void execute({ ...context, operation: "branches" }).then(data => {
+    void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
       if (!live) return;
       setBranches(data.branches); setBranch(current => {
         const preferred = current || rememberedBranch();
@@ -61,6 +61,10 @@ function RepositoryView({ context }: { context: Context }) {
     setBusy(true); setError("");
     if (operation === "pull") { setFile(null); setResults(null); }
     try {
+      if (force) {
+        const catalog = await request("branches", { refresh: true });
+        if (current === generation.current) setBranches(catalog.branches);
+      }
       const next = await request(operation, { refresh: force });
       if (current === generation.current) {
         if (snapshot.current && snapshot.current.sha !== next.sha) { setFile(null); setResults(null); }
@@ -115,6 +119,7 @@ function RepositoryView({ context }: { context: Context }) {
       <span>{status.current ? "Совпадает с Azure на момент проверки" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
       <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
     </div>}
+    {status?.syncError && <p className="repository-sync-warning" role="status">Фоновая проверка: {status.syncError}</p>}
     {error && <div role="alert" className="repository-error">
       <AlertCircle size={20} aria-hidden="true" /><div><strong>Не удалось выполнить операцию</strong><p>{error}</p></div>
       <button className="icon-button" aria-label="Закрыть ошибку" onClick={() => setError("")}><X size={16} /></button>

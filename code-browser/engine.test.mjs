@@ -139,3 +139,15 @@ test('reopening an old cached branch works without contacting its origin', async
   assert.match((await request('file', { path: 'src/hello.ts' })).text, /hello World/);
   await assert.rejects(request('status', { refresh: true }));
 });
+
+test('branch catalog survives service restart and refresh is explicit', async t => {
+  const { request, browser, work, root } = await fixture(t);
+  const initial = await request('branches');
+  await fs.rename(work, work + '-offline');
+  const restarted = new RepositoryBrowser(path.join(root, 'cache'), { allowLocal: true });
+  const input = { url: pathToFileURL(work).href, token: 'fixture-secret', operation: 'branches' };
+  assert.deepEqual(await restarted.execute(input), initial);
+  await assert.rejects(restarted.execute({ ...input, refresh: true }));
+  assert.deepEqual(await restarted.execute(input), initial); // A failed check preserves the last catalog.
+  assert.ok(browser.branchesCache.size);
+});

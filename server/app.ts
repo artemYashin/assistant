@@ -1122,6 +1122,7 @@ export function createApp(
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),
         reviewFiles: reviewFileSettings.optional(),
+        codeSyncMinutes: z.number().int().min(0).max(1440).optional(),
         fetchTimeoutSeconds: z.number().int().min(60).max(1800).optional(),
       })
       .strict()
@@ -1504,5 +1505,5 @@ export function createApp(
       });
     },
   );
-  return { app, sync, agent, approvals, connectors, pullRequests };
+  return { app, sync, agent, approvals, connectors, pullRequests, codeBrowser };
 }

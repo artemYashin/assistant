@@ -2,7 +2,7 @@
 
 ## Boundaries and data flow
 
-1. The header opens `/code` for the currently selected Orbit customer/project.
+1. The sidebar opens `/code` for the currently selected Orbit customer/project.
 2. Orbit resolves its configured Azure repository and authenticates requests using the existing session, Origin and CSRF middleware. The browser never supplies a Git URL or a credential.
 3. Orbit calls `code-browser` over the Compose network, authenticating with a random service key in a dedicated shared control volume. Only Orbit can write that volume; the service mounts it read-only. The service has no published port and no access to Orbit's database or the user's working tree.
 4. The service accepts an allowlist of operations: branches, status, pull, tree, file, search. It runs Git/ripgrep directly with argument arrays, never a shell. There is no write/commit/push API and no LLM execution.
@@ -14,7 +14,7 @@ Existing Azure PAT, HTTPS, Code Read and repository Read permission. A token wit
 
 ## Freshness and efficiency
 
-Branch listings are cached for 60 seconds. Opening a cached branch uses its saved snapshot regardless of age; only the first opening downloads it automatically. Reloading the page does not fetch objects. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (one commit by default; CODE_BROWSER_FETCH_DEPTH accepts 1–1000); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
+Branch listings are persisted in the service cache and refreshed only on an explicit request or a scheduled background check. Repository IDs are persisted in Orbit with a credential/configuration-specific hashed key. Opening a cached branch uses its saved snapshot regardless of age; only the first opening downloads it automatically. Reloading the page does not fetch objects. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (one commit by default; CODE_BROWSER_FETCH_DEPTH accepts 1–1000); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
 
 One operation runs at a time with a bounded queue. Git network timeout defaults to 300 seconds and is configurable per repository from 60 to 1800 seconds. The backend allows an additional 180 seconds for queue/processing; queued work expires after 60 seconds and never starts after that expiry. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in its own named volume; existing Orbit data volumes are unchanged.
 
@@ -22,7 +22,7 @@ One operation runs at a time with a bounded queue. Git network timeout defaults 
 
 Filename search uses Git's tree manifest. Content search uses literal, case-insensitive ripgrep over an immutable snapshot of regular UTF-8 files, including hidden and gitignored tracked files. Symlinks and submodules are not followed. LFS pointer files are displayed as pointers. Binary, oversized and omitted files are explicitly reported. File preview limit: 2 MiB. Search snapshot: 20,000 regular files / 128 MiB; two most recent snapshots per repository are retained. Tree manifest: bounded to 16 MiB. Results are bounded/paginated; partial search coverage is returned to the UI. Snapshot writes are atomic and only use validated relative paths.
 
-There is no background polling or automatic pull. Git object storage persists; fetch is rejected once the configured total cache limit is reached (default 20 GiB). An oversized completed fetch is retained, but the displayed snapshot is not advanced; increase the quota and retry to reuse downloaded objects. This is a pre/post-operation quota, not a hard filesystem limit. The first fetch can take time. There is no execution/build of repository contents.
+Background checks run per repository at a configurable interval (30 minutes by default, 0 disables them). They respect the global sync schedule, refresh the branch catalog and check the last opened branch of an already downloaded repository. They do not start first-time clones or automatically advance the displayed snapshot. Git object storage persists; fetch is rejected once the configured total cache limit is reached (default 20 GiB). An oversized completed fetch is retained, but the displayed snapshot is not advanced; increase the quota and retry to reuse downloaded objects. This is a pre/post-operation quota, not a hard filesystem limit. The first fetch can take time. There is no execution/build of repository contents.
 
 ## API
 
@@ -93,3 +93,15 @@ Lowering history depth reduces newly requested history, but does not automatical
 remove objects from an existing cache. All files at the selected commit are still
 downloaded, so a large current tree may remain large. Partial/blobless clone is
 not used, preserving local-only file browsing and content search.
+
+
+### Background check scheduling
+
+The main backend checks due Git work every 30 seconds independently of the normal
+ticket/PR sync interval. Per-repository `code_sync_minutes` accepts 0–1440 and
+survives context rename. Successful foreground status reads register the last
+opened branch; explicit checks/Pull reset its interval. Attempt timestamps persist
+so failures do not retry on every timer tick or backend restart. Errors are
+retained for display on the code page. Changing repository/source requires opening
+the new repository before background checks start. Only one background pass runs
+at a time, and service jobs retain their existing queue/deduplication rules.

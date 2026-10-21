@@ -14,11 +14,18 @@ test("repository timeout defaults to five minutes, persists and survives rename"
   const input = { client: "A", project: "B", repository: "repo", mode: "all" as const, enabled: true };
   prs.save(input);
   assert.equal(prs.monitors()[0].fetch_timeout_seconds, 300);
+  assert.equal(prs.monitors()[0].code_sync_minutes, 30);
+  prs.save({ ...input, codeSyncMinutes: 60 });
   prs.save({ ...input, fetchTimeoutSeconds: 900 });
   prs.save(input); // Older clients must not reset the saved timeout.
   assert.equal(prs.monitors()[0].fetch_timeout_seconds, 900);
+  assert.equal(prs.monitors()[0].code_sync_minutes, 60);
+  assert.throws(() => prs.save({ ...input, codeSyncMinutes: -1 }));
+  assert.throws(() => prs.save({ ...input, codeSyncMinutes: 1441 }));
   assert.throws(() => prs.save({ ...input, fetchTimeoutSeconds: 0 }));
   assert.throws(() => prs.save({ ...input, fetchTimeoutSeconds: 1801 }));
+  prs.save({ ...input, codeSyncMinutes: 0 });
   store.renameContext({ client: "A", project: "B" }, "Renamed");
   assert.equal(prs.monitors()[0].fetch_timeout_seconds, 900);
+  assert.equal(prs.monitors()[0].code_sync_minutes, 0);
 });

@@ -1231,3 +1231,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Opening a cached branch no longer automatically fetches after 60 seconds. Explicit checks/Pull still contact the origin; initial downloads remain automatic. The displayed check timestamp stays unchanged on local reopening.
 - Move repository navigation to the sidebar. Align folder/file disclosure slots, add extension-specific icons/colors and close-file action; without a selected file the explorer spans the panel and shows locally available type/size metadata.
 - 24 targeted tests passed for repository operations, quota preservation, offline reopening, progress/queue/recovery, backend streams and context rename. Production build, Compose configuration and whitespace checks passed. Existing bundle-size advisories remain. Live Azure/Docker and visual browser checks were not performed.
+
+### Persist Git catalogs and schedule background checks (2026-10-21)
+
+- Persist branch catalogs in the code service and resolved repository IDs in Orbit, scoped by configuration/credentials. Ordinary navigation uses saved catalogs; explicit checks refresh them. Failed catalog refreshes preserve the cached list.
+- Added per-repository Git sync interval (30 minutes by default, 0 manual-only, maximum 1440), preserved through legacy-client saves and context rename. A separate 30-second scheduler checks due work only during allowed global sync windows and only for repositories/branches already opened successfully. Attempts persist to avoid rapid retries after failure or restart; background errors are surfaced on the code page.
+- Background checks update the catalog and remote status without advancing the displayed snapshot; Pull remains explicit.
+- 29 targeted tests passed, including interval/manual/schedule behavior, failure backoff, persistent catalogs, streamed operations and settings preservation. The backend cache test was extended and rerun successfully to cover repository-ID reuse after backend restart. Production build and whitespace checks passed; existing bundle-size advisories remain. Live Azure/Docker and visual browser checks were not performed.

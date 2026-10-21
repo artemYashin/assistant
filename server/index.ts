@@ -2,7 +2,7 @@ import { syncAllowed } from "./sync-schedule.js";
 import { Store } from "./store.js";
 import { createApp } from "./app.js";
 const store = new Store(process.env.DATA_DIR || "./data");
-const { app, sync, agent, pullRequests } = createApp(store);
+const { app, sync, agent, pullRequests, codeBrowser } = createApp(store);
 const server = app.listen(
   Number(process.env.PORT || 43871),
   process.env.BIND_HOST || "127.0.0.1",
@@ -11,6 +11,15 @@ const server = app.listen(
 let stopped = false;
 let syncWork: Promise<unknown> = Promise.resolve();
 let reviewWork: Promise<unknown> = Promise.resolve();
+let codeWork: Promise<unknown> = Promise.resolve();
+let codeTimer: ReturnType<typeof setTimeout>;
+async function codeTick() {
+  if (stopped) return;
+  codeWork = codeBrowser.syncDue();
+  try { await codeWork; } catch {}
+  if (!stopped) codeTimer = setTimeout(codeTick, 30000);
+}
+codeTimer = setTimeout(codeTick, 15000);
 let reviewTimer: ReturnType<typeof setTimeout>;
 async function reviewTick() {
   if (stopped) return;
@@ -44,10 +53,11 @@ function stop() {
   stopped = true;
   clearTimeout(timer);
   clearTimeout(reviewTimer);
+  clearTimeout(codeTimer);
   pullRequests.shutdown();
   agent.stop();
   server.close(async () => {
-    await Promise.allSettled([syncWork, reviewWork]);
+    await Promise.allSettled([syncWork, reviewWork, codeWork]);
     store.close();
     process.exit(0);
   });

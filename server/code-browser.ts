@@ -1,5 +1,6 @@
+import { syncAllowed } from "./sync-schedule.js";
 import { readCodeStream, type CodeProgress } from "./code-progress.js";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { z } from "zod";
@@ -15,11 +16,16 @@ export const codeBrowserSchema = z.object({
   revision: z.string().regex(/^[0-9a-f]{40,64}$/).optional(),
   offset: z.number().int().min(0).max(100000).default(0), refresh: z.boolean().default(false),
 }).strict();
+type CodeSyncState = {
+  repository: string; source: string; azureProject: string; branch: string;
+  lastChecked: number; lastAttempt?: number; error?: string;
+};
 export class CodeBrowser {
   private serviceKey?: Promise<string>;
+  private syncing = false;
   private repositories = new Map<string, { id: string; expires: number }>();
   constructor(private store: Store) {}
-  async request(raw: unknown, report?: (progress: CodeProgress) => void) {
+  async request(raw: unknown, report?: (progress: CodeProgress) => void, background = false) {
     const input = codeBrowserSchema.parse(raw);
     report?.({ stage: "connecting" });
     const settings = this.store.settings(input);
@@ -31,8 +37,10 @@ export class CodeBrowser {
     const base = azureBase(settings.azureUrl);
     if (new URL(base).protocol !== "https:") throw new AppError(400, "Для просмотра кода требуется HTTPS-подключение к Azure.");
     const repoKey = JSON.stringify([base, settings.azureProject, monitor.repository, token]);
-    let repository = this.repositories.get(repoKey);
-    if (!repository || (["branches", "status", "pull"].includes(input.operation) && repository.expires < Date.now())) {
+    const persistedKey = "code-repository:" + createHash("sha256").update(repoKey).digest("hex");
+    let repository = this.repositories.get(repoKey) || this.store.get<{ id: string; expires: number } | undefined>(persistedKey, undefined);
+    if (repository && !/^[0-9a-f-]{36}$/i.test(repository.id)) repository = undefined;
+    if (!repository || (input.operation === "branches" && input.refresh)) {
       const data = await requestJson(`${base}/${encodeURIComponent(settings.azureProject)}/_apis/git/repositories/${encodeURIComponent(monitor.repository)}?api-version=${encodeURIComponent(settings.azureVersion)}`, {
         headers: { Authorization: `Basic ${Buffer.from(":" + token).toString("base64")}` },
         redirect: "error", signal: AbortSignal.timeout(20000),
@@ -40,6 +48,7 @@ export class CodeBrowser {
       if (typeof data.id !== "string" || !/^[0-9a-f-]{36}$/i.test(data.id)) throw new AppError(502, "Azure не вернул ID репозитория.");
       repository = { id: data.id, expires: Date.now() + 60000 };
       this.repositories.set(repoKey, repository);
+      this.store.set(persistedKey, repository);
       if (this.repositories.size > 30) this.repositories.delete(this.repositories.keys().next().value!);
     }
     // Construct from the configured trusted origin, never use a remote-provided URL.
@@ -80,6 +89,49 @@ export class CodeBrowser {
     }
     if (!response.ok) throw new AppError(response.status, data?.error || "Ошибка сервиса кода");
     if (!data) throw new AppError(502, "Некорректный ответ сервиса кода");
-    return { ...data, repository: monitor.repository };
+    const syncKey = "code-sync:" + monitor.id;
+    if (!background && ["status", "pull"].includes(input.operation) && typeof data.sha === "string" && Number.isFinite(Date.parse(data.checkedAt))) {
+      const previous = this.store.get<CodeSyncState | null>(syncKey, null);
+      const same = previous?.repository === monitor.repository && previous?.source === monitor.source && previous?.azureProject === monitor.azure_project;
+      const manual = input.operation === "pull" || input.refresh;
+      this.store.set(syncKey, {
+        ...(same ? previous : {}), repository: monitor.repository, source: monitor.source,
+        azureProject: monitor.azure_project, branch: input.branch, lastChecked: Date.parse(data.checkedAt),
+        ...(manual ? { lastAttempt: Date.now(), error: undefined } : {}),
+      });
+    }
+    return { ...data, repository: monitor.repository, syncError: this.store.get<CodeSyncState | null>(syncKey, null)?.error || "" };
   }
+  async syncDue(now = Date.now()) {
+    if (this.syncing || !process.env.CODE_BROWSER_URL || !this.store.secret("azure.pat") || !syncAllowed(this.store.settings().syncSchedule, new Date(now))) return;
+    this.syncing = true;
+    try {
+      const monitors = this.store.db.prepare("SELECT * FROM pr_projects WHERE repository!='' AND code_sync_minutes>0").all() as Monitor[];
+      for (const monitor of monitors) {
+        if (!syncAllowed(this.store.settings().syncSchedule)) break;
+        const key = "code-sync:" + monitor.id;
+        const state = this.store.get<CodeSyncState | null>(key, null);
+        if (!state || state.repository !== monitor.repository || state.source !== monitor.source || state.azureProject !== monitor.azure_project || !state.branch) continue;
+        const settings = this.store.settings(monitor);
+        if (azureBase(settings.azureUrl) !== monitor.source || settings.azureProject !== monitor.azure_project) continue;
+        if (now - Math.max(state.lastAttempt || 0, state.lastChecked) < (monitor.code_sync_minutes ?? 30) * 60000) continue;
+        this.store.set(key, { ...state, lastAttempt: now });
+        try {
+          await this.request({ client: monitor.client, project: monitor.project, operation: "branches", refresh: true }, undefined, true);
+          const result = await this.request({ client: monitor.client, project: monitor.project, operation: "status", branch: state.branch, refresh: true }, undefined, true);
+          const latest = this.store.get<CodeSyncState>(key, state);
+          // Navigation may have selected another branch while the check was running.
+          if (latest.branch === state.branch && latest.repository === state.repository) {
+            this.store.set(key, { ...latest, lastChecked: Date.parse(result.checkedAt) || now, error: undefined });
+          }
+        } catch (error) {
+          const latest = this.store.get<CodeSyncState>(key, state);
+          if (latest.branch === state.branch && latest.repository === state.repository) {
+            this.store.set(key, { ...latest, error: error instanceof AppError ? error.message.slice(0, 1000) : "Фоновая проверка Git не выполнена. Повторите её кнопкой «Проверить»." });
+          }
+        }
+      }
+    } finally { this.syncing = false; }
+  }
+
 }
