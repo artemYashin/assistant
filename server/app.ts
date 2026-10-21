@@ -440,6 +440,7 @@ export function createApp(
     const context = contextSchema.parse(req.query);
     res.json({ audit: overviewAudit(store, 100), requests: recentUsage(store, context, 100) });
   });
+  app.get("/api/memories/export", (req, res) => res.json(store.memories(contextSchema.parse(req.query), true)));
   app.get("/api/memories", (req, res) =>
     res.json(store.memories(contextSchema.parse(req.query))),
   );

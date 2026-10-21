@@ -1,3 +1,4 @@
+import { ExportMemoryButton } from "./ExportMemory.js";
 import { currentRepositoryBranch } from "./repository-branch.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { VoiceBinding } from "./VoiceBinding.js";
@@ -1898,7 +1899,7 @@ function Memory({ memories, context, run, busy }: any) {
       <PageHeading
         title="Важное остаётся с вами"
         subtitle="Память доступна ассистенту с учётом выбранного заказчика и проекта."
-      />
+      ><ExportMemoryButton key={JSON.stringify(context)} context={context} /></PageHeading>
       <div className="memory-scopes">
         {[
           {

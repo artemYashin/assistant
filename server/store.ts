@@ -491,10 +491,10 @@ export class Store {
   source(s = this.settings()) {
     return `${s.azureUrl.replace(/\/$/, "")}|${s.azureProject}`;
   }
-  memories(context: Context) {
+  memories(context: Context, exportAll = false) {
     return this.db
       .prepare(
-        "SELECT * FROM memories WHERE scope='general' OR (scope='client' AND client=? AND ?!='') OR (scope='project' AND client=? AND project=? AND ?!='') ORDER BY created_at DESC LIMIT 200",
+        "SELECT * FROM memories WHERE scope='general' OR (scope='client' AND client=? AND ?!='') OR (scope='project' AND client=? AND project=? AND ?!='') ORDER BY created_at DESC" + (exportAll ? "" : " LIMIT 200"),
       )
       .all(
         context.client,
