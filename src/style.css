@@ -9042,7 +9042,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .voice-settings-block h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
 .voice-settings-row { display: flex; flex-direction: column; gap: 9px; padding: 14px 0; border-bottom: 1px solid #e2e8e4; margin-bottom: 12px; }
 .voice-settings-row > strong { font-size: 13px; font-weight: 500; }
-.voice-settings-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+
 .voice-settings-controls select { width: auto; max-width: 100%; }
 .voice-binding-key { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; min-height: 38px; border: 1px solid #cad8cf; border-radius: 7px; background: white; color: #365b46; cursor: pointer; }
 .voice-binding-key:hover { background: #edf4ef; }
@@ -9057,12 +9057,14 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-pr-card-meta > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .chat-pr-card-meta time { white-space: nowrap; }
 .chat-pr-card-body .chat-ticket-link { font-size: 11px; padding: 3px 7px; }
-.voice-settings-controls { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; padding-bottom: 24px; }
-.voice-binding { position: relative; min-width: 0; }
-.voice-binding-key { max-width: 100%; }
+.voice-settings-controls { display: grid; grid-template-columns: minmax(0, 1fr) 210px; align-items: center; gap: 12px; padding: 10px 12px 30px; border: 1px solid #d7e2db; border-radius: 10px; background: #fff; }
+.voice-binding { position: relative; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.voice-binding-key { max-width: 100%; min-width: 0; flex: 1; font-size: 12px; justify-content: flex-start; }
 .voice-binding-key kbd { overflow-wrap: anywhere; }
 .voice-binding small { position: absolute; left: 0; top: 100%; width: max-content; max-width: 100%; font-size: 11px; z-index: 2; }
-.voice-binding-cancel { position: absolute; right: 0; top: 100%; font-size: 11px; }
+.voice-binding-cancel { position: static; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; min-height: 38px; padding: 6px 8px; border: 1px solid #e1d5d5; border-radius: 7px; background: #fbf6f6; color: #8d4a4a; font-size: 11px; cursor: pointer; }
+.voice-binding-cancel:hover { background: #f5e8e8; }
+.voice-binding-cancel kbd { padding: 1px 3px; border: 1px solid #dfcccc; border-radius: 3px; font-size: 10px; }
 .voice-press-select .multi-select-label { display: none; }
 .voice-press-select .multi-select-trigger { min-height: 38px; }
 .voice-press-select .multi-select-panel { min-width: 100%; }
