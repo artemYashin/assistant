@@ -1511,17 +1511,6 @@ function Tickets({
           <button
             className="secondary ticket-filter-reset"
             title="Сбросить все фильтры и поиск"
-            disabled={
-              !rawTarget &&
-              !priorityFilter.length &&
-              !tagFilter.length &&
-              !typeFilter.length &&
-              !stateFilter.length &&
-              !assigneeFilter.length &&
-              !localFilter.length &&
-              !azureTagFilter.length &&
-              !query
-            }
             onClick={() => {
               if (rawTarget) navigate("/tickets");
               setPriorityFilter([]);
@@ -2932,6 +2921,11 @@ function Assistant({
         model: chatModel,
         context,
         sessionId,
+        viewedTicket: (() => {
+          const cards = [...document.querySelectorAll<HTMLElement>("dialog[open] .ticket-detail[data-viewed-ticket-id]")];
+          const card = cards.reverse().find(element => !element.closest("dialog:not([open])") && element.getClientRects().length > 0);
+          return card ? { id: Number(card.dataset.viewedTicketId), source: card.dataset.viewedTicketSource } : undefined;
+        })(),
         selectedTickets: selectedTickets.map(({ id, source }) => ({
           id,
           source,

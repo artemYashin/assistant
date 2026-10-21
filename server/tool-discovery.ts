@@ -31,7 +31,7 @@ const catalog: Record<string, string> = {
     "Set local assignees: ticket ID and developer IDs.",
   get_workspace_context:
     "Read customer/project/repository/developer settings; paginated.",
-  list_pull_requests: "List PR summaries in current context.",
+  list_pull_requests: "Count/filter local PRs; select summary fields, conflicts and review status. No Azure calls.",
   get_pull_request:
     "Read PR details/saved review: monitor, repository, PR number and section.",
   request_pull_request_review:

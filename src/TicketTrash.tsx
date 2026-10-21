@@ -249,16 +249,6 @@ export function TicketTrash({
           <button
             className="secondary ticket-filter-reset"
             title="Сбросить все фильтры и поиск"
-            disabled={
-              !query &&
-              !types.length &&
-              !states.length &&
-              !people.length &&
-              !localFilter.length &&
-              !azureTags.length &&
-              !priorities.length &&
-              !tags.length
-            }
             onClick={() => {
               setPriorities([]);
               setTags([]);

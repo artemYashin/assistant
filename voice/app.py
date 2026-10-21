@@ -15,6 +15,9 @@ model = None
 lock = threading.Lock()
 MAX_BYTES = 20 * 1024 * 1024
 logger = logging.getLogger("uvicorn.error")
+# Hint spellings, not instructions or text to append to the transcript.
+DEFAULT_HOTWORDS = "Orbit, Azure DevOps, GitHub, pull request, review, merge, diff, тикет, теги, критерии приёмки, локальное поручение"
+
 
 
 class RecognitionFailure(Exception):
@@ -53,7 +56,13 @@ def recognize(data: bytes):
                 raise RecognitionFailure("model_load", error) from error
             logger.info("[voice] stage=model_load complete")
         try:
-            segments, info = model.transcribe(io.BytesIO(data), beam_size=5, vad_filter=True)
+            segments, info = model.transcribe(
+                io.BytesIO(data),
+                beam_size=8,
+                patience=1.2,
+                vad_filter=True,
+                hotwords=os.getenv("WHISPER_HOTWORDS", DEFAULT_HOTWORDS).strip() or None,
+            )
             if info.duration > 150:
                 raise AudioTooLong()
             # faster-whisper performs inference while iterating this generator.

@@ -35,10 +35,12 @@ export function TicketFilterPanel({
     }
   });
   const id = useId();
+  const [resetVersion, setResetVersion] = useState(0);
   return (
     <section
       className={`ticket-filter-panel${expanded ? "" : " is-collapsed"}`}
       aria-label="Наборы и фильтры тикетов"
+      onClickCapture={event => { if (event.target instanceof Element && event.target.closest(".ticket-filter-reset")) setResetVersion(value => value + 1); }}
     >
       <button
         type="button"
@@ -75,6 +77,7 @@ export function TicketFilterPanel({
           onApply={onApply}
           disabled={disabled}
           compact={!expanded}
+          resetVersion={resetVersion}
         />
         {expanded && children}
       </div>

@@ -38,30 +38,38 @@ export function prTools(
   };
   return [
     defineTool("list_pull_requests", {
-      description:
-        "List locally synchronized PRs in the current client/project. Returns exact monitor/repo identities required by other PR tools. No Azure mutation. Paginate until hasMore=false; data may lag sync.",
+      description: "Read only locally synchronized PRs in the current customer/project. No Azure calls. Default identity/title only; select optional fields, filter status/conflicts/reviewStatus, or countOnly. Conflicts unknown is not conflict-free. Review status refers to the current head/target. Paginate with nextOffset; data may lag sync.",
       parameters: z.object({
         offset: z.number().int().nonnegative().default(0),
+        limit: z.number().int().min(1).max(50).default(20),
+        fields: z.array(z.enum(["sourceBranch", "targetBranch", "author", "status", "conflicts", "reviewStatus", "draft", "syncedAt", "createdAt"])).max(9).default([]),
+        status: z.enum(["active", "completed"]).optional(),
+        conflicts: z.enum(["yes", "no", "unknown"]).optional(),
+        reviewStatus: z.string().trim().min(1).max(50).optional(),
+        countOnly: z.boolean().default(false),
       }),
-      handler: async ({ offset = 0 }) => {
+      handler: async (input) => {
         assertActive();
-        const rows = store.db
-          .prepare(
-            `SELECT p.monitor,p.repo,p.number,substr(p.title,1,200) title,p.draft,p.in_scope,p.created_at,p.synced_at FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor WHERE ${scope} ORDER BY p.created_at DESC,p.monitor,p.repo,p.number LIMIT 21 OFFSET ?`,
-          )
-          .all(...scopeArgs, offset);
-        const total = store.db
-          .prepare(
-            `SELECT COUNT(*) total FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor WHERE ${scope}`,
-          )
-          .get(...scopeArgs) as any;
-        return {
-          scope: "local",
-          total: total.total,
-          items: rows.slice(0, 20),
-          hasMore: rows.length > 20,
-          nextOffset: rows.length > 20 ? offset + 20 : null,
-        };
+        const { offset = 0, limit = 20, fields = [], status, conflicts, reviewStatus, countOnly = false } = input;
+        const cte = `WITH scoped AS (SELECT p.monitor,p.repo,p.number,p.title,
+          p.source_branch AS sourceBranch,p.target_branch AS targetBranch,p.author,p.draft,
+          p.synced_at AS syncedAt,p.created_at AS createdAt,
+          CASE WHEN EXISTS(SELECT 1 FROM pr_completed c WHERE c.monitor=p.monitor AND c.repo=p.repo AND c.number=p.number) THEN 'completed' ELSE 'active' END AS status,
+          CASE WHEN json_valid(p.health) THEN CASE json_extract(p.health,'$.merge') WHEN 'conflicts' THEN 'yes' WHEN 'succeeded' THEN 'no' ELSE 'unknown' END ELSE 'unknown' END AS conflicts,
+          coalesce((SELECT r.status FROM pr_reviews r WHERE r.monitor=p.monitor AND r.repo=p.repo AND r.number=p.number AND r.head=p.head AND r.target=p.target ORDER BY r.rowid DESC LIMIT 1),'not_started') AS reviewStatus
+          FROM pull_requests p JOIN pr_projects m ON m.id=p.monitor WHERE ${scope})`;
+        const clauses: string[] = [], args: string[] = [];
+        for (const [key, value] of [["status", status], ["conflicts", conflicts], ["reviewStatus", reviewStatus]])
+          if (value) { clauses.push(`${key}=?`); args.push(value); }
+        const where = clauses.length ? " WHERE " + clauses.join(" AND ") : "";
+        const total = (store.db.prepare(cte + " SELECT count(*) AS total FROM scoped" + where).get(...scopeArgs, ...args) as any).total;
+        if (countOnly) return { scope: "local", total };
+        // Only schema-enumerated columns may enter the projection.
+        const allowed = new Set(["sourceBranch", "targetBranch", "author", "status", "conflicts", "reviewStatus", "draft", "syncedAt", "createdAt"]);
+        const columns = [...new Set(fields)].filter(field => allowed.has(field));
+        const rows = store.db.prepare(cte + ` SELECT monitor,repo,number,title${columns.map(field => `,${field}`).join("")} FROM scoped${where} ORDER BY createdAt DESC,monitor,repo,number LIMIT ? OFFSET ?`)
+          .all(...scopeArgs, ...args, limit + 1, offset);
+        return { scope: "local", total, items: rows.slice(0, limit), hasMore: rows.length > limit, nextOffset: rows.length > limit ? offset + limit : null };
       },
     }),
     defineTool("get_pull_request", {

@@ -56,6 +56,16 @@ test("PR chat tools paginate, isolate context and enqueue only explicit review r
       .handler!(args, {} as any) as Promise<any>;
   const first = await call("list_pull_requests", {});
   assert.equal(first.total, 25);
+  assert.deepEqual(Object.keys(first.items[0]).sort(), ["monitor", "number", "repo", "title"]);
+  assert.deepEqual(await call("list_pull_requests", { countOnly: true }), { scope: "local", total: 25 });
+  store.db.prepare("UPDATE pull_requests SET health=? WHERE number=1").run(JSON.stringify({ merge: "conflicts" }));
+  const conflicts = await call("list_pull_requests", { conflicts: "yes", fields: ["conflicts", "reviewStatus", "sourceBranch"] });
+  assert.equal(conflicts.total, 1);
+  assert.equal(conflicts.items[0].conflicts, "yes");
+  assert.equal(conflicts.items[0].reviewStatus, "not_started");
+  assert.equal(conflicts.items[0].description, undefined);
+  assert.equal((await call("list_pull_requests", { conflicts: "no", countOnly: true })).total, 0);
+  assert.equal((await call("list_pull_requests", { countOnly: true }, "", { client: "other", project: "P" })).total, 0);
   assert.equal(first.items.length, 20);
   const last = await call("list_pull_requests", { offset: first.nextOffset });
   assert.equal(last.items.length, 5);

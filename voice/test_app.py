@@ -89,7 +89,7 @@ class VoiceDiagnosticsTests(unittest.TestCase):
             )
             self.assertEqual(self.invoke()["text"], "hello")
             factory.assert_called_once_with("medium", device="cpu", compute_type="int8", download_root="/models")
-            self.assertEqual(factory.return_value.transcribe.call_args.kwargs, {"beam_size": 5, "vad_filter": True})
+            self.assertEqual(factory.return_value.transcribe.call_args.kwargs, {"beam_size": 8, "patience": 1.2, "vad_filter": True, "hotwords": app.DEFAULT_HOTWORDS})
 
     def test_success(self):
         app.model = SimpleNamespace(transcribe=lambda *a, **kw: (

@@ -58,6 +58,8 @@ services:
     build: ./voice
     environment:
       WHISPER_MODEL: "medium"
+      # Optional spelling hints; set WHISPER_HOTWORDS="" to disable.
+      WHISPER_HOTWORDS: "${WHISPER_HOTWORDS-Orbit, Azure DevOps, GitHub, pull request, review, merge, diff, тикет, теги, критерии приёмки, локальное поручение}"
       HF_HOME: "/models"
     volumes:
       - whisper-models:/models

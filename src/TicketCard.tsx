@@ -207,7 +207,7 @@ export function TicketCard({ reference }: { reference: string }) {
     });
   };
   return (
-    <article className="ticket-detail">
+    <article className="ticket-detail" data-viewed-ticket-id={card.id} data-viewed-ticket-source={card.source}>
       <div className="ticket-detail-layout">
         <aside className="ticket-detail-sidebar" aria-label="Поля тикета">
           <dl className="ticket-metadata">

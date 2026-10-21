@@ -20,12 +20,14 @@ export function TicketFilterPresets({
   onApply,
   disabled,
   compact = false,
+  resetVersion = 0,
 }: {
   storageKey: string;
   filters: Filters;
   onApply: (filters: Filters) => void;
   disabled: boolean;
   compact?: boolean;
+  resetVersion?: number;
 }) {
   const [presets, setPresets] = useState<Preset[]>(() => {
     try {
@@ -52,6 +54,7 @@ export function TicketFilterPresets({
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     try {
       const saved = localStorage.getItem(storageKey + ".selected");
+      if (saved === "") return null;
       if (saved && presets.some((p) => p.id === saved)) return saved;
     } catch {
       /* Optional browser storage. */
@@ -63,11 +66,15 @@ export function TicketFilterPresets({
     setName(preset?.name || "");
     try {
       if (preset) localStorage.setItem(storageKey + ".selected", preset.id);
-      else localStorage.removeItem(storageKey + ".selected");
+      else localStorage.setItem(storageKey + ".selected", "");
     } catch {
       /* Selection remains usable in this tab. */
     }
   }
+  const lastReset = useRef(resetVersion);
+  useEffect(() => {
+    if (lastReset.current !== resetVersion) { lastReset.current = resetVersion; select(null); }
+  }, [resetVersion]);
   const dragged = useRef<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{
