@@ -1150,3 +1150,11 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Reduced discussion/composer corner radius to 4 px, refined neutral backgrounds, borders, shadow and header separation. Inline discussion headings identify the referenced line.
 - A small upward pointer connects the first inline discussion (or empty-thread composer) to the code line. Out-of-view discussions have no misleading pointer.
 - TypeScript, whitespace checks and all five targeted diff/comment tests passed. Browser visual checks were not performed.
+
+### Diff workspace layout and discussion navigation (2026-10-21)
+
+- Grouped file navigation and side-by-side code into a bordered workspace with a shared header row: language selection on the left and filename on the right. Both content panes begin below that row, separated by a vertical divider; narrow screens stack the panes.
+- Removed budget accounting UI and symbol-limit counters. Existing omitted-content notes remain available.
+- Moved discussions below the diff into individual accordions. Their line actions select the matching file, scroll/focus the appropriate side and highlight the referenced line. Unavailable lines are labeled rather than navigating to unrelated code. New-comment composition remains next to the code.
+- Increased syntax palette saturation; calculated minimum contrast across white/added/removed backgrounds is 4.84:1 for the changed token colors.
+- TypeScript and whitespace checks passed. Tests explicitly skipped at the user's request. Browser visual/scroll checks were not performed.

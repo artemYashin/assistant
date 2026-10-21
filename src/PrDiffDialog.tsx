@@ -58,6 +58,9 @@ export function PrDiffDialog({
   const [commentsError, setCommentsError] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsVersion, setCommentsVersion] = useState(0);
+  const [lineTarget, setLineTarget] = useState<{
+    file: number; side: "left" | "right"; line: number;
+  } | null>(null);
   const [data, setData] = useState<Loaded | null>(null),
     [error, setError] = useState(""),
     [selected, setSelected] = useState(0),
@@ -97,6 +100,27 @@ export function PrDiffDialog({
     return () => { live = false; };
   }, [data, commit, pr.monitor, pr.repo, pr.number, commentsVersion]);
   const file = data?.files[selected];
+  useEffect(() => {
+    if (!lineTarget || selected !== lineTarget.file) return;
+    const frame = requestAnimationFrame(() => {
+      const cell = dialog.current?.querySelector<HTMLElement>(
+        `[data-diff-side="${lineTarget.side}"][data-diff-line="${lineTarget.line}"]`,
+      );
+      cell?.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      cell?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [lineTarget, selected]);
+  const commentLocation = (thread: CommentThread) => {
+    const side = thread.line ? "right" : "left";
+    const line = thread.line || thread.leftLine;
+    if (!line) return null;
+    const index = data?.files.findIndex((f) =>
+      (side === "right" ? f.after : f.before) === thread.path &&
+      f.hunks.some((h) => h.rows.some((r) => r[side]?.number === line)),
+    ) ?? -1;
+    return index < 0 ? null : { file: index, side, line } as const;
+  };
   const effectiveLanguage = language === "auto"
     ? diffLanguage(file?.after === "/dev/null" ? file.before : file?.after || "") : language;
   useEffect(() => {
@@ -118,13 +142,6 @@ export function PrDiffDialog({
   }, [file, effectiveLanguage]);
   const tokens = highlighted?.file === file && highlighted?.language === effectiveLanguage
     ? highlighted.value : undefined;
-  const unplacedThreads = threads.filter((thread) => !data?.files.some((f) =>
-    f.hunks.some((h) => h.rows.some((r) =>
-      thread.line
-        ? f.after === thread.path && r.right?.number === thread.line
-        : f.before === thread.path && !!thread.leftLine && r.left?.number === thread.leftLine,
-    )),
-  ));
   return (
     <dialog
       ref={dialog}
@@ -171,16 +188,6 @@ export function PrDiffDialog({
       )}
       {data && (
         <>
-          {!commit && <div className="pr-diff-comments-status">
-            <span role="status">{commentsLoading ? "Загружаю комментарии…" : `Обсуждения: ${threads.length}`}</span>
-            <button className="text-button" disabled={commentsLoading}
-              onClick={() => setCommentsVersion((v) => v + 1)}>Обновить комментарии</button>
-            {commentsError && <p className="error" role="alert">Комментарии не обновлены: {commentsError}</p>}
-          </div>}
-          {!!unplacedThreads.length && <details className="pr-diff-accounting">
-            <summary>Комментарии вне показанных строк · {unplacedThreads.length}</summary>
-            <CommentThreads threads={unplacedThreads} showPath />
-          </details>}
           <p className="pr-diff-meta">
             {commit ? "Родитель" : "Merge base"}{" "}
             <code>{data.base.slice(0, 12)}</code> →{" "}
@@ -194,70 +201,6 @@ export function PrDiffDialog({
               </>
             )}
           </p>
-          {data.limits && (
-            <p className="muted">
-              Diff: {data.limits.usedCharacters.toLocaleString("ru-RU")} /{" "}
-              {data.limits.totalCharacters.toLocaleString("ru-RU")} символов ·
-              на файл до {data.limits.perFileCharacters.toLocaleString("ru-RU")}{" "}
-              · остаток общего бюджета:{" "}
-              {(
-                data.limits.totalCharacters - data.limits.usedCharacters
-              ).toLocaleString("ru-RU")}{" "}
-              · исключено файлов: {data.limits.ignoredFiles} (расход 0).
-            </p>
-          )}
-          {data.diagnostics && (
-            <details className="pr-diff-accounting">
-              <summary>
-                <FileCode2 size={16} />
-                Исключения и расход бюджета
-              </summary>
-              <p>
-                {data.diagnostics.client} / {data.diagnostics.project} ·{" "}
-                {data.diagnostics.repository}
-              </p>
-              <p className="muted">
-                Бюджет расходуют только включённые diff, вместе с заголовками и
-                строками контекста. Пропущенные файлы его не расходуют. Лимит
-                одного файла проверяется отдельно.
-              </p>
-              <h3>Применённые правила</h3>
-              {data.diagnostics.rules.length ? (
-                <ul>
-                  {data.diagnostics.rules.map((rule) => (
-                    <li key={rule}>
-                      <code>{rule}</code>
-                      {data.diagnostics!.unmatchedRules.includes(rule) &&
-                        " — нет совпадений в загруженном списке изменений"}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Для этого проекта исключения не заданы.</p>
-              )}
-              <h3>Исключённые файлы · {data.limits?.ignoredFiles}</h3>
-              <ul>
-                {data.diagnostics.excludedPaths.map((path, i) => (
-                  <li key={i}>
-                    <code>{path}</code> — 0 символов
-                  </li>
-                ))}
-              </ul>
-              {(data.limits?.ignoredFiles || 0) >
-                data.diagnostics.excludedPaths.length && (
-                <p>Показаны первые 100 исключённых путей.</p>
-              )}
-              <h3>Включено в бюджет</h3>
-              <ul>
-                {data.diagnostics.includedFiles.map((file, i) => (
-                  <li key={i}>
-                    <code>{file.path}</code> —{" "}
-                    {file.characters.toLocaleString("ru-RU")} символов
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
           {!!data.notes.length && (
             <div className="pr-diff-notes" role="note">
               <strong>Покрытие diff и причины пропусков</strong>
@@ -277,13 +220,31 @@ export function PrDiffDialog({
           )}
           {!!data.files.length && (
             <div className="pr-diff-layout">
+              <div className="pr-diff-toolbar-language">
+                <div className="pr-diff-language">
+                  <SingleSelect label="Подсветка кода" value={language}
+                    options={[
+                      { value: "auto", label: `Авто · ${diffLanguages.find((l) => l.value === diffLanguage(file?.after === "/dev/null" ? file.before : file?.after || ""))?.label || "обычный текст"}` },
+                      { value: "plaintext", label: "Без подсветки" }, ...diffLanguages,
+                    ]}
+                    onChange={(value) => {
+                      setLanguage(value);
+                      try { localStorage.setItem(diffLanguageStorageKey, value); } catch { /* Storage may be disabled. */ }
+                    }} />
+                </div>
+              </div>
+              <div className="pr-diff-toolbar-file">
+                <FileCode2 size={18} aria-hidden="true" />
+                <h3>{file && (file.before !== file.after
+                  ? `${file.before} → ${file.after}` : file.after)}</h3>
+              </div>
               <nav className="pr-diff-files" aria-label="Файлы изменений">
                 {data.files.map((f, i) => (
                   <button
                     key={i}
                     aria-pressed={i === selected}
                     title={f.after === "/dev/null" ? f.before : f.after}
-                    onClick={() => setSelected(i)}
+                    onClick={() => { setSelected(i); setLineTarget(null); }}
                   >
                     <FileCode2 size={16} />
                     <span>
@@ -308,22 +269,6 @@ export function PrDiffDialog({
                   key={selected}
                   aria-label={`Изменения ${file.after}`}
                 >
-                  <h3>
-                    {file.before !== file.after
-                      ? `${file.before} → ${file.after}`
-                      : file.after}
-                  </h3>
-                  <div className="pr-diff-language">
-                    <SingleSelect label="Подсветка кода" value={language}
-                      options={[
-                        { value: "auto", label: `Авто · ${diffLanguages.find((l) => l.value === diffLanguage(file.after === "/dev/null" ? file.before : file.after))?.label || "обычный текст"}` },
-                        { value: "plaintext", label: "Без подсветки" }, ...diffLanguages,
-                      ]}
-                      onChange={(value) => {
-                        setLanguage(value);
-                        try { localStorage.setItem(diffLanguageStorageKey, value); } catch { /* Storage may be disabled. */ }
-                      }} />
-                  </div>
                   {!file.hunks.length ? (
                     <p>Текст не изменился (например, файл переименован).</p>
                   ) : (
@@ -354,8 +299,9 @@ export function PrDiffDialog({
                                 <tr key={j}>
                                   <DiffCell
                                     line={r.left}
+                                    side="left"
+                                    highlighted={lineTarget?.file === selected && lineTarget.side === "left" && lineTarget.line === r.left?.number}
                                     tokens={r.left && tokens?.left[r.left.number]}
-                                    threads={threads.filter((t) => !t.line && !!r.left && t.path === file.before && t.leftLine === r.left.number)}
                                     kind={
                                       r.kind === "change"
                                         ? "removed"
@@ -364,8 +310,9 @@ export function PrDiffDialog({
                                   />
                                   <DiffCell
                                     line={r.right}
+                                    side="right"
+                                    highlighted={lineTarget?.file === selected && lineTarget.side === "right" && lineTarget.line === r.right?.number}
                                     tokens={r.right && tokens?.right[r.right.number]}
-                                    threads={threads.filter((t) => !!r.right && t.path === file.after && t.line === r.right.number)}
                                     onComment={!commit && data.canComment ? async (content) => {
                                       await api("/pr/line-comment", "POST", {
                                         monitor: pr.monitor, repo: pr.repo, number: pr.number,
@@ -390,6 +337,21 @@ export function PrDiffDialog({
               )}
             </div>
           )}
+          {!commit && <section className="pr-diff-discussions" aria-label="Комментарии к pull request">
+            <div className="pr-diff-comments-status">
+              <h3>Комментарии · {threads.length}</h3>
+              <button className="text-button" disabled={commentsLoading}
+                onClick={() => setCommentsVersion((v) => v + 1)}>Обновить</button>
+              {commentsLoading && <span role="status">Загружаю…</span>}
+            </div>
+            {commentsError && <p className="error" role="alert">Комментарии не обновлены: {commentsError}</p>}
+            {!commentsLoading && !commentsError && !threads.length && <p className="muted">Комментариев пока нет.</p>}
+            <CommentThreads threads={threads} canLocate={(thread) => !!commentLocation(thread)}
+              onLocate={(thread) => {
+                const target = commentLocation(thread);
+                if (target) { setSelected(target.file); setLineTarget(target); }
+              }} />
+          </section>}
           <p className="muted">
             Показаны изменённые участки с контекстом. Просмотр не запускает LLM
             и не меняет код.
@@ -403,13 +365,15 @@ function DiffCell({
   line,
   kind,
   onComment,
-  threads = [],
   tokens,
+  side,
+  highlighted = false,
 }: {
   line?: DiffLine;
   kind: "context" | "added" | "removed";
   onComment?: (content: string) => Promise<void>;
-  threads?: CommentThread[];
+  side: "left" | "right";
+  highlighted?: boolean;
   tokens?: CodeToken[];
 }) {
   const [editing, setEditing] = useState(false);
@@ -419,7 +383,8 @@ function DiffCell({
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   return (
-    <td className={line ? `diff-${kind}` : "diff-empty"}>
+    <td className={`${line ? `diff-${kind}` : "diff-empty"}${highlighted ? " pr-diff-comment-target" : ""}`}
+      data-diff-side={side} data-diff-line={line?.number} tabIndex={highlighted ? -1 : undefined}>
       {line && (
         <div className="pr-diff-line">
           <span className="pr-diff-number">
@@ -442,10 +407,9 @@ function DiffCell({
           ) : line.text || " "}</code>
         </div>
       )}
-      <CommentThreads threads={threads} />
       {sent && <p className="pr-diff-comment-sent" role="status">Комментарий отправлен в Azure.</p>}
       {editing && onComment && (
-        <form className={`pr-diff-comment-form${!threads.length && !sent ? " pr-diff-line-pointer" : ""}`} onSubmit={async (event) => {
+        <form className={`pr-diff-comment-form${!sent ? " pr-diff-line-pointer" : ""}`} onSubmit={async (event) => {
           event.preventDefault();
           if (pending.current || !content.trim()) return;
           pending.current = true;
@@ -486,26 +450,31 @@ function DiffCell({
   );
 }
 
-function CommentThreads({ threads, showPath = false }: { threads: CommentThread[]; showPath?: boolean }) {
+function CommentThreads({ threads, canLocate, onLocate }: {
+  threads: CommentThread[];
+  canLocate: (thread: CommentThread) => boolean;
+  onLocate: (thread: CommentThread) => void;
+}) {
   const statuses: Record<string, string> = {
     active: "Открыто", fixed: "Решено", closed: "Закрыто", wontFix: "Без изменений",
     byDesign: "По замыслу", pending: "Ожидает", unknown: "",
     "1": "Открыто", "2": "Решено", "3": "Без изменений", "4": "Закрыто", "5": "По замыслу", "6": "Ожидает",
   };
-  return <>{threads.map((thread, index) => <div
-    className={`pr-diff-thread${!showPath && index === 0 ? " pr-diff-line-pointer" : ""}`} key={thread.id}>
-    <div className="pr-diff-thread-heading">
-      <strong>{!showPath && (thread.line || thread.leftLine)
-        ? `Строка ${thread.line || thread.leftLine} · обсуждение #${thread.id}`
-        : `Обсуждение #${thread.id}`}</strong>
+  return <>{threads.map((thread) => <details className="pr-diff-thread pr-diff-thread-accordion" key={thread.id}>
+    <summary className="pr-diff-thread-heading">
+      <MessageSquarePlus size={15} aria-hidden="true" />
+      <strong>{thread.comments[0]?.author} · {thread.path || "Общий комментарий"}
+        {(thread.line || thread.leftLine) ? ` · строка ${thread.line || thread.leftLine}` : ""}</strong>
       <span>{statuses[String(thread.status)] || ""}</span>
-    </div>
-    {showPath && <div className="muted">{thread.path || "Общий комментарий к PR"}{(thread.line || thread.leftLine) ? ` · строка ${thread.line || thread.leftLine}` : ""}</div>}
+    </summary>
+    {canLocate(thread) ? <button type="button" className="secondary pr-diff-locate-comment"
+      onClick={() => onLocate(thread)}>Показать строку {thread.line || thread.leftLine} · {thread.line ? "После" : "До"}</button>
+      : thread.path && <p className="muted">Эта строка не входит в показанный diff.</p>}
     {thread.comments.map((comment) => <article key={comment.id}>
       <header><strong>{comment.author}</strong>{comment.createdAt && <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString("ru-RU")}</time>}</header>
       <p>{comment.content}</p>
     </article>)}
-  </div>)}</>;
+  </details>)}</>;
 }
 
 function DiffFileName({ path }: { path: string }) {

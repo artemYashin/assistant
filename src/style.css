@@ -3917,8 +3917,37 @@ summary > svg {
 .pr-diff-layout {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
-  gap: 16px;
+  gap: 0;
   margin: 16px 0;
+  border: 1px solid #d6dfe7;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 8px #26394c0a;
+}
+.pr-diff-toolbar-language,
+.pr-diff-toolbar-file {
+  min-width: 0;
+  padding: 12px;
+  background: #f1f5f8;
+  border-bottom: 1px solid #d6dfe7;
+}
+.pr-diff-toolbar-language {
+  border-right: 1px solid #d6dfe7;
+  border-top-left-radius: 6px;
+}
+.pr-diff-toolbar-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top-right-radius: 6px;
+}
+.pr-diff-toolbar-file > svg { flex-shrink: 0; color: #637b90; }
+.pr-diff-toolbar-file h3 {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .pr-diff-files {
   display: flex;
@@ -3926,6 +3955,11 @@ summary > svg {
   gap: 4px;
   max-height: 65vh;
   overflow: auto;
+  padding: 8px;
+  border-right: 1px solid #d6dfe7;
+  background: #f8fafb;
+  border-bottom-left-radius: 6px;
+  box-sizing: border-box;
 }
 .pr-diff-files button {
   display: flex;
@@ -3956,16 +3990,11 @@ summary > svg {
 .pr-diff-code {
   min-width: 0;
 }
-.pr-diff-code h3 {
-  margin: 0 0 10px;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
+.pr-diff-code > p { padding: 12px; }
 .pr-diff-scroll {
   overflow: auto;
   max-height: 65vh;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0 0 6px 0;
 }
 .pr-diff-table {
   width: 100%;
@@ -4021,26 +4050,26 @@ summary > svg {
   background: none;
   padding: 0;
 }
-.pr-diff-language { width: min(280px, 100%); margin: 0 0 10px; }
+.pr-diff-language { width: 100%; margin: 0; }
 .pr-diff-language .single-select { width: 100%; }
 .pr-diff-language .multi-select-panel { position: absolute; z-index: 5; }
 .pr-diff-language .multi-select-options { max-height: min(260px, 35vh); }
 .pr-diff-line .hljs-keyword,
-.pr-diff-line .hljs-selector-tag { color: #963048; }
+.pr-diff-line .hljs-selector-tag { color: #c21845; }
 .pr-diff-line .hljs-string,
-.pr-diff-line .hljs-regexp,
-.pr-diff-line .hljs-attr { color: #145574; }
+.pr-diff-line .hljs-regexp { color: #006b52; }
+.pr-diff-line .hljs-attr { color: #0759ca; }
 .pr-diff-line .hljs-number,
-.pr-diff-line .hljs-literal,
-.pr-diff-line .hljs-variable { color: #70429c; }
+.pr-diff-line .hljs-literal { color: #b04400; }
+.pr-diff-line .hljs-variable { color: #0759ca; }
 .pr-diff-line .hljs-title,
 .pr-diff-line .hljs-built_in,
-.pr-diff-line .hljs-type { color: #62409c; }
+.pr-diff-line .hljs-type { color: #7c28cc; }
 .pr-diff-line .hljs-comment,
-.pr-diff-line .hljs-quote { color: #59666a; font-style: italic; }
+.pr-diff-line .hljs-quote { color: #536b80; font-style: italic; }
 .pr-diff-line .hljs-meta,
 .pr-diff-line .hljs-name,
-.pr-diff-line .hljs-tag { color: #85501b; }
+.pr-diff-line .hljs-tag { color: #a44800; }
 .pr-diff-line .hljs-operator,
 .pr-diff-line .hljs-punctuation { color: #384651; }
 .pr-diff-number {
@@ -4140,6 +4169,32 @@ summary > svg {
 .pr-diff-thread article { margin-top: 8px; }
 .pr-diff-thread article + article { padding-top: 8px; border-top: 1px solid #dbe3ec; }
 .pr-diff-thread p { margin: 4px 0 0; white-space: pre-wrap; }
+.pr-diff-discussions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #dbe3ec;
+}
+.pr-diff-discussions h3 { margin: 0; font-size: 14px; }
+.pr-diff-discussions .pr-diff-comments-status { margin-bottom: 8px; }
+.pr-diff-thread-accordion { margin: 8px 0; padding: 0 12px; }
+.pr-diff-thread-accordion > summary {
+  margin: 0 -12px;
+  padding: 10px 12px;
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.pr-diff-thread-accordion > summary:hover { background: #edf3fa; }
+.pr-diff-thread-accordion[open] { padding-bottom: 12px; }
+.pr-diff-thread-accordion[open] > summary { border-bottom: 1px solid #dbe3ec; }
+.pr-diff-thread-accordion > summary > strong { flex: 1; min-width: 0; }
+.pr-diff-locate-comment { margin-top: 10px; padding: 5px 9px; }
+.pr-diff-table td.pr-diff-comment-target {
+  box-shadow: inset 0 0 0 2px #2c70c8;
+  background: #e2efff;
+  scroll-margin-top: 45px;
+  outline: none;
+}
 .pr-diff-table .pr-diff-hunk td {
   padding: 8px 12px;
   font:
@@ -4162,7 +4217,12 @@ summary > svg {
   }
   .pr-diff-files {
     max-height: 150px;
+    border-right: 0;
+    border-bottom: 1px solid #d6dfe7;
+    border-radius: 0;
   }
+  .pr-diff-toolbar-language { border-right: 0; border-radius: 6px 6px 0 0; }
+  .pr-diff-toolbar-file { border-radius: 0; }
   .pr-diff-dialog {
     padding: 14px;
   }
