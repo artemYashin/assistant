@@ -1,3 +1,4 @@
+import { SingleSelect } from "./SingleSelect.js";
 import { VoiceBinding } from "./VoiceBinding.js";
 import { currentViewedTicket, useViewedTicket } from "./viewed-ticket.js";
 import { CodeBrowserPage } from "./CodeBrowserPage.js";
@@ -2518,17 +2519,15 @@ function Settings({ settings, context, run, busy }: any) {
           <h2><Sparkles size={22} />AI Assistant</h2>
           <div className="voice-settings-block">
             <h3><Mic size={17} />Голосовой помощник</h3>
-            <p className="muted">Открывает сайдбар и начинает запись. Сочетания работают и в полях ввода, независимо от раскладки. При одинарном нажатии выбранная клавиша запускает запись вместо ввода символа.</p>
+            <p className="muted">Открывает сайдбар и начинает запись. В полях ввода обычные буквы и цифры не запускают запись. Специальные клавиши, пробел и сочетания с модификаторами работают и при вводе текста. Привязки не зависят от раскладки.</p>
             {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
               <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
               <div className="voice-settings-controls">
                 <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} onChange={value => set(`voice${kind}Key`, value)} />
-                <select aria-label={`Нажатие: ${kind === "Current" ? "текущий" : "новый"} чат`} value={form[`voice${kind}Press`] ?? "double"} onChange={event => set(`voice${kind}Press`, event.target.value)}>
-                  <option value="double">Двойное нажатие</option><option value="single">Одинарное нажатие</option>
-                </select>
+                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
               </div>
             </div>)}
-            <small className="muted">Enter — закончить и отправить запись; Esc — отменить. При выборе клавиши Esc отменяет её запись.</small>
+            <small className="muted">Enter — закончить и отправить запись; Esc — отменить. Для назначения модификатора нажмите и отпустите его; для сочетания удерживайте его и нажмите нужную клавишу. Некоторые системные сочетания перехватывает ОС или браузер.</small>
           </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-assistant-panel`} aria-labelledby={`${settingsTabId}-assistant`} hidden={settingsTab !== "assistant"}>

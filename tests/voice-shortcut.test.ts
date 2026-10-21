@@ -20,7 +20,7 @@ test("modifiers, composition and other keys cannot trigger voice recording", () 
   }
   const press = createVoiceShortcut();
   assert.equal(press(m, 0, true), false);
-  assert.equal(press(m, 100, true), true);
+  assert.equal(press(m, 100, true), false);
   assert.equal(press(m, 200, false), false);
 });
 test("recordings shorter than two seconds are discarded", () => {
@@ -69,4 +69,44 @@ test("single press fires immediately, ignores holding, and coexists with double 
   assert.equal(press(n, 300), false);
   assert.equal(press(one, 350), true);
   assert.equal(press(n, 400), false);
+});
+
+test("space, standalone modifiers and modifier combinations can be bound", () => {
+  for (const [binding, event] of [
+    ["Space", { ...m, code: "Space" }],
+    ["ControlLeft", { ...m, code: "ControlLeft", ctrlKey: true }],
+    ["MetaLeft", { ...m, code: "MetaLeft", metaKey: true }],
+    ["ShiftRight", { ...m, code: "ShiftRight", shiftKey: true }],
+    ["AltLeft", { ...m, code: "AltLeft", altKey: true }],
+    ["Ctrl+Shift+KeyM", { ...m, ctrlKey: true, shiftKey: true }],
+  ] as const) {
+    const press = createVoiceShortcut([binding]);
+    assert.equal(press(event, 0), false);
+    assert.equal(press(event, 100), true);
+  }
+});
+
+
+test("typing suppresses plain alphanumeric shortcuts and resets double press", () => {
+  for (const code of ["KeyM", "Digit1", "Numpad1"]) {
+    const press = createVoiceShortcut([code]);
+    const event = { ...m, code };
+    assert.equal(press(event, 0), false);
+    assert.equal(press(event, 100, true), false);
+    assert.equal(press(event, 200), false);
+    assert.equal(press(event, 300), true);
+    assert.equal(createVoiceShortcut([code], [code])(event, 0, true), false);
+  }
+});
+test("special keys and modifier combinations still work inside editors", () => {
+  for (const [binding, event] of [
+    ["Space", { ...m, code: "Space" }],
+    ["ControlLeft", { ...m, code: "ControlLeft", ctrlKey: true }],
+    ["Ctrl+KeyM", { ...m, ctrlKey: true }],
+  ] as const) {
+    const press = createVoiceShortcut([binding]);
+    assert.equal(press(event, 0, true), false);
+    assert.equal(press(event, 100, true), true);
+    assert.equal(createVoiceShortcut([binding], [binding])(event, 0, true), true);
+  }
 });

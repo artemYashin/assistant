@@ -1,3 +1,4 @@
+import { voiceBinding, voiceBindingLabel } from "../server/voice-binding.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Mic, X, Square, LoaderCircle, AlertCircle } from "lucide-react";
@@ -134,24 +135,34 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
         if (!event.repeat && phaseRef.current === "recording") actions.current.finish(true);
         return;
       }
+      const binding = voiceBinding(event);
       const target = event.target instanceof Element ? event.target : null;
       if (event.repeat) return;
-      const matched = doublePress(event, performance.now());
+      const active = document.activeElement;
+      const isEditor = (element: Element | null) => !!element && (
+        !!element.closest("input, textarea, [role='textbox'], [role='combobox']") ||
+        (element instanceof HTMLElement && element.isContentEditable)
+      );
+      const editing = isEditor(target) || isEditor(active);
+      const matched = doublePress(event, performance.now(), editing);
+      if (editing && /^(Key[A-Z]|Digit[0-9]|Numpad[0-9])$/.test(binding)) {
+        restoreTyping = undefined; previousTarget = null; return;
+      }
       if (!matched) {
-        restoreTyping = [currentKey, newKey].includes(event.code) && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !event.isComposing
+        restoreTyping = [currentKey, newKey].includes(binding) && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing
           ? captureTyping(target, event.key) : undefined;
         previousTarget = event.target;
         return;
       }
       if (phaseRef.current === "idle" && !latest.current.enabled) { restoreTyping = undefined; return; }
       event.preventDefault(); event.stopPropagation();
-      if (!((event.code === currentKey && currentPress === "single") || (event.code === newKey && newPress === "single")) && previousTarget === event.target) restoreTyping?.();
+      if (!((binding === currentKey && currentPress === "single") || (binding === newKey && newPress === "single")) && previousTarget === event.target) restoreTyping?.();
       restoreTyping = undefined;
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (phaseRef.current === "idle" || phaseRef.current === "error") {
         if (!latest.current.enabled) return;
         latest.current.onOpen();
-        if (event.code === newKey) latest.current.onNewChat();
+        if (binding === newKey) latest.current.onNewChat();
         else void actions.current.start();
       }
       else if (phaseRef.current === "transcribing") actions.current.cancel();
@@ -182,7 +193,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
       <strong id="voice-shortcut-title">{phase === "recording" ? "Слушаю вас" : phase === "requesting" ? "Включаю микрофон…" : phase === "transcribing" ? "Распознаю речь…" : "Не получилось записать"}</strong>
       <div className="voice-shortcut-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ animationDelay: `${i * -0.13}s` }} />)}</div>
       <p className="voice-shortcut-target" title={title}>В текущий чат · {title}</p>
-      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? `Enter или ${currentKey.replace(/^(Key|Digit)/, "")}${currentPress === "double" ? " " + currentKey.replace(/^(Key|Digit)/, "") : ""} — закончить и отправить` : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
+      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? `Enter или ${voiceBindingLabel(currentKey)}${currentPress === "double" ? " " + voiceBindingLabel(currentKey) : ""} — закончить и отправить` : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
       {phase === "recording" && <div className="voice-shortcut-footer"><time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</time>
         <button type="button" onClick={() => finish()}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}

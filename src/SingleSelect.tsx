@@ -8,12 +8,14 @@ export function SingleSelect({
   onChange,
   disabled = false,
   onSearch,
+  searchable = true,
 }: {
   label: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  searchable?: boolean;
   onSearch?: (query: string) => void;
 }) {
   const [open, setOpen] = useState(false),
@@ -105,7 +107,7 @@ export function SingleSelect({
           role="dialog"
           aria-labelledby={`${id}-label`}
         >
-          <div className="multi-select-search">
+          {searchable && <div className="multi-select-search">
             <Search size={15} />
             <input
               ref={search}
@@ -118,6 +120,7 @@ export function SingleSelect({
               }}
             />
           </div>
+          }
           <div className="multi-select-options">
             {visible.map((o) => (
               <button

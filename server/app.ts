@@ -1,3 +1,4 @@
+import { voiceBindingPattern } from "./voice-binding.js";
 import { CodeBrowser, codeBrowserSchema } from "./code-browser.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
 import { azureBrowseSchema } from "./azure-browser.js";
@@ -55,8 +56,8 @@ const settingsSchema = z
   .object({
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
     voiceNewPress: z.enum(["single", "double"]).default("double"),
-    voiceCurrentKey: z.string().regex(/^(Key[A-Z]|Digit[0-9])$/).default("KeyM"),
-    voiceNewKey: z.string().regex(/^(Key[A-Z]|Digit[0-9])$/).default("KeyN"),
+    voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),
+    voiceNewKey: z.string().max(80).regex(voiceBindingPattern).default("KeyN"),
     githubClientId: text,
     model: text,
     reviewModel: text.default(""),
