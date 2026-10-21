@@ -1066,10 +1066,12 @@ export class PullRequests {
           },
           pullRequestThreadContext: {
             changeTrackingId: change.changeTrackingId,
-            iterationContext: { firstComparingIteration: 0, secondComparingIteration: iteration.id },
+            // Unlike changes?$compareTo=0, thread context uses equal positive
+            // iteration IDs to represent comparison against the common commit.
+            iterationContext: { firstComparingIteration: iteration.id, secondComparingIteration: iteration.id },
           },
         }),
-      }, "Azure PR comment (Code: Read & Write)",
+      }, "Комментарий Azure PR", { includeErrorMessage: true },
     );
     if (!Number.isInteger(result.id))
       throw new AppError(502, "Azure не подтвердил комментарий. Проверьте PR перед повторной отправкой.");
@@ -1091,7 +1093,7 @@ export class PullRequests {
     if (!Number.isInteger(iteration?.id))
       throw new AppError(409, "Не удалось сопоставить комментарии с версией diff. Откройте diff заново.");
     const result = await this.get(m,
-      `${root}/threads?$iteration=${iteration.id}&$baseIteration=0`, credentials);
+      `${root}/threads?$iteration=${iteration.id}&$baseIteration=${iteration.id}`, credentials);
     if (!Array.isArray(result.value)) throw new AppError(502, "Azure не вернул комментарии PR");
     if (this.credentials(m).pat !== credentials.pat)
       throw new AppError(409, "Подключение Azure изменилось");

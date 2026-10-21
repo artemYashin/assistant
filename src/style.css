@@ -4058,6 +4058,26 @@ summary > svg {
 }
 .pr-diff-comment-form textarea { width: 100%; box-sizing: border-box; }
 .pr-diff-comment-form > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.pr-diff-comment-submit {
+  width: fit-content;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 5px #244c3420;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+.pr-diff-comment-submit:hover:not(:disabled) {
+  box-shadow: 0 3px 8px #244c3433;
+}
+.pr-diff-comment-submit:focus-visible {
+  outline: 2px solid #367253;
+  outline-offset: 3px;
+}
+.pr-diff-comment-submit:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.pr-diff-comment-submit > svg { flex-shrink: 0; }
 .pr-diff-comment-sent { margin: 4px 8px; font: 12px/1.4 system-ui, sans-serif; color: #25633f; }
 .pr-diff-comments-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; }
 .pr-diff-thread {

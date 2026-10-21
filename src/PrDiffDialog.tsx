@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, X } from "lucide-react";
+import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, X } from "lucide-react";
 import { api } from "./api.js";
 import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
 
@@ -422,7 +422,11 @@ function DiffCell({
           </label>
           {error && <p className="error" role="alert">{error}</p>}
           <div>
-            <button type="submit" disabled={busy || !content.trim()}>
+            <button type="submit" className="primary pr-diff-comment-submit"
+              disabled={busy || !content.trim()} aria-busy={busy}>
+              {busy
+                ? <LoaderCircle size={15} className="spin" aria-hidden="true" />
+                : <Send size={15} aria-hidden="true" />}
               {busy ? "Отправляю…" : "Отправить в Azure"}
             </button>
             <button type="button" className="secondary" disabled={busy}

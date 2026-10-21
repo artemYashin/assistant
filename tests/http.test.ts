@@ -53,6 +53,32 @@ test("JSON API responses still load normally", async (t) => {
   assert.deepEqual(await requestJson("https://ado.test"), { value: [] });
 });
 
+test("opt-in Azure JSON diagnostics expose only the sanitized message without retrying writes", async (t) => {
+  const logs: string[] = [];
+  t.mock.method(console, "error", (...args: unknown[]) => logs.push(JSON.stringify(args)));
+  const pat = "private-pat-value";
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    return Response.json({
+      message: `Invalid firstComparingIteration. ${pat} token=secret-query`,
+      innerException: { message: "private-inner-detail" },
+    }, { status: 400 });
+  });
+  await assert.rejects(requestJson("https://ado.test", {
+    method: "POST",
+    headers: { Authorization: "Basic " + Buffer.from(":" + pat).toString("base64") },
+  }, "Комментарий Azure PR", { includeErrorMessage: true }), (error: any) => {
+    assert.equal(error.upstreamStatus, 400);
+    assert.match(error.message, /Invalid firstComparingIteration/);
+    for (const secret of [pat, "secret-query", "private-inner-detail"])
+      assert.ok(!error.message.includes(secret));
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.ok(!logs.join("").includes(pat));
+});
+
 test("HTML error logs include readable text and redact secrets", async (t) => {
   const logs: string[] = [];
   t.mock.method(console, "error", (...args: unknown[]) =>

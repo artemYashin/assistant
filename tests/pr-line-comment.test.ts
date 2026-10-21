@@ -34,12 +34,12 @@ test("line comments use the right file, line and iteration; stale/invalid target
         comments: [{ parentCommentId: 0, content: input.content, commentType: 1 }],
         status: 1,
         threadContext: { filePath: input.path, rightFileStart: { line: 2, offset: 1 }, rightFileEnd: { line: 2, offset: 1 } },
-        pullRequestThreadContext: { changeTrackingId: 7, iterationContext: { firstComparingIteration: 0, secondComparingIteration: 3 } },
+        pullRequestThreadContext: { changeTrackingId: 7, iterationContext: { firstComparingIteration: 3, secondComparingIteration: 3 } },
       });
       data = { id: 55 };
     } else if (url.pathname.endsWith("/threads")) {
       assert.equal(url.searchParams.get("$iteration"), "3");
-      assert.equal(url.searchParams.get("$baseIteration"), "0");
+      assert.equal(url.searchParams.get("$baseIteration"), "3");
       data = { value: [
         { id: 55, status: "active", threadContext: { filePath: input.path, rightFileStart: { line: 2 } },
           comments: [{ id: 1, content: input.content, author: { displayName: "Author" }, commentType: "text" },

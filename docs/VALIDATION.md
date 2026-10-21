@@ -1129,3 +1129,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Ticket details now reuse the existing local tag editor for locally stored tickets, including trash. Metadata events update the displayed badges after saving. Unimported ticket tags and Azure tags remain read-only.
 - The tag list wraps within the sidebar while the edit button keeps its space.
 - TypeScript and whitespace checks passed. Tests skipped at the user's explicit request; browser interactions were not exercised.
+
+### Azure PR comment iteration fix (2026-10-21)
+
+- Thread creation now uses equal positive iteration IDs for comparison with the common commit, as required by CommentIterationContext. Thread reads use the same base iteration; changes lookup retains its distinct compareTo=0 API convention.
+- Comment creation opts into bounded, sanitized Azure JSON error messages. HTTP 400 no longer misleadingly suggests a PAT problem. No automatic write retries were introduced.
+- Styled the comment submit button with the primary treatment, send icon, loading spinner, hover/focus and disabled states.
+- All six targeted HTTP/comment tests passed, including diagnostic redaction and iteration mapping. TypeScript and whitespace checks passed. Live Azure writes and browser visual checks were not exercised.

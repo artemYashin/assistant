@@ -76,6 +76,7 @@ export async function requestJson(
   url: string,
   init: RequestInit = {},
   service = "Сервис",
+  options: { includeErrorMessage?: boolean } = {},
 ): Promise<any> {
   let pageText: string | undefined;
   const fail = (
@@ -128,9 +129,41 @@ export async function requestJson(
   if (contentType.toLowerCase().includes("text/html"))
     pageText = await htmlPreview(response, init);
   if (!response.ok) {
+    let detail = "";
+    if (options.includeErrorMessage && contentType.toLowerCase().includes("json")) {
+      // Only a bounded, sanitized message is exposed, never the full error body.
+      const reader = response.body?.getReader();
+      if (reader) {
+        try {
+          const chunks: Uint8Array[] = [];
+          let size = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            size += value.length;
+            if (size > 65536) break;
+            chunks.push(value);
+          }
+          if (size <= 65536) {
+            const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+            const message = body.message ?? body.error?.message;
+            if (typeof message === "string")
+              detail = await htmlPreview(new Response(message), init);
+          }
+        } catch {
+          // Keep the HTTP diagnostic if the body is missing or malformed.
+        } finally {
+          void reader.cancel().catch(() => {});
+        }
+      }
+    }
     return fail(
       "http",
-      `HTTP ${response.status}. Проверьте URL организации/коллекции, имя проекта, права PAT и версию API.`,
+      detail
+        ? `HTTP ${response.status}. Azure: ${detail}`
+        : response.status === 400
+          ? "HTTP 400. Сервер отклонил параметры запроса."
+          : `HTTP ${response.status}. Проверьте URL организации/коллекции, имя проекта, права PAT и версию API.`,
       response,
     );
   }
