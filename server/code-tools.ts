@@ -42,16 +42,17 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
   };
   return [
     defineTool("cite_code", {
-      description: "Create clickable code references after inspecting code. Returns localUrl links opening the branch/file and highlighting a line range. Render each exact URL as a Markdown link on its own line. Batch multiple references. Reads local files to validate line ranges; no network or bodies returned.",
-      parameters: z.object({ references: z.array(z.object({ branch, path: path.min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive().optional(), label: z.string().trim().min(1).max(200).optional().describe("Optional function/object name for the button; otherwise filename is shown") })).min(1).max(20) }),
+      description: "Create clickable code references after inspecting code. Returns localUrl links opening the branch/file and highlighting a line range. Render each exact URL as an inline Markdown link where the file/function is mentioned. Omit startLine/endLine for a file-only link. Batch multiple references. Reads local files to validate line ranges; no network or bodies returned.",
+      parameters: z.object({ references: z.array(z.object({ branch, path: path.min(1), startLine: z.number().int().positive().optional(), endLine: z.number().int().positive().optional(), label: z.string().trim().min(1).max(200).optional().describe("Optional function/object name for the button; otherwise filename is shown") })).min(1).max(20) }),
       handler: async ({ references }) => {
         const results = [];
         for (const ref of references) {
           const data = await read("file", { branch: ref.branch, path: ref.path });
           if (data.unavailable) throw new AppError(400, "Файл недоступен для цитирования");
-          const endLine = ref.endLine ?? ref.startLine;
-          if (endLine < ref.startLine || endLine > String(data.text).split(/\r?\n/).length) throw new AppError(400, "Диапазон строк вне файла");
-          results.push({ branch: data.branch, label: `${ref.label || ref.path.split("/").pop()}:${ref.startLine}${endLine === ref.startLine ? "" : `–${endLine}`}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, ...(ref.label ? { label: ref.label } : {}), line: String(ref.startLine), endLine: String(endLine) })}` });
+          const startLine = ref.startLine ?? 1;
+          const endLine = ref.endLine ?? startLine;
+          if (endLine < startLine || endLine > String(data.text).split(/\r?\n/).length) throw new AppError(400, "Диапазон строк вне файла");
+          results.push({ branch: data.branch, label: `${ref.label || ref.path.split("/").pop()}${ref.startLine !== undefined || ref.endLine !== undefined ? `:${startLine}${endLine === startLine ? "" : `–${endLine}`}` : ""}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, ...(ref.label ? { label: ref.label } : {}), ...(ref.startLine !== undefined || ref.endLine !== undefined ? { line: String(startLine), endLine: String(endLine) } : {}) })}` });
         }
         return { references: results };
       },
@@ -76,7 +77,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       handler: async ({ offset, limit, search }) => {
         const data = await read("branches", {});
         const names = data.branches.filter((name: string) => name.toLocaleLowerCase().includes((search || "").toLocaleLowerCase())).sort((a: string, b: string) => Number(b === search) - Number(a === search));
-        return { repository: data.repository, defaultBranch: data.defaultBranch, selectedBranch: selectedBranch || data.defaultBranch, branches: names.slice(offset, offset + limit), total: names.length, nextOffset: offset + limit < names.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
+        return { repository: data.repository, defaultBranch: data.defaultBranch, selectedBranch: selectedBranch || data.defaultBranch, selectedBranchUrl: `/code?${new URLSearchParams({ ...context, branch: selectedBranch || data.defaultBranch })}`, branches: names.slice(offset, offset + limit), total: names.length, nextOffset: offset + limit < names.length ? offset + limit : null, checkedAt: data.checkedAt, catalogTruncated: data.more };
       },
     }),
     defineTool("code_tree", {

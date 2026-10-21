@@ -105,7 +105,7 @@ export function memoryProposalTool(
   return defineTool("propose_memory", {
     description:
       `Preferred memory language: ${JSON.stringify(store.settings().memoryLanguage)}. Omit redundant project/branch labels unless essential to the fact. ` +
-      "Propose a concise durable fact or rule for human approval. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep code memory to function, file path and purpose in 1–3 short sentences, no code dumps. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
+      "Propose a concise durable fact or rule for human approval. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep a brief function/path/purpose explanation; include useful Markdown fenced code snippets with a language tag, especially for usage examples or explicit requests to remember code. Preserve indentation and identifiers. Label illustrative examples as examples, not verified source. Prefer relevant excerpts over unrelated whole files; there is no prose-only or sentence-count restriction. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
     parameters: proposalSchema,
     handler: async (args) => {
       assertActive();

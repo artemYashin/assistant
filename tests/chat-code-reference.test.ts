@@ -32,3 +32,14 @@ test("code buttons show filename or symbol while retaining full navigation path"
   assert.match(symbol, /src\/deep\/service.ts/);
   assert.equal(chatCodeBranch(url + "&label=loadUser")?.label, "loadUser");
 });
+
+test("file-only references retain branch and omit an artificial line label", () => {
+  const url = base + "&path=src%2Fdeep%2Fservice.ts";
+  const link = chatCodeBranch(url)!;
+  assert.equal(link.startLine, undefined);
+  assert.equal(link.branch, "feature/test");
+  assert.equal(new URL(link.href, "https://orbit.local").searchParams.has("line"), false);
+  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `See [file](${url}) here.` })));
+  assert.match(html, /<span>service.ts<\/span>/);
+  assert.doesNotMatch(html, /service.ts:1/);
+});

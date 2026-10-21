@@ -9148,3 +9148,15 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-timeline-tool.chat-live-tools { margin: 0; width: 100%; }
 .chat-timeline-message { min-width: 0; }
 .chat-timeline > .chat-timeline-message + .chat-timeline-tool { margin-top: 2px; }
+/* Repository references stay aligned with the surrounding sentence. */
+.chat-markdown .chat-code-reference { display: inline-flex; vertical-align: baseline; max-width: 100%; margin: 0 2px; }
+.chat-markdown .chat-code-reference .chat-branch-link,
+.chat-markdown .chat-code-reference .chat-code-link { gap: 4px; padding: 1px 5px; min-height: 0; border-radius: 5px; font-size: 11px; line-height: 1.5; vertical-align: baseline; }
+.chat-code-reference .chat-copyable-link { margin: 0; gap: 2px; align-items: center; }
+.chat-code-reference .chat-link-copy { width: 20px; height: 20px; min-height: 0; padding: 2px; border-radius: 4px; }
+.chat-code-reference svg { width: 12px; height: 12px; }
+.chat-markdown .chat-code-reference,
+.chat-code-reference .chat-copyable-link { flex-wrap: nowrap; white-space: nowrap; overflow-wrap: normal; word-break: normal; min-width: 0; }
+.chat-code-reference .chat-copyable-link > a { overflow-wrap: normal; min-width: 0; }
+.chat-code-reference .chat-link-copy { flex: 0 0 20px; }
+.chat-markdown .chat-code-reference .chat-code-link { min-width: 0; }

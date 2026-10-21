@@ -100,3 +100,14 @@ test("main branch is resolved from current project repository settings", t => {
   assert.equal(configuredCodeBranch(store, { client: "C", project: "P" }), "dev");
   assert.equal(configuredCodeBranch(store, { client: "C", project: "Other" }), undefined);
 });
+
+test("code citations preserve explicitly requested branch instead of configured default", async t => {
+  const store = setup(t), calls: any[] = [];
+  const tools = codeTools(store, { client: "C", project: "P" }, () => {}, { request: async (input: any) => { calls.push(input); return { sha: "a".repeat(40), text: "one\ntwo" }; } } as any, "main");
+  const result: any = await tools.find(tool => tool.name === "cite_code")!.handler!({ references: [{ branch: "feature/dev", path: "src/a.ts", startLine: 1, endLine: 2 }] } as any, {} as any);
+  const params = new URL(result.references[0].localUrl, "https://orbit.local").searchParams;
+  assert.equal(params.get("branch"), "feature/dev");
+  assert.equal(calls[0].branch, "feature/dev");
+  assert.equal(params.get("path"), "src/a.ts");
+  assert.equal(params.get("endLine"), "2");
+});
