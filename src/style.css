@@ -8596,3 +8596,21 @@ summary > svg {
 }
 
 .repository-sync-warning { margin: 4px 0 8px; font-size: 12px; color: #866a38; overflow-wrap: anywhere; }
+
+.repository-search-input { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 160px; height: 32px; padding: 0 8px; border: 1px solid #d4dde5; border-radius: 6px; background: #fff; color: #728496; }
+.repository-search-input:focus-within { border-color: #91abc1; box-shadow: 0 0 0 2px #dce9f380; }
+.repository-search-input > input { flex: 1; min-width: 0; width: 100%; height: 30px; min-height: 0; padding: 4px 0; border: 0; box-shadow: none; outline: none; font-size: 12px; background: transparent; }
+.repository-search-input > svg { flex-shrink: 0; }
+.repository-search-clear { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; padding: 0; border-radius: 4px; }
+.repository-search-clear:hover { background: #edf2f6; }
+.repository-autocomplete { position: fixed; z-index: 1200; overflow: auto; overscroll-behavior: contain; border: 1px solid #d1dde6; border-radius: 8px; background: #fff; box-shadow: 0 8px 28px #263f5829; padding: 4px; }
+.repository-search-summary { display: block; padding: 6px 8px; font-size: 11px; line-height: 1.4; color: #718292; overflow-wrap: anywhere; }
+.repository-autocomplete-hit { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 7px 8px; border: 0; border-radius: 5px; text-align: left; background: transparent; }
+.repository-autocomplete-hit:hover, .repository-autocomplete-hit[aria-selected="true"] { background: #eef4f9; }
+.repository-autocomplete-hit > svg { flex-shrink: 0; margin-top: 2px; }
+.repository-autocomplete-hit-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.repository-autocomplete-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.repository-autocomplete-name strong { font-size: 12px; font-weight: 500; color: #344f66; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repository-autocomplete-name small { flex-shrink: 0; font-size: 10px; color: #718292; }
+.repository-autocomplete-path, .repository-autocomplete-hit code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.4; color: #7c8c99; }
+.repository-autocomplete-hit code { color: #506577; background: transparent; padding: 0; }

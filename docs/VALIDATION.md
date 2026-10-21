@@ -1238,3 +1238,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added per-repository Git sync interval (30 minutes by default, 0 manual-only, maximum 1440), preserved through legacy-client saves and context rename. A separate 30-second scheduler checks due work only during allowed global sync windows and only for repositories/branches already opened successfully. Attempts persist to avoid rapid retries after failure or restart; background errors are surfaced on the code page.
 - Background checks update the catalog and remote status without advancing the displayed snapshot; Pull remains explicit.
 - 29 targeted tests passed, including interval/manual/schedule behavior, failure backoff, persistent catalogs, streamed operations and settings preservation. The backend cache test was extended and rerun successfully to cover repository-ID reuse after backend restart. Production build and whitespace checks passed; existing bundle-size advisories remain. Live Azure/Docker and visual browser checks were not performed.
+
+### Live repository search dropdown (2026-10-21)
+
+- Replaced the search result sidebar with a positioned dropdown anchored to the input. Path/content search runs after 600 ms; Enter can search immediately. Results use compact filename/path/snippet rows, bounded scrolling, keyboard selection and direct file/line navigation.
+- Keep the file tree visible. Serialize autocomplete requests, replace obsolete pending queries, ignore stale responses and retain up to ten query results per mounted snapshot. Limit displayed suggestions to 50 with an explicit refine-query hint and search coverage information.
+- TypeScript and whitespace checks passed. Tests were not run at the user's request; browser interactions were not exercised.

@@ -1,7 +1,8 @@
+import { RepositorySearch } from "./RepositorySearch.js";
 import { RepositoryFileIcon, repositoryFileKind, repositoryFileSize } from "./RepositoryFileKind.js";
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage } from "./diff-languages.js";
@@ -11,8 +12,6 @@ type Context = { client: string; project: string };
 type Entry = { name: string; path: string; type: string; size: number };
 type Status = { sha: string; remoteSha: string; checkedAt: string; behind: number | null; current: boolean; repository: string; syncError?: string };
 type File = { sha: string; path: string; text?: string; unavailable?: string; lfs?: boolean; symlink?: boolean; size?: number };
-type Result = { path: string; line?: number; text?: string };
-type SearchResult = { results: Result[]; more: boolean; total: number; coverage?: { searchedFiles: number; skippedFiles: number }; perFileLimit?: number };
 type Request = (operation: string, extra?: Record<string, unknown>) => Promise<any>;
 
 export function CodeBrowserPage({ context }: { context: Context }) {
@@ -32,9 +31,7 @@ function RepositoryView({ context }: { context: Context }) {
   const [branchNote, setBranchNote] = useState("");
   const [branchReload, setBranchReload] = useState(0);
   const [file, setFile] = useState<File | null>(null), [fileBusy, setFileBusy] = useState(false), [line, setLine] = useState<number | undefined>();
-  const [query, setQuery] = useState(""), [mode, setMode] = useState("name"), [results, setResults] = useState<SearchResult | null>(null);
-  const [searchBusy, setSearchBusy] = useState(false), [searched, setSearched] = useState({ query: "", mode: "name" });
-  const generation = useRef(0), fileRequest = useRef(0), searchRequest = useRef(0);
+  const generation = useRef(0), fileRequest = useRef(0);
   const snapshot = useRef<Status | null>(null);
   snapshot.current = status;
   const request = useCallback<Request>((operation, extra = {}) => {
@@ -43,7 +40,7 @@ function RepositoryView({ context }: { context: Context }) {
   }, [context.client, context.project, branch, execute]);
   useEffect(() => {
     let live = true;
-    setBusy(true); setError(""); setFileBusy(false); setSearchBusy(false);
+    setBusy(true); setError(""); setFileBusy(false);
     void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
       if (!live) return;
       setBranches(data.branches); setBranch(current => {
@@ -53,13 +50,13 @@ function RepositoryView({ context }: { context: Context }) {
       setBranchNote(data.more ? "Показаны первые 5 000 веток." : !data.branches.length ? "В репозитории пока нет веток." : "");
       if (!data.branches.length || data.branches.includes(branch)) setBusy(false);
     }).catch(e => { if (live) { setError(e.message); setBusy(false); } });
-    return () => { live = false; generation.current++; fileRequest.current++; searchRequest.current++; };
+    return () => { live = false; generation.current++; fileRequest.current++; };
   }, [context.client, context.project, branchReload, execute]);
   const refresh = useCallback(async (operation: "status" | "pull", force = false) => {
     const current = ++generation.current;
-    fileRequest.current++; searchRequest.current++; setFileBusy(false); setSearchBusy(false);
+    fileRequest.current++; setFileBusy(false);
     setBusy(true); setError("");
-    if (operation === "pull") { setFile(null); setResults(null); }
+    if (operation === "pull") { setFile(null); }
     try {
       if (force) {
         const catalog = await request("branches", { refresh: true });
@@ -67,14 +64,14 @@ function RepositoryView({ context }: { context: Context }) {
       }
       const next = await request(operation, { refresh: force });
       if (current === generation.current) {
-        if (snapshot.current && snapshot.current.sha !== next.sha) { setFile(null); setResults(null); }
+        if (snapshot.current && snapshot.current.sha !== next.sha) { setFile(null); }
         setStatus(next);
       }
     } catch (e: any) { if (current === generation.current) setError(e.message); }
     finally { if (current === generation.current) setBusy(false); }
   }, [request]);
   useEffect(() => {
-    setStatus(null); setFile(null); setResults(null); setQuery("");
+    setStatus(null); setFile(null);
     if (branch) void refresh("status");
   }, [branch, refresh]);
   async function openFile(path: string, line?: number) {
@@ -89,18 +86,6 @@ function RepositoryView({ context }: { context: Context }) {
   function closeFile() {
     fileRequest.current++;
     setFile(null); setFileBusy(false); setLine(undefined);
-  }
-  async function search(more = false) {
-    const current = ++searchRequest.current, scope = generation.current;
-    const search = more ? searched : { query: query.trim(), mode };
-    if (!search.query) return;
-    setSearchBusy(true); setError("");
-    if (!more) { setResults(null); setSearched(search); }
-    try {
-      const next = await request("search", { ...search, offset: more ? results?.results.length || 0 : 0 });
-      if (scope === generation.current && current === searchRequest.current) setResults(previous => ({ ...next, results: more ? [...(previous?.results || []), ...next.results] : next.results }));
-    } catch (e: any) { if (scope === generation.current && current === searchRequest.current) setError(e.message); }
-    finally { if (scope === generation.current && current === searchRequest.current) setSearchBusy(false); }
   }
   return <section className="repository-page">
     <header className="repository-heading"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></header>
@@ -125,27 +110,12 @@ function RepositoryView({ context }: { context: Context }) {
       <button className="icon-button" aria-label="Закрыть ошибку" onClick={() => setError("")}><X size={16} /></button>
     </div>}
     <div className="repository-browser">
-    <form className="repository-search" onSubmit={e => { e.preventDefault(); void search(); }}>
-      <div className="repository-search-modes" role="group" aria-label="Режим поиска">
-        <button type="button" aria-pressed={mode === "name"} onClick={() => setMode("name")}>По пути</button>
-        <button type="button" aria-pressed={mode === "content"} onClick={() => setMode("content")}>По содержимому</button>
-      </div>
-      <input aria-label="Поиск в репозитории" placeholder={mode === "name" ? "Имя файла или путь…" : "Текст в коде…"} maxLength={200} value={query} onChange={e => setQuery(e.target.value)} />
-      <button className="secondary" disabled={busy || !status || searchBusy || !query.trim()}><Search size={15} />{searchBusy ? "Ищу…" : "Найти"}</button>
-      {results && <button className="text-button" type="button" onClick={() => { searchRequest.current++; setSearchBusy(false); setResults(null); }}>К дереву</button>}
-    </form>
+    <RepositorySearch key={branch + ":" + (status?.sha || "")} context={context} branch={branch} revision={status?.sha || ""}
+      disabled={busy || !status} onOpen={(path, line) => void openFile(path, line)} />
     <div className={`repository-workspace${!file && !fileBusy ? " is-browsing" : ""}`} aria-busy={busy}>
       <nav className="repository-tree" aria-label="Файлы репозитория">
-        {!results && !file && !fileBusy && <div className="repository-tree-columns" aria-hidden="true"><span>Имя</span><span>Тип</span><span>Размер</span></div>}
-        {results ? <>
-          <p className="muted">{results.total} {results.perFileLimit ? "найденных строк" : "файлов"} · {searched.query}</p>
-          {results.coverage && <p className="repository-coverage">Поиск: {results.coverage.searchedFiles} файлов. Пропущено: {results.coverage.skippedFiles} (бинарные, большие, ссылки или лимит снимка). До {results.perFileLimit} совпавших строк на файл.</p>}
-          {results.results.map((result, i) => <button type="button" key={i} className="repository-search-result" disabled={busy} onClick={() => void openFile(result.path, result.line)}>
-            <span>{result.path}{result.line ? `:${result.line}` : ""}</span>{result.text !== undefined && <code>{result.text}</code>}
-          </button>)}
-          {results.more && <button className="secondary" disabled={searchBusy || busy} onClick={() => void search(true)}>Ещё результаты</button>}
-          {!results.total && <p className="muted">Совпадений нет.</p>}
-        </> : status && !busy ? <Directory key={branch + status.sha} path="" request={request} selected={file?.path} onFile={path => void openFile(path)} /> : <p className="muted">{busy ? "Подготавливаю снимок…" : "Выберите доступную ветку."}</p>}
+        {!file && !fileBusy && <div className="repository-tree-columns" aria-hidden="true"><span>Имя</span><span>Тип</span><span>Размер</span></div>}
+        {status && !busy ? <Directory key={branch + status.sha} path="" request={request} selected={file?.path} onFile={path => void openFile(path)} /> : <p className="muted">{busy ? "Подготавливаю снимок…" : "Выберите доступную ветку."}</p>}
       </nav>
       {(file || fileBusy) && <div className={`repository-file${!file ? " is-empty" : ""}`}>
         {fileBusy ? <div className="repository-placeholder" role="status"><LoaderCircle size={24} className="spin" /><strong>Загрузка файла</strong><button className="secondary" onClick={closeFile}>Закрыть</button></div> : file ? <>
