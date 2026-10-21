@@ -4071,14 +4071,16 @@ summary > svg {
   .pr-diff-comment-trigger { opacity: 1; }
 }
 .pr-diff-comment-form {
-  margin: 8px;
-  padding: 12px;
+  position: relative;
+  margin: 10px 10px 12px;
+  padding: 10px 12px;
   border: 1px solid #bccfe1;
-  border-radius: 8px;
-  background: #f4f8fc;
+  border-radius: 4px;
+  background: #f8fafc;
+  box-shadow: 0 2px 5px #233d5010;
   font: 13px/1.4 system-ui, sans-serif;
 }
-.pr-diff-comment-form textarea { width: 100%; box-sizing: border-box; }
+.pr-diff-comment-form textarea { width: 100%; box-sizing: border-box; border-radius: 4px; }
 .pr-diff-comment-form > div { display: flex; gap: 8px; flex-wrap: wrap; }
 .pr-diff-comment-submit {
   width: fit-content;
@@ -4103,15 +4105,36 @@ summary > svg {
 .pr-diff-comment-sent { margin: 4px 8px; font: 12px/1.4 system-ui, sans-serif; color: #25633f; }
 .pr-diff-comments-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; }
 .pr-diff-thread {
-  margin: 8px;
+  position: relative;
+  margin: 10px 10px 12px;
   padding: 10px 12px;
-  border: 1px solid #c3d3e2;
-  border-radius: 8px;
-  background: #f5f8fc;
+  border: 1px solid #bccfe1;
+  border-radius: 4px;
+  background: #f8fafc;
+  box-shadow: 0 2px 5px #233d5010;
   color: #273746;
   font: 12px/1.5 system-ui, sans-serif;
   overflow-wrap: anywhere;
 }
+.pr-diff-line-pointer::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 23px;
+  width: 8px;
+  height: 8px;
+  background: #f8fafc;
+  border-top: 1px solid #bccfe1;
+  border-left: 1px solid #bccfe1;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.pr-diff-thread-heading {
+  padding-bottom: 7px;
+  border-bottom: 1px solid #e0e7ee;
+}
+.pr-diff-thread-heading > strong { font-size: 11px; font-weight: 600; color: #435d73; }
+.pr-diff-thread-heading > span { margin-left: auto; }
 .pr-diff-thread-heading, .pr-diff-thread article > header { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .pr-diff-thread-heading > span, .pr-diff-thread time { color: #677584; font-size: 11px; }
 .pr-diff-thread article { margin-top: 8px; }

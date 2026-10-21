@@ -445,7 +445,7 @@ function DiffCell({
       <CommentThreads threads={threads} />
       {sent && <p className="pr-diff-comment-sent" role="status">Комментарий отправлен в Azure.</p>}
       {editing && onComment && (
-        <form className="pr-diff-comment-form" onSubmit={async (event) => {
+        <form className={`pr-diff-comment-form${!threads.length && !sent ? " pr-diff-line-pointer" : ""}`} onSubmit={async (event) => {
           event.preventDefault();
           if (pending.current || !content.trim()) return;
           pending.current = true;
@@ -492,9 +492,12 @@ function CommentThreads({ threads, showPath = false }: { threads: CommentThread[
     byDesign: "По замыслу", pending: "Ожидает", unknown: "",
     "1": "Открыто", "2": "Решено", "3": "Без изменений", "4": "Закрыто", "5": "По замыслу", "6": "Ожидает",
   };
-  return <>{threads.map((thread) => <div className="pr-diff-thread" key={thread.id}>
+  return <>{threads.map((thread, index) => <div
+    className={`pr-diff-thread${!showPath && index === 0 ? " pr-diff-line-pointer" : ""}`} key={thread.id}>
     <div className="pr-diff-thread-heading">
-      <strong>Обсуждение #{thread.id}</strong>
+      <strong>{!showPath && (thread.line || thread.leftLine)
+        ? `Строка ${thread.line || thread.leftLine} · обсуждение #${thread.id}`
+        : `Обсуждение #${thread.id}`}</strong>
       <span>{statuses[String(thread.status)] || ""}</span>
     </div>
     {showPath && <div className="muted">{thread.path || "Общий комментарий к PR"}{(thread.line || thread.leftLine) ? ` · строка ${thread.line || thread.leftLine}` : ""}</div>}

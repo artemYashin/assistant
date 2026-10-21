@@ -1144,3 +1144,9 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - A dedicated, lazily loaded worker highlights only the selected file. Work is bounded by character/line limits and a four-second worker timeout; failures fall back to plain text. Worker cancellation prevents stale results after switching files/languages. No additional Azure or LLM requests are made.
 - Limitation: missing context before a diff hunk can affect multiline syntax interpretation; full source files are not fetched.
 - All 258 tests passed, including extension detection, text preservation, multiline comments, side-specific numbering and oversized-fragment fallback. Production build and whitespace checks passed; the highlighter is a separate 174 KB worker asset. Existing main/Excel bundle-size advisories remain. Browser visual interaction was not exercised.
+
+### Compact inline diff discussion styling (2026-10-21)
+
+- Reduced discussion/composer corner radius to 4 px, refined neutral backgrounds, borders, shadow and header separation. Inline discussion headings identify the referenced line.
+- A small upward pointer connects the first inline discussion (or empty-thread composer) to the code line. Out-of-view discussions have no misleading pointer.
+- TypeScript, whitespace checks and all five targeted diff/comment tests passed. Browser visual checks were not performed.
