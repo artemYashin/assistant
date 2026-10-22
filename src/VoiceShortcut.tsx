@@ -1,4 +1,4 @@
-import { voiceBinding, voiceBindingLabel } from "../server/voice-binding.js";
+import { voiceBinding } from "../server/voice-binding.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Mic, X, Square, LoaderCircle, AlertCircle } from "lucide-react";
@@ -197,7 +197,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
       <strong id={titleId}>{phase === "recording" ? "Слушаю вас" : phase === "requesting" ? "Включаю микрофон…" : phase === "transcribing" ? "Распознаю речь…" : "Не получилось записать"}</strong>
       <div className="voice-shortcut-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ animationDelay: `${i * -0.13}s` }} />)}</div>
       <p className="voice-shortcut-target" title={title}>{fieldMode ? "В поле ввода" : "В текущий чат"} · {title}</p>
-      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? `Enter${currentKey ? " или " + voiceBindingLabel(currentKey) + (currentPress === "double" ? " " + voiceBindingLabel(currentKey) : "") : ""} — закончить и ${fieldMode ? "вставить" : "отправить"}` : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
+      <p className="voice-shortcut-help" role="status">{error || (phase === "recording" ? `Enter — закончить и ${fieldMode ? "вставить" : "отправить"}` : phase === "transcribing" ? "Esc или × — отменить отправку" : "Разрешите доступ к микрофону")}</p>
       {phase === "recording" && <div className="voice-shortcut-footer"><time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</time>
         <button type="button" onClick={() => finish()}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : fieldMode ? "Вставить" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}
