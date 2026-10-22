@@ -1498,3 +1498,38 @@ test("completed cache preserves imported full description and local links until 
   assert.equal(restarted.list(context, { monitor, repo: "repo", number: 1 }).length, 0);
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM pr_ticket_links WHERE monitor=?").get(monitor) as { n: number }).n, 0);
 });
+
+test("completed reimport replaces full content and resets local links only after successful loading", async t => {
+  const { service, store } = fixture(t);
+  const closed = new Date().toISOString();
+  let reimport = false, failLinks = false;
+  const full = "Complete server description ".repeat(50) + "#222222";
+  mock(t, [], url => {
+    if (url.searchParams.get("searchCriteria.status") === "completed")
+      return { value: [{ ...pr(), status: "completed", closedDate: closed, description: "Old #111111" }] };
+    if (/\/pullrequests\/1$/.test(url.pathname))
+      return { ...pr(), status: "completed", closedDate: closed, title: "Fresh title", description: full };
+    if (url.pathname.endsWith("/workitems"))
+      return failLinks ? {} : { value: [{ id: reimport ? "333333" : "444444" }] };
+  });
+  const monitor = service.monitors()[0].id;
+  await service.completed(monitor, 0);
+  store.db.prepare("INSERT INTO pr_ticket_links VALUES (?,?,?,?)").run(monitor, "repo", 1, 555555);
+  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor, "repo", 1, 333333);
+  reimport = true;
+  failLinks = true;
+  await assert.rejects(service.reimportCompleted(monitor, "repo", 1), /Локальный кэш сохранён/);
+  const unchanged = service.list(context, { monitor, repo: "repo", number: 1 })[0];
+  assert.equal(unchanged.description, "Old #111111");
+  assert.ok(unchanged.tickets.some((ticket: any) => ticket.id === 555555 && ticket.manual));
+  assert.ok(unchanged.tickets.some((ticket: any) => ticket.id === 333333 && ticket.disabled));
+  failLinks = false;
+  const updated = await service.reimportCompleted(monitor, "repo", 1);
+  assert.equal(updated.title, "Fresh title");
+  assert.equal(updated.description, full);
+  assert.deepEqual(updated.tickets.map((ticket: any) => ticket.id).sort(), [222222, 333333]);
+  assert.ok(updated.tickets.every((ticket: any) => !ticket.disabled && !ticket.manual));
+  assert.equal(Date.parse(updated.expiresAt), Date.parse(closed) + 7 * 86400000);
+  assert.equal((await service.completed(monitor, 0)).items[0].description, full);
+  await assert.rejects(service.reimportCompleted(monitor, "repo", 2), /отсутствует в кэше/);
+});

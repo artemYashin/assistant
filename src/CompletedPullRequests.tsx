@@ -134,6 +134,10 @@ export function CompletedPullRequests({
             context={context}
             settings={settings}
             completedItems={data.items}
+            onCompletedReimport={(updated: any) => setData((current: any) => current ? {
+              ...current, items: current.items.map((item: any) =>
+                item.monitor === updated.monitor && item.repo === updated.repo && item.number === updated.number ? updated : item)
+            } : current)}
           />
         </>
       )}

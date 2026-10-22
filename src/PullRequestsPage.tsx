@@ -16,6 +16,7 @@ import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   ArrowUpRight,
+  RefreshCw,
   TriangleAlert,
   CircleMinus,
   CircleCheck,
@@ -227,7 +228,7 @@ function ReviewHistory({ pr }: any) {
     </PrInfoPopup>
   );
 }
-export function PullRequestsPage({ context, settings, completedItems }: any) {
+export function PullRequestsPage({ context, settings, completedItems, onCompletedReimport }: any) {
   const readOnly = completedItems !== undefined;
   const [prs, setPrs] = useState<any[]>([]),
     [monitors, setMonitors] = useState<any[]>([]),
@@ -759,6 +760,19 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 >
                   <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
                 </button>
+                {readOnly && <ConfirmButton
+                  disabled={busy}
+                  title={`Переимпортировать PR #${p.number}?`}
+                  message="Полное описание и связи будут заново загружены из Azure и заменят локальный кэш. Все локальные привязки тикетов и отметки «Не учитывать» будут удалены. Останутся только связи из Azure, названия и описания PR. Это действие нельзя отменить."
+                  confirmLabel="Переимпортировать"
+                  onConfirm={async () => {
+                    setBusy(true);
+                    try {
+                      const updated = await api("/pr/completed/reimport", "POST", { monitor: p.monitor, repo: p.repo, number: p.number });
+                      onCompletedReimport?.(updated);
+                    } finally { setBusy(false); }
+                  }}
+                ><RefreshCw size={15} aria-hidden="true" /> Переимпортировать</ConfirmButton>}
                 {p.has_review_log && <ChatTools
                   context={context}
                   review={{

@@ -195,6 +195,45 @@ export class PullRequests {
       this.completedPending.delete(key);
     }
   }
+  async reimportCompleted(monitor: string, repo: string, number: number) {
+    const m = this.monitors().find(m => m.id === monitor);
+    if (!m) throw new AppError(404, "Репозиторий не настроен");
+    const cached = this.store.db.prepare("SELECT 1 FROM pr_completed WHERE monitor=? AND repo=? AND number=? AND expires_at>?")
+      .get(monitor, repo, number, Date.now());
+    if (!cached) throw new AppError(404, "Завершённый PR отсутствует в кэше. Обновите список.");
+    const credentials = this.credentials(m);
+    const detail = await this.get(m, `git/repositories/${enc(repo)}/pullrequests/${number}`, credentials);
+    const closed = Date.parse(detail.closedDate);
+    if (detail.pullRequestId !== number || detail.repository?.id !== repo || detail.status !== "completed" ||
+        !Number.isFinite(closed) || closed + 7 * 86400000 <= Date.now())
+      throw new AppError(409, "PR больше не входит в недельный архив завершённых. Обновите список.");
+    const links = await this.get(m, `git/repositories/${enc(repo)}/pullrequests/${number}/workitems`, credentials);
+    if (!Array.isArray(links.value) || links.value.some((v: any) => !Number.isSafeInteger(Number(v.id)) || Number(v.id) <= 0))
+      throw new AppError(502, "Azure не вернул корректные связи PR. Локальный кэш сохранён.");
+    const current = this.monitors().find(item => item.id === monitor);
+    if (!current || current.source !== m.source || current.azure_project !== m.azure_project ||
+        current.repository !== m.repository || this.credentials(current).pat !== credentials.pat)
+      throw new AppError(409, "Настройки подключения изменились. Повторите запрос.");
+    this.store.db.transaction(() => {
+      const updated = this.store.db.prepare(`UPDATE pull_requests SET
+        title=?,description=?,author=?,url=?,head=?,target=?,draft=?,in_scope=0,synced_at=?,
+        created_at=?,source_branch=?,target_branch=?,health='' WHERE monitor=? AND repo=? AND number=?`)
+        .run(detail.title || "", detail.description || "", detail.createdBy?.displayName || "",
+          `${m.source}/${enc(m.azure_project)}/_git/${enc(repo)}/pullrequest/${number}`,
+          detail.lastMergeSourceCommit?.commitId || "", detail.lastMergeTargetCommit?.commitId || "",
+          Number(!!detail.isDraft), now(), detail.creationDate || "", detail.sourceRefName || "", detail.targetRefName || "",
+          monitor, repo, number);
+      if (!updated.changes) throw new AppError(409, "Локальный PR удалён. Обновите список.");
+      this.store.set(prLinksKey(monitor, repo, number), { ids: links.value.map((v: any) => Number(v.id)), error: "" });
+      for (const table of ["pr_ticket_links", "pr_ticket_exclusions"])
+        this.store.db.prepare(`DELETE FROM ${table} WHERE monitor=? AND repo=? AND number=?`).run(monitor, repo, number);
+      this.store.db.prepare("UPDATE pr_completed SET closed_at=?,expires_at=?,hydrated=1 WHERE monitor=? AND repo=? AND number=?")
+        .run(detail.closedDate, closed + 7 * 86400000, monitor, repo, number);
+      this.store.audit("pr.completed.reimport", `PR #${number}: заменён кэш и сброшены локальные связи`, { monitor, repo, number });
+    })();
+    return { ...this.list({ client: m.client, project: m.project }, { monitor, repo, number })[0],
+      closedAt: detail.closedDate, expiresAt: new Date(closed + 7 * 86400000).toISOString() };
+  }
   private sourcePreparation: Pick<PrSourcePreparation, "prepare" | "status">;
   private working = false;
   private modelReviewId: string | null = null;

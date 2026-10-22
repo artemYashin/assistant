@@ -1128,6 +1128,10 @@ export function createApp(
       .run(req.params.id);
     res.json({ ok: true });
   });
+  app.post("/api/pr/completed/reimport", async (req, res) => {
+    const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive() }).strict().parse(req.body);
+    res.json(await pullRequests.reimportCompleted(input.monitor, input.repo, input.number));
+  });
   app.get("/api/pr/completed", async (req, res) => {
     const input = z
       .object({
