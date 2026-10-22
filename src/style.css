@@ -9559,3 +9559,14 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .repository-pr-toggle strong { font-size: 13px; font-weight: 500; }
 .repository-pr-toggle small { font-size: 12px; color: #63796b; line-height: 1.4; }
 @media (max-width: 420px) { .repository-tabs > button { flex: 1; padding: 8px 5px; font-size: 12px; } }
+
+.azure-pat-permissions { margin-top: 12px; padding: 13px 15px; border: 1px solid #e9cf84; border-radius: 10px; background: #fff8df; color: #68521e; font-size: 12px; line-height: 1.5; }
+.azure-pat-permissions-heading { display: flex; align-items: center; gap: 8px; color: #8a6015; font-size: 13px; }
+.azure-pat-permissions-heading svg { flex-shrink: 0; }
+.azure-pat-permissions p { margin: 8px 0; }
+.azure-pat-permissions dl { margin: 10px 0; }
+.azure-pat-permissions dl > div { display: grid; grid-template-columns: minmax(150px, 185px) minmax(0, 1fr); gap: 10px; padding: 7px 0; border-bottom: 1px solid #e9cf8466; }
+.azure-pat-permissions dt { font-weight: 600; }
+.azure-pat-permissions dd { margin: 0; }
+.azure-pat-permissions a { color: #805d17; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 600px) { .azure-pat-permissions dl > div { grid-template-columns: 1fr; gap: 2px; } }

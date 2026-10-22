@@ -362,50 +362,66 @@ export class Connectors {
       }
     })();
   }
+  private statusRequests = new Map<string, Promise<any>>();
+  private async cachedStatusData<T>(kind: string, s: Settings, pat: string | undefined, load: () => Promise<T>): Promise<T> {
+    const key = "azure.status-cache:" + createHash("sha256").update(JSON.stringify([this.store.source(s), s.azureVersion, pat || "", kind])).digest("hex");
+    const cached = this.store.get<{ expires: number; value: T } | null>(key, null);
+    if (cached && cached.expires > Date.now()) return cached.value;
+    const pending = this.statusRequests.get(key);
+    if (pending) return pending;
+    const request = load().then(value => {
+      this.store.set(key, { expires: Date.now() + 86400000, value });
+      return value;
+    }).finally(() => this.statusRequests.delete(key));
+    this.statusRequests.set(key, request);
+    return request;
+  }
+  private typeStates(type: string, s: Settings, pat: string | undefined, supplied?: any[]) {
+    return this.cachedStatusData("states:" + type, s, pat, async () => {
+      const response = supplied ? { value: supplied } : await this.azure(`workitemtypes/${encodeURIComponent(type)}/states`, {}, s, pat);
+      if (!Array.isArray(response.value) || !response.value.length || response.value.some((v: any) => typeof v.name !== "string" || !v.name))
+        throw new AppError(502, "Azure не вернул доступные статусы");
+      return response.value.map((v: any) => v.name) as string[];
+    });
+  }
+  private localStateItem(id: number, s: Settings) {
+    const row = this.store.db.prepare("SELECT id,title,type,state FROM tickets WHERE source=? AND id=?").get(this.store.source(s), id) as any;
+    return row?.type ? { id: row.id, fields: { "System.Title": row.title, "System.WorkItemType": row.type, "System.State": row.state, "System.TeamProject": s.azureProject } } : undefined;
+  }
   async ticketStates(id: number) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
-    const item = await this.azure(`workitems/${id}`, {}, s, pat);
+    const item = this.localStateItem(id, s) || await this.azure(`workitems/${id}`, {}, s, pat);
     if (
       item.id !== id ||
       item.fields?.["System.TeamProject"] !== s.azureProject
     )
       throw new AppError(400, "Тикет относится к другому проекту");
-    const states = await this.azure(
-      `workitemtypes/${encodeURIComponent(item.fields["System.WorkItemType"])}/states`,
-      {},
-      s,
-      pat,
-    );
+    const states = await this.typeStates(item.fields["System.WorkItemType"], s, pat);
     if (this.store.source() !== this.store.source(s))
       throw new AppError(409, "Подключение изменилось");
-    if (!Array.isArray(states.value) || !states.value.length)
-      throw new AppError(502, "Azure не вернул доступные статусы");
     return {
       source: this.store.source(s),
       title: String(item.fields["System.Title"] || ""),
       state: item.fields["System.State"],
-      states: (states.value || []).map((x: any) => x.name),
+      states,
     };
   }
   async ticketStatesBatch(ids: number[]) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
-    const response = await this.azure(
-      "workitemsbatch",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          ids,
-          fields: ["System.TeamProject", "System.WorkItemType", "System.State"],
-        }),
-      },
-      s,
-      pat,
-    );
-    const items = new Map<number, any>(
-      (response.value || []).map((item: any) => [item.id, item]),
-    );
+    const items = new Map<number, any>();
+    for (const id of ids) {
+      const item = this.localStateItem(id, s);
+      if (item) items.set(id, item);
+    }
+    const missing = ids.filter(id => !items.has(id));
+    if (missing.length) {
+      const response = await this.azure("workitemsbatch", {
+        method: "POST", body: JSON.stringify({ ids: missing, fields: ["System.TeamProject", "System.WorkItemType", "System.State"] }),
+      }, s, pat);
+      for (const item of response.value || []) items.set(item.id, item);
+    }
     const byType = new Map<string, string[]>();
     const results = [];
     for (const id of ids) {
@@ -416,20 +432,7 @@ export class Connectors {
           "Тикет недоступен или относится к другому проекту",
         );
       const type = item.fields["System.WorkItemType"];
-      if (!byType.has(type)) {
-        const response = await this.azure(
-          `workitemtypes/${encodeURIComponent(type)}/states`,
-          {},
-          s,
-          pat,
-        );
-        if (!Array.isArray(response.value) || !response.value.length)
-          throw new AppError(502, "Azure не вернул доступные статусы");
-        byType.set(
-          type,
-          response.value.map((x: any) => x.name),
-        );
-      }
+      if (!byType.has(type)) byType.set(type, await this.typeStates(type, s, pat));
       results.push({
         id,
         state: item.fields["System.State"],
@@ -462,15 +465,7 @@ export class Connectors {
           throw new AppError(502, "Azure не вернул список тикетов");
         return response.value;
       },
-      states: async (type) => {
-        const r = await this.azure(
-          `workitemtypes/${encodeURIComponent(type)}/states`,
-          {},
-          s,
-          pat,
-        );
-        return (r.value || []).map((x: any) => x.name);
-      },
+      states: (type) => this.typeStates(type, s, pat),
       beforeWrite: () => {
         guard();
         if (this.store.source() !== this.store.source(s))
@@ -556,13 +551,7 @@ export class Connectors {
         },
         states: async (type) => {
           stage = "load_states";
-          const r = await this.azure(
-            `workitemtypes/${encodeURIComponent(type)}/states`,
-            {},
-            s,
-            pat,
-          );
-          return (r.value || []).map((x: any) => x.name);
+          return this.typeStates(type, s, pat);
         },
         beforeWrite: () => {
           stage = "before_write";
@@ -902,24 +891,16 @@ export class Connectors {
   async ticketOptions() {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
-    const result = await this.azure("workitemtypes", {}, s, pat);
-    const options = [];
-    for (const type of result.value || []) {
-      const states =
-        type.states ||
-        (
-          await this.azure(
-            `workitemtypes/${encodeURIComponent(type.name)}/states`,
-            {},
-            s,
-            pat,
-          )
-        ).value;
-      options.push({
-        name: type.name,
-        states: (states || []).map((v: any) => v.name),
-      });
-    }
+    const options = await this.cachedStatusData("catalog", s, pat, async () => {
+      const result = await this.azure("workitemtypes", {}, s, pat);
+      if (!Array.isArray(result.value) || !result.value.length)
+        throw new AppError(502, "Azure не вернул типы задач");
+      const options: { name: string; states: string[] }[] = [];
+      for (const type of result.value) {
+        options.push({ name: type.name, states: await this.typeStates(type.name, s, pat, type.states) });
+      }
+      return options;
+    });
     this.store.set("azure.ticket-options:" + this.store.source(s), options);
     return options;
   }

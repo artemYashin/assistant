@@ -1,3 +1,4 @@
+import { AzurePatPermissions } from "./AzurePatPermissions.js";
 import { ChatMessageContext } from "./ChatMessageContext.js";
 import { messageContextBadges } from "../server/chat-message-context.js";
 import { ConfirmButton } from "./ConfirmButton.js";
@@ -2609,7 +2610,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <Field
             label="Personal Access Token"
-            hint="Для чтения задач — Work Items (Read), для смены статусов — Work Items (Read & write). Для PR также Code (Read), для шагов CI и логов — Build (Read). Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
+            hint="Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
           >
             <input
               type="password"
@@ -2623,6 +2624,7 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
+          <AzurePatPermissions />
           </div>
           <div className="settings-group">
             <h3>Импорт тикетов и оформление</h3>

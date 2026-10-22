@@ -984,11 +984,7 @@ export function createApp(
   });
   app.get("/api/azure/tickets/catalog", async (_req, res) => {
     const source = store.source();
-    const cached = store.get<{ name: string; states: string[] }[] | null>(
-      "azure.ticket-options:" + source,
-      null,
-    );
-    const types = cached || (await connectors.ticketOptions());
+    const types = await connectors.ticketOptions();
     if (source !== store.source())
       throw new AppError(409, "Подключение Azure изменилось");
     res.json({
