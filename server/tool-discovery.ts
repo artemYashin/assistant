@@ -23,7 +23,7 @@ const catalog: Record<string, string> = {
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
-  search_ticket_content: "Search cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts, no Azure.",
+  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts, no Azure.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
     "Search/page local summaries; filters or exact IDs; full detail requires consent.",
@@ -55,8 +55,8 @@ const catalog: Record<string, string> = {
   request_pull_request_review:
     "Queue PR review: monitor, repository and PR number.",
   list_memories: "List memory IDs and short summaries in current scope; read_memory loads selected details.",
-  save_memory: "Submit an explicitly requested fact for UI approval; never saves directly.",
-  propose_memory: "Propose a useful fact for approval: scope, text and reason.",
+  save_memory: "Submit a requested fact for UI approval in general/client/project/project_review memory; never saves directly.",
+  propose_memory: "Propose a useful fact for approval, including project_review guidance: scope, text and reason.",
   list_chats: "List locally synchronized Teams chats.",
   read_teams_messages: "Read locally stored messages by chat ID.",
   list_inbox: "Read locally detected ticket mentions.",

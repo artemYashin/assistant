@@ -110,3 +110,19 @@ test("special keys and modifier combinations still work inside editors", () => {
     assert.equal(createVoiceShortcut([binding], [binding])(event, 0, true), true);
   }
 });
+
+test("disabled bindings never trigger a shortcut", () => {
+  const press = createVoiceShortcut(["", ""], [""]);
+  for (const code of ["KeyM", "KeyN", "KeyC", "KeyI", "Space", "ControlLeft"]) {
+    assert.equal(press({ ...m, code }, 0), false);
+    assert.equal(press({ ...m, code }, 100), false);
+  }
+});
+
+test("field dictation default Ctrl+I fires once inside an editor", () => {
+  const press = createVoiceShortcut(["Ctrl+KeyI"], ["Ctrl+KeyI"]);
+  const i = { ...m, code: "KeyI" };
+  assert.equal(press(i, 0, true), false);
+  assert.equal(press({ ...i, ctrlKey: true }, 100, true), true);
+  assert.equal(press({ ...i, ctrlKey: true, repeat: true }, 150, true), false);
+});

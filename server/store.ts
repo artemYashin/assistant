@@ -43,6 +43,8 @@ export const defaults = {
   assistantCodeAccess: true,
   memoryLanguage: "English",
   assistantCodeWaitSeconds: 20,
+  voiceInputKey: "Ctrl+KeyI",
+  voiceInputPress: "single",
   chatToggleKey: "KeyC",
   chatTogglePress: "single",
   voiceCurrentPress: "double",

@@ -1380,7 +1380,7 @@ export class PullRequests {
     const id = old && old.status !== "completed" ? old.id : randomUUID();
     this.store.db
       .prepare(
-        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,?,?,?,?,?,'preparing_git',?,?) ON CONFLICT(id) DO UPDATE SET status='preparing_git',error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at,options=excluded.options",
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at,options=excluded.options",
       )
       .run(
         id,
@@ -1389,6 +1389,7 @@ export class PullRequests {
         number,
         p.head,
         p.target,
+        reviewOptions.readCode ? "preparing_git" : "queued",
         now(),
         JSON.stringify(reviewOptions),
       );
@@ -1414,11 +1415,13 @@ export class PullRequests {
     this.working = true;
     try {
       const m = this.monitors().find((m) => m.id === job.monitor)!;
+      const savedOptions = JSON.parse(job.options || "{}");
+      const options = reviewOptionsSchema.parse({ ...savedOptions, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
       this.store.db
         .prepare(
-          "UPDATE pr_reviews SET status='preparing_git',started_at=? WHERE id=?",
+          "UPDATE pr_reviews SET status=?,started_at=? WHERE id=?",
         )
-        .run(now(), job.id);
+        .run(options.readCode ? "preparing_git" : "running", now(), job.id);
 
       const credentials = this.credentials(m);
       const detail = await this.get(
@@ -1445,7 +1448,9 @@ export class PullRequests {
           .run(now(), job.id);
         return;
       }
-      await this.sourcePreparation.prepare(m, { monitor: job.monitor, repo: job.repo, number: job.number, head: job.head, source_branch: String(detail.sourceRefName || "") });
+      if (options.readCode) {
+        await this.sourcePreparation.prepare(m, { monitor: job.monitor, repo: job.repo, number: job.number, head: job.head, source_branch: String(detail.sourceRefName || "") });
+      }
       if (this.stopped) throw new AppError(409, "Приложение завершает работу");
       if (this.agent.active() || used.n >= this.store.settings().prDailyLimit) {
         this.store.db.prepare("UPDATE pr_reviews SET status='queued',started_at=NULL WHERE id=?").run(job.id);
@@ -1482,8 +1487,6 @@ export class PullRequests {
           .run(job.id);
         return;
       }
-      const savedOptions = JSON.parse(job.options || "{}");
-      const options = reviewOptionsSchema.parse({ ...savedOptions, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
       const requirements: any[] = [];
       if (options.readTickets) {
         const links = await this.get(

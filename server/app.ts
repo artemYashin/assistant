@@ -58,6 +58,8 @@ const settingsSchema = z
     assistantCodeAccess: z.boolean().default(true),
     memoryLanguage: z.string().trim().min(1).max(100).default("English"),
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
+    voiceInputKey: z.string().max(80).regex(voiceBindingPattern).default("Ctrl+KeyI"),
+    voiceInputPress: z.enum(["single", "double"]).default("single"),
     chatToggleKey: z.string().max(80).regex(voiceBindingPattern).default("KeyC"),
     chatTogglePress: z.enum(["single", "double"]).default("single"),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
@@ -94,7 +96,10 @@ const settingsSchema = z
     project: text,
     azurePat: z.string().max(2000).optional(),
   })
-  .strict().refine(value => ![value.voiceCurrentKey, value.voiceNewKey].includes(value.chatToggleKey), { message: "Клавиша открытия чата должна отличаться от голосовых горячих клавиш", path: ["chatToggleKey"] }).refine(value => value.voiceCurrentKey !== value.voiceNewKey, { message: "Выберите разные клавиши для текущего и нового чата", path: ["voiceNewKey"] });
+  .strict().refine(value => {
+    const keys = [value.voiceCurrentKey, value.voiceNewKey, value.chatToggleKey, value.voiceInputKey].filter(Boolean);
+    return new Set(keys).size === keys.length;
+  }, { message: "Выберите разные клавиши для действий", path: ["voiceInputKey"] });
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 function sessionToken(req: Request) {
   return (

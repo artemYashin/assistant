@@ -66,3 +66,36 @@ test("imports cache content, search is bounded/paged/source scoped, sync clears 
   assert.equal(searchTicketContent(store, { search: "протокол" }).tickets.length, 0);
   assert.equal(searchTicketContent(store, { search: "протокол" }).coverage.cached, 1);
 });
+
+test("content search includes current local notes without a body cache, with pagination and lifecycle isolation", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-notes-search-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const source = store.source();
+  for (const id of [1, 2, 3]) {
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, `Ticket ${id}`, "Active", "", "Bug", "", "", "now");
+    store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)")
+      .run(source, id, "before ".repeat(100) + "ПРОТОКОЛ обмена" + " after".repeat(100));
+  }
+  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)")
+    .run(source, 2, "description", "Протокол", "протокол", "now");
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run("other", 1, "секрет");
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(source, 99, "протокол");
+  const first = searchTicketContent(store, { search: "протокол", limit: 1 });
+  assert.equal(first.tickets[0].id, 1);
+  assert.equal(first.tickets[0].section, "notes");
+  assert.ok(first.tickets[0].snippet.length < 250);
+  assert.equal(first.hasMore, true);
+  assert.equal(first.coverage.cached, 1);
+  const rest = searchTicketContent(store, { search: "протокол", afterId: first.nextAfterId });
+  assert.deepEqual(rest.tickets.map(row => row.id), [2, 3]);
+  assert.equal(rest.hasMore, false);
+  assert.equal(searchTicketContent(store, { search: "секрет" }).tickets.length, 0);
+  assert.deepEqual(searchTicketContent(store, { search: "протокол", id: 3 }).tickets.map(row => row.id), [3]);
+  store.removeLocalTicket(1);
+  assert.equal(searchTicketContent(store, { search: "протокол", lifecycle: "deleted" }).tickets[0].section, "notes");
+  assert.deepEqual(searchTicketContent(store, { search: "протокол", lifecycle: "active" }).tickets.map(row => row.id), [2, 3]);
+  store.db.prepare("UPDATE ticket_metadata SET notes='новая заметка' WHERE source=? AND id=3").run(source);
+  assert.equal(searchTicketContent(store, { search: "протокол", id: 3 }).tickets.length, 0);
+  assert.equal(searchTicketContent(store, { search: "НОВАЯ", id: 3 }).tickets.length, 1);
+});

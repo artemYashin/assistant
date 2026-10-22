@@ -199,7 +199,7 @@ export function makeTools(
       handler: async args => readCachedTicket(store, args),
     }),
     defineTool("search_ticket_content", {
-      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria and repro steps by literal substring. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
+      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria, repro steps and local notes by literal substring. Notes are searchable even without a body cache; section=notes identifies their excerpts. Read full notes with list_tickets fields=[\"notes\"]. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
       parameters: contentSearchSchema,
       handler: async args => searchTicketContent(store, args),
     }),

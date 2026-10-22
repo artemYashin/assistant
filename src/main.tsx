@@ -1,3 +1,4 @@
+import { FieldDictation } from "./FieldDictation.js";
 import { Fragment, useCallback } from "react";
 import { useChatToggleShortcut } from "./useChatToggleShortcut.js";
 import { ExportMemoryButton } from "./ExportMemory.js";
@@ -1138,6 +1139,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 busy={busy}
               />
             )}
+            <FieldDictation binding={settings?.voiceInputKey ?? "Ctrl+KeyI"} press={settings?.voiceInputPress ?? "single"} />
             <footer className="main-footer">
               <span>
                 orbit <span className="footer-dot">·</span> пространство для
@@ -2737,10 +2739,18 @@ function Settings({ settings, context, run, busy }: any) {
             <div className="voice-settings-row">
               <strong>Открыть или закрыть боковой чат</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form.chatToggleKey ?? "KeyC"} otherKey={form.voiceCurrentKey ?? "KeyM"} otherKeys={[form.voiceNewKey ?? "KeyN"]} onChange={value => set("chatToggleKey", value)} />
+                <VoiceBinding value={form.chatToggleKey ?? "KeyC"} otherKey={form.voiceCurrentKey ?? "KeyM"} otherKeys={[form.voiceNewKey ?? "KeyN", form.voiceInputKey ?? "Ctrl+KeyI"]} onChange={value => set("chatToggleKey", value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.chatTogglePress ?? "single"} onChange={value => set("chatTogglePress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
               </div>
             </div>
+            <div className="voice-settings-row">
+              <strong>Начать голосовой ввод в активное поле</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding value={form.voiceInputKey ?? "Ctrl+KeyI"} otherKey={form.chatToggleKey ?? "KeyC"} otherKeys={[form.voiceCurrentKey ?? "KeyM", form.voiceNewKey ?? "KeyN"]} onChange={value => set("voiceInputKey", value)} />
+                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.voiceInputPress ?? "single"} onChange={value => set("voiceInputPress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
+              </div>
+            </div>
+            <p className="muted">Для диктовки выберите текстовое поле и нажмите Ctrl+I. Этот бинд работает внутри поля. Enter — вставить текст, Esc — отменить. Крестик отключает бинд.</p>
             <p className="muted">По умолчанию C. Буквы и цифры не срабатывают при вводе текста. В открытых диалогах горячая клавиша отключена.</p>
           </div>
           <div className="settings-group voice-settings-block">
@@ -2749,7 +2759,7 @@ function Settings({ settings, context, run, busy }: any) {
             {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
               <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} otherKeys={[form.chatToggleKey ?? "KeyC"]} onChange={value => set(`voice${kind}Key`, value)} />
+                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} otherKeys={[form.chatToggleKey ?? "KeyC", form.voiceInputKey ?? "Ctrl+KeyI"]} onChange={value => set(`voice${kind}Key`, value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
               </div>
             </div>)}

@@ -19,6 +19,20 @@ export function searchTicketContent(store: Store, input: unknown) {
     FROM local_tickets t JOIN ticket_content_cache c ON c.source=t.source AND c.id=t.id
     WHERE t.source=? AND t.id>? AND (? IS NULL OR t.id=?) AND instr(c.search_text,?)>0 ${lifecycleClause}
     ORDER BY t.id,c.section LIMIT ?`).all(source, afterId, id ?? null, id ?? null, search.toLocaleLowerCase(), (limit + 1) * 3) as any[];
+  // Notes are local metadata, independent of the Azure body cache. Match in JS
+  // because SQLite lower() does not fold Cyrillic (or other non-ASCII text).
+  const notes = store.db.prepare(`${localTicketScope()} SELECT t.id,t.title,t.deleted,m.notes AS body
+    FROM local_tickets t JOIN ticket_metadata m ON m.source=t.source AND m.id=t.id
+    WHERE t.source=? AND t.id>? AND (? IS NULL OR t.id=?) AND m.notes<>'' ${lifecycleClause}
+    ORDER BY t.id`).iterate(source, afterId, id ?? null, id ?? null);
+  let noteMatches = 0;
+  for (const value of notes) {
+    const row = value as { id: number; title: string; deleted: number; body: string };
+    if (!row.body.toLocaleLowerCase().includes(search.toLocaleLowerCase())) continue;
+    rows.push({ ...row, section: "notes" });
+    if (++noteMatches > limit) break;
+  }
+  rows.sort((a, b) => a.id - b.id);
   const matches = new Map<number, any>();
   for (const row of rows) {
     if (matches.has(row.id)) continue;
@@ -34,7 +48,7 @@ export function searchTicketContent(store: Store, input: unknown) {
   const hasMore = matches.size > limit;
   return { tickets, hasMore, nextAfterId: hasMore ? tickets.at(-1)!.id : null,
     coverage: { total: coverage.total, cached: coverage.cached || 0 },
-    note: "Local cached descriptions/acceptance criteria/repro steps only; may be stale or incomplete. Literal substring matches, not verified semantic relationships. No Azure calls." };
+    note: "Local notes and cached descriptions/acceptance criteria/repro steps; coverage.cached counts only Azure body caches; may be stale or incomplete. Literal substring matches, not verified semantic relationships. No Azure calls." };
 }
 
 export const cachedTicketSchema = z.object({

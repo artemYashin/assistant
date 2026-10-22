@@ -1103,3 +1103,26 @@ test("review waits for source preparation and never invokes the model after Git 
   assert.equal(calls.length, 1);
   assert.equal((service.list(context)[0] as any).review_status, "error");
 });
+
+test("review without code access skips Git preparation and waits only for the model", async t => {
+  const { store, service, calls, preparation, agent } = fixture(t);
+  mock(t, [pr()]);
+  await service.sync();
+  let preparations = 0;
+  preparation.prepare = async () => { preparations++; throw new Error("Git unavailable"); };
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1, {
+    readCode: false, readTickets: false, questionFrequency: "none",
+  });
+  const status = () => (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status;
+  assert.equal(status(), "queued");
+  const busy = t.mock.method(agent, "active", () => "busy" as any);
+  await service.reviewNext();
+  assert.equal(status(), "queued");
+  assert.equal(preparations, 0);
+  assert.equal(calls.length, 0);
+  busy.mock.restore();
+  await service.reviewNext();
+  assert.equal(preparations, 0);
+  assert.equal(calls.length, 1);
+  assert.equal(status(), "completed");
+});

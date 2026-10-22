@@ -8,7 +8,7 @@ export function voiceBinding(event: BindingEvent) {
   if (event.metaKey && !event.code.startsWith("Meta")) parts.push("Meta");
   return [...parts, event.code].join("+");
 }
-export const voiceBindingPattern = /^(?:Ctrl\+)?(?:Alt\+)?(?:Shift\+)?(?:Meta\+)?[A-Za-z][A-Za-z0-9]{0,39}$/;
+export const voiceBindingPattern = /^(?:$|(?:Ctrl\+)?(?:Alt\+)?(?:Shift\+)?(?:Meta\+)?[A-Za-z][A-Za-z0-9]{0,39})$/;
 export function voiceBindingLabel(value: string) {
   return value.split("+").map(part => ({ Space: "Пробел", Meta: "⌘ / Win", Alt: "Alt / Option", ControlLeft: "Ctrl (лев.)", ControlRight: "Ctrl (прав.)", MetaLeft: "⌘ / Win (лев.)", MetaRight: "⌘ / Win (прав.)", AltLeft: "Alt / Option (лев.)", AltRight: "Alt / Option (прав.)", ShiftLeft: "Shift (лев.)", ShiftRight: "Shift (прав.)" }[part] || part.replace(/^(Key|Digit)/, ""))).join(" + ");
 }
