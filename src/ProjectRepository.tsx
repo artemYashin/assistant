@@ -1,3 +1,4 @@
+import { GitBranch, GitPullRequest, Sparkles, Download } from "lucide-react";
 import { PrReviewerPicker, type ReviewerPerson } from "./PrReviewerPicker.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ export function ProjectRepository({
   context: { client: string; project: string };
   onSaved?: () => void;
 }) {
+  const [tab, setTab] = useState<"git" | "pr" | "review">("git");
   const [required, setRequired] = useState<ReviewerPerson[]>([]);
   const [optional, setOptional] = useState<ReviewerPerson[]>([]);
   const [ignoredPaths, setIgnoredPaths] = useState("");
@@ -28,7 +30,7 @@ export function ProjectRepository({
     setRepo("");
     setAll(false);
     setEnabled(true);
-    setRequired([{ id: "$self", name: "Вы (владелец PAT)", email: "" }]);
+    setRequired([]);
     setOptional([]);
     setLoaded(false);
     setIgnoredPaths("");
@@ -63,8 +65,8 @@ export function ProjectRepository({
           setAll(m.mode === "all");
           if (m.reviewer_filter) {
             const filter = JSON.parse(m.reviewer_filter);
-            setRequired(filter.required);
-            setOptional(filter.optional);
+            setRequired(filter.required.filter((p: ReviewerPerson) => p.id !== "$self"));
+            setOptional(filter.optional.filter((p: ReviewerPerson) => p.id !== "$self"));
           }
           setEnabled(!!m.enabled);
         }
@@ -88,6 +90,7 @@ export function ProjectRepository({
       className="stack"
       onSubmit={async (e) => {
         e.preventDefault();
+        if (!repo.trim()) { setTab("git"); setMessage("Укажите Git-репозиторий на вкладке Git."); return; }
         setBusy(true);
         setMessage("");
         try {
@@ -121,8 +124,14 @@ export function ProjectRepository({
       }}
     >
       <h3>
-        Git-репозиторий · {context.client} / {context.project}
+        Репозиторий · {context.client} / {context.project}
       </h3>
+      <nav className="repository-tabs" aria-label="Настройки репозитория">
+        <button type="button" aria-pressed={tab === "git"} onClick={() => setTab("git")}><GitBranch size={16} />Git</button>
+        <button type="button" aria-pressed={tab === "pr"} onClick={() => setTab("pr")}><GitPullRequest size={16} />Pull request</button>
+        <button type="button" aria-pressed={tab === "review"} onClick={() => setTab("review")}><Sparkles size={16} />AI review</button>
+      </nav>
+      {tab === "git" && <div className="stack repository-tab-body">
       <label>
         Git-репозиторий
         <input
@@ -138,8 +147,8 @@ export function ProjectRepository({
         и PAT — в общих настройках Azure. Синхронизируются только активные PR
         этого репозитория. Смена репозитория сохраняет старые результаты ревью.
       </p>
-      <fieldset className="repository-fetch-settings">
-        <legend>Просмотр кода · загрузка репозитория</legend>
+      <h4 className="repository-section-title"><Download size={16} />Просмотр кода · загрузка репозитория</h4>
+      <div className="repository-fetch-settings">
         <label>Основная ветка для ассистента
           <input value={mainBranch} onChange={event => setMainBranch(event.target.value)} maxLength={500} placeholder="По умолчанию — основная ветка репозитория" />
         </label>
@@ -158,7 +167,7 @@ export function ProjectRepository({
             onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />
         </label>
         <p className="muted">От 1 до 120 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
-      </fieldset>
+      </div>
       <label>
         Исключить из ревью и View Diff (один путь или шаблон на строку)
         <textarea
@@ -176,6 +185,8 @@ export function ProjectRepository({
         на конце исключает всю папку. Настройки общие для ревью и View Diff,
         включая просмотр отдельных коммитов. До 100 правил.
       </p>
+      </div>}
+      {tab === "review" && <div className="stack repository-tab-body">
       <label>
         Общий лимит diff для ревью и просмотра (символы)
         <input
@@ -192,27 +203,24 @@ export function ProjectRepository({
         Увеличение расходует больше токенов. При пропуске файлов ревью укажет
         причину. Лимит 100 файлов применяется после исключений.
       </p>
-      <label className="check-option">
-        <input
-          type="checkbox"
-          checked={all}
-          onChange={(e) => setAll(e.target.checked)}
-        />
-        Все активные PR
-      </label>
+      </div>}
+      {tab === "pr" && <div className="stack repository-tab-body">
+      <div className="repository-pr-toggles">
+        <label className="repository-pr-toggle">
+          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
+          <span><strong>Синхронизировать PR</strong><small>Обновлять активные pull request этого репозитория при синхронизации.</small></span>
+        </label>
+        <label className="repository-pr-toggle">
+          <input type="checkbox" checked={all} onChange={e => setAll(e.target.checked)} />
+          <span><strong>Все активные PR</strong><small>Импортировать независимо от ревьюеров. Снимите галочку, чтобы выбрать людей ниже.</small></span>
+        </label>
+      </div>
       <div className="pr-reviewer-columns">
         <PrReviewerPicker title="Required" people={required} onChange={setRequired} disabled={all || busy || !loaded} context={context} />
         <PrReviewerPicker title="Optional" people={optional} onChange={setOptional} disabled={all || busy || !loaded} context={context} />
       </div>
       <p className="muted">Импортировать PR, где хотя бы один выбранный человек назначен ревьюером в указанной роли. Это не фильтр по автору PR. Пустые списки без галочки «Все» не импортируют PR.</p>
-      <label className="check-option">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-        />
-        Синхронизировать PR
-      </label>
+      </div>}
 
       {message && <p role="status">{message}</p>}
       <div className="context-save-actions"><ContextSaveButton type="submit" busy={busy} disabled={!loaded} /></div>

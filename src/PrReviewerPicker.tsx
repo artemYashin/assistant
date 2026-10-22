@@ -31,8 +31,9 @@ export function PrReviewerPicker({ title, people, onChange, disabled, context }:
     }, 400);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [query, open, disabled, context.client, context.project]);
-  return <fieldset className="pr-reviewer-picker" disabled={disabled}>
-    <legend><Users size={15} /> {title}</legend>
+  return <div className="pr-reviewer-group">
+    <h4 className="repository-section-title"><Users size={15} /> {title}</h4>
+    <fieldset aria-label={title} className="pr-reviewer-picker" disabled={disabled}>
     <div ref={root} className="pr-reviewer-search">
       <Search size={15} />
       <input aria-label={`Поиск ${title} ревьюера`} placeholder="Имя или e-mail" maxLength={100} value={query}
@@ -55,5 +56,5 @@ export function PrReviewerPicker({ title, people, onChange, disabled, context }:
       </div>)}
       {!people.length && <small className="muted">Ревьюеры не выбраны</small>}
     </div>
-  </fieldset>;
+  </fieldset></div>;
 }

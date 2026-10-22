@@ -1,4 +1,4 @@
-import { reviewerFilterSchema, matchesReviewers, needsReviewerIdentity, type ReviewerFilter } from "./pr-reviewer-filter.js";
+import { reviewerFilterSchema, matchesReviewers, type ReviewerFilter } from "./pr-reviewer-filter.js";
 import { UsageLedger } from "./usage.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { PrSourcePreparation } from "./pr-source.js";
@@ -711,13 +711,6 @@ export class PullRequests {
         if (!m.repository?.trim())
           throw new AppError(400, "Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.");
         const credentials = this.credentials(m);
-        const identity =
-          needsReviewerIdentity(m)
-            ? await this.get(m, "connectionData", credentials, true)
-            : null;
-        const me = identity?.authenticatedUser?.id;
-        if (needsReviewerIdentity(m) && !me)
-          throw new AppError(502, "Azure не вернул ID владельца PAT");
         const found: any[] = [];
         for (let skip = 0; ; skip += 100) {
           if (skip >= 5000)
@@ -734,7 +727,7 @@ export class PullRequests {
             throw new AppError(502, "Azure вернул неверный список PR");
           found.push(
             ...page.value.filter(
-              (p: any) => matchesReviewers(p, m, me),
+              (p: any) => matchesReviewers(p, m),
             ),
           );
           if (page.value.length < 100) break;
@@ -1502,18 +1495,13 @@ export class PullRequests {
         `git/repositories/${enc(job.repo)}/pullrequests/${job.number}`,
         credentials,
       );
-      const me =
-        needsReviewerIdentity(m)
-          ? (await this.get(m, "connectionData", credentials, true))
-              .authenticatedUser?.id
-          : "";
       assertReviewActive();
       if (
         detail.status !== "active" ||
         detail.isDraft ||
         detail.lastMergeSourceCommit?.commitId !== job.head ||
         detail.lastMergeTargetCommit?.commitId !== job.target ||
-        !matchesReviewers(detail, m, me)
+        !matchesReviewers(detail, m)
       ) {
         this.store.db
           .prepare(
