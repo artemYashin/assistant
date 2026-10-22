@@ -785,7 +785,7 @@ export function TicketExportDialog({
           </button>
         </footer>
       </dialog>
-      <dialog ref={closeConfirmation} className="developer-dialog action-confirm-dialog" aria-label="Закрыть экспорт?" onCancel={event => event.stopPropagation()}>
+      <dialog ref={closeConfirmation} className="developer-dialog action-confirm-dialog export-close-dialog" aria-label="Закрыть экспорт?" onCancel={event => event.stopPropagation()}>
         <div className="developer-dialog-heading">
           <h2>Закрыть экспорт?</h2>
           <button type="button" className="icon-button" aria-label="Отменить закрытие" onClick={() => closeConfirmation.current?.close()}><X size={18} /></button>
@@ -793,7 +793,7 @@ export function TicketExportDialog({
         <p>В экспорте есть выбранные тикеты. Если закрыть окно, список будет сброшен. Сами тикеты останутся в системе. Чтобы сохранить набор, сверните экспорт.</p>
         <div className="dialog-actions">
           <button type="button" className="secondary" autoFocus onClick={() => closeConfirmation.current?.close()}>Продолжить работу</button>
-          <button type="button" className="danger" onClick={close}>Закрыть и сбросить список</button>
+          <button type="button" className="secondary export-close-confirm" onClick={close}><X size={16} aria-hidden="true" />Закрыть и сбросить список</button>
         </div>
       </dialog>
     </>

@@ -9845,3 +9845,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .ticket-export-actions .export-append-button { display: inline-flex; align-items: center; gap: 6px; color: #24633f; background: #e5f4e9; border: 1px solid #94c3a4; }
 .ticket-export-actions .export-append-button:disabled { opacity: .5; }
 .ticket-bulk-actions > span[role="status"] { font-size: 11px; }
+
+.export-close-dialog .dialog-actions { flex-wrap: wrap; align-items: stretch; }
+.export-close-dialog .dialog-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; }
+.export-close-confirm > svg { flex-shrink: 0; }
+.export-close-dialog .export-close-confirm { background: #b33333; color: #fff; border: 1px solid #9c2929; }
+.export-close-dialog .export-close-confirm:hover:not(:disabled) { background: #962727; border-color: #852222; }
