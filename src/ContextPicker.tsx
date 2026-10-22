@@ -1,5 +1,6 @@
+import { DeleteContextButton } from "./DeleteContextButton.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
-import { copyRenamedContextStorage } from "./context-storage.js";
+import { copyRenamedContextStorage, deleteContextStorage } from "./context-storage.js";
 import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
 import { PrioritySettings } from "./TicketMetadata.js";
 import { DeveloperDirectory } from "./DeveloperDirectory.js";
@@ -126,6 +127,20 @@ export function ContextPicker({
     } finally {
       setBusy(false);
     }
+  }
+  async function remove(target: Context, confirmation: string) {
+    setBusy(true); setError("");
+    try {
+      const result = await api("/contexts", "DELETE", { context: target, confirmation });
+      try { deleteContextStorage(localStorage, target); } catch { /* Server deletion succeeded; browser storage may be unavailable. */ }
+      setItems(result.items);
+      setCatalogClient(target.project ? target.client : "");
+      setCatalogProject("");
+      setCreating(false);
+      onChange(result.context);
+      onSettingsChange();
+      window.dispatchEvent(new Event("orbit:data-synced"));
+    } finally { setBusy(false); }
   }
   return (
     <div className="header-context">
@@ -263,7 +278,7 @@ export function ContextPicker({
                     onClick={() => { setCatalogClient(client); setCatalogProject(""); setCreating(false); }}>{client}</button>)}
                 </div>
                 {selectedClient ? <ContextName key={selectedClient} value={selectedClient} kind="Заказчик" busy={busy}
-                  onSave={name => rename({ client: selectedClient, project: "" }, name)} /> : <p className="muted">Добавьте первого заказчика.</p>}
+                  onSave={name => rename({ client: selectedClient, project: "" }, name)} deleteAction={<DeleteContextButton context={{ client: selectedClient, project: "" }} disabled={busy} onDelete={remove} />} /> : <p className="muted">Добавьте первого заказчика.</p>}
               </section>
               {selectedClient && <section className="context-catalog-level context-catalog-projects">
                 <div className="context-catalog-heading"><h3><Folder size={16} />Проекты <small>{selectedClient}</small></h3>
@@ -273,7 +288,7 @@ export function ContextPicker({
                     onClick={() => { setCatalogProject(project); setCreating(false); }}>{project}</button>)}
                 </div>
                 {selectedProject ? <ContextName key={JSON.stringify([selectedClient, selectedProject])} value={selectedProject} kind="Проект" busy={busy}
-                  onSave={name => rename({ client: selectedClient, project: selectedProject }, name)} /> : <p className="muted">У этого заказчика пока нет проектов.</p>}
+                  onSave={name => rename({ client: selectedClient, project: selectedProject }, name)} deleteAction={<DeleteContextButton context={{ client: selectedClient, project: selectedProject }} disabled={busy} onDelete={remove} />} /> : <p className="muted">У этого заказчика пока нет проектов.</p>}
               </section>}
               {creating && <div className="context-create-panel">
                 <div className="context-catalog-heading"><h3>{createKind === "client" ? "Новый заказчик" : "Новый проект"}</h3>
@@ -312,7 +327,7 @@ export function ContextPicker({
   );
 }
 
-function ContextName({ value, kind, busy, onSave }: { value: string; kind: string; busy: boolean; onSave: (name: string) => Promise<void> }) {
+function ContextName({ value, kind, busy, onSave, deleteAction }: { value: string; kind: string; busy: boolean; onSave: (name: string) => Promise<void>; deleteAction?: React.ReactNode }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   if (!editing) return <div className="context-directory-name">
@@ -320,6 +335,7 @@ function ContextName({ value, kind, busy, onSave }: { value: string; kind: strin
     <button type="button" className="secondary" disabled={busy} onClick={e => {
       e.preventDefault(); setDraft(value); setEditing(true);
     }}><Pencil size={14} />Переименовать</button>
+    {deleteAction}
   </div>;
   return <form className="context-directory-name is-editing" onSubmit={async e => {
     e.preventDefault();

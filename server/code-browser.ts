@@ -25,6 +25,8 @@ type CodeSyncState = {
   lastChecked: number; lastAttempt?: number; error?: string;
 };
 export class CodeBrowser {
+  private static activeOperations = 0;
+  hasActiveOperations() { return CodeBrowser.activeOperations > 0; }
   private serviceKey?: Promise<string>;
   private syncing = false;
   private active = new Map<string, { client: string; project: string; branch: string; operation: string; cancelled: boolean }>();
@@ -43,8 +45,9 @@ export class CodeBrowser {
     }
     const id = randomUUID();
     this.active.set(id, { ...input, cancelled: false });
+    CodeBrowser.activeOperations++;
     try { return await this.requestInternal(input, report, background, id); }
-    finally { this.active.delete(id); }
+    finally { this.active.delete(id); CodeBrowser.activeOperations--; }
   }
   private async requestInternal(input: z.infer<typeof codeBrowserSchema>, report?: (progress: CodeProgress) => void, background = false, requestId?: string, cancelledRequestIds: string[] = []) {
     const checkCancelled = () => { if (requestId && this.active.get(requestId)?.cancelled) throw new AppError(409, "Операция Git отменена."); };

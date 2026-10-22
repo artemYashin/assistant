@@ -3,12 +3,14 @@ import { useLayoutEffect, useState } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { api } from "./api.js";
 
-export function MemoryProposalContent({ summary, body, collapsible = false }: { summary: string; body: string; collapsible?: boolean }) {
+export function MemoryProposalContent({ summary, body, collapsible = false, externalSummaryLabel = false }: { summary: string; body: string; collapsible?: boolean; externalSummaryLabel?: boolean }) {
   return (
     <div className="memory-proposal-fields">
-      <section className="memory-proposal-field" aria-label="Название">
+      <section className={externalSummaryLabel ? "memory-proposal-title" : "memory-proposal-field"} aria-label="Название">
         <div className="memory-proposal-field-label">Название</div>
-        <strong className="memory-summary">{summary}</strong>
+        {externalSummaryLabel
+          ? <div className="memory-proposal-field memory-proposal-title-value">{summary}</div>
+          : <strong className="memory-summary">{summary}</strong>}
       </section>
       {collapsible ? <details className="memory-proposal-field memory-description">
         <summary>Описание</summary>
@@ -56,7 +58,7 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        <MemoryProposalContent summary={summary} body={body} collapsible />
+        <MemoryProposalContent summary={summary} body={body} collapsible externalSummaryLabel={proposal} />
         {!hideActions && <div className="memory-edit-actions">
         <button
           className="secondary"

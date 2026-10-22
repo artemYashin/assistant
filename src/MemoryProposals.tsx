@@ -70,9 +70,9 @@ export function MemoryProposalList({
               </span>
             </div>
             <div className={p.target_memory_id ? "memory-change-comparison" : undefined}>
-            {p.target_memory_id && <section><h3>Было</h3><MemoryProposalContent summary={p.original_summary} body={p.original_body} collapsible /></section>}
+            {p.target_memory_id && <section><h3>Было</h3><MemoryProposalContent summary={p.original_summary} body={p.original_body} collapsible externalSummaryLabel /></section>}
             <section>{p.target_memory_id && <h3>Предлагаемое изменение</h3>}
-            {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.summary}:${p.body}`} id={p.id} body={p.body} summary={p.summary} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} editing={editing === p.id} hideActions /> : <MemoryProposalContent summary={p.summary} body={p.body} collapsible />}
+            {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.summary}:${p.body}`} id={p.id} body={p.body} summary={p.summary} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} editing={editing === p.id} hideActions /> : <MemoryProposalContent summary={p.summary} body={p.body} collapsible externalSummaryLabel />}
             </section></div>
             <p className="muted">Зачем сохранить: {p.reason}</p>
             <div className="card-actions memory-proposal-actions">

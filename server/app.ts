@@ -1,3 +1,4 @@
+import { deleteContext } from "./context-delete.js";
 import { memorySummarySchema } from "./memory-summary.js";
 import { voiceBindingPattern } from "./voice-binding.js";
 import { CodeBrowser, codeBrowserSchema } from "./code-browser.js";
@@ -127,6 +128,14 @@ export function createApp(
   const codeBrowser = new CodeBrowser(store);
   agent.setPullRequests(pullRequests);
   const app = express();
+  let activeApiRequests = 0;
+  app.use("/api", (_req, res, next) => {
+    activeApiRequests++;
+    let released = false;
+    const release = () => { if (!released) { released = true; activeApiRequests--; } };
+    res.once("finish", release); res.once("close", release);
+    next();
+  });
   app.disable("x-powered-by");
   app.use(
     helmet({
@@ -255,6 +264,12 @@ export function createApp(
     const context = contextSchema.strict().parse(req.body);
     store.addContext(context);
     res.json(store.contexts());
+  });
+  app.delete("/api/contexts", (req, res) => {
+    const input = z.object({ context: contextSchema.strict(), confirmation: z.literal("удалить") }).strict().parse(req.body);
+    if (agent.active() || syncing || syncingPrs || codeBrowser.hasActiveOperations() || activeApiRequests > 1)
+      throw new AppError(409, "Дождитесь завершения активных запросов, синхронизации и работы ассистента, затем повторите удаление.");
+    res.json(deleteContext(store, input.context, input.confirmation));
   });
   app.post("/api/contexts/rename", (req, res) => {
     const input = z.object({ context: contextSchema.strict(), name: z.string().trim().min(1).max(200) }).strict().parse(req.body);

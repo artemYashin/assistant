@@ -8684,7 +8684,8 @@ summary > svg {
 
 .voice-shortcut-dialog { position: fixed; inset: auto 16px max(32px, 7vh); width: min(330px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 48px); margin: 0 auto; padding: 0; border: 1px solid #ffffff25; border-radius: 24px; overflow: auto; background: #152337f2; color: #edf4ff; box-shadow: 0 24px 80px #08152666, 0 0 40px #4e71b71c; }
 .voice-shortcut-dialog[open] { animation: voice-arrive .22s ease-out; }
-.voice-shortcut-dialog::backdrop { background: #15223830; backdrop-filter: blur(3px); }
+.voice-shortcut-dialog { background: #152337f5; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-color: #8aa9cf55; box-shadow: 0 18px 54px #08152666, 0 4px 14px #08152640; z-index: 10000; }
+.voice-shortcut-dialog::backdrop { background: transparent; backdrop-filter: none; pointer-events: none; }
 .voice-shortcut-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 27px 22px 18px; text-align: center; }
 .voice-shortcut-close { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #ffffff18; border-radius: 50%; background: #ffffff0a; color: #c9d7eb; }
 .voice-shortcut-close:hover { background: #ffffff22; color: #fff; }
@@ -9446,3 +9447,18 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 }
 
 .memory-proposals .memory-description > summary { padding: 11px 14px; min-height: 40px; }
+
+.memory-proposal-title { min-width: 0; }
+.memory-proposal-title > .memory-proposal-field-label { margin: 0 0 5px; }
+.memory-proposal-title-value { padding: 9px 12px; font-size: 13px; font-weight: 400; line-height: 1.45; overflow-wrap: anywhere; }
+
+.context-delete-button { color: #ae3434; border-color: #e5bbbb; }
+.context-delete-button:hover:not(:disabled) { background: #fbe9e9; }
+.context-delete-dialog { width: min(540px, calc(100vw - 32px)); }
+.context-delete-dialog h2 { display: flex; align-items: center; gap: 8px; color: #a92d2d; }
+.context-delete-name { display: block; overflow-wrap: anywhere; margin-bottom: 12px; }
+.context-delete-warning { padding: 12px; border: 1px solid #e4abab; border-radius: 8px; background: #fff0f0; color: #8f2929; }
+.context-delete-warning p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; }
+.context-delete-dialog form { display: grid; gap: 8px; }
+.context-delete-confirm { background: #b33333; color: white; border: 1px solid #9c2929; }
+.context-delete-confirm:hover:not(:disabled) { background: #962727; }

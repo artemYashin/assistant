@@ -133,7 +133,8 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
       if (event.key === "Escape" && phaseRef.current !== "idle") {
         event.preventDefault(); event.stopPropagation(); actions.current.cancel(); return;
       }
-      if (event.key === "Enter" && phaseRef.current !== "idle" && !event.isComposing) {
+      if (event.key === "Enter" && phaseRef.current !== "idle" && !event.isComposing
+        && (event.target === document.body || (event.target instanceof Node && dialog.current?.contains(event.target)))) {
         event.preventDefault(); event.stopPropagation();
         if (!event.repeat && phaseRef.current === "recording") actions.current.finish(true);
         return;
@@ -179,15 +180,33 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
     };
   }, [currentKey, newKey, currentPress, newPress, fieldMode]);
   useEffect(() => {
-    if (phase === "idle") dialog.current?.close();
-    else if (!dialog.current?.open) { dialog.current?.showModal(); dialog.current?.querySelector<HTMLElement>(".voice-shortcut-card")?.focus(); }
+    const element = dialog.current;
+    if (!element) return;
+    if (phase === "idle") {
+      element.hidePopover?.();
+      element.close();
+    } else if (!element.open) {
+      element.show();
+      // Keep the recorder above existing dialogs without making the page inert.
+      element.showPopover?.();
+      element.querySelector<HTMLElement>(".voice-shortcut-card")?.focus();
+    }
   }, [phase]);
+  useEffect(() => {
+    if (!fieldMode) return;
+    const cancelOutside = (event: PointerEvent) => {
+      if (phaseRef.current !== "idle" && event.target instanceof Node && !dialog.current?.contains(event.target))
+        actions.current.cancel();
+    };
+    document.addEventListener("pointerdown", cancelOutside, true);
+    return () => document.removeEventListener("pointerdown", cancelOutside, true);
+  }, [fieldMode]);
   useEffect(() => {
     if (phase !== "recording") return;
     const timer = setInterval(() => setSeconds(Math.floor((performance.now() - started.current) / 1000)), 250);
     return () => clearInterval(timer);
   }, [phase]);
-  return createPortal(<dialog ref={dialog} className="voice-shortcut-dialog" aria-labelledby={titleId}
+  return createPortal(<dialog ref={dialog} className="voice-shortcut-dialog" popover="manual" aria-modal={false} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); cancel(); }} onClose={() => { if (phaseRef.current !== "idle") cancel(); }}>
     <div className={`voice-shortcut-card is-${phase}`} tabIndex={-1}>
       <button type="button" className="voice-shortcut-close" onClick={cancel} aria-label="Отменить запись и отправку" title="Отменить · Esc"><X size={19} /></button>
