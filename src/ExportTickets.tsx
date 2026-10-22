@@ -3,10 +3,26 @@ import {
   defaultExportColumns,
   type ExportColumnKey,
 } from "./ticket-export-columns.js";
-import { useRef, useState } from "react";
-import { Download, FileSpreadsheet, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Download,
+  FileSpreadsheet,
+  X,
+  Plus,
+  Search,
+  Ticket,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { ticketsCsv, type CsvTicket } from "./tickets-csv.js";
+import { api } from "./api.js";
 
+const eventName = "orbit:export-tickets";
+/** Open the shared export composer with ticket snapshots or local ticket IDs. */
+export function openTicketExport(tickets: (CsvTicket | number)[]) {
+  window.dispatchEvent(new CustomEvent(eventName, { detail: tickets }));
+}
 export function ExportTickets({
   tickets,
   trash = false,
@@ -14,22 +30,144 @@ export function ExportTickets({
   tickets: CsvTicket[];
   trash?: boolean;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  return (
+    <button
+      type="button"
+      className="secondary"
+      onClick={() =>
+        openTicketExport(
+          trash
+            ? tickets.map((ticket) => ({ ...ticket, inTrash: true }))
+            : tickets,
+        )
+      }
+    >
+      <FileSpreadsheet size={16} />
+      Экспорт{tickets.length ? ` (${tickets.length})` : ""}
+    </button>
+  );
+}
+export function TicketExportDialog() {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [format, setFormat] = useState<"csv" | "xlsx">("xlsx");
-  const [columns, setColumns] =
-    useState<ExportColumnKey[]>(defaultExportColumns);
+  const [busy, setBusy] = useState(false),
+    [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [catalog, setCatalog] = useState<CsvTicket[]>([]);
   const [snapshot, setSnapshot] = useState<CsvTicket[]>([]);
-  const lock = useRef(false);
-  function open(format: "csv" | "xlsx") {
-    setFormat(format);
-    setError("");
-    setSnapshot(structuredClone(tickets));
-    dialog.current?.showModal();
-  }
+  const [format, setFormat] = useState<"csv" | "xlsx">("xlsx");
+  const [order, setOrder] = useState<ExportColumnKey[]>(
+    exportColumns.map((c) => c.key),
+  );
+  const [enabled, setEnabled] =
+    useState<ExportColumnKey[]>(defaultExportColumns);
+  const [adding, setAdding] = useState(false),
+    [query, setQuery] = useState("");
+  const [dragged, setDragged] = useState<ExportColumnKey | null>(null);
+  const [dropTarget, setDropTarget] = useState<ExportColumnKey | null>(null);
+  const lock = useRef(false),
+    request = useRef<AbortController | null>(null);
+  const columns = order.filter((key) => enabled.includes(key));
+  const trash =
+    snapshot.length > 0 && snapshot.every((ticket) => ticket.inTrash);
+  useEffect(() => {
+    const open = (event: Event) => {
+      if (lock.current) return;
+      const tickets = (event as CustomEvent<(CsvTicket | number)[]>).detail;
+      if (!Array.isArray(tickets)) return;
+      request.current?.abort();
+      const controller = new AbortController();
+      request.current = controller;
+      const initial = [
+        ...new Map(
+          tickets.map((ticket) => [
+            typeof ticket === "number" ? ticket : ticket.id,
+            ticket,
+          ]),
+        ).values(),
+      ];
+      setSnapshot(
+        initial.map((ticket) =>
+          typeof ticket === "number" ? { id: ticket } : structuredClone(ticket),
+        ),
+      );
+      setError("");
+      setQuery("");
+      setAdding(false);
+      setCatalog([]);
+      setLoading(true);
+      if (!dialog.current?.open) dialog.current?.showModal();
+      Promise.all([
+        api<CsvTicket[]>("/tickets", "GET", undefined, controller.signal),
+        api<CsvTicket[]>("/tickets/trash", "GET", undefined, controller.signal),
+      ])
+        .then(([active, removed]) => {
+          if (controller.signal.aborted) return;
+          const all = [
+            ...active,
+            ...removed.map((t) => ({ ...t, inTrash: true })),
+          ];
+          setCatalog(all);
+          const missing: number[] = [];
+          const resolved = initial.flatMap((ticket) => {
+            if (typeof ticket !== "number") return [structuredClone(ticket)];
+            const found = all.find((t) => t.id === ticket);
+            if (!found) {
+              missing.push(ticket);
+              return [];
+            }
+            return [found];
+          });
+          setSnapshot(resolved);
+          if (missing.length)
+            setError(
+              `Не найдены локально: ${missing.join(", ")}. Эти тикеты не добавлены в экспорт.`,
+            );
+        })
+        .catch((e) => {
+          if (!controller.signal.aborted) {
+            setError(`Не удалось загрузить список тикетов: ${e.message}`);
+            setSnapshot(
+              initial.filter((t): t is CsvTicket => typeof t !== "number"),
+            );
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    };
+    window.addEventListener(eventName, open);
+    return () => {
+      window.removeEventListener(eventName, open);
+      request.current?.abort();
+    };
+  }, []);
+  const close = () => {
+    if (busy) return;
+    request.current?.abort();
+    setLoading(false);
+    dialog.current?.close();
+  };
+  const move = (from: ExportColumnKey, to: ExportColumnKey) =>
+    setOrder((current) => {
+      const next = [...current];
+      const old = next.indexOf(from),
+        target = next.indexOf(to);
+      next.splice(old, 1);
+      next.splice(target, 0, from);
+      return next;
+    });
+  const search = query.trim().toLocaleLowerCase().replace(/^#/, "");
+  const results = catalog
+    .filter(
+      (t) =>
+        !snapshot.some((selected) => selected.id === t.id) &&
+        (!search ||
+          String(t.id).includes(search) ||
+          t.title?.toLocaleLowerCase().includes(search)),
+    )
+    .slice(0, 20);
   async function download() {
-    if (lock.current || !columns.length) return;
+    if (lock.current || !columns.length || !snapshot.length || loading) return;
     lock.current = true;
     setBusy(true);
     setError("");
@@ -72,109 +210,306 @@ export function ExportTickets({
     }
   }
   return (
-    <div className="ticket-export-actions" aria-busy={busy}>
-      <button
-        type="button"
-        className="secondary"
-        disabled={!tickets.length || busy}
-        title="Скачать таблицу с оформлением в Excel"
-        onClick={() => open("xlsx")}
-      >
-        <FileSpreadsheet size={16} />
-        {busy ? "Подготовка…" : `Экспорт Excel (${tickets.length})`}
-      </button>
-      <button
-        type="button"
-        className="secondary"
-        disabled={!tickets.length || busy}
-        title="Скачать CSV с разделителем точка с запятой"
-        onClick={() => open("csv")}
-      >
-        <Download size={16} />
-        CSV
-      </button>
-      <dialog
-        ref={dialog}
-        className="developer-dialog export-columns-dialog"
-        aria-label="Столбцы экспорта"
-        onCancel={(event) => {
-          if (busy) event.preventDefault();
-        }}
-      >
-        <div className="developer-dialog-heading">
-          <strong>
-            Экспорт {format === "xlsx" ? "Excel" : "CSV"} · {snapshot.length}{" "}
-            тикетов
-          </strong>
+    <dialog
+      ref={dialog}
+      className="developer-dialog ticket-export-dialog"
+      aria-label="Экспорт тикетов"
+      onCancel={(event) => {
+        event.preventDefault();
+        close();
+      }}
+    >
+      <div className="developer-dialog-heading">
+        <h2>
+          <FileSpreadsheet size={21} />
+          Экспорт тикетов
+        </h2>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Закрыть экспорт"
+          disabled={busy}
+          onClick={close}
+        >
+          <X size={18} />
+        </button>
+      </div>
+      <div className="export-format" role="group" aria-label="Формат экспорта">
+        <span>Формат</span>
+        {(
+          [
+            ["xlsx", "Excel"],
+            ["csv", "CSV"],
+          ] as const
+        ).map(([value, label]) => (
           <button
             type="button"
-            className="icon-button"
-            aria-label="Закрыть"
+            key={value}
+            aria-pressed={format === value}
             disabled={busy}
-            onClick={() => dialog.current?.close()}
+            onClick={() => setFormat(value)}
           >
-            <X size={18} />
+            {label}
           </button>
-        </div>
-        <p className="muted">
-          Выберите столбцы. Заголовки в файле будут на английском, значения
-          сохранятся без перевода.
+        ))}
+      </div>
+      <div className="export-workspace">
+        <section className="export-ticket-panel">
+          <h3>
+            Тикеты <span>{snapshot.length}</span>
+          </h3>
+          <div className="export-ticket-list" aria-label="Тикеты для экспорта">
+            {!snapshot.length && (
+              <p className="muted">Добавьте тикеты с помощью кнопки ниже.</p>
+            )}
+            {snapshot.map((ticket) => (
+              <div className="export-ticket-row" key={ticket.id}>
+                <Ticket size={18} />
+                <div>
+                  <strong>#{ticket.id}</strong>
+                  <span className="export-ticket-title">
+                    {ticket.title || "Загрузка…"}
+                  </span>
+                  <div className="export-ticket-meta">
+                    <span>{ticket.type}</span>
+                    <span>{ticket.state}</span>
+                    {ticket.inTrash && <span>В корзине</span>}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Убрать из экспорта #${ticket.id}`}
+                  disabled={busy || loading}
+                  onClick={() =>
+                    setSnapshot((rows) =>
+                      rows.filter((t) => t.id !== ticket.id),
+                    )
+                  }
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div
+            className="export-ticket-add"
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && adding) {
+                event.preventDefault();
+                event.stopPropagation();
+                setAdding(false);
+                setQuery("");
+              }
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                const buttons = [
+                  ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                    ".export-ticket-results > button",
+                  ),
+                ];
+                if (!buttons.length) return;
+                event.preventDefault();
+                const index = buttons.indexOf(
+                  document.activeElement as HTMLButtonElement,
+                );
+                buttons[
+                  (index +
+                    (event.key === "ArrowDown" ? 1 : -1) +
+                    buttons.length) %
+                    buttons.length
+                ]?.focus();
+              }
+            }}
+          >
+            {adding ? (
+              <>
+                <div className="export-ticket-search">
+                  <Search size={16} />
+                  <input
+                    autoFocus
+                    value={query}
+                    disabled={loading || busy}
+                    placeholder="Номер или название тикета"
+                    aria-label="Найти тикет для экспорта"
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Отменить добавление"
+                    onClick={() => {
+                      setAdding(false);
+                      setQuery("");
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div
+                  className="export-ticket-results"
+                  aria-label="Найденные тикеты"
+                >
+                  {results.map((ticket) => (
+                    <button
+                      type="button"
+                      key={ticket.id}
+                      disabled={busy || loading}
+                      onClick={() => {
+                        setSnapshot((rows) =>
+                          rows.some((t) => t.id === ticket.id)
+                            ? rows
+                            : [...rows, ticket],
+                        );
+                        setQuery("");
+                      }}
+                    >
+                      <Ticket size={15} />
+                      <span>
+                        <strong>#{ticket.id}</strong> {ticket.title}
+                        <small>
+                          {ticket.type} · {ticket.state}
+                          {ticket.inTrash ? " · В корзине" : ""}
+                        </small>
+                      </span>
+                      <Plus size={15} />
+                    </button>
+                  ))}
+                  {!results.length && (
+                    <p className="muted">
+                      {loading
+                        ? "Загрузка…"
+                        : "Нет подходящих локальных тикетов"}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy || loading}
+                onClick={() => setAdding(true)}
+              >
+                <Plus size={16} />
+                Добавить тикет
+              </button>
+            )}
+          </div>
+        </section>
+        <section className="export-fields-panel">
+          <h3>Столбцы</h3>
+          <p className="muted">Перетащите строки, чтобы изменить порядок.</p>
+          <div className="export-fields-actions">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setEnabled([...order])}
+            >
+              Выбрать все
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setEnabled([])}
+            >
+              Снять выбор
+            </button>
+          </div>
+          <div className="export-fields-list">
+            {order.map((key, index) => {
+              const column = exportColumns.find((c) => c.key === key)!;
+              return (
+                <div
+                  key={key}
+                  className={`export-field${dropTarget === key ? " is-drop-target" : ""}`}
+                  draggable={!busy}
+                  onDragStart={(e) => {
+                    setDragged(key);
+                    e.dataTransfer.setData("text/plain", key);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    if (!busy && dragged) {
+                      e.preventDefault();
+                      setDropTarget(key);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (!busy && dragged) move(dragged, key);
+                    setDragged(null);
+                    setDropTarget(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragged(null);
+                    setDropTarget(null);
+                  }}
+                >
+                  <GripVertical size={16} />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={enabled.includes(key)}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setEnabled((current) =>
+                          e.target.checked
+                            ? [...current, key]
+                            : current.filter((k) => k !== key),
+                        )
+                      }
+                    />
+                    <span>
+                      {column.label}
+                      <small>{column.header}</small>
+                    </span>
+                  </label>
+                  <div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={`Выше: ${column.label}`}
+                      disabled={busy || index === 0}
+                      onClick={() => move(key, order[index - 1])}
+                    >
+                      <ArrowUp size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={`Ниже: ${column.label}`}
+                      disabled={busy || index === order.length - 1}
+                      onClick={() => move(key, order[index + 1])}
+                    >
+                      <ArrowDown size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+      {loading && <p role="status">Загружаю локальные тикеты…</p>}
+      {error && (
+        <p className="error" role="alert">
+          {error}
         </p>
-        <div className="ticket-bulk-actions">
-          <button
-            type="button"
-            className="text-button"
-            disabled={busy}
-            onClick={() => setColumns(exportColumns.map((c) => c.key))}
-          >
-            Выбрать все
-          </button>
-          <button
-            type="button"
-            className="text-button"
-            disabled={busy}
-            onClick={() => setColumns([])}
-          >
-            Снять выбор
-          </button>
-        </div>
-        <div className="export-column-options">
-          {exportColumns.map((column) => (
-            <label key={column.key}>
-              <input
-                type="checkbox"
-                disabled={busy}
-                checked={columns.includes(column.key)}
-                onChange={(event) =>
-                  setColumns((old) =>
-                    event.target.checked
-                      ? [...old, column.key]
-                      : old.filter((key) => key !== column.key),
-                  )
-                }
-              />
-              <span>
-                {column.label}
-                <small>{column.header}</small>
-              </span>
-            </label>
-          ))}
-        </div>
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
+      )}
+      <footer className="export-footer">
+        <small>Заголовки файла — на английском, значения — без перевода.</small>
         <button
           type="button"
           className="primary"
-          disabled={busy || !columns.length || !snapshot.length}
+          disabled={busy || loading || !columns.length || !snapshot.length}
           onClick={() => void download()}
         >
           <Download size={16} />
-          {busy ? "Подготовка…" : "Скачать файл"}
+          {busy
+            ? "Подготовка…"
+            : `Скачать ${format === "xlsx" ? "Excel" : "CSV"}`}
         </button>
-      </dialog>
-    </div>
+      </footer>
+    </dialog>
   );
 }

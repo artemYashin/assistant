@@ -7,36 +7,72 @@
 
 ### Элемент
 
-Скачать таблицу с оформлением в Excel · Подготовка… / Экспорт Excel ({…})
+Экспорт · ({…}) /
 
-Источник: src/ExportTickets.tsx:76.
-
-### Элемент
-
-Скачать CSV с разделителем точка с запятой · CSV
-
-Источник: src/ExportTickets.tsx:86.
+Источник: src/ExportTickets.tsx:34.
 
 ### Элемент
 
-Закрыть
+Закрыть экспорт
 
-Источник: src/ExportTickets.tsx:109.
+Источник: src/ExportTickets.tsx:227.
+
+### Элемент
+
+Убрать из экспорта #{…}
+
+Источник: src/ExportTickets.tsx:279.
+
+### Элемент
+
+Номер или название тикета · Найти тикет для экспорта
+
+Источник: src/ExportTickets.tsx:328.
+
+### Элемент
+
+Отменить добавление
+
+Источник: src/ExportTickets.tsx:336.
+
+### Элемент
+
+# · · В корзине /
+
+Источник: src/ExportTickets.tsx:353.
+
+### Элемент
+
+Добавить тикет
+
+Источник: src/ExportTickets.tsx:387.
 
 ### Элемент
 
 Выбрать все
 
-Источник: src/ExportTickets.tsx:124.
+Источник: src/ExportTickets.tsx:403.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/ExportTickets.tsx:132.
+Источник: src/ExportTickets.tsx:410.
 
 ### Элемент
 
-Подготовка… / Скачать файл
+Выше: {…}
 
-Источник: src/ExportTickets.tsx:168.
+Источник: src/ExportTickets.tsx:468.
+
+### Элемент
+
+Ниже: {…}
+
+Источник: src/ExportTickets.tsx:477.
+
+### Элемент
+
+Подготовка… / Скачать {…}
+
+Источник: src/ExportTickets.tsx:501.

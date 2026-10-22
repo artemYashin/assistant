@@ -42,7 +42,7 @@ test("CSV exports only chosen columns with English headers and all local owners"
   );
   assert.equal(
     csv,
-    '\uFEFF"ID";"Development Owners"\r\n"5";"Ann; Smith; Bob"\r\n',
+    '\uFEFF"Development Owners";"ID"\r\n"Ann; Smith; Bob";"5"\r\n',
   );
   assert.ok(!csv.includes("Private"));
   assert.throws(() => ticketsCsv([], []));

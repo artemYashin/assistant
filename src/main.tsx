@@ -40,7 +40,7 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
-import { ExportTickets } from "./ExportTickets.js";
+import { ExportTickets, TicketExportDialog } from "./ExportTickets.js";
 import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
 import { TicketTrash } from "./TicketTrash.js";
@@ -670,6 +670,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         </header>
         <div className="work-area">
           <main>
+            <TicketExportDialog key={JSON.stringify([context, settings?.azureUrl, settings?.azureProject])} />
             {!page && (
               <div className="empty">
                 <h1>Страница не найдена</h1>
@@ -1680,7 +1681,7 @@ function Tickets({
             />
           )}
           <ExportTickets
-            tickets={selection.selected.length ? selection.selected : sorted}
+            tickets={selection.selected}
           />
         </div>
       </div>
@@ -1747,7 +1748,7 @@ function Tickets({
             </p>
           )}
           <p className="muted">
-            Сортировка — по всему результату поиска. Экспорт — текущая страница.
+            Сортировка — по всему результату поиска. Экспорт — выбранные тикеты; список можно дополнить в окне экспорта.
           </p>
         </>
       )}

@@ -9,4 +9,4 @@
 
 Select at least one column
 
-Источник: src/ticket-export-columns.ts:139.
+Источник: src/ticket-export-columns.ts:142.

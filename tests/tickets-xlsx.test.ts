@@ -97,3 +97,14 @@ test("creation and change dates can be exported without local import", async () 
   assert.equal(sheet.getCell("A2").value, tickets[0].created_at);
   assert.equal(sheet.getCell("B2").value, tickets[0].changed_at);
 });
+
+
+test("Excel preserves custom column order and removes duplicate selections", async () => {
+  const bytes = await ticketsXlsx([{ id: 42, title: "Example", state: "Active" }], false, ["state", "title", "id", "state"]);
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
+  const sheet = book.getWorksheet("Tickets")!;
+  assert.equal(sheet.columnCount, 3);
+  assert.deepEqual(["A1", "B1", "C1"].map(cell => sheet.getCell(cell).value), ["Azure DevOps Status", "Title", "ID"]);
+  assert.deepEqual(["A2", "B2", "C2"].map(cell => sheet.getCell(cell).value), ["Active", "Example", 42]);
+});

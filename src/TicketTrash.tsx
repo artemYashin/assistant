@@ -374,7 +374,7 @@ export function TicketTrash({
             />
             <ExportTickets
               tickets={
-                selection.selected.length ? selection.selected : filtered
+                selection.selected
               }
               trash
             />

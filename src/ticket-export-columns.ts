@@ -135,7 +135,10 @@ export const defaultExportColumns: ExportColumnKey[] = [
   "azureTags",
 ];
 export function selectedExportColumns(keys: ExportColumnKey[]) {
-  const columns = exportColumns.filter((column) => keys.includes(column.key));
+  const columns = [...new Set(keys)].flatMap((key) => {
+    const column = exportColumns.find((c) => c.key === key);
+    return column ? [column] : [];
+  });
   if (!columns.length) throw new Error("Select at least one column");
   return columns;
 }

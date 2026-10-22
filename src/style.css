@@ -9773,3 +9773,53 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-filter-panel .ticket-filters { margin: 0; }
 .pr-filter-panel .multi-select-trigger, .pr-filter-panel .ticket-filters > button { box-sizing: border-box; height: 36px; min-height: 36px; padding: 6px 10px; font-size: 12px; }
 .pr-filter-count { margin: 0 0 12px; font-size: 12px; }
+.ticket-export-dialog { width: min(1100px, calc(100vw - 32px)); max-width: none; height: min(820px, 85dvh); box-sizing: border-box; }
+.ticket-export-dialog[open] { display: flex; flex-direction: column; gap: 12px; }
+.ticket-export-dialog .developer-dialog-heading { margin: 0; flex-shrink: 0; }
+.ticket-export-dialog h2 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.export-format { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.export-format > span { margin-right: 8px; font-size: 12px; color: #637482; }
+.export-format button { padding: 6px 15px; border: 1px solid #d6e1eb; background: #f3f7fb; color: #425a6e; border-radius: 7px; }
+.export-format button[aria-pressed="true"] { background: #e5f2eb; border-color: #87b89b; color: #246243; }
+.export-workspace { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr); gap: 16px; flex: 1; min-height: 0; }
+.export-ticket-panel, .export-fields-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid #dce5ec; border-radius: 10px; padding: 12px; background: #f7f9fc; }
+.export-workspace h3 { margin: 0 0 9px; font-size: 14px; }
+.export-workspace h3 > span { padding: 2px 7px; background: #dfeaf4; border-radius: 5px; font-size: 11px; }
+.export-ticket-list, .export-fields-list { overflow: auto; min-height: 0; flex: 1; }
+.export-ticket-row { display: flex; align-items: flex-start; gap: 8px; padding: 10px; margin-bottom: 7px; border: 1px solid #e0e7ed; border-radius: 8px; background: white; }
+.export-ticket-row > svg { flex-shrink: 0; color: #4a7d69; margin-top: 2px; }
+.export-ticket-row > div { flex: 1; min-width: 0; }
+.export-ticket-row strong { color: #287451; font-size: 12px; }
+.export-ticket-title { margin-left: 7px; font-size: 13px; overflow-wrap: anywhere; }
+.export-ticket-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.export-ticket-meta > span { font-size: 10px; padding: 2px 5px; background: #edf3f7; border-radius: 4px; }
+.export-ticket-row .icon-button { flex-shrink: 0; }
+.export-ticket-add { position: relative; flex-shrink: 0; padding-top: 8px; }
+.export-ticket-add > button { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+.export-ticket-search { display: flex; align-items: center; gap: 5px; background: white; border: 1px solid #aec5d7; border-radius: 7px; padding: 3px 7px; }
+.export-ticket-search input { flex: 1; width: 0; min-width: 0; border: 0; box-shadow: none; }
+.export-ticket-results { position: absolute; bottom: calc(100% - 3px); left: 0; right: 0; max-height: min(300px, 40dvh); overflow: auto; background: white; border: 1px solid #c6d5e1; border-radius: 8px; box-shadow: 0 8px 25px #20304025; z-index: 2; padding: 4px; }
+.export-ticket-results > button { width: 100%; display: flex; align-items: center; gap: 7px; padding: 8px; text-align: left; background: white; border: 0; border-radius: 5px; color: #314d43; }
+.export-ticket-results > button:hover, .export-ticket-results > button:focus-visible { background: #eaf5ef; }
+.export-ticket-results > button > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.export-ticket-results svg { flex-shrink: 0; }
+.export-ticket-results small { display: block; color: #738579; margin-top: 3px; }
+.export-fields-panel > p { font-size: 11px; margin: 0 0 8px; }
+.export-fields-actions { display: flex; gap: 10px; margin-bottom: 8px; }
+.export-fields-actions button { padding: 0; border: 0; background: none; color: #356d53; font-size: 11px; }
+.export-field { display: flex; align-items: center; gap: 6px; padding: 7px; margin-bottom: 5px; background: white; border: 1px solid #dce5df; border-radius: 7px; }
+.export-field > svg { flex-shrink: 0; cursor: grab; color: #8a9a90; }
+.export-field.is-drop-target { border-color: #39815a; box-shadow: inset 0 2px #39815a; }
+.export-field label { display: flex; flex: 1; align-items: center; gap: 7px; margin: 0; min-width: 0; font-size: 12px; }
+.export-field input { width: 15px; height: 15px; margin: 0; flex-shrink: 0; }
+.export-field small { display: block; font-size: 10px; color: #7b8c80; }
+.export-field > div { display: flex; flex-shrink: 0; }
+.export-field .icon-button { width: 22px; height: 24px; padding: 3px; }
+.export-footer { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; }
+.export-footer small { color: #74857b; font-size: 11px; }
+.export-footer button { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+@media (max-width: 700px) {
+  .ticket-export-dialog { height: 90dvh; padding: 14px; }
+  .export-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(180px, 1fr) minmax(150px, 1fr); gap: 8px; }
+  .export-footer { flex-wrap: wrap; }
+}
