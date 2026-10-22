@@ -580,13 +580,13 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               </div>
               <div className="pr-card-utilities">
                 {!readOnly && (
-                  <>
+                  <div className="pr-card-statuses">
                     <PrHealth value={p.health} inScope={!!p.in_scope} />
                     <span className={`pr-local-source ${p.local_source?.status === "ready" ? "is-ready" : p.local_source?.status === "loading" ? "is-loading" : ["error", "stale"].includes(p.local_source?.status) ? "is-error" : ""}`} title={p.local_source?.error || p.local_source?.stage || p.source_branch}>
                       {p.local_source?.status === "loading" ? <LoaderCircle size={13} className="spin" /> : <GitBranch size={13} />}
                       {p.local_source?.status === "ready" ? "Локальная ветка готова" : p.local_source?.status === "loading" ? "Ветка загружается" : p.local_source?.status === "stale" ? "Ветка устарела" : p.local_source?.status === "error" ? "Локальная ветка не готова" : "Ветка не запрашивалась"}
                     </span>
-                  </>
+                  </div>
                 )}
                 <div
                   className="pr-card-info-actions"

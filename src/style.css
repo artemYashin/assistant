@@ -5625,9 +5625,10 @@ summary > svg {
   overflow-wrap: anywhere;
 }
 .pr-card-header > .pr-card-utilities {
-  max-width: 300px;
+  max-width: 100%;
+  min-width: 0;
 }
-@container (max-width: 650px) {
+@container (max-width: 900px) {
   .pr-card-header {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -9352,3 +9353,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .action-confirm-dialog h2 { margin: 0; font-size: 17px; }
 .action-confirm-dialog p { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
 .action-confirm-dialog .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+.pr-card-statuses { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+.pr-card-statuses .pr-health-trigger { flex-wrap: nowrap; }
+.pr-card-statuses .pr-review-status, .pr-card-statuses .pr-local-source { white-space: nowrap; align-self: center; }
+@container (max-width: 900px) { .pr-card-statuses { justify-content: flex-start; } }
+@media (max-width: 420px) { .pr-card-statuses .pr-health-trigger { flex-wrap: wrap; } }
