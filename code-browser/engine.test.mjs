@@ -214,7 +214,7 @@ test('per-project fetch depth controls downloaded history', async t => {
   assert.equal(count, '2');
   assert.equal((await request('status', { fetchTimeoutSeconds: 7200 })).sha, state.sha);
   await assert.rejects(request('status', { fetchTimeoutSeconds: 7201 }), /Тайм-аут Git/);
-  await assert.rejects(request('pull', { fetchDepth: 0 }), /Глубина/);
+  await assert.rejects(request('pull', { fetchDepth: -1 }), /Глубина/);
 });
 
 test('debug cancellation targets one job and cannot cancel another repository', async t => {
@@ -239,4 +239,44 @@ test('debug cancellation targets one job and cannot cancel another repository', 
   assert.equal((await request('cancel', { jobId: jobs[0].id })).cancelled, 1);
   assert.ok(await running instanceof Error);
   assert.equal((await request('jobs')).jobs.length, 0);
+});
+
+
+test('zero depth completes shallow history and fetches other branches without recreating the cache', async t => {
+  const { request, git, work, root, first } = await fixture(t);
+  for (let i = 0; i < 4; i++) {
+    await fs.writeFile(path.join(work, 'extra'), String(i)); git('add', '.'); git('commit', '-m', `more ${i}`);
+  }
+  git('checkout', 'feature/nested');
+  await fs.writeFile(path.join(work, 'branch-only'), 'feature'); git('add', '.'); git('commit', '-m', 'feature only');
+  const feature = git('rev-parse', 'HEAD'); git('tag', 'feature-tag'); git('checkout', 'main');
+  const shallow = await request('pull', { fetchDepth: 2 });
+  const [cacheId] = await fs.readdir(path.join(root, 'cache'));
+  const gitDir = path.join(root, 'cache', cacheId, 'git');
+  const local = (...args) => execFileSync('git', ['--git-dir=' + gitDir, ...args], { encoding: 'utf8' }).trim();
+  assert.equal(local('rev-parse', '--is-shallow-repository'), 'true');
+  await fs.writeFile(path.join(gitDir, 'keep-me'), 'existing-cache');
+  const full = await request('pull', { fetchDepth: 0 });
+  assert.equal(full.sha, shallow.sha);
+  assert.equal(local('rev-parse', '--is-shallow-repository'), 'false');
+  assert.equal(local('rev-list', '--count', full.sha), '5');
+  assert.equal(local('rev-parse', 'refs/orbit/full/feature/nested'), feature);
+  assert.equal(local('rev-parse', 'refs/tags/feature-tag'), feature);
+  assert.equal(local('cat-file', '-t', first), 'commit');
+  assert.equal(await fs.readFile(path.join(gitDir, 'keep-me'), 'utf8'), 'existing-cache');
+  assert.equal((await request('pull', { fetchDepth: 0, branch: 'feature/nested' })).sha, feature);
+  assert.equal((await request('pull', { fetchDepth: 0 })).sha, full.sha);
+  await fs.writeFile(path.join(work, 'next'), 'next'); git('add', '.'); git('commit', '-m', 'after full');
+  const updated = await request('pull', { fetchDepth: 0 });
+  assert.equal(local('rev-list', '--count', updated.sha), '6');
+});
+
+test('zero default depth also supports a fresh full download', async t => {
+  const { request, git, work, root } = await fixture(t, { fetchDepth: 0 });
+  await fs.writeFile(path.join(work, 'next'), 'next'); git('add', '.'); git('commit', '-m', 'next');
+  const state = await request('pull');
+  const [id] = await fs.readdir(path.join(root, 'cache'));
+  const args = ['--git-dir=' + path.join(root, 'cache', id, 'git')];
+  assert.equal(execFileSync('git', [...args, 'rev-parse', '--is-shallow-repository'], { encoding: 'utf8' }).trim(), 'false');
+  assert.equal(execFileSync('git', [...args, 'rev-list', '--count', state.sha], { encoding: 'utf8' }).trim(), '2');
 });

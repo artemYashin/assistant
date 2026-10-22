@@ -157,8 +157,8 @@ export function ProjectRepository({
         </div>
         <div className="repository-fetch-field">
           <label htmlFor="repository-fetch-2">Глубина истории Git, коммитов</label>
-          <p id="repository-fetch-2-description" className="muted">По умолчанию 1. Большая глубина сохраняет больше истории и может улучшить повторное использование объектов между ветками, но увеличивает загрузку. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
-          <input id="repository-fetch-2" aria-describedby="repository-fetch-2-description" type="number" min={1} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
+          <p id="repository-fetch-2-description" className="muted">По умолчанию 1. Значение 0 — полная история всех веток и теги: существующий кэш докачивается без повторного клонирования. 1–1000 — ограниченная история выбранной ветки. Полная история может ускорить переключение веток, но первая загрузка требует больше времени и места; LFS и подмодули не скачиваются. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
+          <input id="repository-fetch-2" aria-describedby="repository-fetch-2-description" type="number" min={0} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
         </div>
         <div className="repository-fetch-field">
           <label htmlFor="repository-fetch-3">Частота синхронизации Git, минуты</label>

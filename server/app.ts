@@ -1195,7 +1195,7 @@ export function createApp(
         reviewFiles: reviewFileSettings.optional(),
         codeSyncMinutes: z.number().int().min(0).max(1440).optional(),
         mainBranch: z.string().trim().max(500).optional(),
-        fetchDepth: z.number().int().min(1).max(1000).optional(),
+        fetchDepth: z.number().int().min(0).max(1000).optional(),
         fetchTimeoutSeconds: z.number().int().min(60).max(7200).optional(),
       })
       .strict()

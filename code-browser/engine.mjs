@@ -66,7 +66,7 @@ async function diskSize(root, signal) {
 }
 export class RepositoryBrowser {
   constructor(root, { allowLocal = false, recoverLocks = false, fetchDepth = 1, localReadWaitMs = 20000, maxCacheBytes = 20 * 1024 ** 3 } = {}) {
-    if (!Number.isInteger(fetchDepth) || fetchDepth < 1 || fetchDepth > 1000) throw new Error('CODE_BROWSER_FETCH_DEPTH must be an integer from 1 to 1000');
+    if (!Number.isInteger(fetchDepth) || fetchDepth < 0 || fetchDepth > 1000) throw new Error('CODE_BROWSER_FETCH_DEPTH must be an integer from 0 to 1000 (0 means full history)');
     if (!Number.isSafeInteger(maxCacheBytes) || maxCacheBytes <= 0) throw new Error('CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer');
     this.localReadWaitMs = localReadWaitMs;
     this.fetchDepth = fetchDepth;
@@ -98,6 +98,7 @@ export class RepositoryBrowser {
     if (input.localOnly) await this.waitForLocalRead(report, signal, waitMs);
     const keyFor = operation => identity + ':' + hash(JSON.stringify({
       operation, branch: input.branch || '', path: input.path || '', query: input.query || '',
+      fetchDepth: input.fetchDepth ?? this.fetchDepth,
       mode: input.mode || 'name', offset: input.offset || 0, revision: input.revision || '',
       refresh: operation === 'branches' ? !!input.refresh : false, localOnly: !!input.localOnly,
     }));
@@ -139,7 +140,7 @@ export class RepositoryBrowser {
     checkCancelled();
     report({ stage: "preparing" });
     const fetchDepth = input.fetchDepth ?? this.fetchDepth;
-    if (!Number.isInteger(fetchDepth) || fetchDepth < 1 || fetchDepth > 1000) throw new BrowserError("Глубина Git должна быть от 1 до 1000 коммитов");
+    if (!Number.isInteger(fetchDepth) || fetchDepth < 0 || fetchDepth > 1000) throw new BrowserError("Глубина Git должна быть от 0 до 1000 коммитов; 0 — полная история");
     const fetchTimeoutSeconds = input.fetchTimeoutSeconds ?? 300;
     if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 7200) throw new BrowserError('Тайм-аут Git должен быть от 60 до 7200 секунд');
     const networkOptions = { timeout: fetchTimeoutSeconds * 1000, timeoutMessage: `Git не успел загрузить данные за ${fetchTimeoutSeconds / 60} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.` };
@@ -205,7 +206,13 @@ export class RepositoryBrowser {
         catch (error) { throw new BrowserError(error.message, 409); }
       }
       report({ stage: 'fetching' });
-      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', '--depth=' + fetchDepth, url, '+refs/heads/' + branch + ':' + remoteRef], { ...networkOptions, onProgress: report });
+      // Complete the existing object database rather than cloning it again.
+      // --unshallow is only valid while the repository still has shallow boundaries.
+      const shallow = (await git(['rev-parse', '--is-shallow-repository'])).toString().trim() === 'true';
+      const depthOptions = fetchDepth === 0 ? (shallow ? ['--unshallow'] : []) : ['--depth=' + fetchDepth];
+      const refs = ['+refs/heads/' + branch + ':' + remoteRef];
+      if (fetchDepth === 0) refs.push('+refs/heads/*:refs/orbit/full/*', '+refs/tags/*:refs/tags/*');
+      await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', ...depthOptions, url, ...refs], { ...networkOptions, onProgress: report });
       const after = await diskSize(this.root, signal);
       if (after > this.maxCacheBytes) throw new BrowserError(quotaMessage(after), 507);
       report({ stage: 'finalizing' });

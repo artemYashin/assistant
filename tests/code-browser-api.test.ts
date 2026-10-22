@@ -47,11 +47,12 @@ test("code browser resolves configured repository and keeps credentials on serve
   await new CodeBrowser(store).request({ ...context, operation: "tree", branch: "main" });
   assert.equal(calls.length, 4); // Persisted ID avoids Azure resolution after backend restart.
   assert.equal(calls[3].url, "http://code-browser:8010/v1/repository");
-  store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=900 WHERE id=?").run("monitor");
+  store.db.prepare("UPDATE pr_projects SET fetch_timeout_seconds=900, fetch_depth=0 WHERE id=?").run("monitor");
   const progress: unknown[] = [];
   globalThis.fetch = (async (_url: any, init?: RequestInit) => {
     assert.equal(new Headers(init?.headers).get("Accept"), "application/x-ndjson");
     assert.equal(JSON.parse(String(init?.body)).fetchTimeoutSeconds, 900);
+    assert.equal(JSON.parse(String(init?.body)).fetchDepth, 0);
     return new Response('{"type":"progress","progress":{"stage":"receiving","percent":25}}\n{"type":"result","data":{"current":true}}\n', { headers: { "Content-Type": "application/x-ndjson" } });
   }) as typeof fetch;
   const streamed = await browser.request({ ...context, operation: "pull", branch: "main" }, value => progress.push(value));

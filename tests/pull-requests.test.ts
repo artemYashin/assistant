@@ -1605,3 +1605,13 @@ test("repository initial commit compares against empty tree and never reads comm
   assert.match(diff.patches[0], /\+export const start/);
   assert.equal(calls.length, 0);
 });
+
+
+test("repository settings persist zero depth and reject invalid depth", t => {
+  const { service } = fixture(t);
+  const settings = { ...context, repository: "repo", mode: "all" as const, enabled: true, fetchDepth: 0 };
+  service.save(settings);
+  assert.equal(service.monitors()[0].fetch_depth, 0);
+  assert.throws(() => service.save({ ...settings, fetchDepth: -1 }));
+  assert.throws(() => service.save({ ...settings, fetchDepth: 1001 }));
+});

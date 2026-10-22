@@ -25,7 +25,7 @@ Git/ripgrep недоступен в сервисе просмотра кода.
 
 ### Сообщение
 
-CODE_BROWSER_FETCH_DEPTH must be an integer from 1 to 1000
+CODE_BROWSER_FETCH_DEPTH must be an integer from 0 to 1000 (0 means full history)
 
 Источник: code-browser/engine.mjs:69.
 
@@ -51,76 +51,76 @@ CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer
 
 Git ещё подготавливает код. Время ожидания ассистента ({…} с) истекло; загрузка продолжается. Повторите запрос после её завершения.
 
-Источник: code-browser/engine.mjs:116.
+Источник: code-browser/engine.mjs:117.
 
 ### Сообщение
 
-Глубина Git должна быть от 1 до 1000 коммитов
+Глубина Git должна быть от 0 до 1000 коммитов; 0 — полная история
 
-Источник: code-browser/engine.mjs:142.
+Источник: code-browser/engine.mjs:143.
 
 ### Сообщение
 
 Тайм-аут Git должен быть от 60 до 7200 секунд
 
-Источник: code-browser/engine.mjs:144.
+Источник: code-browser/engine.mjs:145.
 
 ### Сообщение
 
 Git не успел загрузить данные за {…} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.
 
-Источник: code-browser/engine.mjs:145.
+Источник: code-browser/engine.mjs:146.
 
 ### Сообщение
 
 Разрешено только чтение локального снимка
 
-Источник: code-browser/engine.mjs:147.
+Источник: code-browser/engine.mjs:148.
 
 ### Сообщение
 
 Неизвестная операция
 
-Источник: code-browser/engine.mjs:148.
+Источник: code-browser/engine.mjs:149.
 
 ### Сообщение
 
 Некорректный запрос
 
-Источник: code-browser/engine.mjs:150.
+Источник: code-browser/engine.mjs:151.
 
 ### Сообщение
 
 Некорректный URL
 
-Источник: code-browser/engine.mjs:151.
+Источник: code-browser/engine.mjs:152.
 
 ### Сообщение
 
 Разрешён только HTTPS URL репозитория без credentials
 
-Источник: code-browser/engine.mjs:152.
+Источник: code-browser/engine.mjs:153.
 
 ### Сообщение
 
 Некорректный токен
 
-Источник: code-browser/engine.mjs:153.
+Источник: code-browser/engine.mjs:154.
 
 ### Сообщение
 
 Некорректный поиск
 
-Источник: code-browser/engine.mjs:154.
+Источник: code-browser/engine.mjs:155.
 
 ### Сообщение
 
 Некорректный путь
 
-Источник: code-browser/engine.mjs:155.
+Источник: code-browser/engine.mjs:156.
 
 ### Сообщение
 
 Локальный репозиторий ещё не загружен. Откройте страницу кода.
 
-Источник: code-browser/engine.mjs:167.
+Источник: code-browser/engine.mjs:168.

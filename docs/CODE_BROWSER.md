@@ -105,3 +105,6 @@ so failures do not retry on every timer tick or backend restart. Errors are
 retained for display on the code page. Changing repository/source requires opening
 the new repository before background checks start. Only one background pass runs
 at a time, and service jobs retain their existing queue/deduplication rules.
+
+## Full-history mode
+`fetchDepth=0` (also `CODE_BROWSER_FETCH_DEPTH=0`) fetches all branch heads and tags into the existing bare cache, using `--unshallow` only while it is shallow. Positive depths 1–1000 keep the selected-branch shallow fetch behavior. Full mode does not fetch LFS payloads or submodule repositories. Saving the setting alone does not start a download; use Pull. Every full-mode network refresh updates all branch refs, but only the selected snapshot is adopted by Pull. Cache quota, cancellation and timeout behavior remain unchanged. Job coalescing includes effective depth so a full request cannot join a shallow fetch.

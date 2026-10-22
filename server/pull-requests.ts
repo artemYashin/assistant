@@ -349,7 +349,7 @@ export class PullRequests {
       : undefined;
     const codeSyncMinutes = input.codeSyncMinutes === undefined ? undefined : z.number().int().min(0).max(1440).parse(input.codeSyncMinutes);
     const mainBranch = input.mainBranch === undefined ? undefined : z.string().trim().max(500).refine(value => !/[\r\n\0]/.test(value)).parse(input.mainBranch);
-    const fetchDepth = input.fetchDepth === undefined ? undefined : z.number().int().min(1).max(1000).parse(input.fetchDepth);
+    const fetchDepth = input.fetchDepth === undefined ? undefined : z.number().int().min(0).max(1000).parse(input.fetchDepth);
     const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(7200).parse(input.fetchTimeoutSeconds);
     const filter = input.reviewerFilter === undefined ? undefined : JSON.stringify(reviewerFilterSchema.parse(input.reviewerFilter));
     this.store.addContext(input);
