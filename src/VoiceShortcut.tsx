@@ -1,3 +1,4 @@
+import { keepVoiceOverlayOnTop } from "./voice-overlay.js";
 import { voiceBinding } from "../server/voice-binding.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -45,7 +46,9 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
   const recorder = useRef<MediaRecorder | null>(null), stream = useRef<MediaStream | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const transcription = useRef<AbortController | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  const [host] = useState(() => document.createElement("div"));
+  useEffect(() => { document.body.append(host); return () => host.remove(); }, [host]);
   const latest = useRef({ enabled, onText, onBusy, onNewChat, onOpen });
   latest.current = { enabled, onText, onBusy, onNewChat, onOpen };
   function change(next: Phase) {
@@ -179,19 +182,14 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
       attempt.current++; release(); latest.current.onBusy(false);
     };
   }, [currentKey, newKey, currentPress, newPress, fieldMode]);
+  const visible = phase !== "idle";
   useEffect(() => {
     const element = dialog.current;
-    if (!element) return;
-    if (phase === "idle") {
-      element.hidePopover?.();
-      element.close();
-    } else if (!element.open) {
-      element.show();
-      // Keep the recorder above existing dialogs without making the page inert.
-      element.showPopover?.();
-      element.querySelector<HTMLElement>(".voice-shortcut-card")?.focus();
-    }
-  }, [phase]);
+    if (!element || !visible) return;
+    element.setAttribute("open", "");
+    const cleanup = keepVoiceOverlayOnTop(host, element);
+    return () => { cleanup(); element.removeAttribute("open"); };
+  }, [visible, host]);
   useEffect(() => {
     if (!fieldMode) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -206,8 +204,7 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
     const timer = setInterval(() => setSeconds(Math.floor((performance.now() - started.current) / 1000)), 250);
     return () => clearInterval(timer);
   }, [phase]);
-  return createPortal(<dialog ref={dialog} className="voice-shortcut-dialog" popover="manual" aria-modal={false} aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); cancel(); }} onClose={() => { if (phaseRef.current !== "idle") cancel(); }}>
+  return createPortal(<div ref={dialog} role="dialog" className="voice-shortcut-dialog" popover="manual" aria-modal={false} aria-labelledby={titleId}>
     <div className={`voice-shortcut-card is-${phase}`} tabIndex={-1}>
       <button type="button" className="voice-shortcut-close" onClick={cancel} aria-label="Отменить запись и отправку" title="Отменить · Esc"><X size={19} /></button>
       <div className="voice-orb" aria-hidden="true"><span /><span /><span />
@@ -221,5 +218,5 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
         <button type="button" onClick={() => finish()}><Square size={13} />{seconds < 2 ? "Отменить короткую запись" : fieldMode ? "Вставить" : "Отправить"}</button></div>}
       {phase === "error" && <button type="button" className="secondary" onClick={() => void start()}>Попробовать снова</button>}
     </div>
-  </dialog>, document.body);
+  </div>, host);
 }

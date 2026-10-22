@@ -9,16 +9,16 @@
 
 Отменить запись и отправку · Отменить · Esc
 
-Источник: src/VoiceShortcut.tsx:212.
+Источник: src/VoiceShortcut.tsx:209.
 
 ### Элемент
 
 Отменить короткую запись / Вставить / Отправить
 
-Источник: src/VoiceShortcut.tsx:221.
+Источник: src/VoiceShortcut.tsx:218.
 
 ### Элемент
 
 Попробовать снова
 
-Источник: src/VoiceShortcut.tsx:222.
+Источник: src/VoiceShortcut.tsx:219.

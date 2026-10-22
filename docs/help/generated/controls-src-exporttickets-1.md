@@ -21,76 +21,94 @@
 
 Развернуть экспорт
 
-Источник: src/ExportTickets.tsx:396.
+Источник: src/ExportTickets.tsx:407.
 
 ### Элемент
 
 Закрыть экспорт
 
-Источник: src/ExportTickets.tsx:404.
+Источник: src/ExportTickets.tsx:415.
 
 ### Элемент
 
 Свернуть экспорт
 
-Источник: src/ExportTickets.tsx:429.
+Источник: src/ExportTickets.tsx:441.
 
 ### Элемент
 
 Убрать из экспорта #{…}
 
-Источник: src/ExportTickets.tsx:503.
+Источник: src/ExportTickets.tsx:515.
 
 ### Элемент
 
 Номер или название тикета · Найти тикет для экспорта
 
-Источник: src/ExportTickets.tsx:552.
+Источник: src/ExportTickets.tsx:564.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ExportTickets.tsx:560.
+Источник: src/ExportTickets.tsx:572.
 
 ### Элемент
 
 # · · В корзине /
 
-Источник: src/ExportTickets.tsx:578.
+Источник: src/ExportTickets.tsx:590.
 
 ### Элемент
 
 Добавить тикет
 
-Источник: src/ExportTickets.tsx:614.
+Источник: src/ExportTickets.tsx:626.
 
 ### Элемент
 
 Выбрать все
 
-Источник: src/ExportTickets.tsx:630.
+Источник: src/ExportTickets.tsx:642.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/ExportTickets.tsx:637.
+Источник: src/ExportTickets.tsx:649.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: src/ExportTickets.tsx:728.
+Источник: src/ExportTickets.tsx:740.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: src/ExportTickets.tsx:737.
+Источник: src/ExportTickets.tsx:749.
 
 ### Элемент
 
 Подготовка… / Скачать {…}
 
-Источник: src/ExportTickets.tsx:763.
+Источник: src/ExportTickets.tsx:775.
+
+### Элемент
+
+Отменить закрытие
+
+Источник: src/ExportTickets.tsx:791.
+
+### Элемент
+
+Продолжить работу
+
+Источник: src/ExportTickets.tsx:795.
+
+### Элемент
+
+Закрыть и сбросить список
+
+Источник: src/ExportTickets.tsx:796.

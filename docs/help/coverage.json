@@ -97,7 +97,7 @@
     "src/DevelopersPage.tsx": "cff75cf4868183942857e37cbd9eb0dce0d7b65dd7155609a28f1ca6638acca4",
     "src/DiffFileTree.tsx": "dd92c5a0faffdff827b337bf013835f3a72d257466ebb375b6a0c5cf7231394c",
     "src/ExportMemory.tsx": "e5786054093e466ed81dfbb957d864c5c153979df0541e0525a587f88c6cea60",
-    "src/ExportTickets.tsx": "832808d31df8384f78f6dc411d3e13a1c5070f442df2cf810bc66bc0002f02d0",
+    "src/ExportTickets.tsx": "6528d2c2cb16b1e542cfbcaefb43339f01b5da2a2aa0f77dfc9b7edbd0419313",
     "src/FieldDictation.tsx": "d035d1be5d4b65fb74be0505dc3fa2c108d4acda264d0de044b10b6653e5c59a",
     "src/ImagePreview.tsx": "1764e30a0f4fd140dd33059da0a88004fccaedd5ac64a03eceb8fb7612ea3923",
     "src/ImportAzureTickets.tsx": "1f8cc389aa9a7e78362d2078e4a0c84b5d982c2d4b4ebbb7b905b8d7c5c74e74",
@@ -150,7 +150,7 @@
     "src/TicketTrash.tsx": "f775d7d6aaaa2a988c763c2bc0700cee5d6d88063ad47c24c0ff38b27598bd13",
     "src/Usage.tsx": "78e9bc48716333fa892eec83d76ac3fbbf1884895ab24b7eab8d5dbdee61e472",
     "src/VoiceBinding.tsx": "9de7980876beae6c7c63c252fca7788b4ce4a4843cd14320201f50a9870bd219",
-    "src/VoiceShortcut.tsx": "ef781961533eb23c83d5504233a08649d7c8d8f1b642a9e25edf037524f2ebba",
+    "src/VoiceShortcut.tsx": "4f4a40ad3de4b90cc8ba05505bb7d00518d028f8baa18658c339b032300b9557",
     "src/activity-description.ts": "2ec4d4532d4845fbb5c39b98f54e40b777b8ef673b9a4ee4b028ebc6c96b479f",
     "src/api.ts": "fdcfad05c0d4d4c5a5615f5f7002aff7b4682a075a7de1fc61152ab9187942ed",
     "src/azure-ticket-link.ts": "b8210c213484d965f099ccce447902d6eb04decc08632a678fdc22360d5d7d5a",
@@ -191,6 +191,7 @@
     "src/useTicketFilterOptions.ts": "c18126b1053e88bf4ce544cd1beb27b74b47c7127291ddf9b7789e11a9f4b81b",
     "src/useTicketFilters.ts": "461cb1d9dd35df630af69cf61c1a71a50c8fad33a446967d8db0c464bb7c08d3",
     "src/viewed-ticket.ts": "57fdce8fea2d0776949a795d7e557dafd6bf2287e087996690cfecaacd423132",
+    "src/voice-overlay.ts": "de2964c5bd09e5f98659b585310967d4f0b79c2b2e2d081fbd4628ddff3a23cd",
     "src/voice-shortcut.ts": "de2cdc8d0b2dbe6fa041f503d5ae0d7092ff9abcb7941a8a6dbf08271792741b",
     "voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }

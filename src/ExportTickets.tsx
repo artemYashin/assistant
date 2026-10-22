@@ -117,6 +117,7 @@ export function TicketExportDialog({
   };
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const closeConfirmation = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState(false);
   const [minimized, setMinimized] = useState(false);
   useEffect(() => {
@@ -245,7 +246,10 @@ export function TicketExportDialog({
       if (mode === "open" || !minimizedRef.current) {
         minimizedRef.current = false;
         setMinimized(false);
-        if (!dialog.current?.open) dialog.current?.showModal();
+        if (!dialog.current?.open) {
+          dialog.current?.showModal();
+          dialog.current?.focus({ preventScroll: true });
+        }
       }
       Promise.all([
         api<CsvTicket[]>("/tickets", "GET", undefined, controller.signal),
@@ -292,8 +296,14 @@ export function TicketExportDialog({
       request.current?.abort();
     };
   }, []);
+  const requestClose = () => {
+    if (busy) return;
+    if (draftTickets.current.length) closeConfirmation.current?.showModal();
+    else close();
+  };
   const close = () => {
     if (busy) return;
+    closeConfirmation.current?.close();
     request.current?.abort();
     setLoading(false);
     autoScroll.stop();
@@ -317,6 +327,7 @@ export function TicketExportDialog({
     minimizedRef.current = false;
     setMinimized(false);
     dialog.current?.showModal();
+    dialog.current?.focus({ preventScroll: true });
   };
   const move = (from: ExportColumnKey, to: ExportColumnKey) =>
     setOrder((current) => {
@@ -406,7 +417,7 @@ export function TicketExportDialog({
             className="icon-button"
             aria-label="Закрыть экспорт"
             disabled={busy}
-            onClick={close}
+            onClick={requestClose}
           >
             <X size={16} />
           </button>
@@ -416,9 +427,10 @@ export function TicketExportDialog({
         ref={dialog}
         className="developer-dialog ticket-export-dialog"
         aria-label="Экспорт тикетов"
+        tabIndex={-1}
         onCancel={(event) => {
           event.preventDefault();
-          close();
+          requestClose();
         }}
       >
         <div className="developer-dialog-heading">
@@ -439,7 +451,7 @@ export function TicketExportDialog({
             className="icon-button"
             aria-label="Закрыть экспорт"
             disabled={busy}
-            onClick={close}
+            onClick={requestClose}
           >
             <X size={18} />
           </button>
@@ -772,6 +784,17 @@ export function TicketExportDialog({
               : `Скачать ${format === "xlsx" ? "Excel" : "CSV"}`}
           </button>
         </footer>
+      </dialog>
+      <dialog ref={closeConfirmation} className="developer-dialog action-confirm-dialog" aria-label="Закрыть экспорт?" onCancel={event => event.stopPropagation()}>
+        <div className="developer-dialog-heading">
+          <h2>Закрыть экспорт?</h2>
+          <button type="button" className="icon-button" aria-label="Отменить закрытие" onClick={() => closeConfirmation.current?.close()}><X size={18} /></button>
+        </div>
+        <p>В экспорте есть выбранные тикеты. Если закрыть окно, список будет сброшен. Сами тикеты останутся в системе. Чтобы сохранить набор, сверните экспорт.</p>
+        <div className="dialog-actions">
+          <button type="button" className="secondary" autoFocus onClick={() => closeConfirmation.current?.close()}>Продолжить работу</button>
+          <button type="button" className="danger" onClick={close}>Закрыть и сбросить список</button>
+        </div>
       </dialog>
     </>
   );

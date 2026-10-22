@@ -9,46 +9,46 @@
 
 Микрофон доступен на localhost или HTTPS в браузере с поддержкой записи.
 
-Источник: src/VoiceShortcut.tsx:74.
+Источник: src/VoiceShortcut.tsx:77.
 
 ### Сообщение
 
 Не удалось записать голос. Проверьте микрофон и повторите.
 
-Источник: src/VoiceShortcut.tsx:83.
+Источник: src/VoiceShortcut.tsx:86.
 
 ### Сообщение
 
 Речь не распознана. Попробуйте ещё раз.
 
-Источник: src/VoiceShortcut.tsx:96.
+Источник: src/VoiceShortcut.tsx:99.
 
 ### Сообщение
 
 Запись слишком длинная для сообщения. Повторите короче.
 
-Источник: src/VoiceShortcut.tsx:97.
+Источник: src/VoiceShortcut.tsx:100.
 
 ### Сообщение
 
 Чат сейчас занят. Сообщение не отправлено.
 
-Источник: src/VoiceShortcut.tsx:98.
+Источник: src/VoiceShortcut.tsx:101.
 
 ### Сообщение
 
 Не удалось распознать речь.
 
-Источник: src/VoiceShortcut.tsx:102.
+Источник: src/VoiceShortcut.tsx:105.
 
 ### Сообщение
 
 NotAllowedError
 
-Источник: src/VoiceShortcut.tsx:110.
+Источник: src/VoiceShortcut.tsx:113.
 
 ### Сообщение
 
 Не удалось включить микрофон.
 
-Источник: src/VoiceShortcut.tsx:110.
+Источник: src/VoiceShortcut.tsx:113.
