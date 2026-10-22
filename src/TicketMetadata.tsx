@@ -50,7 +50,7 @@ export function TicketMetadata({
         className={
           showLabel
             ? "secondary ticket-notes-trigger"
-            : `icon-button ticket-cell-button${field !== "notes" ? " ticket-field-edit-trigger" : ""}`
+            : `icon-button ticket-cell-button${field !== "notes" ? " ticket-field-edit-trigger" : ticket.notes ? " has-ticket-notes" : ""}`
         }
         aria-label={label + " тикета #" + ticket.id}
         title={
@@ -59,7 +59,7 @@ export function TicketMetadata({
         onClick={() => setOpen(true)}
       >
         {field === "notes" ? (
-          <NotebookPen size={17} fill={ticket.notes ? "#e0eada" : "none"} />
+          <NotebookPen size={17} fill={showLabel && ticket.notes ? "#e0eada" : "none"} />
         ) : (
           <Pencil size={14} />
         )}

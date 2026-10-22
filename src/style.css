@@ -9464,3 +9464,14 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .context-delete-confirm:hover:not(:disabled) { background: #962727; }
 
 .azure-assignee-section-label { padding: 8px 10px 4px; color: #64748b; font-size: 11px; font-weight: 600; }
+
+.ticket-metadata-control .ticket-cell-button.has-ticket-notes {
+  background: #15803d;
+  border-color: #15803d;
+  color: #fff;
+}
+.ticket-metadata-control .ticket-cell-button.has-ticket-notes:hover:not(:disabled) {
+  background: #166534;
+  border-color: #166534;
+  color: #fff;
+}
