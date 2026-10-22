@@ -9,94 +9,94 @@
 
 Операция Git отменена.
 
-Источник: server/code-browser.ts:53.
+Источник: server/code-browser.ts:54.
 
 ### Сообщение
 
 Настройте Git-репозиторий выбранного проекта в «Заказчики и проекты».
 
-Источник: server/code-browser.ts:58.
+Источник: server/code-browser.ts:59.
 
 ### Сообщение
 
 Укажите PAT Azure с правом Code Read.
 
-Источник: server/code-browser.ts:60.
+Источник: server/code-browser.ts:61.
 
 ### Сообщение
 
 Для просмотра кода требуется HTTPS-подключение к Azure.
 
-Источник: server/code-browser.ts:62.
+Источник: server/code-browser.ts:63.
 
 ### Сообщение
 
 Локальный репозиторий ещё не подготовлен. Откройте страницу кода и загрузите репозиторий.
 
-Источник: server/code-browser.ts:67.
+Источник: server/code-browser.ts:68.
 
 ### Сообщение
 
 Azure не вернул ID репозитория.
 
-Источник: server/code-browser.ts:73.
+Источник: server/code-browser.ts:74.
 
 ### Сообщение
 
 Сервис кода не настроен. Пересоберите Docker Compose с code-browser.
 
-Источник: server/code-browser.ts:82.
+Источник: server/code-browser.ts:83.
 
 ### Сообщение
 
 Некорректный внутренний ключ сервиса кода.
 
-Источник: server/code-browser.ts:90.
+Источник: server/code-browser.ts:91.
 
 ### Сообщение
 
 Истекло время ожидания сервиса кода. Увеличьте тайм-аут Git в настройках репозитория и повторите запрос. / Нет соединения с сервисом кода. Проверьте, что контейнер code-browser запущен.
 
-Источник: server/code-browser.ts:105.
+Источник: server/code-browser.ts:106.
 
 ### Сообщение
 
 Истекло время ожидания сервиса кода. Увеличьте тайм-аут Git в настройках репозитория и повторите запрос.
 
-Источник: server/code-browser.ts:105.
+Источник: server/code-browser.ts:106.
 
 ### Сообщение
 
 Нет соединения с сервисом кода. Проверьте, что контейнер code-browser запущен.
 
-Источник: server/code-browser.ts:105.
+Источник: server/code-browser.ts:106.
 
 ### Сообщение
 
 Истекло время ожидания сервиса кода. Увеличьте тайм-аут Git в настройках репозитория и повторите запрос. / Соединение с сервисом кода прервано. Проверьте контейнер code-browser и повторите запрос.
 
-Источник: server/code-browser.ts:114.
+Источник: server/code-browser.ts:115.
 
 ### Сообщение
 
 Соединение с сервисом кода прервано. Проверьте контейнер code-browser и повторите запрос.
 
-Источник: server/code-browser.ts:114.
+Источник: server/code-browser.ts:115.
 
 ### Сообщение
 
 Ошибка сервиса кода
 
-Источник: server/code-browser.ts:116.
+Источник: server/code-browser.ts:117.
 
 ### Сообщение
 
 Некорректный ответ сервиса кода
 
-Источник: server/code-browser.ts:117.
+Источник: server/code-browser.ts:118.
 
 ### Сообщение
 
 Фоновая проверка Git не выполнена. Повторите её кнопкой «Проверить».
 
-Источник: server/code-browser.ts:158.
+Источник: server/code-browser.ts:159.

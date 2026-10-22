@@ -1,3 +1,4 @@
+import { searchPattern } from "./search-pattern.js";
 import { AppError, Store } from "./store.js";
 import { ticketContentText as plainText } from "./connectors.js";
 import { listLocalTickets, ticketListSchema } from "./ticket-list.js";
@@ -15,6 +16,7 @@ export async function listTicketAnalysis(
       "Полное содержимое требует явной просьбы и отдельного подтверждения предупреждения о расходе токенов. До подтверждения используйте detail=summary.",
     );
   const args = ticketListSchema.parse(input);
+  const matchesSearch = args.search ? searchPattern(args.search, args.searchMode) : null;
   if (!args.ids)
     throw new AppError(
       400,
@@ -67,8 +69,8 @@ export async function listTicketAnalysis(
         (detail.attachments || []).map((file: any) => file.name).join("\n"),
     ].join("\n\n");
     if (
-      args.search &&
-      !content.toLocaleLowerCase().includes(args.search.toLocaleLowerCase())
+      matchesSearch &&
+      !matchesSearch(content)
     ) {
       cursor = row.id;
       continue;

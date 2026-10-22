@@ -9,34 +9,34 @@
 
 Доступ ассистента к коду отключён в настройках.
 
-Источник: server/code-tools.ts:22.
+Источник: server/code-tools.ts:23.
 
 ### Сообщение
 
 Выберите заказчика и проект.
 
-Источник: server/code-tools.ts:23.
+Источник: server/code-tools.ts:24.
 
 ### Сообщение
 
 Выберите ветку репозитория.
 
-Источник: server/code-tools.ts:27.
+Источник: server/code-tools.ts:28.
 
 ### Сообщение
 
 Файл недоступен для цитирования
 
-Источник: server/code-tools.ts:52.
+Источник: server/code-tools.ts:53.
 
 ### Сообщение
 
 Диапазон строк вне файла
 
-Источник: server/code-tools.ts:55.
+Источник: server/code-tools.ts:56.
 
 ### Сообщение
 
 endLine должен быть не меньше startLine
 
-Источник: server/code-tools.ts:98.
+Источник: server/code-tools.ts:99.

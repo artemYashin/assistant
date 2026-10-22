@@ -1,3 +1,4 @@
+import { searchModeSchema } from "./search-pattern.js";
 import { azureBase } from "./http.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
@@ -87,8 +88,8 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
       handler: async ({ limit, ...args }) => paged(await read("tree", args), "entries", args.offset, limit),
     }),
     defineTool("code_search", {
-      description: "Find files by literal path/name substring (mode=name) or grep literal code text (mode=content), case-insensitive. Returns short line-numbered context, not whole files. No shell/regex execution, no network. Read coverage and perFileLimit; paginate nextOffset. Search several specific terms when needed.",
-      parameters: z.object({ branch, query: z.string().trim().min(1).max(200), mode: z.enum(["name", "content"]).default("content"), ...page }),
+      description: "Find paths (mode=name) or code lines (mode=content), case-insensitive. Default searchMode=literal; searchMode=regex uses ripgrep regular expressions without /.../ delimiters, backreferences or lookaround. Regex content matches individual lines; use alternation to combine terms. Returns short line-numbered context, not whole files. No shell execution, no network. Read coverage and perFileLimit; paginate nextOffset. Search several specific terms when needed.",
+      parameters: z.object({ branch, searchMode: searchModeSchema, query: z.string().trim().min(1).max(200), mode: z.enum(["name", "content"]).default("content"), ...page }),
       handler: async ({ limit, ...args }) => paged(await read("search", args), "results", args.offset, limit),
     }),
     defineTool("code_read_file", {

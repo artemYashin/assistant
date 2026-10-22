@@ -144,7 +144,7 @@ export class RepositoryBrowser {
     const fetchTimeoutSeconds = input.fetchTimeoutSeconds ?? 300;
     if (!Number.isInteger(fetchTimeoutSeconds) || fetchTimeoutSeconds < 60 || fetchTimeoutSeconds > 7200) throw new BrowserError('Тайм-аут Git должен быть от 60 до 7200 секунд');
     const networkOptions = { timeout: fetchTimeoutSeconds * 1000, timeoutMessage: `Git не успел загрузить данные за ${fetchTimeoutSeconds / 60} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.` };
-    const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', offset = 0 } = input;
+    const { url, token, operation, branch = '', path: filePath = '', query = '', mode = 'name', searchMode = 'literal', offset = 0 } = input;
     if (input.localOnly && (input.refresh || !['branches', 'status', 'tree', 'file', 'search'].includes(operation))) throw new BrowserError('Разрешено только чтение локального снимка', 403);
     if (!['branches', 'status', 'pull', 'tree', 'file', 'search'].includes(operation)) throw new BrowserError('Неизвестная операция');
     if (typeof url !== 'string' || url.length > 2000 || typeof filePath !== 'string' || filePath.length > 4096 ||
@@ -153,6 +153,14 @@ export class RepositoryBrowser {
     if (!(remote.protocol === 'https:' || (this.allowLocal && remote.protocol === 'file:')) || remote.username || remote.password || remote.search || remote.hash) throw new BrowserError('Разрешён только HTTPS URL репозитория без credentials');
     if (typeof token !== 'string' || token.length > 2000 || /[\r\n\0]/.test(token)) throw new BrowserError('Некорректный токен');
     if (!Number.isInteger(offset) || offset < 0 || offset > 100000 || typeof query !== 'string' || query.length > 200 || /[\r\n\0]/.test(query)) throw new BrowserError('Некорректный поиск');
+    if (!['literal', 'regex'].includes(searchMode)) throw new BrowserError('Неизвестный режим сопоставления');
+    if (operation === 'search' && searchMode === 'regex') {
+      try { await run('rg', ['--no-config', '--ignore-case', '--', query], { signal, input: '', accept: [0, 1] }); }
+      catch (error) {
+        if (error instanceof CancelledError || error.status === 503) throw error;
+        throw new BrowserError('Некорректное регулярное выражение поиска кода. Используйте синтаксис ripgrep без обратных ссылок, lookaround и обрамления /…/.');
+      }
+    }
     if (filePath && !safePath(filePath)) throw new BrowserError('Некорректный путь');
     const repo = path.join(this.root, hash(url));
     const gitDir = path.join(repo, 'git');
@@ -267,7 +275,12 @@ export class RepositoryBrowser {
     if (!query.trim()) throw new BrowserError('Введите поисковый запрос');
     if (mode === 'name') {
       report({ stage: 'searching' });
-      const found = manifest.filter(file => file.path.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+      let found;
+      if (searchMode === 'regex') {
+        const output = await run('rg', ['--no-config', '--null-data', '--ignore-case', '--', query], { signal, input: manifest.map(file => file.path).join('\0') + '\0', accept: [0, 1] });
+        const paths = new Set(output.toString().split('\0'));
+        found = manifest.filter(file => paths.has(file.path));
+      } else found = manifest.filter(file => file.path.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
       return { sha: state.sha, results: found.slice(offset, offset + 200).map(file => ({ path: file.path })), more: found.length > offset + 200, total: found.length };
     }
     if (mode !== 'content') throw new BrowserError('Неизвестный режим поиска');
@@ -307,7 +320,7 @@ export class RepositoryBrowser {
       } catch (error) { await fs.rm(tmp, { recursive: true, force: true }); throw error; }
     }
     report({ stage: 'searching' });
-    const output = await run('rg', ['--json', '--hidden', '--no-ignore', '--fixed-strings', '--ignore-case', '--max-count', '20', '--', query, '.'], { signal, cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
+    const output = await run('rg', ['--no-config', '--json', '--hidden', '--no-ignore', ...(searchMode === 'literal' ? ['--fixed-strings'] : []), '--ignore-case', '--max-count', '20', '--', query, '.'], { signal, cwd: path.join(snapshot, 'files'), env: { PATH: process.env.PATH, LANG: 'C.UTF-8' }, accept: [0, 1], limit: 8 * 1024 * 1024 });
     const matches = output.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)).filter(item => item.type === 'match');
     const results = [];
     let previousPath, lines;

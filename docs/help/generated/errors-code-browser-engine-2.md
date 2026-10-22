@@ -7,66 +7,78 @@
 
 ### Сообщение
 
+Некорректный путь
+
+Источник: code-browser/engine.mjs:164.
+
+### Сообщение
+
+Локальный репозиторий ещё не загружен. Откройте страницу кода.
+
+Источник: code-browser/engine.mjs:176.
+
+### Сообщение
+
 Нет локального списка веток. Откройте страницу кода.
 
-Источник: code-browser/engine.mjs:181.
+Источник: code-browser/engine.mjs:189.
 
 ### Сообщение
 
 Выберите ветку
 
-Источник: code-browser/engine.mjs:194.
+Источник: code-browser/engine.mjs:202.
 
 ### Сообщение
 
 Ветка ещё не загружена локально. Откройте её на странице кода.
 
-Источник: code-browser/engine.mjs:198.
+Источник: code-browser/engine.mjs:206.
 
 ### Сообщение
 
 Кеш кода занимает {…} GiB при лимите {…} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.
 
-Источник: code-browser/engine.mjs:201.
+Источник: code-browser/engine.mjs:209.
 
 ### Сообщение
 
 Снимок обновился в другом окне. Нажмите «Проверить обновления».
 
-Источник: code-browser/engine.mjs:237.
+Источник: code-browser/engine.mjs:245.
 
 ### Сообщение
 
 Не удалось прочитать дерево Git
 
-Источник: code-browser/engine.mjs:241.
+Источник: code-browser/engine.mjs:249.
 
 ### Сообщение
 
 Файл не найден в выбранном снимке
 
-Источник: code-browser/engine.mjs:258.
+Источник: code-browser/engine.mjs:266.
 
 ### Сообщение
 
 Введите поисковый запрос
 
-Источник: code-browser/engine.mjs:267.
+Источник: code-browser/engine.mjs:275.
 
 ### Сообщение
 
 Неизвестный режим поиска
 
-Источник: code-browser/engine.mjs:273.
+Источник: code-browser/engine.mjs:286.
 
 ### Сообщение
 
 Недостаточно места в лимите кеша для поискового снимка.
 
-Источник: code-browser/engine.mjs:287.
+Источник: code-browser/engine.mjs:300.
 
 ### Сообщение
 
 Неполный снимок Git
 
-Источник: code-browser/engine.mjs:295.
+Источник: code-browser/engine.mjs:308.

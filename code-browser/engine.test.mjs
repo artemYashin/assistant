@@ -280,3 +280,16 @@ test('zero default depth also supports a fresh full download', async t => {
   assert.equal(execFileSync('git', [...args, 'rev-parse', '--is-shallow-repository'], { encoding: 'utf8' }).trim(), 'false');
   assert.equal(execFileSync('git', [...args, 'rev-list', '--count', state.sha], { encoding: 'utf8' }).trim(), '2');
 });
+
+test('regex code and path search is explicit, paginated and rejects unsupported patterns', async t => {
+  const {request}=await fixture(t);
+  await request('status');
+  assert.equal((await request('search',{query:'hello|hidden',mode:'name'})).total,0);
+  const names=await request('search',{query:'(hello\\.ts|^\\.hidden$)',mode:'name',searchMode:'regex'});
+  assert.equal(names.total,2);
+  const content=await request('search',{query:'hello (world|hidden)',mode:'content',searchMode:'regex'});
+  assert.equal(content.total,2);
+  assert.equal((await request('search',{query:'hello (world|hidden)',mode:'content',searchMode:'regex',offset:1})).results.length,1);
+  await assert.rejects(()=>request('search',{query:'[',mode:'content',searchMode:'regex'}),/регулярное выражение/);
+  await assert.rejects(()=>request('search',{query:'(?=hello)',mode:'name',searchMode:'regex'}),/регулярное выражение/);
+});

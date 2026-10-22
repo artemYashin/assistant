@@ -100,3 +100,31 @@ test("tag, Azure tag and priority arrays intersect correctly in summary and cont
   assert.throws(()=>listLocalTickets(store,{priority:[0,21]}));
   assert.throws(()=>searchTicketContent(store,{search:"needle",priority:["1"]}));
 });
+
+test("regex title/Azure tag and body/notes searches preserve filters, pagination and compact snippets", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-regex-")); const store = new Store(dir);
+  t.after(()=>{store.close();rmSync(dir,{recursive:true,force:true});});
+  const source=store.source();
+  for (const [id,title] of [[1,"Login error"],[2,"Unrelated"],[3,"Auth retry"],[4,"Other"]] as const) {
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source,id,title,"Active","","Bug","","","now");
+  }
+  store.db.prepare("INSERT INTO ticket_azure_tags VALUES (?,?,?)").run(source,2,JSON.stringify(["AUTH-api"]));
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(source,2,"Validate LOGIN-123");
+  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run(source,1,"description","prefix\nAUTH-42 details","prefix\nauth-42 details","now");
+  store.removeLocalTicket(3);
+  const filters={search:"^(login|auth)",searchMode:"regex",type:["Bug"],limit:2};
+  const first=listLocalTickets(store,filters);
+  assert.equal(first.total,3);
+  assert.deepEqual(first.tickets.map(t=>t.id),[1,2]);
+  assert.deepEqual(listLocalTickets(store,{...filters,afterId:first.nextAfterId}).tickets.map(t=>t.id),[3]);
+  assert.equal(listLocalTickets(store,{...filters,searchMode:"literal"}).total,0);
+  const content=searchTicketContent(store,{search:"(auth|login)-[0-9]+",searchMode:"regex",limit:1});
+  assert.deepEqual(content.tickets.map(t=>t.id),[1]);
+  assert.match(content.tickets[0].snippet,/AUTH-42/);
+  const next=searchTicketContent(store,{search:"(auth|login)-[0-9]+",searchMode:"regex",limit:1,afterId:content.nextAfterId});
+  assert.equal(next.tickets[0].section,"notes");
+  assert.equal(searchTicketContent(store,{search:"auth|login",searchMode:"literal"}).tickets.length,0);
+  assert.throws(()=>listLocalTickets(store,{search:"[",searchMode:"regex"}),/регулярное выражение/);
+  assert.throws(()=>searchTicketContent(store,{search:"[",searchMode:"regex"}),/регулярное выражение/);
+  assert.equal(searchTicketContent(store,{search:".*",searchMode:"regex",state:["Closed"]}).tickets.length,0);
+});

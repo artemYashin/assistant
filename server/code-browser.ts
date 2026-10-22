@@ -14,6 +14,7 @@ export const codeBrowserSchema = z.object({
   jobId: z.string().uuid().optional(),
   monitor: z.string().max(200).default(""),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
+  searchMode: z.enum(["literal", "regex"]).default("literal"),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
   localOnly: z.boolean().default(false),
   localReadWaitMs: z.number().int().min(0).max(120000).optional(),

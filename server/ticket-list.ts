@@ -1,3 +1,4 @@
+import { searchModeSchema, registerTicketPattern } from "./search-pattern.js";
 import { ticketSearchFilters, ticketFilterSql, ticketMetadataFilters, ticketMetadataFilterSql } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
@@ -8,6 +9,7 @@ import { AppError, Store } from "./store.js";
 
 export const ticketListSchema = z.object({
   ...ticketSortSchema,
+  searchMode: searchModeSchema,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all").describe("Include retained local trash by default; deleted=true marks trash results."),
   fields: z.array(z.enum(["type", "state", "assigned", "priority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(13).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
@@ -28,6 +30,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     fields,
     ids,
     search,
+    searchMode,
     type,
     state,
     priority,
@@ -49,10 +52,13 @@ export function listLocalTickets(store: Store, input: unknown) {
     params.push(...ids);
   }
   if (search) {
-    clauses.push(
-      "(instr(lower(title), lower(?)) > 0 OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND instr(lower(tag.value), lower(?)) > 0))",
-    );
-    params.push(search, search);
+    if (searchMode === "regex") {
+      registerTicketPattern(store, search, searchMode);
+      clauses.push("(orbit_ticket_match(title) OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND orbit_ticket_match(tag.value)))");
+    } else {
+      clauses.push("(instr(lower(title), lower(?)) > 0 OR EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND instr(lower(tag.value), lower(?)) > 0))");
+      params.push(search, search);
+    }
   }
 
   const exactFilters = ticketFilterSql(type, state);
@@ -108,7 +114,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   return {
     scope: "local",
     sortBy, sortDirection,
-    filters: { lifecycle, ids, search, type, state, priority, tag, azureTag },
+    filters: { lifecycle, ids, search, searchMode, type, state, priority, tag, azureTag },
     total,
     tickets,
     hasMore,

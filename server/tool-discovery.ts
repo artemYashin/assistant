@@ -13,7 +13,7 @@ const catalog: Record<string, string> = {
   code_work_status: "Read current Git jobs, download progress and queue without starting work.",
   code_branches: "Search cached branch names by substring, or list with pagination; no network.",
   code_tree: "Browse a local directory's file names/types/sizes without bodies.",
-  code_search: "Find files by name/path or grep code with short numbered snippets; local only.",
+  code_search: "Find paths or code snippets; literal by default, optional searchMode=regex; local only.",
   code_read_file: "Read focused code ranges around search hits; returns totalLines. Full-file reads opt-in when needed; no edits.",
   get_ticket_links_batch: "Read links/images of multiple cached tickets in one call; per-ticket pagination, no Azure.",
   get_cached_ticket_content_batch: "Read multiple cached ticket bodies in one call; per-ticket pagination, no Azure.",
@@ -29,10 +29,10 @@ const catalog: Record<string, string> = {
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; returns reopen links, no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
   get_ticket_catalog: "List locally known Azure ticket types and statuses by type for search filters; no Azure calls.",
-  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id, exact type/Azure state; short excerpts; optional sorting by summary fields, no Azure.",
+  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro (literal or searchMode=regex), optionally by ticket id, exact type/Azure state; short excerpts; optional sorting by summary fields, no Azure.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
-    "Search/page local summaries; exact type/Azure state and other filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
+    "Search/page local summaries (literal or searchMode=regex); exact type/Azure state and other filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
   get_ticket: "Read one ticket by ID; local summary by default.",
   get_local_ticket_metadata:
     "Read local notes, tags and priority by ticket ID.",
