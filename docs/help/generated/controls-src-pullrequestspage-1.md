@@ -9,118 +9,118 @@
 
 Описание pull request
 
-Источник: src/PullRequestsPage.tsx:76.
+Источник: src/PullRequestsPage.tsx:79.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: src/PullRequestsPage.tsx:96.
+Источник: src/PullRequestsPage.tsx:99.
 
 ### Элемент
 
 Открыть результат ревью · Модель: /
 
-Источник: src/PullRequestsPage.tsx:129.
+Источник: src/PullRequestsPage.tsx:132.
 
 ### Элемент
 
 Сохранённые ревью всех версий
 
-Источник: src/PullRequestsPage.tsx:195.
+Источник: src/PullRequestsPage.tsx:198.
 
 ### Элемент
 
 Синхронизировать PR
 
-Источник: src/PullRequestsPage.tsx:426.
+Источник: src/PullRequestsPage.tsx:427.
 
 ### Элемент
 
 ＋ Создать PR
 
-Источник: src/PullRequestsPage.tsx:433.
+Источник: src/PullRequestsPage.tsx:434.
 
 ### Элемент
 
 Показать все PR текущего проекта
 
-Источник: src/PullRequestsPage.tsx:448.
+Источник: src/PullRequestsPage.tsx:449.
 
 ### Элемент
 
 Тип PR
 
-Источник: src/PullRequestsPage.tsx:466.
+Источник: src/PullRequestsPage.tsx:469.
 
 ### Элемент
 
 Все PR
 
-Источник: src/PullRequestsPage.tsx:472.
+Источник: src/PullRequestsPage.tsx:476.
 
 ### Элемент
 
 Черновики
 
-Источник: src/PullRequestsPage.tsx:473.
+Источник: src/PullRequestsPage.tsx:477.
 
 ### Элемент
 
 Не черновики
 
-Источник: src/PullRequestsPage.tsx:474.
+Источник: src/PullRequestsPage.tsx:478.
 
 ### Элемент
 
 Готовность ревью
 
-Источник: src/PullRequestsPage.tsx:477.
+Источник: src/PullRequestsPage.tsx:481.
 
 ### Элемент
 
 Все состояния
 
-Источник: src/PullRequestsPage.tsx:483.
+Источник: src/PullRequestsPage.tsx:488.
 
 ### Элемент
 
 Ревью готово
 
-Источник: src/PullRequestsPage.tsx:484.
+Источник: src/PullRequestsPage.tsx:489.
 
 ### Элемент
 
 Ревью не готово
 
-Источник: src/PullRequestsPage.tsx:485.
+Источник: src/PullRequestsPage.tsx:490.
 
 ### Элемент
 
 Сортировка PR
 
-Источник: src/PullRequestsPage.tsx:488.
+Источник: src/PullRequestsPage.tsx:493.
 
 ### Элемент
 
 Созданы: сначала новые
 
-Источник: src/PullRequestsPage.tsx:493.
+Источник: src/PullRequestsPage.tsx:499.
 
 ### Элемент
 
 Созданы: сначала старые
 
-Источник: src/PullRequestsPage.tsx:494.
+Источник: src/PullRequestsPage.tsx:500.
 
 ### Элемент
 
 Номер: по убыванию
 
-Источник: src/PullRequestsPage.tsx:495.
+Источник: src/PullRequestsPage.tsx:501.
 
 ### Элемент
 
 Номер: по возрастанию
 
-Источник: src/PullRequestsPage.tsx:496.
+Источник: src/PullRequestsPage.tsx:502.

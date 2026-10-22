@@ -9753,3 +9753,12 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .ticket-row-actions > .ticket-table-delete { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 5px; border: 1px solid #e7bcbc; border-radius: 7px; background: #fbe9e9; color: #b93838; }
 .ticket-row-actions > .ticket-table-delete:hover:not(:disabled) { background: #f7d1d1; border-color: #d58b8b; }
+
+.pr-filter-panel { background: #f0f6fc; border-color: #d5e3f1; }
+.pr-filter-heading { display: flex; align-items: center; gap: 7px; color: #45637e; font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+.pr-filter-panel .ticket-filters { align-items: end; gap: 10px; }
+.pr-filter-panel .single-select { flex: 1 1 190px; min-width: 0; }
+.pr-filter-panel .multi-select-label { font-size: 11px; margin-bottom: 5px; }
+.pr-filter-panel .multi-select-panel { position: absolute; z-index: 20; }
+.pr-filter-panel .ticket-filters > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.pr-filter-panel > p { margin: 9px 0 0; font-size: 12px; }

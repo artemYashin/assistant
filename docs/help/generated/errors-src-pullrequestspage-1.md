@@ -9,34 +9,34 @@
 
 Данные о расходе недоступны
 
-Источник: src/PullRequestsPage.tsx:117.
+Источник: src/PullRequestsPage.tsx:120.
 
 ### Сообщение
 
 Этот PR не найден в локальной базе.
 
-Источник: src/PullRequestsPage.tsx:446.
+Источник: src/PullRequestsPage.tsx:447.
 
 ### Сообщение
 
 Pull request станет черновиком. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:824.
+Источник: src/PullRequestsPage.tsx:829.
 
 ### Сообщение
 
 PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:830.
+Источник: src/PullRequestsPage.tsx:835.
 
 ### Сообщение
 
 источник больше недоступен
 
-Источник: src/PullRequestsPage.tsx:874.
+Источник: src/PullRequestsPage.tsx:879.
 
 ### Сообщение
 
 Не загружен: проверьте доступ, существование и проект тикета
 
-Источник: src/PullRequestsPage.tsx:885.
+Источник: src/PullRequestsPage.tsx:890.

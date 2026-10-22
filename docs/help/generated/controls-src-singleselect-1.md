@@ -9,4 +9,4 @@
 
 Поиск: {…} · Найти…
 
-Источник: src/SingleSelect.tsx:112.
+Источник: src/SingleSelect.tsx:114.

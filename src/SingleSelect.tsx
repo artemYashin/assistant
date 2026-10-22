@@ -9,6 +9,7 @@ export function SingleSelect({
   disabled = false,
   onSearch,
   searchable = true,
+  active = false,
 }: {
   label: string;
   value: string;
@@ -16,6 +17,7 @@ export function SingleSelect({
   onChange: (value: string) => void;
   disabled?: boolean;
   searchable?: boolean;
+  active?: boolean;
   onSearch?: (query: string) => void;
 }) {
   const [open, setOpen] = useState(false),
@@ -81,7 +83,7 @@ export function SingleSelect({
       <button
         ref={trigger}
         type="button"
-        className="multi-select-trigger"
+        className={`multi-select-trigger${active ? " has-selection" : ""}`}
         disabled={disabled}
         aria-labelledby={`${id}-label ${id}-value`}
         aria-expanded={open}

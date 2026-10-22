@@ -1,3 +1,4 @@
+import { defaultPrFilters, usePrFilters } from "./usePrFilters.js";
 import { PrTicketSourcesInfo } from "./PrTicketSourcesInfo.js";
 import { BranchLabel } from "./PrBranchLabel.js";
 import { ciMergeReason } from "../server/pr-health.js";
@@ -16,6 +17,8 @@ import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   ArrowUpRight,
+  SlidersHorizontal,
+  RotateCcw,
   RefreshCw,
   TriangleAlert,
   CircleMinus,
@@ -240,9 +243,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
   const [merging, setMerging] = useState<any>(null);
   const [viewingCommits, setViewingCommits] = useState<any>(null);
   const [viewingDiff, setViewingDiff] = useState<any>(null);
-  const [draftFilter, setDraftFilter] = useState("all");
-  const [reviewFilter, setReviewFilter] = useState("all");
-  const [sort, setSort] = useState("created:desc");
+  const { filters: { draft: draftFilter, review: reviewFilter, sort }, update: updateFilters } = usePrFilters(context.client || "");
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const target = params.get("monitor")
@@ -462,11 +463,14 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
               </p>
             ))}
 
+          <section className="ticket-filter-panel pr-filter-panel" aria-label="Фильтры pull request">
+          <div className="pr-filter-heading"><SlidersHorizontal size={17} />Фильтры pull request</div>
           <div className="ticket-filters">
             <SingleSelect
               label="Тип PR"
               value={draftFilter}
-              onChange={setDraftFilter}
+              onChange={draft => updateFilters({ draft })}
+              active={draftFilter !== "all"}
               disabled={!!target}
               options={[
                 { value: "all", label: "Все PR" },
@@ -477,7 +481,8 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
             <SingleSelect
               label="Готовность ревью"
               value={reviewFilter}
-              onChange={setReviewFilter}
+              onChange={review => updateFilters({ review })}
+              active={reviewFilter !== "all"}
               disabled={!!target}
               options={[
                 { value: "all", label: "Все состояния" },
@@ -488,7 +493,8 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
             <SingleSelect
               label="Сортировка PR"
               value={sort}
-              onChange={setSort}
+              onChange={sort => updateFilters({ sort })}
+              active={sort !== "created:desc"}
               options={[
                 { value: "created:desc", label: "Созданы: сначала новые" },
                 { value: "created:asc", label: "Созданы: сначала старые" },
@@ -505,17 +511,16 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                 sort === "created:desc"
               }
               onClick={() => {
-                setDraftFilter("all");
-                setReviewFilter("all");
-                setSort("created:desc");
+                updateFilters(defaultPrFilters);
               }}
             >
-              Сбросить фильтры
+              <RotateCcw size={15} /> Сбросить фильтры
             </button>
           </div>
           <p className="muted" role="status">
             Показано {visiblePrs.length} из {prs.length}.
           </p>
+          </section>
           {!!prs.length && !visiblePrs.length && (
             <div className="empty">
               Нет PR по выбранным фильтрам. Измените условия или сбросьте
