@@ -27,8 +27,7 @@ function fixture(t: any) {
 }
 test("automatic import filters by owner, exact type and state with safe WIQL quoting", async (t) => {
   const { store, connectors } = fixture(t);
-  store.set("settings", {
-    ...store.settings(),
+  store.set(store.ticketImportKey(store.settings()), {
     azureAutoImport: true,
     azureTypes: ["Bug", "Change Request"],
     azureStates: ["Ready ' QA"],

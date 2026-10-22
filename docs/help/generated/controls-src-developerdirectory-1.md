@@ -7,33 +7,63 @@
 
 ### Элемент
 
+Общий · все проекты
+
+Источник: src/DeveloperDirectory.tsx:19.
+
+### Элемент
+
+Заказчик ·
+
+Источник: src/DeveloperDirectory.tsx:20.
+
+### Элемент
+
+Проект ·
+
+Источник: src/DeveloperDirectory.tsx:21.
+
+### Элемент
+
+Уровень нового разработчика
+
+Источник: src/DeveloperDirectory.tsx:76.
+
+### Элемент
+
 Добавить разработчиков
 
-Источник: src/DeveloperDirectory.tsx:78.
+Источник: src/DeveloperDirectory.tsx:77.
 
 ### Элемент
 
 Анна Иванова Иван Петров
 
-Источник: src/DeveloperDirectory.tsx:80.
+Источник: src/DeveloperDirectory.tsx:79.
 
 ### Элемент
 
 Добавить
 
-Источник: src/DeveloperDirectory.tsx:89.
+Источник: src/DeveloperDirectory.tsx:88.
 
 ### Элемент
 
 Группировка поручений · ·
 
-Источник: src/DeveloperDirectory.tsx:124.
+Источник: src/DeveloperDirectory.tsx:121.
 
 ### Элемент
 
 Имя разработчика {…}
 
-Источник: src/DeveloperDirectory.tsx:150.
+Источник: src/DeveloperDirectory.tsx:149.
+
+### Элемент
+
+Уровень разработчика {…}
+
+Источник: src/DeveloperDirectory.tsx:156.
 
 ### Элемент
 
@@ -43,6 +73,6 @@
 
 ### Элемент
 
-Сохранить имя · Сохранить имя {…}
+Сохранить имя и уровень · Сохранить имя {…}
 
 Источник: src/DeveloperDirectory.tsx:170.

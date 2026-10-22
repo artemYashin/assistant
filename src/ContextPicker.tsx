@@ -1,3 +1,4 @@
+import { ProjectTicketImport } from "./ProjectTicketImport.js";
 import { DeleteContextButton } from "./DeleteContextButton.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { copyRenamedContextStorage, deleteContextStorage } from "./context-storage.js";
@@ -32,7 +33,7 @@ export function ContextPicker({
   onSettingsChange: () => void;
 }) {
   const [section, setSection] = useState<
-    "browse" | "catalog" | "repository" | "developers" | "priorities"
+    "browse" | "catalog" | "repository" | "developers" | "priorities" | "import"
   >("catalog");
   const [catalogClient, setCatalogClient] = useState("");
   const [catalogProject, setCatalogProject] = useState("");
@@ -213,6 +214,15 @@ export function ContextPicker({
                 {error}
               </p>
             )}
+            <div className="context-dialog-selectors">
+              <SingleSelect label="Заказчик в настройках" value={context.client} disabled={busy}
+                options={[{value:"",label:"Общий контекст"},...clients.map(value=>({value,label:value}))]}
+                onChange={client=>{setCatalogClient(client);setCatalogProject("");void choose({client,project:""});}}/>
+              <ChevronRight size={15}/>
+              <SingleSelect label="Проект в настройках" value={context.project} disabled={busy || !context.client}
+                options={[{value:"",label:"Без проекта"},...projects(context.client).map(value=>({value,label:value}))]}
+                onChange={project=>{setCatalogProject(project);void choose({...context,project});}}/>
+            </div>
             <div
               className="context-manager-nav"
               aria-label="Разделы управления контекстом"
@@ -231,6 +241,9 @@ export function ContextPicker({
                 <GitBranch size={16} />
                 Репозиторий
               </button>
+              <button type="button" aria-pressed={section === "import"} onClick={()=>setSection("import")}>
+                <Plus size={16}/>Автоматический импорт
+              </button>
               <button
                 type="button"
                 aria-pressed={section === "developers"}
@@ -248,6 +261,9 @@ export function ContextPicker({
                 Приоритеты
               </button>
             </div>
+            {section === "import" && <div className="context-manager-section">
+              <ProjectTicketImport key={JSON.stringify(context)} context={context} onSaved={onSettingsChange}/>
+            </div>}
             {section === "priorities" && (
               <PrioritySettings
                 key={JSON.stringify(context)}

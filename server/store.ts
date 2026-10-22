@@ -362,6 +362,18 @@ export class Store {
         .run();
       this.set("migration.manualReviews", true);
     }
+    if (!this.get("migration.projectTicketImport", false)) {
+      this.db.transaction(() => {
+        const old=this.rawSettings();
+        for (const context of [...this.contexts(), {client:old.client,project:old.project}]) {
+          if (!context.client || !context.project) continue;
+          const key=this.ticketImportKey(context);
+          if (this.get(key,null)===null)
+            this.set(key,{azureAutoImport:old.azureAutoImport,azureTypes:old.azureTypes,azureStates:old.azureStates});
+        }
+        this.set("migration.projectTicketImport",true);
+      })();
+    }
     // A crash after Graph accepted a request is ambiguous. Never automatically resend it.
     this.db
       .prepare(
@@ -424,6 +436,14 @@ export class Store {
       ? null
       : { azureUrl: this.rawSettings().azureUrl, azureProject: legacy };
   }
+  ticketImportKey(context: Context) {
+    return "ticket-import:" + JSON.stringify([context.client,context.project]);
+  }
+  ticketImport(context: Context) {
+    return this.get(this.ticketImportKey(context), {
+      azureAutoImport:false,azureTypes:[] as string[],azureStates:[] as string[],
+    });
+  }
   settings(context?: Context): Settings {
     const settings = this.rawSettings();
     const scope = context || settings;
@@ -432,7 +452,7 @@ export class Store {
       : null;
     const project =
       scope.client && scope.project ? this.azureBinding(scope) : null;
-    return { ...settings, ...(project || customer || {}) };
+    return { ...settings, ...(project || customer || {}), ...this.ticketImport(scope) };
   }
   secret(key: string): string | undefined {
     const row = this.db
@@ -506,7 +526,7 @@ export class Store {
         if (context.project) this.db.prepare(`UPDATE ${table} SET project=? WHERE client=? AND project=?`).run(name, context.client, context.project);
         else this.db.prepare(`UPDATE ${table} SET client=? WHERE client=?`).run(name, context.client);
       }
-      const offsets: Record<string, number> = { "azure.context:": 0, "project.azure:": 1, "chat.active:": 0, "ticket-priorities:": 0, "developer-note:": 0, "developer-status-groups:": 1 };
+      const offsets: Record<string, number> = { "ticket-import:": 0, "azure.context:": 0, "project.azure:": 1, "chat.active:": 0, "ticket-priorities:": 0, "developer-note:": 0, "developer-status-groups:": 1 };
       const entries = this.db.prepare("SELECT key,value FROM kv").all() as { key: string; value: string }[];
       for (const row of entries) {
         const prefix = Object.keys(offsets).find(prefix => row.key.startsWith(prefix));

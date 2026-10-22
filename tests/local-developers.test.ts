@@ -37,26 +37,13 @@ test("local developers support scoped multi-assignment, renaming and retired nam
   const store = fixture(t),
     service = new LocalDevelopers(store);
   ticket(store);
-  assert.throws(
-    () => service.add(["Global"], { client: "", project: "" }),
-    /проект/,
-  );
-  assert.throws(
-    () => service.add(["Customer dev"], { ...context, project: "" }),
-    /проект/,
-  );
-  store.db
-    .prepare("INSERT INTO local_developers VALUES (?,?,?,?,1)")
-    .run("legacy-global", "Global", "", "");
+  service.add(["Global"], {client:"",project:""});
+  service.add(["Customer dev"], {...context,project:""});
   service.add(["Project dev", "Anna", "Boris"], context);
-  assert.throws(
-    () => service.assign(42, ["legacy-global"], context),
-    /недоступен/,
-  );
-  assert.equal(service.list(context).length, 3);
-  assert.equal(service.list({ client: "Other", project: "Other" }).length, 0);
+  assert.equal(service.list(context).length,5);
+  assert.equal(service.list({client:"Other",project:"Other"}).length,1);
   const ids = service.list(context).map((d) => d.id);
-  assert.equal(service.assign(42, ids, context).developers.length, 3);
+  assert.equal(service.assign(42, ids, context).developers.length, 5);
   assert.equal(service.assign(42, ids, context).azureChanged, false);
   service.edit(ids[0], "Renamed");
   service.remove(ids[0]);
@@ -65,7 +52,7 @@ test("local developers support scoped multi-assignment, renaming and retired nam
     "Renamed",
   );
   assert.equal(service.assigned(42).find((d) => d.id === ids[0])?.active, 0);
-  assert.equal(service.list(context).length, 2);
+  assert.equal(service.list(context).length, 4);
   service.assign(42, [], context);
   assert.equal(service.assigned(42).length, 0);
   assert.throws(() => service.assign(42, ["unknown"], context), /недоступен/);
@@ -129,4 +116,23 @@ test("legacy Azure-based assignments are migrated into the local directory once"
     store.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test("promoting developers preserves IDs and assignments and widens visibility", t=>{
+  const store=fixture(t),service=new LocalDevelopers(store);
+  ticket(store);
+  const [person]=service.add(["Alice"],context);
+  service.assign(42,[person.id],context);
+  const sibling={...context,project:"Second"};
+  assert.equal(service.list(sibling).length,0);
+  service.edit(person.id,"Alice",{client:context.client,project:""});
+  assert.equal(service.list(sibling)[0].id,person.id);
+  assert.equal(service.assigned(42)[0].id,person.id);
+  assert.equal(service.list({client:"Other",project:"P"}).length,0);
+  service.edit(person.id,"Alice",{client:"",project:""});
+  assert.equal(service.list({client:"Other",project:"P"})[0].id,person.id);
+  assert.equal(service.assigned(42)[0].id,person.id);
+  service.add(["Bob"],{client:"",project:""});
+  assert.throws(()=>service.edit(person.id,"Bob",{client:"",project:""}),/уже есть/);
 });

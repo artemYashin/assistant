@@ -15,7 +15,7 @@ export function TicketImportSettings({
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(""); setOptions([]);
-    api("/tickets/options", "GET", undefined, controller.signal).then(setOptions)
+    api("/tickets/options?"+new URLSearchParams({client:form.client,project:form.project}), "GET", undefined, controller.signal).then(setOptions)
       .catch(e => { if (!controller.signal.aborted) setError(e.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -24,7 +24,6 @@ export function TicketImportSettings({
     ...new Set<string>([
       ...options.map((o) => o.name),
       ...form.azureTypes,
-      ...Object.keys(form.typeColors || {}),
     ]),
   ];
   const states = [
@@ -33,7 +32,6 @@ export function TicketImportSettings({
         .filter((o) => form.azureTypes.includes(o.name))
         .flatMap((o) => o.states),
       ...form.azureStates,
-      ...Object.keys(form.statusColors || {}),
     ]),
   ];
   const toggle = (key: string, value: string, checked: boolean) =>
@@ -47,7 +45,7 @@ export function TicketImportSettings({
     <div className="stack import-settings">
       <h3>Автоматически импортировать мои задачи</h3>
       <p className="muted">
-        Запрашивает Azure API каждые {form.syncSeconds / 60} минут: Assigned To
+        При активном проекте запрашивает Azure API каждые {form.syncSeconds / 60} минут: Assigned To
         = владелец PAT, выбранные типы и статусы. LLM для импорта не
         используется. Уже добавленные тикеты сохраняются и продолжают
         обновляться после выхода из фильтра.
@@ -60,7 +58,7 @@ export function TicketImportSettings({
           setLoading(true);
           setError("");
           try {
-            setOptions(await api("/tickets/options?refresh=true"));
+            setOptions(await api("/tickets/options?"+new URLSearchParams({client:form.client,project:form.project,refresh:"true"})));
           } catch (e: any) {
             setError(e.message);
           } finally {
@@ -147,7 +145,7 @@ export function TicketImportSettings({
         ))}
       </div>
       <p className="muted">
-        Галочки задают фильтр импорта. Цвета меняют только оформление типов и
+        Галочки задают фильтр импорта выбранного проекта. Цвета общие для приложения и меняют только оформление типов и
         статусов в Orbit, независимо от галочек.
       </p>
       <label className="check-option">
@@ -163,7 +161,7 @@ export function TicketImportSettings({
         Включить автоматический импорт
       </label>
       <p className="muted">
-        После выбора фильтров нажмите «Сохранить настройки». Для Bug и Change
+        После выбора фильтров нажмите «Сохранить». Настройки действуют только для выбранного проекта. Для Bug и Change
         Request выберите их реальные названия из вашего процесса Azure.
       </p>
     </div>

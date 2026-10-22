@@ -9939,3 +9939,15 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .image-action-error { max-width:220px; background:#fff0ed; color:#a23c32; padding:4px; font-size:11px; }
 
 .chat-image-loading { display:block; padding:4px 8px; color:#337351; font-size:11px; }
+
+.context-dialog-selectors { display:flex; align-items:center; gap:8px; padding:8px 0 12px; }
+.context-dialog-selectors > .single-select { flex:1; min-width:0; }
+.project-import-fields { border:0; padding:0; margin:0; min-width:0; }
+.developer-scope-group { border:1px solid #dce6df; border-radius:8px; padding:6px; margin-bottom:8px; background:#f7faf8; }
+.developer-scope-group h5 { margin:0 0 6px; font-size:11px; color:#49725c; }
+.developer-directory-row > .single-select { flex:0 1 170px; min-width:95px; }
+.developer-directory-row { grid-template-columns:26px minmax(70px,1fr) minmax(100px,150px) auto; }
+.developer-directory-row .single-select .multi-select-label { display:none; }
+.developer-directory-row .single-select .multi-select-trigger { font-size:11px; }
+@media (max-width:800px) { .developer-directory-editor { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:480px) { .developer-directory-row { grid-template-columns:24px minmax(60px,1fr) 105px auto; gap:4px; padding:4px; } .developer-row-actions { gap:2px; } .developer-row-actions > .icon-button { width:24px; min-width:24px; } }

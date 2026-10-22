@@ -1,3 +1,4 @@
+import { SingleSelect } from "./SingleSelect.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { ProjectDeveloperStatusSettings } from "./DeveloperStatusSettings.js";
 import { Users, Settings2, Plus, X, Save } from "lucide-react";
@@ -14,8 +15,12 @@ export function DeveloperDirectory({
     [error, setError] = useState(""),
     [revision, setRevision] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const target = context;
-  const query = new URLSearchParams(target).toString();
+  const [scope,setScope]=useState(context.project?"project":context.client?"client":"general");
+  const levels=[{value:"general",label:"Общий · все проекты"},
+    ...(context.client?[{value:"client",label:"Заказчик · "+context.client}]:[]),
+    ...(context.project?[{value:"project",label:"Проект · "+context.project}]:[])];
+  const target=scope==="general"?{client:"",project:""}:scope==="client"?{client:context.client,project:""}:context;
+  const query = new URLSearchParams(context).toString();
   useEffect(() => {
     let live = true;
     api(`/local-developers?${query}`)
@@ -43,12 +48,6 @@ export function DeveloperDirectory({
     }
   }
   const own = items;
-  if (!context.client || !context.project)
-    return (
-      <p className="muted">
-        Выберите заказчика и проект, чтобы добавить разработчиков.
-      </p>
-    );
   return (
     <div className="developer-directory">
       <section className="developer-directory-panel">
@@ -56,8 +55,7 @@ export function DeveloperDirectory({
           <Users size={18} /> Справочник разработчиков
         </h3>
         <p className="muted">
-          Разработчики проекта {context.project}. Одна строка — одно имя. Список
-          добавляется вручную и хранится только локально.
+          Одна строка — одно имя. Общие разработчики доступны везде, разработчики заказчика — во всех его проектах. Список хранится локально; Azure не изменяется.
         </p>
         <div className="developer-directory-editor">
           <form
@@ -75,6 +73,7 @@ export function DeveloperDirectory({
               });
             }}
           >
+            <SingleSelect label="Уровень нового разработчика" value={scope} options={levels} disabled={busy} onChange={setScope}/>
             <label>
               Добавить разработчиков
               <textarea
@@ -91,19 +90,18 @@ export function DeveloperDirectory({
             </button>
           </form>
           <section className="developer-directory-roster">
-            <h4>В проекте · {own.length}</h4>
+            <h4>Доступные разработчики · {own.length}</h4>
             <div className="developer-directory-list">
-              {own.map((person) => (
-                <DeveloperRow
-                  key={`${person.id}:${person.name}`}
-                  person={person}
-                  busy={busy}
-                  action={action}
-                />
-              ))}
+              {levels.map(level=>{
+                const people=own.filter(person=>(!person.client?"general":!person.project?"client":"project")===level.value);
+                return <section className="developer-scope-group" key={level.value}><h5>{level.label} · {people.length}</h5>
+                  {people.map(person=><DeveloperRow key={JSON.stringify([person.id,person.name,person.client,person.project])}
+                    person={person} busy={busy} action={action} context={context} levels={levels}/>)}
+                </section>;
+              })}
             </div>
             {!own.length && (
-              <p className="muted">В проекте пока нет разработчиков.</p>
+              <p className="muted">Нет доступных разработчиков.</p>
             )}
           </section>
         </div>
@@ -113,8 +111,7 @@ export function DeveloperDirectory({
           </p>
         )}
         <small className="muted">
-          «Убрать» скрывает имя из новых назначений. Существующие поручения
-          сохраняются.
+          «Убрать» скрывает имя из новых назначений. Существующие поручения сохраняются. Смена уровня сохраняет ID и назначения. Имя и удаление общих разработчиков действуют во всех проектах их уровня.
         </small>
       </section>
       <details
@@ -142,8 +139,10 @@ export function DeveloperDirectory({
     </div>
   );
 }
-function DeveloperRow({ person, busy, action }: any) {
+function DeveloperRow({ person, busy, action, context, levels }: any) {
   const [name, setName] = useState(person.name);
+  const [scope,setScope]=useState(!person.client?"general":!person.project?"client":"project");
+  const initialScope=!person.client?"general":!person.project?"client":"project";
   return (
     <div className="developer-directory-row">
       <InitialsAvatar name={person.name} />
@@ -154,6 +153,7 @@ function DeveloperRow({ person, busy, action }: any) {
         disabled={busy}
         onChange={(e) => setName(e.target.value)}
       />
+      <SingleSelect label={`Уровень разработчика ${person.name}`} value={scope} options={levels} disabled={busy} onChange={setScope}/>
       <div className="developer-row-actions">
 
       <button
@@ -167,9 +167,9 @@ function DeveloperRow({ person, busy, action }: any) {
       >
         <X size={16} />
       </button>
-      <button type="button" className="icon-button developer-save-name" title="Сохранить имя" disabled={busy || !name.trim() || name.trim() === person.name}
+      <button type="button" className="icon-button developer-save-name" title="Сохранить имя и уровень" disabled={busy || !name.trim() || (name.trim() === person.name && scope === initialScope)}
         aria-label={`Сохранить имя ${person.name}`}
-        onClick={() => void action(() => api(`/local-developers/${person.id}`, "PUT", { name: name.trim() }))}><Save size={16} aria-hidden="true" /></button>
+        onClick={() => void action(() => api(`/local-developers/${person.id}`, "PUT", { name: name.trim(), context: scope==="general"?{client:"",project:""}:scope==="client"?{client:context.client,project:""}:context }))}><Save size={16} aria-hidden="true" /></button>
       </div>
     </div>
   );

@@ -33,7 +33,7 @@ export function deleteContext(store: Store, context: Context, confirmation: stri
       ...reviews.flatMap(id => [`review.requests:${id}`, `chat.runtime:review:${id}`, `chat.context:review:${id}`]),
       ...monitors.map(id => `code-sync:${id}`),
     ]);
-    const offsets: Record<string, number> = { "azure.context:": 0, "project.azure:": 1, "chat.active:": 0, "ticket-priorities:": 0, "developer-note:": 0, "developer-status-groups:": 1 };
+    const offsets: Record<string, number> = { "ticket-import:": 0, "azure.context:": 0, "project.azure:": 1, "chat.active:": 0, "ticket-priorities:": 0, "developer-note:": 0, "developer-status-groups:": 1 };
     for (const { key } of store.db.prepare("SELECT key FROM kv").all() as { key: string }[]) {
       let remove = exactKeys.has(key) || monitors.some(id => key.startsWith(`code.snapshot:${id}:`));
       const prefix = Object.keys(offsets).find(prefix => key.startsWith(prefix));

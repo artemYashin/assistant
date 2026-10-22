@@ -51,7 +51,7 @@ const catalog: Record<string, string> = {
   batch_update_tickets:
     "Import a user-supplied list of ticket IDs/links: operations with action add, up to 50 per call. Also batch local edits/removal/assignments or Azure statuses.",
   list_local_developers:
-    "List manually configured developers in the current project.",
+    "List local developers available from global, customer and current project scopes.",
   set_local_ticket_developers:
     "Set local assignees: ticket ID and developer IDs.",
   get_workspace_context:

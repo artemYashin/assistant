@@ -6,12 +6,11 @@ import { defineTool } from "@github/copilot-sdk";
 export class LocalDevelopers {
   constructor(private store: Store) {}
   list(context: Context) {
-    if (!context.client || !context.project) return [];
     return this.store.db
       .prepare(
-        "SELECT id,name,client,project FROM local_developers WHERE active=1 AND client=? AND project=? ORDER BY name COLLATE NOCASE,id",
+        "SELECT id,name,client,project FROM local_developers WHERE active=1 AND ((client='' AND project='') OR (client=? AND project='') OR (client=? AND project=?)) ORDER BY name COLLATE NOCASE,id",
       )
-      .all(context.client, context.project) as {
+      .all(context.client, context.client, context.project) as {
       id: string;
       name: string;
       client: string;
@@ -24,8 +23,8 @@ export class LocalDevelopers {
       .min(1)
       .max(100)
       .parse(names);
-    if (!context.client || !context.project)
-      throw new AppError(400, "Выберите заказчика и проект");
+    if (context.project && !context.client)
+      throw new AppError(400, "Проект должен принадлежать заказчику");
     return this.store.db.transaction(() => {
       for (const name of parsed) {
         const existing = this.store.db
@@ -45,21 +44,23 @@ export class LocalDevelopers {
       return this.list(context);
     })();
   }
-  edit(id: string, name: unknown) {
+  edit(id: string, name: unknown, target?: Context) {
     const parsed = z.string().trim().min(1).max(200).parse(name);
     const person = this.store.db
       .prepare("SELECT * FROM local_developers WHERE id=? AND active=1")
       .get(id) as any;
     if (!person) throw new AppError(404, "Разработчик не найден");
+    const scope=target || person;
+    if (scope.project && !scope.client) throw new AppError(400,"Проект должен принадлежать заказчику");
     const duplicate = this.store.db
       .prepare(
         "SELECT id FROM local_developers WHERE id<>? AND client=? AND project=? AND lower(name)=lower(?)",
       )
-      .get(id, person.client, person.project, parsed);
+      .get(id, scope.client, scope.project, parsed);
     if (duplicate) throw new AppError(409, "Имя уже есть в этом списке");
     this.store.db
-      .prepare("UPDATE local_developers SET name=? WHERE id=?")
-      .run(parsed, id);
+      .prepare("UPDATE local_developers SET name=?,client=?,project=? WHERE id=?")
+      .run(parsed, scope.client, scope.project, id);
   }
   remove(id: string) {
     this.store.db
@@ -140,7 +141,7 @@ export function localDeveloperTools(
   return [
     defineTool("list_local_developers", {
       description:
-        "Read locally configured developers manually added to the current project only. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
+        "Read locally configured developers manually added to the current project, its customer and the global directory. client/project fields identify scope. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
       parameters: z.object({
         ticketId: z.number().int().positive().optional(),
       }),

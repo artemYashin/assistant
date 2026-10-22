@@ -349,6 +349,32 @@ export function createApp(
     );
     res.json({ ok: true });
   });
+  app.get("/api/context/ticket-import", (req,res) => {
+    const context=contextSchema.parse(req.query);
+    res.json({...store.settings(context), ...context});
+  });
+  app.put("/api/context/ticket-import", (req,res) => {
+    const input=z.object({
+      context:contextSchema,
+      azureAutoImport:z.boolean(),
+      azureTypes:z.array(text.min(1)).max(50),
+      azureStates:z.array(text.min(1)).max(100),
+      typeColors:z.record(z.string(),z.string().regex(/^#[0-9a-f]{6}$/i)),
+      statusColors:z.record(z.string(),z.string().regex(/^#[0-9a-f]{6}$/i)),
+    }).parse(req.body);
+    if (!input.context.client || !input.context.project ||
+      !store.contexts().some(c=>c.client===input.context.client && c.project===input.context.project))
+      throw new AppError(400,"Выберите существующий проект для настройки автоимпорта.");
+    if(input.azureAutoImport && (!input.azureTypes.length || !input.azureStates.length))
+      throw new AppError(400,"Выберите типы и статусы для автоимпорта");
+    store.db.transaction(()=>{
+      store.set(store.ticketImportKey(input.context),{
+        azureAutoImport:input.azureAutoImport,azureTypes:input.azureTypes,azureStates:input.azureStates,
+      });
+      store.set("settings",{...store.rawSettings(),typeColors:input.typeColors,statusColors:input.statusColors});
+    })();
+    res.json({ok:true});
+  });
   app.get("/api/settings", (_req, res) =>
     res.json({
       ...store.settings(),
@@ -386,6 +412,9 @@ export function createApp(
       );
     store.set("settings", {
       ...settings,
+      azureAutoImport: store.rawSettings().azureAutoImport,
+      azureTypes: store.rawSettings().azureTypes,
+      azureStates: store.rawSettings().azureStates,
       // Connection fields are managed exclusively by /context/azure.
       azureUrl: store.rawSettings().azureUrl,
       azureProject: store.rawSettings().azureProject,
@@ -842,7 +871,7 @@ export function createApp(
     ),
   );
   app.put("/api/local-developers/:id", (req, res) => {
-    localDevelopers.edit(String(req.params.id), req.body.name);
+    localDevelopers.edit(String(req.params.id), req.body.name, req.body.context === undefined ? undefined : contextSchema.parse(req.body.context));
     res.json({ ok: true });
   });
   app.delete("/api/local-developers/:id", (req, res) => {
@@ -1087,7 +1116,7 @@ export function createApp(
     });
   });
   app.get("/api/tickets/options", async (req, res) =>
-    res.json(await connectors.ticketOptions(z.enum(["true", "false"]).optional().parse(req.query.refresh) === "true")),
+    res.json(await connectors.ticketOptions(z.enum(["true", "false"]).optional().parse(req.query.refresh) === "true", req.query.client === undefined ? undefined : contextSchema.parse(req.query))),
   );
   app.get("/api/tickets/:id/details", async (req, res) => {
     if (req.query.source !== undefined && req.query.source !== store.source()) throw new AppError(409, "Подключение Azure изменилось");

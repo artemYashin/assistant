@@ -7,7 +7,7 @@ import {
 } from "./ticket-status-batch.js";
 import { changeTicketState } from "./ticket-status.js";
 import { createHash, randomUUID } from "node:crypto";
-import { Store, AppError, type Settings } from "./store.js";
+import { Store, AppError, type Settings, type Context } from "./store.js";
 import { IntegrationsAuth } from "./auth.js";
 import { requestJson, azureBase } from "./http.js";
 
@@ -893,8 +893,8 @@ export class Connectors {
     }
     return { id, source, assigned: actual || null, verified: true };
   }
-  async ticketOptions(refresh = false) {
-    const s = this.store.settings(),
+  async ticketOptions(refresh = false, context?: Context) {
+    const s = this.store.settings(context),
       pat = this.store.secret("azure.pat");
     const options = await this.cachedStatusData("catalog", s, pat, async () => {
       const result = await this.azure("workitemtypes", {}, s, pat);

@@ -118,7 +118,6 @@ import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
 import { TicketLookupDialog } from "./TicketLookupDialog.js";
 import { TicketCard } from "./TicketCard.js";
-import { TicketImportSettings } from "./TicketImportSettings.js";
 import { Usage } from "./Usage.js";
 
 type Context = { client: string; project: string };
@@ -2612,10 +2611,6 @@ function Settings({ settings, context, run, busy }: any) {
             />
           </Field>
           <AzurePatPermissions />
-          </div>
-          <div className="settings-group">
-            <h3>Импорт тикетов и оформление</h3>
-          <TicketImportSettings form={form} set={set} />
           </div>
           <div className="settings-group">
             <h3>Автоматическая синхронизация</h3>

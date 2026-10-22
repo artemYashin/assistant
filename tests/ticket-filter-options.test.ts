@@ -65,7 +65,7 @@ test("filter options use the full imported Azure catalog and scoped priority cou
     .query({ client: "Other", project: "Other" })
     .set(auth)
     .expect(200);
-  assert.deepEqual(other.body.types, ["Bug"]);
-  assert.deepEqual(other.body.states, ["Active"]);
+  assert.deepEqual(other.body.types, []);
+  assert.deepEqual(other.body.states, []);
   assert.equal(other.body.priorityCount, 3);
 });

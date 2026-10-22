@@ -31,7 +31,7 @@ test("workspace context exposes scoped developers, registry and repository setti
     )
     .run();
   const data = workspaceContext(store, context);
-  assert.deepEqual(data.developers.map((d) => d.name).sort(), ["Project Dev"]);
+  assert.deepEqual(data.developers.map((d) => d.name).sort(), ["Client Dev", "General", "Project Dev"]);
   assert.equal((data.repositories[0] as any).repository, "Repo");
   assert.ok(data.contexts.some((c) => c.project === "Project"));
   assert.ok(!JSON.stringify(data).includes("TOP-SECRET"));
@@ -42,5 +42,5 @@ test("workspace context exposes scoped developers, registry and repository setti
   const first = workspaceContext(store, context);
   assert.equal(first.developers.length, 10);
   assert.equal(first.nextOffset, 10);
-  assert.equal(workspaceContext(store, context, 20).developers.length, 6);
+  assert.equal(workspaceContext(store, context, 20).developers.length, 8);
 });
