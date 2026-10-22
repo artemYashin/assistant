@@ -216,3 +216,27 @@ test('per-project fetch depth controls downloaded history', async t => {
   await assert.rejects(request('status', { fetchTimeoutSeconds: 7201 }), /Тайм-аут Git/);
   await assert.rejects(request('pull', { fetchDepth: 0 }), /Глубина/);
 });
+
+test('debug cancellation targets one job and cannot cancel another repository', async t => {
+  const { browser, request } = await fixture(t);
+  await request('status');
+  browser.perform = async (_input, _report, signal) => new Promise((_resolve, reject) => {
+    if (signal.aborted) reject(signal.reason);
+    else signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+  });
+  const running = request('pull').catch(error => error);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const queued = request('tree').catch(error => error);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const { jobs } = await request('jobs', { localOnly: true });
+  assert.equal(jobs.length, 2);
+  assert.notEqual(jobs[0].id, jobs[1].id);
+  assert.equal((await request('cancel', { jobId: jobs[0].id, token: 'other-token' })).cancelled, 0);
+  assert.equal((await request('cancel', { jobId: jobs[1].id })).cancelled, 1);
+  assert.ok(await queued instanceof Error);
+  assert.equal((await request('jobs')).jobs[0].id, jobs[0].id);
+  assert.equal(browser.jobs.jobs[0].controller.signal.aborted, false);
+  assert.equal((await request('cancel', { jobId: jobs[0].id })).cancelled, 1);
+  assert.ok(await running instanceof Error);
+  assert.equal((await request('jobs')).jobs.length, 0);
+});

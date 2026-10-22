@@ -80,13 +80,13 @@ export class RepositoryBrowser {
     for (const [id, expires] of this.cancelledRequests) if (expires < Date.now()) this.cancelledRequests.delete(id);
     if (input.operation === 'cancel') {
       for (const id of input.cancelledRequestIds || []) this.cancelledRequests.set(id, Date.now() + 10 * 60000);
-      const cancelled = await this.jobs.cancel(job => job.scope === identity && (job.branch === (input.branch || '') || job.operation === 'branches'));
+      const cancelled = await this.jobs.cancel(job => job.scope === identity && (input.jobId ? job.id === input.jobId : (job.branch === (input.branch || '') || job.operation === 'branches')));
       return { cancelled };
     }
     if (input.requestId && this.cancelledRequests.has(input.requestId)) throw new BrowserError('Операция Git отменена.', 409);
     if (input.operation === 'jobs') {
       return { jobs: this.jobs.jobs.filter(job => job.scope === identity).map(job => ({
-        operation: job.operation, branch: job.branch, running: job.running,
+        id: job.id, operation: job.operation, branch: job.branch, running: job.running,
         queuePosition: this.jobs.jobs.indexOf(job), ...job.progress,
       })) };
     }

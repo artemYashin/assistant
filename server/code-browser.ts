@@ -11,6 +11,7 @@ import type { Monitor } from "./pull-requests.js";
 export const codeBrowserSchema = z.object({
   client: z.string().min(1).max(200), project: z.string().min(1).max(200),
   operation: z.enum(["branches", "status", "pull", "tree", "file", "search", "jobs", "cancel"]),
+  jobId: z.string().uuid().optional(),
   monitor: z.string().max(200).default(""),
   branch: z.string().max(500).default(""), path: z.string().max(4096).default(""),
   query: z.string().max(200).default(""), mode: z.enum(["name", "content"]).default("name"),
@@ -34,7 +35,7 @@ export class CodeBrowser {
     if (input.operation === "cancel") {
       const ids: string[] = [];
       for (const [id, active] of this.active) {
-        if (active.client === input.client && active.project === input.project && (active.branch === input.branch || active.operation === "branches")) {
+        if (!input.jobId && active.client === input.client && active.project === input.project && (active.branch === input.branch || active.operation === "branches")) {
           active.cancelled = true; ids.push(id);
         }
       }

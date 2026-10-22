@@ -9328,3 +9328,19 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-action-group .pr-source-action:hover:not(:disabled) { color: #235478; border-color: #9ebed6; background: #e0eef8; }
 .pr-review-dialog .review-code-info.is-ready svg { color: #40875a; }
 .pr-review-dialog .review-code-info.is-warning svg { color: #b08030; }
+
+.repository-toolbar .repository-debug-work { margin-left: auto; }
+.code-work-dialog { width: min(740px, calc(100vw - 40px)); }
+.code-work-dialog h2 { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.code-work-list { display: grid; gap: 10px; }
+.code-work-job { padding: 12px; border: 1px solid #d7e1dc; border-radius: 8px; background: #f6f8f7; }
+.code-work-job-heading { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+.code-work-job-heading > span { color: var(--muted); }
+.code-work-job-heading .code-work-cancel { margin-left: auto; color: #a54d48; border-color: #e2c9c6; }
+.code-work-cancel:hover:not(:disabled) { background: #fbecea; }
+.code-work-branch { display: block; margin: 8px 0; overflow-wrap: anywhere; font-size: 12px; }
+.code-work-job .repository-progress { width: 100%; max-width: none; }
+.code-work-job details { margin-top: 8px; font-size: 11px; }
+.code-work-job summary { cursor: pointer; }
+.code-work-job pre { overflow: auto; max-height: 220px; padding: 8px; background: #eaf0ec; border-radius: 5px; }
+.code-work-empty { padding: 20px 8px; text-align: center; color: var(--muted); }

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 // One serialized cache writer, with multiple observers for identical work.
 // Credentials belong in the caller's hashed key, never in progress payloads.
 export class QueueError extends Error {}
@@ -20,7 +21,7 @@ export class RepositoryJobs {
     let job = this.jobs.find(job => job.key === key);
     if (!job) {
       if (this.jobs.length >= this.limit) return Promise.reject(new QueueError('Сервис занят. Повторите через несколько секунд.'));
-      job = { ...metadata, controller: new AbortController(), key, perform, listeners: new Set(), startedAt: Date.now(), running: false, progress: { stage: 'queued', startedAt: Date.now() } };
+      job = { ...metadata, id: randomUUID(), controller: new AbortController(), key, perform, listeners: new Set(), startedAt: Date.now(), running: false, progress: { stage: 'queued', startedAt: Date.now() } };
       job.promise = new Promise((resolve, reject) => { job.resolve = resolve; job.reject = reject; });
       this.jobs.push(job);
       job.timer = setTimeout(() => {
