@@ -212,3 +212,49 @@ test("chat receives selected ticket IDs and rejects stale Azure selection", asyn
   await post().expect(200);
   assert.equal(prompts[1], "Расскажи о выбранных");
 });
+
+test("deleting a chat isolates context, clears runtime and selects a remaining or new chat", t => {
+  const store = fixture(t);
+  const first = store.createChat(context);
+  const second = store.createChat(context);
+  const foreign = store.createChat({ ...context, project: 'Other' });
+  store.say('user', 'Keep first', context, [], first.id);
+  store.say('user', 'Delete second', context, [], second.id);
+  store.set(`chat.runtime:${second.id}`, { secret: 'history' });
+  store.set(`chat.context:${second.id}`, { currentTokens: 12 });
+  assert.throws(() => store.deleteChat(context, foreign.id), /Чат не найден/);
+  const result = store.deleteChat(context, second.id);
+  assert.equal(result.activeId, first.id);
+  assert.equal(result.sessions.length, 1);
+  assert.equal((store.history(context, first.id)[0] as any).body, 'Keep first');
+  assert.equal((store.db.prepare('SELECT COUNT(*) AS n FROM conversations WHERE session_id=?').get(second.id) as any).n, 0);
+  assert.equal(store.get(`chat.runtime:${second.id}`, 'missing'), 'missing');
+  assert.equal(store.get(`chat.context:${second.id}`, 'missing'), 'missing');
+  assert.throws(() => store.chatSession(context, second.id), /Чат не найден/);
+  assert.equal(store.chatSession({ ...context, project: 'Other' }, foreign.id).id, foreign.id);
+  const empty = store.deleteChat(context, first.id);
+  assert.notEqual(empty.activeId, first.id);
+  assert.equal(empty.sessions.length, 1);
+  assert.equal((empty.sessions[0] as any).messageCount, 0);
+});
+
+test("delete session API requires auth, CSRF and idle assistant", async t => {
+  const store = fixture(t);
+  const { app, agent } = createApp(store);
+  const session = store.createChat(context);
+  const url = `/api/conversation/sessions/${session.id}`;
+  const headers = { Host: 'localhost:43871', Origin: 'http://localhost:43871', 'X-Orbit-Request': '1' };
+  await request(app).delete(url).set(headers).send(context).expect(401);
+  const setup = await request(app).post('/api/auth/setup').set(headers).send({ password: 'long-enough-password' }).expect(200);
+  const auth = { ...headers, Cookie: setup.headers['set-cookie'][0].split(';')[0] };
+  await request(app).delete(url).set(auth).send(context).expect(403);
+  const csrf = { ...auth, 'X-CSRF-Token': setup.body.csrf };
+  let busy = true;
+  t.mock.method(agent, 'active', () => busy ? 'running' : null);
+  await request(app).delete(url).set(csrf).send(context).expect(409);
+  busy = false;
+  await request(app).delete(url).set(csrf).send({ ...context, project: 'Other' }).expect(404);
+  const result = await request(app).delete(url).set(csrf).send(context).expect(200);
+  assert.notEqual(result.body.activeId, session.id);
+  await request(app).delete(url).set(csrf).send(context).expect(404);
+});

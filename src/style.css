@@ -9687,3 +9687,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .repository-commit-row > span { min-width: 0; }
 .repository-commit-row strong { display: block; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .repository-commit-row small { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; color: var(--muted); }
+
+.chat-history-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.chat-history-row > .chat-history-item { flex: 1; min-width: 0; width: auto; }
+.chat-history-row > .chat-history-delete { flex: 0 0 30px; width: 30px; height: 30px; padding: 6px; color: #b74343; border: 1px solid #edd4d4; border-radius: 7px; background: #fff6f6; }
+.chat-history-row > .chat-history-delete:hover:not(:disabled) { background: #ffe5e5; border-color: #d89595; }
+.chat-delete-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

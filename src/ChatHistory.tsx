@@ -1,7 +1,8 @@
+import { ConfirmButton } from "./ConfirmButton.js";
 import { groupChatHistory } from "./chat-history-groups.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { History, MessageSquare, Plus, X } from "lucide-react";
+import { History, MessageSquare, Plus, Trash2, X } from "lucide-react";
 import { api } from "./api.js";
 
 type Context = { client: string; project: string };
@@ -39,6 +40,7 @@ export function ChatHistory({
             activeId={activeId}
             onClose={() => setOpen(false)}
             onSelect={onSelect}
+            disabled={disabled}
           />,
           document.body,
         )}
@@ -46,11 +48,13 @@ export function ChatHistory({
   );
 }
 function ChatHistoryDialog({
+  disabled,
   context,
   activeId,
   onClose,
   onSelect,
 }: {
+  disabled: boolean;
   context: Context;
   activeId: string;
   onClose: () => void;
@@ -136,12 +140,11 @@ function ChatHistoryDialog({
         <div className="chat-history-list">
           {!sessions.length && <p className="muted">Сохранённых чатов пока нет.</p>}
           {groupChatHistory(sessions).map(group => <section className="chat-history-group" key={group.label}><h3>{group.label}</h3>{group.sessions.map((session) => (
-            <button
+            <div className="chat-history-row" key={session.id}><button
               type="button"
-              key={session.id}
               className={`chat-history-item${session.id === activeId ? " is-active" : ""}`}
               aria-current={session.id === activeId ? "true" : undefined}
-              disabled={busy}
+              disabled={busy || disabled}
               onClick={() => void select(session.id)}
             >
               <MessageSquare size={18} />
@@ -154,6 +157,18 @@ function ChatHistoryDialog({
                 </small>
               </span>
             </button>
+            <ConfirmButton className="icon-button chat-history-delete" disabled={busy || disabled}
+              title="Удалить чат?" message={`Чат «${session.title}», его сообщения и история вызовов инструментов будут удалены без возможности восстановления. Сохранённая память и общий учёт токенов останутся.`}
+              confirmLabel="Удалить чат" onConfirm={async () => {
+                setBusy(true); setError("");
+                try {
+                  const result = await api(`/conversation/sessions/${session.id}`, "DELETE", context);
+                  setSessions(result.sessions);
+                  if (session.id === activeId) await onSelect(result.activeId);
+                } catch (e: any) { setError(e.message); throw e; }
+                finally { setBusy(false); }
+              }}><Trash2 size={15} /><span className="chat-delete-label">Удалить чат «{session.title}»</span></ConfirmButton>
+            </div>
           ))}</section>)}
         </div>
       )}

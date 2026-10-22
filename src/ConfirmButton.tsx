@@ -10,7 +10,7 @@ export function ConfirmButton({ children, title, message, confirmLabel, onConfir
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   return <>
     <button type="button" className={className} disabled={disabled || busy} onClick={() => { setError(""); dialog.current?.showModal(); }}>{children}</button>
-    {typeof document !== "undefined" && createPortal(<dialog ref={dialog} className="developer-dialog action-confirm-dialog" aria-label={title} onCancel={event => { if (busy) event.preventDefault(); }} onClick={event => {
+    {typeof document !== "undefined" && createPortal(<dialog ref={dialog} className="developer-dialog action-confirm-dialog" aria-label={title} onCancel={event => { event.stopPropagation(); if (busy) event.preventDefault(); }} onClick={event => {
       if (event.target === event.currentTarget && !busy) {
         const rect = event.currentTarget.getBoundingClientRect();
         if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.current?.close();

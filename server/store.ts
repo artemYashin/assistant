@@ -905,6 +905,19 @@ export class Store {
         .all(context.client, context.project),
     };
   }
+  deleteChat(context: Context, id: string) {
+    return this.db.transaction(() => {
+      this.chatSession(context, id); // Never delete a chat from another context.
+      this.db.prepare("DELETE FROM llm_tool_traces WHERE request_id IN (SELECT id FROM llm_requests WHERE chat_session_id=? AND client=? AND project=?)")
+        .run(id, context.client, context.project);
+      this.clearHistory(context, id); // Preserve global usage accounting.
+      this.db.prepare("DELETE FROM kv WHERE key IN (?,?)").run(`chat.runtime:${id}`, `chat.context:${id}`);
+      this.db.prepare("DELETE FROM chat_sessions WHERE id=? AND client=? AND project=?").run(id, context.client, context.project);
+      const active = this.activeChat(context);
+      this.set(this.activeChatKey(context), active.id);
+      return this.chatSessions(context);
+    })();
+  }
   chatAttachment(
     context: Context,
     id: string,

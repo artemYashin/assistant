@@ -526,6 +526,12 @@ export function createApp(
       : undefined;
     res.json(store.createChat(context, attachment));
   });
+  app.delete("/api/conversation/sessions/:id", (req, res) => {
+    const context = contextSchema.parse(req.body);
+    const id = z.string().uuid().parse(req.params.id);
+    if (agent.active()) throw new AppError(409, "Дождитесь завершения ответа или остановите его, затем удалите чат.");
+    res.json(store.deleteChat(context, id));
+  });
   app.delete("/api/conversation/sessions/:id/attachment", (req, res) => {
     const context = contextSchema.parse(req.body);
     const id = z.string().uuid().parse(req.params.id);
