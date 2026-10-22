@@ -303,14 +303,12 @@ export function createApp(
   app.get("/api/context/azure", (req, res) => {
     const context = contextSchema.strict().parse(req.query);
     const resolved = store.settings(context);
-    const parent = store.settings({
-      client: context.project ? context.client : "",
-      project: "",
-    });
+    const parent = store.rawSettings();
     res.json({
       azureProject: resolved.azureProject,
       azureUrl: resolved.azureUrl,
-      inherit: !store.azureBinding(context),
+      inherit: !!context.client && (store.get<any>(store.azureContextKey(context), null)?.inheritGlobal === true ||
+        (!store.azureBinding(context) && (!context.project || !store.azureBinding({ client: context.client, project: "" })))),
       parent: { azureUrl: parent.azureUrl, azureProject: parent.azureProject },
     });
   });
@@ -323,11 +321,9 @@ export function createApp(
       })
       .strict()
       .parse(req.body);
-    if (!input.client) throw new AppError(400, "Выберите заказчика");
-    if (
-      !store
-        .contexts()
-        .some((c) => c.client === input.client && c.project === input.project)
+    if (!input.client && input.project) throw new AppError(400, "Выберите заказчика");
+    if (input.client &&
+      !store.contexts().some((c) => c.client === input.client && c.project === input.project)
     )
       throw new AppError(400, "Заказчик или проект не найден");
     if (!input.inherit && !input.azureProject)
@@ -335,13 +331,16 @@ export function createApp(
     const azureUrl = input.inherit
       ? ""
       : azureBase(input.azureUrl || store.settings(input).azureUrl);
-    store.set(
+    if (!input.client) {
+      if (input.inherit) throw new AppError(400, "Глобальное подключение не может наследовать настройки");
+      store.set("settings", { ...store.rawSettings(), azureUrl, azureProject: input.azureProject });
+    } else store.set(
       store.azureContextKey(input),
-      input.inherit ? null : { azureUrl, azureProject: input.azureProject },
+      input.inherit ? { inheritGlobal: true } : { azureUrl, azureProject: input.azureProject },
     );
     store.audit(
       "context.azure.updated",
-      `Azure: ${input.client} / ${input.project || "настройки заказчика"}`,
+      input.client ? `Azure: ${input.client} / ${input.project || "настройки заказчика"}` : "Azure: глобальное подключение",
     );
     res.json({ ok: true });
   });
@@ -382,10 +381,9 @@ export function createApp(
       );
     store.set("settings", {
       ...settings,
-      azureUrl: old.client ? store.rawSettings().azureUrl : settings.azureUrl,
-      azureProject: old.client
-        ? store.rawSettings().azureProject
-        : settings.azureProject,
+      // Connection fields are managed exclusively by /context/azure.
+      azureUrl: store.rawSettings().azureUrl,
+      azureProject: store.rawSettings().azureProject,
       client: old.client,
       project: old.project,
     });

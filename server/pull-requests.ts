@@ -94,7 +94,7 @@ export class PullRequests {
     const task = (async () => {
       const data = await this.get(
         m,
-        `git/repositories/${enc(m.repository)}/pullrequests?searchCriteria.status=completed&searchCriteria.queryTimeRangeType=closed&searchCriteria.minTime=${enc(new Date(Date.now() - 30 * 86400000).toISOString())}&$top=21&$skip=${page * 20}`,
+        `git/repositories/${enc(m.repository.trim())}/pullrequests?searchCriteria.status=completed&searchCriteria.queryTimeRangeType=closed&searchCriteria.minTime=${enc(new Date(Date.now() - 30 * 86400000).toISOString())}&$top=21&$skip=${page * 20}`,
         credentials,
       );
       if (!Array.isArray(data.value))
@@ -317,7 +317,7 @@ export class PullRequests {
       throw new AppError(400, "Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Подключение Azure»");
     const source = azureBase(settings.azureUrl);
     if (!input.repository.trim())
-      throw new AppError(400, "Укажите Git-репозиторий");
+      throw new AppError(400, "Укажите Git-репозиторий в меню «Заказчики и проекты» → «Репозиторий» и сохраните настройки.");
     const reviewFiles = input.reviewFiles
       ? reviewFileSettings.parse(input.reviewFiles)
       : undefined;
@@ -348,7 +348,7 @@ export class PullRequests {
         azureProject,
         input.mode,
         Number(input.enabled),
-        input.repository,
+        input.repository.trim(),
       );
     if (codeSyncMinutes !== undefined) {
       this.store.db.prepare("UPDATE pr_projects SET code_sync_minutes=? WHERE client=? AND project=? AND source=? AND azure_project=?")
@@ -652,7 +652,11 @@ export class PullRequests {
     if (!response.ok)
       throw new AppError(
         502,
-        `Azure PR: HTTP ${response.status}. Проверьте PAT, Code: Read и проект.`,
+        response.status === 400 || response.status === 404
+          ? `Не удалось загрузить данные pull request из Azure (HTTP ${response.status}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).`
+          : response.status === 401 || response.status === 403
+            ? `Azure не разрешил доступ к pull request (HTTP ${response.status}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.`
+            : `Не удалось загрузить данные pull request из Azure (HTTP ${response.status}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.`,
       );
     if (!response.body) throw new AppError(502, "Azure PR: пустой ответ");
     const reader = response.body.getReader();
@@ -690,8 +694,8 @@ export class PullRequests {
       (m) => m.enabled && (!monitor || m.id === monitor),
     )) {
       try {
-        if (!m.repository)
-          throw new AppError(400, "Выберите Git-репозиторий проекта");
+        if (!m.repository?.trim())
+          throw new AppError(400, "Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.");
         const credentials = this.credentials(m);
         const identity =
           m.mode === "required"
@@ -709,7 +713,7 @@ export class PullRequests {
             );
           const page = await this.get(
             m,
-            `git/repositories/${enc(m.repository)}/pullrequests?searchCriteria.status=active&$top=100&$skip=${skip}`,
+            `git/repositories/${enc(m.repository.trim())}/pullrequests?searchCriteria.status=active&$top=100&$skip=${skip}`,
             credentials,
           );
           if (!Array.isArray(page.value))

@@ -409,6 +409,10 @@ export class Store {
     const own = this.get<
       { azureUrl: string; azureProject: string } | null | undefined
     >(this.azureContextKey(context), undefined);
+    if ((own as any)?.inheritGlobal) {
+      const { azureUrl, azureProject } = this.rawSettings();
+      return { azureUrl, azureProject };
+    }
     if (own !== undefined) return own;
     const legacy = this.get<string | null>(this.projectAzureKey(context), null);
     return legacy === null

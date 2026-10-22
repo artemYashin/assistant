@@ -74,6 +74,17 @@ test("Azure project bindings follow context and preserve legacy defaults", async
     .set(auth)
     .send({ ...a, inherit: true })
     .expect(200);
-  assert.equal(store.settings(a).azureProject, "ClientProject");
+  assert.equal(store.settings(a).azureProject, "Legacy");
   assert.equal(store.rawSettings().azureProject, "Legacy");
+  const inherited = await request(app).get("/api/context/azure").query(a).set(auth).expect(200);
+  assert.equal(inherited.body.inherit, true);
+  assert.equal(inherited.body.parent.azureProject, "Legacy");
+  const staleSettings = store.settings();
+  await request(app).put("/api/context/azure").set(auth).send({ client: "", project: "", azureUrl: "https://ado.test/tfs/My Collection", azureProject: "Global Project" }).expect(200);
+  assert.equal(store.settings(a).azureUrl, "https://ado.test/tfs/My%20Collection");
+  assert.equal(store.settings(a).azureProject, "Global Project");
+  assert.equal(store.settings(b).azureProject, "ClientProject"); // Existing customer binding is preserved.
+  await request(app).put("/api/settings").set(auth).send(staleSettings).expect(200);
+  assert.equal(store.rawSettings().azureProject, "Global Project");
+  await request(app).put("/api/context/azure").set(auth).send({ client: "", project: "", inherit: true }).expect(400);
 });

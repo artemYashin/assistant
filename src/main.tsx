@@ -2598,32 +2598,8 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <div className="settings-group">
             <h3>Подключение и доступ</h3>
-          <Field
-            label="URL организации или коллекции"
-            hint="Services: https://dev.azure.com/организация. Server: HTTPS-адрес до коллекции, без проекта. Адрес браузерного прокси *.mcas.ms может возвращать страницу входа вместо API."
-          >
-            <input
-              type="url"
-              value={context.client ? settings.azureUrl : form.azureUrl}
-              disabled={!!context.client}
-              onChange={(e) => set("azureUrl", e.target.value)}
-              placeholder="https://devops.company.com/DefaultCollection"
-            />
-          </Field>
+          <p className="muted">URL организации / коллекции и проект Azure настраиваются в меню «Заказчики и проекты» → «Подключение Azure»: глобально или отдельно для выбранного проекта. Здесь задаются PAT, версия API и синхронизация.</p>
           <div className="form-grid">
-            <Field
-              label="Название проекта в Azure DevOps"
-              hint="Для выбранного проекта задаётся в меню «Заказчики и проекты» → «Подключение Azure»."
-            >
-              <input
-                value={
-                  context.client ? settings.azureProject : form.azureProject
-                }
-                disabled={!!context.client}
-                onChange={(e) => set("azureProject", e.target.value)}
-                placeholder="Точное имя проекта"
-              />
-            </Field>
             <Field label="Версия REST API">
               <input
                 value={form.azureVersion}

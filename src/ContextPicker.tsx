@@ -264,9 +264,9 @@ export function ContextPicker({
             )}
             {section === "browse" && (
               <div className="context-manager-section">
-                {context.client ? <ProjectAzureSettings
+                {<ProjectAzureSettings
                   key={JSON.stringify(context)} context={context} onSaved={onSettingsChange}
-                /> : <p className="muted">Выберите заказчика и проект в верхней панели.</p>}
+                />}
               </div>
             )}
             {section === "catalog" && <div className="context-manager-section">
@@ -311,7 +311,7 @@ export function ContextPicker({
               <div className="context-manager-section">
                 <p className="muted">
                   Настройки PR для выбранного проекта. Подключение Azure DevOps
-                  задаётся в настройках приложения.
+                  задаётся здесь, в разделе «Подключение Azure».
                 </p>
                 <ProjectRepository
                   onSaved={onSettingsChange}

@@ -1277,3 +1277,37 @@ for (const selected of [[42], [], [99]]) {
     }
   });
 }
+
+test("PR sync encodes collection, project and repository spaces exactly once", async t => {
+  const { store, service } = fixture(t);
+  for (const collection of ["My Collection", "My%20Collection"]) {
+    store.set("settings", { ...store.rawSettings(), azureUrl: `https://ado.test/tfs/${collection}`, azureProject: "Project One" });
+    service.save({ ...context, repository: " Repo Name ", mode: "all", enabled: true });
+    const urls: string[] = [];
+    t.mock.method(globalThis, "fetch", async (raw: any) => {
+      urls.push(String(raw));
+      const url = new URL(String(raw));
+      assert.equal(url.pathname, "/tfs/My%20Collection/Project%20One/_apis/git/repositories/Repo%20Name/pullrequests");
+      assert.equal(url.searchParams.get("searchCriteria.status"), "active");
+      assert.equal(url.searchParams.get("$top"), "100");
+      assert.equal(url.searchParams.get("$skip"), "0");
+      assert.equal(url.searchParams.get("api-version"), "7.1");
+      assert.ok(!String(raw).includes("%2520"));
+      return Response.json({ value: [] });
+    });
+    await service.sync();
+    assert.equal(urls.length, 1);
+    assert.equal(service.monitors().find(m => m.enabled)?.error, null);
+    t.mock.restoreAll();
+  }
+});
+
+test("missing PR repository is rejected before Azure requests", async t => {
+  const { store, service } = fixture(t);
+  store.db.prepare("UPDATE pr_projects SET repository='   '").run();
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async () => { requests++; return Response.json({}); });
+  await service.sync();
+  assert.equal(requests, 0);
+  assert.match(service.monitors()[0].error || "", /Заказчики и проекты.*Репозиторий/);
+});

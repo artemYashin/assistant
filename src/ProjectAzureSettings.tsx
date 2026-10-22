@@ -2,7 +2,7 @@ import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 
-export function ProjectAzureSettings({
+function AzureConnectionForm({
   context,
   onSaved,
 }: {
@@ -18,6 +18,7 @@ export function ProjectAzureSettings({
   const [message, setMessage] = useState("");
   useEffect(() => {
     let live = true;
+    setLoaded(false); setMessage("");
     api(`/context/azure?${new URLSearchParams(context)}`)
       .then((result) => {
         if (live) {
@@ -50,7 +51,7 @@ export function ProjectAzureSettings({
             inherit,
           });
           setMessage(
-            "Проект Azure DevOps сохранён. Если он изменился, укажите и сохраните репозиторий в разделе «Репозиторий».",
+            "Подключение Azure сохранено. Если оно изменилось, проверьте и сохраните настройки в разделе «Репозиторий».",
           );
           onSaved();
         } catch (error: any) {
@@ -60,31 +61,24 @@ export function ProjectAzureSettings({
         }
       }}
     >
-      <label className="checkbox-row">
+      {!!context.client && <label className="checkbox-row">
         <input
           type="checkbox"
           checked={inherit}
           disabled={!loaded || busy}
           onChange={(event) => setInherit(event.target.checked)}
         />
-        {context.project
-          ? "Использовать настройки заказчика"
-          : "Использовать общие настройки"}
-      </label>
-      {inherit ? (
-        <p className="muted">
-          {parent.azureUrl || "URL не задан"} ·{" "}
-          {parent.azureProject || "Проект не задан"}
-        </p>
-      ) : (
+        Использовать глобальные настройки Azure
+      </label>}
+      <p className="muted">{!context.client ? "Подключение по умолчанию для заказчиков и проектов, использующих глобальные настройки." : inherit ? "Ниже показано глобальное подключение. Снимите галочку, чтобы задать отдельный URL и проект Azure." : "Отдельное подключение для выбранного заказчика или проекта Orbit."}</p>
         <>
           <label>
             URL организации / коллекции
             <input
               type="url"
-              value={url}
+              value={inherit ? parent.azureUrl : url}
               required
-              disabled={!loaded || busy}
+              disabled={!loaded || busy || inherit}
               maxLength={2000}
               onChange={(event) => setUrl(event.target.value)}
             />
@@ -92,8 +86,8 @@ export function ProjectAzureSettings({
           <label>
             Проект в Azure DevOps
             <input
-              value={project}
-              disabled={!loaded || busy}
+              value={inherit ? parent.azureProject : project}
+              disabled={!loaded || busy || inherit}
               required
               maxLength={200}
               placeholder="Например, RACID"
@@ -101,7 +95,6 @@ export function ProjectAzureSettings({
             />
           </label>
         </>
-      )}
       <p className="muted">
         Название Project, содержащего Boards и Repos. PAT задаётся в общих
         настройках приложения.
@@ -113,4 +106,16 @@ export function ProjectAzureSettings({
       </div>
     </form>
   );
+}
+
+export function ProjectAzureSettings({ context, onSaved }: { context: { client: string; project: string }; onSaved: () => void }) {
+  const [global, setGlobal] = useState(!context.client);
+  const scope = global || !context.client ? { client: "", project: "" } : context;
+  return <>
+    <div className="context-manager-nav" aria-label="Область подключения Azure">
+      <button type="button" aria-pressed={global || !context.client} onClick={() => setGlobal(true)}>Глобальные настройки</button>
+      {!!context.client && <button type="button" aria-pressed={!global} onClick={() => setGlobal(false)}>{context.project ? "Выбранный проект" : "Выбранный заказчик"}</button>}
+    </div>
+    <AzureConnectionForm key={JSON.stringify(scope)} context={scope} onSaved={onSaved} />
+  </>;
 }
