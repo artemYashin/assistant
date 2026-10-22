@@ -9582,3 +9582,11 @@ label.repository-pr-toggle { display: flex; flex-direction: row; align-items: fl
 .repository-fetch-field > p { margin: 0; line-height: 1.45; }
 .repository-fetch-field > input { margin-top: 2px; }
 .repository-fetch-field > input:not([type="number"]) { width: 100%; max-width: 100%; }
+
+.pr-ticket-row.is-disabled { background: #f4f5f4; border-style: dashed; }
+.pr-ticket-row.is-disabled > strong { color: #7b817c; }
+.pr-ticket-sources-hint { font-size: 12px; line-height: 1.5; margin: 8px 0 12px; }
+
+.pr-merge-ticket-id { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; padding: 4px 7px; border: 1px solid #b7dac3; border-radius: 6px; background: #e2f3e8; color: #21683f; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pr-merge-current-state { flex-wrap: wrap; }
+.pr-merge-current-state > svg { flex-shrink: 0; }

@@ -18,7 +18,7 @@ export function deleteContext(store: Store, context: Context, confirmation: stri
       for (const table of ["pr_question_batches", "pr_review_attempts"]) store.db.prepare(`DELETE FROM ${table} WHERE review_id=?`).run(id);
     }
     for (const id of monitors) {
-      for (const table of ["pull_requests", "pr_reviews", "pr_completed", "pr_ticket_links"]) store.db.prepare(`DELETE FROM ${table} WHERE monitor=?`).run(id);
+      for (const table of ["pull_requests", "pr_reviews", "pr_completed", "pr_ticket_links", "pr_ticket_exclusions"]) store.db.prepare(`DELETE FROM ${table} WHERE monitor=?`).run(id);
     }
     for (const id of requests) {
       store.db.prepare("DELETE FROM llm_tool_traces WHERE request_id=?").run(id);

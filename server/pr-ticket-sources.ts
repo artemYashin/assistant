@@ -12,3 +12,7 @@ export function cachedPrLinks(
     { ids: [], error: "Связи Azure ещё не загружены. Синхронизируйте PR." },
   );
 }
+
+export function excludedPrTicketIds(store: Store, monitor: string, repo: string, number: number): number[] {
+  return (store.db.prepare("SELECT ticket_id FROM pr_ticket_exclusions WHERE monitor=? AND repo=? AND number=?").all(monitor, repo, number) as { ticket_id: number }[]).map(row => row.ticket_id);
+}

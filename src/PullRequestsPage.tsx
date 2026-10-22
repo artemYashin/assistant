@@ -428,6 +428,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
       {merging && (
         <PrMergeDialog
           pr={merging}
+          statusColors={settings?.statusColors}
           onClose={() => {
             setMerging(null);
             setVersion((v) => v + 1);
@@ -880,6 +881,9 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 <Ticket size={17} aria-hidden="true" />
                 Связанные тикеты · {p.tickets?.length || 0}
               </summary>
+              <p className="muted pr-ticket-sources-hint">
+                Тикеты собираются по #номерам в названии и описании PR, из связей PR в Azure и добавленных вручную локальных связей. Сообщения коммитов и связи между тикетами не учитываются. Локальное отключение исключает тикет из merge и ревью, не меняя связь в Azure.
+              </p>
               {!readOnly && (
                 <PrTicketLink
                   pr={p}
@@ -895,7 +899,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               )}
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
-                  <div className="pr-ticket-row" key={t.id}>
+                  <div className={`pr-ticket-row${t.disabled ? " is-disabled" : ""}`} key={t.id}>
                     <button
                       type="button"
                       className="chat-ticket-link pr-ticket-jump"
@@ -918,6 +922,15 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
+                    {t.disabled && <span className="muted">Связь отключена локально · не используется в merge и ревью</span>}
+                    {!readOnly && <button type="button" className="text-button" disabled={busy}
+                      title="Меняет только локальное использование связи. Связь в Azure остаётся прежней."
+                      onClick={() => void run(() => api("/pr/tickets", "POST", {
+                        monitor: p.monitor, repo: p.repo, number: p.number, ticketId: t.id,
+                        source: p.ticket_source, action: t.disabled ? "enable" : "disable",
+                      }))}>
+                      {t.disabled ? "Включить связь локально" : "Отключить связь локально"}
+                    </button>}
                     {!readOnly && t.manual && (
                       <button
                         type="button"

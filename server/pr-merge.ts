@@ -1,5 +1,5 @@
 import { PrCi } from "./pr-ci.js";
-import { prLinksKey } from "./pr-ticket-sources.js";
+import { prLinksKey, excludedPrTicketIds } from "./pr-ticket-sources.js";
 import { randomUUID } from "node:crypto";
 import { Store, AppError } from "./store.js";
 import { azureBase, requestJson } from "./http.js";
@@ -139,7 +139,7 @@ export class PrMerge {
         ).map((r) => r.ticket_id),
         ...links.value.map((v: any) => Number(v.id)),
       ]),
-    ].sort((a, b) => a - b);
+    ].filter(id => !excludedPrTicketIds(this.store, key.monitor, key.repo, key.number).includes(id)).sort((a, b) => a - b);
     if (
       ids.length > 100 ||
       ids.some((id) => !Number.isSafeInteger(id) || id < 1)

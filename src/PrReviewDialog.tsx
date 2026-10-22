@@ -36,8 +36,8 @@ export function PrReviewDialog({
   const [codeDepth, setCodeDepth] = useState("below_medium");
   const [maxTokens, setMaxTokens] = useState(defaultMaxTokens);
   const [readTickets, setReadTickets] = useState(true);
-  const [tickets] = useState<{ id: number; title?: string }[]>(() => pr.tickets || []);
-  const [ticketIds, setTicketIds] = useState<number[]>(() => (pr.tickets || []).map((ticket: { id: number }) => ticket.id));
+  const [tickets] = useState<{ id: number; title?: string }[]>(() => (pr.tickets || []).filter((ticket: { disabled?: boolean }) => !ticket.disabled));
+  const [ticketIds, setTicketIds] = useState<number[]>(() => (pr.tickets || []).filter((ticket: { disabled?: boolean }) => !ticket.disabled).map((ticket: { id: number }) => ticket.id));
   const [reviewerComment, setReviewerComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

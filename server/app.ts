@@ -1294,7 +1294,7 @@ export function createApp(
         number: z.number().int().positive(),
         ticketId: z.number().int().positive(),
         source: z.string().min(1).max(2000),
-        action: z.enum(["link", "unlink"]),
+        action: z.enum(["link", "unlink", "disable", "enable"]),
       })
       .strict()
       .parse(req.body);

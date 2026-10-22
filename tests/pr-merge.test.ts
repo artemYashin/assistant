@@ -314,3 +314,13 @@ test("merge rechecks CI and refuses running builds even with policy bypass", asy
   await assert.rejects(f.service.execute(plan.id, [], "squash", { enabled: true, reason: "Test" }), /CI ещё не завершён/);
   assert.equal(f.writes.length, 0);
 });
+
+test("merge omits locally disabled Azure and textual links", async t => {
+  const { store, service, key } = fixture(t);
+  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(key.monitor, key.repo, key.number, 43);
+  assert.deepEqual((await service.linkedTickets(key)).ids, [42]);
+  const plan = await service.prepare(key);
+  assert.deepEqual(plan.tickets.map(t => t.id), [42]);
+  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(key.monitor, key.repo, key.number, 42);
+  assert.deepEqual((await service.linkedTickets(key)).ids, []);
+});

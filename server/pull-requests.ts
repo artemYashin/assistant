@@ -3,7 +3,7 @@ import { UsageLedger } from "./usage.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { PrSourcePreparation } from "./pr-source.js";
 import { z } from "zod";
-import { cachedPrLinks, prLinksKey } from "./pr-ticket-sources.js";
+import { cachedPrLinks, prLinksKey, excludedPrTicketIds } from "./pr-ticket-sources.js";
 import { ignoredReviewPath, reviewFileSettings } from "./review-files.js";
 import { policyChecks } from "./pr-health.js";
 import {
@@ -277,6 +277,7 @@ export class PullRequests {
         for (const table of [
           "pr_reviews",
           "pr_ticket_links",
+          "pr_ticket_exclusions",
           "pull_requests",
           "pr_completed",
         ])
@@ -415,6 +416,7 @@ export class PullRequests {
           row.repo,
           row.number,
         );
+        const excludedIds = excludedPrTicketIds(this.store, row.monitor, row.repo, row.number);
         const descriptionIds = prTicketIds(row.description);
         const titleIds = prTicketIds(row.title || "");
         const azureLinks = cachedPrLinks(
@@ -452,6 +454,7 @@ export class PullRequests {
               ...titleIds,
               ...azureLinks.ids,
               ...manualIds,
+              ...excludedIds,
             ]),
           ].map((id) => {
             const ticket = this.store.db
@@ -466,6 +469,7 @@ export class PullRequests {
               .get(source, id);
             return {
               ...(ticket || { id, unavailable: true, removed }),
+              disabled: excludedIds.includes(id),
               manual: manualIds.includes(id),
               fromDescription: descriptionIds.includes(id),
               fromTitle: titleIds.includes(id),
@@ -490,7 +494,7 @@ export class PullRequests {
     number: number;
     ticketId: number;
     source: string;
-    action: "link" | "unlink";
+    action: "link" | "unlink" | "disable" | "enable";
   }) {
     const guard = () => {
       const m = this.monitors().find((m) => m.id === key.monitor);
@@ -515,7 +519,12 @@ export class PullRequests {
         );
     };
     guard();
-    if (key.action === "unlink") {
+    if (key.action === "disable" || key.action === "enable") {
+      this.store.db.prepare(key.action === "disable"
+        ? "INSERT OR IGNORE INTO pr_ticket_exclusions VALUES (?,?,?,?)"
+        : "DELETE FROM pr_ticket_exclusions WHERE monitor=? AND repo=? AND number=? AND ticket_id=?")
+        .run(key.monitor, key.repo, key.number, key.ticketId);
+    } else if (key.action === "unlink") {
       this.store.db
         .prepare(
           "DELETE FROM pr_ticket_links WHERE monitor=? AND repo=? AND number=? AND ticket_id=?",
@@ -572,6 +581,7 @@ export class PullRequests {
         )
         .all(monitor.id) as any[];
       for (const row of rows) {
+        if (excludedPrTicketIds(this.store, monitor.id, row.repo, row.number).includes(id)) continue;
         if (
           !prTicketIds(
             (row.title || "") + "\n" + (row.description || ""),
@@ -732,11 +742,13 @@ export class PullRequests {
           );
           if (page.value.length < 100) break;
         }
-        // Azure list responses truncate descriptions to 400 characters.
+        // List descriptions can be truncated. A trailing #ID may itself be cut;
+        // resolve it against the full PR even below the usual 400-character boundary.
         for (const p of found) {
           if (
-            typeof p.description === "string" &&
-            p.description.length >= 400
+            (typeof p.description === "string" && p.description.length >= 400) ||
+            /#[0-9]+(?:\.{3}|…)?\s*$/.test(p.description || "") ||
+            /#[0-9]+(?:\.{3}|…)?\s*$/.test(p.title || "")
           ) {
             const detail = await this.get(
               m,
@@ -746,6 +758,7 @@ export class PullRequests {
             if (detail.pullRequestId !== p.pullRequestId)
               throw new AppError(502, "Azure вернул неверное описание PR");
             p.description = detail.description || "";
+            p.title = detail.title || p.title;
           }
         }
         for (const p of found) {
@@ -877,7 +890,7 @@ export class PullRequests {
             found.flatMap((p) => [
               ...prTicketIds((p.title || "") + "\n" + (p.description || "")),
               ...p.ticketLinks.ids,
-            ]),
+            ].filter(id => !excludedPrTicketIds(this.store, m.id, p.repository.id, p.pullRequestId).includes(id))),
           );
         } catch (e) {
           ticketError =
@@ -1560,6 +1573,7 @@ export class PullRequests {
         );
         if (!Array.isArray(links.value))
           throw new AppError(502, "Не удалось прочитать связи тикетов PR");
+        const excludedIds = excludedPrTicketIds(this.store, job.monitor, job.repo, job.number);
         const linkedIds = [
           ...new Set([
             ...prTicketIds(
@@ -1569,7 +1583,7 @@ export class PullRequests {
             ...links.value.map((v: any) => Number(v.id)),
           ]),
         ];
-        const ids = options.ticketIds === undefined ? linkedIds : [...new Set(options.ticketIds)];
+        const ids = (options.ticketIds === undefined ? linkedIds : [...new Set(options.ticketIds)]).filter(id => !excludedIds.includes(id));
         if (ids.some(id => !linkedIds.includes(id)))
           throw new AppError(409, "Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.");
         if (ids.length > 20)

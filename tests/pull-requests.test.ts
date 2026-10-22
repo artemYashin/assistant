@@ -1367,3 +1367,54 @@ test("explicit reviewer filters OR across required/optional, persist and replace
   assert.equal(service.list(context).length, 7);
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n, 7);
 });
+
+test("a short list description cut inside six-digit ID is resolved against full PR", async t => {
+  const { service } = fixture(t);
+  const full = { ...pr(), title: "Fix", description: "See #123456" };
+  mock(t, [{ ...full, description: "See #12345" }], url => {
+    if (/\/pullrequests\/1$/.test(url.pathname)) return full;
+    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+  });
+  await service.sync();
+  assert.equal(service.monitors()[0].error, null);
+  assert.deepEqual((service.list(context)[0] as any).tickets.map((t: any) => t.id), [123456]);
+});
+
+test("local exclusion overrides Azure/title/description, survives sync and can be restored", async t => {
+  const { service, store } = fixture(t);
+  mock(t, [{ ...pr(), title: "Fix #123456", description: "Requirement #123456" }], (url, init) => {
+    assert.notEqual(init.method, "PATCH");
+    if (url.pathname.endsWith("/workitems")) return { value: [{ id: "123456" }] };
+    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+  });
+  await service.sync();
+  const row: any = service.list(context)[0];
+  const key = { monitor: row.monitor, repo: row.repo, number: row.number, ticketId: 123456, source: store.source() };
+  await service.linkTicket({ ...key, action: "disable" });
+  await service.sync();
+  const ticket = (service.list(context)[0] as any).tickets[0];
+  assert.equal(ticket.disabled, true);
+  assert.equal(ticket.fromAzure, true);
+  assert.equal(ticket.fromTitle, true);
+  assert.equal(ticket.fromDescription, true);
+  assert.equal(service.linkedToTicket(123456, store.source()).length, 0);
+  await service.linkTicket({ ...key, action: "enable" });
+  assert.equal((service.list(context)[0] as any).tickets[0].disabled, false);
+  assert.equal(service.linkedToTicket(123456, store.source()).length, 1);
+});
+
+test("review skips disabled ticket even when selected before disabling", async t => {
+  const { store, service, calls } = fixture(t);
+  mock(t, [pr()], url => {
+    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) return { value: [{ id: "42" }] };
+    if (/\/workitems\/42/.test(url.pathname)) throw Error("Disabled ticket must not be read");
+    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+  });
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  service.requestReview(monitor, "repo", 1, { readCode: false, readTickets: true, ticketIds: [42] });
+  await service.linkTicket({ monitor, repo: "repo", number: 1, ticketId: 42, source: store.source(), action: "disable" });
+  await service.reviewNext();
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0][3].ticketEvidence?.tickets || [], []);
+});

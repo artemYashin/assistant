@@ -1,3 +1,4 @@
+import { StatusBadge } from "./TicketControls.js";
 import { useEffect, useRef, useState } from "react";
 import { GitMerge, LoaderCircle, X, Ticket, ArrowRight, ShieldAlert } from "lucide-react";
 import { api } from "./api.js";
@@ -12,9 +13,11 @@ type Plan = {
 };
 export function PrMergeDialog({
   pr,
+  statusColors,
   onClose,
 }: {
   pr: any;
+  statusColors?: Record<string, string>;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -298,13 +301,14 @@ export function PrMergeDialog({
                   {plan.tickets.map((t) => (
                     <li className="pr-merge-ticket" key={t.id}>
                       <div className="pr-merge-ticket-heading">
-                        <span className="badge">#{t.id}</span>
+                        <span className="pr-merge-ticket-id"><Ticket size={14} aria-hidden="true" />#{t.id}</span>
                         <strong>{t.title || "Тикет"}</strong>
                       </div>
                       <p className="pr-merge-current-state">
                         <span>Сейчас:</span>
-                        <span className="badge">{t.state}</span>
+                        <StatusBadge state={t.state} colors={statusColors} />
                         <ArrowRight size={15} aria-hidden="true" />
+                        {states[t.id] ? <StatusBadge state={states[t.id]} colors={statusColors} /> : <span className="muted">Без изменений</span>}
                       </p>
                       <SingleSelect
                         label={`Новый статус #${t.id}`}
