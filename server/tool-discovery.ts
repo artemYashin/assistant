@@ -17,6 +17,7 @@ const catalog: Record<string, string> = {
   code_read_file: "Read focused code ranges around search hits; returns totalLines. Full-file reads opt-in when needed; no edits.",
   get_ticket_links_batch: "Read links/images of multiple cached tickets in one call; per-ticket pagination, no Azure.",
   get_cached_ticket_content_batch: "Read multiple cached ticket bodies in one call; per-ticket pagination, no Azure.",
+  read_image: "Read actual image pixels from a URL only on explicit user request; resolve references from conversation/ticket image links. Native vision result, max 10 MB.",
   get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",
   cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
   sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",

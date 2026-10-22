@@ -1,3 +1,4 @@
+import { readImageUrl } from "./image-reader.js";
 import { ChatFiles, CHAT_FILE_LIMIT } from "./chat-files.js";
 import { ticketExportContextSchema } from "./ticket-export-context.js";
 import { reviewerFilterSchema } from "./pr-reviewer-filter.js";
@@ -599,6 +600,13 @@ export function createApp(
     if(!req.file) throw new AppError(400,"Выберите файл.");
     const name=z.string().min(1).max(240).parse(req.body.name);
     res.json(chatFiles.add(context,sessionId,name,req.file.buffer));
+  });
+  app.post("/api/conversation/image", async (req,res) => {
+    const context=contextSchema.parse(req.body);
+    const {sessionId,url}=z.object({sessionId:z.string().uuid(),url:z.string().min(1).max(8192)}).parse(req.body);
+    store.chatSession(context,sessionId);
+    const image=await readImageUrl(store,connectors,pullRequests,context,sessionId,url);
+    res.json(chatFiles.add(context,sessionId,image.name,image.body));
   });
   app.get("/api/conversation/files/:id", (req,res) => {
     const context=contextSchema.parse(req.query), sessionId=z.string().uuid().parse(req.query.sessionId);

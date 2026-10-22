@@ -33,10 +33,10 @@
 
 developer-dialog action-confirm-dialog chat-file-error-dialog
 
-Источник: src/ChatFiles.tsx:266.
+Источник: src/ChatFiles.tsx:267.
 
 ### Сообщение
 
 Не удалось добавить вложения
 
-Источник: src/ChatFiles.tsx:267.
+Источник: src/ChatFiles.tsx:268.

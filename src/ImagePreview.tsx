@@ -1,3 +1,4 @@
+import { ImageActions } from "./ImageActions.js";
 import { zoomAtPoint } from "./image-zoom.js";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -29,6 +30,7 @@ export function ImagePreview({
   }, [src]);
   return (
     <>
+      <span className={children ? "image-preview-compact" : "image-preview-shell"}>
       <a
         href={src}
         className={`image-preview-trigger ${className}`}
@@ -77,6 +79,8 @@ export function ImagePreview({
             </span>
           ))}
       </a>
+      {!children && <ImageActions src={src} onAttach={() => setOpen(false)}/>}
+      </span>
       {open &&
         createPortal(
           <ImageViewer src={src} alt={alt} onClose={() => setOpen(false)} />,
@@ -206,6 +210,7 @@ function ImageViewer({
       <header className="image-viewer-toolbar">
         <strong title={alt}>{alt}</strong>
         <div className="image-viewer-controls">
+          <ImageActions src={src} onAttach={onClose}/>
           <button
             type="button"
             className="icon-button"

@@ -9929,3 +9929,13 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .chat-file-drop-overlay small { font-size: 11px; }
 .chat-file-error-dialog .section-heading h2 { display: flex; align-items: center; gap: 8px; }
 .chat-file-error-dialog .section-heading h2 svg { flex-shrink: 0; color: #b57b15; }
+
+.image-preview-shell { position:relative; display:block; width:fit-content; max-width:100%; vertical-align:top; }
+.image-preview-compact { display:contents; }
+.image-actions { display:inline-flex; align-items:center; gap:4px; }
+.image-preview-shell > .image-actions { position:absolute; top:10px; right:6px; z-index:2; }
+.image-actions > button { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; padding:4px; border:1px solid #bdcfc5; border-radius:6px; background:#f6fbf8f5; color:#337351; box-shadow:0 1px 5px #142a2520; }
+.image-actions > button:hover { background:#dcefe3; border-color:#79a88c; }
+.image-action-error { max-width:220px; background:#fff0ed; color:#a23c32; padding:4px; font-size:11px; }
+
+.chat-image-loading { display:block; padding:4px 8px; color:#337351; font-size:11px; }

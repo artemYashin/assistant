@@ -9,34 +9,34 @@
 
 Открыть изображение · масштабирование
 
-Источник: src/ImagePreview.tsx:32.
+Источник: src/ImagePreview.tsx:34.
 
 ### Элемент
 
 Уменьшить · Уменьшить изображение
 
-Источник: src/ImagePreview.tsx:209.
+Источник: src/ImagePreview.tsx:214.
 
 ### Элемент
 
 Увеличить · Увеличить изображение
 
-Источник: src/ImagePreview.tsx:222.
+Источник: src/ImagePreview.tsx:227.
 
 ### Элемент
 
 Вписать в окно · Вписать изображение в окно
 
-Источник: src/ImagePreview.tsx:232.
+Источник: src/ImagePreview.tsx:237.
 
 ### Элемент
 
 Исходный размер · 1:1
 
-Источник: src/ImagePreview.tsx:242.
+Источник: src/ImagePreview.tsx:247.
 
 ### Элемент
 
 Закрыть просмотр изображения · Закрыть · Esc
 
-Источник: src/ImagePreview.tsx:254.
+Источник: src/ImagePreview.tsx:259.

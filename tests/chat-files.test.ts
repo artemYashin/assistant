@@ -176,6 +176,15 @@ test("upload API validates files and binds downloads and conversation requests t
     .attach("file", Buffer.from("key,value\n1,complete"), "data.csv")
     .expect(200);
   assert.equal(upload.body.name, "данные.csv");
+  const image = new ChatFiles(store).add(context,chat.id,"screen.png",png);
+  const attached = await request(app).post("/api/conversation/image").set(auth)
+    .send({...context,sessionId:chat.id,url:"/api/conversation/files/"+image.id}).expect(200);
+  assert.notEqual(attached.body.id,image.id);
+  assert.equal(attached.body.mime,"image/png");
+  assert.deepEqual(new ChatFiles(store).read(context,chat.id,[attached.body.id])[0].bytes,png);
+  await request(app).post("/api/conversation/image").set(auth)
+    .send({...context,sessionId:store.createChat(context).id,url:"/api/conversation/files/"+image.id}).expect(404);
+
   await request(app)
     .post("/api/conversation/files")
     .set(auth)

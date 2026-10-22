@@ -30,7 +30,7 @@ export function useChatFiles(scope: string) {
   };
   return {
     files,
-    add(selected: File[]) {
+    add(selected: File[], uploadedIds: string[] = []) {
       const next = [...(drafts.current.get(scope) || [])];
       for (const file of selected) {
         if (
@@ -52,12 +52,13 @@ export function useChatFiles(scope: string) {
         throw new Error(
           "Можно прикрепить до 6 файлов общим размером до 30 МБ.",
         );
-      for (const file of selected) {
+      for (const [index, file] of selected.entries()) {
         const image = /\.(png|jpe?g|gif|webp)$/i.test(file.name);
         const preview = image ? URL.createObjectURL(file) : undefined;
         if (preview) urls.current.add(preview);
         next.push({
           localId: crypto.randomUUID(),
+          uploadedId: uploadedIds[index],
           file,
           mime: image
             ? "image/" +
