@@ -1,5 +1,5 @@
 import { MemoryMarkdown } from "./MemoryMarkdown.js";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { api } from "./api.js";
 
@@ -30,6 +30,8 @@ export function MemoryBody({
   proposal = false,
   onEditingChange,
   actions,
+  editing: controlledEditing,
+  hideActions = false,
 }: {
   id: string;
   body: string;
@@ -38,18 +40,24 @@ export function MemoryBody({
   onSaved: () => void;
   proposal?: boolean;
   actions?: import("react").ReactNode;
+  editing?: boolean;
+  hideActions?: boolean;
   onEditingChange?: (editing: boolean) => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [internalEditing, setEditing] = useState(false);
+  const editing = controlledEditing ?? internalEditing;
   const [draft, setDraft] = useState(body);
   const [short, setShort] = useState(summary);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useLayoutEffect(() => {
+    if (controlledEditing) { setDraft(body); setShort(summary); setError(""); }
+  }, [controlledEditing, body, summary]);
   if (!editing)
     return (
       <>
         <MemoryProposalContent summary={summary} body={body} collapsible />
-        <div className="memory-edit-actions">
+        {!hideActions && <div className="memory-edit-actions">
         <button
           className="secondary"
           disabled={disabled}
@@ -64,7 +72,7 @@ export function MemoryBody({
           <Pencil size={15} /> Редактировать
         </button>
         {actions}
-        </div>
+        </div>}
       </>
     );
   return (
