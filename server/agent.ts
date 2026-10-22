@@ -200,13 +200,13 @@ export function makeTools(
       handler: async args => readCachedTicket(store, args),
     }),
     defineTool("search_ticket_content", {
-      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria, repro steps and local notes by literal substring. Notes are searchable even without a body cache; section=notes identifies their excerpts. Read full notes with list_tickets fields=[\"notes\"]. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Check coverage; paginate with afterId. Cache is not live data.",
+      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria, repro steps and local notes by literal substring. Notes are searchable even without a body cache; section=notes identifies their excerpts. Read full notes with list_tickets fields=[\"notes\"]. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Optional sortBy/sortDirection sort by all summary fields before pagination, like list_tickets. Use only when the requested order matters. Check coverage; paginate with afterId=nextAfterId and unchanged sort/filter parameters. Cache is not live data.",
       parameters: contentSearchSchema,
       handler: async args => searchTicketContent(store, args),
     }),
     defineTool("list_tickets", {
       description:
-        "List LOCAL tickets including retained trash (deleted=true); lifecycle filters active/deleted/all. For the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and ID pagination. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns only id/title. Use fields to request only required extras (including localUrl for navigation). Filters do not require returning their fields. Dates/notes/assignees/tags are opt-in; summary never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
+        "List LOCAL tickets including retained trash (deleted=true); lifecycle filters active/deleted/all. For the configured Azure connection, with local priority/tags/notes, exact type/state/priority/tag filters, literal title or Azure-tag substring search (not semantic search), read-only azureTags and exact azureTag filter, optional exact ids (up to 50), and pagination. Optional sortBy/sortDirection support all summary fields: ID, title, type, state, assigned (Azure), priority, tags, azureTags, notes, localDevelopers, created_at, changed_at, added_at, synced_at, localUrl (ID order). Default id asc. Use sorting when order matters (latest changes: changed_at desc), not to repeat the same search in many orders. Collections sort alphabetically by their sorted values; missing values last, ties by ID. Continue nextAfterId with unchanged sort and filters. For abstract requests, derive distinctive keywords and wording variants from the user context. Search variants separately, then refine using relevant returned summaries and observed feature codes. For weak results broaden terms; for noisy results narrow them. Use up to six distinct formulations, never repeat identical searches; keyword matches alone do not prove feature links. Preserve tool budget for pagination and requested actions; preserve explicit filters/exclusions, deduplicate IDs, and do not invent codes or fetch Azure/full content. Use ids to revalidate an entire historical selection in ONE call instead of per-ticket reads. Bug is a type, not usually a state. Continue with nextAfterId and identical filters until hasMore=false. total is the full filtered count. Default detail=summary returns only id/title. Use fields to request only required extras (including localUrl for navigation). Filters do not require returning their fields. Dates/notes/assignees/tags are opt-in; summary never reads Azure. detail=full is opt-in for explicit user requests for deep analysis/full content; requires exact ids and reads descriptions, acceptance criteria, repro steps and comments. Full mode search checks full text, not just titles. Continue using nextAfterId and nextContentOffset with identical ids/filters.",
       parameters: ticketListSchema,
       handler: async (args) => listLocalTickets(store, args),
     }),
@@ -475,6 +475,7 @@ export class Agent {
     const startedAt = Date.now();
     const elapsed = () => Math.max(0, Date.now() - startedAt);
     const cards: string[] = [];
+    const openedTicketLinks = new Map<number, { title: string; localUrl: string }>();
     let partialMessageId = "", partialText = "";
     let timeline: ChatTimelineItem[] = [];
     const emit = (event: ChatProgress) => { if (!review) { timeline = updateChatTimeline(timeline, event); try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ } } };
@@ -871,7 +872,7 @@ export class Agent {
         proposeAzure({ ids: [singleTarget] });
         this.store.say("assistant", azureQuestion, context, [], conversationId, elapsed(), id);
         status = "completed";
-      if (!review && attachedTicket && conversationId) this.store.markChatAttachmentSent(context, conversationId);
+        if (!review && attachedTicket && conversationId) this.store.markChatAttachmentSent(context, conversationId);
         return { body: azureQuestion, requestId: id, cards, durationMs: elapsed() };
       }
 
@@ -928,7 +929,12 @@ export class Agent {
                         return { id, title: row?.title || `Тикет #${id}` };
                       });
                       emit({ stage: "show_tickets", tickets, source });
-                      return { requested: true, ids: tickets.map(t => t.id), note: "Detail viewer requested. The UI loads selected ticket content separately; do not claim content has loaded or repeat it in chat." };
+                      const links = tickets.map(ticket => {
+                        const localUrl = `/tickets?${new URLSearchParams({ id: String(ticket.id), source })}`;
+                        openedTicketLinks.set(ticket.id, { title: ticket.title, localUrl });
+                        return { ...ticket, localUrl };
+                      });
+                      return { tickets: links, requested: true, ids: tickets.map(t => t.id), note: "Detail viewer requested. The UI loads selected ticket content separately; Briefly tell the user which tickets you are showing and include their exact localUrl as Markdown links so they can reopen them. Do not claim content has loaded or repeat ticket bodies in chat." };
                     },
                   }),
                   defineTool("get_ticket_states", {
@@ -1339,9 +1345,11 @@ export class Agent {
         );
       };
       const responseBody = await Promise.race([work(), stopped]);
-      const body = azureQuestion && !responseBody.includes(azureQuestion)
+      let body = azureQuestion && !responseBody.includes(azureQuestion)
         ? `${responseBody}\n\n---\n\n${azureQuestion}`
         : responseBody;
+      const missingLinks = [...openedTicketLinks].filter(([, ticket]) => !body.includes(ticket.localUrl));
+      if (missingLinks.length) body += "\n\nПоказываю тикеты: " + missingLinks.map(([ticketId, ticket]) => `[#${ticketId} — ${ticket.title.replace(/[\[\]\\\r\n]/g, " ")}](${ticket.localUrl})`).join(" · ");
       status = "completed";
       if (!review && attachedTicket && conversationId) this.store.markChatAttachmentSent(context, conversationId);
       if (!review) timeline = updateChatTimeline(timeline, { stage: "text", messageId: partialMessageId || "final", text: body, replace: true });

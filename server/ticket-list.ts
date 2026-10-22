@@ -1,3 +1,4 @@
+import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { LocalDevelopers } from "./local-developers.js";
@@ -5,6 +6,7 @@ import { z } from "zod";
 import { AppError, Store } from "./store.js";
 
 export const ticketListSchema = z.object({
+  ...ticketSortSchema,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all").describe("Include retained local trash by default; deleted=true marks trash results."),
   fields: z.array(z.enum(["type", "state", "assigned", "priority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(13).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
@@ -16,12 +18,13 @@ export const ticketListSchema = z.object({
   priority: z.number().int().min(1).max(20).optional(),
   azureTag: z.string().trim().max(400).optional(),
   tag: z.string().trim().max(60).optional(),
-  afterId: z.number().int().nonnegative().default(0),
+  afterId: z.number().int().nonnegative().default(0).describe("Pagination cursor: use nextAfterId from the previous response with the same sort/filter settings; 0 starts a new search."),
   limit: z.number().int().min(1).max(100).default(100),
 });
 
 export function listLocalTickets(store: Store, input: unknown) {
   const {
+    sortBy, sortDirection,
     lifecycle,
     detail,
     fields,
@@ -85,11 +88,14 @@ export function listLocalTickets(store: Store, input: unknown) {
   const { total } = store.db
     .prepare(`${localTicketScope()} SELECT COUNT(*) AS total FROM local_tickets WHERE ${where}`)
     .get(...params) as { total: number };
-  const rows = store.db
-    .prepare(
-      `${localTicketScope()} SELECT id, title, type, state, assigned, changed_at, synced_at, deleted FROM local_tickets WHERE ${where} AND id > ? ORDER BY id LIMIT ?`,
-    )
-    .all(...params, afterId, limit + 1) as Record<string, any>[];
+  const sorted = sortBy !== "id" || sortDirection !== "asc";
+  const rows = sorted ? store.db.prepare(`${localTicketScope()}, ordered AS (
+    SELECT t.*,row_number() OVER (ORDER BY ${ticketOrder(sortBy, sortDirection)}) AS position FROM local_tickets t
+  ) SELECT * FROM ordered AS local_tickets WHERE ${where}
+    AND position > coalesce((SELECT position FROM ordered WHERE source=? AND id=?),0) ORDER BY position LIMIT ?`)
+    .all(...params, store.source(), afterId, limit + 1) as Record<string, any>[]
+    : store.db.prepare(`${localTicketScope()} SELECT * FROM local_tickets WHERE ${where} AND id>? ORDER BY id LIMIT ?`)
+      .all(...params, afterId, limit + 1) as Record<string, any>[];
   const tickets: Record<string, any>[] = [];
   let size = 0;
   for (const row of rows.slice(0, limit)) {
@@ -124,6 +130,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const hasMore = rows.length > tickets.length;
   return {
     scope: "local",
+    sortBy, sortDirection,
     filters: { lifecycle, ids, search, type, state, priority, tag, azureTag },
     total,
     tickets,

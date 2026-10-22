@@ -21,12 +21,12 @@ const catalog: Record<string, string> = {
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
   sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
-  show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; no bodies in model context.",
+  show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; returns reopen links, no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
-  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts, no Azure.",
+  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts; optional sorting by summary fields, no Azure.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
-    "Search/page local summaries; filters or exact IDs; full detail requires consent.",
+    "Search/page local summaries; filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
   get_ticket: "Read one ticket by ID; local summary by default.",
   get_local_ticket_metadata:
     "Read local notes, tags and priority by ticket ID.",

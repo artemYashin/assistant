@@ -1254,3 +1254,20 @@ test("review result usage sums continuations, survives trace cleanup and handles
   ledger.record(chat, "chat", { inputTokens: 999, outputTokens: 999 });
   assert.equal(ledger.reviewUsage("missing", chat).totalTokens, null);
 });
+
+test("opening ticket details preserves reopen links in the assistant response and history", async t => {
+  const store = fixture(t), events: any[] = [];
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(store.source(), 42, "Example", "Active", "Dev", "Bug", "url", null, "now");
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const tool = config.tools.find((tool: any) => tool.name === "show_ticket_details");
+    const result = await tool.handler({ ids: [42, 43] }, {});
+    assert.equal(result.tickets.length, 2);
+    return { data: { content: "Готово." } };
+  });
+  const result = await agent.chat("Открой деталки 42 и 43", context, false, undefined, undefined, undefined, event => events.push(event));
+  assert.match(result.body, /\[#42 — Example\]\(\/tickets\?id=42&source=/);
+  assert.match(result.body, /\[#43/);
+  assert.ok(events.some(event => event.stage === "show_tickets"));
+  const saved = store.db.prepare("SELECT body FROM conversations WHERE role='assistant' ORDER BY rowid DESC LIMIT 1").get() as any;
+  assert.equal(saved.body, result.body);
+});
