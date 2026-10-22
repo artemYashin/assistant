@@ -1,3 +1,5 @@
+import { ChatMessageContext } from "./ChatMessageContext.js";
+import { messageContextBadges } from "../server/chat-message-context.js";
 import { ConfirmButton } from "./ConfirmButton.js";
 import { FieldDictation } from "./FieldDictation.js";
 import { Fragment, useCallback } from "react";
@@ -2901,14 +2903,14 @@ function Assistant({
   const [sessionId, setSessionId] = useState("");
   const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
-  const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string; target_memory_id?: string } | null>(null);
+  const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string; summary?: string; target_memory_id?: string } | null>(null);
   useEffect(() => { setMemoryProposalAttachment(null); }, [context.client, context.project, sessionId]);
   useEffect(() => {
     const handle = (event: Event) => {
       const proposal = (event as CustomEvent).detail;
       if (!proposal?.id || typeof proposal.body !== "string") return;
       if ((proposal.scope !== "general" && proposal.client !== context.client) || (["project", "project_review"].includes(proposal.scope) && proposal.project !== context.project)) return;
-      setMemoryProposalAttachment({ id: proposal.id, body: proposal.body, target_memory_id: proposal.target_memory_id });
+      setMemoryProposalAttachment({ id: proposal.id, body: proposal.body, summary: proposal.summary, target_memory_id: proposal.target_memory_id });
       onExpand();
     };
     window.addEventListener("orbit:refine-memory", handle);
@@ -3188,6 +3190,8 @@ function Assistant({
     e?.preventDefault();
     const text = voiceText ?? prompt;
     const sentMemoryProposal = memoryProposalAttachment;
+    const sentViewedTicket = currentViewedTicket();
+    const sentContext = messageContextBadges({ analysis: attachment, proposal: sentMemoryProposal, viewed: sentViewedTicket });
     if (!text.trim() || working || clearing || !sessionId || (!voiceText && shortcutBusy)) return;
     const captured = key;
     const generation = historyGeneration.current;
@@ -3200,14 +3204,14 @@ function Assistant({
     if (!voiceText) setPrompt("");
     if (!history.length)
       setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
-    setHistory((h) => [...h, { role: "user", body: text, id: Date.now() }]);
+    setHistory((h) => [...h, { role: "user", body: text, id: Date.now(), message_context: sentContext }]);
     try {
       const r = await apiProgress<ChatProgress>("/conversation", {
         prompt: text,
         model: chatModel,
         context,
         sessionId,
-        viewedTicket: currentViewedTicket(),
+        viewedTicket: sentViewedTicket,
         repositoryBranch: currentRepositoryBranch(context),
         memoryProposalId: sentMemoryProposal?.id,
         selectedTickets: selectedTickets.map(({ id, source }) => ({
@@ -3445,6 +3449,7 @@ function Assistant({
                 <Sparkles size={13} /> Orbit
               </span>
             )}
+            {m.role === "user" && <ChatMessageContext badges={m.message_context} />}
             {!m.timeline?.length && <ChatToolHistory tools={m.tools} />}
             {m.role === "error" ? (
               <>{m.timeline?.length > 0 && <ChatTimeline items={m.timeline} azureSource={azureSource} />}<p>{m.body}</p></>

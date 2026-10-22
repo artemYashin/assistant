@@ -1,3 +1,4 @@
+import type { ChatMessageContext } from "./chat-message-context.js";
 import { createHash } from "node:crypto";
 import { memorySummarySchema, legacyMemorySummary } from "./memory-summary.js";
 import { syncScheduleSchema } from "./sync-schedule.js";
@@ -319,6 +320,8 @@ export class Store {
     }
     if (!(this.db.prepare("PRAGMA table_info(chat_sessions)").all() as any[]).some(c => c.name === "attachment_sent"))
       this.db.exec("ALTER TABLE chat_sessions ADD COLUMN attachment_sent INTEGER NOT NULL DEFAULT 0");
+    if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(c => c.name === "message_context"))
+      this.db.exec("ALTER TABLE conversations ADD COLUMN message_context TEXT");
     if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(c => c.name === "timeline"))
       this.db.exec("ALTER TABLE conversations ADD COLUMN timeline TEXT");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "main_branch"))
@@ -929,6 +932,7 @@ export class Store {
       messages: rows.slice(0, 100).reverse().map(row => ({
         ...row,
         timeline: row.timeline ? JSON.parse(row.timeline) : undefined,
+        message_context: row.message_context ? JSON.parse(row.message_context) : undefined,
         tools: row.request_id && row.role !== "user" ? this.db.prepare(
           "SELECT t.id AS toolId,t.name,t.status,t.started_at,t.finished_at,t.arguments,r.created_at AS request_started_at,r.status AS request_status FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.request_id=? AND r.chat_session_id=? AND r.client=? AND r.project=? AND t.internal=0 ORDER BY t.started_at,t.rowid LIMIT 100",
         ).all(row.request_id, session.id, context.client, context.project).map((tool: any) => ({
@@ -980,6 +984,7 @@ export class Store {
     durationMs?: number,
     requestId?: string,
     timeline?: import("./chat-stream.js").ChatTimelineItem[],
+    messageContext?: ChatMessageContext[],
   ) {
     const session = this.chatSession(context, id);
     this.db.transaction(() => {
@@ -993,7 +998,7 @@ export class Store {
       const now = new Date().toISOString();
       this.db
         .prepare(
-          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id,duration_ms,request_id,timeline) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO conversations(id,client,project,role,body,created_at,cards,session_id,duration_ms,request_id,timeline,message_context) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .run(
           randomUUID(),
@@ -1007,6 +1012,7 @@ export class Store {
           durationMs === undefined ? null : Math.max(0, Math.round(durationMs)),
           requestId || null,
           timeline?.length ? JSON.stringify(timeline) : null,
+          messageContext?.length ? JSON.stringify(messageContext) : null,
         );
       this.db
         .prepare("UPDATE chat_sessions SET title=?,updated_at=? WHERE id=?")

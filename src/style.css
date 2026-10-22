@@ -9395,3 +9395,9 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-draft-action, .pr-abandon-action { display: inline-flex; align-items: center; gap: 6px; width: fit-content; }
 .pr-abandon-action { color: #b42332; border-color: #eac5ca; background: #fff5f6; }
 .pr-abandon-action:hover:not(:disabled) { background: #ffe4e8; border-color: #dba3ac; }
+
+.chat-message-context { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-width: 0; }
+.chat-message-context-badge { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; min-width: 0; padding: 4px 7px; border: 1px solid #a7cbb9; border-radius: 7px; background: #e4f2e9; color: #246344; font-size: 11px; line-height: 1.4; }
+.chat-message-context-badge > svg { flex-shrink: 0; }
+.chat-message-context-badge > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-message-context-title { color: #527261; }

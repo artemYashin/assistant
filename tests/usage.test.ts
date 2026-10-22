@@ -1288,3 +1288,28 @@ test("review ticket citations are available with ticket evidence even without co
     await agent.chat("Review", context, true, { readCode: false, ticketEvidence: enabled ? { source: store.source(), tickets: [{ id: 42, description: "", criteria: "Show an error", repro: "" }] } : undefined });
   }
 });
+
+test("chat saves Analyze badge only on initial send and preserves viewed ticket reference", async t => {
+  const store = fixture(t);
+  const source = store.source();
+  const session = store.createChat(context, { id: 42, source, title: "Attached ticket", description: "Description", acceptanceCriteria: "", reproSteps: "", comments: [], attachments: [], warnings: [] } as any);
+  const { agent } = fakeAgent(store, async () => ({ data: { content: "Answer" } }));
+  await agent.chat("Explain the requirement", context, false, undefined, session.id, undefined, undefined, { id: 42, source });
+  await agent.chat("Continue", context, false, undefined, session.id, undefined, undefined, { id: 43, source });
+  const messages = store.conversationPage(context, session.id).messages.filter((message: any) => message.role === "user");
+  assert.deepEqual(messages[0].message_context.map((badge: any) => badge.kind), ["analyze_ticket"]);
+  assert.deepEqual(messages[1].message_context, [{ kind: "viewed_ticket", id: 43, source }]);
+});
+
+test("chat stores Refine badge as a snapshot even if the proposal is edited later", async t => {
+  const store = fixture(t);
+  const { MemoryProposals } = await import("../server/memory-proposals.js");
+  const proposals = new MemoryProposals(store);
+  const proposal = proposals.propose({ scope: "project", summary: "Original requirement", body: "Original body", reason: "User request" }, context);
+  const session = store.activeChat(context);
+  const { agent } = fakeAgent(store, async () => ({ data: { content: "Answer" } }));
+  await agent.chat("Make it shorter", context, false, undefined, session.id, undefined, undefined, undefined, undefined, proposal.id);
+  proposals.edit(proposal.id!, { summary: "Updated requirement", body: "Updated body" });
+  const user = store.conversationPage(context, session.id).messages.find((message: any) => message.role === "user");
+  assert.deepEqual(user.message_context, [{ kind: "refine_memory", id: proposal.id, title: "Original requirement", savedMemory: false }]);
+});

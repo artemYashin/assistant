@@ -1,3 +1,4 @@
+import { messageContextBadges } from "./chat-message-context.js";
 import { memorySummarySchema } from "./memory-summary.js";
 import { updateChatTimeline, type ChatTimelineItem } from "./chat-stream.js";
 import { codeTools, configuredCodeBranch } from "./code-tools.js";
@@ -440,7 +441,7 @@ export class Agent {
     if (this.busy)
       throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
     const conversationId = review ? undefined : this.store.chatSession(context, chatSessionId).id;
-    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, request_id, timeline, ...message } = row; return message; });
+    const historySnapshot = review ? [] : this.store.history(context, conversationId).map((row: any) => { const { duration_ms, request_id, timeline, message_context, ...message } = row; return message; });
     const runtimeHistorySnapshot = review ? [] : this.store.db.prepare(
       "SELECT rowid AS sequence,role,body FROM conversations WHERE session_id=? AND client=? AND project=? ORDER BY rowid",
     ).all(conversationId, context.client, context.project) as { sequence: number; role: string; body: string }[];
@@ -863,7 +864,11 @@ export class Agent {
       const metadataRequest = confirmation.contextual
         ? confirmation
         : metadataContextRequest(prompt, history);
-      if (!review) this.store.say("user", prompt, context, [], conversationId);
+      if (!review) this.store.say("user", prompt, context, [], conversationId, undefined, undefined, undefined, messageContextBadges({
+        analysis: conversationId ? this.store.chatAttachment(context, conversationId, true) : null,
+        proposal: attachedProposal,
+        viewed: viewedTicket?.source === this.store.source(settings) ? viewedTicket : null,
+      }));
       if (
         !review &&
         singleTarget !== undefined &&
