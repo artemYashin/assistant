@@ -117,9 +117,24 @@ test("review code reads pin the PR monitor and commit from the very first reques
   const revision = "c".repeat(40);
   const browser = { request: async (input: any) => { calls.push(input); return { sha: revision, text: "const value = 1;" }; } };
   const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, browser as any, "feature", () => true, { monitor: "pr-monitor", branch: "feature", revision });
-  await tools.find(tool => tool.name === "code_read_file")!.handler!({ path: "a.ts", startLine: 1 }, {} as any);
+  await tools.find(tool => tool.name === "code_read_file")!.handler!({ path: "a.ts", startLine: 1 } as any, {} as any);
   assert.equal(calls[0].monitor, "pr-monitor");
   assert.equal(calls[0].revision, revision);
   assert.equal(calls[0].branch, "feature");
   assert.equal(calls[0].localOnly, true);
+});
+
+
+test("review citation validates the pinned source and links the PR branch and line range", async t => {
+  const store = setup(t), calls: any[] = [], revision = "d".repeat(40);
+  const browser = { request: async (input: any) => { calls.push(input); return { sha: revision, text: "one\ntwo\nthree" }; } };
+  const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, browser as any, "feature/review", () => true, { monitor: "monitor", branch: "feature/review", revision });
+  const result: any = await tools.find(tool => tool.name === "cite_code")!.handler!({ references: [{ path: "src/example.ts", startLine: 2, endLine: 3 }] } as any, {} as any);
+  assert.equal(calls[0].revision, revision);
+  assert.equal(calls[0].monitor, "monitor");
+  const params = new URL(result.references[0].localUrl, "https://orbit.local").searchParams;
+  assert.equal(params.get("branch"), "feature/review");
+  assert.equal(params.get("path"), "src/example.ts");
+  assert.equal(params.get("line"), "2");
+  assert.equal(params.get("endLine"), "3");
 });

@@ -1167,7 +1167,7 @@ export class Agent {
           };
           config.tools = (config.tools || []).filter((tool) =>
             ["ask_review_questions", "propose_memory", "read_memory"].includes(tool.name) ||
-            (!!reviewActions?.readCode && ["code_branches", "code_tree", "code_search", "code_read_file", "code_work_status"].includes(tool.name)),
+            (!!reviewActions?.readCode && ["cite_code", "code_branches", "code_tree", "code_search", "code_read_file", "code_work_status"].includes(tool.name)),
           );
           config.availableTools = config.tools.map(
             (tool) => `custom:${tool.name}`,
@@ -1187,7 +1187,7 @@ export class Agent {
               "\n" +
               questionPolicy(reviewActions?.questionFrequency) +
               (reviewActions?.readCode ? "\n" + reviewCodePolicy(reviewActions.codeDepth) : "") +
-              `\nPR source branch: ${JSON.stringify(repositoryBranch || null)}. Code search permission: ${!!reviewActions?.readCode}.`,
+              `\nPR source branch: ${JSON.stringify(repositoryBranch || null)}. Code search permission: ${!!reviewActions?.readCode}. PR source browser URL (JSON): ${JSON.stringify(repositoryBranch ? `/code?${new URLSearchParams({ ...context, branch: repositoryBranch })}` : null)}.`,
           };
         }
         const discovery = !review ? createToolDiscovery(

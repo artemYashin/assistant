@@ -1219,3 +1219,17 @@ test("review debug retains only latest PR traces, preserves continuations and is
   assert.ok(store.db.prepare("SELECT 1 FROM llm_requests WHERE id=?").get(old));
   assert.ok(store.db.prepare("SELECT 1 FROM pr_reviews WHERE id='old'").get());
 });
+
+
+test("review exposes citations only with code permission and supplies source branch links", async t => {
+  const store = fixture(t);
+  for (const readCode of [true, false]) {
+    const { agent } = fakeAgent(store, async (_session, config) => {
+      assert.equal(config.tools.some((tool: any) => tool.name === "cite_code"), readCode);
+      assert.match(config.systemMessage.content, /branch=feature%2Freview/);
+      assert.match(config.systemMessage.content, /batch references/);
+      return { data: { content: "Review complete" } };
+    });
+    await agent.chat("Review", context, true, { readCode, branch: "feature/review" });
+  }
+});
