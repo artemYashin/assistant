@@ -3,7 +3,7 @@ import { createElement, Fragment, type ReactNode } from "react";
 import { ChatCodeSnippet } from "./ChatCodeSnippet.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 
-export function TicketRichText({ value, card, reference }: any) {
+export function TicketRichText({ value, card, reference, markdown = false }: any) {
   const raw = typeof value === "string" ? value : "";
   const preview = (source: string) => {
     try {
@@ -28,7 +28,7 @@ export function TicketRichText({ value, card, reference }: any) {
     }
   };
   const outsideCode = raw.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?^ {0,3}\1[ \t]*$/gm, "");
-  if (!/<\/?[a-z][^>]*>/i.test(outsideCode)) {
+  if (markdown || !/<\/?[a-z][^>]*>/i.test(outsideCode)) {
     const images = [...raw.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => ({
       source: m[1],
       preview: preview(m[1]),

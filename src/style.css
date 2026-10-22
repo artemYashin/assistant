@@ -9430,3 +9430,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .review-ticket-row svg, .review-ticket-row b { flex-shrink: 0; color: #49765a; }
 .review-ticket-row span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .review-ticket-row:has(input:disabled) { opacity: .6; cursor: default; }
+
+.ticket-cache-notice { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #e5d29a; border-radius: 7px; background: #fff8e5; color: #755c25; font-size: 12px; line-height: 1.45; }
+.ticket-cache-notice > svg { flex-shrink: 0; margin-top: 1px; }
+.ticket-cache-notice small { margin-top: 3px; color: #806e47; font-size: 11px; }

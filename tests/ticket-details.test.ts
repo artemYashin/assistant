@@ -230,3 +230,64 @@ test("opening tracked detail refreshes local Azure fields and clears removed cac
   assert.equal(row.title, "Fresh"); assert.equal(row.state, "Closed"); assert.equal(row.assigned, "Other");
   assert.equal((store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='criteria'").get(source) as any).body, "");
 });
+
+test("UI detail fallback preserves the last snapshot without changing strict callers", async t => {
+  const { store, connectors } = fixture(t);
+  let offline = false;
+  t.mock.method(globalThis, "fetch", async (url: any) => {
+    if (offline) return new Response("Unavailable", { status: 503 });
+    return String(url).includes("/comments") ? Response.json({ comments: [{ id: 1, text: "Saved comment" }] }) : Response.json({ id: 42, fields: { "System.TeamProject": "P", "System.Title": "Saved ticket", "System.Description": "<p>Saved body</p>" } });
+  });
+  const fresh = await connectors.ticketDetails(42, true);
+  assert.equal("cacheFallback" in fresh, false);
+  offline = true;
+  await assert.rejects(connectors.ticketDetails(42));
+  const cached = await connectors.ticketDetails(42, true);
+  assert.equal(cached.fields["System.Description"], "<p>Saved body</p>");
+  assert.equal(cached.comments[0].text, "Saved comment");
+  assert.equal((cached as any).cacheFallback.savedAt, fresh.loadedAt);
+  assert.equal(connectors.ticketCard(cached.cardId).cacheFallback.savedAt, fresh.loadedAt);
+  assert.equal(connectors.ticketCard(fresh.cardId).cacheFallback, undefined);
+  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run(store.source(), 42, "description", "Newer synced content", "newer synced content", "2099-01-01T00:00:00.000Z");
+  const newer = await connectors.ticketDetails(42, true);
+  assert.equal(newer.fields["System.Description"], "Newer synced content");
+  assert.equal(newer.comments[0].text, "Saved comment");
+  assert.equal((newer as any).cacheFallback.savedAt, "2099-01-01T00:00:00.000Z");
+
+  await assert.rejects(connectors.ticketDetails(99, true));
+  store.set("settings", { ...store.settings(), azureProject: "Other" });
+  await assert.rejects(connectors.ticketDetails(42, true));
+});
+
+test("UI fallback uses synced content for retained trash and is removed on expiry", async t => {
+  const { store, connectors } = fixture(t);
+  t.mock.method(globalThis, "fetch", async () => Response.json({ id: 42, fields: {
+    "System.TeamProject": "P", "System.Title": "Synced", "System.State": "Active", "System.Description": `<p>Cached requirement</p><img src="https://ado.test/Collection/_apis/wit/attachments/${image}">`,
+    "Microsoft.VSTS.Common.AcceptanceCriteria": "<p>Acceptance</p>",
+  } }));
+  await connectors.trackTicket(42);
+  store.removeLocalTicket(42);
+  t.mock.method(globalThis, "fetch", async () => new Response("Offline", { status: 503 }));
+  const cached = await connectors.ticketDetails(42, true);
+  assert.equal(cached.fields["System.Title"], "Synced");
+  assert.match(cached.fields["System.Description"], /Cached requirement/);
+  assert.match(cached.fields["System.Description"], /https:\/\/ado.test/);
+  assert.ok((cached as any).markdownFields.includes("System.Description"));
+  assert.ok(cached.attachments.some((attachment: any) => attachment.id === image));
+  assert.equal(cached.comments.length, 0);
+  assert.ok(cached.warnings.some(warning => warning.includes("не сохранены")));
+  store.db.prepare("UPDATE ticket_trash SET removed_at=? WHERE id=42").run(Date.now() - 31 * 86400000);
+  await assert.rejects(connectors.ticketDetails(42, true));
+});
+
+test("UI fallback does not hide source changes or invalid live ticket identity", async t => {
+  const { store, connectors } = fixture(t);
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(store.source(), 42, "Cached", "Active", "", "Bug", "url", null, new Date().toISOString());
+  t.mock.method(globalThis, "fetch", async () => Response.json({ id: 43, fields: { "System.TeamProject": "P" } }));
+  await assert.rejects(connectors.ticketDetails(42, true), /другому проекту/);
+  t.mock.method(globalThis, "fetch", async () => {
+    store.set("settings", { ...store.settings(), azureProject: "Other" });
+    throw new Error("Connection failed");
+  });
+  await assert.rejects(connectors.ticketDetails(42, true), /Подключение Azure изменилось/);
+});

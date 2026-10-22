@@ -964,10 +964,61 @@ export class Connectors {
     };
   }
 
-  async ticketDetails(id: number) {
+  private cachedTicketDetails(id: number, s: Settings) {
+    const source = this.store.source(s), base = azureBase(s.azureUrl);
+    this.store.purgeTicketTrash();
+    const saved = this.store.db.prepare("SELECT data FROM ticket_cards WHERE json_extract(data,'$.source')=? AND json_extract(data,'$.id')=? AND json_type(data,'$.fields')='object' AND json_extract(data,'$.cacheFallback') IS NULL ORDER BY json_extract(data,'$.loadedAt') DESC,rowid DESC LIMIT 1").get(source, id) as { data: string } | undefined;
+    const snapshot = saved ? JSON.parse(saved.data) : null;
+    const sections = this.store.db.prepare("SELECT section,body,updated_at FROM ticket_content_cache WHERE source=? AND id=?").all(source, id) as { section: string; body: string; updated_at: string }[];
+    const local = this.store.db.prepare("SELECT * FROM tickets WHERE source=? AND id=?").get(source, id) as any;
+    const trash = !local ? this.store.db.prepare("SELECT body FROM ticket_trash WHERE source=? AND id=?").get(source, id) as { body: string } | undefined : undefined;
+    const summary = local || (trash ? JSON.parse(trash.body) : null);
+    if (!snapshot && !sections.length && !summary) return undefined;
+    const fields = { ...snapshot?.fields };
+    if (summary && (!snapshot || summary.synced_at >= snapshot.loadedAt)) {
+      for (const [key, field] of Object.entries({ title: "System.Title", state: "System.State", type: "System.WorkItemType", assigned: "System.AssignedTo", changed_at: "System.ChangedDate" })) fields[field] = summary[key];
+      fields["System.CreatedDate"] = this.store.ticketCreatedAt(id, source);
+      fields["System.Tags"] = this.store.azureTags(id, source).join("; ");
+    }
+    fields["System.Title"] ||= `Тикет #${id}`;
+    const attachments = [...(snapshot?.attachments || [])];
+    const markdownFields: string[] = [];
+    const sectionFields: Record<string, string> = { description: "System.Description", criteria: "Microsoft.VSTS.Common.AcceptanceCriteria", repro: "Microsoft.VSTS.TCM.ReproSteps" };
+    for (const section of sections) {
+      const field = sectionFields[section.section];
+      if (!field || (snapshot && section.updated_at <= snapshot.loadedAt)) continue;
+      fields[field] = section.body.replace(/\/api\/ticket-cards\/cache-[a-f0-9]+-\d+\/attachments\/([a-f0-9-]{36})/gi, (_match, attachmentId: string) => {
+        if (!attachments.some((a: any) => a.id === attachmentId)) attachments.push({ id: attachmentId, name: "Изображение в тексте", image: true });
+        return `${base}/${encodeURIComponent(s.azureProject)}/_apis/wit/attachments/${attachmentId}`;
+      });
+      markdownFields.push(field);
+    }
+    const savedAt = [snapshot?.loadedAt, summary?.synced_at, ...sections.map(section => section.updated_at)].filter(value => value && Number.isFinite(Date.parse(value))).sort().at(-1) || null;
+    const cachedComments: { id: number; author: string; date: string; text: string; richText: string }[] = snapshot?.comments || [];
+    const card = { id, source, base, project: s.azureProject, fields, markdownFields, comments: cachedComments, attachments,
+      warnings: [...(snapshot?.warnings || []), ...(!snapshot ? ["Комментарии и полный список вложений не сохранены в кэше."] : [])],
+      loadedAt: savedAt, url: snapshot?.url || `${base}/${encodeURIComponent(s.azureProject)}/_workitems/edit/${id}`,
+      cacheFallback: { savedAt },
+    };
+    const cardId = randomUUID();
+    this.store.db.prepare("INSERT INTO ticket_cards VALUES (?,?)").run(cardId, JSON.stringify(card));
+    return { cardId, ...card };
+  }
+  async ticketDetails(id: number, allowCachedFallback = false) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
-    const item = await this.azure(`workitems/${id}?$expand=all`, {}, s, pat);
+    let item: any;
+    try {
+      item = await this.azure(`workitems/${id}?$expand=all`, {}, s, pat);
+    } catch (error) {
+      if (this.store.source() !== this.store.source(s)) throw new AppError(409, "Подключение Azure изменилось");
+      if (allowCachedFallback) {
+        const cached = this.cachedTicketDetails(id, s);
+        if (cached) return cached;
+      }
+      throw error;
+    }
+    if (this.store.source() !== this.store.source(s)) throw new AppError(409, "Подключение Azure изменилось");
     if (item.id !== id || item.fields?.["System.TeamProject"] !== s.azureProject)
       throw new AppError(400, "Тикет относится к другому проекту Azure DevOps");
     const comments: any[] = [];

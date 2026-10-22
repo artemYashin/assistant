@@ -1046,6 +1046,7 @@ export function createApp(
     res.json(
       await connectors.ticketDetails(
         z.coerce.number().int().positive().parse(req.params.id),
+        true,
       ),
     );
   });

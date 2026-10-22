@@ -426,6 +426,11 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
           </div>
         </aside>
         <div className="ticket-detail-main">
+          {card.cacheFallback && <div className="ticket-cache-notice" role="status">
+            <Database size={16} aria-hidden="true" /><div><strong>Не удалось загрузить тикет из Azure — показываем из кэша</strong>
+              <small>{card.cacheFallback.savedAt ? `Сохранённые данные от ${new Date(card.cacheFallback.savedAt).toLocaleString("ru-RU")}. ` : ""}Данные могут быть неполными или устаревшими. Изображения и файлы по-прежнему загружаются из Azure.</small>
+            </div>
+          </div>}
           {!card.locallyTracked && (
             <div className="ticket-tracking-action">
               <button
@@ -626,6 +631,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                   <TicketSectionScroll label={label}>
                     <TicketRichText
                       value={f[key]}
+                      markdown={card.markdownFields?.includes(key)}
                       card={card}
                       reference={reference}
                     />

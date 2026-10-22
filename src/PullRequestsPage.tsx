@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
 import { Link, useLocation } from "react-router-dom";
-import { ticketPath } from "./routing.js";
 import { useEffect, useState, useRef } from "react";
 import { api } from "./api.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
@@ -109,6 +108,12 @@ function BranchLabel({
   );
 }
 
+function openPrTicket(pr: { ticket_source: string }, ticket: { id: number; title?: string }) {
+  window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
+    detail: { source: pr.ticket_source, tickets: [{ id: ticket.id, title: ticket.title || `#${ticket.id}` }] },
+  }));
+}
+
 function PrDescription({ pr }: any) {
   const [open, setOpen] = useState(false);
   return (
@@ -133,17 +138,18 @@ function PrDescription({ pr }: any) {
       {open && !!pr.tickets?.length && (
         <div
           className="pr-ticket-navigation"
-          aria-label="Переходы к тикетам из описания"
+          aria-label="Открыть тикеты из описания"
         >
           {pr.tickets.map((t: any) => (
-            <Link
+            <button
+              type="button"
               className="chat-ticket-link"
               key={t.id}
-              to={ticketPath(t.id, pr.ticket_source)}
+              onClick={() => openPrTicket(pr, t)}
             >
-              Перейти к тикету #{t.id}
-              <ArrowUpRight size={14} aria-hidden="true" />
-            </Link>
+              Открыть тикет #{t.id}
+              <Eye size={14} aria-hidden="true" />
+            </button>
           ))}
         </div>
       )}
@@ -888,13 +894,14 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
                   <div className="pr-ticket-row" key={t.id}>
-                    <Link
+                    <button
+                      type="button"
                       className="chat-ticket-link pr-ticket-jump"
-                      to={ticketPath(t.id, p.ticket_source)}
+                      onClick={() => openPrTicket(p, t)}
                     >
-                      Перейти к тикету #{t.id}
-                      <ArrowUpRight size={14} aria-hidden="true" />
-                    </Link>
+                      Открыть тикет #{t.id}
+                      <Eye size={14} aria-hidden="true" />
+                    </button>
                     <strong>
                       #{t.id}
                       {t.title ? ` · ${t.title}` : ""}
