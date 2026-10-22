@@ -1,6 +1,5 @@
 import { PublicClientApplication, type ICachePlugin } from "@azure/msal-node";
 import { Store, AppError } from "./store.js";
-import { requestJson } from "./http.js";
 
 import { githubLogin } from "./github-login.js";
 
@@ -12,14 +11,6 @@ type Login = {
   expiresAt?: number;
 };
 export class IntegrationsAuth {
-  private github?: {
-    deviceCode: string;
-    clientId: string;
-    interval: number;
-    next: number;
-    expires: number;
-    display: Login;
-  };
   private microsoft: Login = { status: "idle" };
   private msalInstance?: PublicClientApplication;
   private msalKey = "";
@@ -34,116 +25,23 @@ export class IntegrationsAuth {
   }
   async startGitHub() {
     if (this.cliLogin?.status === "pending") return this.cliLogin;
-    if (!this.store.settings().githubClientId) {
-      const flow: Login = { status: "pending", expiresAt: Date.now() + 600000 };
-      this.cliLogin = flow;
-      void this.loginWithCli((code) => {
-        flow.userCode = code;
-        flow.verificationUri = "https://github.com/login/device";
-      })
-        .then((token) => {
-          if (this.store.settings().githubClientId)
-            throw new Error("Настройки входа изменились. Начните вход снова.");
-          this.store.setSecret("github.token", token);
-          flow.status = "connected";
-          this.store.audit("github.connected", "GitHub CLI device flow");
-        })
-        .catch((error) => {
-          flow.status = "error";
-          flow.error =
-            error instanceof Error ? error.message : "Ошибка входа GitHub";
-        });
-      return flow;
-    }
-    this.cliLogin = undefined;
-    if (this.github && Date.now() < this.github.expires)
-      return this.github.display;
-    const clientId = this.store.settings().githubClientId;
-    if (!clientId)
-      throw new AppError(
-        400,
-        "Сначала сохраните Client ID GitHub OAuth App с включённым Device Flow",
-      );
-    const r = await requestJson(
-      "https://github.com/login/device/code",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ client_id: clientId, scope: "read:user" }),
-      },
-      "GitHub",
-    );
-    if (!r.device_code)
-      throw new AppError(
-        400,
-        "GitHub не выдал код. Проверьте Client ID и включите Device Flow в OAuth App.",
-      );
-    const expires = Date.now() + r.expires_in * 1000;
-    const display: Login = {
-      status: "pending",
-      userCode: r.user_code,
-      verificationUri: r.verification_uri,
-      expiresAt: expires,
-    };
-    this.github = {
-      deviceCode: r.device_code,
-      clientId,
-      interval: r.interval || 5,
-      next: 0,
-      expires,
-      display,
-    };
-    return display;
+    const flow: Login = { status: "pending", expiresAt: Date.now() + 600000 };
+    this.cliLogin = flow;
+    void this.loginWithCli((code) => {
+      flow.userCode = code;
+      flow.verificationUri = "https://github.com/login/device";
+    }).then((token) => {
+      this.store.setSecret("github.token", token);
+      flow.status = "connected";
+      this.store.audit("github.connected", "GitHub CLI device flow");
+    }).catch((error) => {
+      flow.status = "error";
+      flow.error = error instanceof Error ? error.message : "Ошибка входа GitHub";
+    });
+    return flow;
   }
   async pollGitHub() {
-    if (this.cliLogin) return this.cliLogin;
-    const flow = this.github;
-    if (!flow)
-      return {
-        status: this.store.secret("github.token") ? "connected" : "idle",
-      };
-    if (Date.now() > flow.expires) {
-      this.github = undefined;
-      return { status: "expired" };
-    }
-    if (Date.now() < flow.next) return flow.display;
-    flow.next = Date.now() + flow.interval * 1000;
-    const r = await requestJson(
-      "https://github.com/login/oauth/access_token",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          client_id: flow.clientId,
-          device_code: flow.deviceCode,
-          grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-        }),
-      },
-      "GitHub",
-    );
-    if (r.error === "authorization_pending") return flow.display;
-    if (r.error === "slow_down") {
-      flow.interval += 5;
-      flow.next = Date.now() + flow.interval * 1000;
-      return flow.display;
-    }
-    if (!r.access_token) {
-      this.github = undefined;
-      return {
-        status: "error",
-        error: "Вход GitHub не завершён. Попробуйте снова.",
-      };
-    }
-    this.store.setSecret("github.token", r.access_token);
-    this.github = undefined;
-    this.store.audit("github.connected", "OAuth device flow");
-    return { status: "connected" };
+    return this.cliLogin || { status: this.store.secret("github.token") ? "connected" : "idle" };
   }
   private msal() {
     const s = this.store.settings();

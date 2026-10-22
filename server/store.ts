@@ -54,7 +54,6 @@ export const defaults = {
   voiceNewPress: "double",
   voiceCurrentKey: "KeyM",
   voiceNewKey: "KeyN",
-  githubClientId: "",
   model: "",
   reviewModel: "",
   microsoftClientId: "",
@@ -387,6 +386,8 @@ export class Store {
   }
   rawSettings(): Settings {
     const saved = this.get<Partial<Settings>>("settings", {});
+    // Ignore the retired custom GitHub OAuth setting in older databases.
+    delete (saved as Record<string, unknown>).githubClientId;
     const settings = { ...defaults, ...saved };
     // Preserve existing custom bindings when introducing the new default shortcut.
     if (saved.ticketOpenKey === undefined && [settings.chatToggleKey, settings.voiceInputKey, settings.voiceCurrentKey, settings.voiceNewKey].includes(settings.ticketOpenKey))

@@ -274,21 +274,23 @@ export function ContextPicker({
                 <div className="context-catalog-heading"><h3><Users size={16} />Заказчики</h3>
                   <button type="button" className="text-button" disabled={busy} onClick={() => { setCreateKind("client"); setCreating(true); }}><Plus size={14} />Заказчик</button></div>
                 <div className="context-catalog-tabs" aria-label="Выбор заказчика для редактирования">
-                  {clients.map(client => <button type="button" key={client} disabled={busy} aria-pressed={selectedClient === client}
-                    onClick={() => { setCatalogClient(client); setCatalogProject(""); setCreating(false); }}>{client}</button>)}
+                  {clients.map(client => <ContextChip key={client} value={client} kind="Заказчик" busy={busy} selected={selectedClient === client}
+                    onSelect={() => { setCatalogClient(client); setCatalogProject(""); setCreating(false); }}
+                    onSave={name => rename({ client, project: "" }, name)}
+                    deleteAction={<DeleteContextButton iconOnly context={{ client, project: "" }} disabled={busy} onDelete={remove} />} />)}
                 </div>
-                {selectedClient ? <ContextName key={selectedClient} value={selectedClient} kind="Заказчик" busy={busy}
-                  onSave={name => rename({ client: selectedClient, project: "" }, name)} deleteAction={<DeleteContextButton context={{ client: selectedClient, project: "" }} disabled={busy} onDelete={remove} />} /> : <p className="muted">Добавьте первого заказчика.</p>}
+                {!clients.length && <p className="muted">Добавьте первого заказчика.</p>}
               </section>
               {selectedClient && <section className="context-catalog-level context-catalog-projects">
                 <div className="context-catalog-heading"><h3><Folder size={16} />Проекты <small>{selectedClient}</small></h3>
                   <button type="button" className="text-button" disabled={busy} onClick={() => { setCreateKind("project"); setOwner(selectedClient); setCreating(true); }}><Plus size={14} />Проект</button></div>
                 <div className="context-catalog-tabs" aria-label={`Проекты заказчика ${selectedClient}`}>
-                  {clientProjects.map(project => <button type="button" key={project} disabled={busy} aria-pressed={selectedProject === project}
-                    onClick={() => { setCatalogProject(project); setCreating(false); }}>{project}</button>)}
+                  {clientProjects.map(project => <ContextChip key={JSON.stringify([selectedClient, project])} value={project} kind="Проект" busy={busy} selected={selectedProject === project}
+                    onSelect={() => { setCatalogProject(project); setCreating(false); }}
+                    onSave={name => rename({ client: selectedClient, project }, name)}
+                    deleteAction={<DeleteContextButton iconOnly context={{ client: selectedClient, project }} disabled={busy} onDelete={remove} />} />)}
                 </div>
-                {selectedProject ? <ContextName key={JSON.stringify([selectedClient, selectedProject])} value={selectedProject} kind="Проект" busy={busy}
-                  onSave={name => rename({ client: selectedClient, project: selectedProject }, name)} deleteAction={<DeleteContextButton context={{ client: selectedClient, project: selectedProject }} disabled={busy} onDelete={remove} />} /> : <p className="muted">У этого заказчика пока нет проектов.</p>}
+                {!clientProjects.length && <p className="muted">У этого заказчика пока нет проектов.</p>}
               </section>}
               {creating && <div className="context-create-panel">
                 <div className="context-catalog-heading"><h3>{createKind === "client" ? "Новый заказчик" : "Новый проект"}</h3>
@@ -327,24 +329,33 @@ export function ContextPicker({
   );
 }
 
-function ContextName({ value, kind, busy, onSave, deleteAction }: { value: string; kind: string; busy: boolean; onSave: (name: string) => Promise<void>; deleteAction?: React.ReactNode }) {
-  const [editing, setEditing] = useState(false);
+function ContextChip({ value, kind, busy, selected, onSelect, onSave, deleteAction }: {
+  value: string; kind: string; busy: boolean; selected: boolean; onSelect: () => void;
+  onSave: (name: string) => Promise<void>; deleteAction: React.ReactNode;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState(value);
-  if (!editing) return <div className="context-directory-name">
-    <span className="muted">{kind}</span><strong>{value}</strong>
-    <button type="button" className="secondary" disabled={busy} onClick={e => {
-      e.preventDefault(); setDraft(value); setEditing(true);
-    }}><Pencil size={14} />Переименовать</button>
+  const [error, setError] = useState("");
+  return <div className={`context-catalog-chip${selected ? " is-selected" : ""}`}>
+    <button type="button" className="context-chip-name" disabled={busy} aria-pressed={selected} onClick={onSelect} title={value}>{value}</button>
+    <button type="button" className="icon-button" disabled={busy} aria-label={`Переименовать: ${value}`} title="Переименовать" onClick={() => {
+      setDraft(value); setError(""); dialog.current?.showModal();
+    }}><Pencil size={14} /></button>
     {deleteAction}
+    {createPortal(<dialog ref={dialog} className="developer-dialog context-rename-dialog" aria-label={`Переименовать: ${value}`}
+      onCancel={event => { event.stopPropagation(); if (busy) event.preventDefault(); }}>
+      <div className="developer-dialog-heading"><h2>Переименовать</h2><button type="button" className="icon-button" disabled={busy} aria-label="Закрыть" onClick={() => dialog.current?.close()}><X size={18} /></button></div>
+      <form onSubmit={async event => {
+        event.preventDefault();
+        if (busy || !draft.trim()) return;
+        setError("");
+        try { await onSave(draft.trim()); dialog.current?.close(); }
+        catch (error: any) { setError(error.message || "Не удалось переименовать"); }
+      }}>
+        <label>{kind}: новое название<input value={draft} onChange={event => setDraft(event.target.value)} maxLength={200} required disabled={busy} autoFocus /></label>
+        {error && <p className="error" role="alert">{error}</p>}
+        <div className="context-save-actions"><button type="button" className="secondary" disabled={busy} onClick={() => dialog.current?.close()}>Отмена</button><ContextSaveButton type="submit" busy={busy} disabled={!draft.trim()} /></div>
+      </form>
+    </dialog>, document.body)}
   </div>;
-  return <form className="context-directory-name is-editing" onSubmit={async e => {
-    e.preventDefault();
-    try { await onSave(draft.trim()); setEditing(false); } catch { /* Parent displays the error. */ }
-  }}>
-    <label><span className="muted">{kind}</span><input aria-label={`Название: ${value}`} value={draft} onChange={e => setDraft(e.target.value)} maxLength={200} required disabled={busy} autoFocus /></label>
-    <div className="context-save-actions">
-      <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>Отмена</button>
-      <ContextSaveButton type="submit" busy={busy} disabled={!draft.trim()} />
-    </div>
-  </form>;
 }

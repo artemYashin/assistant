@@ -3743,9 +3743,12 @@ td > small {
   width: auto;
   min-width: 0;
 }
+.ticket-status-dialog { overflow: visible; }
 .ticket-status-dialog .single-select .multi-select-panel {
-  position: static;
-  margin-top: 6px;
+  position: absolute;
+  margin-top: 0;
+  max-height: min(240px, 35dvh);
+  overflow: auto;
 }
 
 .pr-page-tabs {
@@ -9651,3 +9654,12 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .context-delete-dialog .dialog-actions > button > svg { flex-shrink: 0; }
 .context-delete-dialog .context-delete-confirm { background: #b33333; color: #fff; border-color: #9c2929; }
 .context-delete-dialog .context-delete-confirm:hover:not(:disabled) { background: #962727; border-color: #852222; }
+
+.context-catalog-tabs { margin-bottom: 0; gap: 8px; }
+.context-catalog-chip { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; padding: 4px; border: 1px solid #dae3d5; border-radius: 9px; background: #fff; }
+.context-catalog-chip.is-selected { background: #e9f1e4; border-color: #8ca67a; }
+.context-catalog-chip .context-chip-name { min-width: 0; padding: 5px 7px; border: 0; background: transparent; font-size: 12px; color: #36532a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.context-catalog-chip > .icon-button { flex-shrink: 0; width: 28px; height: 28px; padding: 5px; border-radius: 6px; }
+.context-catalog-chip > .context-delete-button { color: #b83d3d; }
+.context-catalog-chip > .context-delete-button:hover { background: #fee7e7; }
+.context-rename-dialog form { display: grid; gap: 12px; }

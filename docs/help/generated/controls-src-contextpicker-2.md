@@ -7,6 +7,12 @@
 
 ### Элемент
 
+: новое название
+
+Источник: src/ContextPicker.tsx:355.
+
+### Элемент
+
 Отмена
 
-Источник: src/ContextPicker.tsx:346.
+Источник: src/ContextPicker.tsx:357.

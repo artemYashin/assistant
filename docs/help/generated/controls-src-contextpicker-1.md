@@ -81,46 +81,46 @@
 
 Проект
 
-Источник: src/ContextPicker.tsx:285.
+Источник: src/ContextPicker.tsx:286.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ContextPicker.tsx:295.
+Источник: src/ContextPicker.tsx:297.
 
 ### Элемент
 
 Заказчик проекта
 
-Источник: src/ContextPicker.tsx:298.
+Источник: src/ContextPicker.tsx:300.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/ContextPicker.tsx:299.
+Источник: src/ContextPicker.tsx:301.
 
 ### Элемент
 
 Название заказчика / Название проекта
 
-Источник: src/ContextPicker.tsx:300.
+Источник: src/ContextPicker.tsx:302.
 
 ### Элемент
 
 Добавить и выбрать
 
-Источник: src/ContextPicker.tsx:304.
+Источник: src/ContextPicker.tsx:306.
 
 ### Элемент
 
-Переименовать
+Переименовать: {…} · Переименовать
 
-Источник: src/ContextPicker.tsx:335.
+Источник: src/ContextPicker.tsx:341.
 
 ### Элемент
 
-Название: {…}
+Закрыть
 
-Источник: src/ContextPicker.tsx:344.
+Источник: src/ContextPicker.tsx:347.

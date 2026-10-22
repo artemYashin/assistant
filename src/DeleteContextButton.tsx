@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Trash2, TriangleAlert, X } from "lucide-react";
 
 type Context = { client: string; project: string };
-export function DeleteContextButton({ context, disabled, onDelete }: { context: Context; disabled: boolean; onDelete: (context: Context, confirmation: string) => Promise<void> }) {
+export function DeleteContextButton({ context, disabled, onDelete, iconOnly = false }: { iconOnly?: boolean; context: Context; disabled: boolean; onDelete: (context: Context, confirmation: string) => Promise<void> }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const inputId = useId();
   const [confirmation, setConfirmation] = useState("");
@@ -12,7 +12,7 @@ export function DeleteContextButton({ context, disabled, onDelete }: { context: 
   const kind = context.project ? "проект" : "заказчика";
   const title = context.project ? `${context.client} / ${context.project}` : context.client;
   return <>
-    <button type="button" className="secondary context-delete-button" disabled={disabled || busy} onClick={() => { setConfirmation(""); setError(""); dialog.current?.showModal(); }}><Trash2 size={14} />Удалить</button>
+    <button type="button" className={`${iconOnly ? "icon-button" : "secondary"} context-delete-button`} aria-label={`Удалить ${kind}: ${title}`} title={`Удалить ${kind}`} disabled={disabled || busy} onClick={() => { setConfirmation(""); setError(""); dialog.current?.showModal(); }}><Trash2 size={14} />{!iconOnly && "Удалить"}</button>
     {createPortal(<dialog ref={dialog} className="developer-dialog context-delete-dialog" aria-label={`Удалить ${kind}`} onCancel={event => { event.stopPropagation(); if (busy) event.preventDefault(); }}>
       <div className="developer-dialog-heading"><h2><TriangleAlert size={20} />Удалить {kind}?</h2><button type="button" className="icon-button" aria-label="Закрыть" disabled={busy} onClick={() => dialog.current?.close()}><X size={18} /></button></div>
       <strong className="context-delete-name">{title}</strong>

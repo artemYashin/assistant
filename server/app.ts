@@ -71,7 +71,6 @@ const settingsSchema = z
     voiceNewPress: z.enum(["single", "double"]).default("double"),
     voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),
     voiceNewKey: z.string().max(80).regex(voiceBindingPattern).default("KeyN"),
-    githubClientId: text,
     model: text,
     reviewModel: text.default(""),
     microsoftClientId: text,
@@ -395,8 +394,6 @@ export function createApp(
         "DELETE FROM chats; DELETE FROM messages; DELETE FROM suggestions;",
       );
     }
-    if (old.githubClientId !== settings.githubClientId)
-      store.deleteSecret("github.token");
     if (azurePat?.trim()) store.setSecret("azure.pat", azurePat.trim());
     store.audit("settings.updated", "Настройки сохранены");
     res.json({ ok: true });

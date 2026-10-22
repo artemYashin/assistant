@@ -2417,22 +2417,7 @@ function Settings({ settings, context, run, busy }: any) {
             код. На странице GitHub подтвердите вход GitHub CLI. Создавать OAuth
             App не нужно.
           </p>
-          <details>
-            <summary>
-              <LockKeyhole size={17} aria-hidden="true" />
-              Дополнительно: собственное OAuth-приложение
-            </summary>
-            <Field
-              label="Client ID (необязательно)"
-              hint="Оставьте пустым для входа через GitHub CLI. Для собственного приложения включите Device Flow."
-            >
-              <input
-                value={form.githubClientId}
-                onChange={(e) => set("githubClientId", e.target.value)}
-                autoComplete="off"
-              />
-            </Field>
-          </details>
+
           <div className="card-actions">
             <button
               className="secondary"

@@ -6,8 +6,8 @@ const permissions = [
   ["Code · Read", "Синхронизация PR, просмотр diff, коммитов и обсуждений, загрузка Git-репозитория и поиск по коду для ассистента и ревью."],
   ["Code · Read & write", "Создание и слияние PR, Abandon, перевод в Draft и обратно, отправка комментариев к строкам кода. Включает чтение."],
   ["Build · Read", "Просмотр этапов CI и логов выбранного шага. Логи загружаются только при открытии; запуск и изменение пайплайнов не нужны."],
-  ["Identity · Read", "Поиск пользователей Azure для выбора исполнителя и списков Required / Optional ревьюеров."],
-  ["Graph · Read", "Дополнительный поиск пользователей по части имени, если обычный поиск не нашёл совпадений."],
+  ["Graph · Read", "Поиск пользователей по части имени для выбора исполнителя и списков Required / Optional ревьюеров."],
+  ["Identity · Read", "Поиск и сопоставление пользователей Azure: получение идентификатора для назначения исполнителя и ревьюеров."],
 ];
 
 export function AzurePatPermissions() {
@@ -16,7 +16,7 @@ export function AzurePatPermissions() {
     <p>В Azure выберите Custom defined и отметьте права для нужных функций. Если раздел не виден, откройте Show all scopes.</p>
     <dl>{permissions.map(([name, description]) => <div key={name}><dt>{name}</dt><dd>{description}</dd></div>)}</dl>
     <p>Для всех перечисленных функций: Work Items и Code — Read &amp; write; Build, Identity и Graph — Read. Full access не требуется. Сам пользователь также должен иметь доступ к проекту, репозиторию и сборкам; обход политик слияния требует отдельного разрешения в Azure.</p>
-    <p>Локальные теги, заметки и память не требуют прав на запись в Azure. Chat.Read относится к Microsoft Teams / Microsoft Graph и в этот PAT не входит; подключение Copilot тоже настраивается отдельно.</p>
+    <p>Локальные теги, заметки и память не требуют прав на запись в Azure.</p>
     <a href="https://learn.microsoft.com/en-us/azure/devops/integrate/get-started/authentication/oauth?view=azure-devops#available-scopes" target="_blank" rel="noreferrer">Справочник прав Azure DevOps ↗</a>
   </aside>;
 }

@@ -7,60 +7,42 @@
 
 ### Сообщение
 
-Настройки входа изменились. Начните вход снова.
-
-Источник: server/auth.ts:46.
-
-### Сообщение
-
 Ошибка входа GitHub
 
-Источник: server/auth.ts:54.
-
-### Сообщение
-
-Сначала сохраните Client ID GitHub OAuth App с включённым Device Flow
-
-Источник: server/auth.ts:63.
-
-### Сообщение
-
-GitHub не выдал код. Проверьте Client ID и включите Device Flow в OAuth App.
-
-Источник: server/auth.ts:80.
+Источник: server/auth.ts:39.
 
 ### Сообщение
 
 Сохраните Tenant ID и Client ID Microsoft Entra
 
-Источник: server/auth.ts:151.
+Источник: server/auth.ts:49.
 
 ### Сообщение
 
 Account missing or connection settings changed
 
-Источник: server/auth.ts:203.
+Источник: server/auth.ts:101.
 
 ### Сообщение
 
 Cannot switch accounts during delivery
 
-Источник: server/auth.ts:212.
+Источник: server/auth.ts:110.
 
 ### Сообщение
 
 Вход Microsoft не завершён. Проверьте настройки Entra и политику Device Code Flow.
 
-Источник: server/auth.ts:235.
+Источник: server/auth.ts:133.
 
 ### Сообщение
 
 Подключите Microsoft Teams в настройках
 
-Источник: server/auth.ts:258.
+Источник: server/auth.ts:156.
 
 ### Сообщение
 
 Сессия Microsoft истекла или требуется согласие. Подключите Teams заново.
 
-Источник: server/auth.ts:270.
+Источник: server/auth.ts:168.

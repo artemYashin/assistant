@@ -392,7 +392,7 @@ export class Agent {
   };
   private modelCacheKey() {
     return createHash("sha256")
-      .update(JSON.stringify([this.store.settings().githubClientId, this.store.secret("github.token") || ""]))
+      .update(JSON.stringify([this.store.secret("github.token") || ""]))
       .digest("hex");
   }
   async models() {
