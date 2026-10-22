@@ -468,7 +468,7 @@ export class PullRequests {
               row.number,
               this.store.settings().azureVersion,
             )
-              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
+              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, original: new URL(source, row.url).href })}`
               : null,
           })),
           tickets: [

@@ -7,12 +7,18 @@
 
 ### Сообщение
 
+Внешняя ссылка недоступна: изображение локальное или источник не загружен
+
+Источник: src/ImageActions.tsx:33.
+
+### Сообщение
+
 Не удалось скопировать ссылку.
 
-Источник: src/ImageActions.tsx:12.
+Источник: src/ImageActions.tsx:36.
 
 ### Сообщение
 
 image-action-error
 
-Источник: src/ImageActions.tsx:19.
+Источник: src/ImageActions.tsx:43.

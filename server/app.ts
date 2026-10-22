@@ -1166,6 +1166,14 @@ export function createApp(
     }).parse(req.body);
     res.json(await connectors.addTicketComment(String(req.params.ref), text, { markdown, imageUploads, requestId }));
   });
+  app.get("/api/ticket-cards/:ref/attachments/:id/source", (req,res) => {
+    const card=connectors.ticketCard(String(req.params.ref));
+    if(card.source!==store.source()) throw new AppError(409,"Подключение Azure изменилось: загрузите тикет заново");
+    const id=z.string().uuid().parse(req.params.id);
+    if(!card.attachments.some((attachment:any)=>attachment.id.toLowerCase()===id.toLowerCase()))
+      throw new AppError(404,"Вложение не найдено в тикете");
+    res.json({url: `${card.base}/${encodeURIComponent(card.project)}/_apis/wit/attachments/${encodeURIComponent(id)}`});
+  });
   app.get("/api/ticket-cards/:ref/attachments/:id", async (req, res) => {
     const file = await connectors.attachment(
       String(req.params.ref),
