@@ -69,7 +69,6 @@ export function prTicketIds(description: string): number[] {
   ];
 }
 export class PullRequests {
-  private completedCache = new Map<string, { until: number; data: any }>();
   private completedPending = new Map<string, Promise<any>>();
   async completed(monitor: string, page: number) {
     this.purgeCompleted();
@@ -87,8 +86,6 @@ export class PullRequests {
       credentials.pat,
       page,
     ]);
-    const cached = this.completedCache.get(key);
-    if (cached && cached.until > Date.now()) return cached.data;
     const pending = this.completedPending.get(key);
     if (pending) return pending;
     if (this.completedPending.size >= 4)
@@ -96,7 +93,7 @@ export class PullRequests {
     const task = (async () => {
       const data = await this.get(
         m,
-        `git/repositories/${enc(m.repository.trim())}/pullrequests?searchCriteria.status=completed&searchCriteria.queryTimeRangeType=closed&searchCriteria.minTime=${enc(new Date(Date.now() - 30 * 86400000).toISOString())}&$top=21&$skip=${page * 20}`,
+        `git/repositories/${enc(m.repository.trim())}/pullrequests?searchCriteria.status=completed&searchCriteria.queryTimeRangeType=closed&searchCriteria.minTime=${enc(new Date(Date.now() - 7 * 86400000).toISOString())}&$top=21&$skip=${page * 20}`,
         credentials,
       );
       if (!Array.isArray(data.value))
@@ -109,30 +106,18 @@ export class PullRequests {
       const items = [];
       for (const short of data.value.slice(0, 20)) {
         const closed = Date.parse(short.closedDate);
-        if (!Number.isFinite(closed) || closed + 30 * 86400000 <= Date.now())
+        if (!Number.isFinite(closed) || closed + 7 * 86400000 <= Date.now())
           continue;
         const repo = short.repository?.id || m.repository;
-        const previous = this.store.db
-          .prepare(
-            "SELECT * FROM pr_completed WHERE monitor=? AND repo=? AND number=?",
-          )
-          .get(m.id, repo, short.pullRequestId) as any;
-        if (!previous?.hydrated) {
-          const detail =
-            typeof short.description === "string" &&
-            short.description.length >= 400
-              ? await this.get(
-                  m,
-                  `git/repositories/${enc(repo)}/pullrequests/${short.pullRequestId}`,
-                  credentials,
-                )
-              : short;
-          if (
-            detail.pullRequestId !== short.pullRequestId ||
-            detail.status !== "completed" ||
-            detail.repository?.id !== repo
-          )
-            throw new AppError(409, "PR изменился при загрузке истории");
+        const cached = this.store.db.prepare(
+          "SELECT 1 FROM pr_completed c JOIN pull_requests p USING(monitor,repo,number) WHERE c.monitor=? AND c.repo=? AND c.number=? AND c.hydrated=1 AND c.expires_at>?"
+        ).get(m.id, repo, short.pullRequestId, Date.now());
+        if (!cached) {
+          // Preserve the full imported content when the PR enters completed history.
+          const imported = this.store.db.prepare(
+            "SELECT title,description FROM pull_requests WHERE monitor=? AND repo=? AND number=?"
+          ).get(m.id, repo, short.pullRequestId) as { title: string; description: string } | undefined;
+          const detail = imported ? { ...short, ...imported } : short;
           const links = await this.get(
             m,
             `git/repositories/${enc(repo)}/pullrequests/${short.pullRequestId}/workitems`,
@@ -148,7 +133,7 @@ export class PullRequests {
           this.store.db.transaction(() => {
             this.store.db
               .prepare(
-                `INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at,source_branch,target_branch) VALUES (?,?,?,?,?,?,?,?,0,0,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,description=excluded.description,head=excluded.head,target=excluded.target,in_scope=0,source_branch=excluded.source_branch,target_branch=excluded.target_branch`,
+                `INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at,source_branch,target_branch) VALUES (?,?,?,?,?,?,?,?,0,0,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,description=excluded.description,author=excluded.author,url=excluded.url,head=excluded.head,target=excluded.target,in_scope=0,synced_at=excluded.synced_at,created_at=excluded.created_at,source_branch=excluded.source_branch,target_branch=excluded.target_branch`,
               )
               .run(
                 m.id,
@@ -180,7 +165,7 @@ export class PullRequests {
                 repo,
                 detail.pullRequestId,
                 short.closedDate,
-                closed + 30 * 86400000,
+                closed + 7 * 86400000,
               );
           })();
         }
@@ -192,7 +177,7 @@ export class PullRequests {
           items.push({
             ...card,
             closedAt: short.closedDate,
-            expiresAt: new Date(closed + 30 * 86400000).toISOString(),
+            expiresAt: new Date(closed + 7 * 86400000).toISOString(),
           });
       }
       const result = {
@@ -201,9 +186,6 @@ export class PullRequests {
         loadedAt: now(),
         items,
       };
-      if (this.completedCache.size >= 50)
-        this.completedCache.delete(this.completedCache.keys().next().value!);
-      this.completedCache.set(key, { until: Date.now() + 60000, data: result });
       return result;
     })();
     this.completedPending.set(key, task);
@@ -243,6 +225,8 @@ export class PullRequests {
     this.purgeCompleted();
   }
   purgeCompleted(time = Date.now()) {
+    // Also shorten retention for archives created under the former 30-day policy.
+    this.store.db.prepare("UPDATE pr_completed SET expires_at=MIN(expires_at, CAST((julianday(closed_at)-2440587.5)*86400000 AS INTEGER)+?)").run(7 * 86400000);
     const expired = this.store.db
       .prepare("SELECT * FROM pr_completed WHERE expires_at<=?")
       .all(time) as any[];
@@ -291,7 +275,6 @@ export class PullRequests {
           .run(prLinksKey(p.monitor, p.repo, p.number));
       }
     })();
-    if (expired.length) this.completedCache.clear();
   }
   monitors() {
     return this.store.db
@@ -427,6 +410,7 @@ export class PullRequests {
         );
         return {
           ...row,
+          has_review_log: new UsageLedger(this.store).hasReviewLog(context, row.monitor, row.repo, row.number),
           review_usage: new UsageLedger(this.store).reviewUsage(row.review_id, row.usage_id),
           local_source: this.sourcePreparation.status(row),
           last_saved_review: (() => {
@@ -742,24 +726,18 @@ export class PullRequests {
           );
           if (page.value.length < 100) break;
         }
-        // List descriptions can be truncated. A trailing #ID may itself be cut;
-        // resolve it against the full PR even below the usual 400-character boundary.
+        // List responses may truncate descriptions. Parse references only from
+        // the full PR response, regardless of the apparent summary length.
         for (const p of found) {
-          if (
-            (typeof p.description === "string" && p.description.length >= 400) ||
-            /#[0-9]+(?:\.{3}|…)?\s*$/.test(p.description || "") ||
-            /#[0-9]+(?:\.{3}|…)?\s*$/.test(p.title || "")
-          ) {
-            const detail = await this.get(
-              m,
-              `git/repositories/${enc(p.repository.id)}/pullrequests/${p.pullRequestId}`,
-              credentials,
-            );
-            if (detail.pullRequestId !== p.pullRequestId)
-              throw new AppError(502, "Azure вернул неверное описание PR");
-            p.description = detail.description || "";
-            p.title = detail.title || p.title;
-          }
+          const detail = await this.get(
+            m,
+            `git/repositories/${enc(p.repository.id)}/pullrequests/${p.pullRequestId}`,
+            credentials,
+          );
+          if (detail.pullRequestId !== p.pullRequestId || detail.repository?.id !== p.repository.id)
+            throw new AppError(502, "Azure вернул неверную деталку PR");
+          p.description = detail.description || "";
+          p.title = detail.title || "";
         }
         for (const p of found) {
           try {
@@ -843,6 +821,7 @@ export class PullRequests {
               head = p.lastMergeSourceCommit?.commitId || "",
               target = p.lastMergeTargetCommit?.commitId || "";
             if (!repo || !Number.isSafeInteger(p.pullRequestId)) continue;
+            this.store.db.prepare("DELETE FROM pr_completed WHERE monitor=? AND repo=? AND number=?").run(m.id, repo, p.pullRequestId);
             this.store.db
               .prepare(
                 "INSERT INTO pull_requests (monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description,created_at,source_branch,target_branch) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET title=excluded.title,author=excluded.author,head=excluded.head,target=excluded.target,draft=excluded.draft,source_branch=excluded.source_branch,target_branch=excluded.target_branch,description=excluded.description,created_at=CASE WHEN excluded.created_at != '' THEN excluded.created_at ELSE pull_requests.created_at END,in_scope=1,synced_at=excluded.synced_at",

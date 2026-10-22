@@ -9604,3 +9604,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .pr-ticket-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 4px; }
 .pr-ticket-actions > button { flex: 0 1 auto; }
+
+.pr-ticket-sources-tooltip { position: fixed; z-index: 10000; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d4e2d9; border-radius: 8px; background: #fff; color: #40564a; box-shadow: 0 6px 24px #142d2426; font-size: 12px; line-height: 1.45; font-weight: 400; }
+.pr-ticket-sources-tooltip strong { font-size: 12px; }
+.pr-ticket-sources-tooltip p { margin: 6px 0 0; }
+.pr-ticket-origin { display: block; margin: 0 0 -3px; color: #77847b; font-size: 11px; line-height: 1.3; }
+.pr-ticket-summary-content { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; line-height: 1.3; }
+.pr-ticket-summary-content > svg, .pr-ticket-summary-content > .pr-ticket-count, .pr-ticket-summary-content > button { flex-shrink: 0; }

@@ -76,10 +76,11 @@ export function ChatStream({ live, azureSource }: { live: Live; azureSource?: st
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
-  return <>
-    <div className="chat-elapsed">Время работы: <time>{formatChatDuration(now - live.startedAt)}</time></div>
+  return <div className="bubble assistant chat-streaming">
+    <span className="bubble-author"><Sparkles size={13} /> Orbit</span>
     <ChatTimeline items={live.timeline} azureSource={azureSource} now={now} />
-  </>;
+    <div className="chat-elapsed">Время работы: <time>{formatChatDuration(now - live.startedAt)}</time></div>
+  </div>;
 }
 export function ChatTimeline({ items, azureSource, now }: { items: ChatTimelineItem[]; azureSource?: string; now?: number }) {
   return <div className="chat-timeline">{items.map(item => item.kind === "text"

@@ -4,11 +4,11 @@ import { chatPrCard } from "./chat-pr-card.js";
 import { Link } from "react-router-dom";
 import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
 import { FileCode2, GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
-import Markdown from "react-markdown";
+import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { remarkDescriptionBreaks } from "./remark-description-breaks.js";
 
@@ -44,22 +44,7 @@ export function ChatMarkdown({
   images?: { source: string; preview: string | null }[];
   preserveLineBreaks?: boolean;
 }) {
-  return (
-    <div className="chat-markdown">
-      <Markdown
-        remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations] : [remarkGfm, remarkTicketCitations]}
-        skipHtml
-        urlTransform={(url, key) =>
-          ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url))) ? url : key === "href" && chatTicketPath(url)
-            ? chatTicketPath(url)!
-            : key === "src" &&
-                images?.some((image) => image.source === url && image.preview)
-              ? url
-              : /^(https?:\/\/|mailto:)/i.test(url)
-                ? url
-                : ""
-        }
-        components={{
+  const components = useMemo<Components>(() => ({
           pre: MarkdownCodeBlock,
           blockquote: ({ children }) => (
             <blockquote className="chat-quote-card">
@@ -139,7 +124,23 @@ export function ChatMarkdown({
               <table>{children}</table>
             </div>
           ),
-        }}
+  }), [azureSource, images]);
+  return (
+    <div className="chat-markdown">
+      <Markdown
+        remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations] : [remarkGfm, remarkTicketCitations]}
+        skipHtml
+        urlTransform={(url, key) =>
+          ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url))) ? url : key === "href" && chatTicketPath(url)
+            ? chatTicketPath(url)!
+            : key === "src" &&
+                images?.some((image) => image.source === url && image.preview)
+              ? url
+              : /^(https?:\/\/|mailto:)/i.test(url)
+                ? url
+                : ""
+        }
+        components={components}
       >
         {text}
       </Markdown>

@@ -1,3 +1,4 @@
+import { PrTicketSourcesInfo } from "./PrTicketSourcesInfo.js";
 import { BranchLabel } from "./PrBranchLabel.js";
 import { ciMergeReason } from "../server/pr-health.js";
 import { ConfirmButton } from "./ConfirmButton.js";
@@ -754,14 +755,14 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 >
                   <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
                 </button>
-                <ChatTools
+                {p.has_review_log && <ChatTools
                   context={context}
                   review={{
                     monitor: p.monitor,
                     repo: p.repo,
                     number: p.number,
                   }}
-                />
+                />}
                 {!readOnly && (
                   <button
                     type="button"
@@ -823,18 +824,12 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
             <PrDescription pr={p} />
             <details className="pr-content-section">
               <summary>
-                <Ticket size={17} aria-hidden="true" />
-                Связанные тикеты
-                <span className="pr-ticket-count">{p.tickets?.length || 0}</span>
-                <button
-                  type="button"
-                  className="pr-ticket-sources-info"
-                  aria-label="Откуда берутся связанные тикеты"
-                  title="Источники: #номер в названии и описании PR, связи PR в Azure и связи, добавленные вручную в Orbit. Коммиты и связи между тикетами не просматриваются. Локально отключённые связи не участвуют в merge и ревью; Azure не меняется."
-                  onClick={event => { event.preventDefault(); event.stopPropagation(); }}
-                >
-                  <Info size={15} aria-hidden="true" />
-                </button>
+                <span className="pr-ticket-summary-content">
+                  <Ticket size={17} aria-hidden="true" />
+                  <span>Связанные тикеты</span>
+                  <span className="pr-ticket-count">{p.tickets?.length || 0}</span>
+                  <PrTicketSourcesInfo />
+                </span>
               </summary>
               {!readOnly && (
                 <PrTicketLink
@@ -852,6 +847,14 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
                   <div className={`pr-ticket-row${t.disabled ? " is-disabled" : ""}`} key={t.id}>
+                    <small className="pr-ticket-origin">
+                      Импортировано из: {[
+                        t.manual && "добавлено локально",
+                        t.fromAzure && "Azure",
+                        t.fromDescription && "найдено в описании",
+                        t.fromTitle && "найдено в названии",
+                      ].filter(Boolean).join(" · ") || "источник больше недоступен"}
+                    </small>
                     <strong>
                       #{t.id}
                       {t.title ? ` · ${t.title}` : ""}
@@ -875,16 +878,6 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         />
                       </div>
                     )}
-                    <span className="muted">
-                      {[
-                        t.fromAzure && "Azure",
-                        t.fromTitle && "Название PR",
-                        t.fromDescription && "Описание PR",
-                        t.manual && "Локально",
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
                     <div className="pr-ticket-actions">
                       <button
                         type="button"

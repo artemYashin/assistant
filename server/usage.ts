@@ -64,6 +64,14 @@ export class UsageLedger {
   clearReviewTraces() {
     this.store.db.prepare("DELETE FROM llm_tool_traces WHERE request_id IN (SELECT id FROM llm_requests WHERE origin='pr_review')").run();
   }
+  hasReviewLog(context: Context, monitor: string, repo: string, number: number) {
+    const latest = this.store.db.prepare("SELECT id,monitor,repo,number FROM pr_reviews ORDER BY created_at DESC,rowid DESC LIMIT 1").get() as any;
+    if (!latest || latest.monitor !== monitor || latest.repo !== repo || latest.number !== number) return false;
+    const ids = this.store.get<string[]>(`review.requests:${latest.id}`, []);
+    return !!this.store.db.prepare(`SELECT 1 FROM llm_requests
+      WHERE origin='pr_review' AND client=? AND project=? AND id IN (SELECT value FROM json_each(?)) LIMIT 1`)
+      .get(context.client, context.project, JSON.stringify(ids));
+  }
   reviewTools(context: Context, monitor: string, repo: string, number: number) {
     const review = this.store.db.prepare(`SELECT r.id FROM pr_reviews r JOIN pr_projects m ON m.id=r.monitor
       WHERE r.monitor=? AND r.repo=? AND r.number=? AND m.client=? AND m.project=? ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1`)

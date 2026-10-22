@@ -1020,11 +1020,13 @@ test("PR cards retain Azure links after removing local links and include title r
   assert.equal(row.tickets.find((v: any) => v.id === 42).fromTitle, true);
 });
 
-test("completed PR pages are bounded, cached and coalesce concurrent requests", async (t) => {
+test("completed PR pages are bounded, refreshed and coalesce concurrent requests", async (t) => {
   const { service } = fixture(t);
   let requests = 0;
   mock(t, [], (url) => {
     if (url.pathname.endsWith("/workitems")) return { value: [] };
+    const detail = url.pathname.match(/\/pullrequests\/(\d+)$/);
+    if (detail) return { ...pr(Number(detail[1])), status: "completed", description: "Full archived description" };
     if (url.searchParams.get("searchCriteria.status") !== "completed")
       throw new Error("Unexpected request");
     requests++;
@@ -1049,9 +1051,9 @@ test("completed PR pages are bounded, cached and coalesce concurrent requests", 
   assert.equal(first.items.length, 20);
   assert.equal(first.hasNext, true);
   await service.completed(monitor, 0);
-  assert.equal(requests, 1);
-  const next = await service.completed(monitor, 1);
   assert.equal(requests, 2);
+  const next = await service.completed(monitor, 1);
+  assert.equal(requests, 3);
   assert.equal(next.items[0].number, 21);
   assert.equal(first.items[0].description, "Full archived description");
   assert.equal(first.items[0].in_scope, 0);
@@ -1417,4 +1419,82 @@ test("review skips disabled ticket even when selected before disabling", async t
   await service.reviewNext();
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0][3].ticketEvidence?.tickets || [], []);
+});
+
+
+test("completed PR history caches descriptions and links for a week", async t => {
+  const { service, store } = fixture(t);
+  let revision = 0;
+  const bodies = ["Short description #123456", "Updated #987654"];
+  mock(t, [], url => {
+    if (url.pathname.endsWith("/workitems")) return { value: [{ id: revision ? "555555" : "444444" }] };
+    const item = { ...pr(), status: "completed", closedDate: new Date().toISOString(), title: "Revision " + revision, description: bodies[revision] };
+    if (/\/pullrequests\/1$/.test(url.pathname)) assert.fail("Completed history must not fetch PR details");
+    if (url.searchParams.get("searchCriteria.status") === "completed") return { value: [{ ...item, description: bodies[revision].slice(0, 400) }] };
+  });
+  const monitor = service.monitors()[0].id;
+  const first = await service.completed(monitor, 0);
+  assert.equal(first.items[0].description, bodies[0]);
+  assert.deepEqual(first.items[0].tickets.map((t: { id: number }) => t.id).sort(), [123456, 444444]);
+  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor, "repo", 1, 555555);
+  revision = 1;
+  const next = await service.completed(monitor, 0);
+  assert.equal(next.items[0].title, "Revision 0");
+  assert.equal(next.items[0].description, bodies[0]);
+  assert.deepEqual(next.items[0].tickets.map((t: { id: number }) => t.id).sort(), [123456, 444444, 555555]);
+  assert.equal(next.items[0].tickets.find((t: { id: number }) => t.id === 555555)?.disabled, true);
+});
+
+
+test("active import always reads full PR before parsing even a short innocent-looking list description", async t => {
+  const { service } = fixture(t);
+  let details = 0;
+  const description = "Context ".repeat(100) + "#123456 and #765432";
+  mock(t, [{ ...pr(), title: "Short title", description: "Short summary without a trailing reference." }], url => {
+    if (/\/pullrequests\/1$/.test(url.pathname)) {
+      details++;
+      return { ...pr(), title: "Full title #987654", description };
+    }
+    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+  });
+  await service.sync();
+  assert.equal(details, 1);
+  const row = service.list(context)[0];
+  assert.equal(row.description, description);
+  assert.equal(row.title, "Full title #987654");
+  assert.deepEqual(row.tickets.map((ticket: { id: number }) => ticket.id).sort(), [123456, 765432, 987654]);
+});
+
+
+test("completed cache preserves imported full description and local links until seven days after closure", async t => {
+  const { service, store, agent, preparation } = fixture(t);
+  const full = "Full context ".repeat(100) + " #123456";
+  let completed = false, linkReads = 0;
+  const closed = new Date().toISOString();
+  mock(t, [{ ...pr(), description: "Short" }], url => {
+    if (url.searchParams.get("searchCriteria.status") === "completed")
+      return { value: [{ ...pr(), status: "completed", closedDate: closed, description: "Short" }] };
+    if (/\/pullrequests\/1$/.test(url.pathname)) {
+      assert.equal(completed, false, "Completed history must not request full details");
+      return { ...pr(), description: full };
+    }
+    if (url.pathname.endsWith("/workitems")) { linkReads++; return { value: [] }; }
+    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+  });
+  await service.sync();
+  const monitor = service.monitors()[0].id;
+  store.db.prepare("INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?,?,?,?)").run(monitor, "repo", 1, 654321);
+  completed = true;
+  const first = await service.completed(monitor, 0);
+  assert.equal(first.items[0].description, full);
+  assert.ok(first.items[0].tickets.some((ticket: { id: number }) => ticket.id === 654321));
+  const reads = linkReads;
+  const restarted = new PullRequests(store, agent, preparation);
+  assert.equal((await restarted.completed(monitor, 0)).items[0].description, full);
+  assert.equal(linkReads, reads, "Persisted cache must avoid repeated Azure link requests");
+  restarted.purgeCompleted(Date.parse(closed) + 6 * 86400000);
+  assert.equal(restarted.list(context, { monitor, repo: "repo", number: 1 }).length, 1);
+  restarted.purgeCompleted(Date.parse(closed) + 7 * 86400000 + 1);
+  assert.equal(restarted.list(context, { monitor, repo: "repo", number: 1 }).length, 0);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pr_ticket_links WHERE monitor=?").get(monitor) as { n: number }).n, 0);
 });

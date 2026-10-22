@@ -66,7 +66,7 @@ export function CompletedPullRequests({
       <div className="page-heading">
         <div>
           <h1>Завершённые PR</h1>
-          <p>Смёрженные за последние 30 дней · по 20 на странице.</p>
+          <p>Смёрженные за последние 7 дней · по 20 на странице.</p>
         </div>
       </div>
       <div className="completed-pr-controls">
@@ -93,8 +93,8 @@ export function CompletedPullRequests({
         </button>
       </div>
       <p className="muted">
-        Загрузка только при открытии страницы. Кеш — 1 минута; фильтр required
-        reviewer здесь не применяется.
+        Список загружается из Azure. Описание и связи хранятся локально неделю после
+        завершения PR; полное описание из импорта сохраняется. Фильтры ревьюеров здесь не применяются.
       </p>
       {error && (
         <p className="error" role="alert">
