@@ -136,3 +136,53 @@ test("promoting developers preserves IDs and assignments and widens visibility",
   service.add(["Bob"],{client:"",project:""});
   assert.throws(()=>service.edit(person.id,"Bob",{client:"",project:""}),/уже есть/);
 });
+
+test("chat tools discover inherited developers, assign across scopes and retain existing assignments", async t => {
+  const { Agent } = await import("../server/agent.js");
+  const { Approvals } = await import("../server/approvals.js");
+  const { listLocalTickets } = await import("../server/ticket-list.js");
+  const store=fixture(t), service=new LocalDevelopers(store);
+  store.set("settings",{...store.rawSettings(),...context});
+  store.addContext(context);
+  ticket(store);
+  service.add(["Global"],{client:"",project:""});
+  service.add(["Customer dev"],{client:context.client,project:""});
+  service.add(["Project dev"],context);
+  service.add(["Sibling"],{...context,project:"Sibling"});
+  service.add(["Other"],{client:"Other",project:"Other"});
+  const visible=service.list(context);
+  let calls=0;
+  t.mock.method(globalThis,"fetch",async()=>{throw new Error("Local developer tools must not request Azure");});
+  const client={start:async()=>{},stop:async()=>{},createSession:async(config:any)=>{
+    let available=config.tools;
+    return {on:()=>{},abort:async()=>{},setTools:async(tools:any[])=>{available=tools;},
+      sendAndWait:async()=>{
+        const call=async(name:string,args:any)=>{calls++;return available.find((tool:any)=>tool.name===name).handler(args,{});};
+        await call("load_tools",{names:["list_local_developers","set_local_ticket_developers"]});
+        const result=await call("list_local_developers",{ticketId:42});
+        assert.deepEqual(result.developers.map((p:any)=>p.name).sort(),["Customer dev","Global","Project dev"]);
+        assert.equal(result.developers.find((p:any)=>p.name==="Global").client,"");
+        const assigned=await call("set_local_ticket_developers",{ticketId:42,developerIds:visible.map(p=>p.id)});
+        assert.equal(assigned.azureChanged,false);
+        assert.equal(assigned.developers.length,3);
+        return {data:{content:"Поручение обновлено."}};
+      }};
+  }};
+  const agent=new Agent(store,new Approvals(store,async()=>({id:"unused"})),()=>client as any);
+  await agent.chat("Назначь Global, Customer dev и Project dev на тикет 42",context);
+  assert.equal(calls,3);
+  const listed=listLocalTickets(store,{ids:[42],fields:["localDevelopers"]});
+  assert.equal(listed.tickets[0].localDevelopers.length,3);
+  const person=visible.find(p=>p.name==="Project dev")!;
+  service.edit(person.id,person.name,{client:"Other",project:"Other"});
+  const tools=localDeveloperTools(store,context,"Убери Global из тикета 42",()=>{});
+  const readTool=tools.find(tool=>tool.name==="list_local_developers") as {handler:(args:{ticketId:number},context:any)=>Promise<any>};
+  const read=await readTool.handler({ticketId:42},{});
+  assert.ok(!read.developers.some((p:any)=>p.id===person.id));
+  assert.ok(read.assigned.some((p:any)=>p.id===person.id));
+  await tools[1].handler!({ticketId:42,developerIds:read.assigned.filter((p:any)=>p.name!=="Global").map((p:any)=>p.id)},{} as any);
+  assert.equal(service.assigned(42).length,2);
+  const foreign=service.list({client:"Other",project:"Other"}).find(p=>p.name==="Other")!;
+  const denied=localDeveloperTools(store,context,"Назначь Other на тикет 42",()=>{})[1];
+  await assert.rejects(async()=>denied.handler!({ticketId:42,developerIds:[foreign.id]},{} as any));
+});
