@@ -23,3 +23,16 @@ test("export tool dispatches local IDs including trash, without duplicates or bo
   await assert.rejects(() => ticketExportTool(store, () => { throw new Error("stopped"); }, () => {}).handler!({ ids: [42], mode: "open" }, {} as any) as Promise<any>, /stopped/);
   assert.equal(events.length, 2);
 });
+
+test("export columns are ordered, deduplicated and independent of ticket selection", async t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-export-columns-")); const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const events: any[] = [];
+  const tool = ticketExportTool(store, () => {}, event => events.push(event));
+  const result: any = await tool.handler!({ ids: [], mode: "add", columns: ["state", "id", "title", "state"] }, {} as any);
+  assert.deepEqual(result.columns, ["state", "id", "title"]);
+  assert.deepEqual(events[0], { stage: "ticket_export", ids: [], mode: "add", columns: ["state", "id", "title"] });
+  const { ticketExportContextSchema, exportColumnSchema } = await import("../server/ticket-export-context.js");
+  assert.equal(exportColumnSchema.safeParse("unknown-column").success, false);
+  assert.equal(ticketExportContextSchema.safeParse({ state: "minimized", ids: [42], total: 1, columns: ["title", "id"], format: "csv" }).success, true);
+});

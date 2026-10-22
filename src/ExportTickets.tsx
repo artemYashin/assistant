@@ -1,3 +1,4 @@
+import type { TicketExportContext } from "../server/ticket-export-context.js";
 import { useDragAutoScroll } from "./useDragAutoScroll.js";
 import { StatusBadge } from "./TicketControls.js";
 import {
@@ -22,19 +23,35 @@ import {
 import { ticketsCsv, type CsvTicket } from "./tickets-csv.js";
 import { api } from "./api.js";
 
+let exportContext: TicketExportContext = {
+  state: "closed",
+  ids: [],
+  total: 0,
+  columns: [...defaultExportColumns],
+  format: "xlsx",
+};
+export function currentTicketExport(): TicketExportContext {
+  return structuredClone(exportContext);
+}
 let exportIsMinimized = false;
 const minimizedEvent = "orbit:export-minimized";
 const eventName = "orbit:export-tickets";
 /** Open the shared export composer with ticket snapshots or local ticket IDs. */
-export function openTicketExport(tickets: (CsvTicket | number)[]) {
+export function openTicketExport(
+  tickets: (CsvTicket | number)[],
+  columns?: ExportColumnKey[],
+) {
   window.dispatchEvent(
-    new CustomEvent(eventName, { detail: { tickets, mode: "open" } }),
+    new CustomEvent(eventName, { detail: { tickets, mode: "open", columns } }),
   );
 }
 /** Append to an existing export without reopening it when minimized. */
-export function addTicketsToExport(tickets: (CsvTicket | number)[]) {
+export function addTicketsToExport(
+  tickets: (CsvTicket | number)[],
+  columns?: ExportColumnKey[],
+) {
   window.dispatchEvent(
-    new CustomEvent(eventName, { detail: { tickets, mode: "add" } }),
+    new CustomEvent(eventName, { detail: { tickets, mode: "add", columns } }),
   );
 }
 export function ExportTickets({
@@ -96,6 +113,7 @@ export function TicketExportDialog({
   };
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [active, setActive] = useState(false);
   const [minimized, setMinimized] = useState(false);
   useEffect(() => {
     exportIsMinimized = minimized;
@@ -140,19 +158,56 @@ export function TicketExportDialog({
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
   const columns = order.filter((key) => enabled.includes(key));
+  useEffect(() => {
+    exportContext = {
+      state: !active ? "closed" : minimized ? "minimized" : "open",
+      ids: active ? snapshot.slice(0, 200).map((t) => t.id) : [],
+      total: active ? snapshot.length : 0,
+      columns,
+      format,
+    };
+  }, [active, minimized, snapshot, order, enabled, format]);
+  useEffect(
+    () => () => {
+      exportContext = {
+        state: "closed",
+        ids: [],
+        total: 0,
+        columns: [...defaultExportColumns],
+        format: "xlsx",
+      };
+    },
+    [],
+  );
   const trash =
     snapshot.length > 0 && snapshot.every((ticket) => ticket.inTrash);
   useEffect(() => {
     const open = (event: Event) => {
       if (lock.current) return;
-      const { tickets, mode } =
-        (
-          event as CustomEvent<{
-            tickets: (CsvTicket | number)[];
-            mode: "open" | "add";
-          }>
-        ).detail || {};
+      const {
+        tickets,
+        mode,
+        columns: requestedColumns,
+      } = (
+        event as CustomEvent<{
+          tickets: (CsvTicket | number)[];
+          mode: "open" | "add";
+          columns?: ExportColumnKey[];
+        }>
+      ).detail || {};
       if (!Array.isArray(tickets)) return;
+      if (requestedColumns) {
+        const selected = [...new Set(requestedColumns)].filter((key) =>
+          exportColumns.some((column) => column.key === key),
+        );
+        if (selected.length) {
+          setEnabled(selected);
+          setOrder((previous) => [
+            ...selected,
+            ...previous.filter((key) => !selected.includes(key)),
+          ]);
+        }
+      }
       request.current?.abort();
       const controller = new AbortController();
       request.current = controller;
@@ -174,6 +229,7 @@ export function TicketExportDialog({
       );
       draftTickets.current = initial;
       draftActive.current = true;
+      setActive(true);
       setError("");
       setQuery("");
       setAdding(false);
@@ -236,6 +292,7 @@ export function TicketExportDialog({
     autoScroll.stop();
     dialog.current?.close();
     draftActive.current = false;
+    setActive(false);
     minimizedRef.current = false;
     setMinimized(false);
     setSnapshot([]);
@@ -309,6 +366,7 @@ export function TicketExportDialog({
       anchor.remove();
       dialog.current?.close();
       draftActive.current = false;
+      setActive(false);
       minimizedRef.current = false;
       setMinimized(false);
       setSnapshot([]);

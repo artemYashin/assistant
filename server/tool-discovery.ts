@@ -23,7 +23,7 @@ const catalog: Record<string, string> = {
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
   sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
-  show_ticket_export: "Open Excel/CSV export with local ticket IDs, or add IDs to the existing draft; no download or Azure calls.",
+  show_ticket_export: "Open/extend the current Excel/CSV export; optionally choose enabled columns in order. Preserves existing tickets; no download or Azure calls.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; returns reopen links, no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
   get_ticket_catalog: "List locally known Azure ticket types and statuses by type for search filters; no Azure calls.",

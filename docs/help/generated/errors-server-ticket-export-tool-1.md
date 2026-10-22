@@ -9,10 +9,10 @@
 
 Подключение Azure изменилось
 
-Источник: server/ticket-export-tool.ts:25.
+Источник: server/ticket-export-tool.ts:36.
 
 ### Сообщение
 
 Открытие экспорта требует подключённого интерфейса чата
 
-Источник: server/ticket-export-tool.ts:27.
+Источник: server/ticket-export-tool.ts:38.
