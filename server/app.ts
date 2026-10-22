@@ -85,6 +85,7 @@ const settingsSchema = z
     syncSchedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
     teamsEnabled: z.boolean().default(false),
     azureAutoImport: z.boolean().default(false),
+    azureImportAssignees:z.array(z.object({id:text.min(1),name:text.min(1),email:z.string().trim().min(1).max(320)})).max(50).default([]),
     azureTypes: z.array(text.min(1)).max(50).default([]),
     azureStates: z.array(text.min(1)).max(100).default([]),
     typeColors: z
@@ -389,7 +390,7 @@ export function createApp(
   );
   app.put("/api/settings", (req, res) => {
     const parsed = settingsSchema.parse(req.body);
-    const { azurePat, ...settings } = parsed;
+    const { azurePat, azureImportAssignees: _projectImportAssignees, ...settings } = parsed;
     if (settings.azureUrl) settings.azureUrl = azureBase(settings.azureUrl);
     if (settings.project && !settings.client)
       throw new AppError(400, "Проект должен принадлежать заказчику");

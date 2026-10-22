@@ -1656,7 +1656,7 @@ export class Connectors {
     this.store.audit("ticket.tracked", String(id));
     return item.id;
   }
-  async syncTickets(importMine = false, automatic = false) {
+  async syncTickets(importSelected = false, automatic = false) {
     const s = this.store.settings();
     const pat = this.store.secret("azure.pat");
     const ids = new Set(
@@ -1666,12 +1666,12 @@ export class Connectors {
           .all(this.store.source(s)) as { id: number }[]
       ).map((x) => x.id),
     );
-    const mine = new Set<number>();
-    if (importMine || (automatic && s.azureAutoImport && s.azureImportAssignees.length)) {
-      if (automatic && (!s.azureTypes.length || !s.azureStates.length))
+    const matched = new Set<number>();
+    if ((importSelected || (automatic && s.azureAutoImport)) && s.azureImportAssignees.length) {
+      if (!s.azureTypes.length || !s.azureStates.length)
         throw new AppError(
           400,
-          "Для автоимпорта выберите типы и статусы задач",
+          "Выберите типы и статусы задач: Заказчики и проекты → Автоматический импорт",
         );
       const quote = (v: string) => "'" + v.replace(/'/g, "''") + "'";
       const result = await this.azure(
@@ -1681,17 +1681,15 @@ export class Connectors {
           body: JSON.stringify({
             query:
               "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND " +
-              (automatic ? "[System.AssignedTo] IN (" + s.azureImportAssignees.map(person => quote(person.email)).join(",") + ")" : "[System.AssignedTo] = @Me") +
-              (automatic
-                ? ` AND [System.WorkItemType] IN (${s.azureTypes.map(quote).join(",")}) AND [System.State] IN (${s.azureStates.map(quote).join(",")})`
-                : "") +
+              "[System.AssignedTo] IN (" + s.azureImportAssignees.map(person => quote(person.email)).join(",") + ")" +
+              ` AND [System.WorkItemType] IN (${s.azureTypes.map(quote).join(",")}) AND [System.State] IN (${s.azureStates.map(quote).join(",")})` +
               " ORDER BY [System.ChangedDate] DESC",
           }),
         },
         s,
         pat,
       );
-      for (const item of result.workItems || []) { mine.add(item.id); ids.add(item.id); }
+      for (const item of result.workItems || []) { matched.add(item.id); ids.add(item.id); }
     }
     const list = [...ids].filter(
       (id) =>
@@ -1701,7 +1699,7 @@ export class Connectors {
           )
           .get(this.store.source(s), id),
     );
-    const stages = [list.filter(id => mine.has(id)), list.filter(id => !mine.has(id))];
+    const stages = [list.filter(id => matched.has(id)), list.filter(id => !matched.has(id))];
     for (const stage of stages) {
       for (let i = 0; i < stage.length; i += 200) {
         const result = await this.azure(
@@ -1737,7 +1735,7 @@ export class Connectors {
         for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); }
       }
     }
-    if (list.length || importMine || (automatic && s.azureAutoImport))
+    if (list.length || importSelected || (automatic && s.azureAutoImport))
       this.store.set(
         "tickets.lastSync:" + this.store.source(s),
         new Date().toISOString(),

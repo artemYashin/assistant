@@ -201,10 +201,18 @@ test("comment images accept HTML attribute spacing and unquoted sources, dedupli
 test("sync refreshes assigned tickets first then other locally tracked tickets with content", async t => {
   const { store, connectors } = fixture(t);
   const source = store.source();
+  store.set(store.ticketImportKey(store.settings()),{azureAutoImport:false,azureImportAssignees:[{id:"a",name:"A",email:"a@example.test"},{id:"b",name:"B",email:"b@example.test"}],azureTypes:["Bug"],azureStates:["Active"]});
   for (const id of [42, 43]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, "Old", "Old", "Other", "Bug", "url", null, "old");
   const batches: number[][] = [];
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
-    if (String(url).includes("/wiql")) return Response.json({ workItems: [{ id: 43 }, { id: 44 }] });
+    if (String(url).includes("/wiql")) {
+      const query=JSON.parse(init.body).query;
+      assert.ok(query.includes("[System.AssignedTo] IN ('a@example.test','b@example.test')"));
+      assert.ok(query.includes("[System.WorkItemType] IN ('Bug')"));
+      assert.ok(query.includes("[System.State] IN ('Active')"));
+      assert.ok(!query.includes("@Me"));
+      return Response.json({ workItems: [{ id: 43 }, { id: 44 }] });
+    }
     const ids = JSON.parse(init.body).ids; batches.push(ids);
     return Response.json({ value: ids.map((id: number) => ({ id, fields: {
       "System.TeamProject": "P", "System.Title": `Fresh ${id}`, "System.State": "Active",
@@ -298,5 +306,6 @@ test("automatic import without selected assignees never falls back to current us
  store.set(store.ticketImportKey(store.settings()),{azureAutoImport:true,azureTypes:["Bug"],azureStates:["Active"]});
  t.mock.method(globalThis,"fetch",async()=>{throw new Error("Unexpected Azure request");});
  await connectors.syncTickets(false,true);
+ await connectors.syncTickets(true);
  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,0);
 });

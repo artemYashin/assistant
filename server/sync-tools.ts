@@ -15,7 +15,7 @@ export function synchronizationTools(store: Store, connectors: Connectors | unde
   };
   return [
     ...(connectors ? [defineTool("sync_tickets", {
-      description: "Refresh tracked tickets and import tickets assigned to the user from the current Azure connection, exactly like Synchronize tickets in UI. ONLY when the user explicitly asks to refresh/synchronize/import their tickets. No extra confirmation. Never call as a prerequisite for ordinary local search/list/count. Returns count only, not ticket bodies. Retained trash is skipped. At most once per request.",
+      description: "Refresh tracked tickets and import tickets matching the current project’s configured Azure assignees, work item types and states, exactly like Synchronize tickets in UI. ONLY when the user explicitly asks to refresh/synchronize/import tickets. No extra confirmation. Never call as a prerequisite for ordinary local search/list/count. Manual sync uses the saved filters even when background auto-import is disabled. Without selected assignees, only tracked tickets are refreshed; never fall back to the current user or all users. Returns count only, not ticket bodies. Retained trash is skipped. At most once per request.",
       parameters: z.object({}).strict(),
       handler: async () => once("tickets", async () => ({ updated: true, ...await connectors.syncTickets(true) })),
     }), defineTool("sync_teams_chats", {
