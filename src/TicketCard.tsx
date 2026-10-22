@@ -778,7 +778,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
   );
 }
 
-function TicketCopyButton({
+export function TicketCopyButton({
   value,
   label,
   link = false,

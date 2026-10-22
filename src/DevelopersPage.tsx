@@ -3,7 +3,8 @@ import {
   type DeveloperStatusGroups,
 } from "./developer-status.js";
 import { useEffect, useId, useState } from "react";
-import { Link } from "react-router-dom";
+import { TicketCopyButton } from "./TicketCard.js";
+import { shareTicketUrl } from "./azure-ticket-link.js";
 import {
   Users,
   UserRoundMinus,
@@ -377,17 +378,24 @@ function DeveloperCard({
               className="developer-board-ticket"
               key={`${ticket.source}:${ticket.id}`}
             >
-              <Link
-                to={
-                  ticket.removedAt !== undefined
-                    ? `/tickets?${new URLSearchParams({ tab: "trash", id: String(ticket.id), source: ticket.source })}`
-                    : ticketPath(ticket.id, ticket.source)
-                }
-                title={ticket.title}
-              >
-                #{ticket.id} · {ticket.title}
-              </Link>
-              <div>
+              <div className="developer-ticket-heading">
+                <TicketCopyButton
+                  value={shareTicketUrl(ticketPath(ticket.id, ticket.source))}
+                  label={`Скопировать ссылку на тикет #${ticket.id} в Azure DevOps`}
+                  link
+                />
+                <button
+                  type="button"
+                  className="developer-ticket-open"
+                  title={ticket.title}
+                  onClick={() => window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
+                    detail: { source: ticket.source, tickets: [{ id: ticket.id, title: ticket.title }] },
+                  }))}
+                >
+                  <span className="developer-ticket-number">#{ticket.id}</span>{" "}{ticket.title}
+                </button>
+              </div>
+              <div className="developer-ticket-badges">
                 <StatusBadge
                   state={ticket.type}
                   kind="type"

@@ -5802,23 +5802,35 @@ summary > svg {
   overscroll-behavior: contain;
 }
 .developer-board-ticket {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  margin: 0 3px 8px 0;
+  border: 1px solid #dbe5df;
+  border-radius: 9px;
+  background: #f8fbf9;
 }
-.developer-board-ticket > a {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
+.developer-ticket-heading { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.developer-ticket-heading > .ticket-copy-control { flex-shrink: 0; }
+.developer-ticket-open {
+  display: block;
+  min-width: 0;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+  color: #294f40;
+  font: inherit;
   font-weight: 600;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
 }
-.developer-board-ticket > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 7px;
-}
+.developer-ticket-open:hover { background: transparent; color: #157343; text-decoration: underline; }
+.developer-ticket-open:focus-visible { outline: 2px solid #63a780; outline-offset: 3px; }
+.developer-ticket-number { color: #287342; white-space: nowrap; margin-right: 5px; }
+.developer-ticket-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .developer-board-pagination {
   margin-bottom: 14px;
   display: flex;
