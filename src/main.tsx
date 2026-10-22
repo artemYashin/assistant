@@ -2,7 +2,7 @@ import { AzurePatPermissions } from "./AzurePatPermissions.js";
 import { ChatMessageContext } from "./ChatMessageContext.js";
 import { messageContextBadges } from "../server/chat-message-context.js";
 import { ConfirmButton } from "./ConfirmButton.js";
-import { FieldDictation } from "./FieldDictation.js";
+import { ComposerDictation, FieldDictation } from "./FieldDictation.js";
 import { Fragment, useCallback } from "react";
 import { useChatToggleShortcut } from "./useChatToggleShortcut.js";
 import { ExportMemoryButton } from "./ExportMemory.js";
@@ -2904,15 +2904,10 @@ function Assistant({
     [working, setWorking] = useState(false),
     [clearing, setClearing] = useState(false),
     [error, setError] = useState(""),
-    [recording, setRecording] = useState(false),
-    [transcribing, setTranscribing] = useState(false);
-  const recorder = useRef<MediaRecorder | null>(null),
-    stream = useRef<MediaStream | null>(null),
-    timer = useRef<ReturnType<typeof setTimeout> | null>(null),
-    bottom = useRef<HTMLDivElement>(null),
+    [recording, setRecording] = useState(false);
+  const bottom = useRef<HTMLDivElement>(null),
     historyGeneration = useRef(0),
-    contextKey = useRef(""),
-    mounted = useRef(true);
+    contextKey = useRef("");
   const key = JSON.stringify(context);
   contextKey.current = key;
   useEffect(() => {
@@ -2954,15 +2949,6 @@ function Assistant({
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [history.at(-1)?.id, working]);
-  useEffect(
-    () => () => {
-      mounted.current = false;
-      if (timer.current) clearTimeout(timer.current);
-      if (recorder.current?.state === "recording") recorder.current.stop();
-      stream.current?.getTracks().forEach((t) => t.stop());
-    },
-    [],
-  );
   useEffect(() => {
     const handle = (event: Event) => {
       const task = (event as CustomEvent<AnalyzeTicketRequest>).detail;
@@ -2971,7 +2957,6 @@ function Assistant({
         clearing ||
         recording ||
         shortcutBusy ||
-        transcribing ||
         analysisPending.current
       ) {
         task.reject(
@@ -3025,9 +3010,9 @@ function Assistant({
     };
     window.addEventListener(analyzeTicketEvent, handle);
     return () => window.removeEventListener(analyzeTicketEvent, handle);
-  }, [key, working, clearing, shortcutBusy, recording, transcribing, onExpand]);
+  }, [key, working, clearing, shortcutBusy, recording, onExpand]);
   async function chooseChat(id?: string, startVoice = false) {
-    if (working || clearing || shortcutBusy || recording || transcribing) return;
+    if (working || clearing || shortcutBusy || recording) return;
     if (!id && startVoice && sessionId && !history.length && !hasOlder && !attachment) {
       setVoiceStartSession(sessionId);
       onExpand();
@@ -3092,7 +3077,6 @@ function Assistant({
       working ||
       clearing ||
       recording ||
-      transcribing ||
       !sessionId ||
       !attachment
     )
@@ -3126,7 +3110,7 @@ function Assistant({
     }
   }
   async function clearHistory() {
-    if (working || clearing || shortcutBusy || recording || transcribing) return;
+    if (working || clearing || shortcutBusy || recording) return;
     if (clearChatLock.current || !sessionId) return;
     clearChatLock.current = true;
     setClearChatError("");
@@ -3253,66 +3237,6 @@ function Assistant({
       setWorking(false);
     }
   }
-  async function microphone() {
-    if (recording) {
-      recorder.current?.stop();
-      return;
-    }
-    const voiceGeneration = historyGeneration.current;
-    try {
-      setError("");
-      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder)
-        throw new Error(
-          "Микрофон требует localhost или HTTPS и браузер с MediaRecorder.",
-        );
-      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.current = media;
-      const chunks: Blob[] = [];
-      const mime = [
-        "audio/webm;codecs=opus",
-        "audio/mp4",
-        "audio/ogg;codecs=opus",
-      ].find((t) => MediaRecorder.isTypeSupported(t));
-      const rec = new MediaRecorder(media, mime ? { mimeType: mime } : {});
-      recorder.current = rec;
-      rec.ondataavailable = (e) => {
-        if (e.data.size) chunks.push(e.data);
-      };
-      rec.onstop = async () => {
-        if (timer.current) clearTimeout(timer.current);
-        media.getTracks().forEach((t) => t.stop());
-        if (!mounted.current) return;
-        setRecording(false);
-        setTranscribing(true);
-        try {
-          const form = new FormData();
-          form.append(
-            "audio",
-            new Blob(chunks, { type: rec.mimeType }),
-            "voice",
-          );
-          const r = await api("/voice/transcribe", "POST", form);
-          if (!r.text?.trim())
-            throw new Error("Речь не распознана. Попробуйте ещё раз.");
-          if (voiceGeneration === historyGeneration.current)
-            setPrompt((p) => `${p}${p ? " " : ""}${r.text}`);
-        } catch (e: any) {
-          if (voiceGeneration === historyGeneration.current)
-            setError(e.message);
-        } finally {
-          setTranscribing(false);
-        }
-      };
-      rec.start();
-      setRecording(true);
-      timer.current = setTimeout(() => {
-        if (rec.state === "recording") rec.stop();
-      }, 120000);
-    } catch (e: any) {
-      stream.current?.getTracks().forEach((t) => t.stop());
-      setError(e.message);
-    }
-  }
   return (
     <aside
       id="assistant-panel"
@@ -3320,7 +3244,7 @@ function Assistant({
       hidden={!open}
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
-      <VoiceShortcut currentPress={voiceCurrentPress} newPress={voiceNewPress} currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording && !transcribing}
+      <VoiceShortcut currentPress={voiceCurrentPress} newPress={voiceNewPress} currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording}
         autoStart={voiceStartSession === sessionId} onAutoStarted={() => setVoiceStartSession("")}
         onNewChat={() => { void chooseChat(undefined, true).catch(e => setError(e.message)); }}
         title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />
@@ -3338,7 +3262,7 @@ function Assistant({
           context={context}
           activeId={sessionId}
           disabled={
-            working || clearing || shortcutBusy || recording || transcribing || !sessionId
+            working || clearing || shortcutBusy || recording || !sessionId
           }
           onSelect={chooseChat}
         />
@@ -3476,7 +3400,7 @@ function Assistant({
                 aria-label="Не прикреплять тикет к сообщению"
                 title="Убрать прикреплённый тикет. Переписка сохранится."
                 disabled={
-                  working || clearing || shortcutBusy || recording || transcribing || !sessionId
+                  working || clearing || shortcutBusy || recording || !sessionId
                 }
                 onClick={() => void detachAnalysis()}
               >
@@ -3533,7 +3457,7 @@ function Assistant({
             aria-label="Сообщение ассистенту"
             placeholder={
               recording
-                ? "Слушаю… нажмите стоп, когда закончите"
+                ? "Голосовой ввод…"
                 : "Спросите или попросите запомнить…"
             }
             value={prompt}
@@ -3543,7 +3467,7 @@ function Assistant({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (connected && !recording && !transcribing) send(e);
+                if (connected && !recording) send(e);
               }
             }}
           />
@@ -3561,7 +3485,6 @@ function Assistant({
                 working ||
                 clearing ||
                 recording ||
-                transcribing ||
                 !history.length
               }
               onClick={() => { setClearChatError(""); clearChatDialog.current?.showModal(); }}
@@ -3575,22 +3498,8 @@ function Assistant({
             {working ? <button type="button" className="chat-stop-button" title="Остановить ответ" onClick={() => api("/conversation/stop", "POST", {}).catch(e => setError(e.message))}>
               <Square size={15} /><span>Стоп</span>
             </button> : <>
-            <button
-              type="button"
-              className={`mic-button ${recording ? "recording" : ""}`}
-              onClick={microphone}
-              disabled={transcribing || working || shortcutBusy}
-              title={recording ? "Остановить запись" : "Голосовой ввод · M M — запись с отправкой, даже из поля ввода"}
-              aria-label={recording ? "Остановить запись" : "Голосовой ввод"}
-            >
-              {transcribing ? (
-                <LoaderCircle size={18} className="spin" />
-              ) : recording ? (
-                <Square size={16} />
-              ) : (
-                <Mic size={18} />
-              )}
-            </button>
+            <ComposerDictation key={key + ":" + sessionId} target={promptInput}
+              enabled={!working && !clearing && !shortcutBusy && !!sessionId} onBusy={setRecording} />
 
             <button
               className="send-button"
@@ -3598,7 +3507,6 @@ function Assistant({
                 !prompt.trim() ||
                 working ||
                 recording ||
-                transcribing ||
                 !connected ||
                 clearing ||
                 !sessionId
@@ -3620,7 +3528,7 @@ function Assistant({
         {clearChatError && <p className="error" role="alert">{clearChatError}</p>}
         <div className="clear-chat-actions">
           <button type="button" className="secondary" autoFocus disabled={clearing} onClick={() => clearChatDialog.current?.close()}>Отмена</button>
-          <button type="button" className="clear-chat-confirm" disabled={clearing || working || recording || transcribing || shortcutBusy} onClick={() => void clearHistory()}><Trash2 size={15} />{clearing ? "Очищаю…" : "Очистить чат"}</button>
+          <button type="button" className="clear-chat-confirm" disabled={clearing || working || recording || shortcutBusy} onClick={() => void clearHistory()}><Trash2 size={15} />{clearing ? "Очищаю…" : "Очистить чат"}</button>
         </div>
       </dialog>
     </aside>

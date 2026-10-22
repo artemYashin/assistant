@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Mic } from "lucide-react";
 import { VoiceShortcut } from "./VoiceShortcut.js";
 
 export function requestFieldDictation(target: HTMLTextAreaElement | HTMLInputElement | null) {
@@ -62,4 +63,26 @@ export function FieldDictation({ binding, press }: { binding: string; press: str
       return !!insert.current;
     }} onNewChat={() => {}} autoStart={autoStart} onAutoStarted={() => setAutoStart(false)}
     onBusy={value => { busy.current = value; }} onText={text => { insert.current?.(text); insert.current = null; }} />;
+}
+
+/** Composer dictation shares the voice popup but only edits the captured draft. */
+export function ComposerDictation({ target, enabled, onBusy }: {
+  target: React.RefObject<HTMLTextAreaElement | null>; enabled: boolean; onBusy: (busy: boolean) => void;
+}) {
+  const insert = useRef<((text: string) => void) | null>(null);
+  const [autoStart, setAutoStart] = useState(false);
+  const [busy, setBusy] = useState(false);
+  return <>
+    <button type="button" className="mic-button" aria-label="Голосовой ввод" title="Продиктовать текст в поле сообщения без отправки"
+      disabled={!enabled || busy || autoStart} onMouseDown={event => event.preventDefault()}
+      onClick={() => {
+        if (document.querySelector(".voice-shortcut-dialog[open]")) return;
+        target.current?.focus();
+        insert.current = captureField(target.current);
+        if (insert.current) setAutoStart(true);
+      }}><Mic size={18} /></button>
+    <VoiceShortcut fieldMode enabled={enabled} title="Сообщение ассистенту · без отправки" currentKey="" newKey=""
+      onOpen={() => false} onNewChat={() => {}} autoStart={autoStart} onAutoStarted={() => setAutoStart(false)}
+      onBusy={value => { setBusy(value); onBusy(value); }} onText={text => { insert.current?.(text); insert.current = null; }} />
+  </>;
 }
