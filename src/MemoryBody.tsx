@@ -48,7 +48,7 @@ export function MemoryBody({
   if (!editing)
     return (
       <>
-        <MemoryProposalContent summary={summary} body={body} collapsible={!proposal} />
+        <MemoryProposalContent summary={summary} body={body} collapsible />
         <div className="memory-edit-actions">
         <button
           className="secondary"

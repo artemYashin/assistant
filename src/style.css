@@ -9434,3 +9434,14 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .ticket-cache-notice { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; padding: 8px 10px; margin-bottom: 10px; border: 1px solid #e5d29a; border-radius: 7px; background: #fff8e5; color: #755c25; font-size: 12px; line-height: 1.45; }
 .ticket-cache-notice > svg { flex-shrink: 0; margin-top: 1px; }
 .ticket-cache-notice small { margin-top: 3px; color: #806e47; font-size: 11px; }
+
+.memory-proposals .memory-proposal-heading { gap: 8px 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.memory-proposal-heading > strong { flex: 1 1 240px; min-width: 0; }
+.memory-proposal-context { min-width: 0; max-width: 40%; margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.memory-proposal-heading > .ticket-state-badge { flex-shrink: 0; }
+.memory-proposals .memory-description { padding: 0; overflow: hidden; }
+.memory-proposals .memory-description > .memory-markdown { max-height: 350px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; margin: 0; padding: 12px 14px; }
+@media (max-width: 600px) {
+  .memory-proposal-heading > strong { flex-basis: 100%; }
+  .memory-proposal-context { flex: 1; max-width: none; margin-left: 0; }
+}
