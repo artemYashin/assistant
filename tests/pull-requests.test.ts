@@ -1196,3 +1196,44 @@ for (const codeDepth of ["low", "below_medium", "medium", "high"] as const) {
     assert.equal(calls[0][3].codeDepth, codeDepth);
   });
 }
+
+for (const action of ["abandon", "draft", "publish"] as const) {
+  test(`PR ${action} writes only its state and resynchronizes afterwards`, async t => {
+    const { store, service } = fixture(t);
+    const item = { ...pr(), isDraft: action === "publish" };
+    const items = [item]; let writes = 0, readsAfterWrite = 0;
+    mock(t, items, (url, init) => {
+      if (init.method === "PATCH") {
+        writes++;
+        assert.deepEqual(JSON.parse(init.body), action === "abandon" ? { status: "abandoned" } : { isDraft: action === "draft" });
+        if (action === "abandon") { item.status = "abandoned"; items.splice(0); }
+        else item.isDraft = action === "draft";
+        return item;
+      }
+      if (writes && url.pathname.endsWith("/pullrequests")) readsAfterWrite++;
+    });
+    await service.sync();
+    const monitor = service.monitors()[0].id;
+    const result = await service.changeState(monitor, "repo", 1, action);
+    assert.equal(result.updated, true); assert.equal(writes, 1); assert.ok(readsAfterWrite);
+    const saved = store.db.prepare("SELECT draft,in_scope FROM pull_requests WHERE monitor=? AND repo='repo' AND number=1").get(monitor) as any;
+    if (action === "abandon") assert.equal(saved.in_scope, 0);
+    else assert.equal(saved.draft, Number(action === "draft"));
+  });
+}
+
+test("PR state changes reject closed PRs without writes and preserve state on denied PATCH", async t => {
+  const { store, service } = fixture(t);
+  const item = pr(); let writes = 0;
+  mock(t, [item], (_url, init) => {
+    if (init.method === "PATCH") { writes++; return Response.json({ message: "Denied" }, { status: 403 }); }
+  });
+  await service.sync(); const monitor = service.monitors()[0].id;
+  item.status = "completed";
+  await assert.rejects(service.changeState(monitor, "repo", 1, "draft"), /уже закрыт/);
+  assert.equal(writes, 0);
+  item.status = "active";
+  await assert.rejects(service.changeState(monitor, "repo", 1, "draft"), /403/);
+  assert.equal(writes, 1);
+  assert.equal((store.db.prepare("SELECT draft FROM pull_requests WHERE monitor=?").get(monitor) as any).draft, 0);
+});

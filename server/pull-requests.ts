@@ -890,6 +890,45 @@ export class PullRequests {
       }
     }
   }
+  private stateChanges = new Set<string>();
+  async changeState(monitor: string, repo: string, number: number, action: "abandon" | "draft" | "publish") {
+    const key = JSON.stringify([monitor, repo, number]);
+    if (this.stateChanges.has(key)) throw new AppError(409, "Изменение этого PR уже выполняется");
+    const m = this.monitors().find(entry => entry.id === monitor && entry.enabled);
+    const known = this.store.db.prepare("SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=? AND in_scope=1").get(monitor, repo, number);
+    if (!m || !known) throw new AppError(409, "PR недоступен. Обновите список.");
+    const credentials = this.credentials(m);
+    const path = `git/repositories/${enc(repo)}/pullrequests/${number}`;
+    this.stateChanges.add(key);
+    try {
+      const current = await this.get(m, path, credentials);
+      if (current.pullRequestId !== number || current.repository?.id !== repo || current.status !== "active")
+        throw new AppError(409, "PR уже закрыт или изменился. Обновите список.");
+      if (this.credentials(m).pat !== credentials.pat) throw new AppError(409, "Подключение Azure изменилось");
+      const payload = action === "abandon" ? { status: "abandoned" } : { isDraft: action === "draft" };
+      const updated = await requestJson(`${m.source}/${enc(m.azure_project)}/_apis/${path}?api-version=${enc(credentials.version)}`, {
+        method: "PATCH", redirect: "error", signal: AbortSignal.timeout(20000),
+        headers: { Authorization: `Basic ${Buffer.from(":" + credentials.pat).toString("base64")}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }, "Azure PR: изменение состояния (Code: Read & Write)");
+      if (updated.pullRequestId !== number || updated.repository?.id !== repo ||
+          (action === "abandon" ? updated.status !== "abandoned" : updated.status !== "active" || updated.isDraft !== (action === "draft"))) {
+        await this.sync(monitor);
+        throw new AppError(502, "Azure не подтвердил новое состояние PR. Список обновлён; проверьте состояние перед повтором.");
+      }
+      // Prevent pending reviews from continuing after the user closes or drafts a PR.
+      if (action !== "publish") {
+        const reviews = this.store.db.prepare("SELECT id FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND status IN ('preparing_git','queued','running','awaiting_answers')").all(monitor, repo, number) as { id: string }[];
+        for (const review of reviews) this.stopReview(review.id);
+      }
+      if (action === "abandon") this.store.db.prepare("UPDATE pull_requests SET in_scope=0 WHERE monitor=? AND repo=? AND number=?").run(monitor, repo, number);
+      else this.store.db.prepare("UPDATE pull_requests SET draft=? WHERE monitor=? AND repo=? AND number=?").run(Number(action === "draft"), monitor, repo, number);
+      this.store.audit(`pr.${action}`, `PR #${number}: ${current.title || ""}`, { monitor, repo, number });
+      await this.sync(monitor);
+      const syncError = this.monitors().find(entry => entry.id === monitor)?.error;
+      return { updated: true, action, ...(syncError ? { warning: `Состояние изменено в Azure, но повторная синхронизация не удалась: ${syncError}` } : {}) };
+    } finally { this.stateChanges.delete(key); }
+  }
   async commits(
     monitor: string,
     repo: string,
@@ -1606,6 +1645,10 @@ export class PullRequests {
             number: job.number,
             title: String(detail.title || "").slice(0, 2000),
           },
+          ticketEvidence: options.readTickets && requirements.length ? {
+            source: this.store.source({ ...this.store.settings(), azureUrl: m.source, azureProject: m.azure_project }),
+            tickets: requirements.map(ticket => ({ id: ticket.id, description: ticket.description, criteria: ticket.acceptanceCriteria, repro: ticket.reproductionSteps })),
+          } : undefined,
           questionFrequency: options.questionFrequency,
           memoryScopes: options.memoryScopes,
           reviewId: job.id,

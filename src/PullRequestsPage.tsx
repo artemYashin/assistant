@@ -1,3 +1,4 @@
+import { ConfirmButton } from "./ConfirmButton.js";
 import { ChatTools } from "./ChatTools.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { PrCreateDialog } from "./PrCreateDialog.js";
@@ -16,6 +17,9 @@ import {
   Code2,
   Eye,
   GitMerge,
+  GitPullRequestClosed,
+  FilePenLine,
+  Send,
   GitBranch,
   Copy,
   Check,
@@ -361,6 +365,15 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
     } finally {
       setBusy(false);
     }
+  }
+  async function changePrState(pr: any, action: "abandon" | "draft" | "publish") {
+    setBusy(true); setError("");
+    try {
+      const result = await api("/pr/state", "POST", { monitor: pr.monitor, repo: pr.repo, number: pr.number, action });
+      setVersion(value => value + 1);
+      window.dispatchEvent(new CustomEvent("orbit:data-synced"));
+      if (result.warning) setError(result.warning);
+    } finally { setBusy(false); }
   }
   return (
     <>
@@ -833,6 +846,18 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                   >
                     <GitMerge size={17} aria-hidden="true" /> Merge
                   </button>
+                  <ConfirmButton className="secondary pr-draft-action" disabled={busy || !p.in_scope || !p.enabled}
+                    title={p.draft ? "Снять статус черновика?" : "Перевести PR в черновик?"}
+                    message={`PR #${p.number}: ${p.title}. ${p.draft ? "Pull request станет доступен для ревью." : "Pull request станет черновиком. Текущее автоматическое ревью будет остановлено."}`}
+                    confirmLabel={p.draft ? "Unmark as Draft" : "Mark as Draft"}
+                    onConfirm={() => changePrState(p, p.draft ? "publish" : "draft")}>
+                    {p.draft ? <Send size={16} /> : <FilePenLine size={16} />}{p.draft ? "Unmark as Draft" : "Mark as Draft"}
+                  </ConfirmButton>
+                  <ConfirmButton className="secondary pr-abandon-action" disabled={busy || !p.in_scope || !p.enabled}
+                    title="Закрыть pull request без слияния?" message={`PR #${p.number}: ${p.title}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.`}
+                    confirmLabel="Abandon" onConfirm={() => changePrState(p, "abandon")}>
+                    <GitPullRequestClosed size={16} />Abandon
+                  </ConfirmButton>
                 </div>
               )}
             </div>

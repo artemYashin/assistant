@@ -9391,3 +9391,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 
 .pr-review-token-usage { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 7px 9px; margin: 8px 0; border: 1px solid #dfe6e2; border-radius: 6px; background: #f5f8f6; font-size: 12px; }
 .pr-review-token-usage small { color: var(--muted); }
+
+.pr-draft-action, .pr-abandon-action { display: inline-flex; align-items: center; gap: 6px; width: fit-content; }
+.pr-abandon-action { color: #b42332; border-color: #eac5ca; background: #fff5f6; }
+.pr-abandon-action:hover:not(:disabled) { background: #ffe4e8; border-color: #dba3ac; }

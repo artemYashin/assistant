@@ -137,7 +137,7 @@ test("token threshold aborts multi-step work and saves usage", async (t) => {
     s.emit({ inputTokens: 1000, outputTokens: 20 });
     return new Promise(() => {});
   });
-  await assert.rejects(agent.chat("hello", context), /порог токенов/);
+  await assert.rejects(agent.chat("hello", context), /порог токенов чата:.*AI Assistant.*Порог входных \+ выходных токенов чата на запрос/);
   assert.ok(counts().aborts);
   const report = new UsageLedger(store).report() as any;
   assert.equal(report.requests[0].status, "limited");
@@ -1161,7 +1161,7 @@ test("review budget stops cumulative follow-ups even when each attempt is below 
     return { data: { content: "Review" } };
   });
   await agent.chat("First", context, true, { reviewId: "budget-review", maxTokens: 3000 });
-  await assert.rejects(() => agent.chat("Second", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /порог токенов/);
+  await assert.rejects(() => agent.chat("Second", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью:.*Code Review.*Лимит токенов ревью по умолчанию/);
   assert.equal(new UsageLedger(store).reviewTokens("budget-review"), 3400);
   await assert.rejects(() => agent.chat("Third", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью/);
 });
@@ -1270,4 +1270,21 @@ test("opening ticket details preserves reopen links in the assistant response an
   assert.ok(events.some(event => event.stage === "show_tickets"));
   const saved = store.db.prepare("SELECT body FROM conversations WHERE role='assistant' ORDER BY rowid DESC LIMIT 1").get() as any;
   assert.equal(saved.body, result.body);
+});
+
+test("review ticket citations are available with ticket evidence even without code access", async t => {
+  const store = fixture(t);
+  for (const enabled of [true, false]) {
+    const { agent } = fakeAgent(store, async (_session, config) => {
+      const citation = config.tools.find((tool: any) => tool.name === "cite_ticket_content");
+      assert.equal(!!citation, enabled);
+      assert.equal(config.tools.some((tool: any) => tool.name === "cite_code"), false);
+      if (enabled) {
+        const result = await citation.handler({ id: 42, section: "criteria", quote: "Show an error" }, {});
+        assert.match(result.originalUrl, /id=42/);
+      }
+      return { data: { content: "Review" } };
+    });
+    await agent.chat("Review", context, true, { readCode: false, ticketEvidence: enabled ? { source: store.source(), tickets: [{ id: 42, description: "", criteria: "Show an error", repro: "" }] } : undefined });
+  }
 });

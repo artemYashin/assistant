@@ -468,6 +468,9 @@ export class Agent {
     const toolLimit = review ? settings.reviewMaxToolCalls : settings.llmMaxToolCalls;
     const previousToolCalls = review && reviewActions?.reviewId ? ledger.reviewToolCalls(reviewActions.reviewId) : 0;
     const tokenLimit = review ? reviewActions?.maxTokens ?? settings.reviewMaxTokens : settings.llmMaxTokens;
+    const tokenLimitMessage = review
+      ? `Достигнут лимит токенов ревью: ${tokenLimit.toLocaleString("ru-RU")} входных + выходных токенов за всё ревью. Для нового запуска увеличьте «Максимум токенов на ревью» в окне запуска ревью. Значение по умолчанию: Настройки → Code Review → Лимиты ревью → «Лимит токенов ревью по умолчанию».`
+      : `Достигнут порог токенов чата: ${tokenLimit.toLocaleString("ru-RU")} входных + выходных токенов на запрос. Изменить его можно в Настройки → AI Assistant → Общие настройки → «Порог входных + выходных токенов чата на запрос». После изменения повторите запрос.`;
     const spentTokens = () => review && reviewActions?.reviewId ? ledger.reviewTokens(reviewActions.reviewId) : ledger.tokens(id);
     const reviewRuntimeId = review && reviewActions?.reviewId ? `review:${reviewActions.reviewId}` : undefined;
     this.busy = true;
@@ -850,7 +853,7 @@ export class Agent {
       return localCalls.get(ticketId)!.result;
     };
     try {
-      if (spentTokens() >= tokenLimit) throw new AppError(400, "Достигнут лимит токенов ревью. Увеличьте бюджет перед продолжением.");
+      if (spentTokens() >= tokenLimit) throw new AppError(400, tokenLimitMessage);
       const history = historySnapshot,
         memory = review
           ? this.store.reviewMemory(context, reviewActions?.memoryScopes)
@@ -900,6 +903,7 @@ export class Agent {
           review ? undefined : changeStatus,
           review ? undefined : localTicket,
           [
+            ...(review && reviewActions?.ticketEvidence ? [ticketCitationTool(this.store, assertActive, reviewActions.ticketEvidence)] : []),
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
@@ -1173,6 +1177,7 @@ export class Agent {
           };
           config.tools = (config.tools || []).filter((tool) =>
             ["ask_review_questions", "propose_memory", "read_memory"].includes(tool.name) ||
+            (!!reviewActions?.ticketEvidence && tool.name === "cite_ticket_content") ||
             (!!reviewActions?.readCode && ["cite_code", "code_branches", "code_tree", "code_search", "code_read_file", "code_work_status"].includes(tool.name)),
           );
           config.availableTools = config.tools.map(
@@ -1267,7 +1272,7 @@ export class Agent {
             ledger.record(id, event.id, event.data);
             if (conversationId) emit({ stage: "usage", ...ledger.sessionUsage(context, conversationId) });
             if (spentTokens() >= tokenLimit)
-              cancel("Достигнут порог токенов по отчётам SDK.", "limited");
+              cancel(tokenLimitMessage, "limited");
           } catch {
             cancel(
               "Не удалось сохранить отчёт расхода; запрос остановлен.",

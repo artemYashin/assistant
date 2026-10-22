@@ -1198,6 +1198,10 @@ export function createApp(
       .run(String(req.params.id));
     res.json({ ok: true });
   });
+  app.post("/api/pr/state", async (req, res) => {
+    const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive(), action: z.enum(["abandon", "draft", "publish"]) }).strict().parse(req.body);
+    res.json(await pullRequests.changeState(input.monitor, input.repo, input.number, input.action));
+  });
   app.post("/api/pr/merge/tickets", async (req, res) => {
     const key = z
       .object({
