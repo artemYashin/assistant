@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff } from "../src/pr-diff.js";
+import { splitDiff, diffFileSize } from "../src/pr-diff.js";
 
 test("side-by-side aligns replacements and preserves independent line numbers", () => {
   const patch = createTwoFilesPatch(
@@ -45,4 +45,12 @@ test("missing newline markers do not increment code line numbers", () => {
   assert.equal(file.added, 1);
   assert.equal(file.removed, 1);
   assert.ok(file.hunks[0].rows.some((row) => row.kind === "notice"));
+});
+
+test("file sizes format bytes through gigabytes and preserve unknown sizes", () => {
+  assert.equal(diffFileSize(), "—");
+  assert.equal(diffFileSize(0), "0 Б");
+  assert.equal(diffFileSize(1536), "1,5 КБ");
+  assert.equal(diffFileSize(1024 ** 2), "1 МБ");
+  assert.equal(diffFileSize(1024 ** 3), "1 ГБ");
 });

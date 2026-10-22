@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { api } from "./api.js";
-import { splitDiff, diffFileLabel, type DiffLine } from "./pr-diff.js";
+import { splitDiff, diffFileLabel, diffFileSize, type DiffLine } from "./pr-diff.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage, diffLanguages, diffLanguageStorageKey, validDiffLanguage } from "./diff-languages.js";
 import type { CodeToken, HighlightedFile } from "./diff-highlight.js";
@@ -28,7 +28,7 @@ type Loaded = {
     rules: string[];
     unmatchedRules: string[];
     excludedPaths: string[];
-    includedFiles: { path: string; characters: number }[];
+    includedFiles: { path: string; characters: number; sizeBytes?: number }[];
   };
   sourceBranch?: string;
   targetBranch?: string;
@@ -257,6 +257,7 @@ export function PrDiffDialog({
                         }
                       />
                       <span className="pr-diff-counts">
+                        <span className="pr-diff-file-size" title="Размер файла (для удалённого — до удаления)">{diffFileSize(data.diagnostics?.includedFiles.find(item => item.path === (f.after === "/dev/null" ? f.before : f.after))?.sizeBytes)}</span>
                         <span className="pr-diff-added">+{f.added}</span>
                         <span className="pr-diff-removed">−{f.removed}</span>
                       </span>

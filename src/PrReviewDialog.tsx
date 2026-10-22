@@ -1,7 +1,7 @@
 import { requestFieldDictation } from "./FieldDictation.js";
 import { ModelOverride } from "./ModelOverride.js";
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Mic, Globe, Users, FolderOpen, Code2, Ticket } from "lucide-react";
+import { Sparkles, X, Mic, Globe, Users, FolderOpen, Code2, Ticket, CircleCheck, TriangleAlert } from "lucide-react";
 import { SingleSelect } from "./SingleSelect.js";
 import { api } from "./api.js";
 
@@ -16,6 +16,16 @@ export function PrReviewDialog({
   onClose: () => void;
   onStarted: () => void;
 }) {
+  const sourceReady = pr.local_source?.status === "ready";
+  const sourceHint = sourceReady
+    ? "Локальная source-ветка готова: её коммит совпадает с коммитом PR. Дополнительная загрузка перед ревью не требуется."
+    : pr.local_source?.status === "loading"
+      ? "Source-ветка сейчас загружается. Ревью с доступом к коду начнётся после её подготовки."
+      : pr.local_source?.status === "stale"
+        ? "Локальная source-ветка не соответствует коммиту PR. Перед ревью с доступом к коду сначала обновим её."
+        : pr.local_source?.status === "error"
+          ? "Не удалось подготовить локальную source-ветку. При запуске ревью с доступом к коду повторим подготовку; ревью начнётся только после её завершения."
+          : "Готовность локальной source-ветки пока не подтверждена. Перед ревью с доступом к коду сначала проверим и при необходимости загрузим её до коммита PR.";
   const ref = useRef<HTMLDialogElement>(null);
   const commentRef = useRef<HTMLTextAreaElement>(null);
   const [model, setModel] = useState("");
@@ -109,7 +119,12 @@ export function PrReviewDialog({
         </div>
         </fieldset>
         <fieldset className="review-settings-block"><legend>Контекст ревью</legend>
-        <label className="pr-review-ticket-option review-code-option review-choice"><input type="checkbox" checked={readCode} disabled={busy} onChange={event => setReadCode(event.target.checked)} /><Code2 size={17} aria-hidden="true" /><span>Разрешить поиск и чтение кода репозитория</span></label>
+        <label className="pr-review-ticket-option review-code-option review-choice"><input type="checkbox" checked={readCode} disabled={busy} onChange={event => setReadCode(event.target.checked)} /><Code2 size={17} aria-hidden="true" /><span>Разрешить поиск и чтение кода репозитория</span>
+          <span className={`review-code-info ${sourceReady ? "is-ready" : "is-warning"}`} tabIndex={0} aria-label={sourceReady ? "Локальная ветка готова" : "Требуется подготовка локальной ветки"} aria-describedby="review-code-info-tooltip" onClick={event => event.preventDefault()}>
+            {sourceReady ? <CircleCheck size={15} aria-hidden="true" /> : <TriangleAlert size={15} aria-hidden="true" />}
+            <span role="tooltip" id="review-code-info-tooltip">{sourceHint}</span>
+          </span>
+        </label>
         <label className="pr-review-ticket-option review-choice">
           <input
             type="checkbox"
@@ -117,10 +132,10 @@ export function PrReviewDialog({
             disabled={busy}
             onChange={(e) => setReadTickets(e.target.checked)}
           />
-          <Ticket size={17} aria-hidden="true" /><span>Прочитать связанные тикеты и все комментарии перед ревью</span>
+          <Ticket size={17} aria-hidden="true" /><span>Прочитать связанные тикеты, комментарии и локальные заметки</span>
         </label>
         <p className="muted">
-          Сравнить код с описанием, критериями приёмки и обсуждением.
+          Сравнить код с описанием, критериями приёмки, обсуждением и заметками из Orbit.
           Изображения и файлы не анализируются. Если данные недоступны или
           превышают лимит, ревью остановится с объяснением.
         </p>

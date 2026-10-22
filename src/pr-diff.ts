@@ -75,3 +75,11 @@ export function diffFileLabel(path: string) {
     .join("/");
   return { name, directory: directory ? directory + "/" : "" };
 }
+
+/** Human-readable file size; never confuse missing metadata with an empty file. */
+export function diffFileSize(bytes?: number) {
+  if (bytes === undefined || !Number.isFinite(bytes) || bytes < 0) return "—";
+  const units = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
+  const unit = bytes > 0 ? Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1) : 0;
+  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: unit ? 1 : 0 }).format(bytes / 1024 ** unit)} ${units[unit]}`;
+}

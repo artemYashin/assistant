@@ -357,7 +357,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
       )}
       {reviewing && (
         <PrReviewDialog defaultMaxTokens={settings.reviewMaxTokens ?? 1_000_000}
-          pr={reviewing}
+          pr={prs.find(p => p.monitor === reviewing.monitor && p.repo === reviewing.repo && p.number === reviewing.number) ?? reviewing}
           onClose={() => setReviewing(null)}
           onStarted={() => {
             setReviewing(null);
@@ -699,7 +699,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                             : "Запустить ревью"}
                   </button>
                 )}
-                {!readOnly && <button type="button" className="secondary" disabled={busy || !p.enabled || !p.in_scope || p.local_source?.status === "loading" || p.review_status === "preparing_git"} onClick={() => run(() => api("/pr/source", "POST", { monitor: p.monitor, repo: p.repo, number: p.number }))}><GitBranch size={16} />Загрузить source-ветку</button>}
+
                 <button
                   type="button"
                   className="secondary pr-diff-action"
@@ -714,6 +714,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 >
                   <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
                 </button>
+                {!readOnly && <button type="button" className="secondary pr-source-action" disabled={busy || !p.enabled || !p.in_scope || p.local_source?.status === "loading" || p.review_status === "preparing_git"} onClick={() => run(() => api("/pr/source", "POST", { monitor: p.monitor, repo: p.repo, number: p.number }))}><GitBranch size={16} />Загрузить source-ветку</button>}
               </div>
               {!readOnly && (
                 <div className="pr-action-group pr-merge-actions">

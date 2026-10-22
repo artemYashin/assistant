@@ -701,8 +701,10 @@ test("review options persist and disable questions without fetching tickets", as
   assert.equal(calls[0][3].questionFrequency, "none");
 });
 
-test("review receives requirements and every comment page before calling model", async (t) => {
-  const { service, calls } = fixture(t);
+test("review receives requirements, comments and source-scoped local notes before calling model", async (t) => {
+  const { store, service, calls } = fixture(t);
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(store.source(), 42, "Preserve local retry policy");
+  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run("other-source", 42, "Foreign notes must not leak");
   mock(t, [pr()], (url) => {
     if (/\/pullrequests\/1\/workitems$/i.test(url.pathname))
       return { value: [{ id: "42" }] };
@@ -732,6 +734,8 @@ test("review receives requirements and every comment page before calling model",
   assert.match(calls[0][0], /Allow retries/);
   assert.match(calls[0][0], /First comment/);
   assert.match(calls[0][0], /Second comment/);
+  assert.match(calls[0][0], /"localNotes":"Preserve local retry policy"/);
+  assert.doesNotMatch(calls[0][0], /Foreign notes must not leak/);
   assert.equal(calls[0][3].questionFrequency, "medium");
   assert.throws(() =>
     calls[0][3].askQuestions(Array(4).fill({ question: "?", reason: "risk" })),
@@ -1125,4 +1129,13 @@ test("review without code access skips Git preparation and waits only for the mo
   assert.equal(preparations, 0);
   assert.equal(calls.length, 1);
   assert.equal(status(), "completed");
+});
+
+test("diff reports full file byte size rather than patch length", async t => {
+  const { service } = fixture(t);
+  mock(t, [pr()], url => url.pathname.endsWith("/items") ? {
+    content: url.searchParams.get("versionDescriptor.version") === "base" ? "old" : "Привет", contentMetadata: { isBinary: false },
+  } : undefined);
+  const diff = await service.changes(service.monitors()[0], "repo", "head", "target");
+  assert.equal(diff.diagnostics.includedFiles[0].sizeBytes, Buffer.byteLength("Привет", "utf8"));
 });

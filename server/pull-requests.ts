@@ -1,3 +1,4 @@
+import { ticketMetadata } from "./ticket-metadata.js";
 import { PrSourcePreparation } from "./pr-source.js";
 import { z } from "zod";
 import { cachedPrLinks, prLinksKey } from "./pr-ticket-sources.js";
@@ -1202,7 +1203,7 @@ export class PullRequests {
     }
     let ignored = 0;
     const excludedPaths: string[] = [];
-    const includedFiles: { path: string; characters: number }[] = [];
+    const includedFiles: { path: string; characters: number; sizeBytes: number }[] = [];
     const matchedRules = new Set<string>();
     const candidates = allChanges.filter((change) => {
       if (!change.item?.path || change.item.isFolder) return false;
@@ -1230,6 +1231,7 @@ export class PullRequests {
       );
     if (candidates.length > 100)
       notes.push("Список файлов неполный: лимит 100 файлов после исключений");
+    const fileSizes = new Map<string, number>();
     const read = async (path: string, commit: string) => {
       const item = await this.get(
         m,
@@ -1242,6 +1244,7 @@ export class PullRequests {
         item.content.length > 50000
       )
         throw new Error("Неподдерживаемый или большой файл");
+      fileSizes.set(JSON.stringify([path, commit]), typeof item.size === "number" && Number.isFinite(item.size) && item.size >= 0 ? item.size : Buffer.byteLength(item.content, "utf8"));
       return item.content as string;
     };
     for (const change of candidates.slice(0, 100)) {
@@ -1296,7 +1299,7 @@ export class PullRequests {
           continue;
         }
         chars += patch.length;
-        includedFiles.push({ path, characters: patch.length });
+        includedFiles.push({ path, characters: patch.length, sizeBytes: fileSizes.get(JSON.stringify(kind.includes("delete") ? [oldPath, diff.commonCommit] : [path, head])) ?? 0 });
         patches.push(patch);
       } catch {
         notes.push(
@@ -1531,6 +1534,7 @@ export class PullRequests {
           requirements.push({
             id,
             title: card.fields["System.Title"],
+            localNotes: ticketMetadata(this.store, id, this.store.source({ ...this.store.settings(), azureUrl: m.source, azureProject: m.azure_project })).notes,
             description: plainText(card.fields["System.Description"] || ""),
             acceptanceCriteria: plainText(
               card.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || "",
@@ -1547,7 +1551,7 @@ export class PullRequests {
           if (JSON.stringify(requirements).length > 80000)
             throw new AppError(
               400,
-              "Требования и комментарии превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.",
+              "Требования, комментарии и локальные заметки превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.",
             );
         }
         if (
