@@ -9,4 +9,4 @@
 
 Unknown tool:
 
-Источник: server/tool-discovery.ts:96.
+Источник: server/tool-discovery.ts:97.

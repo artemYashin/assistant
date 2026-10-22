@@ -1,5 +1,5 @@
 import { exportColumnSchema } from "./ticket-export-context.js";
-import { exportColumns } from "../src/ticket-export-columns.js";
+import { exportColumns } from "./ticket-export-columns.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
 import { Store, AppError } from "./store.js";
@@ -14,7 +14,7 @@ export function ticketExportTool(
   const source = store.source();
   return defineTool("show_ticket_export", {
     description:
-      "Open the Excel/CSV export composer with local ticket IDs, or add more IDs to its existing list. Use on explicit user requests to prepare/export tickets or add tickets to export. mode=open expands the composer; mode=add keeps an existing minimized composer minimized. Both preserve existing tickets and format, deduplicate IDs; optional columns enables exactly the supplied fields in supplied order, omitted columns preserves current choices; if no draft exists, create one. Empty ids leaves existing tickets unchanged, or creates an empty composer if none exists. Use ids:[] with columns to change columns only. Current export UI context is provided with each message. No Azure requests, import, file download or confirmation. User chooses columns/format and downloads in UI. Returns IDs and missing IDs only, never ticket bodies. UI dispatch is a request, not proof a file was downloaded.",
+      "Open the Excel/CSV export composer with local ticket IDs, or add more IDs to its existing list. Use on explicit user requests to prepare/export tickets or add tickets to export. mode=open expands the composer; mode=add keeps an existing minimized composer minimized. Both preserve existing tickets and format, deduplicate IDs; optional columns enables exactly the supplied fields in supplied order, omitted columns preserves current choices; if no draft exists, create one. Empty ids leaves existing tickets unchanged, or creates an empty composer if none exists. Use ids:[] with columns to change columns only. Only an active export state flag is provided with each message. If absent, use mode=open. When open/minimized, use mode=add to extend it. Read selected IDs and existing columns via read_selected_tickets(target=export) only when needed. No Azure requests, import, file download or confirmation. User chooses columns/format and downloads in UI. Returns IDs and missing IDs only, never ticket bodies. UI dispatch is a request, not proof a file was downloaded.",
     parameters: z
       .object({
         columns: z
@@ -23,7 +23,7 @@ export function ticketExportTool(
           .max(exportColumns.length)
           .optional()
           .describe(
-            "Complete enabled columns in desired order; replaces column selection only, NEVER ticket selection. Omit to preserve columns. For adding a column include existing columns from current export context. Keys: " +
+            "Complete enabled columns in desired order; replaces column selection only, NEVER ticket selection. Omit to preserve columns. For adding a column include existing columns from read_selected_tickets(target=export). Keys: " +
               exportColumns.map((c) => `${c.key}=${c.label}`).join("; "),
           ),
         ids: z.array(z.number().int().positive()).max(200),

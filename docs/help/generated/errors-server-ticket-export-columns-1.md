@@ -1,4 +1,4 @@
-<!-- orbit-help {"id":"errors-src-ticket-export-columns-1","title":"Сообщения и ограничения: ticket-export-columns.ts · 1","summary":"Точные сообщения и шаблоны из кода. Причину определяйте по операции и статье «Ошибки: диагностика».","keywords":["ошибка","ticket-export-columns.ts"]} -->
+<!-- orbit-help {"id":"errors-server-ticket-export-columns-1","title":"Сообщения и ограничения: ticket-export-columns.ts · 1","summary":"Точные сообщения и шаблоны из кода. Причину определяйте по операции и статье «Ошибки: диагностика».","keywords":["ошибка","ticket-export-columns.ts"]} -->
 # Сообщения и ограничения: ticket-export-columns.ts · 1
 
 Точные сообщения и шаблоны из кода. Причину определяйте по операции и статье «Ошибки: диагностика».
@@ -9,4 +9,4 @@
 
 Select at least one column
 
-Источник: src/ticket-export-columns.ts:142.
+Источник: server/ticket-export-columns.ts:142.

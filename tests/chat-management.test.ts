@@ -192,8 +192,10 @@ test("chat receives selected ticket IDs and rejects stale Azure selection", asyn
     "X-CSRF-Token": setup.body.csrf,
   };
   const prompts: string[] = [];
-  t.mock.method(agent, "chat", async (prompt: string) => {
+  const selections: number[][] = [];
+  t.mock.method(agent, "chat", async (prompt: string, ...args: unknown[]) => {
     prompts.push(prompt);
+    selections.push(args[10] as number[]);
     return { body: "OK", cards: [] };
   });
   const post = (selectedTickets?: unknown) =>
@@ -205,8 +207,8 @@ test("chat receives selected ticket IDs and rejects stale Azure selection", asyn
     { id: 42, source: store.source() },
     { id: 42, source: store.source() },
   ]).expect(200);
-  assert.equal((prompts[0].match(/#42/g) || []).length, 1);
-  assert.match(prompts[0], /сам выбор не является просьбой изменить/);
+  assert.equal(prompts[0], "Расскажи о выбранных");
+  assert.deepEqual(selections[0], [42]);
   await post([{ id: 42, source: "other-organization" }]).expect(409);
   assert.equal(prompts.length, 1);
   await post().expect(200);

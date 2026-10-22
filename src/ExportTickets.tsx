@@ -30,8 +30,8 @@ let exportContext: TicketExportContext = {
   columns: [...defaultExportColumns],
   format: "xlsx",
 };
-export function currentTicketExport(): TicketExportContext {
-  return structuredClone(exportContext);
+export function currentTicketExport(): TicketExportContext | undefined {
+  return exportContext.state === "closed" ? undefined : structuredClone(exportContext);
 }
 let exportIsMinimized = false;
 const minimizedEvent = "orbit:export-minimized";
@@ -161,7 +161,7 @@ export function TicketExportDialog({
   useEffect(() => {
     exportContext = {
       state: !active ? "closed" : minimized ? "minimized" : "open",
-      ids: active ? snapshot.slice(0, 200).map((t) => t.id) : [],
+      ids: active ? snapshot.map((t) => t.id) : [],
       total: active ? snapshot.length : 0,
       columns,
       format,
