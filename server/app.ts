@@ -61,6 +61,8 @@ const settingsSchema = z
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
     voiceInputKey: z.string().max(80).regex(voiceBindingPattern).default("Ctrl+KeyI"),
     voiceInputPress: z.enum(["single", "double"]).default("single"),
+    ticketOpenKey: z.string().max(80).regex(voiceBindingPattern).default("KeyT"),
+    ticketOpenPress: z.enum(["single", "double"]).default("single"),
     chatToggleKey: z.string().max(80).regex(voiceBindingPattern).default("KeyC"),
     chatTogglePress: z.enum(["single", "double"]).default("single"),
     voiceCurrentPress: z.enum(["single", "double"]).default("double"),
@@ -99,7 +101,7 @@ const settingsSchema = z
     azurePat: z.string().max(2000).optional(),
   })
   .strict().refine(value => {
-    const keys = [value.voiceCurrentKey, value.voiceNewKey, value.chatToggleKey, value.voiceInputKey].filter(Boolean);
+    const keys = [value.voiceCurrentKey, value.voiceNewKey, value.chatToggleKey, value.voiceInputKey, value.ticketOpenKey].filter(Boolean);
     return new Set(keys).size === keys.length;
   }, { message: "Выберите разные клавиши для действий", path: ["voiceInputKey"] });
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");

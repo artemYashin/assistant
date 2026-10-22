@@ -635,7 +635,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             onSettingsChange={() => setRefresh((value) => value + 1)}
           />
           <div className="topbar-actions">
-            <TicketLookupDialog
+            <TicketLookupDialog shortcutKey={settings?.ticketOpenKey ?? "KeyT"} shortcutPress={settings?.ticketOpenPress ?? "single"}
               key={`${settings?.azureUrl}:${settings?.azureProject}`}
             />
             <button
@@ -2300,6 +2300,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
+    { id: "hotkeys", label: "Горячие клавиши", icon: Command },
     { id: "review", label: "Code Review", icon: GitPullRequest },
     { id: "memory", label: "Память", icon: BookOpen },
   ];
@@ -2745,24 +2746,34 @@ function Settings({ settings, context, run, busy }: any) {
               <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
             </Field>
           </div>
+        </section>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-hotkeys-panel`} aria-labelledby={`${settingsTabId}-hotkeys`} hidden={settingsTab !== "hotkeys"}>
+          <div className="section-heading"><h2><Command size={22} />Горячие клавиши</h2></div>
           <div className="settings-group">
-            <h3>Горячие клавиши</h3>
+            <h3>Навигация и ввод</h3>
             <div className="voice-settings-row">
               <strong>Открыть или закрыть боковой чат</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form.chatToggleKey ?? "KeyC"} otherKey={form.voiceCurrentKey ?? "KeyM"} otherKeys={[form.voiceNewKey ?? "KeyN", form.voiceInputKey ?? "Ctrl+KeyI"]} onChange={value => set("chatToggleKey", value)} />
+                <VoiceBinding value={form.chatToggleKey ?? "KeyC"} otherKey={form.voiceCurrentKey ?? "KeyM"} otherKeys={[form.voiceNewKey ?? "KeyN", form.voiceInputKey ?? "Ctrl+KeyI", form.ticketOpenKey ?? "KeyT"]} onChange={value => set("chatToggleKey", value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.chatTogglePress ?? "single"} onChange={value => set("chatTogglePress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
+              </div>
+            </div>
+            <div className="voice-settings-row">
+              <strong>Открыть тикет по номеру</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding value={form.ticketOpenKey ?? "KeyT"} otherKey={form.chatToggleKey ?? "KeyC"} otherKeys={[form.voiceCurrentKey ?? "KeyM", form.voiceNewKey ?? "KeyN", form.voiceInputKey ?? "Ctrl+KeyI"]} onChange={value => set("ticketOpenKey", value)} />
+                <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.ticketOpenPress ?? "single"} onChange={value => set("ticketOpenPress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
               </div>
             </div>
             <div className="voice-settings-row">
               <strong>Начать голосовой ввод в активное поле</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form.voiceInputKey ?? "Ctrl+KeyI"} otherKey={form.chatToggleKey ?? "KeyC"} otherKeys={[form.voiceCurrentKey ?? "KeyM", form.voiceNewKey ?? "KeyN"]} onChange={value => set("voiceInputKey", value)} />
+                <VoiceBinding value={form.voiceInputKey ?? "Ctrl+KeyI"} otherKey={form.chatToggleKey ?? "KeyC"} otherKeys={[form.voiceCurrentKey ?? "KeyM", form.voiceNewKey ?? "KeyN", form.ticketOpenKey ?? "KeyT"]} onChange={value => set("voiceInputKey", value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form.voiceInputPress ?? "single"} onChange={value => set("voiceInputPress", value)} options={[{ value: "single", label: "Одинарное нажатие" }, { value: "double", label: "Двойное нажатие" }]} /></div>
               </div>
             </div>
             <p className="muted">Для диктовки выберите текстовое поле и нажмите Ctrl+I. Этот бинд работает внутри поля. Enter — вставить текст, Esc — отменить. Крестик отключает бинд.</p>
-            <p className="muted">По умолчанию C. Буквы и цифры не срабатывают при вводе текста. В открытых диалогах горячая клавиша отключена.</p>
+            <p className="muted">По умолчанию C — боковой чат, T — открытие тикета. Буквы и цифры не срабатывают при вводе текста. В открытых диалогах горячая клавиша отключена.</p>
           </div>
           <div className="settings-group voice-settings-block">
             <h3><Mic size={17} />Голосовой помощник</h3>
@@ -2770,7 +2781,7 @@ function Settings({ settings, context, run, busy }: any) {
             {(["Current", "New"] as const).map(kind => <div className="voice-settings-row" key={kind}>
               <strong>{kind === "Current" ? "Открыть текущий чат и начать запись" : "Создать новый чат и начать запись"}</strong>
               <div className="voice-settings-controls">
-                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} otherKeys={[form.chatToggleKey ?? "KeyC", form.voiceInputKey ?? "Ctrl+KeyI"]} onChange={value => set(`voice${kind}Key`, value)} />
+                <VoiceBinding value={form[`voice${kind}Key`] ?? (kind === "Current" ? "KeyM" : "KeyN")} otherKey={form[kind === "Current" ? "voiceNewKey" : "voiceCurrentKey"] ?? (kind === "Current" ? "KeyN" : "KeyM")} otherKeys={[form.chatToggleKey ?? "KeyC", form.voiceInputKey ?? "Ctrl+KeyI", form.ticketOpenKey ?? "KeyT"]} onChange={value => set(`voice${kind}Key`, value)} />
                 <div className="voice-press-select" data-voice-binding><SingleSelect searchable={false} label="Режим нажатия" value={form[`voice${kind}Press`] ?? "double"} onChange={value => set(`voice${kind}Press`, value)} options={[{ value: "double", label: "Двойное нажатие" }, { value: "single", label: "Одинарное нажатие" }]} /></div>
               </div>
             </div>)}

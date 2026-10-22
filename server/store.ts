@@ -46,6 +46,8 @@ export const defaults = {
   assistantCodeWaitSeconds: 20,
   voiceInputKey: "Ctrl+KeyI",
   voiceInputPress: "single",
+  ticketOpenKey: "KeyT",
+  ticketOpenPress: "single",
   chatToggleKey: "KeyC",
   chatTogglePress: "single",
   voiceCurrentPress: "double",
@@ -381,7 +383,12 @@ export class Store {
       .run(key, JSON.stringify(value));
   }
   rawSettings(): Settings {
-    return { ...defaults, ...this.get("settings", {}) };
+    const saved = this.get<Partial<Settings>>("settings", {});
+    const settings = { ...defaults, ...saved };
+    // Preserve existing custom bindings when introducing the new default shortcut.
+    if (saved.ticketOpenKey === undefined && [settings.chatToggleKey, settings.voiceInputKey, settings.voiceCurrentKey, settings.voiceNewKey].includes(settings.ticketOpenKey))
+      settings.ticketOpenKey = "";
+    return settings;
   }
   projectAzureKey(context: Context, azureUrl = this.rawSettings().azureUrl) {
     return (

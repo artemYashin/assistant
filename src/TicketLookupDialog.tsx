@@ -1,3 +1,5 @@
+import { useChatToggleShortcut as useAppShortcut } from "./useChatToggleShortcut.js";
+import { useCallback } from "react";
 import { analysisChatReadyEvent } from "./chat-ticket-analysis.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -5,7 +7,7 @@ import { Ticket, X } from "lucide-react";
 import { TicketCard } from "./TicketCard.js";
 import { api } from "./api.js";
 
-export function TicketLookupDialog() {
+export function TicketLookupDialog({ shortcutKey = "KeyT", shortcutPress = "single" }: { shortcutKey?: string; shortcutPress?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -29,6 +31,11 @@ export function TicketLookupDialog() {
     setBusy(false);
     setError("");
   };
+  const openLookup = useCallback(() => {
+    setOpen(true);
+    dialog.current?.showModal();
+  }, []);
+  useAppShortcut(shortcutKey, shortcutPress, openLookup);
   async function selectTicket(ticketId: number) {
     const current = ++request.current;
     setId(String(ticketId)); setCardRef(""); setBusy(true); setError("");
@@ -100,10 +107,7 @@ export function TicketLookupDialog() {
         title="Открыть тикет по номеру"
         aria-label="Открыть тикет по номеру"
         aria-haspopup="dialog"
-        onClick={() => {
-          setOpen(true);
-          dialog.current?.showModal();
-        }}
+        onClick={openLookup}
       >
         <Ticket size={19} />
         <span>Открыть тикет</span>
