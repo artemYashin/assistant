@@ -9762,3 +9762,11 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-filter-panel .multi-select-panel { position: absolute; z-index: 20; }
 .pr-filter-panel .ticket-filters > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pr-filter-panel > p { margin: 9px 0 0; font-size: 12px; }
+
+.pr-commits-dialog .commit-history-branches { flex: 1; gap: 10px 14px; align-items: flex-start; }
+.pr-commits-dialog .pr-branch { max-width: 100%; }
+.pr-commits-dialog .pr-branch > small:first-child { position: static; }
+.pr-commits-dialog .pr-branch-link { white-space: normal; }
+.pr-commits-dialog .pr-branch-link > span { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+.pr-commits-dialog .repository-commits-heading { align-items: flex-start; }
+.pr-commits-name .pr-merge-name-value { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }

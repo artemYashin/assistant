@@ -15,16 +15,16 @@
 
 Обновить
 
-Источник: src/PrCommitsDialog.tsx:94.
+Источник: src/PrCommitsDialog.tsx:97.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/PrCommitsDialog.tsx:105.
+Источник: src/PrCommitsDialog.tsx:108.
 
 ### Элемент
 
 Загрузить ещё
 
-Источник: src/PrCommitsDialog.tsx:115.
+Источник: src/PrCommitsDialog.tsx:118.

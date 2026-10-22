@@ -88,7 +88,10 @@ export function PrCommitsDialog({
           <X size={20} />
         </button>
       </div>
-      <p className="muted">{pr.title}</p>
+      <div className="pr-merge-name pr-commits-name">
+        <span id="pr-commits-name-label">Название pull request</span>
+        <div className="pr-merge-name-value" aria-labelledby="pr-commits-name-label">{pr.title}</div>
+      </div>
       <div className="repository-commits-heading">
         <div className="commit-history-branches"><BranchLabel kind="source" value={pr.source_branch} client={pr.client} project={pr.project} onNavigate={onClose} /><BranchLabel kind="target" value={pr.target_branch} client={pr.client} project={pr.project} onNavigate={onClose} /></div>
         <button type="button" className="secondary" disabled={busy} onClick={() => { setRequested(""); setCursor(""); setCommits([]); setRevision(v => v + 1); }}><RefreshCw size={14} />Обновить</button>
