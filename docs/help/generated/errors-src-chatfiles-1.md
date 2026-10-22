@@ -9,34 +9,34 @@
 
 Формат файла «{…}» не поддерживается.
 
-Источник: src/ChatFiles.tsx:38.
+Источник: src/ChatFiles.tsx:39.
 
 ### Сообщение
 
 Файл «{…}» пустой.
 
-Источник: src/ChatFiles.tsx:41.
+Источник: src/ChatFiles.tsx:42.
 
 ### Сообщение
 
 Файл «{…}» слишком большой. Максимальный размер одного файла — 10 МБ.
 
-Источник: src/ChatFiles.tsx:43.
+Источник: src/ChatFiles.tsx:44.
 
 ### Сообщение
 
 Можно прикрепить до 6 файлов общим размером до 30 МБ.
 
-Источник: src/ChatFiles.tsx:51.
+Источник: src/ChatFiles.tsx:52.
 
 ### Сообщение
 
 developer-dialog action-confirm-dialog chat-file-error-dialog
 
-Источник: src/ChatFiles.tsx:265.
+Источник: src/ChatFiles.tsx:266.
 
 ### Сообщение
 
 Не удалось добавить вложения
 
-Источник: src/ChatFiles.tsx:266.
+Источник: src/ChatFiles.tsx:267.

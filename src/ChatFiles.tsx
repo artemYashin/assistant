@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode, type DragEvent } from "react";
 import { File as FileIcon, Plus, X, Upload, TriangleAlert } from "lucide-react";
 import { api } from "./api.js";
+import { ImagePreview } from "./ImagePreview.js";
 
 export type PendingChatFile = {
   localId: string;
@@ -129,8 +130,8 @@ export function ChatFileRows({
         <div className="chat-file-item" key={item.localId}>
           <small>Вложение {index + 1}</small>
           <div className="chat-file-row">
-            <FileIcon size={15} />
-            {item.preview && <img src={item.preview} alt="" />}
+            <FileIcon size={12} aria-hidden="true" />
+            {item.preview && <ImagePreview src={item.preview} alt={item.file.name} className="chat-file-preview"><img src={item.preview} alt={`Открыть вложение ${index + 1}: ${item.file.name}`} /></ImagePreview>}
             <span className="chat-file-name" title={item.file.name} dir="rtl">
               {item.file.name}
             </span>
@@ -140,7 +141,7 @@ export function ChatFileRows({
               aria-label={`Убрать вложение ${index + 1}`}
               onClick={() => onRemove(item.localId)}
             >
-              <X size={13} />
+              <X size={11} />
             </button>
           </div>
         </div>
