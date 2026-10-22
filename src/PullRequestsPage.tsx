@@ -17,7 +17,6 @@ import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   ArrowUpRight,
-  SlidersHorizontal,
   RotateCcw,
   RefreshCw,
   TriangleAlert,
@@ -465,8 +464,20 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
             ))}
 
           <section className="ticket-filter-panel pr-filter-panel" aria-label="Фильтры pull request">
-          <div className="pr-filter-heading"><SlidersHorizontal size={17} />Фильтры pull request</div>
           <div className="ticket-filters">
+            <button
+              className="secondary"
+              disabled={
+                draftFilter === "all" &&
+                reviewFilter === "all" &&
+                sort === "created:desc"
+              }
+              onClick={() => {
+                updateFilters(defaultPrFilters);
+              }}
+            >
+              <RotateCcw size={15} /> Сбросить фильтры
+            </button>
             <SingleSelect
               label="Тип PR"
               value={draftFilter}
@@ -504,24 +515,11 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                 { value: "title:asc", label: "Название: А–Я" },
               ]}
             />
-            <button
-              className="secondary"
-              disabled={
-                draftFilter === "all" &&
-                reviewFilter === "all" &&
-                sort === "created:desc"
-              }
-              onClick={() => {
-                updateFilters(defaultPrFilters);
-              }}
-            >
-              <RotateCcw size={15} /> Сбросить фильтры
-            </button>
           </div>
-          <p className="muted" role="status">
+          </section>
+          <p className="muted pr-filter-count" role="status">
             Показано {visiblePrs.length} из {prs.length}.
           </p>
-          </section>
           {!!prs.length && !visiblePrs.length && (
             <div className="empty">
               Нет PR по выбранным фильтрам. Измените условия или сбросьте

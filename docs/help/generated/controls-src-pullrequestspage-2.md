@@ -7,114 +7,114 @@
 
 ### Элемент
 
-Название: А–Я
+Номер: по возрастанию
 
-Источник: src/PullRequestsPage.tsx:504.
+Источник: src/PullRequestsPage.tsx:514.
 
 ### Элемент
 
-Сбросить фильтры
+Название: А–Я
 
-Источник: src/PullRequestsPage.tsx:507.
+Источник: src/PullRequestsPage.tsx:515.
 
 ### Элемент
 
 Остановить ревью
 
-Источник: src/PullRequestsPage.tsx:569.
+Источник: src/PullRequestsPage.tsx:567.
 
 ### Элемент
 
 # · ·
 
-Источник: src/PullRequestsPage.tsx:620.
+Источник: src/PullRequestsPage.tsx:618.
 
 ### Элемент
 
 Контекст PR · Заказчик Проект Orbit Azure Project Репозиторий /
 
-Источник: src/PullRequestsPage.tsx:643.
+Источник: src/PullRequestsPage.tsx:641.
 
 ### Элемент
 
 Версия изменений · Source commit Target commit ID репозитория
 
-Источник: src/PullRequestsPage.tsx:670.
+Источник: src/PullRequestsPage.tsx:668.
 
 ### Элемент
 
 / / / / / · Повторить ревью / Ожидает ответов / Ревью выполняется / Подготовка Git / Ревью в очереди / Запустить ревью
 
-Источник: src/PullRequestsPage.tsx:708.
+Источник: src/PullRequestsPage.tsx:706.
 
 ### Элемент
 
 View Diff
 
-Источник: src/PullRequestsPage.tsx:755.
+Источник: src/PullRequestsPage.tsx:753.
 
 ### Элемент
 
 Коммиты
 
-Источник: src/PullRequestsPage.tsx:762.
+Источник: src/PullRequestsPage.tsx:760.
 
 ### Элемент
 
 Переимпортировать PR #{…}? · Полное описание и связи будут заново загружены из Azure и заменят локальный кэш. Все локальные привязки тикетов и отметки «Не учитывать» будут удалены. Останутся только связи из Azure, названия и описания PR. Это действие нельзя отменить. · Переимпортировать
 
-Источник: src/PullRequestsPage.tsx:769.
+Источник: src/PullRequestsPage.tsx:767.
 
 ### Элемент
 
 Загрузить source-ветку
 
-Источник: src/PullRequestsPage.tsx:791.
+Источник: src/PullRequestsPage.tsx:789.
 
 ### Элемент
 
 Merge
 
-Источник: src/PullRequestsPage.tsx:820.
+Источник: src/PullRequestsPage.tsx:818.
 
 ### Элемент
 
 Снять статус черновика? / Перевести PR в черновик? · PR #{…}: {…}. {…} · Unmark as Draft / Mark as Draft · /
 
-Источник: src/PullRequestsPage.tsx:828.
+Источник: src/PullRequestsPage.tsx:826.
 
 ### Элемент
 
 Закрыть pull request без слияния? · PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено. · Abandon
 
-Источник: src/PullRequestsPage.tsx:835.
+Источник: src/PullRequestsPage.tsx:833.
 
 ### Элемент
 
 Ответить на вопросы ревьюера →
 
-Источник: src/PullRequestsPage.tsx:844.
+Источник: src/PullRequestsPage.tsx:842.
 
 ### Элемент
 
 Связанные тикеты
 
-Источник: src/PullRequestsPage.tsx:850.
+Источник: src/PullRequestsPage.tsx:848.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/PullRequestsPage.tsx:907.
+Источник: src/PullRequestsPage.tsx:905.
 
 ### Элемент
 
 Включает или исключает тикет из ревью и смены статуса при merge. Связи в Azure и локальная привязка сохраняются. · / · Учитывать / Не учитывать
 
-Источник: src/PullRequestsPage.tsx:915.
+Источник: src/PullRequestsPage.tsx:913.
 
 ### Элемент
 
 Удалить локальную привязку. Связи из Azure, названия и описания останутся. / Удалить локальную привязку тикета к PR · Отвязать
 
-Источник: src/PullRequestsPage.tsx:925.
+Источник: src/PullRequestsPage.tsx:923.

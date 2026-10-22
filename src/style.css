@@ -9755,13 +9755,11 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .ticket-row-actions > .ticket-table-delete:hover:not(:disabled) { background: #f7d1d1; border-color: #d58b8b; }
 
 .pr-filter-panel { background: #f0f6fc; border-color: #d5e3f1; }
-.pr-filter-heading { display: flex; align-items: center; gap: 7px; color: #45637e; font-weight: 600; font-size: 13px; margin-bottom: 10px; }
 .pr-filter-panel .ticket-filters { align-items: end; gap: 10px; }
 .pr-filter-panel .single-select { flex: 1 1 190px; min-width: 0; }
 .pr-filter-panel .multi-select-label { font-size: 11px; margin-bottom: 5px; }
 .pr-filter-panel .multi-select-panel { position: absolute; z-index: 20; }
 .pr-filter-panel .ticket-filters > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.pr-filter-panel > p { margin: 9px 0 0; font-size: 12px; }
 
 .pr-commits-dialog .commit-history-branches { flex: 1; gap: 10px 14px; align-items: flex-start; }
 .pr-commits-dialog .pr-branch { max-width: 100%; }
@@ -9770,3 +9768,8 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-commits-dialog .pr-branch-link > span { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
 .pr-commits-dialog .repository-commits-heading { align-items: flex-start; }
 .pr-commits-name .pr-merge-name-value { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+
+.pr-filter-panel { padding: 10px 12px; margin-bottom: 6px; }
+.pr-filter-panel .ticket-filters { margin: 0; }
+.pr-filter-panel .multi-select-trigger, .pr-filter-panel .ticket-filters > button { box-sizing: border-box; height: 36px; min-height: 36px; padding: 6px 10px; font-size: 12px; }
+.pr-filter-count { margin: 0 0 12px; font-size: 12px; }
