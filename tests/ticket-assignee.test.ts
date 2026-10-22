@@ -28,6 +28,14 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
       email: "person@example.test",
     };
     store.set("developers:" + source, [person]);
+    // Content-cache attachment records share this table but have no fields.
+    const attachmentCard = { id: 42, source, attachments: [] };
+    const fullCard = { id: 42, source, fields: { "System.AssignedTo": "Previous" } };
+    const otherCard = { ...fullCard, source: "other-source" };
+    const insert = store.db.prepare("INSERT INTO ticket_cards(id,data) VALUES (?,?)");
+    insert.run("attachments", JSON.stringify(attachmentCard));
+    insert.run("details", JSON.stringify(fullCard));
+    insert.run("other", JSON.stringify(otherCard));
     const connectors = new Connectors(store, new IntegrationsAuth(store));
     let reads = 0,
       writes = 0;
@@ -68,7 +76,13 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
     );
     if (mode === "mismatch" || mode === "patch-error")
       await assert.rejects(result, /не подтверждено/);
-    else assert.equal((await result).verified, true);
+    else {
+      assert.equal((await result).verified, true);
+      const readCard = (id: string) => JSON.parse((store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(id) as { data: string }).data);
+      assert.deepEqual(readCard("attachments"), attachmentCard);
+      assert.deepEqual(readCard("other"), otherCard);
+      assert.deepEqual(readCard("details").fields["System.AssignedTo"], mode === "clear" ? "" : { id: person.id, displayName: person.name });
+    }
     assert.equal(reads, 2);
     assert.equal(writes, 1);
     await assert.rejects(

@@ -345,6 +345,23 @@ export class Connectors {
       );
     this.store.saveTicketCreatedAt(item.id, this.store.source(s), f["System.CreatedDate"]);
   }
+  /** Persist the full work item returned by the post-write verification read. */
+  private refreshTicketAfterEdit(item: any, s: Settings) {
+    const source = this.store.source(s);
+    this.store.db.transaction(() => {
+      if (this.store.hasLocalTicket(item.id, source)) this.saveTicket(item, s);
+      // A full read also clears cached sections that Azure no longer returns.
+      this.cacheTicketContent(item, s, true);
+      const rows = this.store.db.prepare("SELECT id,data FROM ticket_cards WHERE json_extract(data,'$.source')=? AND json_extract(data,'$.id')=? AND json_type(data,'$.fields')='object'")
+        .all(source, item.id) as { id: string; data: string }[];
+      for (const row of rows) {
+        const card = JSON.parse(row.data);
+        card.fields = item.fields;
+        delete card.markdownFields;
+        this.store.db.prepare("UPDATE ticket_cards SET data=? WHERE id=?").run(JSON.stringify(card), row.id);
+      }
+    })();
+  }
   async ticketStates(id: number) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
@@ -491,12 +508,7 @@ export class Connectors {
       },
     });
     return results.map(({ item, ...receipt }) => {
-      if (
-        receipt.success &&
-        item &&
-        this.store.hasLocalTicket(receipt.id, this.store.source(s))
-      )
-        this.saveTicket(item, s);
+      if (receipt.success && item) this.refreshTicketAfterEdit(item, s);
       this.store.audit(
         receipt.success ? "ticket.state.verified" : "ticket.state.unconfirmed",
         JSON.stringify({ ...receipt, reference, source: this.store.source(s) }),
@@ -583,10 +595,7 @@ export class Connectors {
           }
         },
       });
-      if (
-        this.store.hasLocalTicket(id, this.store.source(s))
-      )
-        this.saveTicket(result.item, s);
+      this.refreshTicketAfterEdit(result.item, s);
       this.store.audit(
         "ticket.state.verified",
         JSON.stringify({
@@ -875,21 +884,7 @@ export class Connectors {
         409,
         `Изменение исполнителя не подтверждено. ${failure instanceof Error ? failure.message : "Azure вернул другого исполнителя; проверьте права и правила проекта."}`,
       );
-    if (this.store.hasLocalTicket(id, source)) {
-      // Azure omits AssignedTo when the assignment has been cleared.
-      this.saveTicket({ ...after, fields: { ...after.fields, "System.AssignedTo": actual || "" } }, s);
-    }
-    for (const row of this.store.db
-      .prepare("SELECT id,data FROM ticket_cards")
-      .all() as any[]) {
-      const card = JSON.parse(row.data);
-      if (card.id === id && card.source === source) {
-        card.fields["System.AssignedTo"] = actual || "";
-        this.store.db
-          .prepare("UPDATE ticket_cards SET data=? WHERE id=?")
-          .run(JSON.stringify(card), row.id);
-      }
-    }
+    this.refreshTicketAfterEdit(after, s);
     this.store.audit(
       "ticket.assigned",
       `#${id}: ${user?.name || "Не назначен"}`,
