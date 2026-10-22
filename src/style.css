@@ -9914,3 +9914,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .chat-file-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; font-size:11px; unicode-bidi:normal; }
 .chat-file-row .icon-button { width:23px; height:23px; padding:3px; min-height:0; }
 .composer-bottom .chat-file-add { flex-shrink:0; }
+
+.chat-file-drop-area { position: relative; min-width: 0; }
+.chat-file-drop-overlay { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 2px dashed #429b71; border-radius: 12px; background: rgba(235, 249, 241, .97); color: #206847; pointer-events: none; text-align: center; }
+.chat-file-drop-overlay strong { font-size: 15px; }
+.chat-file-drop-overlay small { font-size: 11px; }
+.chat-file-error-dialog .section-heading h2 { display: flex; align-items: center; gap: 8px; }
+.chat-file-error-dialog .section-heading h2 svg { flex-shrink: 0; color: #b57b15; }

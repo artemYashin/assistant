@@ -1,4 +1,4 @@
-import { useChatFiles, uploadChatFiles, ChatFilePicker, ChatFileRows } from "./ChatFiles.js";
+import { useChatFiles, uploadChatFiles, ChatFilePicker, ChatFileRows, ChatFileDropArea, ChatFileErrorDialog } from "./ChatFiles.js";
 import { AzurePatPermissions } from "./AzurePatPermissions.js";
 import { ChatMessageContext } from "./ChatMessageContext.js";
 import { messageContextBadges } from "../server/chat-message-context.js";
@@ -2896,6 +2896,7 @@ function Assistant({
   const analysisPending = useRef(false);
   const promptInput = useRef<HTMLTextAreaElement>(null);
   const clearChatDialog = useRef<HTMLDialogElement>(null);
+  const [chatFileError, setChatFileError] = useState("");
   const [clearChatError, setClearChatError] = useState("");
   const clearChatLock = useRef(false);
   useEffect(() => { clearChatDialog.current?.close(); setClearChatError(""); }, [context.client, context.project, sessionId]);
@@ -3465,6 +3466,7 @@ function Assistant({
           <Sparkles size={15} aria-hidden="true" /><div><strong>{memoryProposalAttachment.target_memory_id ? "Редактирование сохранённой памяти" : "Редактирование предложения в память"}</strong><span title={memoryProposalAttachment.body}>{memoryProposalAttachment.body}</span><small>Прикреплено к следующему сообщению · можно ответить голосом</small></div>
           <button type="button" className="icon-button" title="Убрать прикреплённое предложение" aria-label="Убрать прикреплённое предложение" onClick={() => setMemoryProposalAttachment(null)}><X size={15} /></button>
         </div>}
+        <ChatFileDropArea disabled={working || clearing || !sessionId} onFiles={fileDraft.add} onError={setChatFileError}>
         <form className="composer" onSubmit={send}>
           <textarea
             ref={promptInput}
@@ -3491,7 +3493,7 @@ function Assistant({
           }}><X size={14} aria-hidden="true" /></button>}
           <ChatFileRows files={fileDraft.files} onRemove={fileDraft.remove}/>
           <div className="composer-bottom">
-            <ChatFilePicker disabled={working || clearing || !sessionId} onFiles={fileDraft.add} onError={setError}/>
+            <ChatFilePicker disabled={working || clearing || !sessionId} onFiles={fileDraft.add} onError={setChatFileError}/>
             <button
               type="button"
               className="secondary composer-clear-history"
@@ -3534,8 +3536,10 @@ function Assistant({
             </>}
           </div>
         </form>
+        </ChatFileDropArea>
 
       </div>
+      <ChatFileErrorDialog message={chatFileError} onClose={() => setChatFileError("")}/>
       <dialog ref={clearChatDialog} className="developer-dialog clear-chat-dialog" aria-labelledby="clear-chat-title" onCancel={event => { if (clearing) event.preventDefault(); }}>
         <div className="section-heading"><h2 id="clear-chat-title"><Trash2 size={20} />Очистить чат?</h2><button type="button" className="icon-button" aria-label="Закрыть" disabled={clearing} onClick={() => clearChatDialog.current?.close()}><X size={17} /></button></div>
         <p className="clear-chat-name" title={sessionTitle}>{sessionTitle}</p>

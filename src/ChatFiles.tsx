@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { File as FileIcon, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode, type DragEvent } from "react";
+import { File as FileIcon, Plus, X, Upload, TriangleAlert } from "lucide-react";
 import { api } from "./api.js";
 
 export type PendingChatFile = {
@@ -36,12 +36,11 @@ export function useChatFiles(scope: string) {
           !/\.(png|jpe?g|gif|webp|txt|md|markdown|json|csv)$/i.test(file.name)
         )
           throw new Error(
-            "Поддерживаются PNG, JPEG, GIF, WebP, TXT, Markdown, JSON и CSV.",
+            `Формат файла «${file.name}» не поддерживается.`,
           );
-        if (!file.size || file.size > 10 * 1024 * 1024)
-          throw new Error(
-            "Каждое вложение должно быть непустым и не больше 10 МБ.",
-          );
+        if (!file.size) throw new Error(`Файл «${file.name}» пустой.`);
+        if (file.size > 10 * 1024 * 1024)
+          throw new Error(`Файл «${file.name}» слишком большой. Максимальный размер одного файла — 10 МБ.`);
       }
       if (
         next.length + selected.length > 6 ||
@@ -188,4 +187,76 @@ export function ChatFilePicker({
       />
     </>
   );
+}
+
+// The drop target covers the whole composer, including its toolbar.
+export function ChatFileDropArea({ children, disabled, onFiles, onError }: {
+  children: ReactNode;
+  disabled: boolean;
+  onFiles: (files: File[]) => void;
+  onError: (message: string) => void;
+}) {
+  const [hover, setHover] = useState(false);
+  const depth = useRef(0);
+  const reset = () => { depth.current = 0; setHover(false); };
+  useEffect(() => {
+    window.addEventListener("dragend", reset);
+    window.addEventListener("drop", reset);
+    window.addEventListener("blur", reset);
+    return () => {
+      window.removeEventListener("dragend", reset);
+      window.removeEventListener("drop", reset);
+      window.removeEventListener("blur", reset);
+    };
+  }, []);
+  useEffect(() => { if (disabled) reset(); }, [disabled]);
+  const isFile = (event: DragEvent) => Array.from(event.dataTransfer.types).includes("Files");
+  return <div className="chat-file-drop-area"
+    onDragEnter={event => {
+      if (!isFile(event)) return;
+      event.preventDefault();
+      depth.current++;
+      if (!disabled) setHover(true);
+    }}
+    onDragOver={event => {
+      if (!isFile(event)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = disabled ? "none" : "copy";
+    }}
+    onDragLeave={event => {
+      if (!isFile(event)) return;
+      depth.current = Math.max(0, depth.current - 1);
+      if (!depth.current) setHover(false);
+    }}
+    onDrop={event => {
+      if (!isFile(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      reset();
+      if (disabled) return;
+      try { onFiles(Array.from(event.dataTransfer.files)); }
+      catch (error) { onError(error instanceof Error ? error.message : String(error)); }
+    }}>
+    {children}
+    {hover && <div className="chat-file-drop-overlay" role="status"><Upload size={28}/><strong>Drop your files here</strong><small>До 6 файлов · 10 МБ на файл · 30 МБ всего</small></div>}
+  </div>;
+}
+
+export function ChatFileErrorDialog({ message, onClose }: {
+  message: string; onClose: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (message) { if (!dialog.current?.open) dialog.current?.showModal(); }
+    else dialog.current?.close();
+  }, [message]);
+  return <dialog ref={dialog} className="developer-dialog action-confirm-dialog chat-file-error-dialog"
+    aria-label="Не удалось добавить вложения" onCancel={onClose}>
+    <div className="section-heading"><h2><TriangleAlert size={20}/>Не удалось добавить вложения</h2>
+      <button type="button" className="icon-button" aria-label="Закрыть" onClick={onClose}><X size={17}/></button></div>
+    <p role="alert">{message}</p>
+    <p className="muted">Поддерживаемые расширения: {CHAT_FILE_ACCEPT.split(",").join(", ")}.</p>
+    <p className="muted">До 6 непустых файлов, не больше 10 МБ каждый и 30 МБ суммарно. Текст — в UTF-8. Весь выбранный набор отклонён; ранее прикреплённые файлы сохранены.</p>
+    <div className="dialog-actions"><button type="button" className="secondary" autoFocus onClick={onClose}>Понятно</button></div>
+  </dialog>;
 }
