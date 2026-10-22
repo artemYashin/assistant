@@ -9,28 +9,28 @@
 
 Показывать тикеты из корзины В завершённых поручениях и счётчиках разработчиков.
 
-Источник: src/DeveloperStatusSettings.tsx:91.
+Источник: src/DeveloperStatusSettings.tsx:94.
 
 ### Элемент
 
 Загрузить все статусы из Azure
 
-Источник: src/DeveloperStatusSettings.tsx:106.
+Источник: src/DeveloperStatusSettings.tsx:109.
 
 ### Элемент
 
 Поиск статуса · Найти статус…
 
-Источник: src/DeveloperStatusSettings.tsx:120.
+Источник: src/DeveloperStatusSettings.tsx:123.
 
 ### Элемент
 
 {…}: {…}
 
-Источник: src/DeveloperStatusSettings.tsx:148.
+Источник: src/DeveloperStatusSettings.tsx:151.
 
 ### Элемент
 
 Повторить
 
-Источник: src/DeveloperStatusSettings.tsx:222.
+Источник: src/DeveloperStatusSettings.tsx:225.

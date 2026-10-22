@@ -1,3 +1,4 @@
+import { StatusBadge } from "./TicketControls.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useId, useState } from "react";
 import { RefreshCw } from "lucide-react";
@@ -19,6 +20,7 @@ export function DeveloperStatusSettings({
   groups,
   showDeleted,
   states,
+  statusColors = {},
   onSaved,
 }: {
   context: { client: string; project: string };
@@ -26,6 +28,7 @@ export function DeveloperStatusSettings({
   groups: DeveloperStatusGroups;
   showDeleted: boolean;
   states: string[];
+  statusColors?: Record<string, string>;
   onSaved: (groups: DeveloperStatusGroups, showDeleted: boolean) => void;
 }) {
   const prefix = useId();
@@ -142,7 +145,7 @@ export function DeveloperStatusSettings({
               )
               .map((state, index) => (
                 <tr key={state}>
-                  <th scope="row">{state}</th>
+                  <th scope="row"><StatusBadge state={state} colors={statusColors} /></th>
                   {categories.map(([key, label]) => (
                     <td key={key}>
                       <label title={`${state}: ${label}`}>
@@ -236,6 +239,7 @@ export function ProjectDeveloperStatusSettings({
       groups={data.statusGroups}
       showDeleted={data.showDeleted}
       states={data.availableStates}
+      statusColors={data.statusColors}
       onSaved={(statusGroups, showDeleted) =>
         setData({ ...data, statusGroups, showDeleted })
       }

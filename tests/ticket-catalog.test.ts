@@ -64,3 +64,39 @@ test("multi-value filters combine OR within each field and AND across fields, in
   assert.equal(searchTicketContent(store,{search:"needle",state:["Unknown"]}).tickets.length,0);
   assert.deepEqual(listLocalTickets(store,{type:"Task",state:["Active","Closed"]}).tickets.map(t=>t.id),[2]);
 });
+
+test("tag, Azure tag and priority arrays intersect correctly in summary and content searches", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-tag-arrays-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const source = store.source();
+  for (const [id, priority, tags, azureTags] of [
+    [1,1,["backend","urgent"],["release","api"]],
+    [2,2,["frontend"],["release"]],
+    [3,3,["urgent"],["api"]],
+    [4,2,["backend"],["other"]],
+    [5,2,["urgent"],["api"]],
+  ] as const) {
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source,id,"Ticket "+id,"Active","","Bug","","","now");
+    store.db.prepare("INSERT INTO ticket_metadata(source,id,priority,tags,notes) VALUES (?,?,?,?,?)").run(source,id,priority,JSON.stringify(tags),"needle note");
+    store.db.prepare("INSERT INTO ticket_azure_tags VALUES (?,?,?)").run(source,id,JSON.stringify(azureTags));
+  }
+  store.removeLocalTicket(5);
+  const filters = {tag:["BACKEND","urgent","urgent"],azureTag:["release","API"],priority:[1,2,2],limit:1};
+  const first = listLocalTickets(store,filters);
+  assert.equal(first.total,2);
+  assert.deepEqual(first.tickets.map(t=>t.id),[1]);
+  assert.deepEqual(listLocalTickets(store,{...filters,afterId:first.nextAfterId}).tickets.map(t=>t.id),[5]);
+  const content = searchTicketContent(store,{...filters,search:"needle"});
+  assert.deepEqual(content.coverage,{total:2,cached:0});
+  assert.deepEqual(content.tickets.map(t=>t.id),[1]);
+  assert.deepEqual(searchTicketContent(store,{...filters,search:"needle",afterId:content.nextAfterId}).tickets.map(t=>t.id),[5]);
+  assert.equal(listLocalTickets(store,{...filters,lifecycle:"active"}).total,1);
+  assert.equal(listLocalTickets(store,{tag:[],azureTag:[],priority:[]}).total,5);
+  assert.equal(searchTicketContent(store,{search:"needle",tag:[],azureTag:[],priority:[]}).coverage.total,5);
+  assert.deepEqual(listLocalTickets(store,{tag:"backend",azureTag:"release",priority:1}).tickets.map(t=>t.id),[1]);
+  assert.equal(listLocalTickets(store,{tag:["' OR 1=1 --"]}).total,0);
+  assert.equal(searchTicketContent(store,{search:"needle",azureTag:["unknown"]}).tickets.length,0);
+  assert.throws(()=>listLocalTickets(store,{priority:[0,21]}));
+  assert.throws(()=>searchTicketContent(store,{search:"needle",priority:["1"]}));
+});

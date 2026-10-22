@@ -785,6 +785,7 @@ export function createApp(
       })),
       completedTickets: store.ticketTrash(),
       availableStates: importedDeveloperStates(),
+      statusColors: store.settings(context).statusColors,
       source: store.source(),
       statusGroups: store.get(developerStatusKey(context), {}),
       showDeleted: store.get(

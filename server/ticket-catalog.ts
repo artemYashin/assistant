@@ -23,6 +23,30 @@ export function ticketFilterSql(type?: string | string[], state?: string | strin
   return { clauses, params };
 }
 
+
+const tagValues = (max: number) => z.union([z.array(z.string().trim().min(1).max(max)).max(50), z.string().trim().min(1).max(max)]);
+export const ticketMetadataFilters = {
+  priority: z.union([z.array(z.number().int().min(1).max(20)).max(20), z.number().int().min(1).max(20)]).optional().describe("Local priorities, OR within array; 1 is highest. Single number supported. Empty/omitted means no filter."),
+  tag: tagValues(60).optional().describe("Exact local tags: match ANY listed tag. Single string supported. Empty/omitted means no filter; AND with other fields."),
+  azureTag: tagValues(400).optional().describe("Exact Azure tags: match ANY listed tag. Single string supported. Empty/omitted means no filter; AND with other fields."),
+};
+export function ticketMetadataFilterSql(input: z.infer<z.ZodObject<typeof ticketMetadataFilters>>, alias: "t" | "local_tickets") {
+  const clauses: string[] = [], params: (string | number)[] = [];
+  const values = <T extends string | number>(input: T | T[] | undefined): T[] => [...new Set(Array.isArray(input) ? input : input === undefined ? [] : [input])];
+  const priorities = values(input.priority);
+  if (priorities.length) {
+    clauses.push(`COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=${alias}.source AND m.id=${alias}.id),1) IN (${priorities.map(() => "?").join(",")})`);
+    params.push(...priorities);
+  }
+  for (const [field, table] of [["tag", "ticket_metadata"], ["azureTag", "ticket_azure_tags"]] as const) {
+    const tags = values(input[field]);
+    if (!tags.length) continue;
+    clauses.push(`EXISTS (SELECT 1 FROM ${table} m,json_each(m.tags) tag WHERE m.source=${alias}.source AND m.id=${alias}.id AND tag.value COLLATE NOCASE IN (${tags.map(() => "?").join(",")}))`);
+    params.push(...tags);
+  }
+  return { clauses, params };
+}
+
 /** Cached process definitions plus locally observed values; never requests Azure. */
 export function getTicketCatalog(store: Store) {
   const source = store.source();

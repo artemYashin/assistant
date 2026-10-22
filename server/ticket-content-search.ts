@@ -1,4 +1,4 @@
-import { ticketSearchFilters, ticketFilterSql } from "./ticket-catalog.js";
+import { ticketSearchFilters, ticketFilterSql, ticketMetadataFilters, ticketMetadataFilterSql } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { Store } from "./store.js";
 export const contentSearchSchema = z.object({
   ...ticketSortSchema,
   ...ticketSearchFilters,
+  ...ticketMetadataFilters,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all"),
   search: z.string().trim().min(2).max(200),
   id: z.number().int().positive().optional(),
@@ -16,12 +17,14 @@ export const contentSearchSchema = z.object({
 
 /** Local literal search only; never downloads ticket bodies or returns full content. */
 export function searchTicketContent(store: Store, input: unknown) {
-  const { search, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state } = contentSearchSchema.parse(input);
+  const { search, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state, priority, tag, azureTag } = contentSearchSchema.parse(input);
   const source = store.source();
   const lifecycleClause = lifecycle === "all" ? "" : lifecycle === "deleted" ? " AND t.deleted=1" : " AND t.deleted=0";
   const exactFilters = ticketFilterSql(type, state, "t.");
-  const filterClause = exactFilters.clauses.length ? " AND " + exactFilters.clauses.join(" AND ") : "";
-  const filterParams = exactFilters.params;
+  const metadataFilters = ticketMetadataFilterSql({ priority, tag, azureTag }, "t");
+  const filterClauses = [...exactFilters.clauses, ...metadataFilters.clauses];
+  const filterClause = filterClauses.length ? " AND " + filterClauses.join(" AND ") : "";
+  const filterParams = [...exactFilters.params, ...metadataFilters.params];
   const query = search.toLocaleLowerCase();
   const sorted = sortBy !== "id" || sortDirection !== "asc";
   const rows = store.db.prepare(`${localTicketScope()}, ordered AS (

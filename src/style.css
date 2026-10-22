@@ -9861,3 +9861,15 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .export-close-confirm > svg { flex-shrink: 0; }
 .export-close-dialog .export-close-confirm { background: #b33333; color: #fff; border: 1px solid #9c2929; }
 .export-close-dialog .export-close-confirm:hover:not(:disabled) { background: #962727; border-color: #852222; }
+
+.developer-status-table { border: 1px solid #cbd9d0; border-radius: 9px; background: #fff; }
+.developer-status-table table { border-collapse: separate; border-spacing: 0; margin: 0; }
+.developer-status-table thead th { background: #eaf2ed; color: #345343; border-bottom: 1px solid #cbd9d0; font-size: 12px; }
+.developer-status-table th + th, .developer-status-table td { border-left: 1px solid #e0e9e3; }
+.developer-status-table tbody th, .developer-status-table tbody td { border-bottom: 1px solid #e0e9e3; }
+.developer-status-table tbody tr:last-child > * { border-bottom: 0; }
+.developer-status-table tbody tr:nth-child(even) { background: #f7faf8; }
+.developer-status-table tbody tr:hover { background: #edf5ef; }
+.developer-status-table label { border-radius: 6px; }
+.developer-status-table label:has(input:checked) { background: #dceee2; }
+.developer-status-table .ticket-state-badge { max-width: 100%; white-space: normal; }

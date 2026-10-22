@@ -1,4 +1,4 @@
-import { ticketSearchFilters, ticketFilterSql } from "./ticket-catalog.js";
+import { ticketSearchFilters, ticketFilterSql, ticketMetadataFilters, ticketMetadataFilterSql } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { ticketMetadata } from "./ticket-metadata.js";
@@ -15,9 +15,7 @@ export const ticketListSchema = z.object({
   ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
   search: z.string().trim().min(1).max(300).optional(),
   ...ticketSearchFilters,
-  priority: z.number().int().min(1).max(20).optional(),
-  azureTag: z.string().trim().max(400).optional(),
-  tag: z.string().trim().max(60).optional(),
+  ...ticketMetadataFilters,
   afterId: z.number().int().nonnegative().default(0).describe("Pagination cursor: use nextAfterId from the previous response with the same sort/filter settings; 0 starts a new search."),
   limit: z.number().int().min(1).max(100).default(100),
 });
@@ -60,24 +58,9 @@ export function listLocalTickets(store: Store, input: unknown) {
   const exactFilters = ticketFilterSql(type, state);
   clauses.push(...exactFilters.clauses);
   params.push(...exactFilters.params);
-  if (priority !== undefined) {
-    clauses.push(
-      "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=local_tickets.source AND m.id=local_tickets.id),1)=?",
-    );
-    params.push(priority);
-  }
-  if (tag) {
-    clauses.push(
-      "EXISTS (SELECT 1 FROM ticket_metadata m,json_each(m.tags) tag WHERE m.source=local_tickets.source AND m.id=local_tickets.id AND tag.value=? COLLATE NOCASE)",
-    );
-    params.push(tag);
-  }
-  if (azureTag) {
-    clauses.push(
-      "EXISTS (SELECT 1 FROM ticket_azure_tags a, json_each(a.tags) tag WHERE a.source=local_tickets.source AND a.id=local_tickets.id AND tag.value=? COLLATE NOCASE)",
-    );
-    params.push(azureTag);
-  }
+  const metadataFilters = ticketMetadataFilterSql({ priority, tag, azureTag }, "local_tickets");
+  clauses.push(...metadataFilters.clauses);
+  params.push(...metadataFilters.params);
   const where = clauses.join(" AND ");
   const { total } = store.db
     .prepare(`${localTicketScope()} SELECT COUNT(*) AS total FROM local_tickets WHERE ${where}`)
