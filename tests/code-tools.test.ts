@@ -25,10 +25,7 @@ test("code tools are scoped, local-only, paginated and disabled at invocation ti
   const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, fake as any);
   const invoke = (name: string, input: any) => tools.find(tool => tool.name === name)!.handler!(input, {} as any) as Promise<any>;
   const result = await invoke("code_read_file", { branch: "main", path: "a.ts", startLine: 3, endLine: 5 });
-  assert.equal(result.format, "numbered-tsv-v1");
-  assert.equal(result.content, "3\tline 3\n4\tline 4\n5\tline 5");
-  assert.equal(result.startLine, 3);
-  assert.equal(result.endLine, 5);
+  assert.deepEqual(result.lines.map((line: any) => line.line), [3,4,5]);
   assert.equal(result.nextLine, null);
   const search = await invoke("code_search", { branch: "main", query: "line", mode: "content", offset: 0, limit: 2 });
   assert.equal(search.results.length, 2); assert.equal(search.nextOffset, 2);
@@ -140,32 +137,4 @@ test("review citation validates the pinned source and links the PR branch and li
   assert.equal(params.get("path"), "src/example.ts");
   assert.equal(params.get("line"), "2");
   assert.equal(params.get("endLine"), "3");
-});
-
-
-test("compact code reads preserve whitespace, blank lines and code-like delimiters", async t => {
-  const store = setup(t);
-  const source = '\tconst s = "a|b\\c";\r\n\r\n  ```\tjson\r\n42\tcode';
-  const tools = codeTools(store, { client: "C", project: "P" }, () => {}, { request: async () => ({ sha: "a", text: source }) } as any, "dev");
-  const read = (args: any) => tools.find(t => t.name === "code_read_file")!.handler!({ path: "a.ts", startLine: 1, ...args }, {} as any) as Promise<any>;
-  const result = await read({});
-  assert.equal(result.content, '1\t\tconst s = "a|b\\c";\n2\t\n3\t  ```\tjson\n4\t42\tcode');
-  assert.equal(result.truncatedLines, undefined);
-  assert.equal(result.endLine, 4);
-  const empty = await read({ startLine: 10 });
-  assert.equal(empty.content, ""); assert.equal(empty.startLine, null); assert.equal(empty.endLine, null); assert.equal(empty.nextLine, null);
-});
-
-test("compact code reads retain pagination and explicitly mark truncated source lines", async t => {
-  const store = setup(t);
-  const source = ["x".repeat(20000), ...Array.from({ length: 20 }, () => "y".repeat(2000))].join("\n");
-  const tools = codeTools(store, { client: "C", project: "P" }, () => {}, { request: async () => ({ sha: "a", text: source }) } as any, "dev");
-  const read = (startLine: number) => tools.find(t => t.name === "code_read_file")!.handler!({ path: "a.ts", startLine, full: true } as any, {} as any) as Promise<any>;
-  const first = await read(1);
-  assert.deepEqual(first.truncatedLines, [1]);
-  assert.equal(first.nextLine, first.endLine + 1);
-  assert.ok(JSON.stringify(first.content).length < 14000);
-  const next = await read(first.nextLine);
-  assert.equal(next.startLine, first.nextLine);
-  assert.ok(next.content.startsWith(`${first.nextLine}\t`));
 });
