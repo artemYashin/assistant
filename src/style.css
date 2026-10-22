@@ -6003,7 +6003,7 @@ summary > svg {
 .developer-status-table {
   max-height: 50vh;
   overflow: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
 }
 .developer-status-table table {
   width: 100%;
@@ -9864,7 +9864,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .developer-status-table { border: 1px solid #cbd9d0; border-radius: 9px; background: #fff; }
 .developer-status-table table { border-collapse: separate; border-spacing: 0; margin: 0; }
-.developer-status-table thead th { background: #eaf2ed; color: #345343; border-bottom: 1px solid #cbd9d0; font-size: 12px; }
+.developer-status-table thead th { position: sticky; top: 0; z-index: 1; background: #eaf2ed; color: #345343; border-bottom: 1px solid #cbd9d0; font-size: 12px; }
 .developer-status-table th + th, .developer-status-table td { border-left: 1px solid #e0e9e3; }
 .developer-status-table tbody th, .developer-status-table tbody td { border-bottom: 1px solid #e0e9e3; }
 .developer-status-table tbody tr:last-child > * { border-bottom: 0; }
