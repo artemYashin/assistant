@@ -53,7 +53,7 @@ export function DiffFileTree({ files, selected, onSelect, sizes }: {
           onMouseLeave={() => setHint(null)} onBlur={() => setHint(null)}
           onClick={() => directory ? setCollapsed(previous => { const next = new Set(previous); if (next.has(child.path)) next.delete(child.path); else next.add(child.path); return next; }) : onSelect(child.index!)}>
           <span className="diff-tree-status" title={label} aria-label={label || undefined}>{status === "added" ? "+" : status === "deleted" ? "−" : status === "renamed" ? "R" : status === "modified" ? "M" : ""}</span>
-          <span className="diff-tree-toggle" style={{ marginLeft: depth * 14 }}>{directory && (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}</span>
+          <span className="diff-tree-toggle" style={{ marginLeft: depth * 8 }}>{directory && (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}</span>
           <RepositoryFileIcon name={child.name} type={directory ? "directory" : "file"} size={15} />
           <span className="diff-tree-name">{child.name}</span>
           {file && <span className="diff-tree-counts"><span className="pr-diff-file-size">{diffFileSize(size)}</span><span className="pr-diff-added">+{file.added}</span><span className="pr-diff-removed">−{file.removed}</span></span>}

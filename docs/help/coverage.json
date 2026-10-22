@@ -91,7 +91,7 @@
     "src/DeveloperDirectory.tsx": "94b7e36171af2655ae1c871585f4f6c78ac55e10d92b377cbf0ba54a64681e97",
     "src/DeveloperStatusSettings.tsx": "3caa8475d401ace0016bb3d083f18e5848413d6f5689cb8325fef7a4759706f4",
     "src/DevelopersPage.tsx": "cff75cf4868183942857e37cbd9eb0dce0d7b65dd7155609a28f1ca6638acca4",
-    "src/DiffFileTree.tsx": "1ac9829d5663965651553f8ee903aff7a1e57d615d9af00c5703aaa36984a4ce",
+    "src/DiffFileTree.tsx": "dd92c5a0faffdff827b337bf013835f3a72d257466ebb375b6a0c5cf7231394c",
     "src/ExportMemory.tsx": "e5786054093e466ed81dfbb957d864c5c153979df0541e0525a587f88c6cea60",
     "src/ExportTickets.tsx": "2a6e00ee20aff10de5f9c1740b5f0b1b3eaa233aae15c85a5f573dc91760384a",
     "src/FieldDictation.tsx": "d035d1be5d4b65fb74be0505dc3fa2c108d4acda264d0de044b10b6653e5c59a",
