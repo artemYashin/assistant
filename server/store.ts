@@ -71,6 +71,7 @@ export const defaults = {
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
   reviewMaxTokens: 1000000,
+  reviewMaxToolCalls: 30,
   llmMaxToolCalls: 30,
   instructions:
     "Reply in the user's language, concisely and clearly. Help track commitments, deadlines and overlooked tickets. Save memory when explicitly asked; otherwise propose useful durable facts, agreements and preferences for approval. Use clear standalone wording, appropriate scope and avoid duplicates.",

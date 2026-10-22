@@ -2298,6 +2298,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
+    { id: "review", label: "Code Review", icon: GitPullRequest },
     { id: "memory", label: "Память", icon: BookOpen },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
@@ -2732,9 +2733,7 @@ function Settings({ settings, context, run, busy }: any) {
               onChange={(e) => set("llmMaxTokens", Number(e.target.value))}
             />
           </Field>
-          <Field label="Лимит токенов ревью по умолчанию" hint="Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.">
-            <input type="number" min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
-          </Field>
+
           </div>
           <div className="settings-group assistant-code-settings">
             <h3>Code Repository</h3>
@@ -2782,6 +2781,18 @@ function Settings({ settings, context, run, busy }: any) {
               отредактировать перед отправкой.
             </span>
           </div>
+          </div>
+        </section>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-review-panel`} aria-labelledby={`${settingsTabId}-review`} hidden={settingsTab !== "review"}>
+          <div className="section-heading"><h2><GitPullRequest size={22} />Code Review</h2></div>
+          <div className="settings-group">
+            <h3>Лимиты ревью</h3>
+          <Field label="Лимит токенов ревью по умолчанию" hint="Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.">
+            <input type="number" min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
+          </Field>
+            <Field label="Максимум вызовов инструментов на ревью" hint="От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.">
+              <input type="number" min="1" max="1000" step="1" value={form.reviewMaxToolCalls ?? 30} onChange={event => set("reviewMaxToolCalls", Number(event.target.value))} />
+            </Field>
           </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-memory-panel`} aria-labelledby={`${settingsTabId}-memory`} hidden={settingsTab !== "memory"}>

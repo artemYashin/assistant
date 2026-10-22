@@ -1165,3 +1165,23 @@ test("review budget stops cumulative follow-ups even when each attempt is below 
   assert.equal(new UsageLedger(store).reviewTokens("budget-review"), 3400);
   await assert.rejects(() => agent.chat("Third", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью/);
 });
+
+test("review tool limit is independent from chat and cumulative across continuations", async t => {
+  const store = fixture(t);
+  assert.equal(store.settings().reviewMaxToolCalls, 30);
+  store.set("settings", { ...store.settings(), llmMaxToolCalls: 1, reviewMaxToolCalls: 2 });
+  let turn = 0;
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    if (++turn === 1) {
+      for (let i = 0; i < 2; i++) assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "allow");
+      return { data: { content: "First review step" } };
+    }
+    assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "deny");
+    return new Promise(() => {});
+  });
+  await agent.chat("Review", context, true, { reviewId: "tool-limit-review" });
+  assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
+  await assert.rejects(agent.chat("Continue", context, true, { reviewId: "tool-limit-review" }), /лимит вызовов инструментов на ревью/);
+  assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
+  assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
+});

@@ -55,6 +55,10 @@ export class UsageLedger {
   reviewTokens(reviewId: string) {
     return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + this.tokens(id), 0);
   }
+  reviewToolCalls(reviewId: string) {
+    const read = this.store.db.prepare("SELECT tool_calls FROM llm_requests WHERE id=?");
+    return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + ((read.get(id) as { tool_calls: number } | undefined)?.tool_calls ?? 0), 0);
+  }
   sessionUsage(context: Context, sessionId: string) {
     this.store.chatSession(context, sessionId);
     const usage = this.store.db.prepare(

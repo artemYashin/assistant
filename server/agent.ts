@@ -464,6 +464,8 @@ export class Agent {
       conversationId,
     );
     if (review && reviewActions?.reviewId) ledger.registerReviewRequest(reviewActions.reviewId, id);
+    const toolLimit = review ? settings.reviewMaxToolCalls : settings.llmMaxToolCalls;
+    const previousToolCalls = review && reviewActions?.reviewId ? ledger.reviewToolCalls(reviewActions.reviewId) : 0;
     const tokenLimit = review ? reviewActions?.maxTokens ?? settings.reviewMaxTokens : settings.llmMaxTokens;
     const spentTokens = () => review && reviewActions?.reviewId ? ledger.reviewTokens(reviewActions.reviewId) : ledger.tokens(id);
     const reviewRuntimeId = review && reviewActions?.reviewId ? `review:${reviewActions.reviewId}` : undefined;
@@ -883,9 +885,9 @@ export class Agent {
           context,
           (toolName) => {
             if (stopReason) return false;
-            if (toolCalls >= settings.llmMaxToolCalls) {
+            if (previousToolCalls + toolCalls >= toolLimit) {
               ledger.toolTrace(id, toolName || "unknown", {}, false, "limited");
-              cancel("Достигнут лимит вызовов инструментов.", "limited");
+              cancel(review ? "Достигнут лимит вызовов инструментов на ревью. Увеличьте его в настройках Code Review для продолжения." : "Достигнут лимит вызовов инструментов.", "limited");
               return false;
             }
             toolCalls++;
