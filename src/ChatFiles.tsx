@@ -212,6 +212,18 @@ export function ChatFileDropArea({ children, disabled, onFiles, onError }: {
   useEffect(() => { if (disabled) reset(); }, [disabled]);
   const isFile = (event: DragEvent) => Array.from(event.dataTransfer.types).includes("Files");
   return <div className="chat-file-drop-area"
+    onPaste={event => {
+      if (!(event.target instanceof HTMLTextAreaElement)) return;
+      const images = Array.from(event.clipboardData.files).filter(file =>
+        file.type.startsWith("image/") || /\.(png|jpe?g|gif|webp)$/i.test(file.name),
+      );
+      if (!images.length) return;
+      // Let the textarea insert accompanying plain text at the current selection.
+      if (!event.clipboardData.getData("text/plain")) event.preventDefault();
+      if (disabled) return;
+      try { onFiles(images); }
+      catch (error) { onError(error instanceof Error ? error.message : String(error)); }
+    }}
     onDragEnter={event => {
       if (!isFile(event)) return;
       event.preventDefault();

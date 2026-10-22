@@ -21,10 +21,10 @@
 
 Закрыть
 
-Источник: src/ChatFiles.tsx:256.
+Источник: src/ChatFiles.tsx:268.
 
 ### Элемент
 
 Понятно
 
-Источник: src/ChatFiles.tsx:260.
+Источник: src/ChatFiles.tsx:272.

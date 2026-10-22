@@ -81,7 +81,7 @@
     "src/AzurePatPermissions.tsx": "d3086dda15ad0d1b2ea8e6817e2f5703e9554eb3fcdc3e1df57d9d46257eadcc",
     "src/BulkTicketStatus.tsx": "6a8a279b3bdfcf555fd7d9b80cd09cbbf42164ceefb6a8e94260fa5c4a396eb8",
     "src/ChatCodeSnippet.tsx": "27e435411ae8bfd7160fa3abe27cf3d79624e6fefdf5f0026d9501c3d4869f7a",
-    "src/ChatFiles.tsx": "cb18b9ea09078010abfc72e11ecfb3e889cc59391cad35cf40f62c3665def006",
+    "src/ChatFiles.tsx": "6d8bf618d6d4c4ab0ab3eac0fb0ef3fdb35315de469dfaa22401a93eef89603d",
     "src/ChatHistory.tsx": "15e890c882db510c1e4fa80a42579b6c9dbab812b689deb37d42c13ada0bf38c",
     "src/ChatMarkdown.tsx": "f76bab7ccbe4e39f7ffb2d87cfdb4ea012a6c9a667276ba849500dddd95e3fd6",
     "src/ChatMessageContext.tsx": "7477df96bd4a48ebc4063795073532b78ced93b045d0d5b0758c6ff641127f86",
