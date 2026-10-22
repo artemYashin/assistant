@@ -1,3 +1,4 @@
+import { TicketCommentForm } from "./TicketCommentForm.js";
 import { ConfirmButton } from "./ConfirmButton.js";
 import { findCitationRange, highlightCitation, revealCitation } from "./ticket-citation-highlight.js";
 import { AzureAssignee } from "./AzureAssignee.js";
@@ -32,7 +33,6 @@ import {
   Paperclip,
   Database,
   NotebookPen,
-  Send,
 } from "lucide-react";
 import { TicketRichText } from "./TicketRichText.js";
 import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
@@ -78,11 +78,12 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
   }, [card, citation]);
   useEffect(() => {
     const update = (event: Event) => {
-      const { id, source, comment } = (event as CustomEvent).detail;
+      const { id, source, comment, attachments = [] } = (event as CustomEvent).detail;
       setCard((old: any) =>
         old?.id === id && old?.source === source
           ? {
               ...old,
+              attachments: [...new Map([...(old.attachments || []), ...attachments].map((image: any) => [image.id, image])).values()],
               comments: [
                 ...old.comments.filter((c: any) => c.id !== comment.id),
                 comment,
@@ -721,7 +722,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                   Комментарии отсутствуют в загруженных данных.
                 </p>
               )}
-              <TicketCommentForm key={reference} reference={reference} />
+              <TicketCommentForm key={reference} reference={reference} draftKey={JSON.stringify([card.source, card.id])} />
             </details>
             <details className="ticket-section ticket-section-neutral">
               <summary>
@@ -828,78 +829,6 @@ export function TicketCopyButton({
         {status !== "idle" ? message : ""}
       </span>
     </span>
-  );
-}
-
-function TicketCommentForm({ reference }: { reference: string }) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
-  const sending = useRef(false);
-  const inputId = useId();
-  return (
-    <form
-      className="ticket-comment-form"
-      onSubmit={async (event) => {
-        event.preventDefault();
-        if (sending.current || !text.trim()) return;
-        sending.current = true;
-        setBusy(true);
-        setError("");
-        setSent(false);
-        try {
-          const result = await api(
-            `/ticket-cards/${encodeURIComponent(reference)}/comments`,
-            "POST",
-            { text },
-          );
-          window.dispatchEvent(
-            new CustomEvent("orbit:ticket-comment", { detail: result }),
-          );
-          setText("");
-          setSent(true);
-        } catch (e: any) {
-          setError(e.message);
-        } finally {
-          sending.current = false;
-          setBusy(false);
-        }
-      }}
-    >
-      <label htmlFor={inputId}>Новый комментарий</label>
-      <textarea
-        id={inputId}
-        rows={4}
-        maxLength={10000}
-        value={text}
-        disabled={busy}
-        placeholder="Напишите комментарий к тикету…"
-        onChange={(event) => {
-          setText(event.target.value);
-          setSent(false);
-        }}
-      />
-      <div className="ticket-comment-form-actions">
-        <small className="muted">
-          Комментарий будет отправлен в Azure DevOps.
-        </small>
-        <button
-          type="submit"
-          className="primary"
-          disabled={busy || !text.trim()}
-        >
-          <Send size={15} />
-          {busy ? "Отправка…" : "Отправить"}
-        </button>
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {sent && <p role="status">Комментарий отправлен.</p>}
-    </form>
   );
 }
 

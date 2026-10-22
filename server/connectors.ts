@@ -1,3 +1,4 @@
+import { commentMarkdown, commentImageType } from "./comment-markdown.js";
 import { browseQuery, browseFields, azureSummary, orderBrowseIds, type AzureBrowse } from "./azure-browser.js";
 import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
 import {
@@ -1124,7 +1125,31 @@ export class Connectors {
       .run(cardId, JSON.stringify(card));
     return { cardId, ...card };
   }
-  async addTicketComment(ref: string, text: string) {
+  async uploadCommentImage(ref: string, bytes: Buffer, name: string, uploadId: string) {
+    const card = this.ticketCard(ref), s = this.store.settings(), source = this.store.source(s);
+    if (card.source !== source) throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    const type = commentImageType(bytes);
+    const key = `ticket.comment-upload:${source}:${card.id}:${uploadId}`;
+    const hash = createHash("sha256").update(bytes).digest("hex");
+    const previous = this.store.get<any>(key, null);
+    if (previous) {
+      if (previous.hash !== hash) throw new AppError(409, "Изображение изменилось. Добавьте его заново.");
+      return previous.image;
+    }
+    await this.ticketSummary(card.id);
+    if (source !== this.store.source()) throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    const safeName = name.replace(/[\\/<>\x00-\x1f]/g, "_").slice(0,150) || "image";
+    const result = await this.azure(`attachments?fileName=${encodeURIComponent(safeName)}`,
+      { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: new Uint8Array(bytes) }, s, this.store.secret("azure.pat"));
+    const id = String(result.id || "").toLowerCase();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) throw new AppError(502, "Azure не вернул ссылку на изображение. Повторите загрузку.");
+    // Construct a trusted URL; never forward a server-supplied arbitrary URL with credentials.
+    const url = `${azureBase(s.azureUrl)}/${encodeURIComponent(s.azureProject)}/_apis/wit/attachments/${id}?fileName=${encodeURIComponent(safeName)}`;
+    const image = { id, url, name: safeName, image: true, type };
+    this.store.set(key, { hash, image });
+    return image;
+  }
+  async addTicketComment(ref: string, text: string, options: { markdown?: boolean; imageUploads?: string[]; requestId?: string } = {}) {
     const card = this.ticketCard(ref);
     const s = this.store.settings();
     const source = this.store.source(s);
@@ -1139,6 +1164,18 @@ export class Connectors {
         400,
         "Комментарий должен содержать от 1 до 10000 символов",
       );
+    const receiptKey = options.requestId ? `ticket.comment-receipt:${source}:${card.id}:${options.requestId}` : undefined;
+    const fingerprint = createHash("sha256").update(JSON.stringify({ text, markdown: !!options.markdown, images: options.imageUploads || [] })).digest("hex");
+    const receipt = receiptKey ? this.store.get<any>(receiptKey, null) : null;
+    if (receipt) {
+      if (receipt.fingerprint !== fingerprint) throw new AppError(409, "Черновик изменился. Повторите отправку с новым идентификатором.");
+      return receipt.result;
+    }
+    const images = (options.imageUploads || []).map(uploadId => {
+      const stored = this.store.get<any>(`ticket.comment-upload:${source}:${card.id}:${uploadId}`, null);
+      if (!stored) throw new AppError(400, "Не найдена загруженная картинка. Добавьте её заново.");
+      return stored.image;
+    });
     // Check the current project before writing, including for old cached cards.
     await this.ticketSummary(card.id);
     if (source !== this.store.source())
@@ -1153,7 +1190,7 @@ export class Connectors {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;")
       .replace(/\r\n?|\n/g, "<br>");
-    const html = `<p>${escaped}</p>`;
+    const html = options.markdown ? await commentMarkdown(text) : `<p>${escaped}</p>`;
     const result = await this.azure(
       `workitems/${card.id}/comments?format=html`,
       { method: "POST", body: JSON.stringify({ text: html }) },
@@ -1177,6 +1214,8 @@ export class Connectors {
       text,
       richText: html,
     };
+    const response = { id: card.id, source, comment, attachments: images };
+    if (receiptKey) this.store.set(receiptKey, { fingerprint, result: response });
     // Keep all open/saved cards consistent without refetching the full ticket.
     this.store.db.transaction(() => {
       const rows = this.store.db
@@ -1185,6 +1224,7 @@ export class Connectors {
       for (const row of rows) {
         const saved = JSON.parse(row.data);
         if (saved.id !== card.id || saved.source !== source) continue;
+        saved.attachments = [...new Map([...(saved.attachments || []), ...images].map((image: any) => [image.id, image])).values()];
         saved.comments = [
           ...(saved.comments || []).filter((c: any) => c.id !== comment.id),
           comment,
@@ -1195,7 +1235,7 @@ export class Connectors {
       }
     })();
     this.store.audit("ticket.comment.added", `${card.id}: ${comment.id}`);
-    return { id: card.id, source, comment };
+    return response;
   }
   ticketCard(ref: string) {
     const row = this.store.db

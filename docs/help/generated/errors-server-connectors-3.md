@@ -7,102 +7,120 @@
 
 ### Сообщение
 
+Не найдена загруженная картинка. Добавьте её заново.
+
+Источник: server/connectors.ts:1176.
+
+### Сообщение
+
+Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.
+
+Источник: server/connectors.ts:1206.
+
+### Сообщение
+
+Карточка не найдена
+
+Источник: server/connectors.ts:1244.
+
+### Сообщение
+
+Вложение не найдено в тикете
+
+Источник: server/connectors.ts:1250.
+
+### Сообщение
+
 Подключите Azure DevOps
 
-Источник: server/connectors.ts:1218.
+Источник: server/connectors.ts:1258.
 
 ### Сообщение
 
 Не удалось загрузить вложение
 
-Источник: server/connectors.ts:1230.
+Источник: server/connectors.ts:1270.
 
 ### Сообщение
 
 Вложение больше 20 МБ
 
-Источник: server/connectors.ts:1241.
+Источник: server/connectors.ts:1281.
 
 ### Сообщение
 
 В описаниях PR более 500 новых тикетов: сузьте выборку PR.
 
-Источник: server/connectors.ts:1285.
+Источник: server/connectors.ts:1325.
 
 ### Сообщение
 
 Подключение Azure изменилось во время импорта
 
-Источник: server/connectors.ts:1304.
+Источник: server/connectors.ts:1344.
 
 ### Сообщение
 
 Azure вернул неверный список тикетов
 
-Источник: server/connectors.ts:1309.
+Источник: server/connectors.ts:1349.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите поиск.
 
-Источник: server/connectors.ts:1329.
+Источник: server/connectors.ts:1369.
 
 ### Сообщение
 
 Результаты поиска устарели. Нажмите «Найти», чтобы обновить список страниц.
 
-Источник: server/connectors.ts:1343.
+Источник: server/connectors.ts:1383.
 
 ### Сообщение
 
 Некорректные номера тикетов Azure
 
-Источник: server/connectors.ts:1355.
+Источник: server/connectors.ts:1395.
 
 ### Сообщение
 
 Azure не вернул данные тикетов
 
-Источник: server/connectors.ts:1387.
+Источник: server/connectors.ts:1427.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите импорт.
 
-Источник: server/connectors.ts:1412.
+Источник: server/connectors.ts:1452.
 
 ### Сообщение
 
 Azure не вернул результаты поиска
 
-Источник: server/connectors.ts:1499.
+Источник: server/connectors.ts:1539.
 
 ### Сообщение
 
 Azure не вернул тикеты
 
-Источник: server/connectors.ts:1532.
+Источник: server/connectors.ts:1572.
 
 ### Сообщение
 
 Подключение Azure изменилось во время запроса
 
-Источник: server/connectors.ts:1599.
+Источник: server/connectors.ts:1639.
 
 ### Сообщение
 
 Azure вернул неверный номер тикета
 
-Источник: server/connectors.ts:1601.
+Источник: server/connectors.ts:1641.
 
 ### Сообщение
 
 Для автоимпорта выберите типы и статусы задач
 
-Источник: server/connectors.ts:1632.
-
-### Сообщение
-
-Azure вернул неполный список тикетов
-
-Источник: server/connectors.ts:1695.
+Источник: server/connectors.ts:1672.

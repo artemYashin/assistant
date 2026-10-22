@@ -1089,11 +1089,22 @@ export function createApp(
       linkedPullRequests: pullRequests.linkedToTicket(card.id, card.source),
     });
   });
+  const commentUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 1 } }).single("image");
+  app.post("/api/ticket-cards/:ref/comment-images", (req, res, next) => {
+    commentUpload(req, res, error => error ? next(new AppError(400, "Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.")) : next());
+  }, async (req, res) => {
+    const uploadId = z.string().uuid().parse(req.body.uploadId);
+    if (!req.file) throw new AppError(400, "Выберите изображение.");
+    res.json(await connectors.uploadCommentImage(String(req.params.ref), req.file.buffer, req.file.originalname, uploadId));
+  });
   app.post("/api/ticket-cards/:ref/comments", async (req, res) => {
-    const { text } = z
-      .object({ text: z.string().trim().min(1).max(10000) })
-      .parse(req.body);
-    res.json(await connectors.addTicketComment(String(req.params.ref), text));
+    const { text, markdown, imageUploads, requestId } = z.object({
+      text: z.string().trim().min(1).max(10000),
+      markdown: z.boolean().optional(),
+      imageUploads: z.array(z.string().uuid()).max(10).optional(),
+      requestId: z.string().uuid().optional(),
+    }).parse(req.body);
+    res.json(await connectors.addTicketComment(String(req.params.ref), text, { markdown, imageUploads, requestId }));
   });
   app.get("/api/ticket-cards/:ref/attachments/:id", async (req, res) => {
     const file = await connectors.attachment(
