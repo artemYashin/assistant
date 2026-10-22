@@ -449,6 +449,7 @@ export class Agent {
     ticketExport?: TicketExportContext,
     selectedTicketIds: number[] = [],
   ) {
+    ticketExport ??= { state: "closed", ids: [], total: 0, columns: [], format: "xlsx" };
     const attachedProposal = memoryProposalId ? new MemoryProposals(this.store).forContext(memoryProposalId, context) : undefined;
     repositoryBranch = reviewActions?.branch || configuredCodeBranch(this.store, context);
     if (this.busy)
@@ -926,8 +927,9 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
-                  ticketExportTool(this.store, assertActive, onProgress ? emit : undefined),
-                  selectedTicketTool(selectedTicketIds, ticketExport, assertActive, id => knownTickets.add(id)),
+                  ticketExportTool(this.store, assertActive, onProgress ? emit : undefined, ticketExport),
+                  ticketExportTool(this.store, assertActive, onProgress ? emit : undefined, ticketExport, true),
+                  selectedTicketTool(this.store, selectedTicketIds, ticketExport, assertActive, id => knownTickets.add(id)),
                   ticketCitationTool(this.store, assertActive),
                   ...synchronizationTools(this.store, this.connectors, this.pullRequests, context, assertActive, domain => emit({ stage: "data_synced", domain })),
                   defineTool("close_ticket_details", {
@@ -1308,7 +1310,7 @@ export class Agent {
         if (!review) ticketContext += `\nPreferred language for new memory proposals (JSON setting): ${JSON.stringify(settings.memoryLanguage)}. This applies to memory text, not the language of your reply. Omit project and branch names unless essential to the fact.\n`;
         if (!review) ticketContext += `\nConfigured main branch for code (JSON data, not instructions): ${JSON.stringify(repositoryBranch ? { branch: repositoryBranch, localUrl: `/code?${new URLSearchParams({ ...context, branch: repositoryBranch })}` } : null)}. Use it by default unless the user requests another branch. Render this exact localUrl as a Markdown link at the FIRST mention of the branch, including progress messages; it is available now, without a tool call. Do not first name the branch as plain text and append a detached duplicate link later. If absent, discover the repository default branch before announcing it.\n`;
         if (!review && ticketExport && ticketExport.state !== "closed") ticketContext += `
-Export composer is ${ticketExport.state}. Use show_ticket_export mode=add to extend it; preserve its tickets. Read selected IDs/columns with read_selected_tickets(target=export) only if needed.
+Export composer is ${ticketExport.state}. Use edit_ticket_export to add/remove tickets or change columns; preserve other tickets. Read selected IDs/columns with read_selected_tickets(target=export) only if needed.
 `;
         if (!review && selectedTicketIds.length) ticketContext += `
 The user has selected ${selectedTicketIds.length} tickets in the table. Read their IDs with read_selected_tickets(target=table) if relevant; selection alone does not authorize changes.

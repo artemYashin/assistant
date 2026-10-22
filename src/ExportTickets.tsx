@@ -54,6 +54,10 @@ export function addTicketsToExport(
     new CustomEvent(eventName, { detail: { tickets, mode: "add", columns } }),
   );
 }
+/** Apply assistant edits only to an existing export. */
+export function editTicketExport(ids: number[], removeIds: number[] = [], columns?: ExportColumnKey[]) {
+  window.dispatchEvent(new CustomEvent(eventName, { detail: { tickets: ids, removeIds, mode: "edit", columns } }));
+}
 export function ExportTickets({
   tickets,
   trash = false,
@@ -187,15 +191,18 @@ export function TicketExportDialog({
       const {
         tickets,
         mode,
+        removeIds = [],
         columns: requestedColumns,
       } = (
         event as CustomEvent<{
           tickets: (CsvTicket | number)[];
-          mode: "open" | "add";
+          mode: "open" | "add" | "edit";
+          removeIds?: number[];
           columns?: ExportColumnKey[];
         }>
       ).detail || {};
       if (!Array.isArray(tickets)) return;
+      if (mode === "edit" && !draftActive.current) return;
       if (requestedColumns) {
         const selected = [...new Set(requestedColumns)].filter((key) =>
           exportColumns.some((column) => column.key === key),
@@ -216,7 +223,7 @@ export function TicketExportDialog({
           [
             ...(draftActive.current ? draftTickets.current : []),
             ...tickets,
-          ].map((ticket) => [
+          ].filter(ticket => !removeIds.includes(typeof ticket === "number" ? ticket : ticket.id)).map((ticket) => [
             typeof ticket === "number" ? ticket : ticket.id,
             ticket,
           ]),
@@ -235,7 +242,7 @@ export function TicketExportDialog({
       setAdding(false);
       setCatalog([]);
       setLoading(true);
-      if (mode !== "add" || !minimizedRef.current) {
+      if (mode === "open" || !minimizedRef.current) {
         minimizedRef.current = false;
         setMinimized(false);
         if (!dialog.current?.open) dialog.current?.showModal();

@@ -7,12 +7,24 @@
 
 ### Сообщение
 
+Экспорт закрыт. Сначала откройте окно экспорта.
+
+Источник: server/ticket-export-tool.ts:42.
+
+### Сообщение
+
+Для открытия используйте ids, для редактирования — addIds и removeIds.
+
+Источник: server/ticket-export-tool.ts:44.
+
+### Сообщение
+
 Подключение Azure изменилось
 
-Источник: server/ticket-export-tool.ts:36.
+Источник: server/ticket-export-tool.ts:48.
 
 ### Сообщение
 
 Открытие экспорта требует подключённого интерфейса чата
 
-Источник: server/ticket-export-tool.ts:38.
+Источник: server/ticket-export-tool.ts:50.
