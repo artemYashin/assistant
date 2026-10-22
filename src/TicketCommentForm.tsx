@@ -143,9 +143,18 @@ export function TicketCommentForm({
   return (
     <form
       className="ticket-comment-form"
+      onKeyDown={(event) => {
+        if (event.key !== "Enter") return;
+        event.stopPropagation();
+        const element = event.target as HTMLElement;
+        if (
+          !(element instanceof HTMLTextAreaElement) &&
+          !element.isContentEditable
+        )
+          event.preventDefault();
+      }}
       onSubmit={(event) => {
         event.preventDefault();
-        void send();
       }}
     >
       <CommentEditor
@@ -163,7 +172,8 @@ export function TicketCommentForm({
           МБ.
         </small>
         <button
-          type="submit"
+          type="button"
+          onClick={() => void send()}
           className="primary"
           disabled={draft.busy || !draft.text.trim()}
         >

@@ -9899,3 +9899,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .comment-link-editor > div { display:flex; flex-wrap:wrap; gap:6px; }
 .comment-link-editor button { font-size:12px; padding:6px 9px; }
 .comment-inline-image { min-width:40px; min-height:36px; }
+.comment-mode-switch { display:flex; flex-wrap:wrap; margin-left:auto; gap:2px; padding:2px; border:1px solid #ced9e0; border-radius:7px; background:#e5edf2; }
+.comment-editor-shell .comment-mode-switch button { font-size:11px; padding:4px 7px; height:27px; border-radius:5px; }
+.comment-editor-shell .comment-mode-switch button[aria-pressed="true"] { background:white; border-color:#bbd2c5; color:#226b4b; box-shadow:0 1px 3px #203a4815; }
+.comment-editor-shell .comment-markdown-input { display:block; width:100%; min-height:190px; max-height:440px; resize:vertical; border:0; border-radius:0; padding:14px; font:13px/1.6 ui-monospace,monospace; box-shadow:none; }
+.comment-editor-shell .comment-inline-image img { width:auto; height:auto; max-width:min(100%, 480px); max-height:240px; }
+.comment-editor-shell .comment-inline-image { max-width:min(100%, 480px); }

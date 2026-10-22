@@ -7,17 +7,7 @@ import { Markdown } from "@tiptap/markdown";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import {
-  Bold,
-  Italic,
-  List,
-  Quote,
-  Code,
-  Link,
-  ImagePlus,
-  Eye,
-  Pencil,
-} from "lucide-react";
+import { Bold, Italic, List, Quote, Code, Link, ImagePlus } from "lucide-react";
 
 type EditTarget = {
   from: number;
@@ -46,7 +36,9 @@ export function CommentEditor(props: Props) {
   const latest = useRef(props);
   latest.current = props;
   const picker = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState(false);
+  const [mode, setMode] = useState<"markdown" | "editor" | "preview">("editor");
+  const preview = mode === "preview";
+  const rawInput = useRef<HTMLTextAreaElement>(null);
   const [target, setTarget] = useState<EditTarget | null>(null);
   const [editError, setEditError] = useState("");
   const [, rerender] = useState(0);
@@ -219,8 +211,8 @@ export function CommentEditor(props: Props) {
     },
   });
   useEffect(() => {
-    editor?.setEditable(!props.disabled && !preview && !target, false);
-  }, [editor, props.disabled, preview, target]);
+    editor?.setEditable(!props.disabled && mode === "editor" && !target, false);
+  }, [editor, props.disabled, mode, target]);
   useEffect(() => {
     if (editor && props.text !== editor.getMarkdown())
       editor.commands.setContent(props.text, {
@@ -283,6 +275,22 @@ export function CommentEditor(props: Props) {
       run: () => picker.current?.click(),
     },
   ];
+  function insertRawImages(files: File[]) {
+    if (props.disabled) return;
+    const images = props.onImages(files);
+    const input = rawInput.current;
+    const from = input?.selectionStart ?? props.text.length,
+      to = input?.selectionEnd ?? from;
+    const markdown = images
+      .map((image) => `\n![${image.alt}](${image.src})\n`)
+      .join("");
+    if (!markdown) return;
+    props.onChange(props.text.slice(0, from) + markdown + props.text.slice(to));
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(from + markdown.length, from + markdown.length);
+    });
+  }
   function apply() {
     if (!target || !editor) return;
     if (
@@ -327,23 +335,36 @@ export function CommentEditor(props: Props) {
             title={action.name}
             aria-label={action.name}
             aria-pressed={action.active}
-            disabled={props.disabled || preview || !!target}
+            disabled={props.disabled || mode !== "editor" || !!target}
             onMouseDown={(event) => event.preventDefault()}
             onClick={action.run}
           >
             <action.icon size={17} />
           </button>
         ))}
-        <button
-          type="button"
-          className="comment-preview-toggle"
-          disabled={!!target}
-          aria-pressed={preview}
-          onClick={() => setPreview(!preview)}
+        <div
+          className="comment-mode-switch"
+          role="group"
+          aria-label="Режим комментария"
         >
-          {preview ? <Pencil size={16} /> : <Eye size={16} />}{" "}
-          {preview ? "Редактировать" : "Предпросмотр"}
-        </button>
+          {(
+            [
+              ["markdown", "Markdown"],
+              ["editor", "Редактор"],
+              ["preview", "Предпросмотр"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={mode === value}
+              disabled={!!target}
+              onClick={() => setMode(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <input
         ref={picker}
@@ -364,7 +385,39 @@ export function CommentEditor(props: Props) {
           event.target.value = "";
         }}
       />
-      <EditorContent editor={editor} />
+      <div hidden={mode === "markdown"}>
+        <EditorContent editor={editor} />
+      </div>
+      {mode === "markdown" && (
+        <textarea
+          ref={rawInput}
+          className="comment-markdown-input"
+          aria-label="Markdown комментария"
+          value={props.text}
+          disabled={props.disabled}
+          placeholder="Напишите комментарий в Markdown…"
+          onChange={(event) => props.onChange(event.target.value)}
+          onPaste={(event) => {
+            const files = Array.from(event.clipboardData.files).filter((file) =>
+              file.type.startsWith("image/"),
+            );
+            if (files.length) {
+              event.preventDefault();
+              insertRawImages(files);
+            }
+          }}
+          onDragOver={(event) => {
+            if (event.dataTransfer.types.includes("Files"))
+              event.preventDefault();
+          }}
+          onDrop={(event) => {
+            if (event.dataTransfer.files.length) {
+              event.preventDefault();
+              insertRawImages(Array.from(event.dataTransfer.files));
+            }
+          }}
+        />
+      )}
       {target && (
         <div
           className="comment-link-editor"

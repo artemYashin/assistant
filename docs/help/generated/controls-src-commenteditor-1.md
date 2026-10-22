@@ -7,36 +7,36 @@
 
 ### Элемент
 
-/ · · Редактировать / Предпросмотр
+Markdown комментария · Напишите комментарий в Markdown…
 
-Источник: src/CommentEditor.tsx:337.
+Источник: src/CommentEditor.tsx:392.
 
 ### Элемент
 
 Описание изображения / Текст ссылки
 
-Источник: src/CommentEditor.tsx:385.
+Источник: src/CommentEditor.tsx:438.
 
 ### Элемент
 
 Адрес
 
-Источник: src/CommentEditor.tsx:396.
+Источник: src/CommentEditor.tsx:449.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/CommentEditor.tsx:407.
+Источник: src/CommentEditor.tsx:460.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CommentEditor.tsx:410.
+Источник: src/CommentEditor.tsx:463.
 
 ### Элемент
 
 Удалить · картинку / ссылку
 
-Источник: src/CommentEditor.tsx:413.
+Источник: src/CommentEditor.tsx:466.
