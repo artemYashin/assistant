@@ -7,7 +7,7 @@ import { RepositorySearch } from "./RepositorySearch.js";
 import { RepositoryFileIcon, repositoryFileKind, repositoryFileSize } from "./RepositoryFileKind.js";
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GitCommitHorizontal, Bug, AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw } from "lucide-react";
+import { TriangleAlert, GitCommitHorizontal, Bug, AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage } from "./diff-languages.js";
@@ -30,6 +30,7 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
   const { progress, execute, stop } = useCodeProgress();
   const [debugWork, setDebugWork] = useState(false);
   const [showCommits, setShowCommits] = useState(false);
+  const [fetchDepth, setFetchDepth] = useState<number | null>(null);
   const branchStorageKey = repositoryBranchKey(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
@@ -92,6 +93,7 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
     setBusy(true); setError(""); setFileBusy(false);
     void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
       if (!live || scope !== generation.current) return;
+      setFetchDepth(data.fetchDepth ?? null);
       if (requestedBranch && !data.branches.includes(requestedBranch)) { setError("Ветка из ссылки отсутствует в локальном списке. Обновите список веток кнопкой проверки."); setBusy(false); return; }
       setBranches(data.branches); setBranch(current => {
         const preferred = current || requestedBranch || rememberedBranch();
@@ -112,11 +114,13 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
         const catalog = await request("branches", { refresh: true });
         if (current !== generation.current) return;
         setBranches(catalog.branches);
+        setFetchDepth(catalog.fetchDepth ?? null);
       }
       const next = await request(operation, { refresh: force });
       if (current === generation.current) {
         if (snapshot.current && snapshot.current.sha !== next.sha) { setFile(null); }
         setStatus(next);
+        setFetchDepth(next.fetchDepth ?? null);
       }
     } catch (e: any) { if (current === generation.current) setError(e.message); }
     finally { if (current === generation.current) setBusy(false); }
@@ -148,7 +152,14 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
   }
   return <section className="repository-page">
     <header className="repository-heading">
-      <div className="repository-heading-title"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span></div>
+      <div className="repository-heading-title"><h1><Code2 size={23} />Код репозитория</h1><span className="muted">{status?.repository || context.project} · только чтение</span>
+        {fetchDepth !== null && fetchDepth > 0 && fetchDepth < 10 && <div className="repository-depth-warning" role="note">
+          <TriangleAlert size={16} aria-hidden="true" /><div><strong>Ограниченная история Git: глубина {fetchDepth}</strong>
+            <p>Для более комфортного переключения веток рекомендуем глубину 0 (полная история) или больше 10, например 100. Это может сократить повторную загрузку объектов, но увеличит первую загрузку и размер кэша.</p>
+            <small>Заказчики и проекты → Репозиторий → Git → Глубина истории. Сохраните значение и нажмите Pull.</small>
+          </div>
+        </div>}
+      </div>
       <div className="repository-heading-status">
     {status && <div className="repository-freshness" title="Сравнение с Azure на момент последней проверки">
       <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>

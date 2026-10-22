@@ -9,10 +9,10 @@
 
 repository-error
 
-Источник: src/CodeBrowserPage.tsx:176.
+Источник: src/CodeBrowserPage.tsx:187.
 
 ### Сообщение
 
 Закрыть ошибку
 
-Источник: src/CodeBrowserPage.tsx:178.
+Источник: src/CodeBrowserPage.tsx:189.

@@ -128,7 +128,7 @@ export class CodeBrowser {
         ...(manual ? { lastAttempt: Date.now(), error: undefined } : {}),
       });
     }
-    return { ...data, repository: monitor.repository, syncError: this.store.get<CodeSyncState | null>(syncKey, null)?.error || "" };
+    return { ...data, repository: monitor.repository, fetchDepth: monitor.fetch_depth ?? 1, syncError: this.store.get<CodeSyncState | null>(syncKey, null)?.error || "" };
   }
   async syncDue(now = Date.now()) {
     if (this.syncing || !process.env.CODE_BROWSER_URL || !this.store.secret("azure.pat") || !syncAllowed(this.store.settings().syncSchedule, new Date(now))) return;

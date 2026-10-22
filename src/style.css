@@ -9693,3 +9693,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .chat-history-row > .chat-history-delete { flex: 0 0 30px; width: 30px; height: 30px; padding: 6px; color: #b74343; border: 1px solid #edd4d4; border-radius: 7px; background: #fff6f6; }
 .chat-history-row > .chat-history-delete:hover:not(:disabled) { background: #ffe5e5; border-color: #d89595; }
 .chat-delete-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.repository-depth-warning { display: flex; align-items: flex-start; gap: 7px; max-width: 660px; margin-top: 8px; padding: 8px 10px; border: 1px solid #e6cf91; border-radius: 8px; background: #fff8e6; color: #795b20; font-size: 11px; line-height: 1.45; }
+.repository-depth-warning > svg { flex-shrink: 0; margin-top: 1px; }
+.repository-depth-warning strong { font-size: 12px; }
+.repository-depth-warning p { margin: 3px 0; }
+.repository-depth-warning small { display: block; font-size: 10px; }
