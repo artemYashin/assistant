@@ -289,20 +289,11 @@ export function sessionConfig(
   ].map((tool) => ({
     ...tool,
     handler: async (args: any, invocation: any) => {
-      let result;
       try {
-        result = await tool.handler!(args, invocation);
+        return await tool.handler!(args, invocation);
       } catch (error) {
         return toolFailure(tool.name, args, error);
       }
-      const serialized = JSON.stringify(result);
-      return serialized.length <= 24000
-        ? result
-        : {
-            preview: serialized.slice(0, 24000),
-            truncated: true,
-            note: "Ответ инструмента сокращён из-за ограничения контекста.",
-          };
     },
   }));
   tools.push(
