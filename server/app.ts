@@ -1396,7 +1396,8 @@ export function createApp(
         .prepare(
           "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? ORDER BY created_at DESC,rowid DESC",
         )
-        .all(input.monitor, input.repo, input.number),
+        .all(input.monitor, input.repo, input.number)
+        .map((review: any) => ({ ...review, review_usage: new UsageLedger(store).reviewUsage(review.id, review.usage_id) })),
     );
   });
   app.get("/api/pr", (req, res) => {

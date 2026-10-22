@@ -82,6 +82,17 @@ export class UsageLedger {
       "SELECT id,request_id,name,arguments,internal,status,result,started_at,finished_at,full_result IS NOT NULL AS hasFullResult FROM llm_tool_traces WHERE request_id=? ORDER BY started_at,rowid"
     ).all(request.id) })) };
   }
+  reviewUsage(reviewId?: string, legacyRequestId?: string) {
+    const ids = [...new Set([...(reviewId ? this.store.get<string[]>(`review.requests:${reviewId}`, []) : []), ...(legacyRequestId ? [legacyRequestId] : [])])];
+    const totals = this.store.db.prepare(`SELECT sum(u.input_tokens) AS inputTokens, sum(u.output_tokens) AS outputTokens,
+      count(u.receipt_id) AS reports,
+      sum(CASE WHEN u.receipt_id IS NULL OR u.input_tokens IS NULL OR u.output_tokens IS NULL THEN 1 ELSE 0 END) AS missing
+      FROM llm_requests r LEFT JOIN llm_usage u ON u.request_id=r.id
+      WHERE r.origin='pr_review' AND r.id IN (SELECT value FROM json_each(?))`).get(JSON.stringify(ids)) as any;
+    return { inputTokens: totals.inputTokens, outputTokens: totals.outputTokens,
+      totalTokens: totals.inputTokens === null && totals.outputTokens === null ? null : (totals.inputTokens ?? 0) + (totals.outputTokens ?? 0),
+      partial: !totals.reports || !!totals.missing };
+  }
   reviewTokens(reviewId: string) {
     return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + this.tokens(id), 0);
   }

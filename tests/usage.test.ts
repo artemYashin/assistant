@@ -1233,3 +1233,24 @@ test("review exposes citations only with code permission and supplies source bra
     await agent.chat("Review", context, true, { readCode, branch: "feature/review" });
   }
 });
+
+test("review result usage sums continuations, survives trace cleanup and handles missing reports", t => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  const first = ledger.begin("model", context, "pr_review");
+  const second = ledger.begin("model", context, "pr_review");
+  ledger.registerReviewRequest("review-total", first);
+  ledger.registerReviewRequest("review-total", second);
+  ledger.record(first, "one", { inputTokens: 100, outputTokens: 20 });
+  ledger.record(second, "two", { inputTokens: 200, outputTokens: 30 });
+  ledger.clearReviewTraces();
+  assert.deepEqual(ledger.reviewUsage("review-total", second), { inputTokens: 300, outputTokens: 50, totalTokens: 350, partial: false });
+  assert.deepEqual(ledger.reviewUsage("legacy", first), { inputTokens: 100, outputTokens: 20, totalTokens: 120, partial: false });
+  assert.deepEqual(ledger.reviewUsage("missing"), { inputTokens: null, outputTokens: null, totalTokens: null, partial: true });
+  const unreported = ledger.begin("model", context, "pr_review");
+  ledger.registerReviewRequest("review-total", unreported);
+  assert.equal(ledger.reviewUsage("review-total").partial, true);
+  assert.equal(ledger.reviewUsage("review-total").totalTokens, 350);
+  const chat = ledger.begin("model", context, "chat");
+  ledger.record(chat, "chat", { inputTokens: 999, outputTokens: 999 });
+  assert.equal(ledger.reviewUsage("missing", chat).totalTokens, null);
+});

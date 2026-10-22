@@ -146,6 +146,16 @@ function PrDescription({ pr }: any) {
     </details>
   );
 }
+function ReviewTokenUsage({ usage }: { usage?: { inputTokens: number | null; outputTokens: number | null; totalTokens: number | null; partial: boolean } }) {
+  const format = (value: number | null | undefined) => value == null ? "—" : value.toLocaleString("ru-RU");
+  return <div className="pr-review-token-usage">
+    <strong>Токены: {format(usage?.totalTokens)}</strong>
+    <span>Вход: {format(usage?.inputTokens)}</span>
+    <span>Выход: {format(usage?.outputTokens)}</span>
+    {(!usage || usage.partial) && <small>{usage?.totalTokens != null ? "Учёт неполный" : "Данные о расходе недоступны"}</small>}
+  </div>;
+}
+
 function ReviewResult({ pr }: any) {
   const result = pr.summary ? pr : pr.last_saved_review || pr;
   let coverage: any = null;
@@ -163,6 +173,7 @@ function ReviewResult({ pr }: any) {
         <small className="muted">
           Модель: {result.model || "Не сохранена для этого ревью"}
         </small>
+        <ReviewTokenUsage usage={result.review_usage} />
         {previous && (
           <p className="muted">
             Ревью предыдущей версии PR: {result.head?.slice(0, 10)} →{" "}
@@ -247,6 +258,7 @@ function ReviewHistory({ pr }: any) {
               Модель: {r.model || "Не сохранена для этого ревью"}
             </small>
           </div>
+          <ReviewTokenUsage usage={r.review_usage} />
           {r.summary && <ChatMarkdown text={r.summary} />}
           {r.error && <p className="error">{r.error}</p>}
         </section>

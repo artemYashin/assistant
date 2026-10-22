@@ -9388,3 +9388,6 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .review-code-depth > small { font-size: 11px; line-height: 1.45; }
 .review-depth-warning { display: flex; align-items: flex-start; gap: 6px; color: #946111; }
 .review-depth-warning svg { flex-shrink: 0; margin-top: 1px; }
+
+.pr-review-token-usage { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 7px 9px; margin: 8px 0; border: 1px solid #dfe6e2; border-radius: 6px; background: #f5f8f6; font-size: 12px; }
+.pr-review-token-usage small { color: var(--muted); }

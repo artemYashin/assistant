@@ -420,13 +420,12 @@ export class PullRequests {
         );
         return {
           ...row,
+          review_usage: new UsageLedger(this.store).reviewUsage(row.review_id, row.usage_id),
           local_source: this.sourcePreparation.status(row),
-          last_saved_review:
-            this.store.db
-              .prepare(
-                "SELECT summary,coverage,finished_at,head,target,model FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1",
-              )
-              .get(row.monitor, row.repo, row.number) || null,
+          last_saved_review: (() => {
+            const saved = this.store.db.prepare("SELECT id,usage_id,summary,coverage,finished_at,head,target,model FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1").get(row.monitor, row.repo, row.number) as any;
+            return saved ? { ...saved, review_usage: new UsageLedger(this.store).reviewUsage(saved.id, saved.usage_id) } : null;
+          })(),
           ticket_source: source,
           ticket_links_error: azureLinks.error,
           images: descriptionImages(row.description).map((source) => ({
