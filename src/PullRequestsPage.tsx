@@ -16,6 +16,10 @@ import { PrMergeDialog } from "./PrMergeDialog.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
   ArrowUpRight,
+  TriangleAlert,
+  CircleMinus,
+  CircleCheck,
+  Trash2,
   LockKeyhole,
   Code2,
   Eye,
@@ -855,9 +859,10 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         t.fromTitle && "найдено в названии",
                       ].filter(Boolean).join(" · ") || "источник больше недоступен"}
                     </small>
-                    <strong>
-                      #{t.id}
-                      {t.title ? ` · ${t.title}` : ""}
+                    <strong className="pr-ticket-heading">
+                      <Ticket size={17} aria-hidden="true" />
+                      <span className="pr-ticket-number">#{t.id}</span>
+                      {t.title && <span>{t.title}</span>}
                     </strong>
                     {t.unavailable ? (
                       <span className="muted">
@@ -887,18 +892,22 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         Открыть тикет #{t.id}
                         <Eye size={14} aria-hidden="true" />
                       </button>
-                      {!readOnly && <button type="button" className="text-button" disabled={busy}
-                        title="Меняет только локальное использование связи. Связь в Azure остаётся прежней."
+                      {!readOnly && <button type="button" className={`pr-ticket-action ${t.disabled ? "is-enable" : "is-exclude"}`} disabled={busy}
+                        title="Включает или исключает тикет из ревью и смены статуса при merge. Связи в Azure и локальная привязка сохраняются."
                         onClick={() => void run(() => api("/pr/tickets", "POST", {
                           monitor: p.monitor, repo: p.repo, number: p.number, ticketId: t.id,
                           source: p.ticket_source, action: t.disabled ? "enable" : "disable",
                         }))}>
-                        {t.disabled ? "Включить связь локально" : "Отключить связь локально"}
+                        {t.disabled ? <CircleCheck size={15} aria-hidden="true" /> : <CircleMinus size={15} aria-hidden="true" />}
+                        {t.disabled ? "Учитывать" : "Не учитывать"}
                       </button>}
                       {!readOnly && t.manual && (
                         <button
                           type="button"
-                          className="text-button"
+                          className="pr-ticket-action is-unlink"
+                          title={t.fromDescription || t.fromTitle || t.fromAzure
+                            ? "Удалить локальную привязку. Связи из Azure, названия и описания останутся."
+                            : "Удалить локальную привязку тикета к PR"}
                           disabled={busy}
                           onClick={() =>
                             void run(() =>
@@ -913,14 +922,15 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                             )
                           }
                         >
-                          Отвязать локально
-                          {t.fromDescription || t.fromTitle || t.fromAzure
-                            ? " (связь из других источников останется)"
-                            : ""}
+                          <Trash2 size={15} aria-hidden="true" />
+                          Отвязать
                         </button>
                       )}
                     </div>
-                    {t.disabled && <span className="muted">Связь отключена локально · не используется в merge и ревью</span>}
+                    {t.disabled && <span className="pr-ticket-exclusion-note">
+                      <TriangleAlert size={16} aria-hidden="true" />
+                      Не учитывается в ревью и смене статуса при merge. Связь сохранена.
+                    </span>}
                   </div>
                 ))}
               </div>
