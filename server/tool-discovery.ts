@@ -24,7 +24,7 @@ const catalog: Record<string, string> = {
   sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   read_selected_tickets: "Read selected ticket summaries (id/title/state/type), optional extra fields, on demand; export includes column order/format. No bodies or Azure calls.",
-  edit_ticket_export: "Edit an existing open/minimized export: add/remove tickets or choose columns. No deletion from the system.",
+  edit_ticket_export: "Edit an existing open/minimized export: add/remove tickets or choose columns. Before EVERY edit first read_selected_tickets(target=export). No deletion from the system.",
   show_ticket_export: "Open an Excel/CSV export; optionally choose enabled columns in order. Preserves existing tickets; no download or Azure calls.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; returns reopen links, no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
