@@ -968,7 +968,7 @@ export class Connectors {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
     const item = await this.azure(`workitems/${id}?$expand=all`, {}, s, pat);
-    if (item.fields?.["System.TeamProject"] !== s.azureProject)
+    if (item.id !== id || item.fields?.["System.TeamProject"] !== s.azureProject)
       throw new AppError(400, "Тикет относится к другому проекту Azure DevOps");
     const comments: any[] = [];
     const warnings: string[] = [];
@@ -1054,7 +1054,12 @@ export class Connectors {
     }
     for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
       add(match[1], "Изображение в комментарии", true);
-    if (this.store.hasLocalTicket(id, this.store.source(s))) this.cacheTicketContent(item, s, true);
+    if (this.store.hasLocalTicket(id, this.store.source(s))) {
+      this.store.db.transaction(() => {
+        this.saveTicket(item, s);
+        this.cacheTicketContent(item, s, true);
+      })();
+    }
     const cardId = randomUUID();
     const card = {
       id,
@@ -1581,6 +1586,7 @@ export class Connectors {
           .all(this.store.source(s)) as { id: number }[]
       ).map((x) => x.id),
     );
+    const mine = new Set<number>();
     if (importMine || (automatic && s.azureAutoImport)) {
       if (automatic && (!s.azureTypes.length || !s.azureStates.length))
         throw new AppError(
@@ -1604,7 +1610,7 @@ export class Connectors {
         s,
         pat,
       );
-      for (const item of result.workItems || []) ids.add(item.id);
+      for (const item of result.workItems || []) { mine.add(item.id); ids.add(item.id); }
     }
     const list = [...ids].filter(
       (id) =>
@@ -1614,38 +1620,41 @@ export class Connectors {
           )
           .get(this.store.source(s), id),
     );
-    for (let i = 0; i < list.length; i += 200) {
-      const result = await this.azure(
-        "workitemsbatch",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            ids: list.slice(i, i + 200),
-            fields: [
-              "System.Description",
-              "Microsoft.VSTS.Common.AcceptanceCriteria",
-              "Microsoft.VSTS.TCM.ReproSteps",
-              "System.Title",
-              "System.State",
-              "System.AssignedTo",
-              "System.WorkItemType",
-              "System.ChangedDate",
-            "System.CreatedDate",
-              "System.Tags",
-              "System.TeamProject",
-            ],
-            errorPolicy: "Fail",
-          }),
-        },
-        s,
-        pat,
-      );
-      if (
-        !Array.isArray(result.value) ||
-        result.value.length !== list.slice(i, i + 200).length
-      )
-        throw new AppError(502, "Azure вернул неполный список тикетов");
-      for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); }
+    const stages = [list.filter(id => mine.has(id)), list.filter(id => !mine.has(id))];
+    for (const stage of stages) {
+      for (let i = 0; i < stage.length; i += 200) {
+        const result = await this.azure(
+          "workitemsbatch",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              ids: stage.slice(i, i + 200),
+              fields: [
+                "System.Description",
+                "Microsoft.VSTS.Common.AcceptanceCriteria",
+                "Microsoft.VSTS.TCM.ReproSteps",
+                "System.Title",
+                "System.State",
+                "System.AssignedTo",
+                "System.WorkItemType",
+                "System.ChangedDate",
+              "System.CreatedDate",
+                "System.Tags",
+                "System.TeamProject",
+              ],
+              errorPolicy: "Fail",
+            }),
+          },
+          s,
+          pat,
+        );
+        if (
+          !Array.isArray(result.value) ||
+          result.value.length !== stage.slice(i, i + 200).length
+        )
+          throw new AppError(502, "Azure вернул неполный список тикетов");
+        for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); }
+      }
     }
     if (list.length || importMine || (automatic && s.azureAutoImport))
       this.store.set(

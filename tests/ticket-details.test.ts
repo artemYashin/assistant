@@ -196,3 +196,37 @@ test("comment images accept HTML attribute spacing and unquoted sources, dedupli
   ]);
   assert.match(card.comments[0].richText, /Screenshot/);
 });
+
+test("sync refreshes assigned tickets first then other locally tracked tickets with content", async t => {
+  const { store, connectors } = fixture(t);
+  const source = store.source();
+  for (const id of [42, 43]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, "Old", "Old", "Other", "Bug", "url", null, "old");
+  const batches: number[][] = [];
+  t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
+    if (String(url).includes("/wiql")) return Response.json({ workItems: [{ id: 43 }, { id: 44 }] });
+    const ids = JSON.parse(init.body).ids; batches.push(ids);
+    return Response.json({ value: ids.map((id: number) => ({ id, fields: {
+      "System.TeamProject": "P", "System.Title": `Fresh ${id}`, "System.State": "Active",
+      "System.AssignedTo": { displayName: id === 42 ? "Someone else" : "Me" }, "System.Description": `<p>Body ${id}</p>`,
+    } })) });
+  });
+  assert.deepEqual(await connectors.syncTickets(true), { count: 3 });
+  assert.deepEqual(batches, [[43, 44], [42]]);
+  const other = store.db.prepare("SELECT * FROM tickets WHERE source=? AND id=42").get(source) as any;
+  assert.equal(other.title, "Fresh 42"); assert.equal(other.assigned, "Someone else");
+  assert.equal((store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='description'").get(source) as any).body, "Body 42");
+});
+
+test("opening tracked detail refreshes local Azure fields and clears removed cached sections", async t => {
+  const { store, connectors } = fixture(t);
+  const source = store.source();
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, 42, "Old", "Old", "Old", "Bug", "url", null, "old");
+  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run(source, 42, "criteria", "outdated", "outdated", "old");
+  t.mock.method(globalThis, "fetch", async (url: any) => String(url).includes("/comments") ? Response.json({ comments: [] }) : Response.json({ id: 42, fields: {
+    "System.TeamProject": "P", "System.Title": "Fresh", "System.State": "Closed", "System.AssignedTo": { displayName: "Other" }, "System.Tags": "AzureTag", "System.Description": "<p>Fresh body</p>",
+  } }));
+  await connectors.ticketDetails(42);
+  const row = store.db.prepare("SELECT * FROM tickets WHERE source=? AND id=42").get(source) as any;
+  assert.equal(row.title, "Fresh"); assert.equal(row.state, "Closed"); assert.equal(row.assigned, "Other");
+  assert.equal((store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='criteria'").get(source) as any).body, "");
+});
