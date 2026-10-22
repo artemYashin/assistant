@@ -3189,13 +3189,15 @@ function Assistant({
   async function send(e?: React.FormEvent, voiceText?: string) {
     e?.preventDefault();
     const text = voiceText ?? prompt;
+    const sentAnalysis = attachment;
     const sentMemoryProposal = memoryProposalAttachment;
     const sentViewedTicket = currentViewedTicket();
-    const sentContext = messageContextBadges({ analysis: attachment, proposal: sentMemoryProposal, viewed: sentViewedTicket });
+    const sentContext = messageContextBadges({ analysis: sentAnalysis, proposal: sentMemoryProposal, viewed: sentViewedTicket });
     if (!text.trim() || working || clearing || !sessionId || (!voiceText && shortcutBusy)) return;
     const captured = key;
     const generation = historyGeneration.current;
     setWorking(true);
+    setAttachment(null);
     setMemoryProposalAttachment(null);
     chatStream.reset();
     followStream.current = true;
@@ -3230,9 +3232,6 @@ function Assistant({
           else chatStream.receive(event);
         }
       }, chatConnection.current!.signal);
-      if (contextKey.current === captured && generation === historyGeneration.current) {
-        setAttachment(null);
-      }
       const toolSnapshot = chatStream.tools();
       if (
         contextKey.current === captured &&
@@ -3257,6 +3256,7 @@ function Assistant({
         contextKey.current === captured &&
         generation === historyGeneration.current
       ) {
+        if (sentAnalysis) setAttachment((current: any) => current ?? sentAnalysis);
         if (sentMemoryProposal) setMemoryProposalAttachment(current => current ?? sentMemoryProposal);
         const partial = chatStream.partial();
         const toolSnapshot = chatStream.tools().map(tool => ({ ...tool, status: tool.status === "running" ? "interrupted" : tool.status }));
