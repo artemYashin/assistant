@@ -7,36 +7,6 @@
 
 ### Элемент
 
-Новый комментарий · Markdown
-
-Источник: src/TicketCommentForm.tsx:180.
-
-### Элемент
-
-Картинка
-
-Источник: src/TicketCommentForm.tsx:199.
-
-### Элемент
-
-Редактировать / Предпросмотр
-
-Источник: src/TicketCommentForm.tsx:207.
-
-### Элемент
-
-Напишите комментарий. Вставьте картинку из буфера или перетащите её сюда…
-
-Источник: src/TicketCommentForm.tsx:253.
-
-### Элемент
-
-Удалить {…}
-
-Источник: src/TicketCommentForm.tsx:282.
-
-### Элемент
-
 Отправка… / Отправить
 
-Источник: src/TicketCommentForm.tsx:307.
+Источник: src/TicketCommentForm.tsx:165.

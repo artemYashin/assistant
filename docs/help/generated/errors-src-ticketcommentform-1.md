@@ -9,10 +9,10 @@
 
 https://orbit.invalid/comment-image/{…}
 
-Источник: src/TicketCommentForm.tsx:17.
+Источник: src/TicketCommentForm.tsx:15.
 
 ### Сообщение
 
 Комментарий со ссылками на картинки превышает 10000 символов. Сократите текст.
 
-Источник: src/TicketCommentForm.tsx:133.
+Источник: src/TicketCommentForm.tsx:114.

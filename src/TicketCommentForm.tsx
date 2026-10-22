@@ -1,9 +1,7 @@
-import { useRef, useState, useId, useEffect } from "react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Send, ImagePlus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send } from "lucide-react";
 import { api } from "./api.js";
-import { MarkdownCodeBlock } from "./MarkdownCodeBlock.js";
+import { CommentEditor } from "./CommentEditor.js";
 
 type ImageDraft = { id: string; file: File; preview: string; url?: string };
 type Draft = {
@@ -37,12 +35,8 @@ export function TicketCommentForm({
     return value;
   });
   const [, render] = useState(0);
-  const [preview, setPreview] = useState(false),
-    [error, setError] = useState(""),
+  const [error, setError] = useState(""),
     [sent, setSent] = useState(false);
-  const input = useRef<HTMLTextAreaElement>(null),
-    picker = useRef<HTMLInputElement>(null);
-  const id = useId();
   useEffect(() => {
     const listener = () => render((n) => n + 1);
     draft.listeners.add(listener);
@@ -52,34 +46,16 @@ export function TicketCommentForm({
   }, [draft]);
   const refresh = () => draft.listeners.forEach((listener) => listener());
   const change = (text: string) => {
+    if (text === draft.text) return;
     draft.text = text;
     draft.requestId = crypto.randomUUID();
     setSent(false);
     refresh();
   };
-  function insert(before: string, after = "") {
-    const start = input.current?.selectionStart ?? draft.text.length,
-      end = input.current?.selectionEnd ?? start;
-    change(
-      draft.text.slice(0, start) +
-        before +
-        draft.text.slice(start, end) +
-        after +
-        draft.text.slice(end),
-    );
-    setPreview(false);
-    requestAnimationFrame(() => {
-      input.current?.focus();
-      input.current?.setSelectionRange(
-        start + before.length,
-        end + before.length,
-      );
-    });
-  }
   function add(files: File[]) {
-    if (draft.busy) return;
+    if (draft.busy) return [];
     setError("");
-    let markdown = "";
+    const added: { src: string; alt: string }[] = [];
     for (const file of files) {
       if (
         !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
@@ -89,7 +65,12 @@ export function TicketCommentForm({
         setError("Поддерживаются PNG, JPEG, GIF и WebP до 10 МБ.");
         continue;
       }
-      if (draft.images.length >= 10) {
+      if (
+        draft.images.filter((image) => draft.text.includes(marker(image.id)))
+          .length +
+          added.length >=
+        10
+      ) {
         setError("В комментарий можно добавить до 10 изображений.");
         break;
       }
@@ -99,9 +80,9 @@ export function TicketCommentForm({
         preview: URL.createObjectURL(file),
       };
       draft.images.push(image);
-      markdown += `\n![Изображение](${marker(image.id)})\n`;
+      added.push({ src: marker(image.id), alt: "Изображение" });
     }
-    if (markdown) insert(markdown);
+    return added;
   }
   async function send() {
     if (draft.busy || !draft.text.trim()) return;
@@ -150,7 +131,6 @@ export function TicketCommentForm({
       draft.images = [];
       change("");
       setSent(true);
-      setPreview(false);
     } catch (e: any) {
       setError(
         `${e.message} Черновик и загруженные ссылки сохранены; можно повторить отправку.`,
@@ -167,138 +147,16 @@ export function TicketCommentForm({
         event.preventDefault();
         void send();
       }}
-      onDragOver={(event) => {
-        if (event.dataTransfer.types.includes("Files")) event.preventDefault();
-      }}
-      onDrop={(event) => {
-        if (event.dataTransfer.types.includes("Files")) {
-          event.preventDefault();
-          add(Array.from(event.dataTransfer.files));
-        }
-      }}
     >
-      <label htmlFor={id}>Новый комментарий · Markdown</label>
-      <div className="comment-editor-toolbar">
-        {[
-          ["Жирный", "**", "**"],
-          ["Курсив", "_", "_"],
-          ["Список", "\n- ", ""],
-          ["Цитата", "\n> ", ""],
-          ["Код", "\n```\n", "\n```\n"],
-          ["Ссылка", "[", "](https://)"],
-        ].map(([label, before, after]) => (
-          <button
-            type="button"
-            key={label}
-            disabled={draft.busy}
-            onClick={() => insert(before, after)}
-          >
-            {label}
-          </button>
-        ))}
-        <button
-          type="button"
-          disabled={draft.busy}
-          onClick={() => picker.current?.click()}
-        >
-          <ImagePlus size={15} />
-          Картинка
-        </button>
-        <button
-          type="button"
-          aria-pressed={preview}
-          onClick={() => setPreview(!preview)}
-        >
-          {preview ? "Редактировать" : "Предпросмотр"}
-        </button>
-      </div>
-      <input
-        ref={picker}
-        type="file"
-        hidden
-        multiple
-        accept="image/png,image/jpeg,image/gif,image/webp"
-        onChange={(event) => {
-          add(Array.from(event.target.files || []));
-          event.target.value = "";
-        }}
+      <CommentEditor
+        text={draft.text}
+        disabled={draft.busy}
+        onChange={change}
+        onImages={add}
+        resolveImage={(src) =>
+          draft.images.find((image) => marker(image.id) === src)?.preview || src
+        }
       />
-      {preview ? (
-        <div className="comment-editor-preview memory-markdown">
-          <Markdown
-            remarkPlugins={[remarkGfm]}
-            skipHtml
-            components={{
-              pre: MarkdownCodeBlock,
-              img: ({ src, alt }) => (
-                <img
-                  src={
-                    draft.images.find((image) => marker(image.id) === src)
-                      ?.preview || src
-                  }
-                  alt={alt}
-                />
-              ),
-              a: ({ href, children }) => (
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {draft.text || "Предпросмотр комментария"}
-          </Markdown>
-        </div>
-      ) : (
-        <textarea
-          id={id}
-          ref={input}
-          rows={6}
-          maxLength={10000}
-          value={draft.text}
-          disabled={draft.busy}
-          placeholder="Напишите комментарий. Вставьте картинку из буфера или перетащите её сюда…"
-          onChange={(event) => change(event.target.value)}
-          onPaste={(event) => {
-            const files = Array.from(event.clipboardData.files).filter((file) =>
-              file.type.startsWith("image/"),
-            );
-            if (files.length) {
-              event.preventDefault();
-              add(files);
-            }
-          }}
-        />
-      )}
-      {!!draft.images.length && (
-        <div className="comment-editor-images">
-          {draft.images.map((image) => (
-            <div key={image.id}>
-              <img src={image.preview} alt={image.file.name} />
-              <span title={image.file.name}>{image.file.name}</span>
-              <small>
-                {image.url ? "Загружено в Azure" : "Ещё не загружено"}
-              </small>
-              <button
-                type="button"
-                aria-label={`Удалить ${image.file.name}`}
-                disabled={draft.busy}
-                onClick={() => {
-                  draft.images = draft.images.filter((item) => item !== image);
-                  URL.revokeObjectURL(image.preview);
-                  change(
-                    draft.text
-                      .replaceAll(`![Изображение](${marker(image.id)})`, "")
-                      .replaceAll(marker(image.id), ""),
-                  );
-                }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
       <div className="ticket-comment-form-actions">
         <small className="muted">
           Картинки загружаются в Azure только при отправке. До 10 файлов по 10

@@ -9874,14 +9874,28 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .developer-status-table label:has(input:checked) { background: #dceee2; }
 .developer-status-table .ticket-state-badge { max-width: 100%; white-space: normal; }
 
-.comment-editor-toolbar { display:flex; flex-wrap:wrap; gap:5px; }
-.comment-editor-toolbar button { display:inline-flex; align-items:center; gap:5px; padding:5px 8px; font-size:12px; }
-.comment-editor-toolbar button[aria-pressed="true"] { background:#e1f3e9; border-color:#75b99a; }
-.comment-editor-preview { min-height:150px; max-height:400px; overflow:auto; border:1px solid #d6dfe7; border-radius:8px; padding:12px; background:#fafcfd; }
-.comment-editor-preview img { display:block; max-width:100%; max-height:240px; object-fit:contain; border-radius:6px; }
-.comment-editor-images { display:flex; flex-wrap:wrap; gap:8px; }
-.comment-editor-images > div { position:relative; display:flex; flex-direction:column; gap:4px; width:140px; padding:8px; background:#f2f6f8; border:1px solid #d6dfe7; border-radius:8px; }
-.comment-editor-images img { width:100%; height:75px; object-fit:contain; }
-.comment-editor-images span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
-.comment-editor-images small { font-size:10px; color:#536775; }
-.comment-editor-images button { position:absolute; right:3px; top:3px; display:grid; place-items:center; padding:4px; background:white; }
+.comment-editor-shell { border:1px solid #cbd5df; border-radius:10px; overflow:hidden; background:#fff; }
+.comment-editor-shell .comment-editor-toolbar { display:flex; flex-wrap:wrap; padding:7px 9px; border-bottom:1px solid #d6dfe7; background:#f1f5f8; align-items:center; gap:4px; }
+.comment-editor-shell .comment-editor-toolbar button { display:inline-flex; align-items:center; min-width:31px; height:31px; padding:5px 7px; justify-content:center; border-color:transparent; background:transparent; }
+.comment-editor-shell .comment-editor-toolbar button:hover { background:#e1e9ef; }
+.comment-editor-shell .comment-editor-toolbar button[aria-pressed="true"] { background:#dbf2e5; border-color:#75b99a; }
+.comment-editor-shell .comment-preview-toggle { margin-left:auto; font-size:12px; gap:5px; }
+.comment-editor-shell .tiptap { min-height:170px; max-height:440px; overflow:auto; padding:14px; outline:none; line-height:1.6; font-size:14px; overflow-wrap:anywhere; }
+.comment-editor-shell .tiptap p { margin:0 0 8px; }
+.comment-editor-shell .tiptap p:last-child { margin-bottom:0; }
+.comment-editor-shell .tiptap > p:only-child:has(> br:only-child)::before { content:"Напишите комментарий…"; color:#8593a0; pointer-events:none; float:left; height:0; }
+.comment-editor-shell .tiptap pre { padding:12px; background:#172331; color:#e9eff6; border-radius:7px; overflow:auto; }
+.comment-editor-shell .tiptap pre code { background:transparent; color:inherit; }
+.comment-editor-shell .tiptap blockquote { margin:8px 0; padding:6px 12px; border-left:3px solid #83a89a; background:#f1f6f3; }
+.comment-editor-shell .tiptap a { color:#217553; text-decoration:underline; cursor:text; }
+.comment-editor-shell .comment-inline-edit { display:inline-flex; align-items:center; justify-content:center; width:23px; height:23px; min-height:0; padding:3px; margin:0 3px; vertical-align:middle; border:1px solid #cbd5df; border-radius:5px; color:#506979; background:#f4f7fa; cursor:pointer; }
+.comment-inline-image { display:block; position:relative; width:fit-content; max-width:100%; margin:8px 0; }
+.comment-inline-image img { display:block; max-width:100%; max-height:240px; border:1px solid #d6dfe7; border-radius:7px; object-fit:contain; }
+.comment-editor-shell .comment-inline-image .comment-inline-edit { position:absolute; right:5px; top:5px; background:white; }
+.comment-editor-shell.is-preview .comment-inline-edit, .comment-editor-shell.is-busy .comment-inline-edit { display:none; }
+.comment-link-editor { border-top:1px solid #d6dfe7; padding:10px; background:#f1f5f8; display:grid; gap:8px; }
+.comment-link-editor label { display:grid; gap:4px; font-size:12px; }
+.comment-link-editor input { width:100%; min-width:0; }
+.comment-link-editor > div { display:flex; flex-wrap:wrap; gap:6px; }
+.comment-link-editor button { font-size:12px; padding:6px 9px; }
+.comment-inline-image { min-width:40px; min-height:36px; }
