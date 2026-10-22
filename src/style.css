@@ -9905,3 +9905,12 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .comment-editor-shell .comment-markdown-input { display:block; width:100%; min-height:190px; max-height:440px; resize:vertical; border:0; border-radius:0; padding:14px; font:13px/1.6 ui-monospace,monospace; box-shadow:none; }
 .comment-editor-shell .comment-inline-image img { width:auto; height:auto; max-width:min(100%, 480px); max-height:240px; }
 .comment-editor-shell .comment-inline-image { max-width:min(100%, 480px); }
+.chat-file-list { display:flex; flex-direction:column; gap:5px; max-height:200px; overflow:auto; padding:5px 8px; }
+.chat-file-item { min-width:0; }
+.chat-file-item > small { display:block; color:#6d7d87; font-size:10px; margin-bottom:2px; }
+.chat-file-row { display:flex; align-items:center; gap:6px; padding:4px 6px; background:#f0f5f7; border:1px solid #dbe4e9; border-radius:6px; min-width:0; }
+.chat-file-row > svg, .chat-file-row > button { flex-shrink:0; }
+.chat-file-row img { width:25px; height:25px; object-fit:cover; border-radius:3px; }
+.chat-file-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; font-size:11px; unicode-bidi:normal; }
+.chat-file-row .icon-button { width:23px; height:23px; padding:3px; min-height:0; }
+.composer-bottom .chat-file-add { flex-shrink:0; }

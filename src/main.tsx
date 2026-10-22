@@ -1,3 +1,4 @@
+import { useChatFiles, uploadChatFiles, ChatFilePicker, ChatFileRows } from "./ChatFiles.js";
 import { AzurePatPermissions } from "./AzurePatPermissions.js";
 import { ChatMessageContext } from "./ChatMessageContext.js";
 import { messageContextBadges } from "../server/chat-message-context.js";
@@ -2876,6 +2877,7 @@ function Assistant({
   const selectedTickets = useSelectedChatTickets();
   const viewedTicket = useViewedTicket();
   const [sessionId, setSessionId] = useState("");
+  const fileDraft = useChatFiles(JSON.stringify([context.client, context.project, sessionId]));
   const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
   const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string; summary?: string; target_memory_id?: string } | null>(null);
@@ -3121,6 +3123,7 @@ function Assistant({
     setError("");
     try {
       await api("/conversation", "DELETE", { ...context, sessionId });
+      fileDraft.release(fileDraft.take());
       if (
         contextKey.current === captured &&
         generation === historyGeneration.current
@@ -3147,14 +3150,15 @@ function Assistant({
   }
   async function send(e?: React.FormEvent, voiceText?: string) {
     e?.preventDefault();
-    const text = voiceText ?? prompt;
+    const text = (voiceText ?? prompt).trim() || (fileDraft.files.length ? "Прочитай все приложенные файлы." : "");
     const sentAnalysis = attachment;
     const sentMemoryProposal = memoryProposalAttachment;
     const sentViewedTicket = currentViewedTicket();
-    const sentContext = messageContextBadges({ analysis: sentAnalysis, proposal: sentMemoryProposal, viewed: sentViewedTicket });
+    const sentContext = messageContextBadges({ analysis: sentAnalysis, proposal: sentMemoryProposal, viewed: sentViewedTicket, files:fileDraft.files.map(file=>({id:file.localId,name:file.file.name,mime:file.mime})) });
     if (!text.trim() || working || clearing || !sessionId || (!voiceText && shortcutBusy)) return;
     const captured = key;
     const generation = historyGeneration.current;
+    const sentFiles = fileDraft.take();
     setWorking(true);
     setAttachment(null);
     setMemoryProposalAttachment(null);
@@ -3167,7 +3171,9 @@ function Assistant({
       setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
     setHistory((h) => [...h, { role: "user", body: text, id: Date.now(), message_context: sentContext }]);
     try {
+      const fileIds = await uploadChatFiles(sentFiles,context,sessionId,chatConnection.current!.signal);
       const r = await apiProgress<ChatProgress>("/conversation", {
+        fileIds,
         prompt: text,
         model: chatModel,
         context,
@@ -3196,6 +3202,7 @@ function Assistant({
           else chatStream.receive(event);
         }
       }, chatConnection.current!.signal);
+      fileDraft.release(sentFiles);
       const toolSnapshot = chatStream.tools();
       if (
         contextKey.current === captured &&
@@ -3216,6 +3223,7 @@ function Assistant({
       chatStream.reset();
       onChange();
     } catch (e: any) {
+      fileDraft.restore(sentFiles);
       if (
         contextKey.current === captured &&
         generation === historyGeneration.current
@@ -3481,7 +3489,9 @@ function Assistant({
             setPrompt("");
             promptInput.current?.focus();
           }}><X size={14} aria-hidden="true" /></button>}
+          <ChatFileRows files={fileDraft.files} onRemove={fileDraft.remove}/>
           <div className="composer-bottom">
+            <ChatFilePicker disabled={working || clearing || !sessionId} onFiles={fileDraft.add} onError={setError}/>
             <button
               type="button"
               className="secondary composer-clear-history"
@@ -3510,7 +3520,7 @@ function Assistant({
             <button
               className="send-button"
               disabled={
-                !prompt.trim() ||
+                (!prompt.trim() && !fileDraft.files.length) ||
                 working ||
                 recording ||
                 !connected ||

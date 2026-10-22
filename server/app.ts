@@ -1,3 +1,4 @@
+import { ChatFiles, CHAT_FILE_LIMIT } from "./chat-files.js";
 import { ticketExportContextSchema } from "./ticket-export-context.js";
 import { reviewerFilterSchema } from "./pr-reviewer-filter.js";
 import { PrCi } from "./pr-ci.js";
@@ -125,6 +126,7 @@ export function createApp(
     store,
     options.sendMessage || ((id, body) => connectors.sendMessage(id, body)),
   );
+  const chatFiles = new ChatFiles(store);
   const agent = new Agent(store, approvals, undefined, connectors);
   const pullRequests = new PullRequests(store, agent);
   const prMerge = new PrMerge(store, connectors);
@@ -589,6 +591,20 @@ export function createApp(
       activeRequestId: agent.active(),
     });
   });
+  const uploadChatFile = multer({storage:multer.memoryStorage(),limits:{fileSize:CHAT_FILE_LIMIT,files:1,fields:4}}).single("file");
+  app.post("/api/conversation/files", (req,res,next) => {
+    uploadChatFile(req,res,error => error ? next(new AppError(400,"Не удалось принять вложение. Максимальный размер файла — 10 МБ.")) : next());
+  }, (req,res) => {
+    const context=contextSchema.parse(req.body), sessionId=z.string().uuid().parse(req.body.sessionId);
+    if(!req.file) throw new AppError(400,"Выберите файл.");
+    const name=z.string().min(1).max(240).parse(req.body.name);
+    res.json(chatFiles.add(context,sessionId,name,req.file.buffer));
+  });
+  app.get("/api/conversation/files/:id", (req,res) => {
+    const context=contextSchema.parse(req.query), sessionId=z.string().uuid().parse(req.query.sessionId);
+    const file=chatFiles.read(context,sessionId,[z.string().uuid().parse(req.params.id)])[0];
+    res.type(file.mime).set("Content-Disposition", `${file.kind === "image" ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`).send(file.bytes);
+  });
   app.post("/api/conversation/stop", (_req, res) => res.json(agent.stop()));
   app.post(
     "/api/conversation",
@@ -601,6 +617,7 @@ export function createApp(
       const v = z
         .object({
           prompt: z.string().trim().min(1).max(16000),
+          fileIds: z.array(z.string().uuid()).max(6).default([]),
           model: z.string().trim().max(200).optional(),
           context: contextSchema,
           sessionId: z.string().uuid().optional(),
@@ -627,8 +644,9 @@ export function createApp(
         );
       const ids = [...new Set(v.selectedTickets.map((ticket) => ticket.id))];
       const prompt = v.prompt;
+      const files = v.fileIds.length ? chatFiles.read(v.context,store.chatSession(v.context,v.sessionId).id,v.fileIds) : [];
       if (!req.headers.accept?.includes("application/x-ndjson")) {
-        res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model, undefined, v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids));
+        res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model, undefined, v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids, files));
         return;
       }
       res.status(200).set({ "Content-Type": "application/x-ndjson", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" });
@@ -637,7 +655,7 @@ export function createApp(
       const heartbeat = setInterval(() => { if (!res.destroyed && !res.writableEnded) res.write("\n"); }, 15000);
       try {
         const result = await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model,
-          progress => write({ type: "progress", progress }), v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids);
+          progress => write({ type: "progress", progress }), v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids, files);
         write({ type: "result", data: result });
       } catch (error) {
         write({ type: "error", error: error instanceof AppError ? error.message : "Не удалось завершить ответ ассистента" });

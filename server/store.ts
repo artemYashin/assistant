@@ -223,6 +223,7 @@ export class Store {
       );
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS chat_sessions (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, title TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS chat_files (id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE, name TEXT NOT NULL, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes BLOB NOT NULL, created_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0);
       CREATE INDEX IF NOT EXISTS chat_session_context ON chat_sessions(client,project,updated_at);
       CREATE INDEX IF NOT EXISTS conversation_session ON conversations(session_id);
     `);
@@ -977,6 +978,7 @@ export class Store {
   clearHistory(context: Context, id?: string) {
     const session = this.chatSession(context, id);
     return this.db.transaction(() => {
+      this.db.prepare("DELETE FROM chat_files WHERE session_id=?").run(session.id);
       this.set(`chat.runtime:${session.id}`, null);
       this.set(`chat.context:${session.id}`, null);
       const result = this.db
