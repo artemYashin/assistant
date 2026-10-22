@@ -51,7 +51,7 @@ export function PrReviewerPicker({ title, people, onChange, disabled, context }:
     </div>
     <div className="pr-reviewer-selected">
       {people.map(p => <div className="pr-reviewer-person" key={p.id}>
-        <InitialsAvatar name={p.name} /><span title={p.email || p.name}>{p.name}</span>
+        <InitialsAvatar name={p.name} /><span className="pr-reviewer-person-info"><span title={p.name}>{p.name}</span><small title={p.email}>{p.email || "Email не указан"}</small></span>
         <button type="button" className="icon-button" aria-label={`Убрать ${p.name} из ${title}`} onClick={() => onChange(people.filter(item => item.id !== p.id))}><X size={14} /></button>
       </div>)}
       {!people.length && <small className="muted">Ревьюеры не выбраны</small>}

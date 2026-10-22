@@ -147,27 +147,33 @@ export function ProjectRepository({
         и PAT — в общих настройках Azure. Синхронизируются только активные PR
         этого репозитория. Смена репозитория сохраняет старые результаты ревью.
       </p>
+      <section>
       <h4 className="repository-section-title"><Download size={16} />Просмотр кода · загрузка репозитория</h4>
       <div className="repository-fetch-settings">
-        <label>Основная ветка для ассистента
-          <input value={mainBranch} onChange={event => setMainBranch(event.target.value)} maxLength={500} placeholder="По умолчанию — основная ветка репозитория" />
-        </label>
-        <p className="muted">Например, dev или main. Чат использует её, если вы явно не попросили другую ветку. Выбор ветки в просмотре кода на чат не влияет.</p>
-        <label>Глубина истории Git, коммитов
-          <input type="number" min={1} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
-        </label>
-        <p className="muted">По умолчанию 1. Большая глубина сохраняет больше истории и может улучшить повторное использование объектов между ветками, но увеличивает загрузку. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
-        <label>Частота синхронизации Git, минуты
-          <input type="number" min={0} max={1440} step={1} required value={codeSyncMinutes}
+        <div className="repository-fetch-field">
+          <label htmlFor="repository-fetch-1">Основная ветка для ассистента</label>
+          <p id="repository-fetch-1-description" className="muted">Например, dev или main. Чат использует её, если вы явно не попросили другую ветку. Выбор ветки в просмотре кода на чат не влияет.</p>
+          <input id="repository-fetch-1" aria-describedby="repository-fetch-1-description" value={mainBranch} onChange={event => setMainBranch(event.target.value)} maxLength={500} placeholder="По умолчанию — основная ветка репозитория" />
+        </div>
+        <div className="repository-fetch-field">
+          <label htmlFor="repository-fetch-2">Глубина истории Git, коммитов</label>
+          <p id="repository-fetch-2-description" className="muted">По умолчанию 1. Большая глубина сохраняет больше истории и может улучшить повторное использование объектов между ветками, но увеличивает загрузку. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
+          <input id="repository-fetch-2" aria-describedby="repository-fetch-2-description" type="number" min={1} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
+        </div>
+        <div className="repository-fetch-field">
+          <label htmlFor="repository-fetch-3">Частота синхронизации Git, минуты</label>
+          <p id="repository-fetch-3-description" className="muted">По умолчанию 30 минут; 0 — только вручную. Фоновая проверка обновляет список веток и проверяет последнюю открытую ветку уже загруженного репозитория. Учитываются разрешённые часы и дни общей синхронизации. Открытый снимок обновляется кнопкой Pull.</p>
+          <input id="repository-fetch-3" aria-describedby="repository-fetch-3-description" type="number" min={0} max={1440} step={1} required value={codeSyncMinutes}
             onChange={event => setCodeSyncMinutes(Number(event.target.value))} />
-        </label>
-        <p className="muted">По умолчанию 30 минут; 0 — только вручную. Фоновая проверка обновляет список веток и проверяет последнюю открытую ветку уже загруженного репозитория. Учитываются разрешённые часы и дни общей синхронизации. Открытый снимок обновляется кнопкой Pull.</p>
-        <label>Тайм-аут Git, минуты
-          <input type="number" min={1} max={120} step={1} required value={fetchTimeoutMinutes}
+        </div>
+        <div className="repository-fetch-field">
+          <label htmlFor="repository-fetch-4">Тайм-аут Git, минуты</label>
+          <p id="repository-fetch-4-description" className="muted">От 1 до 120 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
+          <input id="repository-fetch-4" aria-describedby="repository-fetch-4-description" type="number" min={1} max={120} step={1} required value={fetchTimeoutMinutes}
             onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />
-        </label>
-        <p className="muted">От 1 до 120 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
+        </div>
       </div>
+      </section>
       <label>
         Исключить из ревью и View Diff (один путь или шаблон на строку)
         <textarea

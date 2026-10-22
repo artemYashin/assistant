@@ -9530,7 +9530,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-reviewer-picker:disabled { opacity: .5; }
 .pr-reviewer-picker legend { display: inline-flex; align-items: center; gap: 6px; padding: 0 5px; font-size: 13px; }
 .pr-reviewer-search { position: relative; display: flex; align-items: center; gap: 6px; }
-.pr-reviewer-search input { min-width: 0; width: 100%; }
+.pr-reviewer-search input { min-width: 0; width: 100%; height: 32px; padding: 5px 8px; font-size: 12px; border-radius: 6px; }
 .pr-reviewer-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 15; max-height: 230px; overflow-y: auto; background: var(--panel, white); border: 1px solid #dce3df; border-radius: 8px; box-shadow: 0 8px 24px #0002; padding: 6px; }
 .pr-reviewer-results > button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 5px; }
 .pr-reviewer-results > button:hover { background: #e8f5ed; }
@@ -9549,10 +9549,15 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .repository-tab-body { min-width: 0; }
 .repository-section-title { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #365d45; }
 .pr-reviewer-group { min-width: 0; }
-.pr-reviewer-picker { background: #edf7f0; border-color: #cce3d3; padding: 12px; min-height: 125px; }
-.pr-reviewer-person { background: #dceee2; }
+.pr-reviewer-picker { background: #fff; border-color: #cce3d3; padding: 12px; min-height: 125px; }
+.pr-reviewer-person { background: #fff; padding: 6px 4px; gap: 8px; }
+.pr-reviewer-person:hover { background: #f4f7f5; }
+.pr-reviewer-person-info { display: flex; flex-direction: column; gap: 2px; }
+.pr-reviewer-person-info > span, .pr-reviewer-person-info > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-reviewer-person-info > small { font-size: 11px; color: #6b7b72; }
+.pr-reviewer-person .initials-avatar { flex: 0 0 28px; width: 28px; height: 28px; min-width: 28px; font-size: 10px; }
 .repository-pr-toggles { display: flex; flex-direction: column; gap: 8px; }
-.repository-pr-toggle { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; padding: 11px 12px; background: #f0f7f2; border: 1px solid #d5e7db; border-radius: 9px; cursor: pointer; }
+label.repository-pr-toggle { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; padding: 11px 12px; background: #f0f7f2; border: 1px solid #d5e7db; border-radius: 9px; cursor: pointer; }
 .repository-pr-toggle:hover { background: #e6f2ea; }
 .repository-pr-toggle > input { width: 16px; height: 16px; flex: 0 0 16px; margin: 2px 0 0; }
 .repository-pr-toggle > span { display: flex; flex-direction: column; gap: 3px; }
@@ -9570,3 +9575,10 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .azure-pat-permissions dd { margin: 0; }
 .azure-pat-permissions a { color: #805d17; text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 600px) { .azure-pat-permissions dl > div { grid-template-columns: 1fr; gap: 2px; } }
+
+.repository-fetch-settings { display: grid; gap: 16px; }
+.repository-fetch-field { display: grid; gap: 6px; min-width: 0; }
+.repository-fetch-field > label { font-size: 14px; font-weight: 600; margin: 0; }
+.repository-fetch-field > p { margin: 0; line-height: 1.45; }
+.repository-fetch-field > input { margin-top: 2px; }
+.repository-fetch-field > input:not([type="number"]) { width: 100%; max-width: 100%; }
