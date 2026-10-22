@@ -1,3 +1,4 @@
+import { RepositoryCommits } from "./RepositoryCommits.js";
 import { CodeWorkDialog } from "./CodeWorkDialog.js";
 import { repositoryBranchKey } from "./repository-branch.js";
 import { useSearchParams } from "react-router-dom";
@@ -6,7 +7,7 @@ import { RepositorySearch } from "./RepositorySearch.js";
 import { RepositoryFileIcon, repositoryFileKind, repositoryFileSize } from "./RepositoryFileKind.js";
 import { CodeProgress, useCodeProgress } from "./CodeProgress.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bug, AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw } from "lucide-react";
+import { GitCommitHorizontal, Bug, AlertCircle, X, ChevronDown, ChevronRight, Code2, Download, FileCode2, GitBranch, LoaderCircle, RefreshCw } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage } from "./diff-languages.js";
@@ -28,6 +29,7 @@ export function CodeBrowserPage({ context }: { context: Context }) {
 function RepositoryView({ context, requestedBranch, reference }: { context: Context; requestedBranch?: string; reference?: NonNullable<ReturnType<typeof chatCodeBranch>> }) {
   const { progress, execute, stop } = useCodeProgress();
   const [debugWork, setDebugWork] = useState(false);
+  const [showCommits, setShowCommits] = useState(false);
   const branchStorageKey = repositoryBranchKey(context);
   const rememberedBranch = () => { try { return sessionStorage.getItem(branchStorageKey) || ""; } catch { return ""; } };
   const [branches, setBranches] = useState<string[]>([]), [branch, setBranch] = useState("");
@@ -161,10 +163,12 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
       <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={cancelling || !branches.length} /></div>
       <button className="secondary" title="Проверить обновления репозитория" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить</button>
       <button className="secondary repository-pull" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
+      <button className="secondary" disabled={!branch} onClick={() => setShowCommits(true)}><GitCommitHorizontal size={15} />Коммиты</button>
       {(busy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
       <button type="button" className="secondary repository-debug-work" onClick={() => setDebugWork(true)}><Bug size={15} />Работа Git</button>
     </div>
+    {showCommits && <RepositoryCommits key={branch} context={context} branch={branch} onClose={() => setShowCommits(false)} />}
     {debugWork && <CodeWorkDialog context={context} onClose={() => setDebugWork(false)} />}
     {branchNote && <p className="muted">{branchNote}</p>}
 

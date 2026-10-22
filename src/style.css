@@ -9663,3 +9663,27 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .context-catalog-chip > .context-delete-button { color: #b83d3d; }
 .context-catalog-chip > .context-delete-button:hover { background: #fee7e7; }
 .context-rename-dialog form { display: grid; gap: 12px; }
+
+/* Shared compact file tree for PR and repository commit diffs. */
+.diff-file-tree { gap: 1px; padding: 6px; }
+.pr-diff-files .diff-tree-row { width: 100%; align-items: center; gap: 4px; min-height: 31px; padding: 4px 5px; font-size: 12px; }
+.diff-tree-status { flex: 0 0 16px; text-align: center; font: 600 11px ui-monospace, monospace; }
+.diff-tree-toggle { flex: 0 0 13px; display: flex; }
+.pr-diff-files .diff-tree-name { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; overflow-wrap: normal; }
+.diff-tree-counts { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; font-size: 10px; }
+.pr-diff-files .diff-tree-row.is-added { background: #ecf8ef; color: #277144; }
+.pr-diff-files .diff-tree-row.is-deleted { background: #fff0f0; color: #aa3535; }
+.pr-diff-files .diff-tree-row.is-modified { background: #edf4fc; color: #345e8c; }
+.pr-diff-files .diff-tree-row.is-renamed { background: #f4effc; color: #71549b; }
+.pr-diff-files .diff-tree-row:hover { filter: brightness(.96); }
+.pr-diff-files .diff-tree-row[aria-pressed="true"] { border-color: #678969; box-shadow: inset 3px 0 #678969; }
+.repository-commits-dialog { width: min(760px, calc(100vw - 32px)); }
+.repository-commits-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.repository-commits-heading > code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repository-commits-list { overflow: auto; max-height: 55dvh; display: grid; gap: 6px; }
+.repository-commit-row { display: flex; gap: 10px; align-items: flex-start; width: 100%; padding: 10px; border: 1px solid #dce4db; background: #f8faf7; border-radius: 8px; text-align: left; }
+.repository-commit-row:hover { background: #ecf3e8; border-color: #a7bc9a; }
+.repository-commit-row > svg { flex-shrink: 0; margin-top: 2px; }
+.repository-commit-row > span { min-width: 0; }
+.repository-commit-row strong { display: block; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.repository-commit-row small { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; color: var(--muted); }

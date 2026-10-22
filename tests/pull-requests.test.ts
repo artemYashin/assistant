@@ -1560,3 +1560,48 @@ test("completed reimport replaces an ID cut at the list boundary and keeps descr
   assert.equal(detailReads, 1);
   assert.deepEqual(reopened.items[0].tickets.map((ticket: any) => ticket.id), [123456, 765432, 987654]);
 });
+
+test("repository history uses selected branch, bounded pages and pinned head without requiring a PR", async t => {
+  const { service } = fixture(t);
+  const head = "a".repeat(40);
+  const queries: URL[] = [];
+  mock(t, [], url => {
+    if (url.pathname.endsWith('/commits')) {
+      queries.push(url);
+      return { value: Array.from({ length: queries.length === 1 ? 51 : 1 }, (_, i) => ({ commitId: i === 0 ? head : i.toString(16).padStart(40, '0'), comment: 'Commit', author: { name: 'Dev', date: '2026-01-01' } })) };
+    }
+  });
+  const first = await service.repositoryCommits(context, 'feature/ветка с пробелом');
+  assert.equal(first.commits.length, 50);
+  assert.equal(first.nextOffset, 50);
+  assert.equal(first.head, head);
+  assert.equal(queries[0].searchParams.get('searchCriteria.itemVersion.version'), 'feature/ветка с пробелом');
+  assert.equal(queries[0].searchParams.get('searchCriteria.itemVersion.versionType'), 'branch');
+  const second = await service.repositoryCommits(context, 'feature/ветка с пробелом', 50, first.head);
+  assert.equal(second.nextOffset, null);
+  assert.equal(queries[1].searchParams.get('searchCriteria.itemVersion.versionType'), 'commit');
+  assert.equal(queries[1].searchParams.get('searchCriteria.itemVersion.version'), head);
+  assert.equal(queries[1].searchParams.get('searchCriteria.$skip'), '50');
+  await assert.rejects(service.repositoryCommits({ client: 'Missing', project: 'Missing' }, 'dev'), /Настройте/);
+});
+
+test("repository initial commit compares against empty tree and never reads comments or LLM", async t => {
+  const { service, calls } = fixture(t);
+  const head = 'b'.repeat(40);
+  mock(t, [], url => {
+    if (url.pathname.endsWith('/commits/' + head)) return { commitId: head, parents: [], comment: 'Initial' };
+    if (url.pathname.endsWith('/changes')) return { changes: [{ changeType: 'add', item: { path: '/src/start.ts' } }] };
+    if (url.pathname.endsWith('/items')) {
+      assert.equal(url.searchParams.get('versionDescriptor.version'), head);
+      return { content: 'export const start = true;\n', size: 27 };
+    }
+    throw new Error('Unexpected endpoint: ' + url.pathname);
+  });
+  const diff = await service.repositoryCommitDiff(context, head);
+  assert.equal(diff.base, '');
+  assert.equal(diff.title, 'Initial');
+  assert.equal(diff.patches.length, 1);
+  assert.match(diff.patches[0], /--- \/dev\/null/);
+  assert.match(diff.patches[0], /\+export const start/);
+  assert.equal(calls.length, 0);
+});

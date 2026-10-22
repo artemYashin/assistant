@@ -1,8 +1,9 @@
+import { DiffFileTree } from "./DiffFileTree.js";
 import { useEffect, useRef, useState } from "react";
 import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { api } from "./api.js";
-import { splitDiff, diffFileLabel, diffFileSize, type DiffLine } from "./pr-diff.js";
+import { splitDiff, type DiffLine } from "./pr-diff.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage, diffLanguages, diffLanguageStorageKey, validDiffLanguage } from "./diff-languages.js";
 import type { CodeToken, HighlightedFile } from "./diff-highlight.js";
@@ -42,8 +43,10 @@ export function PrDiffDialog({
   pr,
   onClose,
   commit,
+  repositoryContext,
 }: {
-  pr: any;
+  pr?: any;
+  repositoryContext?: { client: string; project: string };
   commit?: string;
   onClose: () => void;
 }) {
@@ -75,7 +78,7 @@ export function PrDiffDialog({
     setError("");
     setSelected(0);
     api(
-      `/pr/${commit ? "commit-diff" : "diff"}?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number), ...(commit ? { commit } : {}) })}`,
+      repositoryContext ? `/repository/commit-diff?${new URLSearchParams({ ...repositoryContext, commit: commit! })}` : `/pr/${commit ? "commit-diff" : "diff"}?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number), ...(commit ? { commit } : {}) })}`,
     )
       .then((result) => {
         const parsed = { ...result, files: splitDiff(result.patches) };
@@ -87,10 +90,10 @@ export function PrDiffDialog({
     return () => {
       live = false;
     };
-  }, [pr.monitor, pr.repo, pr.number, commit, revision]);
+  }, [pr?.monitor, pr?.repo, pr?.number, commit, revision, repositoryContext?.client, repositoryContext?.project]);
   useEffect(() => {
     let live = true;
-    if (!data || commit) { setThreads([]); return; }
+    if (!data || commit || repositoryContext) { setThreads([]); return; }
     setCommentsLoading(true);
     setCommentsError("");
     api(`/pr/line-comments?${new URLSearchParams({
@@ -99,7 +102,7 @@ export function PrDiffDialog({
       .catch((e) => { if (live) setCommentsError(e.message); })
       .finally(() => { if (live) setCommentsLoading(false); });
     return () => { live = false; };
-  }, [data, commit, pr.monitor, pr.repo, pr.number, commentsVersion]);
+  }, [data, commit, pr?.monitor, pr?.repo, pr?.number, commentsVersion, repositoryContext]);
   const file = data?.files[selected];
   useEffect(() => {
     if (!lineTarget || selected !== lineTarget.file) return;
@@ -160,7 +163,7 @@ export function PrDiffDialog({
             <Code2 size={20} /> Diff ·{" "}
             {commit ? `коммит ${commit.slice(0, 12)}` : `PR #${pr.number}`}
           </h2>
-          <p>{data?.title || pr.title}</p>
+          <p>{data?.title || pr?.title}</p>
         </div>
         <button
           className="icon-button"
@@ -191,7 +194,7 @@ export function PrDiffDialog({
         <>
           <p className="pr-diff-meta">
             {commit ? "Родитель" : "Merge base"}{" "}
-            <code>{data.base.slice(0, 12)}</code> →{" "}
+            <code>{data.base ? data.base.slice(0, 12) : "пустое дерево"}</code> →{" "}
             {commit ? "Коммит" : "PR head"}{" "}
             <code>{data.head.slice(0, 12)}</code>
             {!commit && (
@@ -239,32 +242,8 @@ export function PrDiffDialog({
                 <h3>{file && (file.before !== file.after
                   ? `${file.before} → ${file.after}` : file.after)}</h3>
               </div>
-              <nav className="pr-diff-files" aria-label="Файлы изменений">
-                {data.files.map((f, i) => (
-                  <button
-                    key={i}
-                    aria-pressed={i === selected}
-                    title={f.after === "/dev/null" ? f.before : f.after}
-                    onClick={() => { setSelected(i); setLineTarget(null); }}
-                  >
-                    <FileCode2 size={16} />
-                    <span className="pr-diff-file-label">
-                      <DiffFileName
-                        path={
-                          f.after === "/dev/null"
-                            ? f.before
-                            : f.after || f.before
-                        }
-                      />
-                      <span className="pr-diff-counts">
-                        <span className="pr-diff-file-size" title="Размер файла (для удалённого — до удаления)">{diffFileSize(data.diagnostics?.includedFiles.find(item => item.path === (f.after === "/dev/null" ? f.before : f.after))?.sizeBytes)}</span>
-                        <span className="pr-diff-added">+{f.added}</span>
-                        <span className="pr-diff-removed">−{f.removed}</span>
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </nav>
+              <DiffFileTree files={data.files} selected={selected} sizes={data.diagnostics?.includedFiles}
+                onSelect={index => { setSelected(index); setLineTarget(null); }} />
               {file && (
                 <section
                   className="pr-diff-code"
@@ -317,7 +296,7 @@ export function PrDiffDialog({
                                     threads={threads.filter((t) => !!r.right && t.path === file.after && t.line === r.right.number)}
                                     highlighted={lineTarget?.file === selected && lineTarget.side === "right" && lineTarget.line === r.right?.number}
                                     tokens={r.right && tokens?.right[r.right.number]}
-                                    onComment={!commit && data.canComment ? async (content) => {
+                                    onComment={!repositoryContext && !commit && data.canComment ? async (content) => {
                                       await api("/pr/line-comment", "POST", {
                                         monitor: pr.monitor, repo: pr.repo, number: pr.number,
                                         head: data.head, base: data.base, target: data.target,
@@ -341,7 +320,7 @@ export function PrDiffDialog({
               )}
             </div>
           )}
-          {!commit && <section className="pr-diff-discussions" aria-label="Комментарии к pull request">
+          {!repositoryContext && !commit && <section className="pr-diff-discussions" aria-label="Комментарии к pull request">
             <div className="pr-diff-comments-status">
               <h3>Комментарии · {threads.length}</h3>
               <button className="text-button" disabled={commentsLoading}
@@ -493,14 +472,4 @@ function CommentThreads({ threads, canLocate, onLocate, inline = false }: {
       <p>{comment.content}</p>
     </article>)}
   </details>)}</>;
-}
-
-function DiffFileName({ path }: { path: string }) {
-  const { directory, name } = diffFileLabel(path);
-  return (
-    <>
-      <span className="pr-diff-directory">{directory || "Корень"}</span>
-      <span className="pr-diff-filename">{name}</span>
-    </>
-  );
 }

@@ -1330,6 +1330,15 @@ export function createApp(
       ),
     });
   });
+  app.get("/api/repository/commits", async (req, res) => {
+    const input = z.object({ client: text.min(1), project: text.min(1), branch: z.string().min(1).max(500),
+      offset: z.coerce.number().int().min(0).max(100000).default(0), head: z.string().regex(/^[0-9a-f]{40}$/i).optional() }).parse(req.query);
+    res.json(await pullRequests.repositoryCommits(input, input.branch, input.offset, input.head));
+  });
+  app.get("/api/repository/commit-diff", async (req, res) => {
+    const input = z.object({ client: text.min(1), project: text.min(1), commit: z.string().regex(/^[0-9a-f]{40}$/i) }).parse(req.query);
+    res.json(await pullRequests.repositoryCommitDiff(input, input.commit));
+  });
   app.get("/api/pr/commits", async (req, res) => {
     const input = z
       .object({

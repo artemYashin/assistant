@@ -9,76 +9,82 @@
 
 Ветка
 
-Источник: src/CodeBrowserPage.tsx:161.
+Источник: src/CodeBrowserPage.tsx:163.
 
 ### Элемент
 
 Проверить обновления репозитория · Проверить
 
-Источник: src/CodeBrowserPage.tsx:162.
+Источник: src/CodeBrowserPage.tsx:164.
 
 ### Элемент
 
 Обновить только локальную копию для просмотра · Pull
 
-Источник: src/CodeBrowserPage.tsx:163.
+Источник: src/CodeBrowserPage.tsx:165.
 
 ### Элемент
 
-Отменяю… / Отменить
-
-Источник: src/CodeBrowserPage.tsx:164.
-
-### Элемент
-
-Работа Git
+Коммиты
 
 Источник: src/CodeBrowserPage.tsx:166.
 
 ### Элемент
 
+Отменяю… / Отменить
+
+Источник: src/CodeBrowserPage.tsx:167.
+
+### Элемент
+
+Работа Git
+
+Источник: src/CodeBrowserPage.tsx:169.
+
+### Элемент
+
 Закрыть ошибку
 
-Источник: src/CodeBrowserPage.tsx:174.
+Источник: src/CodeBrowserPage.tsx:178.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CodeBrowserPage.tsx:192.
+Источник: src/CodeBrowserPage.tsx:196.
 
 ### Элемент
 
 Закрыть файл
 
-Источник: src/CodeBrowserPage.tsx:194.
+Источник: src/CodeBrowserPage.tsx:198.
 
 ### Элемент
 
 — /
 
-Источник: src/CodeBrowserPage.tsx:221.
+Источник: src/CodeBrowserPage.tsx:225.
 
 ### Элемент
 
 Повторить
 
-Источник: src/CodeBrowserPage.tsx:232.
+Источник: src/CodeBrowserPage.tsx:236.
 
 ### Элемент
 
 Ещё файлы
 
-Источник: src/CodeBrowserPage.tsx:233.
+Источник: src/CodeBrowserPage.tsx:237.
 
 ### Элемент
 
 ←
 
-Источник: src/CodeBrowserPage.tsx:253.
+Источник: src/CodeBrowserPage.tsx:257.
 
 ### Элемент
 
 →
 
-Источник: src/CodeBrowserPage.tsx:255.
+Источник: src/CodeBrowserPage.tsx:259.

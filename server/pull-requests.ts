@@ -972,6 +972,31 @@ export class PullRequests {
       return { updated: true, action, ...(syncError ? { warning: `Состояние изменено в Azure, но повторная синхронизация не удалась: ${syncError}` } : {}) };
     } finally { this.stateChanges.delete(key); }
   }
+  private repositoryMonitor(context: Context) {
+    const settings = this.store.settings(context);
+    const m = this.monitors().find(m => m.client === context.client && m.project === context.project && m.source === azureBase(settings.azureUrl) && m.azure_project === settings.azureProject);
+    if (!m?.repository) throw new AppError(400, "Настройте Git-репозиторий в «Заказчики и проекты».");
+    return m;
+  }
+  async repositoryCommits(context: Context, branch: string, offset = 0, head = "") {
+    const m = this.repositoryMonitor(context);
+    const credentials = this.credentials(m);
+    const query = new URLSearchParams({
+      "searchCriteria.itemVersion.version": head || branch.replace(/^refs\/heads\//, ""),
+      "searchCriteria.itemVersion.versionType": head ? "commit" : "branch",
+      "searchCriteria.$top": "51", "searchCriteria.$skip": String(offset),
+    });
+    const result = await this.get(m, `git/repositories/${enc(m.repository)}/commits?${query}`, credentials);
+    if (!Array.isArray(result.value) || result.value.some((c: any) => !/^[0-9a-f]{40}$/i.test(c.commitId)))
+      throw new AppError(502, "Azure не вернул список коммитов ветки");
+    if (this.credentials(m).pat !== credentials.pat) throw new AppError(409, "Подключение Azure изменилось");
+    return { head: head || result.value[0]?.commitId || "", nextOffset: result.value.length > 50 ? offset + 50 : null,
+      commits: result.value.slice(0, 50).map((c: any) => ({ id: c.commitId, message: String(c.comment || ""), author: String(c.author?.name || ""), date: String(c.author?.date || "") })) };
+  }
+  async repositoryCommitDiff(context: Context, commit: string) {
+    const m = this.repositoryMonitor(context);
+    return this.readCommitDiff(m, m.repository, commit);
+  }
   async commits(
     monitor: string,
     repo: string,
@@ -1046,6 +1071,9 @@ export class PullRequests {
         "Коммит не найден среди первых 1000 коммитов текущего PR",
       );
     const m = this.monitors().find((entry) => entry.id === monitor)!;
+    return this.readCommitDiff(m, repo, commit);
+  }
+  private async readCommitDiff(m: Monitor, repo: string, commit: string) {
     const credentials = this.credentials(m);
     const detail = await this.get(
       m,
@@ -1058,19 +1086,9 @@ export class PullRequests {
     )
       throw new AppError(502, "Azure не вернул данные коммита");
     const parent = detail.parents[0];
-    if (!parent)
-      return {
-        patches: [],
-        notes: [
-          "Начальный коммит без родителя: сравнение с пустым деревом пока не поддерживается.",
-        ],
-        base: "",
-        head: commit,
-        title: detail.comment || commit,
-      };
-    if (!/^[0-9a-f]{40}$/i.test(parent))
+    if (parent && !/^[0-9a-f]{40}$/i.test(parent))
       throw new AppError(502, "Azure вернул некорректный родительский коммит");
-    const result = await this.changes(m, repo, commit, parent);
+    const result = await this.changes(m, repo, commit, parent || "");
     if (this.credentials(m).pat !== credentials.pat)
       throw new AppError(409, "Подключение Azure изменилось");
     if (detail.parents.length > 1)
@@ -1233,16 +1251,16 @@ export class PullRequests {
     const budget = settings.diffBudget;
     const perFileBudget = Math.floor(budget / 4);
     const preparationStarted = Date.now();
-    const diff = await this.get(
-      m,
-      `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(target)}&targetVersionType=commit&targetVersion=${enc(head)}&$top=101`,
-      credentials,
-    );
-    if (!diff.commonCommit || !Array.isArray(diff.changes))
-      throw new AppError(
-        502,
-        "Azure не вернул merge base или список изменений",
-      );
+    const loadChanges = async (skip = 0) => {
+      if (!target) {
+        const page = await this.get(m, `${root}/commits/${enc(head)}/changes?top=101&skip=${skip}`, credentials);
+        return { commonCommit: "", changes: page.changes, allChangesIncluded: Array.isArray(page.changes) && page.changes.length < 101 };
+      }
+      return this.get(m, `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(target)}&targetVersionType=commit&targetVersion=${enc(head)}&$top=101&$skip=${skip}`, credentials);
+    };
+    const diff = await loadChanges();
+    if ((target && !diff.commonCommit) || !Array.isArray(diff.changes))
+      throw new AppError(502, "Azure не вернул базу или список изменений");
     const notes: string[] = [];
     const patches: string[] = [];
     let chars = 0;
@@ -1255,11 +1273,7 @@ export class PullRequests {
         diff.changes.length &&
         Date.now() - preparationStarted < 20000
       ) {
-        const page = await this.get(
-          m,
-          `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(target)}&targetVersionType=commit&targetVersion=${enc(head)}&$top=101&$skip=${allChanges.length}`,
-          credentials,
-        );
+        const page = await loadChanges(allChanges.length);
         if (
           page.commonCommit !== diff.commonCommit ||
           !Array.isArray(page.changes)
@@ -1358,8 +1372,8 @@ export class PullRequests {
           : await read(oldPath, diff.commonCommit);
         const after = kind.includes("delete") ? "" : await read(path, head);
         const patch = createTwoFilesPatch(
-          oldPath,
-          path,
+          kind.includes("add") ? "/dev/null" : oldPath,
+          kind.includes("delete") ? "/dev/null" : path,
           before,
           after,
           "merge base",
