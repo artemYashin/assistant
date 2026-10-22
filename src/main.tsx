@@ -1894,6 +1894,7 @@ function Tickets({
   );
 }
 function Memory({ memories, context, run, busy }: any) {
+  const [editingMemory, setEditingMemory] = useState<string | null>(null);
   const [scope, setScope] = useState("general"),
     [body, setBody] = useState(""),
     [summary, setSummary] = useState("");
@@ -1944,10 +1945,10 @@ function Memory({ memories, context, run, busy }: any) {
           }}><Trash2 size={16} />{busy ? "Удаление…" : "Удалить"}</button>
         </div>
       </dialog>
-      <PageHeading
+      <div className="memory-page-heading"><PageHeading
         title="Важное остаётся с вами"
         subtitle="Память доступна ассистенту с учётом выбранного заказчика и проекта."
-      ><ExportMemoryButton key={JSON.stringify(context)} context={context} /></PageHeading>
+      ><ExportMemoryButton key={JSON.stringify(context)} context={context} /></PageHeading></div>
       <div className="memory-create-toolbar">
         <button type="button" className="primary" disabled={!!busy} onClick={() => {
           setCreateError("");
@@ -2095,8 +2096,13 @@ function Memory({ memories, context, run, busy }: any) {
               body={m.body}
               summary={m.summary}
               disabled={!!busy}
-              onSaved={() => run("refresh-memory", async () => {})}
+              onEditingChange={editing => setEditingMemory(editing ? m.id : null)}
+              onSaved={() => { setEditingMemory(null); run("refresh-memory", async () => {}); }}
             />
+            <button type="button" className="secondary memory-refine-button" disabled={!!busy || editingMemory === m.id} onClick={() => run(`refine-memory:${m.id}`, async () => {
+              const proposal = await api<any>(`/memories/${m.id}/refine`, "POST", { context });
+              window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { ...proposal, body: proposal.summary } }));
+            })}><Sparkles size={15} />Refine with AI</button>
             {(typeof m.cards === "string"
               ? JSON.parse(m.cards)
               : m.cards || []
@@ -2880,14 +2886,14 @@ function Assistant({
   const [sessionId, setSessionId] = useState("");
   const [chatModel, setChatModel] = useState("");
   const [attachment, setAttachment] = useState<any>(null);
-  const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string } | null>(null);
+  const [memoryProposalAttachment, setMemoryProposalAttachment] = useState<{ id: string; body: string; target_memory_id?: string } | null>(null);
   useEffect(() => { setMemoryProposalAttachment(null); }, [context.client, context.project, sessionId]);
   useEffect(() => {
     const handle = (event: Event) => {
       const proposal = (event as CustomEvent).detail;
       if (!proposal?.id || typeof proposal.body !== "string") return;
       if ((proposal.scope !== "general" && proposal.client !== context.client) || (["project", "project_review"].includes(proposal.scope) && proposal.project !== context.project)) return;
-      setMemoryProposalAttachment({ id: proposal.id, body: proposal.body });
+      setMemoryProposalAttachment({ id: proposal.id, body: proposal.body, target_memory_id: proposal.target_memory_id });
       onExpand();
     };
     window.addEventListener("orbit:refine-memory", handle);
@@ -3524,7 +3530,7 @@ function Assistant({
           </span>
         </div>}
         {memoryProposalAttachment && <div className="chat-memory-attachment">
-          <Sparkles size={15} aria-hidden="true" /><div><strong>Редактирование предложения в память</strong><span title={memoryProposalAttachment.body}>{memoryProposalAttachment.body}</span><small>Прикреплено к следующему сообщению · можно ответить голосом</small></div>
+          <Sparkles size={15} aria-hidden="true" /><div><strong>{memoryProposalAttachment.target_memory_id ? "Редактирование сохранённой памяти" : "Редактирование предложения в память"}</strong><span title={memoryProposalAttachment.body}>{memoryProposalAttachment.body}</span><small>Прикреплено к следующему сообщению · можно ответить голосом</small></div>
           <button type="button" className="icon-button" title="Убрать прикреплённое предложение" aria-label="Убрать прикреплённое предложение" onClick={() => setMemoryProposalAttachment(null)}><X size={15} /></button>
         </div>}
         <form className="composer" onSubmit={send}>

@@ -35,7 +35,7 @@ export class MemoryProposals {
     if (existing) return { status: "already_saved" };
     const old = this.store.db
       .prepare(
-        "SELECT id FROM memory_proposals WHERE scope=? AND client=? AND project=? AND body=? AND status='pending'",
+        "SELECT id FROM memory_proposals WHERE scope=? AND client=? AND project=? AND body=? AND status='pending' AND target_memory_id IS NULL",
       )
       .get(p.scope, client, project, p.body) as any;
     if (old) return { id: old.id, status: "pending" };
@@ -60,6 +60,21 @@ export class MemoryProposals {
       status: "pending",
       note: "Запись ещё не сохранена в память. Ожидает подтверждения в интерфейсе.",
     };
+  }
+  proposeEdit(memoryId: string, context: Context) {
+    return this.store.db.transaction(() => {
+      const memory = this.store.memoryDetail(memoryId, context);
+      const existing = this.store.db.prepare("SELECT * FROM memory_proposals WHERE target_memory_id=? AND status='pending' AND original_summary=? AND original_body=? ORDER BY created_at DESC LIMIT 1")
+        .get(memoryId, memory.summary, memory.body) as any;
+      if (existing) return existing;
+      const id = randomUUID();
+      this.store.db.prepare("INSERT INTO memory_proposals(id,scope,client,project,summary,body,reason,status,created_at,target_memory_id,original_summary,original_body) VALUES (?,?,?,?,?,?,?,'pending',?,?,?,?)")
+        .run(id, memory.scope, memory.scope === "general" ? "" : context.client,
+          ["project", "project_review"].includes(memory.scope) ? context.project : "",
+          memory.summary, memory.body, "Редактирование сохранённой памяти с помощью AI", new Date().toISOString(), memoryId, memory.summary, memory.body);
+      this.store.audit("memory.proposed", id);
+      return this.forContext(id, context);
+    })();
   }
   forContext(id: string, context: Context) {
     const p = this.store.db.prepare("SELECT * FROM memory_proposals WHERE id=?").get(id) as any;
@@ -88,7 +103,12 @@ export class MemoryProposals {
       if (!p) throw new AppError(404, "Предложение не найдено");
       if (p.status !== "pending")
         throw new AppError(409, "Предложение уже обработано");
-      if (approve) {
+      if (approve && p.target_memory_id) {
+        const result = this.store.db.prepare("UPDATE memories SET summary=?,body=? WHERE id=? AND summary=? AND body=? AND scope=? AND client=? AND project=?")
+          .run(p.summary, p.body, p.target_memory_id, p.original_summary, p.original_body, p.scope, p.client, p.project);
+        if (!result.changes) throw new AppError(409, "Исходная память изменена или удалена. Создайте новое предложение на основе актуальной записи.");
+        this.store.audit("memory.updated", p.target_memory_id);
+      } else if (approve) {
         const old = this.store.db
           .prepare(
             "SELECT id FROM memories WHERE scope=? AND client=? AND project=? AND body=?",
@@ -136,7 +156,7 @@ export function memoryRefinementTools(store: Store, context: Context, assertActi
       handler: async ({ id }) => { assertActive(); return service.forContext(id, context); },
     }),
     defineTool("edit_memory_proposal", {
-      description: "Refine an existing pending memory proposal at the user's request. Supply the short summary (one or two sentences) and complete replacement Markdown body, plus exact previous summary and body from attachment/read_memory_proposal to avoid overwriting concurrent edits. Does not approve or save to memory. No extra confirmation needed for this draft edit.",
+      description: "Refine an existing pending memory proposal at the user's request, including updates to saved memories identified by target_memory_id. For an update, edit only the proposed summary/body; approval later updates the original record. Supply the short summary (one or two sentences) and complete replacement Markdown body, plus exact previous summary and body from attachment/read_memory_proposal to avoid overwriting concurrent edits. Does not approve or save to memory. No extra confirmation needed for this draft edit.",
       parameters: z.object({ id: z.string().uuid(), body: z.string().trim().min(1).max(8000), summary: memorySummarySchema, expectedSummary: z.string().max(320), expectedBody: z.string().max(8000) }),
       handler: async ({ id, body, summary, expectedBody, expectedSummary }) => { assertActive(); service.forContext(id, context); service.edit(id, { body, summary }, expectedBody, expectedSummary); onEdited(); return { id, status: "pending", updated: true }; },
     }),

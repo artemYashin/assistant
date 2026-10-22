@@ -9294,3 +9294,13 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .review-comment-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .review-comment-heading .review-comment-mic { width: 28px; height: 28px; min-height: 28px; padding: 5px; flex-shrink: 0; }
 .voice-binding > .icon-button { flex-shrink: 0; }
+
+.memory-page-heading .page-heading { margin-bottom: 12px; }
+.memory-page-heading .page-heading p { margin-top: 4px; margin-bottom: 0; }
+.memory-create-toolbar > .primary { margin-left: 0; }
+.memory-note > .memory-refine-button { align-self: flex-start; margin-top: 8px; }
+.memory-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 12px 0; }
+.memory-change-comparison > section { min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #f7f9f8; }
+.memory-change-comparison > section:last-child { background: #f0f7f2; }
+.memory-change-comparison h3 { margin: 0 0 10px; font-size: 12px; }
+@media (max-width: 760px) { .memory-change-comparison { grid-template-columns: 1fr; } }

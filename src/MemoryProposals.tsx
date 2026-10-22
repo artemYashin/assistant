@@ -53,7 +53,7 @@ export function MemoryProposalList({
         {items.map((p) => (
           <article className="panel" key={p.id}>
             <div className="section-heading">
-              <strong>{scopes[p.scope]}</strong>
+              <strong>{p.target_memory_id ? "Редактирование памяти" : "Добавление памяти"} · {scopes[p.scope]}</strong>
               <span className="ticket-state-badge">
                 {p.status === "pending"
                   ? "Ожидает подтверждения"
@@ -68,8 +68,12 @@ export function MemoryProposalList({
                 {p.project ? ` / ${p.project}` : ""}
               </p>
             )}
+            <div className={p.target_memory_id ? "memory-change-comparison" : undefined}>
+            {p.target_memory_id && <section><h3>Было</h3><MemoryProposalContent summary={p.original_summary} body={p.original_body} /></section>}
+            <section>{p.target_memory_id && <h3>Предлагаемое изменение</h3>}
             {p.status === "pending" ? <MemoryBody key={`${p.id}:${p.summary}:${p.body}`} id={p.id} body={p.body} summary={p.summary} proposal disabled={!!busy || (!!editing && editing !== p.id)} onSaved={() => { setEditing(null); onChange(); }} onEditingChange={value => setEditing(value ? p.id : null)} /> : <MemoryProposalContent summary={p.summary} body={p.body} />}
-            {p.status === "pending" && <button type="button" className="secondary memory-refine-button" disabled={!!busy || !!editing || (p.scope !== "general" && p.client !== context.client) || (["project", "project_review"].includes(p.scope) && p.project !== context.project)} title="Прикрепить к следующему сообщению ассистенту. Выберите соответствующего заказчика и проект." onClick={() => window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { id: p.id, body: p.summary, client: p.client, project: p.project, scope: p.scope } }))}><Sparkles size={15} />Refine with AI</button>}
+            </section></div>
+            {p.status === "pending" && <button type="button" className="secondary memory-refine-button" disabled={!!busy || !!editing || (p.scope !== "general" && p.client !== context.client) || (["project", "project_review"].includes(p.scope) && p.project !== context.project)} title="Прикрепить к следующему сообщению ассистенту. Выберите соответствующего заказчика и проект." onClick={() => window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { id: p.id, body: p.summary, client: p.client, project: p.project, scope: p.scope, target_memory_id: p.target_memory_id } }))}><Sparkles size={15} />Refine with AI</button>}
             <p className="muted">Зачем сохранить: {p.reason}</p>
             <div className="card-actions memory-proposal-actions">
               {p.status === "pending" && (
@@ -79,7 +83,7 @@ export function MemoryProposalList({
                     disabled={!!busy || !!editing}
                     onClick={() => void decide(p.id, true)}
                   >
-                    Подтвердить сохранение
+                    {p.target_memory_id ? "Подтвердить изменение" : "Подтвердить сохранение"}
                   </button>
                   <button
                     className="secondary"

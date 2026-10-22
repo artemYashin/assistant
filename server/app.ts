@@ -642,6 +642,10 @@ export function createApp(
     ),
   );
   const memoryProposals = new MemoryProposals(store);
+  app.post("/api/memories/:id/refine", (req, res) => {
+    const { context } = z.object({ context: contextSchema }).parse(req.body);
+    res.json(memoryProposals.proposeEdit(String(req.params.id), context));
+  });
   const reviewQuestions = new ReviewQuestions(store);
   app.get("/api/memory-proposals", (_req, res) =>
     res.json(memoryProposals.list()),

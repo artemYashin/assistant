@@ -126,3 +126,52 @@ test("project review memory is isolated from automatic chat context and scoped t
   assert.equal(store.reviewMemory(context, ["project_review"]).length, 2);
   assert.equal(store.memoryCatalog(context).length, 3);
 });
+
+test("saved memory refinement requires approval and preserves identity with conflict protection", t => {
+  const dir = mkdtempSync(join(tmpdir(), "memory-refine-saved-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const context = { client: "C", project: "P" };
+  store.addMemory("project_review", "Original body", context, "Original summary");
+  const memory = store.reviewMemory(context)[0];
+  const service = new MemoryProposals(store);
+  assert.throws(() => service.proposeEdit(memory.id, { ...context, project: "Other" }));
+  const draft = service.proposeEdit(memory.id, context);
+  assert.equal(draft.target_memory_id, memory.id);
+  assert.equal(service.proposeEdit(memory.id, context).id, draft.id);
+  service.edit(draft.id, { summary: "New summary", body: "New **body**" }, draft.body, draft.summary);
+  assert.equal(store.memoryDetail(memory.id, context).body, "Original body");
+  assert.equal(service.forContext(draft.id, context).original_body, "Original body");
+  service.decide(draft.id, true);
+  assert.equal(store.memoryDetail(memory.id, context).body, "New **body**");
+  assert.equal(store.reviewMemory(context).length, 1);
+  assert.throws(() => service.decide(draft.id, true), /обработано/);
+  const rejected = service.proposeEdit(memory.id, context);
+  service.edit(rejected.id, { body: "Rejected body" });
+  service.decide(rejected.id, false);
+  assert.equal(store.memoryDetail(memory.id, context).body, "New **body**");
+  const stale = service.proposeEdit(memory.id, context);
+  store.db.prepare("UPDATE memories SET body='Manual change' WHERE id=?").run(memory.id);
+  assert.throws(() => service.decide(stale.id, true), /изменена или удалена/);
+  assert.equal(service.forContext(stale.id, context).status, "pending");
+  assert.equal(store.memoryDetail(memory.id, context).body, "Manual change");
+  const deleted = service.proposeEdit(memory.id, context);
+  store.db.prepare("DELETE FROM memories WHERE id=?").run(memory.id);
+  assert.throws(() => service.decide(deleted.id, true), /изменена или удалена/);
+  assert.equal(store.reviewMemory(context).length, 0);
+});
+
+test("memory update approvals render old and proposed versions separately", async () => {
+  const { MemoryProposalList } = await import("../src/MemoryProposals.js");
+  const html = renderToStaticMarkup(createElement(MemoryProposalList, {
+    context: { client: "C", project: "P" }, onChange() {},
+    items: [{ id: "draft", scope: "project", client: "C", project: "P", status: "pending", target_memory_id: "memory",
+      original_summary: "Old title", original_body: "Old body", summary: "New title", body: "New body" }],
+  }));
+  assert.match(html, /Редактирование памяти/);
+  assert.match(html, /Было/);
+  assert.match(html, /Предлагаемое изменение/);
+  assert.match(html, /Old body/);
+  assert.match(html, /New body/);
+  assert.match(html, /Подтвердить изменение/);
+});

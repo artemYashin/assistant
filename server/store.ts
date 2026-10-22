@@ -304,6 +304,10 @@ export class Store {
       this.db.exec(
         "ALTER TABLE pr_projects ADD COLUMN review_files TEXT NOT NULL DEFAULT '{}'",
       );
+    for (const column of ["target_memory_id", "original_summary", "original_body"]) {
+      if (!(this.db.prepare("PRAGMA table_info(memory_proposals)").all() as any[]).some(c => c.name === column))
+        this.db.exec(`ALTER TABLE memory_proposals ADD COLUMN ${column} TEXT`);
+    }
     for (const table of ["memories", "memory_proposals"]) {
       if (!(this.db.prepare(`PRAGMA table_info(${table})`).all() as any[]).some(c => c.name === "summary")) {
         this.db.transaction(() => {
