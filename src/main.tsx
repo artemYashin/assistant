@@ -40,7 +40,7 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { useSelectedChatTickets } from "./TicketSelection.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { SelectAllTickets, useTicketSelection } from "./TicketSelection.js";
-import { ExportTickets, TicketExportDialog } from "./ExportTickets.js";
+import { ExportTickets, TicketExportDialog, openTicketExport, addTicketsToExport } from "./ExportTickets.js";
 import { CompletedPullRequests } from "./CompletedPullRequests.js";
 import { LastSync } from "./LastSync.js";
 import { TicketTrash } from "./TicketTrash.js";
@@ -3182,6 +3182,10 @@ function Assistant({
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
           if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
+          else if (event.stage === "ticket_export") {
+            if (event.mode === "add") addTicketsToExport(event.ids);
+            else openTicketExport(event.ids);
+          }
           else if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
           else if (event.stage === "close_ticket_details") {
             window.dispatchEvent(new Event("orbit-close-ticket-details"));

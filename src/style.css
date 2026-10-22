@@ -9823,3 +9823,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
   .export-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(180px, 1fr) minmax(150px, 1fr); gap: 8px; }
   .export-footer { flex-wrap: wrap; }
 }
+.ticket-export-dialog .export-minimize { margin-left: auto; }
+.export-minimized { position: fixed; z-index: 1200; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 9px; max-width: calc(100vw - 24px); box-sizing: border-box; padding: 8px 10px 8px 14px; border: 1px solid #abc9ba; border-radius: 11px; background: #f2faf6; color: #285b45; box-shadow: 0 5px 24px #19372b2b; }
+.export-minimized > span { font-size: 12px; font-weight: 600; min-width: 0; }
+.export-minimized > svg, .export-minimized > button { flex-shrink: 0; }
+.export-minimized .icon-button { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid #c9dfd3; border-radius: 7px; background: white; }
+.export-minimized { width: max-content; }
+.export-minimized > span { flex: 1; }

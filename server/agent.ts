@@ -1,3 +1,4 @@
+import { ticketExportTool } from "./ticket-export-tool.js";
 import { helpTools } from "./help.js";
 import { getTicketCatalog } from "./ticket-catalog.js";
 import { messageContextBadges } from "./chat-message-context.js";
@@ -921,6 +922,7 @@ export class Agent {
             ...(!review
               ? [
                   workspaceContextTool(this.store, context, assertActive),
+                  ticketExportTool(this.store, assertActive, onProgress ? emit : undefined),
                   ticketCitationTool(this.store, assertActive),
                   ...synchronizationTools(this.store, this.connectors, this.pullRequests, context, assertActive, domain => emit({ stage: "data_synced", domain })),
                   defineTool("close_ticket_details", {
