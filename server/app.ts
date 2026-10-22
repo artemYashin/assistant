@@ -1,3 +1,4 @@
+import { PrCi } from "./pr-ci.js";
 import { deleteContext } from "./context-delete.js";
 import { memorySummarySchema } from "./memory-summary.js";
 import { voiceBindingPattern } from "./voice-binding.js";
@@ -1222,6 +1223,17 @@ export function createApp(
   app.post("/api/pr/state", async (req, res) => {
     const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive(), action: z.enum(["abandon", "draft", "publish"]) }).strict().parse(req.body);
     res.json(await pullRequests.changeState(input.monitor, input.repo, input.number, input.action));
+  });
+  const prCi = new PrCi(store);
+  const ciKey = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive() });
+  app.post("/api/pr/ci", async (req, res) => res.json(await prCi.checks(ciKey.strict().parse(req.body))));
+  app.post("/api/pr/ci/timeline", async (req, res) => {
+    const { buildId, ...key } = ciKey.extend({ buildId: z.number().int().positive() }).strict().parse(req.body);
+    res.json(await prCi.timeline(key, buildId));
+  });
+  app.post("/api/pr/ci/log", async (req, res) => {
+    const { buildId, logId, ...key } = ciKey.extend({ buildId: z.number().int().positive(), logId: z.number().int().positive() }).strict().parse(req.body);
+    res.json(await prCi.log(key, buildId, logId));
   });
   app.post("/api/pr/merge/tickets", async (req, res) => {
     const key = z

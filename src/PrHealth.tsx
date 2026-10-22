@@ -1,12 +1,16 @@
+import { useState } from "react";
+import { PrCiDialog } from "./PrCiDialog.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
-import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Workflow } from "lucide-react";
 export function PrHealth({
   value,
-  inScope,
+  inScope, pr, onUpdated,
 }: {
   value?: string;
   inScope: boolean;
+  pr?: any; onUpdated?: () => void;
 }) {
+  const [ciOpen, setCiOpen] = useState(false);
   let health: any;
   try {
     health = value ? JSON.parse(value) : null;
@@ -41,17 +45,9 @@ export function PrHealth({
           : builds.length
             ? "CI: состояние неизвестно"
             : "CI: нет проверок сборки";
-  const status: Record<string, string> = {
-    approved: "Пройдена",
-    rejected: "Не пройдена",
-    queued: "Ожидает",
-    running: "Выполняется",
-    notApplicable: "Не применяется",
-    broken: "Ошибка проверки",
-  };
   return (
-    <PrInfoPopup
-      title="Подробности проверок Azure"
+    <><PrInfoPopup
+      title="Конфликты слияния"
       className="pr-health-trigger"
       trigger={
         <>
@@ -65,11 +61,7 @@ export function PrHealth({
             )}{" "}
             {label}
           </span>
-          <span
-            className={`pr-review-status ${!inScope || health?.error ? "is-idle" : failed ? "is-error" : pending ? "is-pending" : passed ? "is-ready" : "is-idle"}`}
-          >
-            {health ? ci : "CI: нет данных"}
-          </span>
+
         </>
       }
     >
@@ -83,23 +75,17 @@ export function PrHealth({
           Синхронизация: {new Date(health.checkedAt).toLocaleString("ru-RU")}
         </p>
       )}
-      {health?.error && <p className="error">{health.error}</p>}
-      <p className="muted">
-        CI показывает политики проверки сборки Azure. Успешный CI сам по себе не
-        означает, что все условия merge выполнены.
-      </p>
-      {checks.map((c, i) => (
-        <div className="pr-health-check" key={i}>
-          <strong>{c.name}</strong>
-          <span>
-            {status[c.state] || "Неизвестно"}
-            {c.required ? " · обязательная" : " · необязательная"}
-          </span>
-        </div>
-      ))}
-      {!checks.length && !health?.error && (
-        <p>Проверки ещё не загружены или не настроены.</p>
-      )}
+      <p className={`pr-review-status ${tone}`}>{label}</p>
+      <p className="muted">Статус возможности слияния веток, полученный из Azure при последней синхронизации.</p>
     </PrInfoPopup>
+    <button type="button" className="pr-health-trigger" title="Подробности CI" aria-label="Подробности CI" onClick={() => setCiOpen(true)}>
+          <span
+            className={`pr-review-status ${!inScope || health?.error ? "is-idle" : failed ? "is-error" : pending ? "is-pending" : passed ? "is-ready" : "is-idle"}`}
+          >
+            <Workflow size={13} />{health ? ci : "CI: нет данных"}
+          </span>
+    </button>
+    {ciOpen && pr && <PrCiDialog pr={pr} onClose={() => setCiOpen(false)} onUpdated={onUpdated} />}
+    </>
   );
 }

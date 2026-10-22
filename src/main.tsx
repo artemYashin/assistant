@@ -2609,7 +2609,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <Field
             label="Personal Access Token"
-            hint="Для чтения задач — Work Items (Read), для смены статусов — Work Items (Read & write). Для PR также Code (Read). Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
+            hint="Для чтения задач — Work Items (Read), для смены статусов — Work Items (Read & write). Для PR также Code (Read), для шагов CI и логов — Build (Read). Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
           >
             <input
               type="password"

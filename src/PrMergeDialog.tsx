@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GitMerge, LoaderCircle, X, Ticket, ArrowRight } from "lucide-react";
+import { GitMerge, LoaderCircle, X, Ticket, ArrowRight, ShieldAlert } from "lucide-react";
 import { api } from "./api.js";
 import { SingleSelect } from "./SingleSelect.js";
 
@@ -176,6 +176,7 @@ export function PrMergeDialog({
       {plan && !submitted && (
         <SingleSelect
           label="Способ слияния"
+          searchable={false}
           value={strategy}
           onChange={setStrategy}
           disabled={busy}
@@ -198,10 +199,10 @@ export function PrMergeDialog({
                 onChange={(event) => setBypassPolicy(event.target.checked)}
               />
               <span>
-                <strong>Обойти проверки и политики Azure</strong>
+                <strong><ShieldAlert size={16} />Обойти проверки и политики Azure</strong>
                 <small>
                   Требуется право Bypass policies when completing pull requests.
-                  Конфликты кода всё равно нужно разрешить.
+                  CI должен пройти успешно; конфликты кода тоже нужно разрешить.
                 </small>
               </span>
             </label>
@@ -245,7 +246,7 @@ export function PrMergeDialog({
                 }}
               />
               <span>
-                <strong>Сменить статусы связанных тикетов</strong>
+                <strong><Ticket size={16} />Сменить статусы связанных тикетов</strong>
                 <small>
                   {linkedIds?.length
                     ? `Связано тикетов: ${linkedIds.length}`

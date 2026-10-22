@@ -1,3 +1,4 @@
+import { PrCi } from "./pr-ci.js";
 import { prLinksKey } from "./pr-ticket-sources.js";
 import { randomUUID } from "node:crypto";
 import { Store, AppError } from "./store.js";
@@ -240,6 +241,7 @@ export class PrMerge {
     };
     guard();
     // Mode is frozen in the prepared plan; confirmation cannot enable ticket writes.
+    await new PrCi(this.store).assertReady(plan);
     const { m, pr, ids } = await this.snapshot(
       plan,
       plan.moveTickets !== false,

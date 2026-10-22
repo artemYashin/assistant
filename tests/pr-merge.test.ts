@@ -74,11 +74,12 @@ function fixture(t: any, bypass = false) {
         });
       merged = true;
       data = { status: "completed" };
-    } else if (path.endsWith("/workitems")) data = { value: [{ id: "43" }] };
+    } else if (path.endsWith("/policy/evaluations")) data = { value: [] };
+    else if (path.endsWith("/workitems")) data = { value: [{ id: "43" }] };
     else
       data = {
         pullRequestId: 1,
-        repository: { id: "repo" },
+        repository: { id: "repo", project: { id: "project-id" } },
         status: merged ? "completed" : "active",
         lastMergeSourceCommit: { commitId: head },
         lastMergeTargetCommit: { commitId: "target" },
@@ -300,4 +301,16 @@ test("merge commit uses the current PR title after the dialog was opened", async
   f.setTitle("Исправление авторизации — updated title");
   await f.service.execute(plan.id, [], "noFastForward");
   assert.equal(f.writes[0].completionOptions.mergeCommitMessage, "Merged PR 1: Исправление авторизации — updated title");
+});
+
+test("merge rechecks CI and refuses running builds even with policy bypass", async t => {
+  const f = fixture(t, true);
+  const plan = await f.service.prepare(f.key, false);
+  const original = globalThis.fetch;
+  t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
+    if (new URL(String(raw)).pathname.endsWith("/policy/evaluations")) return Response.json({ value: [{ status: "running", configuration: { settings: { buildDefinitionId: 1 } } }] });
+    return original(raw, init);
+  });
+  await assert.rejects(f.service.execute(plan.id, [], "squash", { enabled: true, reason: "Test" }), /CI ещё не завершён/);
+  assert.equal(f.writes.length, 0);
 });

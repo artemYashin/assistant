@@ -1,3 +1,4 @@
+import { ciMergeReason } from "../server/pr-health.js";
 import { ConfirmButton } from "./ConfirmButton.js";
 import { ChatTools } from "./ChatTools.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
@@ -626,7 +627,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                   {!!p.draft && <span className="badge">Черновик</span>}
                   {!readOnly && (
                     <div className="pr-card-statuses">
-                      <PrHealth value={p.health} inScope={!!p.in_scope} />
+                      <PrHealth value={p.health} inScope={!!p.in_scope} pr={p} onUpdated={() => setVersion(v => v + 1)} />
                       <span
                         className={`pr-local-source ${p.local_source?.status === "ready" ? "is-ready" : p.local_source?.status === "loading" ? "is-loading" : ["error", "stale"].includes(p.local_source?.status) ? "is-error" : ""}`}
                         title={
@@ -844,14 +845,15 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               </div>
               {!readOnly && (
                 <div className="pr-action-group pr-merge-actions">
+                  <span title={ciMergeReason(p.health) || "Слить pull request"}>
                   <button
                     type="button"
                     className="secondary pr-merge-action"
-                    disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                    disabled={busy || !p.in_scope || !p.enabled || !!p.draft || !!ciMergeReason(p.health)}
                     onClick={() => setMerging(p)}
                   >
                     <GitMerge size={17} aria-hidden="true" /> Merge
-                  </button>
+                  </button></span>
                   <ConfirmButton className="secondary pr-draft-action" disabled={busy || !p.in_scope || !p.enabled}
                     title={p.draft ? "Снять статус черновика?" : "Перевести PR в черновик?"}
                     message={`PR #${p.number}: ${p.title}. ${p.draft ? "Pull request станет доступен для ревью." : "Pull request станет черновиком. Текущее автоматическое ревью будет остановлено."}`}

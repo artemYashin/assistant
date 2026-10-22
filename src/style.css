@@ -3830,8 +3830,11 @@ summary > svg {
   width: min(640px, calc(100vw - 32px));
 }
 .pr-merge-dialog .single-select .multi-select-panel {
-  position: static;
-  margin-top: 6px;
+  position: absolute;
+  z-index: 5;
+  margin-top: 0;
+  max-height: min(240px, 35dvh);
+  overflow: auto;
 }
 .pr-merge-dialog > * {
   margin: 0;
@@ -9492,3 +9495,32 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 }
 .context-azure-settings .azure-inherit-toggle > svg { flex-shrink: 0; color: #64748b; }
 .context-azure-settings .azure-inherit-toggle > span { min-width: 0; }
+
+.pr-merge-toggle { padding: 12px; border: 1px solid #d7e1e8; border-radius: 9px; background: #f8fafc; cursor: pointer; transition: background .15s, border-color .15s; }
+.pr-merge-toggle:hover { background: #edf4f7; border-color: #93b7a3; }
+.pr-merge-toggle:has(input:checked) { background: #edf8f0; border-color: #85b895; }
+.pr-merge-toggle > input { width: 18px; height: 18px; flex: 0 0 18px; margin: 2px 0 0; accent-color: #32814d; }
+.pr-merge-toggle strong { display: flex; align-items: center; gap: 7px; }
+.pr-ci-dialog { width: min(1100px, calc(100vw - 32px)); max-height: 90dvh; }
+.pr-ci-dialog[open] { display: flex; flex-direction: column; gap: 12px; }
+.pr-ci-dialog h2, .pr-ci-toolbar { display: flex; align-items: center; gap: 8px; }
+.pr-ci-layout { display: grid; grid-template-columns: minmax(220px, 32%) minmax(0, 1fr); min-height: 0; height: min(600px, 65dvh); border: 1px solid #d9e2ec; border-radius: 10px; overflow: hidden; }
+.pr-ci-steps { overflow: auto; background: #f6f8fb; border-right: 1px solid #d9e2ec; padding: 8px; min-width: 0; }
+.pr-ci-build, .pr-ci-step { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: 1px solid transparent; border-radius: 6px; padding: 8px; background: transparent; color: #334155; font-size: 12px; margin-bottom: 3px; }
+.pr-ci-build > span, .pr-ci-step > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.pr-ci-build strong { font-size: 12px; }
+.pr-ci-build small, .pr-ci-step small { display: block; font-size: 10px; color: #64748b; }
+.pr-ci-build svg, .pr-ci-step svg { flex-shrink: 0; }
+.pr-ci-build:hover:not(:disabled), .pr-ci-step:hover { background: #e8eef6; }
+.pr-ci-build.is-selected, .pr-ci-step.is-selected { background: #e2eefb; border-color: #afcae9; }
+.pr-ci-build-info { display: flex; align-items: center; gap: 5px; padding: 9px 4px; color: #64748b; font-size: 10px; }
+.ci-success { color: #15803d; } .ci-failed { color: #c03939; }
+.pr-ci-log { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: 12px; background: #f8fafc; }
+.pr-ci-log-heading { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; padding-bottom: 10px; }
+.pr-ci-log pre { flex: 1; min-height: 100px; margin: 0; overflow: auto; padding: 12px; background: #152235; color: #e2e8f0; border-radius: 7px; font: 11px/1.6 monospace; white-space: pre; }
+.pr-ci-empty { margin: auto; color: #64748b; font-size: 13px; text-align: center; }
+@media (max-width: 650px) { .pr-ci-layout { grid-template-columns: 1fr; grid-template-rows: 40% 60%; } .pr-ci-steps { border-right: 0; border-bottom: 1px solid #d9e2ec; } }
+
+.pr-merge-actions > span > button:disabled { pointer-events: none; }
+.pr-merge-option-block:has(.pr-merge-toggle input:checked) { border-color: #85b895; background: #edf8f0; }
+.pr-merge-option-block > .pr-merge-toggle:hover:not(.is-disabled) { background: #e8f1ec; }
