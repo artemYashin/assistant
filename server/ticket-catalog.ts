@@ -2,10 +2,26 @@ import { z } from "zod";
 import { Store } from "./store.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 
+const exactValues = z.union([
+  z.array(z.string().trim().min(1).max(200)).max(50),
+  z.string().trim().min(1).max(200),
+]);
 export const ticketSearchFilters = {
-  type: z.string().trim().max(200).optional().describe("Exact Azure work item type; use get_ticket_catalog for known values."),
-  state: z.string().trim().max(200).optional().describe("Exact Azure workflow status, not local lifecycle. Use get_ticket_catalog for known values."),
+  type: exactValues.optional().describe("Exact Azure work item types: pass an array, OR within it. A single string is accepted for compatibility. Empty array/omitted means no type filter. AND with state and other filters. Use get_ticket_catalog for known values."),
+  state: exactValues.optional().describe("Exact Azure workflow statuses: pass an array, OR within it. A single string is accepted for compatibility. Empty array/omitted means no state filter. AND with type and other filters; not local lifecycle. Use get_ticket_catalog for known values."),
 };
+
+/** Bound values only; arrays use OR and separate fields use AND. */
+export function ticketFilterSql(type?: string | string[], state?: string | string[], alias: "" | "t." = "") {
+  const clauses: string[] = [], params: string[] = [];
+  for (const [field, input] of [["type", type], ["state", state]] as const) {
+    const values = [...new Set((Array.isArray(input) ? input : input ? [input] : []))];
+    if (!values.length) continue;
+    clauses.push(`${alias}${field} COLLATE NOCASE IN (${values.map(() => "?").join(",")})`);
+    params.push(...values);
+  }
+  return { clauses, params };
+}
 
 /** Cached process definitions plus locally observed values; never requests Azure. */
 export function getTicketCatalog(store: Store) {

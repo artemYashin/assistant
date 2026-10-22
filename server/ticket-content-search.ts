@@ -1,4 +1,4 @@
-import { ticketSearchFilters } from "./ticket-catalog.js";
+import { ticketSearchFilters, ticketFilterSql } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { z } from "zod";
@@ -19,8 +19,9 @@ export function searchTicketContent(store: Store, input: unknown) {
   const { search, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state } = contentSearchSchema.parse(input);
   const source = store.source();
   const lifecycleClause = lifecycle === "all" ? "" : lifecycle === "deleted" ? " AND t.deleted=1" : " AND t.deleted=0";
-  const filterClause = `${type ? " AND t.type=? COLLATE NOCASE" : ""}${state ? " AND t.state=? COLLATE NOCASE" : ""}`;
-  const filterParams = [...(type ? [type] : []), ...(state ? [state] : [])];
+  const exactFilters = ticketFilterSql(type, state, "t.");
+  const filterClause = exactFilters.clauses.length ? " AND " + exactFilters.clauses.join(" AND ") : "";
+  const filterParams = exactFilters.params;
   const query = search.toLocaleLowerCase();
   const sorted = sortBy !== "id" || sortDirection !== "asc";
   const rows = store.db.prepare(`${localTicketScope()}, ordered AS (

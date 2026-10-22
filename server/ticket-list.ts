@@ -1,4 +1,4 @@
-import { ticketSearchFilters } from "./ticket-catalog.js";
+import { ticketSearchFilters, ticketFilterSql } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { ticketMetadata } from "./ticket-metadata.js";
@@ -57,15 +57,9 @@ export function listLocalTickets(store: Store, input: unknown) {
     params.push(search, search);
   }
 
-  for (const [field, value] of [
-    ["type", type],
-    ["state", state],
-  ]) {
-    if (value) {
-      clauses.push(`${field} = ? COLLATE NOCASE`);
-      params.push(value);
-    }
-  }
+  const exactFilters = ticketFilterSql(type, state);
+  clauses.push(...exactFilters.clauses);
+  params.push(...exactFilters.params);
   if (priority !== undefined) {
     clauses.push(
       "COALESCE((SELECT priority FROM ticket_metadata m WHERE m.source=local_tickets.source AND m.id=local_tickets.id),1)=?",

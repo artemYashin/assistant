@@ -36,3 +36,31 @@ test("catalog and content filters include retained trash, isolate source and pag
   store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(source, 1, "needle note");
   assert.equal(searchTicketContent(store, { ...filters, lifecycle: "active" }).tickets[0].section, "notes");
 });
+
+test("multi-value filters combine OR within each field and AND across fields, including pagination and notes", t => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-multifilter-"));
+  const store = new Store(dir);
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  const source = store.source();
+  for (const [id, type, state] of [[1,"Bug","New"],[2,"Task","Active"],[3,"Bug","Closed"],[4,"Story","Active"],[5,"Task","New"]] as const) {
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source,id,"Ticket "+id,state,"",type,"","","now");
+    store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(source,id,"needle note");
+  }
+  store.removeLocalTicket(5);
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run("foreign",6,"Other","New","","Bug","","","now");
+  const filters = { type: [" bug ", "Task", "Bug"], state: ["new","Active"], limit: 2 };
+  const first = listLocalTickets(store, filters);
+  assert.equal(first.total,3);
+  assert.deepEqual(first.tickets.map(t=>t.id),[1,2]);
+  assert.deepEqual(listLocalTickets(store,{...filters,afterId:first.nextAfterId}).tickets.map(t=>t.id),[5]);
+  assert.deepEqual(listLocalTickets(store,{...filters,lifecycle:"active"}).tickets.map(t=>t.id),[1,2]);
+  const content = searchTicketContent(store,{...filters,search:"needle"});
+  assert.deepEqual(content.tickets.map(t=>t.id),[1,2]);
+  assert.deepEqual(content.coverage,{total:3,cached:0});
+  assert.deepEqual(searchTicketContent(store,{...filters,search:"needle",afterId:content.nextAfterId}).tickets.map(t=>t.id),[5]);
+  assert.equal(listLocalTickets(store,{type:[],state:[]}).total,5);
+  assert.equal(searchTicketContent(store,{search:"needle",type:[],state:[]}).coverage.total,5);
+  assert.equal(listLocalTickets(store,{type:["Unknown", "Bug') OR 1=1 --"]}).total,0);
+  assert.equal(searchTicketContent(store,{search:"needle",state:["Unknown"]}).tickets.length,0);
+  assert.deepEqual(listLocalTickets(store,{type:"Task",state:["Active","Closed"]}).tickets.map(t=>t.id),[2]);
+});
