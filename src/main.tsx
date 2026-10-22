@@ -1,3 +1,4 @@
+import { ConfirmButton } from "./ConfirmButton.js";
 import { FieldDictation } from "./FieldDictation.js";
 import { Fragment, useCallback } from "react";
 import { useChatToggleShortcut } from "./useChatToggleShortcut.js";
@@ -1012,7 +1013,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 <PageHeading
                   title="Подтверждения"
                   subtitle="Проверьте предложения ассистента перед сохранением в память или отправкой сообщения."
-                />
+                ><ConfirmButton title="Удалить все подтверждения?" message="Будет очищен весь список предложений памяти и черновиков Teams, включая обработанные записи всех заказчиков и проектов. Сохранённая память и отправленные сообщения останутся без изменений. Это действие нельзя отменить." confirmLabel="Удалить всё" disabled={!!busy || (!memoryProposals.length && !approvals.length)} onConfirm={async () => { await api("/confirmations", "DELETE"); setRefresh(n => n + 1); }}><Trash2 size={16} />Удалить всё</ConfirmButton></PageHeading>
                 <MemoryProposalList
                   context={context}
                   items={memoryProposals}
@@ -1061,10 +1062,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                         <div className="card-actions">
                           {a.status === "pending" ? (
                             <>
-                              <button
+                              <ConfirmButton
+                                title="Отправить сообщение в Teams?" message={`Получатель: ${a.chat_name}. Сообщение будет отправлено в этот чат.`} confirmLabel="Подтвердить и отправить"
                                 className="primary"
                                 disabled={!!busy}
-                                onClick={() =>
+                                onConfirm={() =>
                                   run(
                                     a.id,
                                     () =>
@@ -1079,11 +1081,12 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                               >
                                 <Send size={16} />
                                 Подтвердить и отправить
-                              </button>
-                              <button
+                              </ConfirmButton>
+                              <ConfirmButton
+                                title="Отклонить черновик?" message="Сообщение не будет отправлено в Teams." confirmLabel="Отклонить"
                                 className="secondary"
                                 disabled={!!busy}
-                                onClick={() =>
+                                onConfirm={() =>
                                   run(
                                     a.id,
                                     () =>
@@ -1098,7 +1101,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                               >
                                 <X size={16} />
                                 Отклонить
-                              </button>
+                              </ConfirmButton>
                               <small>Действует до {date(a.expires_at)}</small>
                             </>
                           ) : (
@@ -2096,13 +2099,14 @@ function Memory({ memories, context, run, busy }: any) {
               body={m.body}
               summary={m.summary}
               disabled={!!busy}
+              actions={<button type="button" className="secondary memory-refine-button" disabled={!!busy || editingMemory === m.id} onClick={() => run(`refine-memory:${m.id}`, async () => {
+              const proposal = await api<any>(`/memories/${m.id}/refine`, "POST", { context });
+              window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { ...proposal, body: proposal.summary } }));
+            })}><Sparkles size={15} />Refine with AI</button>}
               onEditingChange={editing => setEditingMemory(editing ? m.id : null)}
               onSaved={() => { setEditingMemory(null); run("refresh-memory", async () => {}); }}
             />
-            <button type="button" className="secondary memory-refine-button" disabled={!!busy || editingMemory === m.id} onClick={() => run(`refine-memory:${m.id}`, async () => {
-              const proposal = await api<any>(`/memories/${m.id}/refine`, "POST", { context });
-              window.dispatchEvent(new CustomEvent("orbit:refine-memory", { detail: { ...proposal, body: proposal.summary } }));
-            })}><Sparkles size={15} />Refine with AI</button>
+
             {(typeof m.cards === "string"
               ? JSON.parse(m.cards)
               : m.cards || []

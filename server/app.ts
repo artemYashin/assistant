@@ -676,6 +676,7 @@ export function createApp(
     res.json({ ok: true });
   });
   app.get("/api/approvals", (_req, res) => res.json(approvals.list()));
+  app.delete("/api/confirmations", (_req, res) => res.json(approvals.clearAll()));
   app.post("/api/approvals", (req, res) => {
     const v = z
       .object({ chatId: z.string(), body: z.string().min(1).max(12000) })

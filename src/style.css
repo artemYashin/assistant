@@ -9344,3 +9344,11 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .code-work-job summary { cursor: pointer; }
 .code-work-job pre { overflow: auto; max-height: 220px; padding: 8px; background: #eaf0ec; border-radius: 5px; }
 .code-work-empty { padding: 20px 8px; text-align: center; color: var(--muted); }
+
+.memory-edit-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.memory-note > .memory-edit-actions { margin-top: auto; padding-top: 8px; }
+.memory-edit-actions > .memory-refine-button { margin: 0; }
+.action-confirm-dialog { width: min(480px, calc(100vw - 40px)); }
+.action-confirm-dialog h2 { margin: 0; font-size: 17px; }
+.action-confirm-dialog p { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.action-confirm-dialog .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

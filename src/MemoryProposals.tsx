@@ -1,3 +1,4 @@
+import { ConfirmButton } from "./ConfirmButton.js";
 import { MemoryBody, MemoryProposalContent } from "./MemoryBody.js";
 import { Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +33,7 @@ export function MemoryProposalList({
       onChange();
     } catch (e: any) {
       setError(e.message);
+      throw e;
     } finally {
       setBusy("");
     }
@@ -78,27 +80,30 @@ export function MemoryProposalList({
             <div className="card-actions memory-proposal-actions">
               {p.status === "pending" && (
                 <>
-                  <button
+                  <ConfirmButton
+                    title={p.target_memory_id ? "Подтвердить изменение памяти?" : "Сохранить предложение в память?"}
+                    message={`«${p.summary}». ${p.target_memory_id ? "Текущая запись будет заменена предложенным вариантом." : "Запись станет доступна в выбранном разделе памяти."}`}
+                    confirmLabel="Подтвердить"
                     className="primary"
                     disabled={!!busy || !!editing}
-                    onClick={() => void decide(p.id, true)}
+                    onConfirm={() => decide(p.id, true)}
                   >
                     {p.target_memory_id ? "Подтвердить изменение" : "Подтвердить сохранение"}
-                  </button>
-                  <button
+                  </ConfirmButton>
+                  <ConfirmButton title="Отклонить предложение?" message={`«${p.summary}». Сохранённая память останется без изменений.`} confirmLabel="Отклонить"
                     className="secondary"
                     disabled={!!busy || !!editing}
-                    onClick={() => void decide(p.id, false)}
+                    onConfirm={() => decide(p.id, false)}
                   >
                     Отклонить
-                  </button>
+                  </ConfirmButton>
                 </>
               )}
-              <button
+              <ConfirmButton
+                title="Удалить предложение?" message={`«${p.summary}». Предложение будет удалено из списка. Сохранённая память останется без изменений.`} confirmLabel="Удалить"
                 className="secondary memory-proposal-delete"
                 disabled={!!busy || !!editing}
-                title="Убрать предложение из списка. Сохранённая память останется без изменений."
-                onClick={async () => {
+                onConfirm={async () => {
                   setBusy(p.id);
                   setError("");
                   try {
@@ -106,13 +111,14 @@ export function MemoryProposalList({
                     onChange();
                   } catch (e: any) {
                     setError(e.message);
+                    throw e;
                   } finally {
                     setBusy("");
                   }
                 }}
               >
                 <Trash2 size={15} /> Удалить предложение
-              </button>
+              </ConfirmButton>
             </div>
           </article>
         ))}

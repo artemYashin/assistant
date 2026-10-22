@@ -50,6 +50,16 @@ export class Approvals {
       .prepare("SELECT * FROM approvals ORDER BY created_at DESC LIMIT 100")
       .all();
   }
+  clearAll() {
+    return this.store.db.transaction(() => {
+      if (this.store.db.prepare("SELECT 1 FROM approvals WHERE status='sending' LIMIT 1").get())
+        throw new AppError(409, "Дождитесь завершения отправки сообщения перед очисткой списка.");
+      const proposals = this.store.db.prepare("DELETE FROM memory_proposals").run().changes;
+      const messages = this.store.db.prepare("DELETE FROM approvals").run().changes;
+      this.store.audit("approvals.cleared", "all");
+      return { proposals, messages };
+    })();
+  }
   reject(id: string) {
     const r = this.store.db
       .prepare(

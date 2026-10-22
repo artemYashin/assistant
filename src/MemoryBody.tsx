@@ -29,6 +29,7 @@ export function MemoryBody({
   onSaved,
   proposal = false,
   onEditingChange,
+  actions,
 }: {
   id: string;
   body: string;
@@ -36,6 +37,7 @@ export function MemoryBody({
   disabled: boolean;
   onSaved: () => void;
   proposal?: boolean;
+  actions?: import("react").ReactNode;
   onEditingChange?: (editing: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -47,6 +49,7 @@ export function MemoryBody({
     return (
       <>
         <MemoryProposalContent summary={summary} body={body} collapsible={!proposal} />
+        <div className="memory-edit-actions">
         <button
           className="secondary"
           disabled={disabled}
@@ -60,6 +63,8 @@ export function MemoryBody({
         >
           <Pencil size={15} /> Редактировать
         </button>
+        {actions}
+        </div>
       </>
     );
   return (

@@ -132,3 +132,40 @@ test("memory isolates project and client context but includes general memory", (
     AppError,
   );
 });
+
+test("clearing confirmations removes all drafts but preserves saved memory and never sends", async t => {
+  const { store } = fixture(t);
+  const { MemoryProposals } = await import("../server/memory-proposals.js");
+  const proposals = new MemoryProposals(store);
+  const context = { client: "C", project: "P" };
+  const proposal = proposals.propose({ scope: "project", summary: "Fact", body: "Saved fact", reason: "Useful" }, context);
+  proposals.decide(proposal.id!, true);
+  proposals.propose({ scope: "general", body: "Pending fact", reason: "Useful" }, context);
+  let sends = 0;
+  const approvals = new Approvals(store, async () => { sends++; return { id: "remote" }; });
+  approvals.propose("chat-1", "Pending message");
+  const old = approvals.propose("chat-1", "Rejected message");
+  approvals.reject(old.id);
+  assert.deepEqual(approvals.clearAll(), { proposals: 2, messages: 2 });
+  assert.equal(proposals.list().length, 0);
+  assert.equal(approvals.list().length, 0);
+  assert.equal(store.memoryCatalog(context).length, 1);
+  assert.equal(sends, 0);
+});
+
+test("clearing confirmations is atomic and blocked during message delivery", async t => {
+  const { store } = fixture(t);
+  const { MemoryProposals } = await import("../server/memory-proposals.js");
+  const proposals = new MemoryProposals(store);
+  proposals.propose({ scope: "general", body: "Keep draft", reason: "Useful" }, { client: "", project: "" });
+  let finish!: () => void;
+  const gate = new Promise<void>(resolve => { finish = resolve; });
+  const approvals = new Approvals(store, async () => { await gate; return { id: "remote" }; });
+  const draft = approvals.propose("chat-1", "Sending message");
+  const sending = approvals.approve(draft.id);
+  assert.throws(() => approvals.clearAll(), /Дождитесь завершения/);
+  assert.equal(proposals.list().length, 1);
+  assert.equal(approvals.list().length, 1);
+  finish(); await sending;
+  assert.deepEqual(approvals.clearAll(), { proposals: 1, messages: 1 });
+});
