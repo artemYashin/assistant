@@ -670,7 +670,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         </header>
         <div className="work-area">
           <main>
-            <TicketExportDialog key={JSON.stringify([context, settings?.azureUrl, settings?.azureProject])} />
+            <TicketExportDialog settings={settings} key={JSON.stringify([context, settings?.azureUrl, settings?.azureProject])} />
             {!page && (
               <div className="empty">
                 <h1>Страница не найдена</h1>

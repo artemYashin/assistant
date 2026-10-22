@@ -9,46 +9,46 @@
 
 Отображение
 
-Источник: src/TicketColumns.tsx:124.
+Источник: src/TicketColumns.tsx:127.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/TicketColumns.tsx:150.
+Источник: src/TicketColumns.tsx:153.
 
 ### Элемент
 
 Select All
 
-Источник: src/TicketColumns.tsx:160.
+Источник: src/TicketColumns.tsx:163.
 
 ### Элемент
 
 Deselect All
 
-Источник: src/TicketColumns.tsx:167.
+Источник: src/TicketColumns.tsx:170.
 
 ### Элемент
 
 Переместить столбец: {…} · Перетащите для изменения порядка. С клавиатуры: Alt + ↑ / ↓.
 
-Источник: src/TicketColumns.tsx:226.
+Источник: src/TicketColumns.tsx:229.
 
 ### Элемент
 
 Ширины будут сброшены при сохранении / Сбросить ширины
 
-Источник: src/TicketColumns.tsx:278.
+Источник: src/TicketColumns.tsx:281.
 
 ### Элемент
 
 Cancel
 
-Источник: src/TicketColumns.tsx:289.
+Источник: src/TicketColumns.tsx:292.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/TicketColumns.tsx:292.
+Источник: src/TicketColumns.tsx:295.

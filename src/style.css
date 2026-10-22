@@ -9792,7 +9792,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .export-ticket-row strong { color: #287451; font-size: 12px; }
 .export-ticket-title { margin-left: 7px; font-size: 13px; overflow-wrap: anywhere; }
 .export-ticket-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-.export-ticket-meta > span { font-size: 10px; padding: 2px 5px; background: #edf3f7; border-radius: 4px; }
+.export-ticket-meta > span:not(.ticket-type-badge):not(.ticket-state-badge) { font-size: 10px; padding: 2px 5px; background: #edf3f7; border-radius: 4px; }
 .export-ticket-row .icon-button { flex-shrink: 0; }
 .export-ticket-add { position: relative; flex-shrink: 0; padding-top: 8px; }
 .export-ticket-add > button { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
@@ -9830,3 +9830,18 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .export-minimized .icon-button { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid #c9dfd3; border-radius: 7px; background: white; }
 .export-minimized { width: max-content; }
 .export-minimized > span { flex: 1; }
+
+.export-field, .ticket-columns-dialog .ticket-column-option { padding-top: 10px; padding-bottom: 10px; }
+.export-field.is-enabled, .ticket-columns-dialog .ticket-column-option.is-enabled { background: #e8f5ec; border-color: #8cbea0; }
+.export-field.is-drop-before, .ticket-columns-dialog .ticket-column-option.is-drop-before { border-top-color: #28794d; box-shadow: inset 0 3px #28794d; }
+.export-field.is-drop-after, .ticket-columns-dialog .ticket-column-option.is-drop-after { border-bottom-color: #28794d; box-shadow: inset 0 -3px #28794d; }
+.export-ticket-add { background: #e9edf2; margin: 8px -12px -12px; padding: 9px 12px; border-top: 1px solid #d6dfe7; border-radius: 0 0 10px 10px; box-shadow: 0 -3px 8px #26394c09; }
+.export-ticket-add > button, .export-ticket-search { box-sizing: border-box; height: 34px; min-height: 34px; }
+.export-ticket-add > button { padding: 5px 9px; font-size: 12px; }
+.export-ticket-search { padding: 2px 7px; }
+.export-ticket-search input { height: 26px; min-height: 0; padding: 3px 4px; font-size: 12px; }
+.export-ticket-search > .icon-button { width: 26px; height: 26px; padding: 3px; }
+.export-ticket-results { left: 12px; right: 12px; bottom: calc(100% - 5px); }
+.ticket-export-actions .export-append-button { display: inline-flex; align-items: center; gap: 6px; color: #24633f; background: #e5f4e9; border: 1px solid #94c3a4; }
+.ticket-export-actions .export-append-button:disabled { opacity: .5; }
+.ticket-bulk-actions > span[role="status"] { font-size: 11px; }

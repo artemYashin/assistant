@@ -1,3 +1,5 @@
+import { useDragAutoScroll } from "./useDragAutoScroll.js";
+import { StatusBadge } from "./TicketControls.js";
 import {
   exportColumns,
   defaultExportColumns,
@@ -20,6 +22,8 @@ import {
 import { ticketsCsv, type CsvTicket } from "./tickets-csv.js";
 import { api } from "./api.js";
 
+let exportIsMinimized = false;
+const minimizedEvent = "orbit:export-minimized";
 const eventName = "orbit:export-tickets";
 /** Open the shared export composer with ticket snapshots or local ticket IDs. */
 export function openTicketExport(tickets: (CsvTicket | number)[]) {
@@ -40,26 +44,68 @@ export function ExportTickets({
   tickets: CsvTicket[];
   trash?: boolean;
 }) {
+  const [minimized, setMinimized] = useState(exportIsMinimized);
+  useEffect(() => {
+    const update = () => setMinimized(exportIsMinimized);
+    window.addEventListener(minimizedEvent, update);
+    update();
+    return () => window.removeEventListener(minimizedEvent, update);
+  }, []);
   return (
-    <button
-      type="button"
-      className="secondary"
-      onClick={() =>
-        openTicketExport(
-          trash
-            ? tickets.map((ticket) => ({ ...ticket, inTrash: true }))
-            : tickets,
-        )
-      }
-    >
-      <FileSpreadsheet size={16} />
-      Экспорт{tickets.length ? ` (${tickets.length})` : ""}
-    </button>
+    <div className="ticket-export-actions">
+      <button
+        type="button"
+        className="secondary"
+        onClick={() =>
+          openTicketExport(
+            trash
+              ? tickets.map((ticket) => ({ ...ticket, inTrash: true }))
+              : tickets,
+          )
+        }
+      >
+        <FileSpreadsheet size={16} />
+        Экспорт{tickets.length ? ` (${tickets.length})` : ""}
+      </button>
+      {minimized && (
+        <button
+          type="button"
+          className="secondary export-append-button"
+          disabled={!tickets.length}
+          onClick={() =>
+            addTicketsToExport(
+              trash
+                ? tickets.map((ticket) => ({ ...ticket, inTrash: true }))
+                : tickets,
+            )
+          }
+        >
+          <Plus size={16} />
+          Добавить в экспорт
+        </button>
+      )}
+    </div>
   );
 }
-export function TicketExportDialog() {
+export function TicketExportDialog({
+  settings,
+}: {
+  settings?: {
+    typeColors?: Record<string, string>;
+    statusColors?: Record<string, string>;
+  };
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [minimized, setMinimized] = useState(false);
+  useEffect(() => {
+    exportIsMinimized = minimized;
+    window.dispatchEvent(new Event(minimizedEvent));
+    return () => {
+      exportIsMinimized = false;
+      window.dispatchEvent(new Event(minimizedEvent));
+    };
+  }, [minimized]);
+  const autoScroll = useDragAutoScroll();
   const draftActive = useRef(false),
     minimizedRef = useRef(false);
   const draftTickets = useRef<(CsvTicket | number)[]>([]);
@@ -87,7 +133,10 @@ export function TicketExportDialog() {
   const [adding, setAdding] = useState(false),
     [query, setQuery] = useState("");
   const [dragged, setDragged] = useState<ExportColumnKey | null>(null);
-  const [dropTarget, setDropTarget] = useState<ExportColumnKey | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    key: ExportColumnKey;
+    edge: "before" | "after";
+  } | null>(null);
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
   const columns = order.filter((key) => enabled.includes(key));
@@ -184,6 +233,7 @@ export function TicketExportDialog() {
     if (busy) return;
     request.current?.abort();
     setLoading(false);
+    autoScroll.stop();
     dialog.current?.close();
     draftActive.current = false;
     minimizedRef.current = false;
@@ -193,6 +243,7 @@ export function TicketExportDialog() {
     setAdding(false);
   };
   const minimize = () => {
+    autoScroll.stop();
     dialog.current?.close();
     minimizedRef.current = true;
     setMinimized(true);
@@ -372,8 +423,15 @@ export function TicketExportDialog() {
                       {ticket.title || "Загрузка…"}
                     </span>
                     <div className="export-ticket-meta">
-                      <span>{ticket.type}</span>
-                      <span>{ticket.state}</span>
+                      <StatusBadge
+                        state={ticket.type || "Тип не указан"}
+                        kind="type"
+                        colors={settings?.typeColors}
+                      />
+                      <StatusBadge
+                        state={ticket.state || "Не указан"}
+                        colors={settings?.statusColors}
+                      />
                       {ticket.inTrash && <span>В корзине</span>}
                     </div>
                   </div>
@@ -446,43 +504,46 @@ export function TicketExportDialog() {
                       <X size={16} />
                     </button>
                   </div>
-                  <div
-                    className="export-ticket-results"
-                    aria-label="Найденные тикеты"
-                  >
-                    {results.map((ticket) => (
-                      <button
-                        type="button"
-                        key={ticket.id}
-                        disabled={busy || loading}
-                        onClick={() => {
-                          setSnapshot((rows) =>
-                            rows.some((t) => t.id === ticket.id)
-                              ? rows
-                              : [...rows, ticket],
-                          );
-                          setQuery("");
-                        }}
-                      >
-                        <Ticket size={15} />
-                        <span>
-                          <strong>#{ticket.id}</strong> {ticket.title}
-                          <small>
-                            {ticket.type} · {ticket.state}
-                            {ticket.inTrash ? " · В корзине" : ""}
-                          </small>
-                        </span>
-                        <Plus size={15} />
-                      </button>
-                    ))}
-                    {!results.length && (
-                      <p className="muted">
-                        {loading
-                          ? "Загрузка…"
-                          : "Нет подходящих локальных тикетов"}
-                      </p>
-                    )}
-                  </div>
+                  {!!query.trim() && (
+                    <div
+                      className="export-ticket-results"
+                      aria-label="Найденные тикеты"
+                    >
+                      {results.map((ticket) => (
+                        <button
+                          type="button"
+                          key={ticket.id}
+                          disabled={busy || loading}
+                          onClick={() => {
+                            setSnapshot((rows) =>
+                              rows.some((t) => t.id === ticket.id)
+                                ? rows
+                                : [...rows, ticket],
+                            );
+                            setQuery("");
+                            setAdding(false);
+                          }}
+                        >
+                          <Ticket size={15} />
+                          <span>
+                            <strong>#{ticket.id}</strong> {ticket.title}
+                            <small>
+                              {ticket.type} · {ticket.state}
+                              {ticket.inTrash ? " · В корзине" : ""}
+                            </small>
+                          </span>
+                          <Plus size={15} />
+                        </button>
+                      ))}
+                      {!results.length && (
+                        <p className="muted">
+                          {loading
+                            ? "Загрузка…"
+                            : "Нет подходящих локальных тикетов"}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <button
@@ -516,13 +577,19 @@ export function TicketExportDialog() {
                 Снять выбор
               </button>
             </div>
-            <div className="export-fields-list">
+            <div
+              className="export-fields-list"
+              onDragOver={(event) =>
+                autoScroll.onDragOver(event, !!dragged && !busy)
+              }
+              onDragLeave={autoScroll.onDragLeave}
+            >
               {order.map((key, index) => {
                 const column = exportColumns.find((c) => c.key === key)!;
                 return (
                   <div
                     key={key}
-                    className={`export-field${dropTarget === key ? " is-drop-target" : ""}`}
+                    className={`export-field${enabled.includes(key) ? " is-enabled" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
                     draggable={!busy}
                     onDragStart={(e) => {
                       setDragged(key);
@@ -532,16 +599,43 @@ export function TicketExportDialog() {
                     onDragOver={(e) => {
                       if (!busy && dragged) {
                         e.preventDefault();
-                        setDropTarget(key);
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setDropTarget(
+                          dragged === key
+                            ? null
+                            : {
+                                key,
+                                edge:
+                                  e.clientY < rect.top + rect.height / 2
+                                    ? "before"
+                                    : "after",
+                              },
+                        );
                       }
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      if (!busy && dragged) move(dragged, key);
+                      if (!busy && dragged && dragged !== key) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const after = e.clientY >= rect.top + rect.height / 2;
+                        setOrder((current) => {
+                          const next = current.filter(
+                            (item) => item !== dragged,
+                          );
+                          next.splice(
+                            next.indexOf(key) + (after ? 1 : 0),
+                            0,
+                            dragged,
+                          );
+                          return next;
+                        });
+                      }
+                      autoScroll.stop();
                       setDragged(null);
                       setDropTarget(null);
                     }}
                     onDragEnd={() => {
+                      autoScroll.stop();
                       setDragged(null);
                       setDropTarget(null);
                     }}

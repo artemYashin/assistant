@@ -1,3 +1,4 @@
+import { useDragAutoScroll } from "./useDragAutoScroll.js";
 import { useTicketColumnResize } from "./useTicketColumnResize.js";
 import {
   Fragment,
@@ -97,7 +98,9 @@ export function useTicketColumns(trash = false, namespace = "active") {
     key: string;
     edge: "before" | "after";
   } | null>(null);
+  const autoScroll = useDragAutoScroll();
   const finishDrag = () => {
+    autoScroll.stop();
     setDragged(null);
     setDropTarget(null);
   };
@@ -176,13 +179,13 @@ export function useTicketColumns(trash = false, namespace = "active") {
             Перетащите строки за ручку слева. ID и название всегда остаются
             видимыми и идут первыми.
           </p>
-          <div className="ticket-column-options">
+          <div className="ticket-column-options" onDragOver={event => autoScroll.onDragOver(event, !!dragged)} onDragLeave={autoScroll.onDragLeave}>
             {draftOrder.map((key) => {
               const label = options.find(([id]) => id === key)![1];
               return (
                 <div
                   key={key}
-                  className={`ticket-column-option${dragged === key ? " is-dragging" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
+                  className={`ticket-column-option${!draftHidden.includes(key) ? " is-enabled" : ""}${dragged === key ? " is-dragging" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
                   onDragOver={(event) => {
                     if (!dragged || dragged === key) {
                       setDropTarget(null);
