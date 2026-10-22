@@ -1,3 +1,5 @@
+import { BranchLabel } from "./PrBranchLabel.js";
+import { CommitList } from "./CommitList.js";
 import { useEffect, useRef, useState } from "react";
 import { GitCommitHorizontal, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { api } from "./api.js";
@@ -32,11 +34,9 @@ export function RepositoryCommits({ context, branch, onClose }: {
   return <dialog ref={dialog} className="developer-dialog repository-commits-dialog" aria-label={`Коммиты ветки ${branch}`}
     onCancel={e => { e.preventDefault(); e.stopPropagation(); onClose(); }}>
     <div className="developer-dialog-heading"><h2><GitCommitHorizontal size={19} />Коммиты</h2><button type="button" className="icon-button" aria-label="Закрыть коммиты" onClick={onClose}><X size={18} /></button></div>
-    <div className="repository-commits-heading"><code title={branch}>{branch}</code><button type="button" className="secondary" disabled={busy} onClick={() => { setOffset(0); setCommits([]); setHead(""); setNext(null); setVersion(v => v + 1); }}><RefreshCw size={14} />Обновить</button></div>
+    <div className="repository-commits-heading"><BranchLabel kind="ветка" value={branch} client={context.client} project={context.project} onNavigate={onClose} /><button type="button" className="secondary" disabled={busy} onClick={() => { setOffset(0); setCommits([]); setHead(""); setNext(null); setVersion(v => v + 1); }}><RefreshCw size={14} />Обновить</button></div>
     <p className="muted">История из Azure · выберите коммит, чтобы посмотреть изменения. Локальная глубина Git не ограничивает этот список.</p>
-    <div className="repository-commits-list">{commits.map(commit => <button type="button" className="repository-commit-row" key={commit.id} onClick={() => setSelected(commit.id)}>
-      <GitCommitHorizontal size={17} /><span><strong>{commit.message || commit.id}</strong><small><code>{commit.id.slice(0, 10)}</code><span>{commit.author}</span>{commit.date && <time dateTime={commit.date}>{new Date(commit.date).toLocaleString("ru-RU")}</time>}</small></span>
-    </button>)}</div>
+    <CommitList commits={commits} onSelect={setSelected} />
     {busy && <p role="status"><LoaderCircle size={16} className="spin" />Загружаю коммиты…</p>}
     {error && <div role="alert"><p className="error">{error}</p><button className="secondary" onClick={() => setVersion(v => v + 1)}>Повторить</button></div>}
     {!busy && !error && !commits.length && <p>В этой ветке коммитов нет.</p>}

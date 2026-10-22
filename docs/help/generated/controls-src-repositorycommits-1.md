@@ -9,13 +9,13 @@
 
 Закрыть коммиты
 
-Источник: src/RepositoryCommits.tsx:34.
+Источник: src/RepositoryCommits.tsx:36.
 
 ### Элемент
 
 Обновить
 
-Источник: src/RepositoryCommits.tsx:35.
+Источник: src/RepositoryCommits.tsx:37.
 
 ### Элемент
 

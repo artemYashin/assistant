@@ -1,6 +1,8 @@
+import { BranchLabel } from "./PrBranchLabel.js";
+import { CommitList } from "./CommitList.js";
 import { PrDiffDialog } from "./PrDiffDialog.js";
 import { useEffect, useRef, useState } from "react";
-import { GitCommitHorizontal, LoaderCircle, X, Code2 } from "lucide-react";
+import { GitCommitHorizontal, LoaderCircle, X, RefreshCw } from "lucide-react";
 import { api } from "./api.js";
 
 type Commit = {
@@ -87,42 +89,11 @@ export function PrCommitsDialog({
         </button>
       </div>
       <p className="muted">{pr.title}</p>
-      <ol className="pr-commit-list">
-        {commits.map((c) => (
-          <li key={c.id}>
-            <code title={c.id}>{c.id.slice(0, 12)}</code>
-            <p className="pr-commit-message">
-              <a href={c.url} target="_blank" rel="noreferrer">
-                {c.message || "Без сообщения"}
-              </a>
-            </p>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setSelectedCommit(c.id)}
-            >
-              <Code2 size={16} /> View Diff
-            </button>
-            {c.truncated && (
-              <small className="muted">
-                Azure вернул сокращённое сообщение коммита.
-              </small>
-            )}
-            <div className="muted">
-              {c.author || "Автор не указан"}
-              {c.date && Number.isFinite(Date.parse(c.date)) && (
-                <>
-                  {" "}
-                  ·{" "}
-                  <time dateTime={c.date}>
-                    {new Date(c.date).toLocaleString("ru-RU")}
-                  </time>
-                </>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
+      <div className="repository-commits-heading">
+        <div className="commit-history-branches"><BranchLabel kind="source" value={pr.source_branch} client={pr.client} project={pr.project} onNavigate={onClose} /><BranchLabel kind="target" value={pr.target_branch} client={pr.client} project={pr.project} onNavigate={onClose} /></div>
+        <button type="button" className="secondary" disabled={busy} onClick={() => { setRequested(""); setCursor(""); setCommits([]); setRevision(v => v + 1); }}><RefreshCw size={14} />Обновить</button>
+      </div>
+      <CommitList commits={commits} onSelect={setSelectedCommit} />
       {busy && (
         <p role="status">
           <LoaderCircle className="spin" size={17} /> Загружаю коммиты…

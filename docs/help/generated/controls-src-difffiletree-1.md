@@ -7,6 +7,6 @@
 
 ### Элемент
 
-{…} → {…} / · + / − / R / M /
++ / − / R / M /
 
-Источник: src/DiffFileTree.tsx:42.
+Источник: src/DiffFileTree.tsx:48.

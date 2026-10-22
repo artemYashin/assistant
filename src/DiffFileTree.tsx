@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { RepositoryFileIcon } from "./RepositoryFileKind.js";
 import { diffFileSize, splitDiff } from "./pr-diff.js";
@@ -21,6 +21,12 @@ export function DiffFileTree({ files, selected, onSelect, sizes }: {
   files: ReturnType<typeof splitDiff>; selected: number; onSelect: (index: number) => void;
   sizes?: { path: string; sizeBytes?: number }[];
 }) {
+  const tooltipId = useId();
+  const [hint, setHint] = useState<{ text: string; left: number; top: number } | null>(null);
+  const showHint = (element: HTMLElement, text: string) => {
+    const rect = element.getBoundingClientRect();
+    setHint({ text, left: Math.max(8, Math.min(rect.left, window.innerWidth - 328)), top: Math.min(rect.bottom + 5, window.innerHeight - 90) });
+  };
   const tree = useMemo(() => buildDiffTree(files), [files]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   useEffect(() => { setCollapsed(new Set()); }, [tree]);
@@ -41,7 +47,10 @@ export function DiffFileTree({ files, selected, onSelect, sizes }: {
       return <div key={child.path}>
         <button type="button" className={`diff-tree-row is-${status || "folder"}`}
           aria-expanded={directory ? open : undefined} aria-pressed={directory ? undefined : child.index === selected}
-          title={file && status === "renamed" ? `${file.before} → ${file.after}` : child.path}
+          aria-describedby={hint ? tooltipId : undefined}
+          onMouseEnter={event => showHint(event.currentTarget, file && status === "renamed" ? `${file.before} → ${file.after}` : child.path)}
+          onFocus={event => showHint(event.currentTarget, file && status === "renamed" ? `${file.before} → ${file.after}` : child.path)}
+          onMouseLeave={() => setHint(null)} onBlur={() => setHint(null)}
           onClick={() => directory ? setCollapsed(previous => { const next = new Set(previous); if (next.has(child.path)) next.delete(child.path); else next.add(child.path); return next; }) : onSelect(child.index!)}>
           <span className="diff-tree-status" title={label} aria-label={label || undefined}>{status === "added" ? "+" : status === "deleted" ? "−" : status === "renamed" ? "R" : status === "modified" ? "M" : ""}</span>
           <span className="diff-tree-toggle" style={{ marginLeft: depth * 14 }}>{directory && (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}</span>
@@ -53,5 +62,5 @@ export function DiffFileTree({ files, selected, onSelect, sizes }: {
       </div>;
     });
   }
-  return <nav className="pr-diff-files diff-file-tree" aria-label="Файлы изменений">{render(tree, 0)}</nav>;
+  return <nav className="pr-diff-files diff-file-tree" aria-label="Файлы изменений" onScroll={() => setHint(null)}>{render(tree, 0)}{hint && <div role="tooltip" id={tooltipId} className="diff-file-tooltip" style={{ left: hint.left, top: hint.top }}>{hint.text}</div>}</nav>;
 }

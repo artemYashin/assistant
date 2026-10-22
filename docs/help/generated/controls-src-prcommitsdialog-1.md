@@ -9,22 +9,22 @@
 
 Закрыть историю коммитов
 
-Источник: src/PrCommitsDialog.tsx:81.
+Источник: src/PrCommitsDialog.tsx:83.
 
 ### Элемент
 
-View Diff
+Обновить
 
-Источник: src/PrCommitsDialog.tsx:99.
+Источник: src/PrCommitsDialog.tsx:94.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/PrCommitsDialog.tsx:134.
+Источник: src/PrCommitsDialog.tsx:105.
 
 ### Элемент
 
 Загрузить ещё
 
-Источник: src/PrCommitsDialog.tsx:144.
+Источник: src/PrCommitsDialog.tsx:115.

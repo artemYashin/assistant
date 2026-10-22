@@ -51,6 +51,16 @@ export function PrDiffDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const layout = useRef<HTMLDivElement>(null);
+  const [treeWidth, setTreeWidth] = useState(() => {
+    try { const width = Number(localStorage.getItem("diff-tree-width")); return width >= 180 && width <= 600 ? width : 280; } catch { return 280; }
+  });
+  const resizeTree = (width: number) => {
+    const available = layout.current?.clientWidth || 900;
+    const next = Math.max(180, Math.min(600, available - 240, width));
+    setTreeWidth(next);
+    try { localStorage.setItem("diff-tree-width", String(next)); } catch { /* Optional preference. */ }
+  };
   const [language, setLanguage] = useState(() => {
     try { return validDiffLanguage(localStorage.getItem(diffLanguageStorageKey)); }
     catch { return "auto"; }
@@ -223,7 +233,12 @@ export function PrDiffDialog({
             </p>
           )}
           {!!data.files.length && (
-            <div className="pr-diff-layout">
+            <div className="pr-diff-layout" ref={layout} style={{ "--diff-tree-width": `${treeWidth}px` } as React.CSSProperties}>
+              <div className="diff-tree-resizer" role="separator" aria-label="Ширина дерева файлов diff" aria-orientation="vertical" aria-valuemin={180} aria-valuemax={600} aria-valuenow={treeWidth} tabIndex={0}
+                onPointerDown={event => { if (event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); }}
+                onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && layout.current) resizeTree(event.clientX - layout.current.getBoundingClientRect().left); }}
+                onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+                onKeyDown={event => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); resizeTree(treeWidth + (event.key === "ArrowRight" ? 20 : -20)); } }} />
               <div className="pr-diff-toolbar-language">
                 <div className="pr-diff-language">
                   <SingleSelect label="Подсветка кода" value={language}

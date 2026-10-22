@@ -6,7 +6,7 @@ export function BranchLabel({
   value,
   client, project, onNavigate, disabled = false,
 }: {
-  kind: "source" | "target";
+  kind: "source" | "target" | "ветка";
   value?: string;
   client: string; project: string; onNavigate?: () => void; disabled?: boolean;
 }) {

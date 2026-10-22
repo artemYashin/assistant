@@ -9699,3 +9699,21 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .repository-depth-warning strong { font-size: 12px; }
 .repository-depth-warning p { margin: 3px 0; }
 .repository-depth-warning small { display: block; font-size: 10px; }
+
+.pr-diff-dialog { height: 80dvh; box-sizing: border-box; }
+.pr-diff-layout { position: relative; grid-template-columns: min(var(--diff-tree-width, 280px), 55%) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 50dvh; min-height: 220px; }
+.pr-diff-layout > .pr-diff-files, .pr-diff-layout > .pr-diff-code { min-height: 0; max-height: none; }
+.pr-diff-layout .pr-diff-scroll { height: 100%; max-height: none; }
+.diff-tree-resizer { position: absolute; z-index: 4; top: 0; bottom: 0; left: min(var(--diff-tree-width, 280px), 55%); width: 7px; transform: translateX(-50%); cursor: col-resize; touch-action: none; }
+.diff-tree-resizer:hover, .diff-tree-resizer:focus-visible { background: #8eb4d588; outline: none; }
+.diff-file-tooltip { position: fixed; z-index: 10; pointer-events: none; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 7px 9px; border: 1px solid #c6d3df; border-radius: 7px; background: #f7fafc; color: #304a60; box-shadow: 0 4px 16px #23354726; font-size: 11px; overflow-wrap: anywhere; }
+.repository-commits-dialog .developer-dialog-heading h2, .pr-commits-dialog .developer-dialog-heading h2 { display: flex; align-items: center; gap: 9px; margin: 0; }
+.repository-commits-dialog .developer-dialog-heading h2 > svg, .pr-commits-dialog .developer-dialog-heading h2 > svg { flex-shrink: 0; }
+.pr-commits-dialog { width: min(760px, calc(100vw - 32px)); }
+.commit-history-branches { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.repository-commits-heading > button { flex-shrink: 0; }
+@media (max-width: 800px) {
+  .pr-diff-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(70px, 120px) minmax(0, 1fr); height: 56dvh; }
+  .diff-tree-resizer { display: none; }
+  .repository-commits-heading { flex-wrap: wrap; }
+}
