@@ -845,61 +845,10 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               <div className="pr-ticket-list">
                 {(p.tickets || []).map((t: any) => (
                   <div className={`pr-ticket-row${t.disabled ? " is-disabled" : ""}`} key={t.id}>
-                    <button
-                      type="button"
-                      className="chat-ticket-link pr-ticket-jump"
-                      onClick={() => openPrTicket(p, t)}
-                    >
-                      Открыть тикет #{t.id}
-                      <Eye size={14} aria-hidden="true" />
-                    </button>
                     <strong>
                       #{t.id}
                       {t.title ? ` · ${t.title}` : ""}
                     </strong>
-                    <span className="muted">
-                      {[
-                        t.fromAzure && "Azure",
-                        t.fromTitle && "Название PR",
-                        t.fromDescription && "Описание PR",
-                        t.manual && "Локально",
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                    {t.disabled && <span className="muted">Связь отключена локально · не используется в merge и ревью</span>}
-                    {!readOnly && <button type="button" className="text-button" disabled={busy}
-                      title="Меняет только локальное использование связи. Связь в Azure остаётся прежней."
-                      onClick={() => void run(() => api("/pr/tickets", "POST", {
-                        monitor: p.monitor, repo: p.repo, number: p.number, ticketId: t.id,
-                        source: p.ticket_source, action: t.disabled ? "enable" : "disable",
-                      }))}>
-                      {t.disabled ? "Включить связь локально" : "Отключить связь локально"}
-                    </button>}
-                    {!readOnly && t.manual && (
-                      <button
-                        type="button"
-                        className="text-button"
-                        disabled={busy}
-                        onClick={() =>
-                          void run(() =>
-                            api("/pr/tickets", "POST", {
-                              monitor: p.monitor,
-                              repo: p.repo,
-                              number: p.number,
-                              ticketId: t.id,
-                              source: p.ticket_source,
-                              action: "unlink",
-                            }),
-                          )
-                        }
-                      >
-                        Отвязать локально
-                        {t.fromDescription || t.fromTitle || t.fromAzure
-                          ? " (связь из других источников останется)"
-                          : ""}
-                      </button>
-                    )}
                     {t.unavailable ? (
                       <span className="muted">
                         {t.removed
@@ -919,6 +868,59 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                         />
                       </div>
                     )}
+                    <span className="muted">
+                      {[
+                        t.fromAzure && "Azure",
+                        t.fromTitle && "Название PR",
+                        t.fromDescription && "Описание PR",
+                        t.manual && "Локально",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                    <div className="pr-ticket-actions">
+                      <button
+                        type="button"
+                        className="chat-ticket-link pr-ticket-jump"
+                        onClick={() => openPrTicket(p, t)}
+                      >
+                        Открыть тикет #{t.id}
+                        <Eye size={14} aria-hidden="true" />
+                      </button>
+                      {!readOnly && <button type="button" className="text-button" disabled={busy}
+                        title="Меняет только локальное использование связи. Связь в Azure остаётся прежней."
+                        onClick={() => void run(() => api("/pr/tickets", "POST", {
+                          monitor: p.monitor, repo: p.repo, number: p.number, ticketId: t.id,
+                          source: p.ticket_source, action: t.disabled ? "enable" : "disable",
+                        }))}>
+                        {t.disabled ? "Включить связь локально" : "Отключить связь локально"}
+                      </button>}
+                      {!readOnly && t.manual && (
+                        <button
+                          type="button"
+                          className="text-button"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(() =>
+                              api("/pr/tickets", "POST", {
+                                monitor: p.monitor,
+                                repo: p.repo,
+                                number: p.number,
+                                ticketId: t.id,
+                                source: p.ticket_source,
+                                action: "unlink",
+                              }),
+                            )
+                          }
+                        >
+                          Отвязать локально
+                          {t.fromDescription || t.fromTitle || t.fromAzure
+                            ? " (связь из других источников останется)"
+                            : ""}
+                        </button>
+                      )}
+                    </div>
+                    {t.disabled && <span className="muted">Связь отключена локально · не используется в merge и ревью</span>}
                   </div>
                 ))}
               </div>

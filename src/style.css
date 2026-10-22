@@ -9599,3 +9599,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-branch-link.is-unavailable { opacity: .65; }
 .pr-merge-branches { margin: 12px 0 6px; }
 .pr-branches > svg { flex-shrink: 0; }
+
+.pr-ticket-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 4px; }
+.pr-ticket-actions > button { flex: 0 1 auto; }
