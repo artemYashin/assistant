@@ -9462,3 +9462,5 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .context-delete-dialog form { display: grid; gap: 8px; }
 .context-delete-confirm { background: #b33333; color: white; border: 1px solid #9c2929; }
 .context-delete-confirm:hover:not(:disabled) { background: #962727; }
+
+.azure-assignee-section-label { padding: 8px 10px 4px; color: #64748b; font-size: 11px; font-weight: 600; }

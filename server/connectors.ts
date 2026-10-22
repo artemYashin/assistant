@@ -821,7 +821,9 @@ export class Connectors {
     };
     guard();
     const users = this.store.get<any[]>("developers:" + source, []);
-    const user = userId ? users.find((p) => p.id === userId) : null;
+    const recentKey = "azure.assignees.recent:" + source;
+    const recent = this.store.get<{ id: string; name: string; email: string }[]>(recentKey, []);
+    const user = userId ? [...users, ...recent].find((p) => p.id === userId) : null;
     if (userId && !user?.email)
       throw new AppError(
         400,
@@ -889,6 +891,12 @@ export class Connectors {
       "ticket.assigned",
       `#${id}: ${user?.name || "Не назначен"}`,
     );
+    if (user) {
+      // Store only assignments confirmed by the read-back, never mere selections.
+      const person = { id: user.id, name: actual?.displayName || user.name, email: actual?.uniqueName || user.email };
+      const latest = this.store.get<typeof recent>(recentKey, []);
+      this.store.set(recentKey, [person, ...latest.filter(p => p.id !== person.id)].slice(0, 8));
+    }
     return { id, source, assigned: actual || null, verified: true };
   }
   async ticketOptions() {

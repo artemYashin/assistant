@@ -36,6 +36,10 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
     insert.run("attachments", JSON.stringify(attachmentCard));
     insert.run("details", JSON.stringify(fullCard));
     insert.run("other", JSON.stringify(otherCard));
+    const recentKey = "azure.assignees.recent:" + source;
+    const previousRecent = Array.from({ length: 8 }, (_, i) => ({ id: `old-${i}`, name: `Old ${i}`, email: `old${i}@example.test` }));
+    store.set(recentKey, previousRecent);
+    store.set("azure.assignees.recent:other-source", [{ id: "other" }]);
     const connectors = new Connectors(store, new IntegrationsAuth(store));
     let reads = 0,
       writes = 0;
@@ -83,6 +87,13 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
       assert.deepEqual(readCard("other"), otherCard);
       assert.deepEqual(readCard("details").fields["System.AssignedTo"], mode === "clear" ? "" : { id: person.id, displayName: person.name });
     }
+    const recent = store.get<any[]>(recentKey, []);
+    if (mode === "assign") {
+      assert.deepEqual(recent[0], person);
+      assert.equal(recent.length, 8);
+      assert.equal(recent[1].id, "old-0");
+    } else assert.deepEqual(recent, previousRecent);
+    assert.deepEqual(store.get("azure.assignees.recent:other-source", []), [{ id: "other" }]);
     assert.equal(reads, 2);
     assert.equal(writes, 1);
     await assert.rejects(
@@ -94,5 +105,11 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
       /Найдите пользователя/,
     );
     assert.equal(writes, 1);
+    if (mode === "assign") {
+      // Recent users remain assignable after the ordinary search cache expires.
+      store.set("developers:" + source, []);
+      assert.equal((await connectors.assignTicket(42, source, person.id)).verified, true);
+      assert.equal(store.get<any[]>(recentKey, []).filter(p => p.id === person.id).length, 1);
+    }
   });
 }

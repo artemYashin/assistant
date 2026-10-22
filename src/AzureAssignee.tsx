@@ -10,12 +10,22 @@ export function AzureAssignee({ ticket, onChange }: any) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [people, setPeople] = useState<Person[]>([]);
+  const [recent, setRecent] = useState<Person[]>([]);
   const [selected, setSelected] = useState<Person | null | undefined>();
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [truncated, setTruncated] = useState(false);
   const [warning, setWarning] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setRecent([]);
+    api(`/developers/recent-assignees?source=${encodeURIComponent(ticket.source)}`)
+      .then(result => { if (live) setRecent(result.users); })
+      .catch(e => { if (live) setError(e.message); });
+    return () => { live = false; };
+  }, [open, ticket.source]);
   useEffect(() => {
     if (!open) return;
     let live = true;
@@ -117,7 +127,8 @@ export function AzureAssignee({ ticket, onChange }: any) {
             />
             <span>Не назначен</span>
           </label>
-          {people.map((person) => (
+          {query.trim().length < 2 && recent.length > 0 && <div className="azure-assignee-section-label">Последние</div>}
+          {(query.trim().length < 2 ? recent : people).map((person) => (
             <label className="local-developer-option" key={person.id}>
               <input
                 type="radio"

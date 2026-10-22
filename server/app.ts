@@ -1004,6 +1004,11 @@ export function createApp(
       .parse(req.body);
     res.json(await connectors.assignTicket(id, source, userId));
   });
+  app.get("/api/developers/recent-assignees", (req, res) => {
+    const source = z.string().min(1).parse(req.query.source);
+    if (source !== store.source()) throw new AppError(409, "Подключение Azure изменилось. Откройте выбор исполнителя заново.");
+    res.json({ users: store.get("azure.assignees.recent:" + source, []) });
+  });
   app.post("/api/developers/search", async (req, res) => {
     const { query } = z
       .object({ query: z.string().trim().min(2).max(100) })
