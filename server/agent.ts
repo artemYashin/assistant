@@ -1,3 +1,4 @@
+import { helpTools } from "./help.js";
 import { getTicketCatalog } from "./ticket-catalog.js";
 import { messageContextBadges } from "./chat-message-context.js";
 import { memorySummarySchema } from "./memory-summary.js";
@@ -92,6 +93,7 @@ export function makeTools(
   localTicket?: (id: number, action: "add" | "remove") => Promise<any>,
 ) {
   return [
+    ...helpTools(),
     defineTool("list_local_tags", {
       description: "List existing LOCAL ticket tag names for the current Azure connection, including retained trash. Optional case-insensitive substring search; paginated, continue with nextOffset to read all tags. No Azure calls or changes.",
       parameters: z.object({ search: z.string().max(60).optional(), offset: z.number().int().min(0).default(0) }).strict(),

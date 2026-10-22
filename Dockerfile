@@ -15,6 +15,7 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/dist-server ./dist-server
 COPY --from=build /app/package.json ./package.json
+COPY --chown=node:node docs/help ./docs/help
 RUN mkdir -p /data /home/node/.copilot /repo-control && chown -R node:node /data /home/node/.copilot /repo-control
 ENV NODE_ENV=production PORT=43871 BIND_HOST=0.0.0.0 DATA_DIR=/data
 USER node

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  search_app_help: "On explicit app-help/troubleshooting requests only: search Orbit documentation titles and short excerpts, not live data.",
+  read_app_help: "Read a selected Orbit help article by ID, with bounded pagination. Only for app-help requests.",
   read_memory: "Read full details of one relevant memory by its catalog ID.",
   read_memory_proposal: "Read a pending memory proposal for refinement in the current scope.",
   edit_memory_proposal: "Edit an existing pending memory proposal at user request, without approving it or creating a duplicate.",

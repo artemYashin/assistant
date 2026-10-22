@@ -8,9 +8,11 @@
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.server.json",
     "start": "node dist-server/index.js",
     "test": "tsx --test tests/*.test.ts code-browser/*.test.mjs",
-    "check": "tsc --noEmit",
+    "check": "npm run docs:check && tsc --noEmit",
     "test:sdk": "tsx scripts/check-sdk.ts",
-    "format": "prettier --write \"server/**/*.ts\" \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\""
+    "format": "prettier --write \"server/**/*.ts\" \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\"",
+    "docs:generate": "node scripts/generate-help.mjs",
+    "docs:check": "node scripts/generate-help.mjs --check"
   },
   "dependencies": {
     "@azure/msal-node": "^3.8.0",
