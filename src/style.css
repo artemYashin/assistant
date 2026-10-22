@@ -2900,6 +2900,9 @@ td > small {
   margin-top: 12px;
 }
 .pr-ticket-row {
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
   background: #f8faf7;
   box-shadow: 0 2px 6px #24392f0d;
   display: grid;
@@ -9626,5 +9629,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-ticket-action.is-unlink:hover:not(:disabled) { background: #ffe0e2; border-color: #d78990; }
 .pr-ticket-action:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .pr-ticket-action:disabled { opacity: .55; cursor: not-allowed; }
-.pr-ticket-exclusion-note { display: flex; align-items: flex-start; gap: 7px; padding: 8px 10px; border: 1px solid #e8d19c; border-radius: 7px; background: #fff4d9; color: #80520d; font-size: 12px; font-weight: 500; line-height: 1.45; }
+.pr-ticket-exclusion-note { width: fit-content; max-width: 100%; display: flex; align-items: flex-start; gap: 7px; padding: 8px 10px; border: 1px solid #e8d19c; border-radius: 7px; background: #fff4d9; color: #80520d; font-size: 12px; font-weight: 500; line-height: 1.45; }
 .pr-ticket-exclusion-note > svg { flex-shrink: 0; margin-top: 1px; }
+
+.pr-linked-tickets[open] > summary { margin-bottom: 4px; }
+
+.pr-ticket-action.is-open { color: #24683c; background: #e5f4e9; border-color: #add2b8; }
+.pr-ticket-action.is-open:hover:not(:disabled) { background: #d3ebdb; border-color: #77b68b; }

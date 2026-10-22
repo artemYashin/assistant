@@ -840,7 +840,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
               </Link>
             )}
             <PrDescription pr={p} />
-            <details className="pr-content-section">
+            <details className="pr-content-section pr-linked-tickets">
               <summary>
                 <span className="pr-ticket-summary-content">
                   <Ticket size={17} aria-hidden="true" />
@@ -900,11 +900,11 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                     <div className="pr-ticket-actions">
                       <button
                         type="button"
-                        className="chat-ticket-link pr-ticket-jump"
+                        className="pr-ticket-action is-open"
                         onClick={() => openPrTicket(p, t)}
                       >
-                        Открыть тикет #{t.id}
-                        <Eye size={14} aria-hidden="true" />
+                        <Eye size={15} aria-hidden="true" />
+                        Открыть тикет
                       </button>
                       {!readOnly && <button type="button" className={`pr-ticket-action ${t.disabled ? "is-enable" : "is-exclude"}`} disabled={busy}
                         title="Включает или исключает тикет из ревью и смены статуса при merge. Связи в Azure и локальная привязка сохраняются."
