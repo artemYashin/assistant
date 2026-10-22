@@ -1,3 +1,4 @@
+import { ChatTools } from "./ChatTools.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { PrCreateDialog } from "./PrCreateDialog.js";
 import { LastSync } from "./LastSync.js";
@@ -117,7 +118,11 @@ function PrDescription({ pr }: any) {
       </summary>
       {open &&
         (pr.description ? (
-          <ChatMarkdown text={pr.description} images={pr.images} preserveLineBreaks />
+          <ChatMarkdown
+            text={pr.description}
+            images={pr.images}
+            preserveLineBreaks
+          />
         ) : (
           <p className="muted">Описание не указано.</p>
         ))}
@@ -155,7 +160,9 @@ function ReviewResult({ pr }: any) {
       trigger={<Eye size={16} aria-hidden="true" />}
     >
       <div className="pr-review-result">
-        <small className="muted">Модель: {result.model || "Не сохранена для этого ревью"}</small>
+        <small className="muted">
+          Модель: {result.model || "Не сохранена для этого ревью"}
+        </small>
         {previous && (
           <p className="muted">
             Ревью предыдущей версии PR: {result.head?.slice(0, 10)} →{" "}
@@ -235,7 +242,11 @@ function ReviewHistory({ pr }: any) {
             {r.head.slice(0, 10)} → {r.target.slice(0, 10)} ·{" "}
             {statuses[r.status]}
           </small>
-          <div><small className="muted">Модель: {r.model || "Не сохранена для этого ревью"}</small></div>
+          <div>
+            <small className="muted">
+              Модель: {r.model || "Не сохранена для этого ревью"}
+            </small>
+          </div>
           {r.summary && <ChatMarkdown text={r.summary} />}
           {r.error && <p className="error">{r.error}</p>}
         </section>
@@ -356,8 +367,16 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
         />
       )}
       {reviewing && (
-        <PrReviewDialog defaultMaxTokens={settings.reviewMaxTokens ?? 1_000_000}
-          pr={prs.find(p => p.monitor === reviewing.monitor && p.repo === reviewing.repo && p.number === reviewing.number) ?? reviewing}
+        <PrReviewDialog
+          defaultMaxTokens={settings.reviewMaxTokens ?? 1_000_000}
+          pr={
+            prs.find(
+              (p) =>
+                p.monitor === reviewing.monitor &&
+                p.repo === reviewing.repo &&
+                p.number === reviewing.number,
+            ) ?? reviewing
+          }
           onClose={() => setReviewing(null)}
           onStarted={() => {
             setReviewing(null);
@@ -550,101 +569,141 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                   >
                     {statuses[p.review_status] || "Ревью не запускалось"}
                   </span>
+                  {!readOnly &&
+                    [
+                      "preparing_git",
+                      "queued",
+                      "running",
+                      "awaiting_answers",
+                    ].includes(p.review_status) && (
+                      <button
+                        className="secondary pr-stop-review"
+                        disabled={busy}
+                        onClick={() =>
+                          run(() =>
+                            api("/pr/review/stop", "POST", { id: p.review_id }),
+                          )
+                        }
+                      >
+                        Остановить ревью
+                      </button>
+                    )}
                   {(p.summary || p.coverage || p.last_saved_review) && (
                     <ReviewResult pr={p} />
                   )}
                   {p.review_count > 1 && <ReviewHistory pr={p} />}
                   {!!p.draft && <span className="badge">Черновик</span>}
+                  {!readOnly && (
+                    <div className="pr-card-statuses">
+                      <PrHealth value={p.health} inScope={!!p.in_scope} />
+                      <span
+                        className={`pr-local-source ${p.local_source?.status === "ready" ? "is-ready" : p.local_source?.status === "loading" ? "is-loading" : ["error", "stale"].includes(p.local_source?.status) ? "is-error" : ""}`}
+                        title={
+                          p.local_source?.error ||
+                          p.local_source?.stage ||
+                          p.source_branch
+                        }
+                      >
+                        {p.local_source?.status === "loading" ? (
+                          <LoaderCircle size={13} className="spin" />
+                        ) : (
+                          <GitBranch size={13} />
+                        )}
+                        {p.local_source?.status === "ready"
+                          ? "Локальная ветка готова"
+                          : p.local_source?.status === "loading"
+                            ? "Ветка загружается"
+                            : p.local_source?.status === "stale"
+                              ? "Ветка устарела"
+                              : p.local_source?.status === "error"
+                                ? "Локальная ветка не готова"
+                                : "Ветка не запрашивалась"}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="pr-identity">
-                  <InitialsAvatar name={p.author || "?"} />
-                  <div className="pr-identity-text">
-                    <h2 className="pr-title">
-                      <a href={p.url} target="_blank" rel="noreferrer">
-                        #{p.number} · {p.title}
-                      </a>
-                    </h2>
-                    <p className="muted pr-created-at">
-                      <strong>{p.author || "Автор не указан"}</strong>
-                      {" · Создан: "}
-                      {p.created_at ? (
-                        <time dateTime={p.created_at}>
-                          {new Date(p.created_at).toLocaleString("ru-RU")}
-                        </time>
-                      ) : (
-                        "дата пока не загружена"
-                      )}
-                    </p>
+                <div className="pr-identity-row">
+                  <div className="pr-identity">
+                    <InitialsAvatar name={p.author || "?"} />
+                    <div className="pr-identity-text">
+                      <h2 className="pr-title">
+                        <a href={p.url} target="_blank" rel="noreferrer">
+                          #{p.number} · {p.title}
+                        </a>
+                      </h2>
+                      <p className="muted pr-created-at">
+                        <strong>{p.author || "Автор не указан"}</strong>
+                        {" · Создан: "}
+                        {p.created_at ? (
+                          <time dateTime={p.created_at}>
+                            {new Date(p.created_at).toLocaleString("ru-RU")}
+                          </time>
+                        ) : (
+                          "дата пока не загружена"
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="pr-card-utilities">
-                {!readOnly && (
-                  <div className="pr-card-statuses">
-                    <PrHealth value={p.health} inScope={!!p.in_scope} />
-                    <span className={`pr-local-source ${p.local_source?.status === "ready" ? "is-ready" : p.local_source?.status === "loading" ? "is-loading" : ["error", "stale"].includes(p.local_source?.status) ? "is-error" : ""}`} title={p.local_source?.error || p.local_source?.stage || p.source_branch}>
-                      {p.local_source?.status === "loading" ? <LoaderCircle size={13} className="spin" /> : <GitBranch size={13} />}
-                      {p.local_source?.status === "ready" ? "Локальная ветка готова" : p.local_source?.status === "loading" ? "Ветка загружается" : p.local_source?.status === "stale" ? "Ветка устарела" : p.local_source?.status === "error" ? "Локальная ветка не готова" : "Ветка не запрашивалась"}
-                    </span>
+                  <div className="pr-card-utilities">
+                    <div
+                      className="pr-card-info-actions"
+                      role="group"
+                      aria-label="Информация о PR"
+                    >
+                      <PrInfoPopup
+                        title="Контекст PR"
+                        trigger={<Layers3 size={17} aria-hidden="true" />}
+                      >
+                        <dl>
+                          <div>
+                            <dt>Заказчик</dt>
+                            <dd>{p.client || "—"}</dd>
+                          </div>
+                          <div>
+                            <dt>Проект Orbit</dt>
+                            <dd>{p.project || "—"}</dd>
+                          </div>
+                          <div>
+                            <dt>Azure Project</dt>
+                            <dd>{p.azure_project || "—"}</dd>
+                          </div>
+                          <div>
+                            <dt>Репозиторий</dt>
+                            <dd>
+                              {p.in_scope && p.repository
+                                ? p.repository
+                                : p.repo || "—"}
+                            </dd>
+                          </div>
+                        </dl>
+                      </PrInfoPopup>
+                      <PrInfoPopup
+                        title="Версия изменений"
+                        trigger={<Info size={17} aria-hidden="true" />}
+                      >
+                        <dl>
+                          <div>
+                            <dt>Source commit</dt>
+                            <dd>
+                              <code>{p.head}</code>
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Target commit</dt>
+                            <dd>
+                              <code>{p.target}</code>
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>ID репозитория</dt>
+                            <dd>
+                              <code>{p.repo}</code>
+                            </dd>
+                          </div>
+                        </dl>
+                      </PrInfoPopup>
+                    </div>
                   </div>
-                )}
-                <div
-                  className="pr-card-info-actions"
-                  role="group"
-                  aria-label="Информация о PR"
-                >
-                  <PrInfoPopup
-                    title="Контекст PR"
-                    trigger={<Layers3 size={17} aria-hidden="true" />}
-                  >
-                    <dl>
-                      <div>
-                        <dt>Заказчик</dt>
-                        <dd>{p.client || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>Проект Orbit</dt>
-                        <dd>{p.project || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>Azure Project</dt>
-                        <dd>{p.azure_project || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>Репозиторий</dt>
-                        <dd>
-                          {p.in_scope && p.repository
-                            ? p.repository
-                            : p.repo || "—"}
-                        </dd>
-                      </div>
-                    </dl>
-                  </PrInfoPopup>
-                  <PrInfoPopup
-                    title="Версия изменений"
-                    trigger={<Info size={17} aria-hidden="true" />}
-                  >
-                    <dl>
-                      <div>
-                        <dt>Source commit</dt>
-                        <dd>
-                          <code>{p.head}</code>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Target commit</dt>
-                        <dd>
-                          <code>{p.target}</code>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>ID репозитория</dt>
-                        <dd>
-                          <code>{p.repo}</code>
-                        </dd>
-                      </div>
-                    </dl>
-                  </PrInfoPopup>
                 </div>
               </div>
             </div>
@@ -663,9 +722,12 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                       !p.in_scope ||
                       !p.enabled ||
                       !!p.draft ||
-                      ["preparing_git", "queued", "running", "awaiting_answers"].includes(
-                        p.review_status,
-                      )
+                      [
+                        "preparing_git",
+                        "queued",
+                        "running",
+                        "awaiting_answers",
+                      ].includes(p.review_status)
                     }
                     onClick={() => setReviewing(p)}
                   >
@@ -694,9 +756,9 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                           ? "Ревью выполняется"
                           : p.review_status === "preparing_git"
                             ? "Подготовка Git"
-                          : p.review_status === "queued"
-                            ? "Ревью в очереди"
-                            : "Запустить ревью"}
+                            : p.review_status === "queued"
+                              ? "Ревью в очереди"
+                              : "Запустить ревью"}
                   </button>
                 )}
 
@@ -714,7 +776,39 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                 >
                   <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
                 </button>
-                {!readOnly && <button type="button" className="secondary pr-source-action" disabled={busy || !p.enabled || !p.in_scope || p.local_source?.status === "loading" || p.review_status === "preparing_git"} onClick={() => run(() => api("/pr/source", "POST", { monitor: p.monitor, repo: p.repo, number: p.number }))}><GitBranch size={16} />Загрузить source-ветку</button>}
+                <ChatTools
+                  context={context}
+                  review={{
+                    monitor: p.monitor,
+                    repo: p.repo,
+                    number: p.number,
+                  }}
+                />
+                {!readOnly && (
+                  <button
+                    type="button"
+                    className="secondary pr-source-action"
+                    disabled={
+                      busy ||
+                      !p.enabled ||
+                      !p.in_scope ||
+                      p.local_source?.status === "loading" ||
+                      p.review_status === "preparing_git"
+                    }
+                    onClick={() =>
+                      run(() =>
+                        api("/pr/source", "POST", {
+                          monitor: p.monitor,
+                          repo: p.repo,
+                          number: p.number,
+                        }),
+                      )
+                    }
+                  >
+                    <GitBranch size={16} />
+                    Загрузить source-ветку
+                  </button>
+                )}
               </div>
               {!readOnly && (
                 <div className="pr-action-group pr-merge-actions">

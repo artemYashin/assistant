@@ -1,3 +1,4 @@
+import { groupChatHistory } from "./chat-history-groups.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { History, MessageSquare, Plus, X } from "lucide-react";
@@ -133,7 +134,8 @@ function ChatHistoryDialog({
         <p role="status">Загружаю чаты…</p>
       ) : (
         <div className="chat-history-list">
-          {sessions.map((session) => (
+          {!sessions.length && <p className="muted">Сохранённых чатов пока нет.</p>}
+          {groupChatHistory(sessions).map(group => <section className="chat-history-group" key={group.label}><h3>{group.label}</h3>{group.sessions.map((session) => (
             <button
               type="button"
               key={session.id}
@@ -144,15 +146,15 @@ function ChatHistoryDialog({
             >
               <MessageSquare size={18} />
               <span>
-                <strong>{session.title}</strong>
+                <strong title={session.title}>{session.title}</strong>
                 <small>
-                  {new Date(session.updated_at).toLocaleString("ru-RU")} ·
+                  {new Date(session.updated_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}{group.label === "Последняя неделя" || group.label === "Ранее" ? ` · ${new Date(session.updated_at).toLocaleDateString("ru-RU")}` : ""} ·
                   Сообщений: {session.messageCount}
                   {session.id === activeId ? " · Текущий" : ""}
                 </small>
               </span>
             </button>
-          ))}
+          ))}</section>)}
         </div>
       )}
     </dialog>

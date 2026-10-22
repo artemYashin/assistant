@@ -51,6 +51,36 @@ export class UsageLedger {
     const key = `review.requests:${reviewId}`;
     const ids = this.store.get<string[]>(key, []);
     if (!ids.includes(requestId)) this.store.set(key, [...ids, requestId]);
+    this.pruneReviewTraces();
+  }
+  private pruneReviewTraces() {
+    const latest = this.store.db.prepare("SELECT id FROM pr_reviews ORDER BY created_at DESC,rowid DESC LIMIT 1").get() as any;
+    if (!latest) return;
+    const keep = this.store.get<string[]>(`review.requests:${latest.id}`, []);
+    this.store.db.prepare(`DELETE FROM llm_tool_traces WHERE request_id IN (
+      SELECT id FROM llm_requests WHERE origin='pr_review'
+      AND id NOT IN (SELECT value FROM json_each(?)))`).run(JSON.stringify(keep));
+  }
+  clearReviewTraces() {
+    this.store.db.prepare("DELETE FROM llm_tool_traces WHERE request_id IN (SELECT id FROM llm_requests WHERE origin='pr_review')").run();
+  }
+  reviewTools(context: Context, monitor: string, repo: string, number: number) {
+    const review = this.store.db.prepare(`SELECT r.id FROM pr_reviews r JOIN pr_projects m ON m.id=r.monitor
+      WHERE r.monitor=? AND r.repo=? AND r.number=? AND m.client=? AND m.project=? ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1`)
+      .get(monitor, repo, number, context.client, context.project) as any;
+    if (!review) return { requests: [] };
+    const latest = this.store.db.prepare("SELECT id FROM pr_reviews ORDER BY created_at DESC,rowid DESC LIMIT 1").get() as any;
+    if (latest?.id !== review.id) return { requests: [] };
+    this.pruneReviewTraces();
+    const ids = this.store.get<string[]>(`review.requests:${review.id}`, []);
+    const requests = this.store.db.prepare(`SELECT r.id,r.model,r.created_at,r.finished_at,r.status,r.reason,r.tool_calls,
+      (SELECT sum(input_tokens) FROM llm_usage WHERE request_id=r.id) AS inputTokens,
+      (SELECT sum(output_tokens) FROM llm_usage WHERE request_id=r.id) AS outputTokens
+      FROM llm_requests r WHERE r.origin='pr_review' AND r.client=? AND r.project=? AND r.id IN (SELECT value FROM json_each(?)) ORDER BY r.created_at DESC,r.rowid DESC`)
+      .all(context.client, context.project, JSON.stringify(ids)) as any[];
+    return { requests: requests.map(request => ({ ...request, tools: this.store.db.prepare(
+      "SELECT id,request_id,name,arguments,internal,status,result,started_at,finished_at,full_result IS NOT NULL AS hasFullResult FROM llm_tool_traces WHERE request_id=? ORDER BY started_at,rowid"
+    ).all(request.id) })) };
   }
   reviewTokens(reviewId: string) {
     return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + this.tokens(id), 0);
@@ -105,6 +135,9 @@ export class UsageLedger {
     status = "running",
   ) {
     const id = randomUUID();
+    const latest = this.store.db.prepare("SELECT id FROM pr_reviews ORDER BY created_at DESC,rowid DESC LIMIT 1").get() as any;
+    const request = this.store.db.prepare("SELECT origin FROM llm_requests WHERE id=?").get(requestId) as any;
+    if (latest && request?.origin === "pr_review" && !this.store.get<string[]>(`review.requests:${latest.id}`, []).includes(requestId)) return id;
     // Record identifiers and operation shape, never notes, message bodies or secrets.
     const summary: Record<string, unknown> = {};
     for (const key of [
@@ -194,16 +227,16 @@ export class UsageLedger {
         id,
       );
   }
-  toolArguments(id: string, context: Context) {
-    const row = this.store.db.prepare("SELECT t.arguments,t.full_arguments FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin='chat' AND r.client=? AND r.project=?")
-      .get(id, context.client, context.project) as any;
+  toolArguments(id: string, context: Context, origin = "chat") {
+    const row = this.store.db.prepare("SELECT t.arguments,t.full_arguments FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin=? AND r.client=? AND r.project=?")
+      .get(id, origin, context.client, context.project) as any;
     if (!row) throw new AppError(404, "Вызов инструмента не найден");
     return { arguments: JSON.parse(row.full_arguments ?? row.arguments), full: row.full_arguments !== null };
   }
-  toolResult(id: string, context: Context) {
+  toolResult(id: string, context: Context, origin = "chat") {
     const row = this.store.db.prepare(
-      "SELECT t.full_result FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin='chat' AND r.client=? AND r.project=?",
-    ).get(id, context.client, context.project) as { full_result: string | null } | undefined;
+      "SELECT t.full_result FROM llm_tool_traces t JOIN llm_requests r ON r.id=t.request_id WHERE t.id=? AND r.origin=? AND r.client=? AND r.project=?",
+    ).get(id, origin, context.client, context.project) as { full_result: string | null } | undefined;
     if (!row) throw new AppError(404, "Вызов инструмента не найден в текущем чате");
     if (row.full_result === null) throw new AppError(404, "Полный результат не сохранён или вызов ещё выполняется");
     return { result: JSON.parse(row.full_result) };

@@ -1139,3 +1139,46 @@ test("diff reports full file byte size rather than patch length", async t => {
   const diff = await service.changes(service.monitors()[0], "repo", "head", "target");
   assert.equal(diff.diagnostics.includedFiles[0].sizeBytes, Buffer.byteLength("Привет", "utf8"));
 });
+
+test("stop review removes queued work without cancelling an unrelated chat", async t => {
+  const { store, service, agent, calls } = fixture(t);
+  mock(t, [pr()]); await service.sync();
+  let stops = 0; Object.assign(agent, { stop: () => { stops++; } });
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false });
+  assert.deepEqual(service.stopReview(id), { stopped: true });
+  await service.reviewNext();
+  assert.equal(calls.length, 0); assert.equal(stops, 0);
+  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "interrupted");
+});
+
+test("stop review during source preparation cannot start the model afterwards", async t => {
+  const { store, service, calls, preparation } = fixture(t);
+  mock(t, [pr()]); await service.sync();
+  let entered!: () => void, finish!: () => void;
+  const started = new Promise<void>(r => { entered = r; });
+  const ready = new Promise<void>(r => { finish = r; });
+  preparation.prepare = async () => { entered(); await ready; };
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1);
+  const running = service.reviewNext(); await started;
+  service.stopReview(id); finish(); await running;
+  assert.equal(calls.length, 0);
+  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "interrupted");
+  assert.notEqual(service.requestReview(service.monitors()[0].id, "repo", 1), id);
+});
+
+test("stop review cancels its model and does not save a late completion", async t => {
+  const { store, service, agent } = fixture(t);
+  mock(t, [pr()]); await service.sync();
+  let entered!: () => void, finish!: () => void, stops = 0;
+  const started = new Promise<void>(r => { entered = r; });
+  const ready = new Promise<void>(r => { finish = r; });
+  agent.chat = async () => { entered(); await ready; return { body: "late", requestId: "00000000-0000-0000-0000-000000000000" }; };
+  Object.assign(agent, { stop: () => { stops++; finish(); } });
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false, readTickets: false });
+  const running = service.reviewNext(); await started;
+  service.stopReview(id); await running;
+  assert.equal(stops, 1);
+  const row = store.db.prepare("SELECT status,summary FROM pr_reviews WHERE id=?").get(id) as any;
+  assert.equal(row.status, "interrupted"); assert.equal(row.summary, null);
+  assert.deepEqual(service.stopReview(id), { stopped: false });
+});

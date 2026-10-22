@@ -1185,3 +1185,37 @@ test("review tool limit is independent from chat and cumulative across continuat
   assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
   assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
 });
+
+test("review debug retains only latest PR traces, preserves continuations and isolates chat and projects", t => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)").run(context.client, context.project);
+  const pr = { monitor: "monitor", repo: "repo", number: 1, title: "PR" };
+  const addReview = (id: string, number = 1) => store.db.prepare("INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES (?,'monitor','repo',?,?,'target','running',?)").run(id, number, id, id === "old" ? "2026-01-01" : "2026-01-02");
+  const trace = (request: string) => { const id = ledger.toolTrace(request, "code_read_file", { path: "src/a.ts", startLine: 1 }, false); ledger.finishToolTrace(id, "completed", { text: "Source code" }); return id; };
+  addReview("old");
+  const old = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("old", old); const oldTrace = trace(old);
+  const chat = ledger.begin("model", context, "chat"), chatTrace = trace(chat);
+  addReview("other", 2);
+  const other = ledger.begin("model", context, "pr_review", { ...pr, number: 2 }); ledger.registerReviewRequest("other", other); const otherTrace = trace(other);
+  addReview("new");
+  const first = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("new", first); const firstTrace = trace(first);
+  ledger.record(first, "usage", { inputTokens: 100, outputTokens: 20 });
+  const second = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("new", second); trace(second);
+  const debug = ledger.reviewTools(context, "monitor", "repo", 1);
+  assert.equal(debug.requests.length, 2);
+  assert.equal(debug.requests.flatMap(r => r.tools).length, 2);
+  assert.equal(debug.requests.find(r => r.id === first)?.inputTokens, 100);
+  assert.equal(ledger.toolResult(firstTrace, context, "pr_review").result.text, "Source code");
+  assert.equal(ledger.toolArguments(firstTrace, context, "pr_review").arguments.path, "src/a.ts");
+  assert.throws(() => ledger.toolResult(firstTrace, { ...context, project: "Other" }, "pr_review"));
+  assert.throws(() => ledger.toolResult(firstTrace, context));
+  assert.throws(() => ledger.toolResult(oldTrace, context, "pr_review"));
+  assert.ok(ledger.toolResult(chatTrace, context));
+  assert.throws(() => ledger.toolResult(otherTrace, context, "pr_review"));
+  assert.equal(ledger.reviewTools(context, "monitor", "repo", 2).requests.length, 0);
+  const lateTrace = trace(other);
+  assert.throws(() => ledger.toolResult(lateTrace, context, "pr_review"));
+  assert.equal(ledger.reviewTools({ ...context, project: "Other" }, "monitor", "repo", 1).requests.length, 0);
+  assert.ok(store.db.prepare("SELECT 1 FROM llm_requests WHERE id=?").get(old));
+  assert.ok(store.db.prepare("SELECT 1 FROM pr_reviews WHERE id='old'").get());
+});

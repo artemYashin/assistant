@@ -480,6 +480,12 @@ export function createApp(
     store.db.prepare("DELETE FROM memories WHERE id=?").run(req.params.id);
     res.json({ ok: true });
   });
+  app.get("/api/pr/debug-tools", (req, res) => {
+    const v = contextSchema.extend({ monitor: z.string().min(1), repo: z.string().min(1), number: z.coerce.number().int().positive() }).parse(req.query);
+    res.json(new UsageLedger(store).reviewTools(v, v.monitor, v.repo, v.number));
+  });
+  app.get("/api/pr/debug-tools/:id/arguments", (req, res) => res.json(new UsageLedger(store).toolArguments(String(req.params.id), contextSchema.parse(req.query), "pr_review")));
+  app.get("/api/pr/debug-tools/:id/result", (req, res) => res.json(new UsageLedger(store).toolResult(String(req.params.id), contextSchema.parse(req.query), "pr_review")));
   app.get("/api/conversation/tools/:id/arguments", (req, res) =>
     res.json(new UsageLedger(store).toolArguments(String(req.params.id), contextSchema.parse(req.query))),
   );
@@ -1262,6 +1268,10 @@ export function createApp(
   app.post("/api/pr/source", (req, res) => {
     const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive() }).strict().parse(req.body);
     res.json(pullRequests.prepareSource(input.monitor, input.repo, input.number));
+  });
+  app.post("/api/pr/review/stop", (req, res) => {
+    const input = z.object({ id: z.string().uuid() }).strict().parse(req.body);
+    res.json(pullRequests.stopReview(input.id));
   });
   app.post("/api/pr/review", (req, res) => {
     const input = z
