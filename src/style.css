@@ -9524,3 +9524,20 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-merge-actions > span > button:disabled { pointer-events: none; }
 .pr-merge-option-block:has(.pr-merge-toggle input:checked) { border-color: #85b895; background: #edf8f0; }
 .pr-merge-option-block > .pr-merge-toggle:hover:not(.is-disabled) { background: #e8f1ec; }
+
+.pr-reviewer-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pr-reviewer-picker { min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--border, #dce3df); border-radius: 10px; }
+.pr-reviewer-picker:disabled { opacity: .5; }
+.pr-reviewer-picker legend { display: inline-flex; align-items: center; gap: 6px; padding: 0 5px; font-size: 13px; }
+.pr-reviewer-search { position: relative; display: flex; align-items: center; gap: 6px; }
+.pr-reviewer-search input { min-width: 0; width: 100%; }
+.pr-reviewer-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 15; max-height: 230px; overflow-y: auto; background: var(--panel, white); border: 1px solid #dce3df; border-radius: 8px; box-shadow: 0 8px 24px #0002; padding: 6px; }
+.pr-reviewer-results > button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 5px; }
+.pr-reviewer-results > button:hover { background: #e8f5ed; }
+.pr-reviewer-results > button span { min-width: 0; overflow-wrap: anywhere; }
+.pr-reviewer-results small { display: block; font-size: 11px; color: #64756d; }
+.pr-reviewer-selected { display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; margin-top: 8px; }
+.pr-reviewer-person { display: flex; align-items: center; gap: 6px; padding: 3px 5px; border-radius: 6px; background: #eef5f0; }
+.pr-reviewer-person > span:not(.initials-avatar) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-size: 12px; }
+.pr-reviewer-person > button { flex-shrink: 0; }
+@media (max-width: 600px) { .pr-reviewer-columns { grid-template-columns: 1fr; } }

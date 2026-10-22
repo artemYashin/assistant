@@ -1,3 +1,4 @@
+import { PrReviewerPicker, type ReviewerPerson } from "./PrReviewerPicker.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
@@ -8,6 +9,8 @@ export function ProjectRepository({
   context: { client: string; project: string };
   onSaved?: () => void;
 }) {
+  const [required, setRequired] = useState<ReviewerPerson[]>([]);
+  const [optional, setOptional] = useState<ReviewerPerson[]>([]);
   const [ignoredPaths, setIgnoredPaths] = useState("");
   const [mainBranch, setMainBranch] = useState("");
   const [fetchDepth, setFetchDepth] = useState(1);
@@ -23,6 +26,10 @@ export function ProjectRepository({
   useEffect(() => {
     let live = true;
     setRepo("");
+    setAll(false);
+    setEnabled(true);
+    setRequired([{ id: "$self", name: "Вы (владелец PAT)", email: "" }]);
+    setOptional([]);
     setLoaded(false);
     setIgnoredPaths("");
     setDiffBudget(160000);
@@ -54,6 +61,11 @@ export function ProjectRepository({
           setDiffBudget(rules.diffBudget || 160000);
           setRepo(m.repository || "");
           setAll(m.mode === "all");
+          if (m.reviewer_filter) {
+            const filter = JSON.parse(m.reviewer_filter);
+            setRequired(filter.required);
+            setOptional(filter.optional);
+          }
           setEnabled(!!m.enabled);
         }
         setLoaded(true);
@@ -84,6 +96,7 @@ export function ProjectRepository({
             repository: repo.trim(),
             mode: all ? "all" : "required",
             enabled,
+            reviewerFilter: { required, optional },
             codeSyncMinutes,
             fetchDepth,
             mainBranch,
@@ -185,9 +198,13 @@ export function ProjectRepository({
           checked={all}
           onChange={(e) => setAll(e.target.checked)}
         />
-        Все активные PR (без галочки — только лично назначенные вам как required
-        reviewer)
+        Все активные PR
       </label>
+      <div className="pr-reviewer-columns">
+        <PrReviewerPicker title="Required" people={required} onChange={setRequired} disabled={all || busy || !loaded} context={context} />
+        <PrReviewerPicker title="Optional" people={optional} onChange={setOptional} disabled={all || busy || !loaded} context={context} />
+      </div>
+      <p className="muted">Импортировать PR, где хотя бы один выбранный человек назначен ревьюером в указанной роли. Это не фильтр по автору PR. Пустые списки без галочки «Все» не импортируют PR.</p>
       <label className="check-option">
         <input
           type="checkbox"

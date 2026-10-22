@@ -1,3 +1,4 @@
+import { reviewerFilterSchema } from "./pr-reviewer-filter.js";
 import { PrCi } from "./pr-ci.js";
 import { deleteContext } from "./context-delete.js";
 import { memorySummarySchema } from "./memory-summary.js";
@@ -1011,11 +1012,11 @@ export function createApp(
     res.json({ users: store.get("azure.assignees.recent:" + source, []) });
   });
   app.post("/api/developers/search", async (req, res) => {
-    const { query } = z
-      .object({ query: z.string().trim().min(2).max(100) })
+    const { query, context } = z
+      .object({ query: z.string().trim().min(2).max(100), context: contextSchema.optional() })
       .strict()
       .parse(req.body);
-    res.json(await connectors.developers(query));
+    res.json(await connectors.developers(query, context));
   });
   app.get("/api/tickets/trash", (_req, res) => res.json(store.ticketTrash()));
   app.post("/api/tickets/:id/restore", (req, res) => {
@@ -1193,6 +1194,7 @@ export function createApp(
         repository: text.min(1),
         mode: z.enum(["required", "all"]),
         enabled: z.boolean(),
+        reviewerFilter: reviewerFilterSchema.optional(),
         reviewFiles: reviewFileSettings.optional(),
         codeSyncMinutes: z.number().int().min(0).max(1440).optional(),
         mainBranch: z.string().trim().max(500).optional(),

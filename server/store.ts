@@ -326,6 +326,8 @@ export class Store {
       this.db.exec("ALTER TABLE conversations ADD COLUMN message_context TEXT");
     if (!(this.db.prepare("PRAGMA table_info(conversations)").all() as any[]).some(c => c.name === "timeline"))
       this.db.exec("ALTER TABLE conversations ADD COLUMN timeline TEXT");
+    if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "reviewer_filter"))
+      this.db.exec("ALTER TABLE pr_projects ADD COLUMN reviewer_filter TEXT");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "main_branch"))
       this.db.exec("ALTER TABLE pr_projects ADD COLUMN main_branch TEXT NOT NULL DEFAULT ''");
     if (!(this.db.prepare("PRAGMA table_info(pr_projects)").all() as any[]).some(c => c.name === "fetch_depth"))

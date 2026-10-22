@@ -1,3 +1,4 @@
+import { reviewerFilterSchema, matchesReviewers, needsReviewerIdentity, type ReviewerFilter } from "./pr-reviewer-filter.js";
 import { UsageLedger } from "./usage.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { PrSourcePreparation } from "./pr-source.js";
@@ -32,6 +33,7 @@ export type Monitor = {
   azure_project: string;
   repository: string;
   mode: "required" | "all";
+  reviewer_filter?: string | null;
   enabled: number;
   error?: string | null;
   review_files?: string;
@@ -303,6 +305,7 @@ export class PullRequests {
     repository: string;
     mode: "required" | "all";
     enabled: boolean;
+    reviewerFilter?: ReviewerFilter;
     reviewFiles?: { ignoredPaths: string[]; diffBudget: number };
     fetchDepth?: number;
     mainBranch?: string;
@@ -325,6 +328,7 @@ export class PullRequests {
     const mainBranch = input.mainBranch === undefined ? undefined : z.string().trim().max(500).refine(value => !/[\r\n\0]/.test(value)).parse(input.mainBranch);
     const fetchDepth = input.fetchDepth === undefined ? undefined : z.number().int().min(1).max(1000).parse(input.fetchDepth);
     const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(7200).parse(input.fetchTimeoutSeconds);
+    const filter = input.reviewerFilter === undefined ? undefined : JSON.stringify(reviewerFilterSchema.parse(input.reviewerFilter));
     this.store.addContext(input);
     this.store.db
       .prepare(
@@ -350,6 +354,7 @@ export class PullRequests {
         Number(input.enabled),
         input.repository.trim(),
       );
+    if (filter !== undefined) this.store.db.prepare("UPDATE pr_projects SET synced_at=CASE WHEN reviewer_filter IS NOT ? THEN NULL ELSE synced_at END, reviewer_filter=? WHERE client=? AND project=? AND source=? AND azure_project=?").run(filter, filter, input.client, input.project, source, azureProject);
     if (codeSyncMinutes !== undefined) {
       this.store.db.prepare("UPDATE pr_projects SET code_sync_minutes=? WHERE client=? AND project=? AND source=? AND azure_project=?")
         .run(codeSyncMinutes, input.client, input.project, source, azureProject);
@@ -707,11 +712,11 @@ export class PullRequests {
           throw new AppError(400, "Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.");
         const credentials = this.credentials(m);
         const identity =
-          m.mode === "required"
+          needsReviewerIdentity(m)
             ? await this.get(m, "connectionData", credentials, true)
             : null;
         const me = identity?.authenticatedUser?.id;
-        if (m.mode === "required" && !me)
+        if (needsReviewerIdentity(m) && !me)
           throw new AppError(502, "Azure не вернул ID владельца PAT");
         const found: any[] = [];
         for (let skip = 0; ; skip += 100) {
@@ -729,7 +734,7 @@ export class PullRequests {
             throw new AppError(502, "Azure вернул неверный список PR");
           found.push(
             ...page.value.filter(
-              (p: any) => m.mode === "all" || requiredReviewer(p, me),
+              (p: any) => matchesReviewers(p, m, me),
             ),
           );
           if (page.value.length < 100) break;
@@ -817,6 +822,7 @@ export class PullRequests {
         if (
           !currentMonitor?.enabled ||
           currentMonitor.mode !== m.mode ||
+          currentMonitor.reviewer_filter !== m.reviewer_filter ||
           currentMonitor.repository !== m.repository
         )
           continue;
@@ -1497,7 +1503,7 @@ export class PullRequests {
         credentials,
       );
       const me =
-        m.mode === "required"
+        needsReviewerIdentity(m)
           ? (await this.get(m, "connectionData", credentials, true))
               .authenticatedUser?.id
           : "";
@@ -1507,11 +1513,11 @@ export class PullRequests {
         detail.isDraft ||
         detail.lastMergeSourceCommit?.commitId !== job.head ||
         detail.lastMergeTargetCommit?.commitId !== job.target ||
-        (m.mode === "required" && !requiredReviewer(detail, me))
+        !matchesReviewers(detail, m, me)
       ) {
         this.store.db
           .prepare(
-            "UPDATE pr_reviews SET status='outdated',error='PR закрыт, изменён или больше не требует вашего ревью',finished_at=? WHERE id=?",
+            "UPDATE pr_reviews SET status='outdated',error='PR закрыт, изменён или больше не соответствует фильтру ревьюеров',finished_at=? WHERE id=?",
           )
           .run(now(), job.id);
         return;

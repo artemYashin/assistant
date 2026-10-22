@@ -1341,3 +1341,32 @@ test("PR sync errors identify endpoint and sanitized Azure reason", async t => {
   assert.match(error, /HTTP 400/);
   assert.ok(!error.includes("test-pat"));
 });
+
+test("explicit reviewer filters OR across required/optional, persist and replace membership", async t => {
+  const { store, service } = fixture(t);
+  const person = (id: string) => ({ id, name: id, email: "" });
+  const input = { ...context, repository: "repo", mode: "required" as const, enabled: true,
+    reviewerFilter: { required: [person("alice"), person("bob")], optional: [person("carol")] } };
+  service.save(input);
+  const items = [
+    { ...pr(1), reviewers: [{ id: "ALICE", isRequired: true }] },
+    { ...pr(2), reviewers: [{ id: "bob", isRequired: true }] },
+    { ...pr(3), reviewers: [{ id: "carol", isRequired: false }] },
+    { ...pr(4), reviewers: [{ id: "alice", isRequired: false }] },
+    { ...pr(5), reviewers: [{ id: "carol", isRequired: true }] },
+    { ...pr(6), reviewers: [{ id: "alice", isRequired: true, isContainer: true }] },
+    pr(7),
+  ];
+  mock(t, items, url => { if (url.pathname.endsWith("connectionData")) throw new Error("Explicit IDs must not request PAT identity"); });
+  await service.sync();
+  assert.equal(service.monitors()[0].error, null);
+  assert.deepEqual(service.list(context).map(p => p.number).sort(), [1, 2, 3]);
+  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!), input.reviewerFilter);
+  service.save({ ...input, reviewerFilter: { required: [], optional: [] } });
+  await service.sync();
+  assert.equal(service.list(context).length, 0);
+  service.save({ ...input, mode: "all" });
+  await service.sync();
+  assert.equal(service.list(context).length, 7);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n, 7);
+});

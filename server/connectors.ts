@@ -617,7 +617,7 @@ export class Connectors {
       throw e;
     }
   }
-  async developers(query: string) {
+  async developers(query: string, context?: { client: string; project: string }) {
     query = query.trim();
     if (
       query.length < 2 ||
@@ -629,7 +629,7 @@ export class Connectors {
         400,
         "Введите минимум два символа имени или email без * и ?",
       );
-    const s = this.store.settings(),
+    const s = this.store.settings(context),
       source = this.store.source(s),
       pat = this.store.secret("azure.pat");
     if (!pat || !s.azureProject)
@@ -767,7 +767,7 @@ export class Connectors {
       ),
     }));
     if (
-      source !== this.store.source() ||
+      source !== this.store.source(this.store.settings(context)) ||
       pat !== this.store.secret("azure.pat")
     )
       throw new AppError(409, "Подключение изменилось; повторите поиск");
