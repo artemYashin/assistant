@@ -2,14 +2,14 @@ import { useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-export function ConfirmButton({ children, title, message, confirmLabel, onConfirm, disabled, className = "secondary" }: {
+export function ConfirmButton({ children, title, message, confirmLabel, onConfirm, disabled, ariaLabel, className = "secondary" }: {
   children: ReactNode; title: string; message: string; confirmLabel: string;
-  onConfirm: () => unknown | Promise<unknown>; disabled?: boolean; className?: string;
+  onConfirm: () => unknown | Promise<unknown>; disabled?: boolean; ariaLabel?: string; className?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   return <>
-    <button type="button" className={className} disabled={disabled || busy} onClick={() => { setError(""); dialog.current?.showModal(); }}>{children}</button>
+    <button type="button" aria-label={ariaLabel} title={ariaLabel} className={className} disabled={disabled || busy} onClick={() => { setError(""); dialog.current?.showModal(); }}>{children}</button>
     {typeof document !== "undefined" && createPortal(<dialog ref={dialog} className="developer-dialog action-confirm-dialog" aria-label={title} onCancel={event => { event.stopPropagation(); if (busy) event.preventDefault(); }} onClick={event => {
       if (event.target === event.currentTarget && !busy) {
         const rect = event.currentTarget.getBoundingClientRect();

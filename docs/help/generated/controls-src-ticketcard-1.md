@@ -9,118 +9,118 @@
 
 Скопировать номер тикета
 
-Источник: src/TicketCard.tsx:233.
+Источник: src/TicketCard.tsx:234.
 
 ### Элемент
 
 Локальные заметки · #{…} · Для редактирования добавьте тикет в локальный список.
 
-Источник: src/TicketCard.tsx:389.
+Источник: src/TicketCard.tsx:390.
 
 ### Элемент
 
 Все поля тикета #{…}
 
-Источник: src/TicketCard.tsx:406.
+Источник: src/TicketCard.tsx:407.
 
 ### Элемент
 
 / / · Восстановить / Импортировать
 
-Источник: src/TicketCard.tsx:436.
+Источник: src/TicketCard.tsx:437.
 
 ### Элемент
 
 Скопировать ссылку на тикет в Azure DevOps
 
-Источник: src/TicketCard.tsx:502.
+Источник: src/TicketCard.tsx:503.
 
 ### Элемент
 
 Перейти к тикету
 
-Источник: src/TicketCard.tsx:511.
+Источник: src/TicketCard.tsx:512.
 
 ### Элемент
 
 Открыть в Azure DevOps
 
-Источник: src/TicketCard.tsx:515.
+Источник: src/TicketCard.tsx:516.
 
 ### Элемент
 
 Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Удаляю… / Удалить
 
-Источник: src/TicketCard.tsx:520.
+Источник: src/TicketCard.tsx:521.
 
 ### Элемент
 
 / · Analyze with AI
 
-Источник: src/TicketCard.tsx:556.
+Источник: src/TicketCard.tsx:557.
 
 ### Элемент
 
 / /
 
-Источник: src/TicketCard.tsx:621.
+Источник: src/TicketCard.tsx:622.
 
 ### Элемент
 
 Связанные открытые PR ·
 
-Источник: src/TicketCard.tsx:646.
+Источник: src/TicketCard.tsx:647.
 
 ### Элемент
 
 # · ·
 
-Источник: src/TicketCard.tsx:659.
+Источник: src/TicketCard.tsx:660.
 
 ### Элемент
 
 Комментарии ·
 
-Источник: src/TicketCard.tsx:692.
+Источник: src/TicketCard.tsx:693.
 
 ### Элемент
 
 Вложения и изображения ·
 
-Источник: src/TicketCard.tsx:726.
+Источник: src/TicketCard.tsx:727.
 
 ### Элемент
 
 ↗
 
-Источник: src/TicketCard.tsx:751.
+Источник: src/TicketCard.tsx:752.
 
 ### Элемент
 
 Новый комментарий
 
-Источник: src/TicketCard.tsx:869.
+Источник: src/TicketCard.tsx:870.
 
 ### Элемент
 
 Напишите комментарий к тикету…
 
-Источник: src/TicketCard.tsx:870.
+Источник: src/TicketCard.tsx:871.
 
 ### Элемент
 
 Отправка… / Отправить
 
-Источник: src/TicketCard.tsx:886.
+Источник: src/TicketCard.tsx:887.
 
 ### Элемент
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: src/TicketCard.tsx:998.
+Источник: src/TicketCard.tsx:999.
 
 ### Элемент
 
-Убрать тикет #{…} из локального списка · Удалить только из Orbit; автоимпорт не вернёт тикет
+Удалить тикет #{…}? · Тикет #{…} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины. · Удалить в корзину
 
-Источник: src/TicketCard.tsx:1017.
+Источник: src/TicketCard.tsx:1018.

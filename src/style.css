@@ -9750,3 +9750,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .diff-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .pr-diff-heading > div { flex: 1; }
+
+.ticket-row-actions > .ticket-table-delete { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 5px; border: 1px solid #e7bcbc; border-radius: 7px; background: #fbe9e9; color: #b93838; }
+.ticket-row-actions > .ticket-table-delete:hover:not(:disabled) { background: #f7d1d1; border-color: #d58b8b; }

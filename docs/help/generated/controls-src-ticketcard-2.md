@@ -9,4 +9,4 @@
 
 Повторить загрузку
 
-Источник: src/TicketCard.tsx:1044.
+Источник: src/TicketCard.tsx:1046.

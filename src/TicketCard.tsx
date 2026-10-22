@@ -1,3 +1,4 @@
+import { ConfirmButton } from "./ConfirmButton.js";
 import { findCitationRange, highlightCitation, revealCitation } from "./ticket-citation-highlight.js";
 import { AzureAssignee } from "./AzureAssignee.js";
 import { ImagePreview } from "./ImagePreview.js";
@@ -1014,15 +1015,16 @@ export function TicketTableRow({
                 {open ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
               {onRemove && (
-                <button
-                  type="button"
-                  className="text-button"
-                  aria-label={`Убрать тикет #${id} из локального списка`}
-                  onClick={onRemove}
-                  title="Удалить только из Orbit; автоимпорт не вернёт тикет"
+                <ConfirmButton
+                  className="icon-button ticket-table-delete"
+                  ariaLabel={`Удалить тикет #${id} из локального списка`}
+                  title={`Удалить тикет #${id}?`}
+                  message={`Тикет #${id} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины.`}
+                  confirmLabel="Удалить в корзину"
+                  onConfirm={onRemove}
                 >
-                  <Trash2 size={17} />
-                </button>
+                  <Trash2 size={17} aria-hidden="true" />
+                </ConfirmButton>
               )}
             </div>
           </td>
