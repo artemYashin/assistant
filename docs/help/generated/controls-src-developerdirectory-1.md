@@ -9,40 +9,40 @@
 
 Добавить разработчиков
 
-Источник: src/DeveloperDirectory.tsx:79.
+Источник: src/DeveloperDirectory.tsx:78.
 
 ### Элемент
 
 Анна Иванова Иван Петров
 
-Источник: src/DeveloperDirectory.tsx:81.
+Источник: src/DeveloperDirectory.tsx:80.
 
 ### Элемент
 
 Добавить
 
-Источник: src/DeveloperDirectory.tsx:90.
+Источник: src/DeveloperDirectory.tsx:89.
 
 ### Элемент
 
 Группировка поручений · ·
 
-Источник: src/DeveloperDirectory.tsx:125.
+Источник: src/DeveloperDirectory.tsx:124.
 
 ### Элемент
 
 Имя разработчика {…}
 
-Источник: src/DeveloperDirectory.tsx:149.
+Источник: src/DeveloperDirectory.tsx:150.
 
 ### Элемент
 
 Убрать из справочника · Убрать {…} из справочника
 
-Источник: src/DeveloperDirectory.tsx:158.
+Источник: src/DeveloperDirectory.tsx:159.
 
 ### Элемент
 
-Сохранить имя {…}
+Сохранить имя · Сохранить имя {…}
 
-Источник: src/DeveloperDirectory.tsx:169.
+Источник: src/DeveloperDirectory.tsx:170.

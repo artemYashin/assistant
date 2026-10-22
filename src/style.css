@@ -8592,8 +8592,18 @@ summary > svg {
 .context-save-actions > .context-save-button { order: 1; }
 .context-save-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 34px; padding: 7px 12px; font-size: 12px; border-radius: 6px; }
 .context-directory-name.is-editing > .context-save-actions { flex-basis: 100%; }
-.developer-directory-row > .context-save-actions { margin-top: 0; padding-top: 6px; }
-.developer-directory-row:has(> .context-save-actions) { grid-template-columns: 28px minmax(0, 1fr); }
+.developer-directory-row { grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; }
+.developer-row-actions { display: flex; align-items: center; gap: 4px; }
+.developer-row-actions > .icon-button { width: 30px; height: 30px; min-width: 30px; padding: 0; }
+.developer-row-actions > .developer-save-name { color: #285b45; background: #edf6f0; border: 1px solid #b9d5c4; }
+.developer-row-actions > .developer-save-name:hover:not(:disabled) { background: #dcefe3; }
+.developer-directory-panel.developer-grouping-panel { padding: 0; overflow: hidden; }
+.developer-grouping-panel > summary { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 12px; min-height: 38px; box-sizing: border-box; font-size: 13px; line-height: 1.4; cursor: pointer; }
+.developer-grouping-panel > summary > svg { flex-shrink: 0; }
+.developer-grouping-panel > summary:hover { background: #f0f6f2; }
+.developer-grouping-panel > summary:focus-visible { outline: 2px solid #7ca78b; outline-offset: -2px; }
+.developer-grouping-panel[open] > summary { border-bottom: 1px solid var(--border); }
+.developer-grouping-body { padding: 12px; }
 
 .sidebar .sidebar-icon-code { color: #7c63bd; }
 

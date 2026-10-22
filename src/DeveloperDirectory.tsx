@@ -1,7 +1,6 @@
-import { ContextSaveButton } from "./ContextSaveButton.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { ProjectDeveloperStatusSettings } from "./DeveloperStatusSettings.js";
-import { Users, Settings2, Plus, X } from "lucide-react";
+import { Users, Settings2, Plus, X, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 export function DeveloperDirectory({
@@ -119,13 +118,14 @@ export function DeveloperDirectory({
         </small>
       </section>
       <details
-        className="developer-directory-panel"
+        className="developer-directory-panel developer-grouping-panel"
         onToggle={(e) => setShowSettings(e.currentTarget.open)}
       >
         <summary>
           <Settings2 size={17} /> Группировка поручений ·{" "}
           {context.project || "выберите проект"}
         </summary>
+        <div className="developer-grouping-body">
         {showSettings &&
           (context.project ? (
             <ProjectDeveloperStatusSettings
@@ -137,6 +137,7 @@ export function DeveloperDirectory({
               Выберите проект, чтобы настроить вкладки и показ корзины.
             </p>
           ))}
+        </div>
       </details>
     </div>
   );
@@ -153,7 +154,7 @@ function DeveloperRow({ person, busy, action }: any) {
         disabled={busy}
         onChange={(e) => setName(e.target.value)}
       />
-      <div className="context-save-actions">
+      <div className="developer-row-actions">
 
       <button
         className="icon-button"
@@ -166,9 +167,9 @@ function DeveloperRow({ person, busy, action }: any) {
       >
         <X size={16} />
       </button>
-      <ContextSaveButton busy={busy} disabled={!name.trim() || name.trim() === person.name}
+      <button type="button" className="icon-button developer-save-name" title="Сохранить имя" disabled={busy || !name.trim() || name.trim() === person.name}
         aria-label={`Сохранить имя ${person.name}`}
-        onClick={() => void action(() => api(`/local-developers/${person.id}`, "PUT", { name: name.trim() }))} />
+        onClick={() => void action(() => api(`/local-developers/${person.id}`, "PUT", { name: name.trim() }))}><Save size={16} aria-hidden="true" /></button>
       </div>
     </div>
   );

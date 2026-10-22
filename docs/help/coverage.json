@@ -92,7 +92,7 @@
     "src/ContextPicker.tsx": "9c0524209632423cc8ed30c6321ba6aa5206281d651bf62e7e7b0eb416779526",
     "src/ContextSaveButton.tsx": "271d4733a9e369fcdab09e468ea58773abd0d3fed28da77e649e70e37082ed6a",
     "src/DeleteContextButton.tsx": "5a59d3c8b41076b2ed00457a6e073756c0a81c601c6a32558ac03e99bdf0a558",
-    "src/DeveloperDirectory.tsx": "94b7e36171af2655ae1c871585f4f6c78ac55e10d92b377cbf0ba54a64681e97",
+    "src/DeveloperDirectory.tsx": "a9da1f02160d3e41f2b60401b7d1f39ad3b0a44aaa894df44ae53c17ad742ad7",
     "src/DeveloperStatusSettings.tsx": "3caa8475d401ace0016bb3d083f18e5848413d6f5689cb8325fef7a4759706f4",
     "src/DevelopersPage.tsx": "cff75cf4868183942857e37cbd9eb0dce0d7b65dd7155609a28f1ca6638acca4",
     "src/DiffFileTree.tsx": "dd92c5a0faffdff827b337bf013835f3a72d257466ebb375b6a0c5cf7231394c",
