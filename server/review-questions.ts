@@ -22,6 +22,7 @@ export const reviewOptionsSchema = z
     model: z.string().trim().max(200).default(""),
     questionFrequency: z.enum(["none", "medium", "high"]).default("medium"),
     readTickets: z.boolean().default(true),
+    ticketIds: z.array(z.number().int().positive().safe()).max(20).optional(),
     readCode: z.boolean().default(true),
     codeDepth: z.enum(["low", "below_medium", "medium", "high"]).default("below_medium"),
     maxTokens: z.number().int().min(1000).max(100_000_000).default(1_000_000),

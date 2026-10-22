@@ -1237,3 +1237,43 @@ test("PR state changes reject closed PRs without writes and preserve state on de
   assert.equal(writes, 1);
   assert.equal((store.db.prepare("SELECT draft FROM pull_requests WHERE monitor=?").get(monitor) as any).draft, 0);
 });
+
+for (const selected of [[42], [], [99]]) {
+  test(`review reads only explicitly selected linked tickets: ${JSON.stringify(selected)}`, async t => {
+    const { store, service, calls } = fixture(t);
+    const reads: number[] = [];
+    let linkReads = 0;
+    mock(t, [pr()], url => {
+      if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) {
+        linkReads++;
+        return { value: [{ id: "42" }, { id: "43" }] };
+      }
+      const ticket = url.pathname.match(/\/workitems\/(\d+)$/);
+      if (ticket) {
+        const id = Number(ticket[1]);
+        reads.push(id);
+        assert.equal(id, 42, "Unselected tickets must never be fetched");
+        return { id, fields: { "System.TeamProject": "Project One", "System.Title": "Selected requirement", "System.Description": "Only selected content" } };
+      }
+      if (url.pathname.endsWith("/workitems/42/comments")) return { comments: [] };
+    });
+    await service.sync();
+    linkReads = 0;
+    const review = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false, readTickets: true, ticketIds: selected });
+    const saved = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(review) as any;
+    assert.deepEqual(JSON.parse(saved.options).ticketIds, selected);
+    await service.reviewNext();
+    if (selected.includes(99)) {
+      assert.equal(calls.length, 0);
+      assert.deepEqual(reads, []);
+      const result = store.db.prepare("SELECT error FROM pr_reviews WHERE id=?").get(review) as any;
+      assert.match(result.error, /Связи тикетов PR изменились/);
+    } else {
+      assert.equal(calls.length, 1);
+      assert.deepEqual(reads, selected);
+      assert.deepEqual(calls[0][3].ticketEvidence?.tickets.map((ticket: any) => ticket.id) || [], selected);
+      if (!selected.length) assert.equal(linkReads, 0);
+      else assert.match(calls[0][0], /Only selected content/);
+    }
+  });
+}

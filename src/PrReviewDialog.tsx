@@ -36,6 +36,8 @@ export function PrReviewDialog({
   const [codeDepth, setCodeDepth] = useState("below_medium");
   const [maxTokens, setMaxTokens] = useState(defaultMaxTokens);
   const [readTickets, setReadTickets] = useState(true);
+  const [tickets] = useState<{ id: number; title?: string }[]>(() => pr.tickets || []);
+  const [ticketIds, setTicketIds] = useState<number[]>(() => (pr.tickets || []).map((ticket: { id: number }) => ticket.id));
   const [reviewerComment, setReviewerComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -76,6 +78,7 @@ export function PrReviewDialog({
                 model,
                 questionFrequency: frequency,
                 readTickets,
+                ticketIds: readTickets ? ticketIds : [],
                 memoryScopes,
                 readCode,
                 codeDepth,
@@ -152,6 +155,18 @@ export function PrReviewDialog({
           />
           <Ticket size={17} aria-hidden="true" /><span>Прочитать связанные тикеты, комментарии и локальные заметки</span>
         </label>
+        {readTickets && <div className="review-ticket-selection" role="group" aria-label="Тикеты для ревью">
+          {pr.ticket_links_error && <small className="error">Не удалось обновить связи тикетов. Ниже — сохранённый список; для актуализации синхронизируйте PR.</small>}
+          {tickets.length ? <>
+            <div className="review-ticket-selection-heading"><small>Выбрано {ticketIds.length} из {tickets.length}</small><button type="button" className="text-button" disabled={busy} onClick={() => setTicketIds(ticketIds.length === tickets.length ? [] : tickets.map(ticket => ticket.id))}>{ticketIds.length === tickets.length ? "Снять все" : "Выбрать все"}</button></div>
+            <div className="review-ticket-selection-list">{tickets.map(ticket => <label className="review-ticket-row" key={ticket.id} title={ticket.title || `Тикет #${ticket.id}`}>
+              <input type="checkbox" disabled={busy} checked={ticketIds.includes(ticket.id)} onChange={event => setTicketIds(previous => event.target.checked ? [...previous, ticket.id] : previous.filter(id => id !== ticket.id))} />
+              <Ticket size={14} aria-hidden="true" /><b>#{ticket.id}</b><span>{ticket.title || "Название не загружено"}</span>
+            </label>)}</div>
+            {ticketIds.length > 20 && <small className="error">Выберите не более 20 тикетов.</small>}
+            {!ticketIds.length && <small className="muted">Тикеты не выбраны — ревью пройдёт без их содержимого.</small>}
+          </> : <small className="muted">Связанных тикетов нет.</small>}
+        </div>}
         <p className="muted">
           Сравнить код с описанием, критериями приёмки, обсуждением и заметками из Orbit.
           Изображения и файлы не анализируются. Если данные недоступны или
@@ -202,7 +217,7 @@ export function PrReviewDialog({
           >
             Отмена
           </button>
-          <button className="pr-review-launch" disabled={busy}>
+          <button className="pr-review-launch" disabled={busy || (readTickets && ticketIds.length > 20)}>
             <Sparkles size={17} />
             {busy ? "Запускаю…" : "Запустить ревью"}
           </button>

@@ -9401,3 +9401,15 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .chat-message-context-badge > svg { flex-shrink: 0; }
 .chat-message-context-badge > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-message-context-title { color: #527261; }
+
+.review-ticket-selection { display: grid; gap: 5px; margin-top: 6px; min-width: 0; }
+.review-ticket-selection-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.review-ticket-selection-heading .text-button { padding: 2px 4px; font-size: 11px; }
+.review-ticket-selection-list { max-height: 180px; overflow-y: auto; scrollbar-width: thin; border: 1px solid #d8e1db; border-radius: 6px; background: #fff; }
+.pr-review-dialog .review-ticket-row { display: flex; align-items: center; gap: 7px; min-width: 0; margin: 0; padding: 5px 8px; font-size: 12px; line-height: 18px; cursor: pointer; }
+.review-ticket-row:hover { background: #edf5ef; }
+.review-ticket-row:focus-within { outline: 2px solid #7aa98a; outline-offset: -2px; }
+.pr-review-dialog .review-ticket-row input { flex: 0 0 15px; width: 15px; height: 15px; min-height: 15px; margin: 0; padding: 0; accent-color: #43835a; }
+.review-ticket-row svg, .review-ticket-row b { flex-shrink: 0; color: #49765a; }
+.review-ticket-row span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.review-ticket-row:has(input:disabled) { opacity: .6; cursor: default; }

@@ -1545,7 +1545,7 @@ export class PullRequests {
         return;
       }
       const requirements: any[] = [];
-      if (options.readTickets) {
+      if (options.readTickets && options.ticketIds?.length !== 0) {
         const links = await this.get(
           m,
           `git/repositories/${enc(job.repo)}/pullRequests/${job.number}/workitems`,
@@ -1553,7 +1553,7 @@ export class PullRequests {
         );
         if (!Array.isArray(links.value))
           throw new AppError(502, "Не удалось прочитать связи тикетов PR");
-        const ids = [
+        const linkedIds = [
           ...new Set([
             ...prTicketIds(
               (detail.title || "") + "\n" + (detail.description || ""),
@@ -1562,10 +1562,13 @@ export class PullRequests {
             ...links.value.map((v: any) => Number(v.id)),
           ]),
         ];
+        const ids = options.ticketIds === undefined ? linkedIds : [...new Set(options.ticketIds)];
+        if (ids.some(id => !linkedIds.includes(id)))
+          throw new AppError(409, "Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.");
         if (ids.length > 20)
           throw new AppError(
             400,
-            "Более 20 связанных тикетов. Запустите ревью без чтения тикетов или уточните связи.",
+            "Выберите не более 20 связанных тикетов для одного ревью или отключите чтение тикетов.",
           );
         const connectors = new Connectors(
           this.store,
