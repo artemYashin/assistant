@@ -9717,3 +9717,11 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
   .diff-tree-resizer { display: none; }
   .repository-commits-heading { flex-wrap: wrap; }
 }
+
+.import-catalog-group { min-width: 0; }
+.import-catalog-group h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; font-size: 13px; color: #40594c; }
+.import-catalog-options { display: grid; gap: 6px; padding: 9px; border: 1px solid #d9e4dc; border-radius: 9px; background: #f2f6f3; max-height: 380px; overflow: auto; }
+.import-catalog-options .import-color-row { margin: 0; padding: 7px 8px; border: 1px solid #e0e8e2; border-radius: 7px; background: white; }
+.import-catalog-options .check-option { align-items: center; gap: 7px; min-width: 0; }
+.import-catalog-options .import-color-row:has(input:checked) { background: #eaf4ed; border-color: #afcbb8; }
+.import-settings > button.secondary { display: inline-flex; align-items: center; gap: 6px; width: fit-content; }

@@ -1,18 +1,25 @@
 import { StatusBadge } from "./TicketControls.js";
-import { useState } from "react";
+import { RefreshCw, ListFilter, Tags } from "lucide-react";
+import { useEffect, useState } from "react";
 import { api } from "./api.js";
 export function TicketImportSettings({
   form,
   set,
-  save,
 }: {
   form: any;
   set: (key: string, value: any) => void;
-  save: () => Promise<void>;
 }) {
   const [options, setOptions] = useState<any[]>([]),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(""); setOptions([]);
+    api("/tickets/options", "GET", undefined, controller.signal).then(setOptions)
+      .catch(e => { if (!controller.signal.aborted) setError(e.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [form.client, form.project, form.azureUrl, form.azureProject]);
   const types = [
     ...new Set<string>([
       ...options.map((o) => o.name),
@@ -53,8 +60,7 @@ export function TicketImportSettings({
           setLoading(true);
           setError("");
           try {
-            await save();
-            setOptions(await api("/tickets/options"));
+            setOptions(await api("/tickets/options?refresh=true"));
           } catch (e: any) {
             setError(e.message);
           } finally {
@@ -62,10 +68,11 @@ export function TicketImportSettings({
           }
         }}
       >
-        {loading
+        <RefreshCw size={15} className={loading ? "spin" : undefined} />{loading
           ? "Загрузка…"
-          : "Сохранить подключение и загрузить типы / статусы"}
+          : "Реимпортировать статусы"}
       </button>
+      <p className="muted">Полный каталог Azure кэшируется на 30 дней независимо от галочек. Реимпорт обновляет его по сохранённому подключению, не меняя фильтры и настройки.</p>
       {error && <p className="error">{error}</p>}
       <div className="form-grid">
         {[
@@ -86,8 +93,8 @@ export function TicketImportSettings({
             fallback: "#466540",
           },
         ].map((group) => (
-          <fieldset key={group.key}>
-            <legend>{group.title}</legend>
+          <section className="import-catalog-group" key={group.key}>
+            <h4>{group.kind === "type" ? <Tags size={16} /> : <ListFilter size={16} />}{group.title}</h4><div className="import-catalog-options">
             {!group.items.length && (
               <p className="muted">
                 Загрузите типы / статусы из Azure.
@@ -136,7 +143,7 @@ export function TicketImportSettings({
                 )}
               </div>
             ))}
-          </fieldset>
+          </div></section>
         ))}
       </div>
       <p className="muted">

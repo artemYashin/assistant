@@ -2613,7 +2613,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <div className="settings-group">
             <h3>Импорт тикетов и оформление</h3>
-          <TicketImportSettings form={form} set={set} save={save} />
+          <TicketImportSettings form={form} set={set} />
           </div>
           <div className="settings-group">
             <h3>Автоматическая синхронизация</h3>

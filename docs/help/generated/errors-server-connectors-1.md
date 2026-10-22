@@ -45,82 +45,82 @@ Azure не вернул доступные статусы
 
 Тикет относится к другому проекту
 
-Источник: server/connectors.ts:399.
+Источник: server/connectors.ts:403.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: server/connectors.ts:402.
+Источник: server/connectors.ts:406.
 
 ### Сообщение
 
 Тикет недоступен или относится к другому проекту
 
-Источник: server/connectors.ts:430.
+Источник: server/connectors.ts:434.
 
 ### Сообщение
 
 Azure не вернул список тикетов
 
-Источник: server/connectors.ts:465.
+Источник: server/connectors.ts:469.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/connectors.ts:472.
+Источник: server/connectors.ts:476.
 
 ### Сообщение
 
 Unexpected error
 
-Источник: server/connectors.ts:542.
+Источник: server/connectors.ts:546.
 
 ### Сообщение
 
 Подключение Azure изменилось, запись отменена
 
-Источник: server/connectors.ts:560.
+Источник: server/connectors.ts:564.
 
 ### Сообщение
 
 patch_failed
 
-Источник: server/connectors.ts:582.
+Источник: server/connectors.ts:586.
 
 ### Сообщение
 
 Введите минимум два символа имени или email без * и ?
 
-Источник: server/connectors.ts:617.
+Источник: server/connectors.ts:621.
 
 ### Сообщение
 
 Настройте Azure DevOps
 
-Источник: server/connectors.ts:625.
+Источник: server/connectors.ts:629.
 
 ### Сообщение
 
 Для Azure Services укажите URL организации без проекта
 
-Источник: server/connectors.ts:631.
+Источник: server/connectors.ts:635.
 
 ### Сообщение
 
 Azure вернул неверный список пользователей
 
-Источник: server/connectors.ts:657.
+Источник: server/connectors.ts:661.
 
 ### Сообщение
 
 Azure вернул неверный результат поиска Graph
 
-Источник: server/connectors.ts:692.
+Источник: server/connectors.ts:696.
 
 ### Сообщение
 
 API по настроенному адресу не найден (HTTP 404)
 
-Источник: server/connectors.ts:738.
+Источник: server/connectors.ts:742.

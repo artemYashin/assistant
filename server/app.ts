@@ -1059,8 +1059,8 @@ export function createApp(
       priorityCount: priorityCount(store, context),
     });
   });
-  app.get("/api/tickets/options", async (_req, res) =>
-    res.json(await connectors.ticketOptions()),
+  app.get("/api/tickets/options", async (req, res) =>
+    res.json(await connectors.ticketOptions(z.enum(["true", "false"]).optional().parse(req.query.refresh) === "true")),
   );
   app.get("/api/tickets/:id/details", async (req, res) => {
     if (req.query.source !== undefined && req.query.source !== store.source()) throw new AppError(409, "Подключение Azure изменилось");

@@ -7,7 +7,7 @@ import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
 import { IntegrationsAuth } from "../server/auth.js";
 
-test("status cache lasts one day, persists, shares concurrent requests and separates credentials/projects", async t => {
+test("status cache lasts thirty days, persists, shares concurrent requests and separates credentials/projects", async t => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-states-cache-"));
   const store = new Store(dir);
   t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
@@ -15,15 +15,16 @@ test("status cache lasts one day, persists, shares concurrent requests and separ
   store.setSecret("azure.pat", "first");
   store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(store.source(), 1, "Title", "Active", "", "Bug", "", "", "");
   let time = Date.now(), calls = 0, fail = false;
+  let states = ["Active", "Closed"];
   t.mock.method(Date, "now", () => time);
   const make = () => {
     const c = new Connectors(store, new IntegrationsAuth(store));
     (c as any).azure = async (path: string) => {
       calls++;
       if (fail) throw Error("offline");
-      if (path === "workitemtypes") return { value: [{ name: "Bug", states: [{ name: "Active" }, { name: "Closed" }] }] };
+      if (path === "workitemtypes") return { value: [{ name: "Bug", states: states.map(name => ({ name })) }] };
       assert.match(path, /workitemtypes\/Bug\/states/);
-      return { value: [{ name: "Active" }, { name: "Closed" }] };
+      return { value: states.map(name => ({ name })) };
     };
     return c;
   };
@@ -33,7 +34,7 @@ test("status cache lasts one day, persists, shares concurrent requests and separ
   c = make(); // A new service instance still uses the persisted cache.
   assert.deepEqual((await c.ticketStatesBatch([1])).results[0].states, ["Active", "Closed"]);
   assert.equal(calls, 1);
-  time += 86400000 - 1;
+  time += 30 * 86400000 - 1;
   await c.ticketStates(1); assert.equal(calls, 1);
   time++;
   fail = true;
@@ -43,6 +44,13 @@ test("status cache lasts one day, persists, shares concurrent requests and separ
   store.setSecret("azure.pat", "second");
   await c.ticketStates(1); assert.equal(calls, 4);
   await c.ticketOptions(); await c.ticketOptions(); assert.equal(calls, 5);
+  states = ["Active", "Closed", "New status"];
+  assert.deepEqual((await c.ticketOptions())[0].states, ["Active", "Closed"]);
+  await c.ticketOptions(true);
+  assert.equal(calls, 6);
+  assert.deepEqual((await c.ticketStates(1)).states, states);
+  assert.deepEqual((await c.ticketOptions())[0].states, states);
+  assert.equal(calls, 6);
   store.set("settings", { ...store.settings(), azureProject: "Other" });
-  await c.ticketOptions(); assert.equal(calls, 6);
+  await c.ticketOptions(); assert.equal(calls, 7);
 });

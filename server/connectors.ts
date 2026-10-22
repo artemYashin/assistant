@@ -363,26 +363,30 @@ export class Connectors {
     })();
   }
   private statusRequests = new Map<string, Promise<any>>();
-  private async cachedStatusData<T>(kind: string, s: Settings, pat: string | undefined, load: () => Promise<T>): Promise<T> {
+  private async cachedStatusData<T>(kind: string, s: Settings, pat: string | undefined, load: () => Promise<T>, refresh = false): Promise<T> {
     const key = "azure.status-cache:" + createHash("sha256").update(JSON.stringify([this.store.source(s), s.azureVersion, pat || "", kind])).digest("hex");
     const cached = this.store.get<{ expires: number; value: T } | null>(key, null);
-    if (cached && cached.expires > Date.now()) return cached.value;
+    if (!refresh && cached && cached.expires > Date.now()) return cached.value;
     const pending = this.statusRequests.get(key);
-    if (pending) return pending;
+    if (pending) { if (!refresh) return pending; await pending.catch(() => {}); }
     const request = load().then(value => {
-      this.store.set(key, { expires: Date.now() + 86400000, value });
+      this.store.set(key, { expires: Date.now() + 30 * 86400000, value });
       return value;
     }).finally(() => this.statusRequests.delete(key));
     this.statusRequests.set(key, request);
     return request;
   }
-  private typeStates(type: string, s: Settings, pat: string | undefined, supplied?: any[]) {
-    return this.cachedStatusData("states:" + type, s, pat, async () => {
+  private async typeStates(type: string, s: Settings, pat: string | undefined, supplied?: any[], refresh = false) {
+    const states = await this.cachedStatusData("states:" + type, s, pat, async () => {
       const response = supplied ? { value: supplied } : await this.azure(`workitemtypes/${encodeURIComponent(type)}/states`, {}, s, pat);
       if (!Array.isArray(response.value) || !response.value.length || response.value.some((v: any) => typeof v.name !== "string" || !v.name))
         throw new AppError(502, "Azure не вернул доступные статусы");
       return response.value.map((v: any) => v.name) as string[];
-    });
+    }, refresh);
+    const key = "azure.ticket-options:" + this.store.source(s);
+    const catalog = this.store.get<{ name: string; states: string[] }[]>(key, []);
+    this.store.set(key, [...catalog.filter(entry => entry.name !== type), { name: type, states }]);
+    return states;
   }
   private localStateItem(id: number, s: Settings) {
     const row = this.store.db.prepare("SELECT id,title,type,state FROM tickets WHERE source=? AND id=?").get(this.store.source(s), id) as any;
@@ -888,7 +892,7 @@ export class Connectors {
     }
     return { id, source, assigned: actual || null, verified: true };
   }
-  async ticketOptions() {
+  async ticketOptions(refresh = false) {
     const s = this.store.settings(),
       pat = this.store.secret("azure.pat");
     const options = await this.cachedStatusData("catalog", s, pat, async () => {
@@ -897,12 +901,13 @@ export class Connectors {
         throw new AppError(502, "Azure не вернул типы задач");
       const options: { name: string; states: string[] }[] = [];
       for (const type of result.value) {
-        options.push({ name: type.name, states: await this.typeStates(type.name, s, pat, type.states) });
+        options.push({ name: type.name, states: await this.typeStates(type.name, s, pat, type.states, refresh) });
       }
       return options;
-    });
-    this.store.set("azure.ticket-options:" + this.store.source(s), options);
-    return options;
+    }, refresh);
+    const updated = await Promise.all(options.map(async type => ({ name: type.name, states: await this.typeStates(type.name, s, pat) })));
+    this.store.set("azure.ticket-options:" + this.store.source(s), updated);
+    return updated;
   }
   async ticketSummary(id: number) {
     const s = this.store.settings(),
