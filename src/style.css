@@ -9279,7 +9279,7 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-review-dialog .review-settings-block > p { margin-top: 6px; }
 .pr-review-dialog .pr-review-ticket-option { font-size: 12px; gap: 7px; }
 .review-memory-heading { border-top: 1px solid #dce4df; margin-top: 8px; padding-top: 7px; font-size: 12px; font-weight: 600; }
-.review-memory-options { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 3px; }
+.review-memory-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 7px; }
 .review-memory-options .check-option { align-items: center; gap: 6px; padding: 4px 0; }
 .pr-review-dialog .review-question-field { margin: 0; gap: 5px; font-size: 12px; }
 .pr-review-dialog .review-question-field small { font-size: 11px; }
@@ -9304,3 +9304,16 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .memory-change-comparison > section:last-child { background: #f0f7f2; }
 .memory-change-comparison h3 { margin: 0 0 10px; font-size: 12px; }
 @media (max-width: 760px) { .memory-change-comparison { grid-template-columns: 1fr; } }
+
+/* Shared, full-label hit targets for review context and memory choices. */
+.pr-review-dialog .review-choice { display: flex; align-items: center; gap: 9px; min-height: 42px; margin: 0; padding: 9px 11px; border: 1px solid #d8e1db; border-radius: 7px; background: #fff; color: #344d3e; font-size: 12px; line-height: 1.4; cursor: pointer; transition: background .15s, border-color .15s; }
+.pr-review-dialog .review-choice:has(input:checked) { background: #edf5ef; border-color: #b9d2c1; }
+.pr-review-dialog .review-choice:hover:not(:has(input:disabled)) { background: #e2efe6; border-color: #8db79a; }
+.pr-review-dialog .review-choice:focus-within { outline: 2px solid #7aa98a; outline-offset: 2px; }
+.pr-review-dialog .review-choice:has(input:disabled) { opacity: .6; cursor: default; }
+.pr-review-dialog .review-choice input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; margin: 0; padding: 0; flex: 0 0 18px; accent-color: #43835a; cursor: inherit; }
+.pr-review-dialog .review-choice svg { flex: 0 0 auto; color: #568467; }
+.pr-review-dialog .review-choice span { min-width: 0; }
+.pr-review-dialog .review-code-option { margin-bottom: 8px; }
+.review-parameter-hints { display: grid; gap: 4px; margin-top: 7px; }
+@media (max-width: 420px) { .review-memory-options { grid-template-columns: 1fr; } }

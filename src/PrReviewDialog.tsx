@@ -1,7 +1,7 @@
 import { requestFieldDictation } from "./FieldDictation.js";
 import { ModelOverride } from "./ModelOverride.js";
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Mic } from "lucide-react";
+import { Sparkles, X, Mic, Globe, Users, FolderOpen, Code2, Ticket } from "lucide-react";
 import { SingleSelect } from "./SingleSelect.js";
 import { api } from "./api.js";
 
@@ -94,6 +94,10 @@ export function PrReviewDialog({
           ]}
         />
         </div>
+        <label className="review-token-limit">Максимум токенов на ревью
+          <input type="number" min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
+        </label>
+        <div className="review-parameter-hints">
         <p className="muted">
           {frequency === "none"
             ? "Ревью без вопросов; нехватка данных будет отмечена в отчёте."
@@ -101,21 +105,19 @@ export function PrReviewDialog({
               ? "Только важные уточнения, без которых нельзя оценить риск. До 3 вопросов."
               : "Более подробные уточнения требований и граничных случаев. До 8 вопросов."}
         </p>
-        <label className="review-token-limit">Максимум токенов на ревью
-          <input type="number" min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
-        </label>
         <small className="muted">Входящие + исходящие за всё ревью, включая продолжения после ответов. Остановка по отчётам модели.</small>
+        </div>
         </fieldset>
         <fieldset className="review-settings-block"><legend>Контекст ревью</legend>
-        <label className="pr-review-ticket-option review-code-option"><input type="checkbox" checked={readCode} disabled={busy} onChange={event => setReadCode(event.target.checked)} />Разрешить поиск и чтение кода репозитория</label>
-        <label className="pr-review-ticket-option">
+        <label className="pr-review-ticket-option review-code-option review-choice"><input type="checkbox" checked={readCode} disabled={busy} onChange={event => setReadCode(event.target.checked)} /><Code2 size={17} aria-hidden="true" /><span>Разрешить поиск и чтение кода репозитория</span></label>
+        <label className="pr-review-ticket-option review-choice">
           <input
             type="checkbox"
             checked={readTickets}
             disabled={busy}
             onChange={(e) => setReadTickets(e.target.checked)}
           />
-          Прочитать связанные тикеты и все комментарии перед ревью
+          <Ticket size={17} aria-hidden="true" /><span>Прочитать связанные тикеты и все комментарии перед ревью</span>
         </label>
         <p className="muted">
           Сравнить код с описанием, критериями приёмки и обсуждением.
@@ -125,9 +127,12 @@ export function PrReviewDialog({
         <div className="review-memory-heading">Используемая память</div>
         <div className="review-memory-options" role="group" aria-label="Используемая память">
           {[
-            ["general", "Общая"], ["client", "Заказчика"], ["project", "Проекта"], ["project_review", "Ревью проекта"],
-          ].map(([value, label]) => <label className="check-option" key={value}>
-            <input type="checkbox" checked={memoryScopes.includes(value)} disabled={busy} onChange={event => setMemoryScopes(previous => event.target.checked ? [...previous, value] : previous.filter(scope => scope !== value))} />{label}
+            { value: "general", label: "Общая", Icon: Globe },
+            { value: "client", label: "Заказчика", Icon: Users },
+            { value: "project", label: "Проекта", Icon: FolderOpen },
+            { value: "project_review", label: "Ревью проекта", Icon: Sparkles },
+          ].map(({ value, label, Icon }) => <label className="check-option review-choice" key={value}>
+            <input type="checkbox" checked={memoryScopes.includes(value)} disabled={busy} onChange={event => setMemoryScopes(previous => event.target.checked ? [...previous, value] : previous.filter(scope => scope !== value))} /><Icon size={17} aria-hidden="true" /><span>{label}</span>
           </label>)}
         </div>
         <small className="muted">Сначала передаются только названия; подробности ревьюер читает по необходимости. Память «Ревью проекта» используется только для ревью и не добавляется автоматически в чат. Можно отключить все разделы.</small>
