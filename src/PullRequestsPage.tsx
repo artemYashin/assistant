@@ -429,6 +429,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                 disabled={busy}
                 onClick={() => void run(() => api("/pr/sync", "POST", {}))}
               >
+                <RefreshCw size={15} aria-hidden="true" />
                 Синхронизировать PR
               </button>
               <button className="primary" onClick={() => setCreating(true)}>
