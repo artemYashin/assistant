@@ -1,11 +1,22 @@
+import { ImagePreview } from "./ImagePreview.js";
 import { Eye, Sparkles, File } from "lucide-react";
 import type { ChatMessageContext as ContextBadge } from "../server/chat-message-context.js";
 
-export function ChatMessageContext({ badges }: { badges?: ContextBadge[] }) {
+export function ChatMessageContext({ badges, context, sessionId, previews }: {
+  badges?: ContextBadge[]; context?: {client:string;project:string}; sessionId?:string;
+  previews?:Record<string,string>;
+}) {
   if (!badges?.length) return null;
   return (
     <div className="chat-message-context" aria-label="Контекст сообщения">
-      {badges.map((badge, index) => (
+      {badges.map((badge, index) => {
+        const image=badge.kind==="file" && badge.mime?.startsWith("image/");
+        const src=previews?.[String(badge.id)] || (context && sessionId ? "/api/conversation/files/"+encodeURIComponent(badge.id)+"?"+new URLSearchParams({...context,sessionId}) : "");
+        if(image && src) return <figure className="chat-message-image" key={`${badge.id}:${index}`}>
+          <ImagePreview src={src} alt={badge.title || `Вложение ${badge.number}`}/>
+          <figcaption title={badge.title}>Вложение {badge.number} · {badge.title || "Изображение"}</figcaption>
+        </figure>;
+        return (
         <span
           className="chat-message-context-badge"
           key={`${badge.kind}:${badge.id}:${index}`}
@@ -34,7 +45,7 @@ export function ChatMessageContext({ badges }: { badges?: ContextBadge[] }) {
             )}
           </span>
         </span>
-      ))}
+      );})}
     </div>
   );
 }

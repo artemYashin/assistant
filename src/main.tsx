@@ -3206,9 +3206,16 @@ function Assistant({
     if (!voiceText) setPrompt("");
     if (!history.length)
       setSessionTitle(text.replace(/\s+/g, " ").trim().slice(0, 80));
-    setHistory((h) => [...h, { role: "user", body: text, id: Date.now(), message_context: sentContext }]);
+    const sentMessageId=Date.now();
+    setHistory((h) => [...h, { role: "user", body: text, id: sentMessageId, message_context: sentContext,
+      image_previews:Object.fromEntries(sentFiles.filter(file=>file.preview).map(file=>[file.localId,file.preview])) }]);
     try {
       const fileIds = await uploadChatFiles(sentFiles,context,sessionId,chatConnection.current!.signal);
+      if(contextKey.current===captured && generation===historyGeneration.current) {
+        const uploadedContext=messageContextBadges({analysis:sentAnalysis,proposal:sentMemoryProposal,viewed:sentViewedTicket,
+          files:sentFiles.map((file,index)=>({id:fileIds[index],name:file.file.name,mime:file.mime}))});
+        setHistory(h=>h.map(message=>message.id===sentMessageId ? {...message,message_context:uploadedContext,image_previews:undefined} : message));
+      }
       const r = await apiProgress<ChatProgress>("/conversation", {
         fileIds,
         prompt: text,
@@ -3398,7 +3405,7 @@ function Assistant({
                 <Sparkles size={13} /> Orbit
               </span>
             )}
-            {m.role === "user" && <ChatMessageContext badges={m.message_context} />}
+            {m.role === "user" && <ChatMessageContext badges={m.message_context} context={context} sessionId={sessionId} previews={m.image_previews} />}
             {!m.timeline?.length && <ChatToolHistory tools={m.tools} />}
             {m.role === "error" ? (
               <>{m.timeline?.length > 0 && <ChatTimeline items={m.timeline} azureSource={azureSource} />}<p>{m.body}</p></>

@@ -9982,3 +9982,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
   .project-import-panel .import-settings .form-grid {grid-template-columns:1fr}
   .project-import-panel {padding:12px}
 }
+
+.chat-message-image { margin:0; width:min(260px,100%); min-width:0; }
+.chat-message-image .image-preview-shell { display:block;max-width:100%; }
+.chat-message-image .image-preview-trigger { display:block;max-width:100%; }
+.chat-message-image .image-thumbnail { width:100%;max-height:200px; }
+.chat-message-image .image-thumbnail img { max-height:200px;object-fit:contain; }
+.chat-message-image figcaption { margin-top:4px;font-size:11px;color:#527261;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
