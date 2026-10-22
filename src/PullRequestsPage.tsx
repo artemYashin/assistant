@@ -824,11 +824,18 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
             <details className="pr-content-section">
               <summary>
                 <Ticket size={17} aria-hidden="true" />
-                Связанные тикеты · {p.tickets?.length || 0}
+                Связанные тикеты
+                <span className="pr-ticket-count">{p.tickets?.length || 0}</span>
+                <button
+                  type="button"
+                  className="pr-ticket-sources-info"
+                  aria-label="Откуда берутся связанные тикеты"
+                  title="Источники: #номер в названии и описании PR, связи PR в Azure и связи, добавленные вручную в Orbit. Коммиты и связи между тикетами не просматриваются. Локально отключённые связи не участвуют в merge и ревью; Azure не меняется."
+                  onClick={event => { event.preventDefault(); event.stopPropagation(); }}
+                >
+                  <Info size={15} aria-hidden="true" />
+                </button>
               </summary>
-              <p className="muted pr-ticket-sources-hint">
-                Тикеты собираются по #номерам в названии и описании PR, из связей PR в Azure и добавленных вручную локальных связей. Сообщения коммитов и связи между тикетами не учитываются. Локальное отключение исключает тикет из merge и ревью, не меняя связь в Azure.
-              </p>
               {!readOnly && (
                 <PrTicketLink
                   pr={p}

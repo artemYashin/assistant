@@ -9585,7 +9585,9 @@ label.repository-pr-toggle { display: flex; flex-direction: row; align-items: fl
 
 .pr-ticket-row.is-disabled { background: #f4f5f4; border-style: dashed; }
 .pr-ticket-row.is-disabled > strong { color: #7b817c; }
-.pr-ticket-sources-hint { font-size: 12px; line-height: 1.5; margin: 8px 0 12px; }
+.pr-ticket-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border: 1px solid #c9dece; border-radius: 6px; background: #eaf4ed; color: #39704b; font-size: 11px; font-weight: 600; line-height: 1; }
+.pr-ticket-sources-info { display: inline-flex; align-items: center; justify-content: center; padding: 3px; border: 0; border-radius: 5px; background: transparent; color: #748579; cursor: help; }
+.pr-ticket-sources-info:hover, .pr-ticket-sources-info:focus-visible { background: #eaf4ed; color: #39704b; }
 
 .pr-merge-ticket-id { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; padding: 4px 7px; border: 1px solid #b7dac3; border-radius: 6px; background: #e2f3e8; color: #21683f; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .pr-merge-current-state { flex-wrap: wrap; }
@@ -9597,7 +9599,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-branch-link > svg { flex-shrink: 0; }
 .pr-branch-link > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pr-branch-link.is-unavailable { opacity: .65; }
-.pr-merge-branches { margin: 12px 0 6px; }
+.pr-merge-dialog > .pr-merge-branches { margin: -6px 0 0; }
 .pr-branches > svg { flex-shrink: 0; }
 
 .pr-ticket-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 4px; }
