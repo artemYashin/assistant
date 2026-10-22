@@ -9475,3 +9475,20 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
   border-color: #166534;
   color: #fff;
 }
+
+.context-azure-settings .azure-inherit-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.context-azure-settings .azure-inherit-toggle > input {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+}
+.context-azure-settings .azure-inherit-toggle > svg { flex-shrink: 0; color: #64748b; }
+.context-azure-settings .azure-inherit-toggle > span { min-width: 0; }

@@ -22,7 +22,7 @@ import { IntegrationsAuth } from "./auth.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
 import { Store, AppError, type Context } from "./store.js";
-import { azureBase, requestJson } from "./http.js";
+import { azureBase, azureErrorDetail, requestJson } from "./http.js";
 import type { Agent } from "./agent.js";
 export type Monitor = {
   id: string;
@@ -640,7 +640,10 @@ export class PullRequests {
     collection = false,
     paged = false,
   ) {
-    const url = `${m.source}/${collection ? "" : enc(m.azure_project) + "/"}_apis/${path}${path.includes("?") ? "&" : "?"}api-version=${enc(credentials.version)}`;
+    // Location/connectionData is a preview API, unlike the Git endpoints.
+    const version = path.split("?")[0] === "connectionData"
+      ? `${credentials.version.split("-")[0]}-preview.1` : credentials.version;
+    const url = `${m.source}/${collection ? "" : enc(m.azure_project) + "/"}_apis/${path}${path.includes("?") ? "&" : "?"}api-version=${enc(version)}`;
     const response = await fetch(url, {
       headers: {
         Authorization: `Basic ${Buffer.from(":" + credentials.pat).toString("base64")}`,
@@ -649,15 +652,21 @@ export class PullRequests {
       redirect: "error",
       signal: AbortSignal.timeout(20000),
     });
-    if (!response.ok)
+    if (!response.ok) {
+      const detail = await azureErrorDetail(response, { headers: { Authorization: `Basic ${Buffer.from(":" + credentials.pat).toString("base64")}` } });
+      const endpoint = path.split("?")[0];
+      const proxy = /\.mcas\./i.test(new URL(m.source).hostname)
+        ? " Указан адрес корпоративного прокси MCAS. Для Azure REST API проверьте исходный адрес организации, например https://dev.azure.com/организация, и доступ к нему по правилам вашей компании."
+        : "";
       throw new AppError(
         502,
-        response.status === 400 || response.status === 404
+        `Запрос: ${endpoint}.` + proxy + (detail ? ` Ответ Azure: ${detail}. ` : " ") + (response.status === 400 || response.status === 404
           ? `Не удалось загрузить данные pull request из Azure (HTTP ${response.status}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).`
           : response.status === 401 || response.status === 403
             ? `Azure не разрешил доступ к pull request (HTTP ${response.status}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.`
-            : `Не удалось загрузить данные pull request из Azure (HTTP ${response.status}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.`,
+            : `Не удалось загрузить данные pull request из Azure (HTTP ${response.status}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.`),
       );
+    }
     if (!response.body) throw new AppError(502, "Azure PR: пустой ответ");
     const reader = response.body.getReader();
     const chunks: Uint8Array[] = [];

@@ -1311,3 +1311,33 @@ test("missing PR repository is rejected before Azure requests", async t => {
   assert.equal(requests, 0);
   assert.match(service.monitors()[0].error || "", /Заказчики и проекты.*Репозиторий/);
 });
+
+test("required-reviewer sync uses preview connectionData and stable Git API", async t => {
+  const { service } = fixture(t);
+  const paths: string[] = [];
+  t.mock.method(globalThis, "fetch", async (raw: any) => {
+    const url = new URL(String(raw));
+    paths.push(url.pathname);
+    if (url.pathname.endsWith("connectionData")) {
+      assert.equal(url.searchParams.get("api-version"), "7.1-preview.1");
+      assert.equal(url.pathname, "/tfs/Collection/_apis/connectionData");
+      return Response.json({ authenticatedUser: { id: "me" } });
+    }
+    assert.equal(url.searchParams.get("api-version"), "7.1");
+    return Response.json({ value: [] });
+  });
+  await service.sync();
+  assert.equal(paths.length, 2);
+  assert.equal(service.monitors()[0].error, null);
+});
+
+test("PR sync errors identify endpoint and sanitized Azure reason", async t => {
+  const { service } = fixture(t);
+  t.mock.method(globalThis, "fetch", async () => Response.json({ message: "Use a preview API version. test-pat" }, { status: 400 }));
+  await service.sync();
+  const error = service.monitors()[0].error || "";
+  assert.match(error, /connectionData/);
+  assert.match(error, /Use a preview API version/);
+  assert.match(error, /HTTP 400/);
+  assert.ok(!error.includes("test-pat"));
+});
