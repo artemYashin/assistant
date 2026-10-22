@@ -9951,3 +9951,34 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .developer-directory-row .single-select .multi-select-trigger { font-size:11px; }
 @media (max-width:800px) { .developer-directory-editor { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:480px) { .developer-directory-row { grid-template-columns:24px minmax(60px,1fr) 105px auto; gap:4px; padding:4px; } .developer-row-actions { gap:2px; } .developer-row-actions > .icon-button { width:24px; min-width:24px; } }
+
+/* Context settings: compact controls without nested scrolling. */
+.project-import-panel {
+  padding:16px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fafbfa;
+}
+.project-import-panel .import-settings {margin:0;padding:0;border:0}
+.context-dialog .import-settings label.check-option {
+  display:flex;align-items:center;gap:8px;margin:0;
+}
+.context-dialog .import-settings .check-option input[type=checkbox] {
+  flex:0 0 auto;width:16px;height:16px;margin:0;
+}
+.import-color-row .check-option :is(.ticket-type-badge,.ticket-state-badge) {min-width:0}
+.context-dialog-selectors {align-items:flex-end;padding:4px 0 8px;gap:8px}
+.context-dialog-selectors > svg {flex-shrink:0;margin-bottom:9px}
+.context-dialog-selectors .multi-select-trigger {min-height:32px;padding:5px 9px;font-size:12px}
+.context-dialog-selectors .multi-select-label {font-size:11px;margin-bottom:3px}
+.developer-directory-list {max-height:none;overflow:visible}
+.developer-scope-group {padding:12px;margin-bottom:10px;background:#f8faf9;border-color:#d7e1db;border-radius:10px}
+.developer-scope-group h5 {margin:0 0 10px;font-size:12px;font-weight:600}
+.developer-directory-row {padding:8px 0;gap:8px}
+.context-dialog .context-manager-nav {margin:4px 0 8px}
+.project-import-panel .import-settings .form-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.context-dialog .import-color-row label.check-option {padding:0}
+@media (max-width:650px) {
+  .project-import-panel .import-settings .form-grid {grid-template-columns:1fr}
+  .project-import-panel {padding:12px}
+}

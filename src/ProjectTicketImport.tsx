@@ -13,12 +13,12 @@ export function ProjectTicketImport({context,onSaved}:{
     return ()=>controller.abort();
   },[context.client,context.project]);
   if(!context.client || !context.project) return <p className="muted">Выберите заказчика и проект для настройки автоматического импорта.</p>;
-  return <form onSubmit={async event=>{
+  return <form className="project-import-panel" onSubmit={async event=>{
     event.preventDefault();if(!form)return;
     setBusy(true);setMessage("");
     try {
-      const {azureAutoImport,azureTypes,azureStates,typeColors,statusColors}=form;
-      await api("/context/ticket-import","PUT",{context,azureAutoImport,azureTypes,azureStates,typeColors,statusColors});
+      const {azureAutoImport,azureImportAssignees,azureTypes,azureStates,typeColors,statusColors}=form;
+      await api("/context/ticket-import","PUT",{context,azureAutoImport,azureImportAssignees,azureTypes,azureStates,typeColors,statusColors});
       setMessage("Настройки импорта проекта сохранены.");onSaved();
     }catch(error:any){setMessage(error.message);}finally{setBusy(false);}
   }}>

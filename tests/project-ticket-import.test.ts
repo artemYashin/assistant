@@ -37,9 +37,13 @@ test("project import API saves only the selected project and rejects empty enabl
   const headers={Host:"localhost:43871",Origin:"http://localhost:43871","X-Orbit-Request":"1"};
   const setup=await request(app).post("/api/auth/setup").set(headers).send({password:"long-test-password"}).expect(200);
   const auth={...headers,Cookie:setup.headers["set-cookie"][0].split(";")[0],"X-CSRF-Token":setup.body.csrf};
-  const input={context:first,azureAutoImport:true,azureTypes:["Task"],azureStates:["New"],typeColors:{},statusColors:{}};
+  const input={context:first,azureAutoImport:true,azureImportAssignees:[{id:"u",name:"Person",email:"person@example.test"}],azureTypes:["Task"],azureStates:["New"],typeColors:{},statusColors:{}};
   await request(app).put("/api/context/ticket-import").set(auth).send({...input,azureStates:[]}).expect(400);
+  await request(app).put("/api/context/ticket-import").set(auth).send({...input,azureImportAssignees:[]}).expect(400);
   await request(app).put("/api/context/ticket-import").set(auth).send(input).expect(200);
+  assert.deepEqual(store.settings(first).azureImportAssignees,input.azureImportAssignees);
+  assert.equal((store.db.prepare("SELECT count(*) n FROM local_developers").get() as any).n,0);
+  assert.deepEqual(store.settings(second).azureImportAssignees,[]);
   assert.deepEqual(store.settings(first).azureTypes,["Task"]);
   assert.equal(store.settings(second).azureAutoImport,false);
   const read=await request(app).get("/api/context/ticket-import").query(first).set(auth).expect(200);

@@ -3,8 +3,8 @@ import { Search, X, Users } from "lucide-react";
 import { api } from "./api.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 export type ReviewerPerson = { id: string; name: string; email: string };
-export function PrReviewerPicker({ title, people, onChange, disabled, context }: {
-  title: string; people: ReviewerPerson[]; onChange: (value: ReviewerPerson[]) => void;
+export function PrReviewerPicker({ title, people, onChange, disabled, context, userPicker = false }: {
+  userPicker?: boolean; title: string; people: ReviewerPerson[]; onChange: (value: ReviewerPerson[]) => void;
   disabled: boolean; context: { client: string; project: string };
 }) {
   const [query, setQuery] = useState("");
@@ -36,7 +36,7 @@ export function PrReviewerPicker({ title, people, onChange, disabled, context }:
     <fieldset aria-label={title} className="pr-reviewer-picker" disabled={disabled}>
     <div ref={root} className="pr-reviewer-search">
       <Search size={15} />
-      <input aria-label={`Поиск ${title} ревьюера`} placeholder="Имя или e-mail" maxLength={100} value={query}
+      <input aria-label={userPicker ? `Поиск: ${title}` : `Поиск ${title} ревьюера`} placeholder="Имя или e-mail" maxLength={100} value={query}
         onFocus={() => setOpen(true)} onChange={e => { setQuery(e.target.value); setOpen(true); }}
         onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setOpen(false); } if (e.key === "Enter") e.preventDefault(); }} />
       {open && !disabled && <div className="pr-reviewer-results">
@@ -54,7 +54,7 @@ export function PrReviewerPicker({ title, people, onChange, disabled, context }:
         <InitialsAvatar name={p.name} /><span className="pr-reviewer-person-info"><span title={p.name}>{p.name}</span><small title={p.email}>{p.email || "Email не указан"}</small></span>
         <button type="button" className="icon-button" aria-label={`Убрать ${p.name} из ${title}`} onClick={() => onChange(people.filter(item => item.id !== p.id))}><X size={14} /></button>
       </div>)}
-      {!people.length && <small className="muted">Ревьюеры не выбраны</small>}
+      {!people.length && <small className="muted">{userPicker ? "Пользователи не выбраны" : "Ревьюеры не выбраны"}</small>}
     </div>
   </fieldset></div>;
 }

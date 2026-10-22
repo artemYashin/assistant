@@ -1667,7 +1667,7 @@ export class Connectors {
       ).map((x) => x.id),
     );
     const mine = new Set<number>();
-    if (importMine || (automatic && s.azureAutoImport)) {
+    if (importMine || (automatic && s.azureAutoImport && s.azureImportAssignees.length)) {
       if (automatic && (!s.azureTypes.length || !s.azureStates.length))
         throw new AppError(
           400,
@@ -1680,7 +1680,8 @@ export class Connectors {
           method: "POST",
           body: JSON.stringify({
             query:
-              "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.AssignedTo] = @Me" +
+              "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND " +
+              (automatic ? "[System.AssignedTo] IN (" + s.azureImportAssignees.map(person => quote(person.email)).join(",") + ")" : "[System.AssignedTo] = @Me") +
               (automatic
                 ? ` AND [System.WorkItemType] IN (${s.azureTypes.map(quote).join(",")}) AND [System.State] IN (${s.azureStates.map(quote).join(",")})`
                 : "") +

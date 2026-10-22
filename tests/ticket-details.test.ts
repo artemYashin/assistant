@@ -25,10 +25,11 @@ function fixture(t: any) {
     connectors: new Connectors(store, new IntegrationsAuth(store)),
   };
 }
-test("automatic import filters by owner, exact type and state with safe WIQL quoting", async (t) => {
+test("automatic import filters by selected assignees, exact type and state with safe WIQL quoting", async (t) => {
   const { store, connectors } = fixture(t);
   store.set(store.ticketImportKey(store.settings()), {
     azureAutoImport: true,
+    azureImportAssignees:[{id:"a",name:"A",email:"a@example.test"},{id:"b",name:"B",email:"b'test@example.test"}],
     azureTypes: ["Bug", "Change Request"],
     azureStates: ["Ready ' QA"],
   });
@@ -53,7 +54,8 @@ test("automatic import filters by owner, exact type and state with safe WIQL quo
     });
   });
   await connectors.syncTickets(false, true);
-  assert.match(query, /\[System.AssignedTo\] = @Me/);
+  assert.ok(query.includes("[System.AssignedTo] IN ('a@example.test','b''test@example.test')"));
+  assert.ok(!query.includes("@Me"));
   assert.match(query, /IN \('Bug','Change Request'\)/);
   assert.match(query, /'Ready '' QA'/);
   assert.equal(
@@ -289,4 +291,12 @@ test("UI fallback does not hide source changes or invalid live ticket identity",
     throw new Error("Connection failed");
   });
   await assert.rejects(connectors.ticketDetails(42, true), /Подключение Azure изменилось/);
+});
+
+test("automatic import without selected assignees never falls back to current user or all tickets",async t=>{
+ const {store,connectors}=fixture(t);
+ store.set(store.ticketImportKey(store.settings()),{azureAutoImport:true,azureTypes:["Bug"],azureStates:["Active"]});
+ t.mock.method(globalThis,"fetch",async()=>{throw new Error("Unexpected Azure request");});
+ await connectors.syncTickets(false,true);
+ assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,0);
 });

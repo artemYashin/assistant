@@ -1,3 +1,4 @@
+import { PrReviewerPicker } from "./PrReviewerPicker.js";
 import { StatusBadge } from "./TicketControls.js";
 import { RefreshCw, ListFilter, Tags } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -43,13 +44,14 @@ export function TicketImportSettings({
     );
   return (
     <div className="stack import-settings">
-      <h3>Автоматически импортировать мои задачи</h3>
+      <h3>Автоматический импорт тикетов</h3>
       <p className="muted">
-        При активном проекте запрашивает Azure API каждые {form.syncSeconds / 60} минут: Assigned To
-        = владелец PAT, выбранные типы и статусы. LLM для импорта не
+        При активном проекте запрашивает Azure API каждые {form.syncSeconds / 60} минут: любой из выбранных исполнителей, выбранные типы и статусы. LLM для импорта не
         используется. Уже добавленные тикеты сохраняются и продолжают
         обновляться после выхода из фильтра.
       </p>
+      <PrReviewerPicker title="Исполнители" userPicker people={form.azureImportAssignees || []} onChange={people=>set("azureImportAssignees",people)} disabled={false} context={{client:form.client,project:form.project}}/>
+      <p className="muted">Новые тикеты ищутся в Azure только по выбранным исполнителям. Пустой список отключает поиск новых тикетов. Владелец токена автоматически не подставляется.</p>
       <button
         type="button"
         className="secondary"
@@ -154,7 +156,7 @@ export function TicketImportSettings({
           checked={form.azureAutoImport}
           disabled={
             !form.azureAutoImport &&
-            (!form.azureTypes.length || !form.azureStates.length)
+            (!form.azureTypes.length || !form.azureStates.length || !form.azureImportAssignees?.length)
           }
           onChange={(e) => set("azureAutoImport", e.target.checked)}
         />{" "}

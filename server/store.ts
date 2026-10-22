@@ -63,6 +63,7 @@ export const defaults = {
   azureVersion: "7.1",
   teamsEnabled: false,
   azureAutoImport: false,
+  azureImportAssignees: [] as {id:string;name:string;email:string}[],
   azureTypes: [] as string[],
   azureStates: [] as string[],
   statusColors: {} as Record<string, string>,

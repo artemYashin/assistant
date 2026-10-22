@@ -357,6 +357,7 @@ export function createApp(
     const input=z.object({
       context:contextSchema,
       azureAutoImport:z.boolean(),
+      azureImportAssignees:z.array(z.object({id:text.min(1),name:text.min(1),email:z.string().trim().min(1).max(320)})).max(50).default([]),
       azureTypes:z.array(text.min(1)).max(50),
       azureStates:z.array(text.min(1)).max(100),
       typeColors:z.record(z.string(),z.string().regex(/^#[0-9a-f]{6}$/i)),
@@ -367,8 +368,11 @@ export function createApp(
       throw new AppError(400,"Выберите существующий проект для настройки автоимпорта.");
     if(input.azureAutoImport && (!input.azureTypes.length || !input.azureStates.length))
       throw new AppError(400,"Выберите типы и статусы для автоимпорта");
+    if(input.azureAutoImport && !input.azureImportAssignees.length)
+      throw new AppError(400,"Выберите исполнителей для автоимпорта");
     store.db.transaction(()=>{
       store.set(store.ticketImportKey(input.context),{
+        azureImportAssignees:input.azureImportAssignees,
         azureAutoImport:input.azureAutoImport,azureTypes:input.azureTypes,azureStates:input.azureStates,
       });
       store.set("settings",{...store.rawSettings(),typeColors:input.typeColors,statusColors:input.statusColors});

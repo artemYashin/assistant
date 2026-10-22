@@ -9,22 +9,22 @@
 
 Загрузка… / Реимпортировать статусы
 
-Источник: src/TicketImportSettings.tsx:53.
+Источник: src/TicketImportSettings.tsx:55.
 
 ### Элемент
 
 Цвет {…} {…}
 
-Источник: src/TicketImportSettings.tsx:116.
+Источник: src/TicketImportSettings.tsx:118.
 
 ### Элемент
 
 Вернуть стандартный цвет · Сбросить цвет {…} · ↺
 
-Источник: src/TicketImportSettings.tsx:128.
+Источник: src/TicketImportSettings.tsx:130.
 
 ### Элемент
 
 · Включить автоматический импорт
 
-Источник: src/TicketImportSettings.tsx:151.
+Источник: src/TicketImportSettings.tsx:153.
