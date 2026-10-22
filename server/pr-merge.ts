@@ -13,6 +13,8 @@ type Plan = Key & {
   head: string;
   target: string;
   title: string;
+  sourceBranch?: string;
+  targetBranch?: string;
   created: number;
   moveTickets: boolean;
   tickets: { id: number; title?: string; state: string; states: string[] }[];
@@ -186,6 +188,8 @@ export class PrMerge {
       head: pr.lastMergeSourceCommit.commitId,
       target: pr.lastMergeTargetCommit.commitId,
       title: pr.title,
+      sourceBranch: pr.sourceRefName || "",
+      targetBranch: pr.targetRefName || "",
       created: Date.now(),
       moveTickets,
       tickets,

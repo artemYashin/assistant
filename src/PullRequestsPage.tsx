@@ -1,3 +1,4 @@
+import { BranchLabel } from "./PrBranchLabel.js";
 import { ciMergeReason } from "../server/pr-health.js";
 import { ConfirmButton } from "./ConfirmButton.js";
 import { ChatTools } from "./ChatTools.js";
@@ -22,7 +23,6 @@ import {
   FilePenLine,
   Send,
   GitBranch,
-  Copy,
   Check,
   FileText,
   History,
@@ -53,61 +53,6 @@ const statuses: Record<string, string> = {
   outdated: "Версия устарела",
   cancelled: "Отменено",
 };
-function BranchLabel({
-  kind,
-  value,
-}: {
-  kind: "source" | "target";
-  value?: string;
-}) {
-  const name = value?.replace(/^refs\/heads\//, "") || "";
-  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
-  useEffect(() => {
-    setStatus("idle");
-  }, [value]);
-  useEffect(() => {
-    if (status === "idle") return;
-    const timer = setTimeout(() => setStatus("idle"), 2500);
-    return () => clearTimeout(timer);
-  }, [status]);
-  return (
-    <span
-      className="pr-branch"
-      title={`${kind} branch: ${value || "пока не загружена"}`}
-    >
-      <small>{kind}</small>
-      <span className="pr-branch-value">
-        <code>{name || "—"}</code>
-        <button
-          type="button"
-          className="text-button"
-          disabled={!name}
-          aria-label={`Скопировать ${kind} ветку ${name}`}
-          title={
-            status === "copied" ? "Скопировано" : "Скопировать название ветки"
-          }
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(name);
-              setStatus("copied");
-            } catch {
-              setStatus("error");
-            }
-          }}
-        >
-          {status === "copied" ? <Check size={14} /> : <Copy size={14} />}
-        </button>
-      </span>
-      <small role="status">
-        {status === "copied"
-          ? "Скопировано"
-          : status === "error"
-            ? "Не удалось скопировать"
-            : ""}
-      </small>
-    </span>
-  );
-}
 
 function openPrTicket(pr: { ticket_source: string }, ticket: { id: number; title?: string }) {
   window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
@@ -741,9 +686,9 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
               </div>
             </div>
             <div className="pr-branches" aria-label="Ветки pull request">
-              <BranchLabel kind="source" value={p.source_branch} />
+              <BranchLabel kind="source" value={p.source_branch} client={p.client} project={p.project} />
               <span aria-hidden="true">→</span>
-              <BranchLabel kind="target" value={p.target_branch} />
+              <BranchLabel kind="target" value={p.target_branch} client={p.client} project={p.project} />
             </div>
             <div className="pr-card-actions">
               <div className="pr-action-group">

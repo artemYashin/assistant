@@ -83,6 +83,8 @@ function fixture(t: any, bypass = false) {
         status: merged ? "completed" : "active",
         lastMergeSourceCommit: { commitId: head },
         lastMergeTargetCommit: { commitId: "target" },
+        sourceRefName: "refs/heads/feature/test",
+        targetRefName: "refs/heads/dev",
         description: "Fix #42",
         title,
       };
@@ -323,4 +325,11 @@ test("merge omits locally disabled Azure and textual links", async t => {
   assert.deepEqual(plan.tickets.map(t => t.id), [42]);
   store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(key.monitor, key.repo, key.number, 42);
   assert.deepEqual((await service.linkedTickets(key)).ids, []);
+});
+
+test("merge preparation exposes current source and target branch names", async t => {
+  const { service, key } = fixture(t);
+  const plan = await service.prepare(key, false);
+  assert.equal(plan.sourceBranch, "refs/heads/feature/test");
+  assert.equal(plan.targetBranch, "refs/heads/dev");
 });

@@ -9590,3 +9590,12 @@ label.repository-pr-toggle { display: flex; flex-direction: row; align-items: fl
 .pr-merge-ticket-id { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; padding: 4px 7px; border: 1px solid #b7dac3; border-radius: 6px; background: #e2f3e8; color: #21683f; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .pr-merge-current-state { flex-wrap: wrap; }
 .pr-merge-current-state > svg { flex-shrink: 0; }
+
+.pr-branch-link { display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; padding: 4px 7px; border: 1px solid #b8d5ee; border-radius: 6px; background: #edf6ff; color: #286596; font-size: 11px; line-height: 1.4; text-decoration: none; white-space: nowrap; }
+a.pr-branch-link:hover { background: #dfedfc; border-color: #77acd7; color: #194e7c; }
+a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px; }
+.pr-branch-link > svg { flex-shrink: 0; }
+.pr-branch-link > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-branch-link.is-unavailable { opacity: .65; }
+.pr-merge-branches { margin: 12px 0 6px; }
+.pr-branches > svg { flex-shrink: 0; }

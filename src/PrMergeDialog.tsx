@@ -1,3 +1,4 @@
+import { BranchLabel } from "./PrBranchLabel.js";
 import { StatusBadge } from "./TicketControls.js";
 import { useEffect, useRef, useState } from "react";
 import { GitMerge, LoaderCircle, X, Ticket, ArrowRight, ShieldAlert } from "lucide-react";
@@ -7,6 +8,8 @@ import { SingleSelect } from "./SingleSelect.js";
 type Plan = {
   id: string;
   title: string;
+  sourceBranch?: string;
+  targetBranch?: string;
   head: string;
   target: string;
   tickets: { id: number; title?: string; state: string; states: string[] }[];
@@ -155,6 +158,11 @@ export function PrMergeDialog({
         <div className="pr-merge-name-value" aria-labelledby="pr-merge-name-label">
           {plan?.title || pr.title || ""}
         </div>
+      </div>
+      <div className="pr-branches pr-merge-branches" aria-label="Направление слияния">
+        <BranchLabel kind="source" value={plan ? plan.sourceBranch : pr.source_branch} client={pr.client} project={pr.project} onNavigate={onClose} disabled={busy} />
+        <ArrowRight size={16} aria-hidden="true" />
+        <BranchLabel kind="target" value={plan ? plan.targetBranch : pr.target_branch} client={pr.client} project={pr.project} onNavigate={onClose} disabled={busy} />
       </div>
       <p className="muted">
         {moveTickets
