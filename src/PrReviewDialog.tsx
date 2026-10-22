@@ -1,6 +1,6 @@
 import { requestFieldDictation } from "./FieldDictation.js";
 import { ModelOverride } from "./ModelOverride.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Sparkles, X, Mic, Globe, Users, FolderOpen, Code2, Ticket, CircleCheck, TriangleAlert } from "lucide-react";
 import { SingleSelect } from "./SingleSelect.js";
 import { api } from "./api.js";
@@ -28,6 +28,7 @@ export function PrReviewDialog({
           : "Готовность локальной source-ветки пока не подтверждена. Перед ревью с доступом к коду сначала проверим и при необходимости загрузим её до коммита PR.";
   const ref = useRef<HTMLDialogElement>(null);
   const commentRef = useRef<HTMLTextAreaElement>(null);
+  const commentId = useId();
   const [model, setModel] = useState("");
   const [frequency, setFrequency] = useState("medium");
   const [memoryScopes, setMemoryScopes] = useState(["general", "client", "project", "project_review"]);
@@ -152,10 +153,11 @@ export function PrReviewDialog({
         </div>
         <small className="muted">Сначала передаются только названия; подробности ревьюер читает по необходимости. Память «Ревью проекта» используется только для ревью и не добавляется автоматически в чат. Можно отключить все разделы.</small>
         </fieldset>
-        <label className="review-question-field">
-          <span className="review-comment-heading"><strong>Комментарий ревьюеру</strong>
-          <button type="button" className="icon-button review-comment-mic" disabled={busy} title="Продиктовать комментарий" aria-label="Продиктовать комментарий" onClick={() => requestFieldDictation(commentRef.current)}><Mic size={16} /></button></span>
+        <div className="review-question-field">
+          <div className="review-comment-heading"><label htmlFor={commentId}><strong>Комментарий ревьюеру</strong></label>
+          <button type="button" className="icon-button review-comment-mic" disabled={busy} title="Продиктовать комментарий" aria-label="Продиктовать комментарий" onClick={() => requestFieldDictation(commentRef.current)}><Mic size={16} /></button></div>
           <textarea
+            id={commentId}
             ref={commentRef}
             rows={3}
             maxLength={4000}
@@ -168,7 +170,7 @@ export function PrReviewDialog({
             Необязательно. Сохранится для повторной проверки после ответов на
             вопросы.
           </small>
-        </label>
+        </div>
         {error && (
           <p role="alert" className="error">
             {error}

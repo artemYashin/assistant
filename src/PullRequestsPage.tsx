@@ -792,6 +792,7 @@ export function PullRequestsPage({ context, settings, completedItems }: any) {
                       busy ||
                       !p.enabled ||
                       !p.in_scope ||
+                      p.local_source?.status === "ready" ||
                       p.local_source?.status === "loading" ||
                       p.review_status === "preparing_git"
                     }
