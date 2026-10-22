@@ -9725,3 +9725,28 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .import-catalog-options .check-option { align-items: center; gap: 7px; min-width: 0; }
 .import-catalog-options .import-color-row:has(input:checked) { background: #eaf4ed; border-color: #afcbb8; }
 .import-settings > button.secondary { display: inline-flex; align-items: center; gap: 6px; width: fit-content; }
+
+/* Shared PR and commit diff: fill the dialog without unused space. */
+.pr-diff-dialog { height: 85dvh; }
+.pr-diff-dialog[open] { display: flex; flex-direction: column; }
+.pr-diff-dialog > * { flex-shrink: 0; }
+.pr-diff-dialog .pr-diff-layout { flex: 1 1 0; height: auto; min-height: 220px; margin: 8px 0; }
+.pr-diff-dialog .pr-diff-discussions { max-height: 20dvh; overflow: auto; }
+.pr-diff-footer { margin: 4px 0 0; font-size: 12px; }
+.pr-diff-heading > div { min-width: 0; }
+.pr-diff-heading h2 { flex-wrap: wrap; }
+.pr-diff-heading p { max-height: 3em; overflow: auto; }
+.pr-diff-toolbar-file h3 { flex: 1; }
+.pr-diff-language { display: flex; align-items: center; gap: 8px; }
+.pr-diff-language > svg { flex-shrink: 0; color: #637b90; }
+.pr-diff-language .multi-select-label, .diff-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.diff-copy { flex-shrink: 0; width: 28px; height: 28px; padding: 4px; }
+.diff-warning { position: relative; margin-left: auto; font-size: 12px; font-weight: normal; }
+.diff-warning > button { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; margin: 0; color: #a36513; background: #fff4da; border: 1px solid #edd4a5; border-radius: 7px; cursor: pointer; list-style: none; }
+
+.diff-warning-panel { display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 12; width: min(440px, 70vw); max-height: 40dvh; overflow: auto; padding: 12px 16px; border: 1px solid #edd4a5; border-radius: 9px; background: #fffaf0; color: #63471d; box-shadow: 0 6px 24px #18263826; line-height: 1.5; }
+.diff-warning:hover > .diff-warning-panel, .diff-warning:focus-within > .diff-warning-panel, .diff-warning.is-open > .diff-warning-panel { display: block; }
+.diff-warning-panel ul { padding-left: 18px; margin: 6px 0 0; }
+
+.diff-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.pr-diff-heading > div { flex: 1; }

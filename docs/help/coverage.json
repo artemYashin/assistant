@@ -113,7 +113,7 @@
     "src/PrCiDialog.tsx": "e3bf9ed1eb2a659dec483cd7bdce77eda05f265738afb8c84cda5c0ff1c7c8cd",
     "src/PrCommitsDialog.tsx": "69efe3831a807e55d0b5638ae0d45df6c0fc8cd8a093c364238333d96d8d5e57",
     "src/PrCreateDialog.tsx": "f459ccfbed8c55708ca1ca6df7d8bde1e5cc66a2c0bb33d4131c3ef3d5d4ff67",
-    "src/PrDiffDialog.tsx": "afa1bb5d20a997fcddcd669b25d7adc7b6ff26b923096274c24d11e716650544",
+    "src/PrDiffDialog.tsx": "9e5f0756a81d68012e87e1a2f62f96b8f7b1d10c633530dbd43baee767d4f5de",
     "src/PrHealth.tsx": "6e19fd32bbcf253ddce7c95f6b87a146bcdf2a442555a0b3db5c8e9c5a4b7860",
     "src/PrInfoPopup.tsx": "df0ed674a45d3d6f15688161ae42a7d507782aedcab8fd2730e24b0885de51b2",
     "src/PrMergeDialog.tsx": "8cfb13ade3b0bed95472630d5db37e4fb9c0935e9278a9d57f7fa1ebf4c833ff",

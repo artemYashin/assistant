@@ -1,6 +1,6 @@
 import { DiffFileTree } from "./DiffFileTree.js";
 import { useEffect, useRef, useState } from "react";
-import { Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
+import { AlertTriangle, Copy, Check, Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { api } from "./api.js";
 import { splitDiff, type DiffLine } from "./pr-diff.js";
@@ -51,6 +51,7 @@ export function PrDiffDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [warningsOpen, setWarningsOpen] = useState(false);
   const layout = useRef<HTMLDivElement>(null);
   const [treeWidth, setTreeWidth] = useState(() => {
     try { const width = Number(localStorage.getItem("diff-tree-width")); return width >= 180 && width <= 600 ? width : 280; } catch { return 280; }
@@ -169,10 +170,18 @@ export function PrDiffDialog({
     >
       <header className="pr-diff-heading">
         <div>
-          <h2 id="pr-diff-title">
+          <div className="diff-title-row"><h2 id="pr-diff-title">
             <Code2 size={20} /> Diff ·{" "}
             {commit ? `коммит ${commit.slice(0, 12)}` : `PR #${pr.number}`}
-          </h2>
+            </h2>
+            {commit && <DiffCopy value={commit} label="Скопировать хеш коммита" />}
+            {!!data?.notes.length && <div className={`diff-warning${warningsOpen ? " is-open" : ""}`}>
+              <button type="button" aria-label="Покрытие diff и причины пропусков" aria-expanded={warningsOpen} onClick={() => setWarningsOpen(value => !value)}><AlertTriangle size={18} /></button>
+              <div className="diff-warning-panel"><strong>Покрытие diff и причины пропусков</strong>
+                <ul>{data.notes.map((note, i) => <li key={i}>{note}</li>)}</ul>
+              </div>
+            </div>}
+          </div>
           <p>{data?.title || pr?.title}</p>
         </div>
         <button
@@ -215,20 +224,10 @@ export function PrDiffDialog({
               </>
             )}
           </p>
-          {!!data.notes.length && (
-            <div className="pr-diff-notes" role="note">
-              <strong>Покрытие diff и причины пропусков</strong>
-              <ul>
-                {data.notes.map((note, i) => (
-                  <li key={i}>{note}</li>
-                ))}
-              </ul>
-            </div>
-          )}
           {!data.files.length && (
             <p>
               {data.notes.length
-                ? "Нет доступных текстовых изменений. Причины указаны выше."
+                ? "Нет доступных текстовых изменений. Причины доступны по значку предупреждения в заголовке."
                 : "Текстовых изменений между этими коммитами нет."}
             </p>
           )}
@@ -241,6 +240,7 @@ export function PrDiffDialog({
                 onKeyDown={event => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); resizeTree(treeWidth + (event.key === "ArrowRight" ? 20 : -20)); } }} />
               <div className="pr-diff-toolbar-language">
                 <div className="pr-diff-language">
+                  <Code2 size={17} aria-hidden="true" />
                   <SingleSelect label="Подсветка кода" value={language}
                     options={[
                       { value: "auto", label: `Авто · ${diffLanguages.find((l) => l.value === diffLanguage(file?.after === "/dev/null" ? file.before : file?.after || ""))?.label || "обычный текст"}` },
@@ -256,6 +256,7 @@ export function PrDiffDialog({
                 <FileCode2 size={18} aria-hidden="true" />
                 <h3>{file && (file.before !== file.after
                   ? `${file.before} → ${file.after}` : file.after)}</h3>
+                {file && <DiffCopy value={file.after === "/dev/null" ? file.before : file.after} label="Скопировать путь файла" />}
               </div>
               <DiffFileTree files={data.files} selected={selected} sizes={data.diagnostics?.includedFiles}
                 onSelect={index => { setSelected(index); setLineTarget(null); }} />
@@ -350,7 +351,7 @@ export function PrDiffDialog({
                 if (target) { setSelected(target.file); setLineTarget(target); }
               }} />
           </section>}
-          <p className="muted">
+          <p className="muted pr-diff-footer">
             Показаны изменённые участки с контекстом. Просмотр не запускает LLM
             и не меняет код.
           </p>
@@ -358,6 +359,16 @@ export function PrDiffDialog({
       )}
     </dialog>
   );
+}
+function DiffCopy({ value, label }: { value: string; label: string }) {
+  const [status, setStatus] = useState("");
+  useEffect(() => { setStatus(""); }, [value]);
+  useEffect(() => { if (!status) return; const timer = setTimeout(() => setStatus(""), 2000); return () => clearTimeout(timer); }, [status]);
+  return <button type="button" className="icon-button diff-copy" aria-label={label} title={status || label}
+    onClick={async () => { try { await navigator.clipboard.writeText(value); setStatus("Скопировано"); } catch { setStatus("Не удалось скопировать"); } }}>
+    {status === "Скопировано" ? <Check size={15} /> : <Copy size={15} />}
+    <span className="diff-visually-hidden" role="status">{status}</span>
+  </button>;
 }
 function DiffCell({
   line,

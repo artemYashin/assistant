@@ -7,15 +7,21 @@
 
 ### Элемент
 
+Покрытие diff и причины пропусков
+
+Источник: src/PrDiffDialog.tsx:179.
+
+### Элемент
+
 Закрыть diff
 
-Источник: src/PrDiffDialog.tsx:178.
+Источник: src/PrDiffDialog.tsx:187.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/PrDiffDialog.tsx:195.
+Источник: src/PrDiffDialog.tsx:204.
 
 ### Элемент
 
@@ -39,40 +45,46 @@
 
 Обновить
 
-Источник: src/PrDiffDialog.tsx:341.
+Источник: src/PrDiffDialog.tsx:342.
+
+### Элемент
+
+/
+
+Источник: src/PrDiffDialog.tsx:367.
 
 ### Элемент
 
 Комментарий к строке {…} · Добавить комментарий в Azure
 
-Источник: src/PrDiffDialog.tsx:393.
+Источник: src/PrDiffDialog.tsx:404.
 
 ### Элемент
 
 Комментарий к строке
 
-Источник: src/PrDiffDialog.tsx:433.
+Источник: src/PrDiffDialog.tsx:444.
 
 ### Элемент
 
 / · Отправляю… / Отправить в Azure
 
-Источник: src/PrDiffDialog.tsx:440.
+Источник: src/PrDiffDialog.tsx:451.
 
 ### Элемент
 
 Отмена
 
-Источник: src/PrDiffDialog.tsx:447.
+Источник: src/PrDiffDialog.tsx:458.
 
 ### Элемент
 
 Строка {…} /
 
-Источник: src/PrDiffDialog.tsx:470.
+Источник: src/PrDiffDialog.tsx:481.
 
 ### Элемент
 
 Показать строку · После / До
 
-Источник: src/PrDiffDialog.tsx:482.
+Источник: src/PrDiffDialog.tsx:493.
