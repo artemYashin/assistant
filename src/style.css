@@ -5131,16 +5131,12 @@ summary > svg {
   color: #58665d;
 }
 
-.completed-pr-controls,
 .completed-pr-pagination {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   margin: 16px 0;
-}
-.completed-pr-controls .single-select {
-  width: min(100%, 400px);
 }
 .completed-pr-pagination {
   justify-content: space-between;

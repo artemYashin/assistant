@@ -2,16 +2,21 @@ import { PullRequestsPage } from "./PullRequestsPage.js";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { api } from "./api.js";
-import { SingleSelect } from "./SingleSelect.js";
-export function CompletedPullRequests({
+type CompletedPullRequestsProps = {
+  settings?: any;
+  context: { client: string; project: string };
+};
+export function CompletedPullRequests(props: CompletedPullRequestsProps) {
+  return <CompletedProjectPullRequests key={JSON.stringify(props.context)} {...props} />;
+}
+function CompletedProjectPullRequests({
   context,
   settings,
 }: {
   settings?: any;
   context: { client: string; project: string };
 }) {
-  const [monitors, setMonitors] = useState<any[]>([]),
-    [monitor, setMonitor] = useState("");
+  const [monitor, setMonitor] = useState("");
   const [page, setPage] = useState(0),
     [version, setVersion] = useState(0);
   const [data, setData] = useState<any>(null),
@@ -24,11 +29,9 @@ export function CompletedPullRequests({
         if (!live) return;
         const filtered = rows.filter(
           (m: any) =>
-            (!context.client || m.client === context.client) &&
-            (!context.project || m.project === context.project),
+            m.client === context.client && m.project === context.project && m.repository,
         );
-        setMonitors(filtered);
-        setMonitor(filtered[0]?.id || "");
+        setMonitor((filtered.find((m: any) => m.enabled) || filtered[0])?.id || "");
         setBusy(false);
       })
       .catch((e) => {
@@ -68,21 +71,6 @@ export function CompletedPullRequests({
           <h1>Завершённые PR</h1>
           <p>Смёрженные за последние 7 дней · по 20 на странице.</p>
         </div>
-      </div>
-      <div className="completed-pr-controls">
-        <SingleSelect
-          label="Репозиторий"
-          value={monitor}
-          options={monitors.map((m) => ({
-            value: m.id,
-            label: `${m.client} / ${m.project} · ${m.repository}`,
-          }))}
-          onChange={(v) => {
-            setMonitor(v);
-            setPage(0);
-          }}
-          disabled={busy}
-        />
         <button
           className="secondary"
           disabled={busy || !monitor}
