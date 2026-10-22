@@ -28,10 +28,10 @@ export function PrTicketSourcesInfo() {
       <Info size={15} aria-hidden="true" />
     </button>
     {position && createPortal(<div id={id} role="tooltip" className="pr-ticket-sources-tooltip"
-      style={{ left: position.left, width: position.width, ...(position.top > 190 ? { bottom: window.innerHeight - position.top + 8 } : { top: position.top + 30 }) }}>
+      style={{ left: position.left, width: position.width, ...(position.top > 260 ? { bottom: window.innerHeight - position.top + 8 } : { top: position.top + 30 }) }}>
       <strong>Источники связанных тикетов</strong>
-      <p>#номер в названии и описании PR, явные связи PR в Azure и связи, добавленные вручную в Orbit.</p>
-      <p>Коммиты и связи между тикетами не просматриваются. Локальное отключение исключает тикет из merge и ревью, не меняя Azure.</p>
+      <p>Порядок: сначала #номер из описания PR, затем из названия, далее явные связи в Azure и локальные привязки в Orbit. Повторяющиеся номера объединяются; каждый следующий источник дополняет список.</p>
+      <p>Коммиты и связи между тикетами не просматриваются. «Не учитывать» исключает тикет из ревью и смены статуса при merge, не меняя Azure. Такие тикеты остаются видны в списке.</p>
     </div>, document.body)}
   </>;
 }

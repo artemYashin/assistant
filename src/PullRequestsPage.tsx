@@ -611,7 +611,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                     <InitialsAvatar name={p.author || "?"} />
                     <div className="pr-identity-text">
                       <h2 className="pr-title">
-                        <a href={p.url} target="_blank" rel="noreferrer">
+                        <a href={p.url} target="_blank" rel="noreferrer" title={p.title}>
                           #{p.number} · {p.title}
                         </a>
                       </h2>

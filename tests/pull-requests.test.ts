@@ -1533,3 +1533,30 @@ test("completed reimport replaces full content and resets local links only after
   assert.equal((await service.completed(monitor, 0)).items[0].description, full);
   await assert.rejects(service.reimportCompleted(monitor, "repo", 2), /отсутствует в кэше/);
 });
+
+test("completed reimport replaces an ID cut at the list boundary and keeps description references first", async t => {
+  const { service } = fixture(t);
+  const closedDate = new Date().toISOString();
+  const description = "x".repeat(393) + " #123456 and #765432";
+  let detailReads = 0;
+  mock(t, [], url => {
+    if (url.searchParams.get("searchCriteria.status") === "completed")
+      return { value: [{ ...pr(), status: "completed", closedDate, title: "Title #987654", description: description.slice(0, 400) }] };
+    if (/\/pullrequests\/1$/.test(url.pathname)) {
+      detailReads++;
+      return { ...pr(), status: "completed", closedDate, title: "Title #987654", description };
+    }
+    if (url.pathname.endsWith("/workitems")) return { value: [] };
+  });
+  const monitor = service.monitors()[0].id;
+  const initial = await service.completed(monitor, 0);
+  assert.equal(detailReads, 0);
+  assert.ok(initial.items[0].tickets.some((ticket: any) => ticket.id === 12345));
+  const updated = await service.reimportCompleted(monitor, "repo", 1);
+  assert.equal(detailReads, 1);
+  assert.equal(updated.description, description);
+  assert.deepEqual(updated.tickets.map((ticket: any) => ticket.id), [123456, 765432, 987654]);
+  const reopened = await service.completed(monitor, 0);
+  assert.equal(detailReads, 1);
+  assert.deepEqual(reopened.items[0].tickets.map((ticket: any) => ticket.id), [123456, 765432, 987654]);
+});

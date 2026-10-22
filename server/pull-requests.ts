@@ -607,7 +607,7 @@ export class PullRequests {
         if (excludedPrTicketIds(this.store, monitor.id, row.repo, row.number).includes(id)) continue;
         if (
           !prTicketIds(
-            (row.title || "") + "\n" + (row.description || ""),
+            (row.description || "") + "\n" + (row.title || ""),
           ).includes(id) &&
           !cachedPrLinks(
             this.store,
@@ -906,7 +906,7 @@ export class PullRequests {
             new IntegrationsAuth(this.store),
           ).importPrTickets(
             found.flatMap((p) => [
-              ...prTicketIds((p.title || "") + "\n" + (p.description || "")),
+              ...prTicketIds((p.description || "") + "\n" + (p.title || "")),
               ...p.ticketLinks.ids,
             ].filter(id => !excludedPrTicketIds(this.store, m.id, p.repository.id, p.pullRequestId).includes(id))),
           );
@@ -1595,7 +1595,7 @@ export class PullRequests {
         const linkedIds = [
           ...new Set([
             ...prTicketIds(
-              (detail.title || "") + "\n" + (detail.description || ""),
+              (detail.description || "") + "\n" + (detail.title || ""),
             ),
             ...this.manualTicketIds(job.monitor, job.repo, job.number),
             ...links.value.map((v: any) => Number(v.id)),

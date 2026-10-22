@@ -131,7 +131,7 @@ export class PrMerge {
       throw new AppError(502, "Не удалось загрузить связи PR");
     const ids = [
       ...new Set([
-        ...prTicketIds((pr.title || "") + "\n" + (pr.description || "")),
+        ...prTicketIds((pr.description || "") + "\n" + (pr.title || "")),
         ...(
           this.store.db
             .prepare(

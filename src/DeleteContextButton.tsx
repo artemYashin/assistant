@@ -31,7 +31,7 @@ export function DeleteContextButton({ context, disabled, onDelete }: { context: 
         <label htmlFor={inputId}>Для подтверждения введите <b>удалить</b></label>
         <input id={inputId} value={confirmation} onChange={event => setConfirmation(event.target.value)} disabled={busy} autoComplete="off" spellCheck={false} />
         {error && <p className="error" role="alert">{error}</p>}
-        <div className="dialog-actions"><button type="button" className="secondary" autoFocus disabled={busy} onClick={() => dialog.current?.close()}>Отмена</button><button type="submit" className="context-delete-confirm" disabled={busy || confirmation !== "удалить"}>{busy ? "Удаляю…" : `Удалить ${kind} навсегда`}</button></div>
+        <div className="dialog-actions"><button type="button" className="secondary" autoFocus disabled={busy} onClick={() => dialog.current?.close()}>Отмена</button><button type="submit" className="secondary context-delete-confirm" disabled={busy || confirmation !== "удалить"}><Trash2 size={16} aria-hidden="true" />{busy ? "Удаляю…" : `Удалить ${kind} навсегда`}</button></div>
       </form>
     </dialog>, document.body)}
   </>;

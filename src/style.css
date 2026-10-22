@@ -9632,3 +9632,10 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .pr-ticket-action.is-open { color: #24683c; background: #e5f4e9; border-color: #add2b8; }
 .pr-ticket-action.is-open:hover:not(:disabled) { background: #d3ebdb; border-color: #77b68b; }
+
+
+.context-delete-dialog .dialog-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; margin-top: 8px; }
+.context-delete-dialog .dialog-actions > button { flex: 1 1 180px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 9px 12px; border-radius: 8px; font-size: 13px; line-height: 1.4; }
+.context-delete-dialog .dialog-actions > button > svg { flex-shrink: 0; }
+.context-delete-dialog .context-delete-confirm { background: #b33333; color: #fff; border-color: #9c2929; }
+.context-delete-dialog .context-delete-confirm:hover:not(:disabled) { background: #962727; border-color: #852222; }
