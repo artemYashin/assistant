@@ -9792,7 +9792,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .export-ticket-row strong { color: #287451; font-size: 12px; }
 .export-ticket-title { margin-left: 7px; font-size: 13px; overflow-wrap: anywhere; }
 .export-ticket-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-.export-ticket-meta > span:not(.ticket-type-badge):not(.ticket-state-badge) { font-size: 10px; padding: 2px 5px; background: #edf3f7; border-radius: 4px; }
+.export-ticket-meta > span:not(.ticket-type-badge):not(.ticket-state-badge) { display: inline-flex; align-items: center; justify-content: center; text-align: center; line-height: 1.4; font-size: 10px; padding: 2px 8px; background: #edf3f7; border-radius: 4px; }
 .export-ticket-row .icon-button { flex-shrink: 0; }
 .export-ticket-add { position: relative; flex-shrink: 0; padding-top: 8px; }
 .export-ticket-add > button { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
