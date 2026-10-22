@@ -74,12 +74,12 @@ export function mayManageLocalTicket(
 ) {
   const intent =
     action === "add"
-      ? /добав(?:ь|ить|ьте)|отслеживай|\b(add|track|restore)\b/i
+      ? /добав(?:ь|ить|ьте)|отслеживай|импортир(?:уй(?:те)?|овать)|восстанов(?:и(?:те)?|ить)|\b(add|track|restore|import)\b/i
       : /удали(?:ть|те)?|убери(?:те)?|убрать|\b(remove|untrack|delete)\b/i;
   return (
     (extractTicketIds(prompt).includes(ticketId) || knownTicket) &&
     intent.test(prompt) &&
-    !/не\s+(?:добав|удал|убир|убер|отслеж)|не надо|не нужно|do not|don't/i.test(
+    !/не\s+(?:добав|удал|убир|убер|отслеж|импорт|восстанов)|не надо|не нужно|do not|don't/i.test(
       prompt,
     )
   );
@@ -122,7 +122,7 @@ export function makeTools(
       defineTool(`${action}_local_ticket`, {
         description:
           action === "add"
-            ? "Add or restore a ticket in the LOCAL tracker on explicit user request. Reads Azure to validate its ID/project, writes only local SQLite. Never changes Azure fields or links."
+            ? "Add or restore a ticket in the LOCAL tracker on explicit user request. Reads Azure to validate its ID/project, writes only local SQLite. Never changes Azure fields or links. For multiple explicit IDs use batch_update_tickets operations with action add; no extra confirmation."
             : "Remove a ticket from the LOCAL tracker on explicit user request. No Azure request or deletion; automatic imports will not restore it. Explicit add can restore it.",
         parameters: z.object({ id: z.number().int().positive() }),
         handler: async ({ id }) => {
@@ -850,6 +850,7 @@ export class Agent {
               return this.store.removeLocalTicket(ticketId);
             if (!this.connectors) throw new AppError(400, "Azure недоступен");
             await this.connectors.trackTicket(ticketId, assertActive);
+            emit({ stage: "data_synced", domain: "tickets" });
             return {
               success: true,
               id: ticketId,

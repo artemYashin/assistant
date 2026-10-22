@@ -258,3 +258,14 @@ test("delete session API requires auth, CSRF and idle assistant", async t => {
   assert.notEqual(result.body.activeId, session.id);
   await request(app).delete(url).set(csrf).send(context).expect(404);
 });
+
+test("explicit import and restore commands authorize only requested ticket IDs", () => {
+  for (const prompt of ["Импортируй тикеты #42, #43", "Импортировать 42 и 43", "Import tickets 42, 43", "Восстанови тикеты 42, 43", "Импортируйте https://dev.azure.com/org/project/_workitems/edit/42 и #43"]) {
+    assert.equal(mayManageLocalTicket(prompt, 42, "add"), true, prompt);
+    assert.equal(mayManageLocalTicket(prompt, 43, "add"), true, prompt);
+    assert.equal(mayManageLocalTicket(prompt, 99, "add"), false, prompt);
+  }
+  for (const prompt of ["Не импортируй 42", "Не восстанавливай 42", "Do not import 42", "Покажи тикет 42"]) {
+    assert.equal(mayManageLocalTicket(prompt, 42, "add"), false, prompt);
+  }
+});

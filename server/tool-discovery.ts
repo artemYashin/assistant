@@ -45,7 +45,7 @@ const catalog: Record<string, string> = {
   update_local_ticket_metadata:
     "Edit local notes, priority or tags for one ticket ID.",
   batch_update_tickets:
-    "Batch local edits/import/removal/assignments or Azure status changes: IDs and desired values.",
+    "Import a user-supplied list of ticket IDs/links: operations with action add, up to 50 per call. Also batch local edits/removal/assignments or Azure statuses.",
   list_local_developers:
     "List manually configured developers in the current project.",
   set_local_ticket_developers:

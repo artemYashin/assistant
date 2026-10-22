@@ -185,3 +185,22 @@ test("shared metadata batch sends one patch, deduplicates IDs and returns partia
   for (const args of invalid) await assert.rejects(async () => tool.handler!(args, {} as any));
   assert.equal(calls.length, 2);
 });
+
+test("batch imports explicit IDs and reports partial failures without ticket bodies", async () => {
+  const calls: number[] = [];
+  const add = defineTool("add_local_ticket", {
+    description: "import", parameters: z.object({ id: z.number() }),
+    handler: async ({ id }) => {
+      calls.push(id);
+      return id === 43 ? { success: false, error: "Ticket belongs to another project" } : { success: true, id, azureChanged: false, body: "Must not enter batch output" };
+    },
+  });
+  const batch = ticketBatchTool([add]);
+  const result: any = await batch.handler!({ operations: [42, 43, 44].map(id => ({ action: "add", id })) }, {} as any);
+  assert.deepEqual(calls, [42, 43, 44]);
+  assert.equal(result.succeeded, 2);
+  assert.equal(result.failed, 1);
+  assert.equal(result.results[1].success, false);
+  assert.equal(result.results[2].success, true);
+  assert.equal(JSON.stringify(result).includes("Must not enter"), false);
+});
