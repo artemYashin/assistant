@@ -692,6 +692,7 @@ test("review options persist and disable questions without fetching tickets", as
     questionFrequency: "none",
     readTickets: false,
     readCode: true,
+    codeDepth: "below_medium",
     maxTokens: 1000000,
     memoryScopes: ["general", "client", "project", "project_review"],
   });
@@ -699,6 +700,7 @@ test("review options persist and disable questions without fetching tickets", as
   assert.equal(calls.length, 1);
   assert.equal(calls[0][3].askQuestions, undefined);
   assert.equal(calls[0][3].questionFrequency, "none");
+  assert.equal(calls[0][3].codeDepth, "below_medium");
 });
 
 test("review receives requirements, comments and source-scoped local notes before calling model", async (t) => {
@@ -1182,3 +1184,15 @@ test("stop review cancels its model and does not save a late completion", async 
   assert.equal(row.status, "interrupted"); assert.equal(row.summary, null);
   assert.deepEqual(service.stopReview(id), { stopped: false });
 });
+
+for (const codeDepth of ["low", "below_medium", "medium", "high"] as const) {
+  test(`review preserves and passes ${codeDepth} exploration depth`, async t => {
+    const { store, service, calls } = fixture(t);
+    mock(t, [pr()]); await service.sync();
+    const id = service.requestReview(service.monitors()[0].id, "repo", 1, { codeDepth, readTickets: false });
+    const row = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any;
+    assert.equal(JSON.parse(row.options).codeDepth, codeDepth);
+    await service.reviewNext();
+    assert.equal(calls[0][3].codeDepth, codeDepth);
+  });
+}

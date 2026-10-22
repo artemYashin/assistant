@@ -1611,6 +1611,7 @@ export class PullRequests {
           memoryScopes: options.memoryScopes,
           reviewId: job.id,
           readCode: options.readCode,
+          codeDepth: options.codeDepth,
           maxTokens: options.maxTokens,
           sourceRevision: job.head,
           branch: String(detail.sourceRefName || "").replace(/^refs\/heads\//, ""),

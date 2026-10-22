@@ -9383,3 +9383,8 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-identity-row .pr-card-utilities { flex: 0 0 auto; }
 .pr-stop-review { color: #b42332; border-color: #edb9bf; background: #fff3f4; padding: 4px 8px; font-size: 12px; }
 .pr-stop-review:hover:not(:disabled) { background: #ffe0e4; }
+
+.review-code-depth { display: grid; gap: 6px; margin: 8px 0 12px; }
+.review-code-depth > small { font-size: 11px; line-height: 1.45; }
+.review-depth-warning { display: flex; align-items: flex-start; gap: 6px; color: #946111; }
+.review-depth-warning svg { flex-shrink: 0; margin-top: 1px; }

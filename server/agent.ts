@@ -39,6 +39,7 @@ import { MemoryProposals, memoryProposalTool, memoryRefinementTools } from "./me
 import {
   REVIEW_POLICY,
   questionPolicy,
+  reviewCodePolicy,
   reviewQuestionsSchema,
   type ReviewActions,
 } from "./review-questions.js";
@@ -1185,6 +1186,7 @@ export class Agent {
               REVIEW_POLICY +
               "\n" +
               questionPolicy(reviewActions?.questionFrequency) +
+              (reviewActions?.readCode ? "\n" + reviewCodePolicy(reviewActions.codeDepth) : "") +
               `\nPR source branch: ${JSON.stringify(repositoryBranch || null)}. Code search permission: ${!!reviewActions?.readCode}.`,
           };
         }
@@ -1233,7 +1235,7 @@ export class Agent {
           runtimeState = runtime.state;
           resumedRuntime = runtime.resumed;
         } else if (reviewRuntimeId) {
-          const runtime = await openChatRuntime(client, config, this.store, reviewRuntimeId, JSON.stringify({ source: this.store.source(settings), scopes: reviewActions?.memoryScopes, readCode: reviewActions?.readCode, branch: repositoryBranch, model }));
+          const runtime = await openChatRuntime(client, config, this.store, reviewRuntimeId, JSON.stringify({ source: this.store.source(settings), scopes: reviewActions?.memoryScopes, readCode: reviewActions?.readCode, codeDepth: reviewActions?.codeDepth, branch: repositoryBranch, model }));
           session = runtime.session;
           resumedRuntime = runtime.resumed;
         } else session = await client.createSession(config);

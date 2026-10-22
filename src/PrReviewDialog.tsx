@@ -33,6 +33,7 @@ export function PrReviewDialog({
   const [frequency, setFrequency] = useState("medium");
   const [memoryScopes, setMemoryScopes] = useState(["general", "client", "project", "project_review"]);
   const [readCode, setReadCode] = useState(true);
+  const [codeDepth, setCodeDepth] = useState("below_medium");
   const [maxTokens, setMaxTokens] = useState(defaultMaxTokens);
   const [readTickets, setReadTickets] = useState(true);
   const [reviewerComment, setReviewerComment] = useState("");
@@ -77,6 +78,7 @@ export function PrReviewDialog({
                 readTickets,
                 memoryScopes,
                 readCode,
+                codeDepth,
                 maxTokens,
                 reviewerComment,
               },
@@ -126,6 +128,21 @@ export function PrReviewDialog({
             <span role="tooltip" id="review-code-info-tooltip">{sourceHint}</span>
           </span>
         </label>
+        {readCode && <div className="review-code-depth">
+          <SingleSelect label="Глубина изучения кода" value={codeDepth} onChange={setCodeDepth} disabled={busy} searchable={false} options={[
+            { value: "low", label: "Низкая" },
+            { value: "below_medium", label: "Ниже среднего" },
+            { value: "medium", label: "Средняя" },
+            { value: "high", label: "Высокая" },
+          ]} />
+          <small className={codeDepth === "high" ? "review-depth-warning" : "muted"}>
+            {codeDepth === "high" && <TriangleAlert size={14} aria-hidden="true" />}
+            {codeDepth === "low" ? "В основном diff; чтение кода — только для важных уточнений."
+              : codeDepth === "below_medium" ? "Основной изменённый код и ближайшие зависимости, без широкого изучения проекта."
+              : codeDepth === "medium" ? "Более подробная проверка связанной логики, контрактов и граничных случаев."
+              : "Широкое изучение связанного контекста. Может потребовать очень много токенов; установленный лимит сохраняется."}
+          </small>
+        </div>}
         <label className="pr-review-ticket-option review-choice">
           <input
             type="checkbox"

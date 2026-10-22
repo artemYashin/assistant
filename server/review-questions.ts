@@ -22,6 +22,7 @@ export const reviewOptionsSchema = z
     questionFrequency: z.enum(["none", "medium", "high"]).default("medium"),
     readTickets: z.boolean().default(true),
     readCode: z.boolean().default(true),
+    codeDepth: z.enum(["low", "below_medium", "medium", "high"]).default("below_medium"),
     maxTokens: z.number().int().min(1000).max(100_000_000).default(1_000_000),
     memoryScopes: z.array(z.enum(["general", "client", "project", "project_review"])).max(4).default(["general", "client", "project", "project_review"]),
     reviewerComment: z.string().trim().max(4000).default(""),
@@ -38,10 +39,21 @@ export function questionPolicy(
     high: "Ask at most 8 material questions only when answers would change the review. Do not invent questions to fill a quota.",
   }[frequency];
 }
+export function reviewCodePolicy(depth: ReviewOptions["codeDepth"] = "below_medium") {
+  const guidance = {
+    low: "Low: review primarily from the supplied diff. Use repository tools rarely, only to resolve a concrete uncertainty that could change a material finding. Read the smallest relevant implementation excerpt, then return to the diff.",
+    below_medium: "Below medium: use a small amount of targeted context around changed production code and its direct dependencies or callers. Investigate only concrete correctness risks raised by the diff. Avoid exploratory reading of ancillary examples, demonstrations, fixtures or presentation variants unless essential to resolve that risk. Do not inspect every referenced file or symbol by default.",
+    medium: "Medium: trace relevant implementation paths, direct callers and dependencies to check contracts, edge cases and integration risks. Read supporting material only when it provides evidence needed for a specific finding. Keep exploration centered on the changed behavior, not a general project survey.",
+    high: "High: investigate broader cross-module behavior, indirect dependencies, relevant tests and ancillary usage examples when they help assess the changes. More context is allowed, but every exploration should answer a review question; do not exhaustively survey the repository or spend tokens just because budget remains.",
+  }[depth];
+  return `Repository exploration depth: ${depth}. ${guidance}
+At every depth, review all supplied changes, including changes in supporting files; depth controls additional repository exploration, not diff coverage. Reuse code and tool results already present in this review session. Do not reread the same unchanged file range unless earlier output was incomplete or a specific missing detail requires it. Prefer focused searches and line ranges; widen or read a whole file only when needed to understand the relevant behavior. Stop exploring once sufficient evidence supports the finding or resolves the concern. Token and tool-call limits remain independent hard limits.`;
+}
 export type ReviewActions = {
   pullRequest?: UsagePullRequest;
   reviewId?: string;
   readCode?: boolean;
+  codeDepth?: ReviewOptions["codeDepth"];
   maxTokens?: number;
   branch?: string;
   sourceRevision?: string;
