@@ -23,10 +23,11 @@ const catalog: Record<string, string> = {
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   show_ticket_details: "Open UI ticket details, with a sidebar for multiple IDs; returns reopen links, no bodies in model context.",
   get_cached_ticket_content: "Read full cached description/criteria/repro of a candidate, paged; no Azure calls.",
-  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id; short excerpts; optional sorting by summary fields, no Azure.",
+  get_ticket_catalog: "List locally known Azure ticket types and statuses by type for search filters; no Azure calls.",
+  search_ticket_content: "Search local notes and cached ticket descriptions/criteria/repro, optionally by ticket id, exact type/Azure state; short excerpts; optional sorting by summary fields, no Azure.",
   list_local_tags: "List/search existing local tag names, paginated; no Azure calls.",
   list_tickets:
-    "Search/page local summaries; filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
+    "Search/page local summaries; exact type/Azure state and other filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
   get_ticket: "Read one ticket by ID; local summary by default.",
   get_local_ticket_metadata:
     "Read local notes, tags and priority by ticket ID.",

@@ -1,3 +1,4 @@
+import { getTicketCatalog } from "./ticket-catalog.js";
 import { messageContextBadges } from "./chat-message-context.js";
 import { memorySummarySchema } from "./memory-summary.js";
 import { updateChatTimeline, type ChatTimelineItem } from "./chat-stream.js";
@@ -200,8 +201,13 @@ export function makeTools(
       parameters: cachedTicketSchema,
       handler: async args => readCachedTicket(store, args),
     }),
+    defineTool("get_ticket_catalog", {
+      description: "List known Azure work item types and their workflow statuses for the current connection, from cached process definitions and local tickets including trash. No Azure calls. Use to resolve type/state filter names when needed; missing values may mean incomplete cache.",
+      parameters: z.object({}),
+      handler: async () => getTicketCatalog(store),
+    }),
     defineTool("search_ticket_content", {
-      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria, repro steps and local notes by literal substring. Notes are searchable even without a body cache; section=notes identifies their excerpts. Read full notes with list_tickets fields=[\"notes\"]. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Optional sortBy/sortDirection sort by all summary fields before pagination, like list_tickets. Use only when the requested order matters. Check coverage; paginate with afterId=nextAfterId and unchanged sort/filter parameters. Cache is not live data.",
+      description: "Search LOCAL cached descriptions including retained trash (deleted=true), acceptance criteria, repro steps and local notes by literal substring. Optional exact type/state filters use Azure work item type/status (get_ticket_catalog lists known values), combined with search and lifecycle. Notes are searchable even without a body cache; section=notes identifies their excerpts. Read full notes with list_tickets fields=[\"notes\"]. Use when title/tag searches are insufficient or for a narrow follow-up within a known ticket using optional id. Search text/keywords, not HTML tags: the cache is Markdown. For links prefer get_ticket_links. Returns id/title and one short matching excerpt per ticket, not full bodies. No Azure requests or full-read consent needed. Optional sortBy/sortDirection sort by all summary fields before pagination, like list_tickets. Use only when the requested order matters. Check coverage; paginate with afterId=nextAfterId and unchanged sort/filter parameters. Cache is not live data.",
       parameters: contentSearchSchema,
       handler: async args => searchTicketContent(store, args),
     }),

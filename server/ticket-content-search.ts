@@ -1,3 +1,4 @@
+import { ticketSearchFilters } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { z } from "zod";
@@ -5,6 +6,7 @@ import { Store } from "./store.js";
 
 export const contentSearchSchema = z.object({
   ...ticketSortSchema,
+  ...ticketSearchFilters,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all"),
   search: z.string().trim().min(2).max(200),
   id: z.number().int().positive().optional(),
@@ -14,9 +16,11 @@ export const contentSearchSchema = z.object({
 
 /** Local literal search only; never downloads ticket bodies or returns full content. */
 export function searchTicketContent(store: Store, input: unknown) {
-  const { search, id, afterId, limit, lifecycle, sortBy, sortDirection } = contentSearchSchema.parse(input);
+  const { search, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state } = contentSearchSchema.parse(input);
   const source = store.source();
   const lifecycleClause = lifecycle === "all" ? "" : lifecycle === "deleted" ? " AND t.deleted=1" : " AND t.deleted=0";
+  const filterClause = `${type ? " AND t.type=? COLLATE NOCASE" : ""}${state ? " AND t.state=? COLLATE NOCASE" : ""}`;
+  const filterParams = [...(type ? [type] : []), ...(state ? [state] : [])];
   const query = search.toLocaleLowerCase();
   const sorted = sortBy !== "id" || sortDirection !== "asc";
   const rows = store.db.prepare(`${localTicketScope()}, ordered AS (
@@ -24,10 +28,10 @@ export function searchTicketContent(store: Store, input: unknown) {
     FROM local_tickets t WHERE t.source=?
   ) SELECT t.id,t.title,t.deleted,coalesce(m.notes,'') AS notes FROM ordered t
     LEFT JOIN ticket_metadata m ON m.source=t.source AND m.id=t.id
-    WHERE (? IS NULL OR t.id=?) ${lifecycleClause}
+    WHERE (? IS NULL OR t.id=?) ${lifecycleClause} ${filterClause}
       AND ${sorted ? "t.position > coalesce((SELECT position FROM ordered WHERE id=?),0)" : "t.id>?"}
       AND (coalesce(m.notes,'')<>'' OR EXISTS(SELECT 1 FROM ticket_content_cache c WHERE c.source=t.source AND c.id=t.id AND instr(c.search_text,?)>0))
-    ORDER BY t.position`).iterate(source, id ?? null, id ?? null, afterId, query);
+    ORDER BY t.position`).iterate(source, id ?? null, id ?? null, ...filterParams, afterId, query);
   const cached = store.db.prepare("SELECT section,body FROM ticket_content_cache WHERE source=? AND id=? AND instr(search_text,?)>0 ORDER BY section LIMIT 1");
   const matches = new Map<number, any>();
   for (const value of rows) {
@@ -45,7 +49,7 @@ export function searchTicketContent(store: Store, input: unknown) {
   const tickets = [...matches.values()].slice(0, limit);
   const coverage = store.db.prepare(`${localTicketScope()} SELECT count(*) AS total,
     sum(EXISTS(SELECT 1 FROM ticket_content_cache c WHERE c.source=t.source AND c.id=t.id)) AS cached
-    FROM local_tickets t WHERE source=? AND (? IS NULL OR t.id=?) ${lifecycleClause}`).get(source, id ?? null, id ?? null) as any;
+    FROM local_tickets t WHERE source=? AND (? IS NULL OR t.id=?) ${lifecycleClause} ${filterClause}`).get(source, id ?? null, id ?? null, ...filterParams) as any;
   const hasMore = matches.size > limit;
   return { tickets, sortBy, sortDirection, hasMore, nextAfterId: hasMore ? tickets.at(-1)!.id : null,
     coverage: { total: coverage.total, cached: coverage.cached || 0 },

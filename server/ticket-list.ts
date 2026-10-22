@@ -1,3 +1,4 @@
+import { ticketSearchFilters } from "./ticket-catalog.js";
 import { ticketOrder, ticketSortSchema } from "./ticket-sort.js";
 import { localTicketScope } from "./local-ticket-scope.js";
 import { ticketMetadata } from "./ticket-metadata.js";
@@ -13,8 +14,7 @@ export const ticketListSchema = z.object({
   contentOffset: z.number().int().nonnegative().default(0),
   ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
   search: z.string().trim().min(1).max(300).optional(),
-  type: z.string().trim().max(200).optional(),
-  state: z.string().trim().max(200).optional(),
+  ...ticketSearchFilters,
   priority: z.number().int().min(1).max(20).optional(),
   azureTag: z.string().trim().max(400).optional(),
   tag: z.string().trim().max(60).optional(),
