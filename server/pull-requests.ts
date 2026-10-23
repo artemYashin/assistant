@@ -246,6 +246,7 @@ export class PullRequests {
   }
   private sourcePreparation: Pick<PrSourcePreparation, "prepare" | "status">;
   private working = false;
+  private activeReviewId: string | null = null;
   private reviewProgress = new ReviewProgress();
   private modelReviewId: string | null = null;
   private stopped = false;
@@ -461,7 +462,7 @@ export class PullRequests {
         );
         return {
           ...row,
-          review_progress: this.reviewProgress.text(row.review_id, row.review_status),
+          review_progress: this.reviewProgress.text(row.review_id, row.review_status, this.activeReviewId),
           has_review_log: new UsageLedger(this.store).hasReviewLog(context, row.monitor, row.repo, row.number),
           review_usage: new UsageLedger(this.store).reviewUsage(row.review_id, row.usage_id),
           local_source: this.sourcePreparation.status(row),
@@ -1564,6 +1565,7 @@ export class PullRequests {
       .get(Number(modelPaused)) as any;
     if (!job) return;
     this.working = true;
+    this.activeReviewId = job.id;
     const assertReviewActive = () => {
       const row = this.store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(job.id) as any;
       if (row?.status === "interrupted") throw new AppError(409, "Ревью остановлено пользователем");
@@ -1829,6 +1831,7 @@ export class PullRequests {
       this.reviewProgress.clear(job.id);
       this.modelReviewId = null;
       this.working = false;
+      this.activeReviewId = null;
     }
   }
 }

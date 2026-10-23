@@ -30,7 +30,10 @@ export class ReviewProgress {
     this.tools.set(id, active);
   }
   clear(id: string) { this.phases.delete(id); this.tools.delete(id); }
-  text(id: string | undefined, status: string): string | null {
+  text(id: string | undefined, status: string, activeReviewId?: string | null): string | null {
+    if (["preparing_git", "queued"].includes(status) && id !== activeReviewId) {
+      return activeReviewId ? "Ожидание завершения другого ревью" : "Ожидаю запуска ревью";
+    }
     if (status === "preparing_git") return "Подготавливаю локальную ветку Git";
     if (status === "queued") return "Ожидаю запуска ревью";
     if (status === "awaiting_answers") return "Ожидаю ваших ответов";

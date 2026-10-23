@@ -557,7 +557,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   <span
                     className={`pr-review-status pr-review-outcome ${p.review_status === "completed" ? "is-ready" : ["error", "interrupted"].includes(p.review_status) ? "is-error" : ["preparing_git", "running", "queued", "awaiting_answers"].includes(p.review_status) ? "is-pending" : "is-idle"}`}
                   >
-                    {statuses[p.review_status] || "Ревью не запускалось"}
+                    {(["preparing_git", "queued"].includes(p.review_status) && p.review_progress) || statuses[p.review_status] || "Ревью не запускалось"}
                   </span>
                   {(p.summary || p.coverage || p.last_saved_review) && (
                     <ReviewResult pr={p} />
