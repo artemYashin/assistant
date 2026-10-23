@@ -48,7 +48,7 @@
     "server/pr-source.ts": "d41b6eb7d904205c7e6672dd0fa627f1be5a85ea9d6a927751c2eea24e7608d0",
     "server/pr-ticket-sources.ts": "9734abda9f277f168320b9b3a64bee43c1e663836f35908b32045c8aea00a4e2",
     "server/pr-tools.ts": "a0b0a45ed6a6de1e78eb3af766f65fe3f1333769e5e927e9b17c0f32b14d1678",
-    "server/pull-requests.ts": "e983516a8df40b4632a3d5de26d429e1c0a311b6953f2daeb80a1dd399005c12",
+    "server/pull-requests.ts": "5726802dbef4427a10fd8685a454b0375f8caade37d64e2db5446e606711b4c4",
     "server/review-files.ts": "1747ccda353052176bf4e590b4952d410fc685fe61a8f24e006eab79884bc2bf",
     "server/review-questions.ts": "f25e2f0e63c4f8c99ee9662849215d04d12d961305f4b6eaa90ea52b07861abb",
     "server/search-pattern.ts": "2397d60aecd644d5417c00358723135cc71cb56463f6560c9679db31f05a888a",

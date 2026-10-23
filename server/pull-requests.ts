@@ -1011,16 +1011,16 @@ export class PullRequests {
     const m = this.repositoryMonitor(context);
     return this.readCommitDiff(m, m.repository, commit);
   }
-  private countCache = new Map<string, {expires: number; result: Promise<any>}>();
+  private countCache = new Map<string, {revision: string; result: Promise<any>}>();
   async counts(monitor: string, repo: string, number: number) {
     const m = this.monitors().find(entry => entry.id === monitor);
     const known = this.store.db.prepare("SELECT head,target,synced_at FROM pull_requests WHERE monitor=? AND repo=? AND number=?").get(monitor,repo,number) as any;
     if (!m || !known) throw new AppError(404, "PR не найден. Синхронизируйте список.");
     const credentials = this.credentials(m);
-    const key = JSON.stringify([monitor,repo,number,m.source,m.azure_project,known.head,known.target,known.synced_at]);
+    const key = JSON.stringify([monitor,repo,number]);
+    const revision = JSON.stringify([m.source,m.azure_project,known.head,known.target,known.synced_at]);
     const cached = this.countCache.get(key);
-    if (cached && cached.expires > Date.now()) return cached.result;
-    if (this.countCache.size >= 200) this.countCache.delete(this.countCache.keys().next().value!);
+    if (cached?.revision === revision) return cached.result;
     const root = `git/repositories/${enc(repo)}`;
     const result = (async () => {
       const [files,commits] = await Promise.allSettled([
@@ -1031,8 +1031,11 @@ export class PullRequests {
       const value = (result: PromiseSettledResult<any>) => result.status === "fulfilled" ? result.value : {error: result.reason?.message || "Не удалось загрузить количество"};
       return {files:value(files),commits:value(commits)};
     })();
-    this.countCache.set(key,{expires:Date.now()+300000,result});
-    try { return await result; } catch(error) {this.countCache.delete(key);throw error;}
+    this.countCache.set(key,{revision,result});
+    try { return await result; } catch(error) {
+      if (this.countCache.get(key)?.result === result) this.countCache.delete(key);
+      throw error;
+    }
   }
   async commits(
     monitor: string,

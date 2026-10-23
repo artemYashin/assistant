@@ -81,46 +81,46 @@ PR не найден. Синхронизируйте список.
 
 Azure не вернул список коммитов
 
-Источник: server/pull-requests.ts:1060.
+Источник: server/pull-requests.ts:1063.
 
 ### Сообщение
 
 Azure повторил страницу коммитов. Обновите историю.
 
-Источник: server/pull-requests.ts:1064.
+Источник: server/pull-requests.ts:1067.
 
 ### Сообщение
 
 Некорректный SHA коммита
 
-Источник: server/pull-requests.ts:1087.
+Источник: server/pull-requests.ts:1090.
 
 ### Сообщение
 
 Коммит не найден среди первых 1000 коммитов текущего PR
 
-Источник: server/pull-requests.ts:1106.
+Источник: server/pull-requests.ts:1109.
 
 ### Сообщение
 
 Azure не вернул данные коммита
 
-Источник: server/pull-requests.ts:1124.
+Источник: server/pull-requests.ts:1127.
 
 ### Сообщение
 
 Azure вернул некорректный родительский коммит
 
-Источник: server/pull-requests.ts:1127.
+Источник: server/pull-requests.ts:1130.
 
 ### Сообщение
 
 Azure не вернул коммиты выбранного PR
 
-Источник: server/pull-requests.ts:1156.
+Источник: server/pull-requests.ts:1159.
 
 ### Сообщение
 
 PR не найден
 
-Источник: server/pull-requests.ts:1183.
+Источник: server/pull-requests.ts:1186.

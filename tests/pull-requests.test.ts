@@ -1660,7 +1660,13 @@ test("PR counters cache metadata by revision and never read file content",async 
  const first=await service.counts(monitor,'repo',1);
  assert.deepEqual(first,{files:{value:2,complete:true},commits:{value:2,complete:true}});
  assert.deepEqual(await service.counts(monitor,'repo',1),first);assert.equal(paths.length,2);
- store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
+ const realNow=Date.now();
+ const clock=t.mock.method(Date,"now",()=>realNow+24*60*60*1000);
+ assert.deepEqual(await service.counts(monitor,'repo',1),first);assert.equal(paths.length,2);
+ clock.mock.restore();
+ store.db.prepare("UPDATE pull_requests SET synced_at='manual-refresh' WHERE number=1").run();
  await service.counts(monitor,'repo',1);assert.equal(paths.length,4);
+ store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
+ await service.counts(monitor,'repo',1);assert.equal(paths.length,6);
  assert.ok(paths.every(path=>!path.endsWith('/items')));
 });
