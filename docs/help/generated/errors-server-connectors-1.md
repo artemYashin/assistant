@@ -9,118 +9,118 @@
 
 Недопустимая ссылка Graph
 
-Источник: server/connectors.ts:113.
+Источник: server/connectors.ts:114.
 
 ### Сообщение
 
 Список чатов слишком большой
 
-Источник: server/connectors.ts:148.
+Источник: server/connectors.ts:149.
 
 ### Сообщение
 
 Graph returned no message ID
 
-Источник: server/connectors.ts:160.
+Источник: server/connectors.ts:161.
 
 ### Сообщение
 
 Слишком много сообщений за период. Синхронизация не завершена; отметка времени не изменена.
 
-Источник: server/connectors.ts:245.
+Источник: server/connectors.ts:246.
 
 ### Сообщение
 
 Настройте URL, проект и PAT Azure DevOps
 
-Источник: server/connectors.ts:263.
+Источник: server/connectors.ts:264.
 
 ### Сообщение
 
 Azure не вернул доступные статусы
 
-Источник: server/connectors.ts:384.
+Источник: server/connectors.ts:386.
 
 ### Сообщение
 
 Тикет относится к другому проекту
 
-Источник: server/connectors.ts:404.
+Источник: server/connectors.ts:406.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: server/connectors.ts:407.
+Источник: server/connectors.ts:409.
 
 ### Сообщение
 
 Тикет недоступен или относится к другому проекту
 
-Источник: server/connectors.ts:435.
+Источник: server/connectors.ts:437.
 
 ### Сообщение
 
 Azure не вернул список тикетов
 
-Источник: server/connectors.ts:470.
+Источник: server/connectors.ts:472.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/connectors.ts:477.
+Источник: server/connectors.ts:479.
 
 ### Сообщение
 
 Unexpected error
 
-Источник: server/connectors.ts:547.
+Источник: server/connectors.ts:549.
 
 ### Сообщение
 
 Подключение Azure изменилось, запись отменена
 
-Источник: server/connectors.ts:565.
+Источник: server/connectors.ts:567.
 
 ### Сообщение
 
 patch_failed
 
-Источник: server/connectors.ts:587.
+Источник: server/connectors.ts:589.
 
 ### Сообщение
 
 Введите минимум два символа имени или email без * и ?
 
-Источник: server/connectors.ts:622.
+Источник: server/connectors.ts:624.
 
 ### Сообщение
 
 Настройте Azure DevOps
 
-Источник: server/connectors.ts:630.
+Источник: server/connectors.ts:632.
 
 ### Сообщение
 
 Для Azure Services укажите URL организации без проекта
 
-Источник: server/connectors.ts:636.
+Источник: server/connectors.ts:638.
 
 ### Сообщение
 
 Azure вернул неверный список пользователей
 
-Источник: server/connectors.ts:662.
+Источник: server/connectors.ts:664.
 
 ### Сообщение
 
 Azure вернул неверный результат поиска Graph
 
-Источник: server/connectors.ts:697.
+Источник: server/connectors.ts:699.
 
 ### Сообщение
 
 API по настроенному адресу не найден (HTTP 404)
 
-Источник: server/connectors.ts:743.
+Источник: server/connectors.ts:745.

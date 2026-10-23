@@ -14,6 +14,7 @@ test("every summary sort supports stable pagination for lists and content search
   const source = store.source();
   for (const id of [1, 2, 3]) {
     const value = id === 1 ? "Z" : "A";
+    store.saveAzurePriority(id,source,id===1?3:1);
     const date = id === 1 ? "2026-10-22" : "2026-10-21";
     store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, value, value, value, value, "url", date, date);
     store.db.prepare("INSERT INTO ticket_metadata VALUES (?,?,?,?,?)").run(source, id, `${value} needle`, id === 1 ? 5 : 1, JSON.stringify([value]));

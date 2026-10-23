@@ -1,3 +1,4 @@
+import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { commentMarkdown, commentImageType } from "./comment-markdown.js";
 import { browseQuery, browseFields, azureSummary, orderBrowseIds, type AzureBrowse } from "./azure-browser.js";
 import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
@@ -313,6 +314,7 @@ export class Connectors {
       return;
     }
     const f = item.fields || {};
+    this.store.saveAzurePriority(item.id,this.store.source(s),f[AZURE_PRIORITY_FIELD]);
     const azureTags = [
       ...new Set(
         String(f["System.Tags"] || "")
@@ -968,6 +970,7 @@ export class Connectors {
     if (summary && (!snapshot || summary.synced_at >= snapshot.loadedAt)) {
       for (const [key, field] of Object.entries({ title: "System.Title", state: "System.State", type: "System.WorkItemType", assigned: "System.AssignedTo", changed_at: "System.ChangedDate" })) fields[field] = summary[key];
       fields["System.CreatedDate"] = this.store.ticketCreatedAt(id, source);
+      fields[AZURE_PRIORITY_FIELD] = this.store.azurePriority(id,source);
       fields["System.Tags"] = this.store.azureTags(id, source).join("; ");
     }
     fields["System.Title"] ||= `Тикет #${id}`;
@@ -1524,6 +1527,7 @@ export class Connectors {
       if (plan.type)
         filters.push(`[System.WorkItemType] = ${quote(plan.type)}`);
       if (plan.state) filters.push(`[System.State] = ${quote(plan.state)}`);
+      if(plan.azurePriority?.length) filters.push(`[${AZURE_PRIORITY_FIELD}] IN (${plan.azurePriority.join(",")})`);
       const found = await this.azure(
         "wiql?$top=51",
         {
@@ -1560,6 +1564,7 @@ export class Connectors {
             "System.AssignedTo",
             "System.ChangedDate",
             "System.CreatedDate",
+            AZURE_PRIORITY_FIELD,
             "System.Tags",
           ],
         }),
@@ -1579,6 +1584,7 @@ export class Connectors {
       const f = item.fields;
       return {
         id: item.id,
+        azurePriority: azurePriorityValue(f[AZURE_PRIORITY_FIELD]),
         azureTags: [
           ...new Set(
             String(f["System.Tags"] || "")
@@ -1718,6 +1724,7 @@ export class Connectors {
                 "System.WorkItemType",
                 "System.ChangedDate",
               "System.CreatedDate",
+                AZURE_PRIORITY_FIELD,
                 "System.Tags",
                 "System.TeamProject",
               ],

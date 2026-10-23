@@ -1247,6 +1247,7 @@ function Tickets({
               state: t.state,
               type: t.type,
               assigned: t.assigned,
+              azurePriority: t.azurePriority,
               azureTags: t.azureTags,
               created_at: t.created_at,
               changed_at: t.changed_at,
@@ -1404,6 +1405,10 @@ function Tickets({
     ? filteredTickets
     : [...filteredTickets].sort((a, b) => {
         const [key, direction] = sort.split("-");
+        if(key==="azurePriority") {
+          if(a[key]==null || b[key]==null) return a[key]==null ? (b[key]==null ? a.id-b.id : 1) : -1;
+          return (direction==="desc" ? b[key]-a[key] : a[key]-b[key]) || a.id-b.id;
+        }
         const cmp =
           key === "id"
             ? a.id - b.id
@@ -1795,6 +1800,7 @@ function Tickets({
                   [
                     ["state", "Статус"],
                     ["priority", "Приоритет"],
+                    ["azurePriority", "Azure приоритет"],
                     ["tags", "Теги"],
                     ["azureTags", "Azure теги"],
                     ["assigned", "Исполнитель в Azure"],

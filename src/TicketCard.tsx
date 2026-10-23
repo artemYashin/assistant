@@ -359,6 +359,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                 )}
               </dd>
             </div>
+            <div><dt>Azure приоритет</dt><dd title="Приоритет Azure DevOps · только чтение">{card.fields?.["Microsoft.VSTS.Common.Priority"] ?? "—"}</dd></div>
             <div className="ticket-overview-tags">
               <dt>Azure теги</dt>
               <dd title="Теги Azure DevOps · только чтение">

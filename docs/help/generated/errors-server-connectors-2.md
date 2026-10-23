@@ -9,118 +9,118 @@
 
 Подключение изменилось; повторите поиск
 
-Источник: server/connectors.ts:767.
+Источник: server/connectors.ts:769.
 
 ### Сообщение
 
 Пользователи не найдены в локальном кэше, а онлайн-поиск не завершён. Попробуйте полное имя или e-mail.
 
-Источник: server/connectors.ts:799.
+Источник: server/connectors.ts:801.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
-Источник: server/connectors.ts:811.
+Источник: server/connectors.ts:813.
 
 ### Сообщение
 
 Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.
 
-Источник: server/connectors.ts:822.
+Источник: server/connectors.ts:824.
 
 ### Сообщение
 
 Тикет относится к другому проекту Azure
 
-Источник: server/connectors.ts:832.
+Источник: server/connectors.ts:834.
 
 ### Сообщение
 
 Azure не вернул ревизию тикета
 
-Источник: server/connectors.ts:837.
+Источник: server/connectors.ts:839.
 
 ### Сообщение
 
 Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.
 
-Источник: server/connectors.ts:865.
+Источник: server/connectors.ts:867.
 
 ### Сообщение
 
 Изменение исполнителя не подтверждено. {…}
 
-Источник: server/connectors.ts:879.
+Источник: server/connectors.ts:881.
 
 ### Сообщение
 
 Azure вернул другого исполнителя; проверьте права и правила проекта.
 
-Источник: server/connectors.ts:881.
+Источник: server/connectors.ts:883.
 
 ### Сообщение
 
 Azure не вернул типы задач
 
-Источник: server/connectors.ts:902.
+Источник: server/connectors.ts:904.
 
 ### Сообщение
 
 Номер или проект тикета не соответствует запросу
 
-Источник: server/connectors.ts:936.
+Источник: server/connectors.ts:938.
 
 ### Сообщение
 
 Тикет относится к другому проекту Azure DevOps
 
-Источник: server/connectors.ts:1013.
+Источник: server/connectors.ts:1016.
 
 ### Сообщение
 
 Некорректный ответ Comments API
 
-Источник: server/connectors.ts:1032.
+Источник: server/connectors.ts:1035.
 
 ### Сообщение
 
 Комментарии загружены не полностью: достигнут защитный лимит
 
-Источник: server/connectors.ts:1040.
+Источник: server/connectors.ts:1043.
 
 ### Сообщение
 
 Комментарии недоступны: проверьте разрешения и поддержку Comments API на вашем Azure Server
 
-Источник: server/connectors.ts:1048.
+Источник: server/connectors.ts:1051.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: server/connectors.ts:1130.
+Источник: server/connectors.ts:1133.
 
 ### Сообщение
 
 Изображение изменилось. Добавьте его заново.
 
-Источник: server/connectors.ts:1136.
+Источник: server/connectors.ts:1139.
 
 ### Сообщение
 
 Azure не вернул ссылку на изображение. Повторите загрузку.
 
-Источник: server/connectors.ts:1145.
+Источник: server/connectors.ts:1148.
 
 ### Сообщение
 
 Комментарий должен содержать от 1 до 10000 символов
 
-Источник: server/connectors.ts:1163.
+Источник: server/connectors.ts:1166.
 
 ### Сообщение
 
 Черновик изменился. Повторите отправку с новым идентификатором.
 
-Источник: server/connectors.ts:1171.
+Источник: server/connectors.ts:1174.

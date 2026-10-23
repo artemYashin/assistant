@@ -39,6 +39,7 @@ test("Azure sorting validates fields and preserves global ordering before pagina
     ["created_at-asc", "System.CreatedDate", "ASC"],
     ["changed_at-desc", "System.ChangedDate", "DESC"],
     ["title-asc", "System.Title", "ASC"],
+    ["azurePriority-asc", "Microsoft.VSTS.Common.Priority", "ASC"],
   ]) {
     const query = browseQuery(azureBrowseSchema.parse({ source: "s", sort }), [])!;
     assert.ok(query.endsWith(`ORDER BY [${field}] ${direction}, [System.Id] DESC`));
@@ -82,7 +83,8 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     batches++;
     const body = JSON.parse(init.body);
     assert.ok(body.ids.length <= 50);
-    assert.ok(!body.fields.includes("System.Description"));
+    assert.equal(body.fields.includes("System.Description"),body.ids.includes(100), "selected import reads content; browsing reads summary only");
+    assert.ok(body.fields.includes("Microsoft.VSTS.Common.Priority"));
     return Response.json({
       value: [...body.ids].reverse().map((id: number) => ({
         id,
@@ -91,6 +93,7 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
           "System.Title": `Ticket ${id}`,
           "System.WorkItemType": "Bug",
           "System.State": "Active",
+          "Microsoft.VSTS.Common.Priority": 2,
           "System.Tags": "a; b",
           "System.CreatedDate": "2025-01-02T03:04:05Z",
           "System.ChangedDate": "2026-02-03T04:05:06Z",
@@ -104,6 +107,7 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
   );
   assert.equal(result.tickets.length, 50);
   assert.equal(result.tickets[0].id, 40000);
+  assert.equal(result.tickets[0].azurePriority,2);
   assert.equal(result.tickets[0].created_at, "2025-01-02T03:04:05Z");
   assert.equal(result.tickets[0].changed_at, "2026-02-03T04:05:06Z");
   assert.equal(result.total, 51);
@@ -162,6 +166,7 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
   assert.deepEqual([...imported.added].sort((a, b) => b - a), [100, 99]);
   assert.equal(store.ticketCreatedAt(100), "2025-01-02T03:04:05.000Z");
   assert.equal(batches, 3);
+  assert.equal(store.azurePriority(100),2);
   await connectors.importAzureSelection([100, 99], store.source());
   assert.equal(batches, 3);
   assert.equal(

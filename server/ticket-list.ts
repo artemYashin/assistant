@@ -11,7 +11,7 @@ export const ticketListSchema = z.object({
   ...ticketSortSchema,
   searchMode: searchModeSchema,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all").describe("Include retained local trash by default; deleted=true marks trash results."),
-  fields: z.array(z.enum(["type", "state", "assigned", "priority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(13).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
+  fields: z.array(z.enum(["type", "state", "assigned", "priority", "azurePriority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(14).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
   contentOffset: z.number().int().nonnegative().default(0),
   ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
@@ -34,6 +34,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     type,
     state,
     priority,
+    azurePriority,
     tag,
     azureTag,
     afterId,
@@ -64,7 +65,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const exactFilters = ticketFilterSql(type, state);
   clauses.push(...exactFilters.clauses);
   params.push(...exactFilters.params);
-  const metadataFilters = ticketMetadataFilterSql({ priority, tag, azureTag }, "local_tickets");
+  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag }, "local_tickets");
   clauses.push(...metadataFilters.clauses);
   params.push(...metadataFilters.params);
   const where = clauses.join(" AND ");
@@ -93,6 +94,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     }
     if (wanted.has("added_at")) ticket.added_at = store.ticketAddedAt(row.id);
     if (wanted.has("created_at")) ticket.created_at = store.ticketCreatedAt(row.id);
+    if (wanted.has("azurePriority")) ticket.azurePriority = store.azurePriority(row.id);
     if (wanted.has("azureTags")) ticket.azureTags = store.azureTags(row.id);
     if (wanted.has("localDevelopers")) ticket.localDevelopers = new LocalDevelopers(store)
       .assigned(row.id).map(({ id, name }) => ({ id, name }));

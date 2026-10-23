@@ -1010,6 +1010,7 @@ export function createApp(
           added_at: store.ticketAddedAt(ticket.id, ticket.source),
           created_at: store.ticketCreatedAt(ticket.id, ticket.source),
           ...ticketMetadata(store, ticket.id, ticket.source),
+          azurePriority: store.azurePriority(ticket.id,ticket.source),
           azureTags: store.azureTags(ticket.id, ticket.source),
           developers,
           developer_name: developers.length

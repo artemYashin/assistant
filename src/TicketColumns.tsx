@@ -14,6 +14,7 @@ import { Columns3, GripVertical, X } from "lucide-react";
 export const ticketColumns = [
   ["state", "Статус"],
   ["priority", "Приоритет"],
+  ["azurePriority", "Azure приоритет"],
   ["tags", "Теги"],
   ["azureTags", "Azure теги"],
   ["assigned", "Исполнитель в Azure"],

@@ -1,3 +1,4 @@
+import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import type { ChatMessageContext } from "./chat-message-context.js";
 import { createHash } from "node:crypto";
 import { memorySummarySchema, legacyMemorySummary } from "./memory-summary.js";
@@ -114,6 +115,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
       CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, name TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
       CREATE TABLE IF NOT EXISTS messages (id TEXT NOT NULL, chat_id TEXT NOT NULL, sender TEXT NOT NULL, body TEXT NOT NULL, url TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(chat_id,id));
+      CREATE TABLE IF NOT EXISTS ticket_azure_priority (source TEXT NOT NULL,id INTEGER NOT NULL,priority REAL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_azure_tags (source TEXT NOT NULL, id INTEGER NOT NULL, tags TEXT NOT NULL DEFAULT '[]', PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS tickets (source TEXT NOT NULL, id INTEGER NOT NULL, title TEXT NOT NULL, state TEXT NOT NULL, assigned TEXT NOT NULL, type TEXT NOT NULL, url TEXT NOT NULL, changed_at TEXT, synced_at TEXT NOT NULL, PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS suggestions (id TEXT PRIMARY KEY, source TEXT NOT NULL, ticket_id INTEGER NOT NULL, chat_id TEXT NOT NULL, message_id TEXT NOT NULL, excerpt TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', created_at TEXT NOT NULL, UNIQUE(source,ticket_id,chat_id,message_id));
@@ -611,6 +613,12 @@ export class Store {
     this.audit("memory.saved", `${scope}: ${id}`);
     return { id, scope, summary: short, body };
   }
+  azurePriority(id:number,source=this.source()):number|null {
+    return (this.db.prepare("SELECT priority FROM ticket_azure_priority WHERE source=? AND id=?").get(source,id) as {priority:number|null}|undefined)?.priority ?? null;
+  }
+  saveAzurePriority(id:number,source:string,value:unknown) {
+    this.db.prepare("INSERT INTO ticket_azure_priority(source,id,priority) VALUES (?,?,?) ON CONFLICT(source,id) DO UPDATE SET priority=excluded.priority").run(source,id,azurePriorityValue(value));
+  }
   azureTags(id: number, source = this.source()): string[] {
     const row = this.db
       .prepare("SELECT tags FROM ticket_azure_tags WHERE source=? AND id=?")
@@ -657,6 +665,7 @@ export class Store {
             "DELETE FROM ticket_azure_tags WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)",
           )
           .run(row.source, row.id, row.source, row.id);
+        this.db.prepare("DELETE FROM ticket_azure_priority WHERE source=? AND id=? AND NOT EXISTS (SELECT 1 FROM tickets WHERE source=? AND id=?)").run(row.source,row.id,row.source,row.id);
         this.db
           .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
           .run(row.source, row.id);
@@ -719,6 +728,7 @@ export class Store {
               .filter(Boolean),
           ),
         );
+    this.saveAzurePriority(item.id,source,fields[AZURE_PRIORITY_FIELD]);
     this.saveTicketCreatedAt(item.id, source, fields["System.CreatedDate"]);
     body.synced_at = new Date().toISOString();
     this.db
@@ -747,6 +757,7 @@ export class Store {
         ...JSON.parse(row.body),
         added_at: this.ticketAddedAt(row.id, row.source),
         created_at: this.ticketCreatedAt(row.id, row.source) ?? JSON.parse(row.body).created_at ?? null,
+        azurePriority: this.azurePriority(row.id,row.source),
         azureTags: this.azureTags(row.id, row.source),
         ...ticketMetadata(this, row.id, row.source),
         developers,

@@ -19,6 +19,7 @@ const sorts = new Set(
     "type",
     "state",
     "priority",
+    "azurePriority",
     "tags",
     "azureTags",
     "assigned",

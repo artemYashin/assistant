@@ -67,12 +67,14 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
     if (url.pathname.endsWith("/wiql")) {
       assert.equal(url.searchParams.get("$top"), "51");
       assert.match(JSON.parse(init.body).query, /CONTAINS 'O''Brien'/);
+      assert.ok(JSON.parse(init.body).query.includes("[Microsoft.VSTS.Common.Priority] IN (2)"));
       return Response.json({ workItems: [{ id: 42 }] });
     }
     assert.ok(url.pathname.endsWith("/workitemsbatch"));
     const body = JSON.parse(init.body);
     assert.deepEqual(body.ids, [42]);
-    assert.ok(!body.fields.includes("System.Description"));
+    assert.equal(body.fields.includes("System.Description"),calls===3);
+    assert.ok(body.fields.includes("Microsoft.VSTS.Common.Priority"));
     assert.ok(body.fields.includes("System.Tags"));
     return Response.json({
       value: [
@@ -91,7 +93,7 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
   });
   const connectors = new Connectors(store, new IntegrationsAuth(store));
   const read = await connectors.lookupTickets(
-    { search: "O'Brien" },
+    { search: "O'Brien",azurePriority:[2] },
     false,
     () => {},
   );
@@ -111,4 +113,11 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
     1,
   );
   assert.equal(calls, 3);
+});
+
+test("Azure priority filter survives user consent without becoming local priority",()=>{
+ const plan={azurePriority:[1,2]},source="https://ado.test|P";
+ const history=[{role:"assistant",body:azureLookupQuestion(plan,source,0)}];
+ assert.deepEqual(azureLookupConsent("Только показать",history,source),{plan,add:false});
+ assert.equal(azureLookupSchema.safeParse({ids:[1],azurePriority:[2]}).success,false);
 });

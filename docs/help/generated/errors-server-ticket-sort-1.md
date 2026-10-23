@@ -9,4 +9,4 @@
 
 Unsupported ticket sort
 
-Источник: server/ticket-sort.ts:21.
+Источник: server/ticket-sort.ts:22.

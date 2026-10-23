@@ -111,6 +111,7 @@ export function TicketDataRow({
           "N/A"
         )}
       </td>
+      <td data-column="azurePriority" hidden={columns.hidden("azurePriority")} title="Приоритет Azure DevOps · только чтение">{t.azurePriority ?? "—"}</td>
       <td data-column="tags" hidden={columns.hidden("tags")}>
         {local ? (
           <TicketMetadata

@@ -19,11 +19,11 @@ export const contentSearchSchema = z.object({
 
 /** Local literal search only; never downloads ticket bodies or returns full content. */
 export function searchTicketContent(store: Store, input: unknown) {
-  const { search, searchMode, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state, priority, tag, azureTag } = contentSearchSchema.parse(input);
+  const { search, searchMode, id, afterId, limit, lifecycle, sortBy, sortDirection, type, state, priority, azurePriority, tag, azureTag } = contentSearchSchema.parse(input);
   const source = store.source();
   const lifecycleClause = lifecycle === "all" ? "" : lifecycle === "deleted" ? " AND t.deleted=1" : " AND t.deleted=0";
   const exactFilters = ticketFilterSql(type, state, "t.");
-  const metadataFilters = ticketMetadataFilterSql({ priority, tag, azureTag }, "t");
+  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag }, "t");
   const filterClauses = [...exactFilters.clauses, ...metadataFilters.clauses];
   const filterClause = filterClauses.length ? " AND " + filterClauses.join(" AND ") : "";
   const filterParams = [...exactFilters.params, ...metadataFilters.params];

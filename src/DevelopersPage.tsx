@@ -32,6 +32,7 @@ type Task = {
   state: string;
   type: string;
   priority?: number;
+  azurePriority?: number | null;
   removedAt?: number;
   developers?: { id: string }[];
 };
@@ -406,6 +407,7 @@ function DeveloperCard({
                   colors={settings?.statusColors}
                 />
                 <span className="badge">P{ticket.priority ?? 1}</span>
+                {ticket.azurePriority != null && <span className="badge" title="Azure приоритет · только чтение">Azure приоритет: {ticket.azurePriority}</span>}
               </div>
             </div>
           ))}

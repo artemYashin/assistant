@@ -9,4 +9,4 @@
 
 Azure вернул неполный список тикетов
 
-Источник: server/connectors.ts:1734.
+Источник: server/connectors.ts:1741.

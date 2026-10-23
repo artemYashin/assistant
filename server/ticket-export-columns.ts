@@ -6,6 +6,7 @@ export type CsvTicket = {
   type?: string;
   state?: string;
   priority?: number;
+  azurePriority?: number | null;
   tags?: string[];
   azureTags?: string[];
   assigned?: string;
@@ -54,6 +55,7 @@ export const exportColumns = [
     value: (t: CsvTicket) =>
       t.imported === false && !t.inTrash ? "N/A" : (t.priority ?? 1),
   },
+  { key:"azurePriority",header:"Azure Priority",label:"Azure приоритет",width:20,value:(t:CsvTicket)=>t.azurePriority ?? "" },
   {
     key: "tags",
     header: "Tags",

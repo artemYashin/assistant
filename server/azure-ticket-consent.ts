@@ -10,15 +10,16 @@ const baseAzureLookupSchema = z
     search: text.optional(),
     type: text.optional(),
     state: text.optional(),
+    azurePriority:z.array(z.number().int().min(0).max(2147483647)).min(1).max(50).optional(),
   })
   .strict()
   .refine(
     (value) =>
-      Boolean(value.ids?.length || value.search || value.type || value.state),
+      Boolean(value.ids?.length || value.search || value.type || value.state || value.azurePriority?.length),
     "Укажите номера или критерии поиска",
   );
 export const azureLookupSchema = baseAzureLookupSchema.refine(
-  (value) => !value.ids || !(value.search || value.type || value.state),
+  (value) => !value.ids || !(value.search || value.type || value.state || value.azurePriority?.length),
   "Укажите либо точные ID, либо критерии поиска",
 );
 export type AzureLookup = z.infer<typeof azureLookupSchema>;
@@ -28,7 +29,7 @@ export function azureLookupQuestion(
   source: string,
   localCount: number,
 ) {
-  return `Локальных совпадений по критериям предложенного запроса Azure: ${localCount}. Это не общее количество результатов предыдущих поисков.\n\n${heading}\nПодключение: ${source}\nНомера: ${plan.ids?.join(", ") || "—"}\nНазвание содержит: ${plan.search || "—"}\nТип: ${plan.type || "—"}\nСтатус: ${plan.state || "—"}\n\nМожно только показать краткие сведения или запросить и добавить найденные тикеты в локальный список (не более 50 за один поиск). Описания и критерии загружаться не будут. Какой вариант выбрать?`;
+  return `Локальных совпадений по критериям предложенного запроса Azure: ${localCount}. Это не общее количество результатов предыдущих поисков.\n\n${heading}\nПодключение: ${source}\nНомера: ${plan.ids?.join(", ") || "—"}\nНазвание содержит: ${plan.search || "—"}\nТип: ${plan.type || "—"}\nСтатус: ${plan.state || "—"}\nAzure приоритет: ${plan.azurePriority?.join(", ") || "—"}\n\nМожно только показать краткие сведения или запросить и добавить найденные тикеты в локальный список (не более 50 за один поиск). Описания и критерии загружаться не будут. Какой вариант выбрать?`;
 }
 export function azureLookupConsent(
   prompt: string,
@@ -53,6 +54,7 @@ export function azureLookupConsent(
     search: field("Название содержит: "),
     type: field("Тип: "),
     state: field("Статус: "),
+    azurePriority:field("Azure приоритет: ")?.split(", ").map(Number),
   });
   if (!parsed.success) return;
   const reply = prompt
@@ -75,6 +77,7 @@ export function azureLookupConsent(
           ...(parsed.data.search ? { search: parsed.data.search } : {}),
           ...(parsed.data.type ? { type: parsed.data.type } : {}),
           ...(parsed.data.state ? { state: parsed.data.state } : {}),
+          ...(parsed.data.azurePriority ? {azurePriority:parsed.data.azurePriority} : {}),
         },
         add,
       }

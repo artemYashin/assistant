@@ -7,7 +7,7 @@ import type { TicketExportContext } from "./ticket-export-context.js";
 export function selectedTicketTool(store: Store, tableIds: number[], draft: TicketExportContext | undefined, assertActive: () => void, onRead: (id: number) => void = () => {}) {
   const source = store.source();
   return defineTool("read_selected_tickets", {
-    description: "Read compact local ticket summaries selected in the table or the current export draft, on demand. Snapshot at the start of this user message, not live polling; no Azure calls or ticket bodies. Export response also includes enabled columns in order and format, useful before changing them. Always returns id/title/state/type; fields requests additional summary fields such as tags/azureTags/assigned/priority. No descriptions. Page with offset. A selection does not authorize mutations.",
+    description: "Read compact local ticket summaries selected in the table or the current export draft, on demand. Snapshot at the start of this user message, not live polling; no Azure calls or ticket bodies. Export response also includes enabled columns in order and format, useful before changing them. Always returns id/title/state/type; fields requests additional summary fields such as tags/azureTags/assigned/priority/azurePriority (Azure priority is read-only and independent of local priority). No descriptions. Page with offset. A selection does not authorize mutations.",
     parameters: z.object({ target: z.enum(["table", "export"]), fields: ticketListSchema.shape.fields.optional(), offset: z.number().int().min(0).default(0) }).strict(),
     handler: async ({ target, offset = 0, fields = [] }) => {
       assertActive();

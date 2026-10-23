@@ -177,6 +177,10 @@ export function TicketTrash({
     .sort((a, b) => {
       const value = (t: any) =>
         sort.key === "developer_name" ? localName(t) : t[sort.key];
+      if(sort.key==="azurePriority") {
+        if(value(a)==null || value(b)==null) return value(a)==null ? (value(b)==null ? a.id-b.id : 1) : -1;
+        return (sort.descending ? value(b)-value(a) : value(a)-value(b)) || a.id-b.id;
+      }
       const cmp = ["id", "removedAt", "expiresAt"].includes(sort.key)
         ? Number(value(a)) - Number(value(b))
         : ["created_at", "changed_at"].includes(sort.key)
@@ -195,6 +199,7 @@ export function TicketTrash({
     ["title", "Тикет"],
     ["state", "Статус"],
     ["priority", "Приоритет"],
+    ["azurePriority", "Azure приоритет"],
     ["tags", "Теги"],
     ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],

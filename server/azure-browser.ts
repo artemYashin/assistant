@@ -1,3 +1,4 @@
+import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { z } from "zod";
 import { AppError } from "./store.js";
 const azureSortFields: Record<string, string> = {
@@ -6,6 +7,7 @@ const azureSortFields: Record<string, string> = {
   type: "System.WorkItemType",
   state: "System.State",
   assigned: "System.AssignedTo",
+  azurePriority: AZURE_PRIORITY_FIELD,
   azureTags: "System.Tags",
   created_at: "System.CreatedDate",
   changed_at: "System.ChangedDate",
@@ -121,6 +123,7 @@ export function browseQuery(input: AzureBrowse, local: any[]) {
   return query;
 }
 export const browseFields = [
+  AZURE_PRIORITY_FIELD,
   "System.Id",
   "System.TeamProject",
   "System.Title",
@@ -148,6 +151,7 @@ export function azureSummary(
       typeof f["System.AssignedTo"] === "string"
         ? f["System.AssignedTo"]
         : f["System.AssignedTo"]?.displayName || "",
+    azurePriority: azurePriorityValue(f[AZURE_PRIORITY_FIELD]),
     azureTags: String(f["System.Tags"] || "")
       .split(";")
       .map((v) => v.trim())
