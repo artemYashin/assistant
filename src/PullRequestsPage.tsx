@@ -639,20 +639,12 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                       role="group"
                       aria-label="Информация о PR"
                     >
-                      {!readOnly && <ConfirmButton
-                        className="secondary pr-refresh-one" disabled={busy}
-                        ariaLabel={`Обновить PR #${p.number}`}
-                        title={`Обновить PR #${p.number}?`}
-                        message="Полная деталка, связи и проверки будут обновлены из Azure. Локальные привязки тикетов и отметки «Не учитывать» сохранятся. Остальные PR не изменятся."
-                        confirmLabel="Обновить"
-                        onConfirm={async () => {
-                          setBusy(true);
-                          try {
-                            await api("/pr/reimport", "POST", {monitor:p.monitor,repo:p.repo,number:p.number});
-                            setVersion(v => v+1);
-                          } finally {setBusy(false);}
-                        }}
-                      ><RefreshCw size={14} aria-hidden="true" /> Обновить</ConfirmButton>}
+                      {!readOnly && <button
+                        type="button" className="secondary pr-refresh-one" disabled={busy}
+                        aria-label={`Обновить PR #${p.number}`}
+                        title="Полная деталка, связи и проверки будут обновлены из Azure. Локальные привязки тикетов и отметки «Не учитывать» сохранятся. Остальные PR не изменятся."
+                        onClick={() => void run(() => api("/pr/reimport", "POST", {monitor:p.monitor,repo:p.repo,number:p.number}))}
+                      ><RefreshCw size={14} aria-hidden="true" /> Обновить</button>}
                       <PrInfoPopup
                         title="Контекст PR"
                         trigger={<Layers3 size={17} aria-hidden="true" />}
