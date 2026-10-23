@@ -1,3 +1,4 @@
+import type { Element, ElementContent } from "hast";
 import { MarkdownCodeBlock } from "./MarkdownCodeBlock.js";
 import { chatCodeBranch } from "./chat-code-branch.js";
 import { chatPrCard } from "./chat-pr-card.js";
@@ -33,6 +34,20 @@ function CopyableLink({ href, children, ticket = false, copyValue }: { href: str
   }}>{status === "Скопировано" ? <Check size={13} /> : ticket ? <Link2 size={13} /> : <Copy size={13} />}<span className="chat-copy-feedback" role="status">{status}</span></button></span>;
 }
 
+function quoteTickets(node?: Element) {
+  const tickets = new Map<string, {id: number; source: string}>();
+  const visit = (child: Element | ElementContent) => {
+    if (child.type !== "element" || child.tagName === "blockquote") return;
+    if (child.tagName === "a" && typeof child.properties.href === "string") {
+      const citation = chatTicketCitation(child.properties.href);
+      if (citation) tickets.set(JSON.stringify([citation.source,citation.id]),citation);
+    }
+    child.children.forEach(visit);
+  };
+  node?.children.forEach(visit);
+  return [...tickets.values()];
+}
+
 export function ChatMarkdown({
   text,
   images,
@@ -46,9 +61,16 @@ export function ChatMarkdown({
 }) {
   const components = useMemo<Components>(() => ({
           pre: MarkdownCodeBlock,
-          blockquote: ({ children }) => (
+          blockquote: ({ children, node }) => (
             <blockquote className="chat-quote-card">
-              <Quote className="chat-quote-icon" size={17} aria-hidden="true" />
+              <span className="chat-quote-heading">
+                <Quote className="chat-quote-icon" size={17} aria-hidden="true" />
+                {quoteTickets(node).map(ticket => <button type="button" key={JSON.stringify([ticket.source,ticket.id])}
+                  className="chat-quote-ticket" title={`Открыть тикет #${ticket.id}`} aria-label={`Открыть тикет #${ticket.id}`}
+                  onClick={() => window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
+                    detail: {source:ticket.source,tickets:[{id:ticket.id,title:`#${ticket.id}`}]},
+                  }))}>#{ticket.id}</button>)}
+              </span>
               {children}
             </blockquote>
           ),

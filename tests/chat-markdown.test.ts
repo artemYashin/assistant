@@ -97,3 +97,13 @@ test("code snippets render copy control, language and line numbers", () => {
   assert.match(html, />ts<\/span>/);
   assert.match(html, /value\+\+;/);
 });
+
+ test("citation cards show a compact ticket badge beside the quote icon", () => {
+  const url="/tickets?id=42&source=azure%7Cproject&section=description&quote=Requirement";
+  const html=render(`> Requirement\n\n[Source](${url})`);
+  assert.match(html,/class="chat-quote-heading"/);
+  assert.match(html,/class="chat-quote-ticket"[^>]*>#[0-9]+<\/button>/);
+  assert.match(html,/Открыть тикет #42/);
+  assert.match(html,/Показать в тикете/);
+  assert.doesNotMatch(render("> Ordinary quote"),/class="chat-quote-ticket"/);
+ });

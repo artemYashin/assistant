@@ -10001,3 +10001,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-card-info-actions .pr-refresh-one { padding:4px 7px; min-height:28px; font-size:11px; gap:4px; white-space:nowrap; }
 
 .pr-action-count { display:inline-flex; align-items:center; justify-content:center; min-width:18px; padding:1px 5px; border:1px solid #bed3e5; border-radius:10px; background:#e9f2fa; color:#385d7d; font-size:10px; line-height:14px; font-weight:600; }
+
+.chat-quote-heading { display:inline-flex; float:left; align-items:center; gap:5px; margin:1px 8px 2px 0; white-space:nowrap; }
+.chat-markdown .chat-quote-heading .chat-quote-icon { float:none; margin:0; }
+.chat-markdown .chat-quote-ticket { display:inline-flex; align-items:center; justify-content:center; padding:1px 5px; min-height:18px; border:1px solid #bfd3c6; border-radius:5px; background:#eaf4ed; color:#41634c; font-size:10px; line-height:14px; font-weight:500; white-space:nowrap; }
+.chat-markdown .chat-quote-ticket:hover { background:#d8eadc; border-color:#8db69b; }
+.chat-markdown .chat-quote-ticket:focus-visible { outline:2px solid #709c7e; outline-offset:2px; }

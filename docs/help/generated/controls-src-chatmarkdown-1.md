@@ -9,22 +9,28 @@
 
 / /
 
-Источник: src/ChatMarkdown.tsx:28.
+Источник: src/ChatMarkdown.tsx:29.
+
+### Элемент
+
+Открыть тикет #{…} · #
+
+Источник: src/ChatMarkdown.tsx:68.
 
 ### Элемент
 
 {…} · {…} · :{…}{…} /
 
-Источник: src/ChatMarkdown.tsx:60.
+Источник: src/ChatMarkdown.tsx:82.
 
 ### Элемент
 
 Перейти к pull request
 
-Источник: src/ChatMarkdown.tsx:70.
+Источник: src/ChatMarkdown.tsx:92.
 
 ### Элемент
 
 Показать в тикете
 
-Источник: src/ChatMarkdown.tsx:78.
+Источник: src/ChatMarkdown.tsx:100.

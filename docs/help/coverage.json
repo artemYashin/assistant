@@ -86,7 +86,7 @@
     "src/ChatCodeSnippet.tsx": "27e435411ae8bfd7160fa3abe27cf3d79624e6fefdf5f0026d9501c3d4869f7a",
     "src/ChatFiles.tsx": "cd6d0f3352539566863b0aac811baad45eb163522fc8575faa1ba2817f386955",
     "src/ChatHistory.tsx": "15e890c882db510c1e4fa80a42579b6c9dbab812b689deb37d42c13ada0bf38c",
-    "src/ChatMarkdown.tsx": "f76bab7ccbe4e39f7ffb2d87cfdb4ea012a6c9a667276ba849500dddd95e3fd6",
+    "src/ChatMarkdown.tsx": "215c0bcd7439cbc8ae27ae4a3c994d54a20cdc2a277f0c93e2cc5814de60feb5",
     "src/ChatMessageContext.tsx": "765bbe2758f6bd58981f344a1f221b1cff60c53dade22067a6cfc3eba50ce760",
     "src/ChatStream.tsx": "a9fd9ad5fdc4edadbc0766278d66a199cc255e73615cd5bc019fa6482dfc7bf6",
     "src/ChatTools.tsx": "6600d2200a8dbc3c4d01edd964b96c2b3996ff33f3a669c8cf4227cf1c6da28b",
