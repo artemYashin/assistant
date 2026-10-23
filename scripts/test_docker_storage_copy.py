@@ -45,5 +45,39 @@ class StorageCopyTests(unittest.TestCase):
                     copy.copy_verified(source, destination)
             self.assertEqual((source / 'db').read_bytes(), b'database')
 
+    def test_metadata_mismatch_is_reported_separately_from_data(self):
+        original = {'.': (16384, 448, 1000, 1000, None), 'private-name': (32768, 384, 1000, 1000, (8, 'hash'))}
+        changed = {'.': (16384, 493, 501, 20, None), 'private-name': (32768, 384, 501, 20, (8, 'hash'))}
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(copy, 'inventory', side_effect=[original, changed]):
+                with self.assertRaises(copy.StorageCopyError) as result:
+                    copy.verify_copy(Path(tmp), Path(tmp))
+        message = copy.safe_error(result.exception)
+        self.assertIn('METADATA_MISMATCH', message)
+        self.assertIn('uid=2', message)
+        self.assertIn('root_uid=1', message)
+        self.assertIn('contents and symlink targets match', message)
+        self.assertNotIn('private-name', message)
+
+    def test_missing_entries_are_not_mistaken_for_permissions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(copy, 'inventory', side_effect=[{'private-name': (32768, 384, 1, 1, (8, 'hash'))}, {}]):
+                with self.assertRaisesRegex(copy.StorageCopyError, 'DATA_MISMATCH: missing_entries=1'):
+                    copy.verify_copy(Path(tmp), Path(tmp))
+
+    def test_verify_does_not_copy_or_change_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, target = Path(tmp) / 'source', Path(tmp) / 'target'
+            source.mkdir()
+            (source / 'file').write_bytes(b'content')
+            copy.copy_verified(source, target)
+            with patch.object(copy.subprocess, 'run', side_effect=AssertionError('Must not copy')):
+                copy.verify_copy(source, target)
+
+    def test_filesystem_errors_hide_sensitive_paths(self):
+        message = copy.safe_error(PermissionError(13, 'Denied', '/private-key-path'))
+        self.assertIn('EACCES', message)
+        self.assertNotIn('private-key-path', message)
+
 if __name__ == '__main__':
     unittest.main()

@@ -7,8 +7,9 @@ project_override=""
 while (($#)); do
   case "$1" in
     --init) mode=init; shift ;;
+    --diagnose) mode=diagnose; shift ;;
     --project) project_override=${2:?Specify the existing Compose project name}; shift 2 ;;
-    -h|--help) echo "Usage: bash scripts/migrate-docker-storage.sh [--project NAME] [--init]"; exit 0 ;;
+    -h|--help) echo "Usage: bash scripts/migrate-docker-storage.sh [--project NAME] [--init | --diagnose]"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -52,8 +53,33 @@ for i in 0 1 2 3; do
     echo "${volume_keys[$i]}: $volume -> docker-data/${folders[$i]}"
   fi
   volumes+=("$volume")
-  [[ ! -e "$base/${folders[$i]}" && ! -L "$base/${folders[$i]}" ]] || fail "docker-data/${folders[$i]} already exists. Nothing will be overwritten."
+  [[ "$mode" == diagnose || ( ! -e "$base/${folders[$i]}" && ! -L "$base/${folders[$i]}" ) ]] || fail "docker-data/${folders[$i]} already exists. Nothing will be overwritten."
 done
+if [[ "$mode" == diagnose ]]; then
+  [[ -d "$base" ]] || fail "No docker-data directory; no staging copy found."
+  [[ ! -d "$base/.migration-lock" ]] || fail "Migration lock exists. Ensure no migration is running before removing a stale lock."
+  for volume in "${volumes[@]}"; do
+    [[ -z $(docker ps -q --filter "volume=$volume") ]] || fail "Stop the old services before verification: docker compose -f compose.named-volumes.yaml stop (with your --project name)."
+  done
+  stage_name=$(docker run --rm --network none --user 0 --mount "type=bind,src=$base,dst=/storage,readonly" "$helper" python -c 'from pathlib import Path; import re; paths=[p for p in Path("/storage").iterdir() if re.fullmatch(r".migration-[A-Za-z0-9]{8}",p.name) and p.is_dir() and not p.is_symlink()]; print(max(paths,key=lambda p:p.stat().st_mtime).name if paths else "")')
+  [[ -n "$stage_name" ]] || fail "No staging copy found. Run migration again to obtain detailed diagnostics."
+  stage="$base/$stage_name"
+  echo "Diagnostic only: checking the latest staging copy ($stage_name). No files will be changed."
+  failed=0
+  for i in 0 1 2 3; do
+    echo "Checking ${volume_keys[$i]}..."
+    if docker run --rm --network none --user 0 \
+      --mount "type=volume,src=${volumes[$i]},dst=/source,readonly" \
+      --mount "type=bind,src=$stage,dst=/destination,readonly" \
+      --mount "type=bind,src=$root/scripts/docker-storage-copy.py,dst=/copy.py,readonly" \
+      "$helper" python /copy.py --verify /source "/destination/${folders[$i]}"; then
+      :
+    else
+      failed=1
+    fi
+  done
+  exit "$failed"
+fi
 mkdir -p "$base"
 chmod 700 "$base"
 mkdir "$base/.migration-lock" 2>/dev/null || fail "Another migration may be running (docker-data/.migration-lock)."
@@ -74,6 +100,7 @@ else
     [[ -z $(docker ps -q --filter "volume=$volume") ]] || fail "A running container still uses $volume. Stop it before copying."
   done
   for i in 0 1 2 3; do
+    echo "Copying and verifying ${volume_keys[$i]}..."
     docker run --rm --network none --user 0 \
       --mount "type=volume,src=${volumes[$i]},dst=/source,readonly" \
       --mount "type=bind,src=$stage,dst=/destination" \
