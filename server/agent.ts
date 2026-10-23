@@ -1241,7 +1241,7 @@ export class Agent {
           };
         }
         if (discovery) config.tools = [discovery];
-        if (!review && onProgress) config.streaming = true;
+        if (onProgress) config.streaming = true;
         if (!review && conversationId) {
           const runtime = await openChatRuntime(client, config, this.store, conversationId, this.store.source(settings));
           session = runtime.session;
@@ -1253,13 +1253,21 @@ export class Agent {
           resumedRuntime = runtime.resumed;
         } else session = await client.createSession(config);
         session.on("assistant.message_delta", event => {
-          if (review || stopReason || event.data.parentToolCallId || event.agentId) return;
+          if (stopReason || event.data.parentToolCallId || event.agentId) return;
+          if (review) {
+            emit({ stage: "text", messageId: event.data.messageId, text: event.data.deltaContent });
+            return;
+          }
           if (partialMessageId !== event.data.messageId) { partialMessageId = event.data.messageId; partialText = ""; }
           partialText += event.data.deltaContent;
           emit({ stage: "text", messageId: partialMessageId, text: event.data.deltaContent });
         });
         session.on("assistant.message", event => {
-          if (review || stopReason || event.data.parentToolCallId || event.agentId || !event.data.content) return;
+          if (stopReason || event.data.parentToolCallId || event.agentId || !event.data.content) return;
+          if (review) {
+            emit({ stage: "text", messageId: event.data.messageId, text: event.data.content, replace: true });
+            return;
+          }
           partialMessageId = event.data.messageId; partialText = event.data.content;
           emit({ stage: "text", messageId: partialMessageId, text: partialText, replace: true });
         });

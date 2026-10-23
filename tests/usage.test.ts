@@ -82,10 +82,13 @@ function fakeAgent(
     config: any,
     aborts = 0,
     stops = 0;
+  const events = new Map<string, (event: any) => void>();
   const session = {
     on: (_name: string, fn: any) => {
       handler = fn;
+      events.set(_name, fn);
     },
+    emitEvent: (name: string, data: any) => events.get(name)?.({ data }),
     emit: (data: any) => handler({ id: "receipt", data }),
     abort: async () => {
       aborts++;
@@ -220,12 +223,17 @@ test("manual PR review has only memory reads, no chat history and still accounts
         .permissionDecision,
       "deny",
     );
+    assert.equal(c.streaming, true);
     await c.tools[0].handler({ id: store.memoryCatalog(context)[0].id }, {});
+    s.emitEvent("assistant.message_delta", {messageId: "answer", deltaContent: "Review"});
+    s.emitEvent("assistant.message_delta", {messageId: "child", deltaContent: "Hidden", parentToolCallId: "tool"});
+    s.emitEvent("assistant.message", {messageId: "answer", content: "Review"});
     s.emit({ inputTokens: 500, outputTokens: 100 });
     return { data: { content: "Review" } };
   });
   await agent.chat("Review this diff", context, true, undefined, undefined, undefined, event => progress.push(event));
   assert.deepEqual(progress.filter(event => event.stage === "tool").map(event => [event.name, event.status]), [["read_memory", "running"], ["read_memory", "completed"]]);
+  assert.deepEqual(progress.filter(event => event.stage === "text").map(event => event.text), ["Review", "Review"]);
   assert.equal(store.history(context).length, 1);
   assert.equal(
     (new UsageLedger(store).report() as any).summary.input_tokens,
