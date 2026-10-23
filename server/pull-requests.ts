@@ -196,43 +196,51 @@ export class PullRequests {
     }
   }
   async reimportCompleted(monitor: string, repo: string, number: number) {
+    return this.reimportOne(monitor, repo, number, true);
+  }
+  async reimportActive(monitor: string, repo: string, number: number) {
+    return this.reimportOne(monitor, repo, number, false);
+  }
+  private async reimportOne(monitor: string, repo: string, number: number, completed: boolean) {
     const m = this.monitors().find(m => m.id === monitor);
     if (!m) throw new AppError(404, "Репозиторий не настроен");
-    const cached = this.store.db.prepare("SELECT 1 FROM pr_completed WHERE monitor=? AND repo=? AND number=? AND expires_at>?")
-      .get(monitor, repo, number, Date.now());
-    if (!cached) throw new AppError(404, "Завершённый PR отсутствует в кэше. Обновите список.");
+    const cached = completed ? this.store.db.prepare("SELECT 1 FROM pr_completed WHERE monitor=? AND repo=? AND number=? AND expires_at>?")
+      .get(monitor, repo, number, Date.now())
+      : this.store.db.prepare("SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=? AND in_scope=1").get(monitor,repo,number);
+    if (!cached) throw new AppError(404, completed ? "Завершённый PR отсутствует в кэше. Обновите список." : "Активный PR отсутствует в локальном списке. Выполните синхронизацию.");
     const credentials = this.credentials(m);
     const detail = await this.get(m, `git/repositories/${enc(repo)}/pullrequests/${number}`, credentials);
     const closed = Date.parse(detail.closedDate);
-    if (detail.pullRequestId !== number || detail.repository?.id !== repo || detail.status !== "completed" ||
-        !Number.isFinite(closed) || closed + 7 * 86400000 <= Date.now())
-      throw new AppError(409, "PR больше не входит в недельный архив завершённых. Обновите список.");
+    if (detail.pullRequestId !== number || detail.repository?.id !== repo || detail.status !== (completed ? "completed" : "active") ||
+        (completed && (!Number.isFinite(closed) || closed + 7 * 86400000 <= Date.now())))
+      throw new AppError(409, completed ? "PR больше не входит в недельный архив завершённых. Обновите список." : "PR больше не активен. Выполните синхронизацию списка.");
     const links = await this.get(m, `git/repositories/${enc(repo)}/pullrequests/${number}/workitems`, credentials);
     if (!Array.isArray(links.value) || links.value.some((v: any) => !Number.isSafeInteger(Number(v.id)) || Number(v.id) <= 0))
       throw new AppError(502, "Azure не вернул корректные связи PR. Локальный кэш сохранён.");
+    const health = completed ? "" : await this.readHealth(m, detail, credentials);
     const current = this.monitors().find(item => item.id === monitor);
     if (!current || current.source !== m.source || current.azure_project !== m.azure_project ||
         current.repository !== m.repository || this.credentials(current).pat !== credentials.pat)
       throw new AppError(409, "Настройки подключения изменились. Повторите запрос.");
     this.store.db.transaction(() => {
       const updated = this.store.db.prepare(`UPDATE pull_requests SET
-        title=?,description=?,author=?,url=?,head=?,target=?,draft=?,in_scope=0,synced_at=?,
-        created_at=?,source_branch=?,target_branch=?,health='' WHERE monitor=? AND repo=? AND number=?`)
+        title=?,description=?,author=?,url=?,head=?,target=?,draft=?,in_scope=?,synced_at=?,
+        created_at=?,source_branch=?,target_branch=?,health=? WHERE monitor=? AND repo=? AND number=?`)
         .run(detail.title || "", detail.description || "", detail.createdBy?.displayName || "",
           `${m.source}/${enc(m.azure_project)}/_git/${enc(repo)}/pullrequest/${number}`,
           detail.lastMergeSourceCommit?.commitId || "", detail.lastMergeTargetCommit?.commitId || "",
-          Number(!!detail.isDraft), now(), detail.creationDate || "", detail.sourceRefName || "", detail.targetRefName || "",
+          Number(!!detail.isDraft), Number(!completed), now(), detail.creationDate || "", detail.sourceRefName || "", detail.targetRefName || "", health,
           monitor, repo, number);
       if (!updated.changes) throw new AppError(409, "Локальный PR удалён. Обновите список.");
       this.store.set(prLinksKey(monitor, repo, number), { ids: links.value.map((v: any) => Number(v.id)), error: "" });
       for (const table of ["pr_ticket_links", "pr_ticket_exclusions"])
         this.store.db.prepare(`DELETE FROM ${table} WHERE monitor=? AND repo=? AND number=?`).run(monitor, repo, number);
-      this.store.db.prepare("UPDATE pr_completed SET closed_at=?,expires_at=?,hydrated=1 WHERE monitor=? AND repo=? AND number=?")
+      if (completed) this.store.db.prepare("UPDATE pr_completed SET closed_at=?,expires_at=?,hydrated=1 WHERE monitor=? AND repo=? AND number=?")
         .run(detail.closedDate, closed + 7 * 86400000, monitor, repo, number);
-      this.store.audit("pr.completed.reimport", `PR #${number}: заменён кэш и сброшены локальные связи`, { monitor, repo, number });
+      this.store.audit(completed ? "pr.completed.reimport" : "pr.active.reimport", `PR #${number}: заменён кэш и сброшены локальные связи`, { monitor, repo, number });
     })();
-    return { ...this.list({ client: m.client, project: m.project }, { monitor, repo, number })[0],
-      closedAt: detail.closedDate, expiresAt: new Date(closed + 7 * 86400000).toISOString() };
+    const card = this.list({ client: m.client, project: m.project }, { monitor, repo, number })[0];
+    return completed ? { ...card, closedAt: detail.closedDate, expiresAt: new Date(closed + 7 * 86400000).toISOString() } : card;
   }
   private sourcePreparation: Pick<PrSourcePreparation, "prepare" | "status">;
   private working = false;
@@ -737,6 +745,40 @@ export class PullRequests {
         }
       : body;
   }
+  private async readHealth(m: Monitor, p: any, credentials: ReturnType<PullRequests["credentials"]>) {
+    const health: any = {
+      merge: p.mergeStatus || "notSet",
+      checks: [],
+      checkedAt: now(),
+      error: "",
+    };
+    try {
+      const projectId = p.repository?.project?.id;
+      if (!projectId) throw new Error("Project ID missing");
+      const artifact = `vstfs:///CodeReview/CodeReviewId/${projectId}/${p.pullRequestId}`;
+      const evaluations = [];
+      for (let skip = 0; ; skip += 100) {
+        if (skip >= 500) throw new Error("Too many policy evaluations");
+        const page = await this.get(
+          m,
+          `policy/evaluations?artifactId=${enc(artifact)}&$top=100&$skip=${skip}`,
+          {
+            ...credentials,
+            version: `${credentials.version.split("-")[0]}-preview.1`,
+          },
+        );
+        if (!Array.isArray(page.value))
+          throw new Error("Invalid policy response");
+        evaluations.push(...page.value);
+        if (page.value.length < 100) break;
+      }
+      health.checks = policyChecks(evaluations);
+    } catch {
+      health.error =
+        "Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.";
+    }
+    return JSON.stringify(health);
+  }
   async sync(monitor?: string) {
     this.purgeCompleted();
     for (const m of this.monitors().filter(
@@ -810,38 +852,7 @@ export class PullRequests {
         }
         // Health failures must not discard an otherwise successful PR scan.
         for (const p of found) {
-          const health: any = {
-            merge: p.mergeStatus || "notSet",
-            checks: [],
-            checkedAt: now(),
-            error: "",
-          };
-          try {
-            const projectId = p.repository?.project?.id;
-            if (!projectId) throw new Error("Project ID missing");
-            const artifact = `vstfs:///CodeReview/CodeReviewId/${projectId}/${p.pullRequestId}`;
-            const evaluations = [];
-            for (let skip = 0; ; skip += 100) {
-              if (skip >= 500) throw new Error("Too many policy evaluations");
-              const page = await this.get(
-                m,
-                `policy/evaluations?artifactId=${enc(artifact)}&$top=100&$skip=${skip}`,
-                {
-                  ...credentials,
-                  version: `${credentials.version.split("-")[0]}-preview.1`,
-                },
-              );
-              if (!Array.isArray(page.value))
-                throw new Error("Invalid policy response");
-              evaluations.push(...page.value);
-              if (page.value.length < 100) break;
-            }
-            health.checks = policyChecks(evaluations);
-          } catch {
-            health.error =
-              "Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.";
-          }
-          p.health = JSON.stringify(health);
+          p.health = await this.readHealth(m, p, credentials);
         }
         const currentMonitor = this.monitors().find((x) => x.id === m.id);
         if (

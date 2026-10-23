@@ -9997,3 +9997,5 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-ticket-suggestions { position:absolute; z-index:30; top:100%; left:0; right:0; max-height:260px; overflow:auto; background:white; border:1px solid #ccd9ce; border-radius:8px; box-shadow:0 6px 20px #0002; padding:4px; }
 .pr-ticket-suggestions > button { display:flex; align-items:center; gap:6px; width:100%; text-align:left; background:white; color:inherit; padding:8px; }
 .pr-ticket-suggestions > button:hover { background:#eef7ed; }
+
+.pr-card-info-actions .pr-refresh-one { padding:4px 7px; min-height:28px; font-size:11px; gap:4px; white-space:nowrap; }

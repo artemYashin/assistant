@@ -1615,3 +1615,31 @@ test("repository settings persist zero depth and reject invalid depth", t => {
   assert.throws(() => service.save({ ...settings, fetchDepth: -1 }));
   assert.throws(() => service.save({ ...settings, fetchDepth: 1001 }));
 });
+
+test("active reimport refreshes only one PR and resets links atomically", async t => {
+  const {service,store}=fixture(t);
+  let refresh=false, fail=false, status="active";
+  const requested:string[]=[];
+  mock(t,[pr(1),pr(2)],url=>{
+    requested.push(url.pathname);
+    if(refresh && /\/pullrequests\/1$/.test(url.pathname)) return {...pr(1,"new-head"),status,title:"Fresh active",description:"Full description #222222",mergeStatus:"succeeded"};
+    if(refresh && url.pathname.endsWith("/workitems")) return fail ? {} : {value:[{id:"333333"}]};
+  });
+  await service.sync();
+  const monitor=service.monitors()[0].id;
+  store.db.prepare("INSERT INTO pr_ticket_links VALUES (?,?,?,?)").run(monitor,"repo",1,444444);
+  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor,"repo",1,333333);
+  refresh=true;fail=true;requested.length=0;
+  await assert.rejects(service.reimportActive(monitor,"repo",1),/Локальный кэш сохранён/);
+  assert.ok(service.list(context).find(p=>p.number===1).tickets.some((t:any)=>t.id===444444));
+  fail=false;
+  const result=await service.reimportActive(monitor,"repo",1);
+  assert.equal(result.title,"Fresh active");assert.equal(result.head,"new-head");assert.equal(result.in_scope,1);
+  assert.deepEqual(result.tickets.map((t:any)=>t.id),[222222,333333]);
+  assert.ok(result.tickets.every((t:any)=>!t.disabled && !t.manual));
+  assert.equal(service.list(context).find(p=>p.number===2).title,"Change");
+  assert.ok(requested.every(path=>!path.endsWith('/pullrequests') && !path.endsWith('/pullrequests/2')));
+  status="completed";
+  await assert.rejects(service.reimportActive(monitor,"repo",1),/больше не активен/);
+  assert.equal(service.list(context).find(p=>p.number===1).title,"Fresh active");
+});
