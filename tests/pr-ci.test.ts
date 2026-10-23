@@ -35,7 +35,7 @@ test("CI metadata never downloads logs; logs must belong to PR and are bounded",
   assert.equal(log.text.length, 256 * 1024); assert.equal(log.truncated, true); assert.equal(logs, 1);
   await assert.rejects(ci.checks({ ...key, repo: "other" }), /не найден/);
 });
-test("merge CI gate blocks unknown, failed and pending, permits approved and no configured builds", () => {
-  for (const health of [null, "bad", { error: "Failed", checks: [] }, { checks: [{ build: true, state: "queued" }] }, { checks: [{ build: true, state: "rejected" }] }]) assert.ok(ciMergeReason(health));
-  for (const checks of [[], [{ build: true, state: "approved" }], [{ build: true, state: "notApplicable" }], [{ build: false, state: "queued" }]]) assert.equal(ciMergeReason({ checks }), "");
+test("merge CI gate blocks missing data and failures but permits pending builds", () => {
+  for (const health of [null, "bad", { error: "Failed", checks: [] }, { checks: [{ build: true, state: "rejected" }] }]) assert.ok(ciMergeReason(health));
+  for (const checks of [[{ build: true, state: "queued" }], [{ build: true, state: "running" }], [{ build: true, state: "unknown" }], [], [{ build: true, state: "approved" }], [{ build: true, state: "notApplicable" }], [{ build: false, state: "queued" }]]) assert.equal(ciMergeReason({ checks }), "");
 });

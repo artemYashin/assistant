@@ -43,7 +43,7 @@ Rebase с merge commit
 
 ### Элемент
 
-Обойти проверки и политики Azure Требуется право Bypass policies when completing pull requests. CI должен пройти успешно; конфликты кода тоже нужно разрешить.
+Обойти проверки и политики Azure Требуется право Bypass policies when completing pull requests. Ожидание CI не блокирует отправку merge. Конфликты кода нужно разрешить; завершившийся с ошибкой CI блокируется в Orbit.
 
 Источник: src/PrMergeDialog.tsx:205.
 

@@ -24,6 +24,5 @@ export function ciMergeReason(value: unknown): string {
   if (!health || health.error || !Array.isArray(health.checks)) return "CI: нет данных — обновите проверки";
   const builds = health.checks.filter((c: any) => c.build && c.state !== "notApplicable");
   if (builds.some((c: any) => ["rejected", "broken"].includes(c.state))) return "CI: проверки не прошли";
-  if (builds.some((c: any) => c.state !== "approved")) return "CI ещё не завершён — дождитесь успешного выполнения проверок";
   return "";
 }

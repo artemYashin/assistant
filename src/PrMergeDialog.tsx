@@ -213,7 +213,7 @@ export function PrMergeDialog({
                 <strong><ShieldAlert size={16} />Обойти проверки и политики Azure</strong>
                 <small>
                   Требуется право Bypass policies when completing pull requests.
-                  CI должен пройти успешно; конфликты кода тоже нужно разрешить.
+                  Ожидание CI не блокирует отправку merge. Конфликты кода нужно разрешить; завершившийся с ошибкой CI блокируется в Orbit.
                 </small>
               </span>
             </label>

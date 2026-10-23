@@ -305,7 +305,7 @@ test("merge commit uses the current PR title after the dialog was opened", async
   assert.equal(f.writes[0].completionOptions.mergeCommitMessage, "Merged PR 1: Исправление авторизации — updated title");
 });
 
-test("merge rechecks CI and refuses running builds even with policy bypass", async t => {
+test("merge allows running CI and preserves explicit policy bypass", async t => {
   const f = fixture(t, true);
   const plan = await f.service.prepare(f.key, false);
   const original = globalThis.fetch;
@@ -313,8 +313,9 @@ test("merge rechecks CI and refuses running builds even with policy bypass", asy
     if (new URL(String(raw)).pathname.endsWith("/policy/evaluations")) return Response.json({ value: [{ status: "running", configuration: { settings: { buildDefinitionId: 1 } } }] });
     return original(raw, init);
   });
-  await assert.rejects(f.service.execute(plan.id, [], "squash", { enabled: true, reason: "Test" }), /CI ещё не завершён/);
-  assert.equal(f.writes.length, 0);
+  await f.service.execute(plan.id, [], "squash", { enabled: true, reason: "Test" });
+  assert.equal(f.writes.length, 1);
+  assert.equal(f.writes[0].completionOptions.bypassPolicy, true);
 });
 
 test("merge omits locally disabled Azure and textual links", async t => {
