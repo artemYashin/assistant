@@ -1616,7 +1616,7 @@ test("repository settings persist zero depth and reject invalid depth", t => {
   assert.throws(() => service.save({ ...settings, fetchDepth: 1001 }));
 });
 
-test("active reimport refreshes only one PR and resets links atomically", async t => {
+test("active reimport refreshes only one PR and preserves local links and exclusions", async t => {
   const {service,store}=fixture(t);
   let refresh=false, fail=false, status="active";
   const requested:string[]=[];
@@ -1635,8 +1635,9 @@ test("active reimport refreshes only one PR and resets links atomically", async 
   fail=false;
   const result=await service.reimportActive(monitor,"repo",1);
   assert.equal(result.title,"Fresh active");assert.equal(result.head,"new-head");assert.equal(result.in_scope,1);
-  assert.deepEqual(result.tickets.map((t:any)=>t.id),[222222,333333]);
-  assert.ok(result.tickets.every((t:any)=>!t.disabled && !t.manual));
+  assert.deepEqual(result.tickets.map((t:any)=>t.id),[222222,333333,444444]);
+  assert.ok(result.tickets.find((t:any)=>t.id===444444).manual);
+  assert.ok(result.tickets.find((t:any)=>t.id===333333).disabled);
   assert.equal(service.list(context).find(p=>p.number===2).title,"Change");
   assert.ok(requested.every(path=>!path.endsWith('/pullrequests') && !path.endsWith('/pullrequests/2')));
   status="completed";

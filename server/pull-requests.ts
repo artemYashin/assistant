@@ -233,11 +233,11 @@ export class PullRequests {
           monitor, repo, number);
       if (!updated.changes) throw new AppError(409, "Локальный PR удалён. Обновите список.");
       this.store.set(prLinksKey(monitor, repo, number), { ids: links.value.map((v: any) => Number(v.id)), error: "" });
-      for (const table of ["pr_ticket_links", "pr_ticket_exclusions"])
+      if (completed) for (const table of ["pr_ticket_links", "pr_ticket_exclusions"])
         this.store.db.prepare(`DELETE FROM ${table} WHERE monitor=? AND repo=? AND number=?`).run(monitor, repo, number);
       if (completed) this.store.db.prepare("UPDATE pr_completed SET closed_at=?,expires_at=?,hydrated=1 WHERE monitor=? AND repo=? AND number=?")
         .run(detail.closedDate, closed + 7 * 86400000, monitor, repo, number);
-      this.store.audit(completed ? "pr.completed.reimport" : "pr.active.reimport", `PR #${number}: заменён кэш и сброшены локальные связи`, { monitor, repo, number });
+      this.store.audit(completed ? "pr.completed.reimport" : "pr.active.reimport", `PR #${number}: ${completed ? "заменён кэш и сброшены локальные связи" : "обновлены данные Azure, локальные связи и исключения сохранены"}`, { monitor, repo, number });
     })();
     const card = this.list({ client: m.client, project: m.project }, { monitor, repo, number })[0];
     return completed ? { ...card, closedAt: detail.closedDate, expiresAt: new Date(closed + 7 * 86400000).toISOString() } : card;
