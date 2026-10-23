@@ -58,7 +58,7 @@ test('isolated snapshots, branch selection, local tree and content search', asyn
   assert.match((await request('file', { branch: 'feature/nested', path: 'src/hello.ts' })).text, /hello/);
 });
 
-test('checking does not advance displayed code, pull is local only, stale revision rejected', async t => {
+test('checking does not advance displayed code, pull is local only, historical revision stays readable', async t => {
   const { request, git, work, first } = await fixture(t, { fetchDepth: 200 });
   await request('status');
   await fs.writeFile(path.join(work, 'src/hello.ts'), 'new version\n');
@@ -68,7 +68,12 @@ test('checking does not advance displayed code, pull is local only, stale revisi
   assert.match((await request('file', { path: 'src/hello.ts' })).text, /hello World/);
   const pulled = await request('pull'); assert.equal(pulled.sha, head); assert.equal(pulled.behind, 0);
   assert.equal((await request('file', { path: 'src/hello.ts' })).text, 'new version\n');
-  await assert.rejects(request('tree', { revision: first }), /Снимок обновился/);
+  assert.equal((await request('tree', { revision: first })).sha, first);
+  assert.match((await request('file', { revision: first, path: 'src/hello.ts' })).text, /hello World/);
+  assert.equal((await request('status')).sha, head, 'historical reads never rewind the branch');
+  assert.equal((await request('status', { revision: first, branch: 'deleted-branch' })).sha, first);
+  assert.equal((await request('search', { revision: first, query: 'hello', mode: 'content' })).sha, first);
+  await assert.rejects(request('file', { revision: 'f'.repeat(40), localOnly: true, path: 'src/hello.ts' }), /отсутствует локально/);
   assert.equal(git('rev-parse', 'HEAD'), head); assert.equal(git('status', '--porcelain'), '');
 });
 
@@ -292,4 +297,13 @@ test('regex code and path search is explicit, paginated and rejects unsupported 
   assert.equal((await request('search',{query:'hello (world|hidden)',mode:'content',searchMode:'regex',offset:1})).results.length,1);
   await assert.rejects(()=>request('search',{query:'[',mode:'content',searchMode:'regex'}),/регулярное выражение/);
   await assert.rejects(()=>request('search',{query:'(?=hello)',mode:'name',searchMode:'regex'}),/регулярное выражение/);
+});
+
+test('exact commit can be loaded without branch checkout or branch catalog', async t => {
+  const { request, first } = await fixture(t);
+  const snapshot = await request('status', { revision: first, branch: 'deleted' });
+  assert.equal(snapshot.sha, first);
+  assert.equal(snapshot.pinned, true);
+  assert.match((await request('file', { revision: first, branch: 'deleted', path: 'src/hello.ts' })).text, /hello World/);
+  await assert.rejects(request('pull', { revision: first }), /только чтение/);
 });

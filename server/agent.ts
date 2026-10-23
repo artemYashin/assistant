@@ -1242,7 +1242,7 @@ export class Agent {
               "\n" +
               questionPolicy(reviewActions?.questionFrequency) +
               (reviewActions?.readCode ? "\n" + reviewCodePolicy(reviewActions.codeDepth) : "") +
-              `\nPR source branch: ${JSON.stringify(repositoryBranch || null)}. Code search permission: ${!!reviewActions?.readCode}. PR source browser URL (JSON): ${JSON.stringify(repositoryBranch ? `/code?${new URLSearchParams({ ...context, branch: repositoryBranch })}` : null)}.`,
+              `\nPR source branch: ${JSON.stringify(repositoryBranch || null)}. Code search permission: ${!!reviewActions?.readCode}. PR source browser URL (JSON): ${JSON.stringify(repositoryBranch ? `/code?${new URLSearchParams({ ...context, branch: repositoryBranch, ...(reviewActions?.sourceRevision ? { revision: reviewActions.sourceRevision } : {}) })}` : null)}.`,
           };
         }
         const discovery = !review ? createToolDiscovery(

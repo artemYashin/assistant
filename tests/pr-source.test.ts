@@ -18,7 +18,8 @@ test("ready matching snapshots need no fetch and a moved branch becomes stale", 
   const prep = new PrSourcePreparation(store, { request: async input => { calls.push(input); return { sha: pr.head }; } });
   assert.equal(prep.status(pr).status, "unknown");
   await prep.prepare(monitor, pr);
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].revision, pr.head);
   assert.equal(calls[0].localOnly, true);
   assert.equal(calls[0].monitor, monitor.id);
   assert.equal(prep.status(pr).status, "ready");
@@ -32,6 +33,7 @@ test("concurrent preparation waits for one pull, and rejects the wrong commit", 
   const wait = new Promise<void>(resolve => { finish = resolve; });
   let sha = pr.head;
   const prep = new PrSourcePreparation(store, { request: async (input: any) => {
+    if (input.revision) return { sha: input.revision };
     if (input.localOnly) throw new Error("not cached");
     pulls++; await wait; return { sha };
   } });

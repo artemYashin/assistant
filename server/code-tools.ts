@@ -26,10 +26,12 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
     if (["tree", "search", "file"].includes(operation)) {
       name ||= selectedBranch || (await browser.request({ ...context, ...(reviewSource ? { monitor: reviewSource.monitor } : {}), operation: "branches", localOnly: true, refresh: false })).defaultBranch;
       if (!name) throw new AppError(400, "Выберите ветку репозитория.");
+      if (reviewSource && name !== reviewSource.branch) throw new AppError(409, "Ревью читает только source-ветку проверяемого PR.");
       args = { ...args, branch: name };
     }
     const data = await browser.request({ ...args, ...context, ...(reviewSource ? { monitor: reviewSource.monitor } : {}), operation, localOnly: true, localReadWaitMs: store.settings().assistantCodeWaitSeconds * 1000, refresh: false, ...(revisions.has(name) ? { revision: revisions.get(name) } : {}) });
     assertActive();
+    if (reviewSource && ["tree", "file", "search"].includes(operation) && data.sha !== reviewSource.revision) throw new AppError(409, "Код не соответствует проверяемому коммиту PR.");
     if (data.sha) revisions.set(name, data.sha);
     return name ? { ...data, branch: name } : data;
   };
@@ -54,7 +56,7 @@ export function codeTools(store: Store, context: Context, assertActive: () => vo
           const startLine = ref.startLine ?? 1;
           const endLine = ref.endLine ?? startLine;
           if (endLine < startLine || endLine > String(data.text).split(/\r?\n/).length) throw new AppError(400, "Диапазон строк вне файла");
-          results.push({ branch: data.branch, label: `${ref.label || ref.path.split("/").pop()}${ref.startLine !== undefined || ref.endLine !== undefined ? `:${startLine}${endLine === startLine ? "" : `–${endLine}`}` : ""}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, path: ref.path, ...(ref.label ? { label: ref.label } : {}), ...(ref.startLine !== undefined || ref.endLine !== undefined ? { line: String(startLine), endLine: String(endLine) } : {}) })}` });
+          results.push({ branch: data.branch, label: `${ref.label || ref.path.split("/").pop()}${ref.startLine !== undefined || ref.endLine !== undefined ? `:${startLine}${endLine === startLine ? "" : `–${endLine}`}` : ""}`, localUrl: `/code?${new URLSearchParams({ ...context, branch: data.branch, ...(data.sha ? { revision: data.sha } : {}), path: ref.path, ...(ref.label ? { label: ref.label } : {}), ...(ref.startLine !== undefined || ref.endLine !== undefined ? { line: String(startLine), endLine: String(endLine) } : {}) })}` });
         }
         return { references: results };
       },

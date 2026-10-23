@@ -43,3 +43,21 @@ test("file-only references retain branch and omit an artificial line label", () 
   assert.match(html, /<span>service.ts<\/span>/);
   assert.doesNotMatch(html, /service.ts:1/);
 });
+
+test("code links retain exact commit and reject malformed revisions", () => {
+  const revision = "a".repeat(40);
+  const link = chatCodeBranch("/code?client=C&project=P&branch=dev&path=a.ts&line=3&revision=" + revision);
+  assert.equal(link?.revision, revision);
+  assert.equal(new URL(link!.href, "http://local").searchParams.get("revision"), revision);
+  assert.equal(chatCodeBranch("/code?client=C&project=P&branch=dev&revision=HEAD"), null);
+});
+
+test("historical review renderer pins legacy links and enhances optional labels", () => {
+  const revision = "b".repeat(40);
+  const text = "**Критичность: высокая**\n\n**Проблема:** [file](" + base + "&path=a.ts&line=2)\n\n**Предлагаемое решение:** исправить.";
+  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text, review: true, reviewRevision: revision })));
+  assert.match(html, /revision=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/);
+  assert.match(html, /review-severity is-high/);
+  assert.match(html, /review-label-icon/);
+  assert.match(html, /line=2/);
+});

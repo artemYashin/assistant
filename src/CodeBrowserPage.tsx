@@ -28,6 +28,7 @@ export function CodeBrowserPage({ context }: { context: Context }) {
 }
 function RepositoryView({ context, requestedBranch, reference }: { context: Context; requestedBranch?: string; reference?: NonNullable<ReturnType<typeof chatCodeBranch>> }) {
   const { progress, execute, stop } = useCodeProgress();
+  const revision = reference?.revision;
   const [debugWork, setDebugWork] = useState(false);
   const [showCommits, setShowCommits] = useState(false);
   const [fetchDepth, setFetchDepth] = useState<number | null>(null);
@@ -84,13 +85,14 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
   const snapshot = useRef<Status | null>(null);
   snapshot.current = status;
   const request = useCallback<Request>((operation, extra = {}) => {
-    const body = { ...context, branch, operation, ...(["tree", "file", "search"].includes(operation) && snapshot.current ? { revision: snapshot.current.sha } : {}), ...extra };
+    const body = { ...context, branch, operation, ...(["tree", "file", "search"].includes(operation) && snapshot.current ? { revision: snapshot.current.sha } : {}), ...extra, ...(revision && ["status", "tree", "file", "search"].includes(operation) ? { revision } : {}) };
     return ["tree", "file"].includes(operation) ? api("/code-browser", "POST", body) : execute(body);
-  }, [context.client, context.project, branch, execute]);
+  }, [context.client, context.project, branch, execute, revision]);
   useEffect(() => {
     let live = true;
     const scope = generation.current;
     setBusy(true); setError(""); setFileBusy(false);
+    if (revision && requestedBranch) { setBranches([requestedBranch]); setBranch(requestedBranch); setBusy(false); return; }
     void execute({ ...context, operation: "branches", refresh: branchReload > 0 }).then(data => {
       if (!live || scope !== generation.current) return;
       setFetchDepth(data.fetchDepth ?? null);
@@ -110,7 +112,7 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
     setBusy(true); setError("");
     if (operation === "pull") { setFile(null); }
     try {
-      if (force) {
+      if (force && !revision) {
         const catalog = await request("branches", { refresh: true });
         if (current !== generation.current) return;
         setBranches(catalog.branches);
@@ -124,7 +126,7 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
       }
     } catch (e: any) { if (current === generation.current) setError(e.message); }
     finally { if (current === generation.current) setBusy(false); }
-  }, [request]);
+  }, [request, revision]);
   useEffect(() => {
     setStatus(null); setFile(null);
     if (branch) void refresh("status");
@@ -163,7 +165,7 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
       <div className="repository-heading-status">
     {status && <div className="repository-freshness" title="Сравнение с Azure на момент последней проверки">
       <GitBranch size={14} /><code title={status.sha}>{status.sha.slice(0, 10)}</code>
-      <span>{status.current ? "Совпадает с Azure" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
+      <span>{revision ? "Закреплённый коммит ревью" : status.current ? "Совпадает с Azure" : status.behind !== null ? `Отстаёт на ${status.behind} коммитов` : "В Azure другая версия; расстояние неизвестно (история изменена или ограничена глубиной загрузки)"}</span>
       <time dateTime={status.checkedAt}>Проверено: {new Date(status.checkedAt).toLocaleString()}</time>
     </div>}
         <CodeProgress progress={progress} />
@@ -171,16 +173,17 @@ function RepositoryView({ context, requestedBranch, reference }: { context: Cont
     </header>
     <div className="repository-toolbar">
       <span className="repository-branch-label" aria-hidden="true">Ветка</span>
-      <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={cancelling || !branches.length} /></div>
+      <div className="repository-branch"><GitBranch size={14} aria-hidden="true" /><SingleSelect label="Ветка" value={branch} options={branches.map(value => ({ value, label: value }))} onChange={chooseBranch} disabled={!!revision || cancelling || !branches.length} /></div>
       <button className="secondary" title="Проверить обновления репозитория" disabled={busy} onClick={() => branch ? void refresh("status", true) : setBranchReload(n => n + 1)}><RefreshCw size={15} />Проверить</button>
-      <button className="secondary repository-pull" disabled={busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
-      <button className="secondary" disabled={!branch} onClick={() => setShowCommits(true)}><GitCommitHorizontal size={15} />Коммиты</button>
+      <button className="secondary repository-pull" disabled={!!revision || busy || !branch} onClick={() => void refresh("pull")} title="Обновить только локальную копию для просмотра"><Download size={15} />Pull</button>
+      <button className="secondary" disabled={!!revision || !branch} onClick={() => setShowCommits(true)}><GitCommitHorizontal size={15} />Коммиты</button>
       {(busy || (progress && !progress.ended)) && <button className="secondary" disabled={cancelling} onClick={() => void cancelCurrent()}><X size={15} />{cancelling ? "Отменяю…" : "Отменить"}</button>}
       {busy && <span className="repository-loading" role="status"><LoaderCircle size={15} className="spin" />Загружаю…</span>}
       <button type="button" className="secondary repository-debug-work" onClick={() => setDebugWork(true)}><Bug size={15} />Работа Git</button>
     </div>
     {showCommits && <RepositoryCommits key={branch} context={context} branch={branch} onClose={() => setShowCommits(false)} />}
     {debugWork && <CodeWorkDialog context={context} onClose={() => setDebugWork(false)} />}
+    {revision && <p className="repository-sync-warning">Просмотр проверенного коммита <code>{revision}</code>. Ветка не переключается на новую версию.</p>}
     {branchNote && <p className="muted">{branchNote}</p>}
 
     {status?.syncError && <p className="repository-sync-warning" role="status">Фоновая проверка: {status.syncError}</p>}

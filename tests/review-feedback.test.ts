@@ -160,3 +160,26 @@ test("retry after review error gets an isolated usage budget and runtime identit
   assert.equal(ledger.reviewUsage(first).totalTokens, 1200);
   assert.equal(service.requestReview(monitor, "repo", 1), second);
 });
+
+test("review does not call the model when source changes while preparing context", async t => {
+  const store = fixture(t);
+  store.set("settings", { ...store.settings(), azureUrl: "https://ado.test/org", azureProject: "P" });
+  store.setSecret("azure.pat", "pat");
+  store.setSecret("github.token", "token");
+  let modelCalls = 0, detailCalls = 0;
+  const service = new PullRequests(store, { active: () => null, chat: async () => { modelCalls++; return { body: "", requestId: "" }; } });
+  service.save({ ...context, repository: "repo", mode: "all", enabled: true });
+  const monitor = service.monitors()[0].id;
+  store.db.prepare("INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run(monitor, "repo", 1, "Title", "Author", "https://ado.test/pr", "head", "target", 0, 1, "now");
+  t.mock.method(service as any, "get", async () => {
+    detailCalls++;
+    return { status: "active", isDraft: false, lastMergeSourceCommit: { commitId: detailCalls === 1 ? "head" : "new-head" }, lastMergeTargetCommit: { commitId: "target" } };
+  });
+  t.mock.method(service, "changes", async () => ({ patches: [{ path: "a.ts", patch: "diff" }], notes: [], base: "target" }) as any);
+  const id = service.requestReview(monitor, "repo", 1, { readCode: false, readTickets: false });
+  await service.reviewNext();
+  assert.equal(detailCalls, 2);
+  assert.equal(modelCalls, 0);
+  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "outdated");
+});

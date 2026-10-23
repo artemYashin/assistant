@@ -203,9 +203,25 @@ export class RepositoryBrowser {
     await git(['check-ref-format', 'refs/heads/' + branch]);
     const branchKey = hash(branch), stateFile = path.join(repo, branchKey + '.json');
     let state = await fs.readFile(stateFile, 'utf8').then(JSON.parse).catch(() => null);
-    if (input.localOnly && !state) throw new BrowserError('Ветка ещё не загружена локально. Откройте её на странице кода.', 409);
+    if (input.localOnly && !state && !input.revision) throw new BrowserError('Ветка ещё не загружена локально. Откройте её на странице кода.', 409);
+    if (input.revision) {
+      if (!['status', 'tree', 'file', 'search'].includes(operation)) throw new BrowserError('Для закреплённого коммита доступны только чтение и поиск.', 400);
+      try { await git(['cat-file', '-e', input.revision + '^{commit}']); }
+      catch {
+        checkCancelled();
+        if (input.localOnly) throw new BrowserError('Проверенный коммит отсутствует локально. Откройте ссылку на код для загрузки точной версии.', 409);
+        if (await diskSize(this.root, signal) >= this.maxCacheBytes) throw new BrowserError('Недостаточно места в кэше для загрузки коммита.', 507);
+        report({ stage: 'fetching' });
+        await git(['fetch', '--progress', '--no-tags', '--no-recurse-submodules', ...(fetchDepth === 0 ? [] : ['--depth=' + fetchDepth]), url, input.revision], { ...networkOptions, onProgress: report });
+        await git(['cat-file', '-e', input.revision + '^{commit}']);
+        if (await diskSize(this.root, signal) > this.maxCacheBytes) throw new BrowserError('Превышен лимит кэша кода.', 507);
+      }
+      // Retain historical review objects across branch updates and Git GC.
+      await git(['update-ref', 'refs/orbit/reviews/' + input.revision, input.revision]);
+      state = { sha: input.revision, remoteSha: input.revision, branch, checkedAt: new Date().toISOString(), pinned: true };
+    }
     const remoteRef = 'refs/orbit/remote/' + branchKey;
-    if (!state || operation === 'pull' || (operation === 'status' && input.refresh)) {
+    if (!input.revision && (!state || operation === 'pull' || (operation === 'status' && input.refresh))) {
       const quotaMessage = size => `Кеш кода занимает ${(size / 1024 ** 3).toFixed(2)} GiB при лимите ${(this.maxCacheBytes / 1024 ** 3).toFixed(2)} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.`;
       const before = await diskSize(this.root, signal);
       if (before >= this.maxCacheBytes) throw new BrowserError(quotaMessage(before), 507);
@@ -242,7 +258,7 @@ export class RepositoryBrowser {
       }
       return { ...state, behind, current: state.sha === state.remoteSha };
     }
-    if (input.revision && input.revision !== state.sha) throw new BrowserError('Снимок обновился в другом окне. Нажмите «Проверить обновления».', 409);
+
     report({ stage: 'tree' });
     const manifest = (await git(['ls-tree', '-rzl', state.sha])).toString('utf8').split('\0').filter(Boolean).map(line => {
       const match = /^(\d+) (\w+) ([0-9a-f]+) +([\d-]+)\t([\s\S]+)$/.exec(line);

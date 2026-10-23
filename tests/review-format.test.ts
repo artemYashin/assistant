@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { rehypeReviewFormat, reviewText } from "../src/rehype-review-format.js";
+import type { Root } from "hast";
+
+test("optional review cards preserve prose, nested quotes and code; severity gets a badge", async () => {
+  const pipeline = unified().use(remarkParse).use(remarkRehype).use(rehypeReviewFormat);
+  const markdown = "Объяснение перед замечанием.\n\n> ### Проблема: потеря данных\n>\n> **Критичность:** высокая — записи пропадают.\n>\n> **Проблема:** описание.\n>\n> > Требование тикета\n>\n> **Предлагаемое решение:** сохранить.\n>\n> ```ts\n> save();\n> ```\n\nТекст после замечания.";
+  const tree = await pipeline.run(pipeline.parse(markdown)) as Root;
+  const elements = tree.children.filter((node: any) => node.type === "element") as any[];
+  assert.deepEqual(elements.map(node => node.tagName), ["p", "section", "p"]);
+  assert.deepEqual(elements[1].properties.className, ["review-finding"]);
+  const serialized = JSON.stringify(tree);
+  assert.match(serialized, /is-high/);
+  assert.match(serialized, /blockquote/);
+  assert.match(serialized, /language-ts/);
+  assert.match(reviewText(tree), /Текст после замечания/);
+});
+
+test("ordinary ticket blockquotes stay quotes and inline severity works", async () => {
+  const pipeline = unified().use(remarkParse).use(remarkRehype).use(rehypeReviewFormat);
+  const tree = await pipeline.run(pipeline.parse("> Требование без заголовка\n\n**Критичность: очень низкая**"));
+  const serialized = JSON.stringify(tree);
+  assert.match(serialized, /blockquote/);
+  assert.doesNotMatch(serialized, /review-finding/);
+  assert.match(serialized, /is-minimal/);
+});

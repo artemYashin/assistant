@@ -117,7 +117,7 @@ export class CodeBrowser {
     if (!response.ok) throw new AppError(response.status, data?.error || "Ошибка сервиса кода");
     if (!data) throw new AppError(502, "Некорректный ответ сервиса кода");
     checkCancelled();
-    if (input.branch && typeof data.sha === "string") this.store.set(`code.snapshot:${monitor.id}:${input.branch.replace(/^refs\/heads\//, "")}`, { sha: data.sha, checkedAt: new Date().toISOString() });
+    if (!input.revision && input.branch && typeof data.sha === "string") this.store.set(`code.snapshot:${monitor.id}:${input.branch.replace(/^refs\/heads\//, "")}`, { sha: data.sha, checkedAt: new Date().toISOString() });
     const syncKey = "code-sync:" + monitor.id;
     if (!background && ["status", "pull"].includes(input.operation) && typeof data.sha === "string" && Number.isFinite(Date.parse(data.checkedAt))) {
       const previous = this.store.get<CodeSyncState | null>(syncKey, null);

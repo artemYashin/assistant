@@ -25,18 +25,30 @@
 
 ### Сообщение
 
+Ревью читает только source-ветку проверяемого PR.
+
+Источник: server/code-tools.ts:29.
+
+### Сообщение
+
+Код не соответствует проверяемому коммиту PR.
+
+Источник: server/code-tools.ts:34.
+
+### Сообщение
+
 Файл недоступен для цитирования
 
-Источник: server/code-tools.ts:53.
+Источник: server/code-tools.ts:55.
 
 ### Сообщение
 
 Диапазон строк вне файла
 
-Источник: server/code-tools.ts:56.
+Источник: server/code-tools.ts:58.
 
 ### Сообщение
 
 endLine должен быть не меньше startLine
 
-Источник: server/code-tools.ts:99.
+Источник: server/code-tools.ts:101.

@@ -38,6 +38,8 @@ export class PrSourcePreparation {
           local = await this.browser.request({ ...scope, operation: "pull" }, progress => write("loading", { stage: progress.stage }));
         }
         if (local?.sha !== pr.head) throw new AppError(409, "Source-ветка уже отличается от коммита PR. Синхронизируйте pull request и повторите ревью.");
+        const pinned = await this.browser.request({ ...scope, operation: "status", localOnly: true, revision: pr.head });
+        if (pinned.sha !== pr.head) throw new AppError(409, "Не удалось закрепить проверяемый коммит PR.");
         write("ready");
       } catch (error) {
         write("error", { error: error instanceof AppError ? error.message : "Не удалось подготовить source-ветку. Повторите загрузку." });

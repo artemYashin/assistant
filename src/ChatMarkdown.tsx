@@ -1,3 +1,4 @@
+import { rehypeReviewFormat, reviewText } from "./rehype-review-format.js";
 import type { Element, ElementContent } from "hast";
 import { MarkdownCodeBlock } from "./MarkdownCodeBlock.js";
 import { chatCodeBranch } from "./chat-code-branch.js";
@@ -7,7 +8,7 @@ import { remarkTicketCitations } from "./remark-ticket-citations.js";
 import { ImagePreview } from "./ImagePreview.js";
 import { useMemo, useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "./azure-ticket-link.js";
-import { FileCode2, GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
+import { ShieldAlert, CircleAlert, Lightbulb, FileCode2, GitBranch, GitPullRequest, Copy, Check, ArrowUpRight, Quote, Figma, Github, Cloud, Link2 } from "lucide-react";
 import { chatTicketCitation, chatTicketPath } from "./routing.js";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -53,14 +54,25 @@ export function ChatMarkdown({
   images,
   azureSource,
   preserveLineBreaks = false,
+  reviewRevision,
+  review = false,
 }: {
   text: string;
   azureSource?: string;
   images?: { source: string; preview: string | null }[];
   preserveLineBreaks?: boolean;
+  reviewRevision?: string;
+  review?: boolean;
 }) {
   const components = useMemo<Components>(() => ({
           pre: MarkdownCodeBlock,
+          strong: ({ children, node, ...props }) => {
+            const label = reviewText(node || {});
+            const Icon = review && /^Критичность\s*:/i.test(label) ? ShieldAlert
+              : review && /^Проблема\s*:/i.test(label) ? CircleAlert
+              : review && /^Предлагаемое решение\s*:/i.test(label) ? Lightbulb : null;
+            return <strong {...props}>{Icon && <Icon size={15} className="review-label-icon" aria-hidden="true" />}{children}</strong>;
+          },
           blockquote: ({ children, node }) => (
             <blockquote className="chat-quote-card">
               <span className="chat-quote-heading">
@@ -77,9 +89,14 @@ export function ChatMarkdown({
           a: ({ href, children, node }) => {
             if (node?.children.some(child => child.type === "element" && child.tagName === "img")) return <span>{children}</span>;
             if (!href) return <span>{children}</span>;
-            const codeBranch = chatCodeBranch(href);
+            let codeBranch = chatCodeBranch(href);
+            if (codeBranch && reviewRevision && /^[0-9a-f]{40,64}$/.test(reviewRevision)) {
+              const url = new URL(codeBranch.href, "http://local");
+              url.searchParams.set("revision", reviewRevision);
+              codeBranch = chatCodeBranch(url.pathname + url.search);
+            }
             if (codeBranch) {
-              if (codeBranch.path) return <span className="chat-code-reference"><Link className="chat-ticket-link chat-code-link" to={codeBranch.href} title={`${codeBranch.branch} · ${codeBranch.path}`}><FileCode2 size={14} aria-hidden="true" /><span>{codeBranch.label || codeBranch.path.split("/").pop()}{codeBranch.startLine !== undefined ? `:${codeBranch.startLine}${codeBranch.endLine !== codeBranch.startLine ? `–${codeBranch.endLine}` : ""}` : ""}</span></Link></span>;
+              if (codeBranch.path) return <span className="chat-code-reference"><Link className="chat-ticket-link chat-code-link" to={codeBranch.href} title={`${codeBranch.branch}${codeBranch.revision ? " @ " + codeBranch.revision.slice(0, 12) : ""} · ${codeBranch.path}`}><FileCode2 size={14} aria-hidden="true" /><span>{codeBranch.label || codeBranch.path.split("/").pop()}{codeBranch.startLine !== undefined ? `:${codeBranch.startLine}${codeBranch.endLine !== codeBranch.startLine ? `–${codeBranch.endLine}` : ""}` : ""}</span></Link></span>;
               return <span className="chat-code-reference"><CopyableLink href={codeBranch.href} copyValue={codeBranch.branch}><Link className="chat-ticket-link chat-branch-link" to={codeBranch.href} title={codeBranch.branch}><GitBranch size={14} aria-hidden="true" /><span>{codeBranch.branch}</span></Link></CopyableLink></span>;
             }
             const pr = chatPrCard(href);
@@ -146,11 +163,12 @@ export function ChatMarkdown({
               <table>{children}</table>
             </div>
           ),
-  }), [azureSource, images]);
+  }), [azureSource, images, review, reviewRevision]);
   return (
     <div className="chat-markdown">
       <Markdown
         remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations] : [remarkGfm, remarkTicketCitations]}
+        rehypePlugins={review ? [rehypeReviewFormat] : []}
         skipHtml
         urlTransform={(url, key) =>
           ticketAsset(url) || (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url))) ? url : key === "href" && chatTicketPath(url)

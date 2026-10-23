@@ -145,7 +145,7 @@ function ReviewDetail({ result, pr }: any) {
         </header>
         {result.error && <p className="error">{result.error}</p>}
         {result.summary ? (
-          <ChatMarkdown text={result.summary} />
+          <ChatMarkdown text={result.summary} review reviewRevision={result.head} />
         ) : (
           <p className="muted">
             Отчёт ещё не готов. Показаны сведения о подготовленном diff.

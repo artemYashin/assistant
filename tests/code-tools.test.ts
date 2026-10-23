@@ -134,7 +134,17 @@ test("review citation validates the pinned source and links the PR branch and li
   assert.equal(calls[0].monitor, "monitor");
   const params = new URL(result.references[0].localUrl, "https://orbit.local").searchParams;
   assert.equal(params.get("branch"), "feature/review");
+  assert.equal(params.get("revision"), revision);
   assert.equal(params.get("path"), "src/example.ts");
   assert.equal(params.get("line"), "2");
   assert.equal(params.get("endLine"), "3");
+});
+
+test("review reads reject another branch and a mismatched backend SHA", async t => {
+  const store = setup(t), revision = "c".repeat(40);
+  const browser = { request: async () => ({ sha: "d".repeat(40), text: "wrong revision" }) };
+  const tools = codeTools(store, { client: "Client", project: "Project" }, () => {}, browser as any, "feature", () => true, { monitor: "m", branch: "feature", revision });
+  const cite = tools.find(tool => tool.name === "cite_code")!.handler!;
+  await assert.rejects(() => cite({ references: [{ branch: "main", path: "a.ts" }] } as any, {} as any) as Promise<any>, /source-ветку/);
+  await assert.rejects(() => cite({ references: [{ path: "a.ts" }] } as any, {} as any) as Promise<any>, /не соответствует/);
 });
