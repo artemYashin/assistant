@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -78,6 +79,51 @@ class StorageCopyTests(unittest.TestCase):
         message = copy.safe_error(PermissionError(13, 'Denied', '/private-key-path'))
         self.assertIn('EACCES', message)
         self.assertNotIn('private-key-path', message)
+
+    def test_preparation_resumes_copy_and_checks_real_access(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, target = Path(tmp) / 'source', Path(tmp) / 'target'
+            source.mkdir(mode=0o700)
+            (source / 'master.key').write_bytes(b'test key')
+            (source / 'master.key').chmod(0o600)
+            copy.copy_verified(source, target)
+            before = copy.inventory(source)
+            (target / 'master.key').chmod(0o644)
+            with patch.object(copy.subprocess, 'run', side_effect=AssertionError('Existing copy must not be recopied')):
+                copy.prepare_copy(source, target, os.getuid())
+            self.assertEqual((target / 'master.key').stat().st_mode & 0o777, 0o600)
+            copy.check_service_access(target)
+            self.assertEqual(before, copy.inventory(source))
+            self.assertEqual(set(copy.inventory(target)), set(before))
+
+    def test_prepare_does_not_change_permissions_when_data_differs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, target = Path(tmp) / 'source', Path(tmp) / 'target'
+            source.mkdir()
+            (source / 'file').write_bytes(b'original')
+            copy.copy_verified(source, target)
+            (target / 'file').write_bytes(b'wrong')
+            with patch.object(copy.os, 'chown', side_effect=AssertionError('Must verify content first')):
+                with self.assertRaisesRegex(copy.StorageCopyError, 'DATA_MISMATCH'):
+                    copy.prepare_copy(source, target, os.getuid())
+            self.assertEqual((source / 'file').read_bytes(), b'original')
+
+    def test_service_access_failure_stops_migration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(copy.os, 'access', return_value=False):
+                with self.assertRaisesRegex(copy.StorageCopyError, 'SERVICE_ACCESS_DENIED'):
+                    copy.check_service_access(Path(tmp))
+
+    def test_data_verification_accepts_host_ownership_mapping_but_rejects_content_changes(self):
+        original = {'.': (16384, 448, 1000, 1000, None), 'file': (32768, 384, 1000, 1000, (8, 'hash'))}
+        mapped = {'.': (16384, 448, 501, 20, None), 'file': (32768, 384, 501, 20, (8, 'hash'))}
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(copy, 'inventory', side_effect=[original, mapped]):
+                copy.verify_copy(Path(tmp), Path(tmp), require_metadata=False)
+            mapped['file'] = (32768, 384, 501, 20, (8, 'different'))
+            with patch.object(copy, 'inventory', side_effect=[original, mapped]):
+                with self.assertRaisesRegex(copy.StorageCopyError, 'DATA_MISMATCH'):
+                    copy.verify_copy(Path(tmp), Path(tmp), require_metadata=False)
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,8 +8,9 @@ while (($#)); do
   case "$1" in
     --init) mode=init; shift ;;
     --diagnose) mode=diagnose; shift ;;
+    --resume) mode=resume; shift ;;
     --project) project_override=${2:?Specify the existing Compose project name}; shift 2 ;;
-    -h|--help) echo "Usage: bash scripts/migrate-docker-storage.sh [--project NAME] [--init | --diagnose]"; exit 0 ;;
+    -h|--help) echo "Usage: bash scripts/migrate-docker-storage.sh [--project NAME] [--init | --diagnose | --resume]"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -28,6 +29,7 @@ base="$root/docker-data"
 [[ "$base" != *,* ]] || fail "Docker --mount requires a project path without commas."
 [[ ! -L "$base" ]] || fail "docker-data must not be a symlink."
 folders=(orbit repositories repo-control whisper)
+uids=(1000 1000 1000 10001)
 volume_keys=(orbit-data repository-cache repo-control whisper-models)
 services=(orbit code-browser orbit voice)
 targets=(/data /cache /repo-control /models)
@@ -93,7 +95,14 @@ if [[ "$mode" == init ]]; then
   '
 else
   # Keep sources untouched. A failed copy leaves services stopped for a consistent retry.
-  stage=$(mktemp -d "$base/.migration-XXXXXXXX")
+  if [[ "$mode" == resume ]]; then
+    stage_name=$(docker run --rm --network none --user 0 --mount "type=bind,src=$base,dst=/storage,readonly" "$helper" python -c 'from pathlib import Path; import re; paths=[p for p in Path("/storage").iterdir() if re.fullmatch(r".migration-[A-Za-z0-9]{8}",p.name) and p.is_dir() and not p.is_symlink()]; print(max(paths,key=lambda p:p.stat().st_mtime).name if paths else "")')
+    [[ -n "$stage_name" ]] || fail "No staging copy to resume. Run without --resume."
+    stage="$base/$stage_name"
+    echo "Resuming $stage_name; existing copies will be verified, never overwritten."
+  else
+    stage=$(mktemp -d "$base/.migration-XXXXXXXX")
+  fi
   echo "Stopping project '$project' for a consistent database and Git copy..."
   docker compose "${legacy[@]}" stop --timeout 60 orbit code-browser voice
   for volume in "${volumes[@]}"; do
@@ -105,7 +114,11 @@ else
       --mount "type=volume,src=${volumes[$i]},dst=/source,readonly" \
       --mount "type=bind,src=$stage,dst=/destination" \
       --mount "type=bind,src=$root/scripts/docker-storage-copy.py,dst=/copy.py,readonly" \
-      "$helper" python /copy.py /source "/destination/${folders[$i]}"
+      "$helper" python /copy.py --prepare /source "/destination/${folders[$i]}" "${uids[$i]}"
+    docker run --rm --network none --user "${uids[$i]}:${uids[$i]}" \
+      --mount "type=bind,src=$stage/${folders[$i]},dst=/check" \
+      --mount "type=bind,src=$root/scripts/docker-storage-copy.py,dst=/copy.py,readonly" \
+      "$helper" python /copy.py --check-access /check
   done
   # Publish only after every volume has been copied and verified.
   for folder in "${folders[@]}"; do mv "$stage/$folder" "$base/$folder"; done
