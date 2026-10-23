@@ -1,3 +1,4 @@
+import { reviewBaseTools, reviewCodeTools, reviewTicketTools } from "./review-progress.js";
 import { imageReadingTool } from "./image-reader.js";
 import { ChatFiles, prepareChatFiles, type ChatFile } from "./chat-files.js";
 import { selectedTicketTool } from "./selected-ticket-tool.js";
@@ -450,7 +451,10 @@ export class Agent {
     const openedTicketLinks = new Map<number, { title: string; localUrl: string }>();
     let partialMessageId = "", partialText = "";
     let timeline: ChatTimelineItem[] = [];
-    const emit = (event: ChatProgress) => { if (!review) { timeline = updateChatTimeline(timeline, event); try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ } } };
+    const emit = (event: ChatProgress) => {
+      if (!review) timeline = updateChatTimeline(timeline, event);
+      try { onProgress?.(event); } catch { /* A disconnected viewer must not break persistence. */ }
+    };
     emit({ stage: "preparing", startedAt });
     const singleTarget = !review
       ? singleTicketTarget(readPrompt, historySnapshot)
@@ -1174,9 +1178,9 @@ export class Agent {
             return this.store.memoryDetail(args.id, context);
           };
           config.tools = (config.tools || []).filter((tool) =>
-            ["ask_review_questions", "propose_memory", "read_memory"].includes(tool.name) ||
-            (!!reviewActions?.ticketEvidence && tool.name === "cite_ticket_content") ||
-            (!!reviewActions?.readCode && ["cite_code", "code_branches", "code_tree", "code_search", "code_read_file", "code_work_status"].includes(tool.name)),
+            (reviewBaseTools as readonly string[]).includes(tool.name) ||
+            (!!reviewActions?.ticketEvidence && (reviewTicketTools as readonly string[]).includes(tool.name)) ||
+            (!!reviewActions?.readCode && (reviewCodeTools as readonly string[]).includes(tool.name)),
           );
           config.availableTools = config.tools.map(
             (tool) => `custom:${tool.name}`,

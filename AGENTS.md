@@ -19,3 +19,10 @@ buttons, workflows, limits, or errors:
    General greetings/capability questions must not automatically load articles.
 
 Read docs/help/README.md for the article format and coverage limitations.
+
+When adding or changing tools available to PR review, update the review tool groups
+and Russian activity labels together in server/review-progress.ts. Review progress
+must describe the current operation, keep concurrent tools separate, and clear on
+completion/error/stop. Keep it independent of debug-log retention and do not expose
+arguments, code, ticket content or model reasoning in the status. Update the PR
+review help article and tests/review-progress.test.ts in the same change.

@@ -43,6 +43,7 @@ import {
   Clock,
   MessageCircle,
   LoaderCircle,
+  Square,
 } from "lucide-react";
 import { filterPullRequests } from "./pr-filters.js";
 import { Link, useLocation } from "react-router-dom";
@@ -558,25 +559,6 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   >
                     {statuses[p.review_status] || "Ревью не запускалось"}
                   </span>
-                  {!readOnly &&
-                    [
-                      "preparing_git",
-                      "queued",
-                      "running",
-                      "awaiting_answers",
-                    ].includes(p.review_status) && (
-                      <button
-                        className="secondary pr-stop-review"
-                        disabled={busy}
-                        onClick={() =>
-                          run(() =>
-                            api("/pr/review/stop", "POST", { id: p.review_id }),
-                          )
-                        }
-                      >
-                        Остановить ревью
-                      </button>
-                    )}
                   {(p.summary || p.coverage || p.last_saved_review) && (
                     <ReviewResult pr={p} />
                   )}
@@ -707,55 +689,27 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
               <span aria-hidden="true">→</span>
               <BranchLabel kind="target" value={p.target_branch} client={p.client} project={p.project} />
             </div>
+            {!readOnly && p.review_progress && (
+              <div className="pr-review-activity" role="status" aria-live="polite" aria-atomic="true">
+                {p.review_status === "awaiting_answers" ? <MessageCircle size={15} aria-hidden="true" /> : <LoaderCircle className="spin" size={15} aria-hidden="true" />}
+                <span>{p.review_progress}</span>
+              </div>
+            )}
             <div className="pr-card-actions">
               <div className="pr-action-group">
-                {!readOnly && (
-                  <button
-                    className="pr-review-launch"
-                    disabled={
-                      busy ||
-                      !p.in_scope ||
-                      !p.enabled ||
-                      !!p.draft ||
-                      [
-                        "preparing_git",
-                        "queued",
-                        "running",
-                        "awaiting_answers",
-                      ].includes(p.review_status)
-                    }
-                    onClick={() => setReviewing(p)}
-                  >
-                    {p.review_status === "completed" ? (
-                      <Check size={17} aria-hidden="true" />
-                    ) : p.review_status === "running" ? (
-                      <LoaderCircle
-                        className="spin"
-                        size={17}
-                        aria-hidden="true"
-                      />
-                    ) : p.review_status === "preparing_git" ? (
-                      <LoaderCircle className="spin" size={17} />
-                    ) : p.review_status === "queued" ? (
-                      <Clock size={17} aria-hidden="true" />
-                    ) : p.review_status === "awaiting_answers" ? (
-                      <MessageCircle size={17} aria-hidden="true" />
-                    ) : (
-                      <Sparkles size={17} aria-hidden="true" />
-                    )}
-                    {p.review_status === "completed"
-                      ? "Повторить ревью"
-                      : p.review_status === "awaiting_answers"
-                        ? "Ожидает ответов"
-                        : p.review_status === "running"
-                          ? "Ревью выполняется"
-                          : p.review_status === "preparing_git"
-                            ? "Подготовка Git"
-                            : p.review_status === "queued"
-                              ? "Ревью в очереди"
-                              : "Запустить ревью"}
+                {!readOnly && (["preparing_git", "queued", "running", "awaiting_answers"].includes(p.review_status) ? (
+                  <button className="secondary pr-stop-review" disabled={busy}
+                    onClick={() => run(() => api("/pr/review/stop", "POST", { id: p.review_id }))}>
+                    <Square size={16} aria-hidden="true" /> Остановить ревью
                   </button>
-                )}
+                ) : (
+                  <button className="pr-review-launch"
+                    disabled={busy || !p.in_scope || !p.enabled || !!p.draft}
+                    onClick={() => setReviewing(p)}>
+                    {p.review_status === "completed" ? <Check size={17} aria-hidden="true" /> : <Sparkles size={17} aria-hidden="true" />}
+                    {p.review_status === "completed" ? "Повторить ревью" : "Запустить ревью"}
+                  </button>
+                ))}
 
                 <PrChangeButtons pr={p} onDiff={() => setViewingDiff(p)} onCommits={() => setViewingCommits(p)} />
                 {readOnly && <ConfirmButton

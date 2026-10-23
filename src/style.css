@@ -9912,3 +9912,8 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .review-severity.is-medium { color: #875008; background: #fff0d4; border-color: #e8c27c; }
 .review-severity.is-low { color: #75600c; background: #fff9da; border-color: #e0d28d; }
 .review-severity.is-minimal { color: #286441; background: #e9f6ec; border-color: #a9d1b6; }
+
+.pr-review-activity { display: flex; align-items: center; gap: 7px; margin: 10px 0 7px; color: #466a8a; font-size: 12px; }
+.pr-review-activity > svg { flex-shrink: 0; }
+.pr-action-group > .pr-stop-review { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 11px 20px; color: #a33e39; border-color: #e4bcb8; background: #fff5f4; }
+.pr-action-group > .pr-stop-review:hover:not(:disabled) { background: #fbe5e2; border-color: #ce918b; }

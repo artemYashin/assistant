@@ -199,6 +199,7 @@ test("watchdog stops a model that never returns usage or a response", async (t) 
 
 test("manual PR review has only memory reads, no chat history and still accounts usage", async (t) => {
   const store = fixture(t);
+  const progress: any[] = [];
   store.say("user", "private chat history", context);
   store.addMemory("general", "General knowledge", context);
   store.addMemory("client", "Client knowledge", context);
@@ -219,10 +220,12 @@ test("manual PR review has only memory reads, no chat history and still accounts
         .permissionDecision,
       "deny",
     );
+    await c.tools[0].handler({ id: store.memoryCatalog(context)[0].id }, {});
     s.emit({ inputTokens: 500, outputTokens: 100 });
     return { data: { content: "Review" } };
   });
-  await agent.chat("Review this diff", context, true);
+  await agent.chat("Review this diff", context, true, undefined, undefined, undefined, event => progress.push(event));
+  assert.deepEqual(progress.filter(event => event.stage === "tool").map(event => [event.name, event.status]), [["read_memory", "running"], ["read_memory", "completed"]]);
   assert.equal(store.history(context).length, 1);
   assert.equal(
     (new UsageLedger(store).report() as any).summary.input_tokens,
