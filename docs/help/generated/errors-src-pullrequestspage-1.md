@@ -15,28 +15,28 @@
 
 Этот PR не найден в локальной базе.
 
-Источник: src/PullRequestsPage.tsx:447.
+Источник: src/PullRequestsPage.tsx:442.
 
 ### Сообщение
 
 Pull request станет черновиком. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:821.
+Источник: src/PullRequestsPage.tsx:816.
 
 ### Сообщение
 
 PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:827.
+Источник: src/PullRequestsPage.tsx:822.
 
 ### Сообщение
 
 источник больше недоступен
 
-Источник: src/PullRequestsPage.tsx:872.
+Источник: src/PullRequestsPage.tsx:867.
 
 ### Сообщение
 
 Не загружен: проверьте доступ, существование и проект тикета
 
-Источник: src/PullRequestsPage.tsx:883.
+Источник: src/PullRequestsPage.tsx:878.

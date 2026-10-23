@@ -27,100 +27,100 @@
 
 Сохранённые ревью всех версий
 
-Источник: src/PullRequestsPage.tsx:197.
+Источник: src/PullRequestsPage.tsx:192.
 
 ### Элемент
 
 Синхронизировать PR
 
-Источник: src/PullRequestsPage.tsx:426.
+Источник: src/PullRequestsPage.tsx:421.
 
 ### Элемент
 
 ＋ Создать PR
 
-Источник: src/PullRequestsPage.tsx:434.
+Источник: src/PullRequestsPage.tsx:429.
 
 ### Элемент
 
 Показать все PR текущего проекта
 
-Источник: src/PullRequestsPage.tsx:449.
+Источник: src/PullRequestsPage.tsx:444.
 
 ### Элемент
 
 Сбросить фильтры
 
-Источник: src/PullRequestsPage.tsx:468.
+Источник: src/PullRequestsPage.tsx:463.
 
 ### Элемент
 
 Тип PR
 
-Источник: src/PullRequestsPage.tsx:481.
+Источник: src/PullRequestsPage.tsx:476.
 
 ### Элемент
 
 Все PR
 
-Источник: src/PullRequestsPage.tsx:488.
+Источник: src/PullRequestsPage.tsx:483.
 
 ### Элемент
 
 Черновики
 
-Источник: src/PullRequestsPage.tsx:489.
+Источник: src/PullRequestsPage.tsx:484.
 
 ### Элемент
 
 Не черновики
 
-Источник: src/PullRequestsPage.tsx:490.
+Источник: src/PullRequestsPage.tsx:485.
 
 ### Элемент
 
 Готовность ревью
 
-Источник: src/PullRequestsPage.tsx:493.
+Источник: src/PullRequestsPage.tsx:488.
 
 ### Элемент
 
 Все состояния
 
-Источник: src/PullRequestsPage.tsx:500.
+Источник: src/PullRequestsPage.tsx:495.
 
 ### Элемент
 
 Ревью готово
 
-Источник: src/PullRequestsPage.tsx:501.
+Источник: src/PullRequestsPage.tsx:496.
 
 ### Элемент
 
 Ревью не готово
 
-Источник: src/PullRequestsPage.tsx:502.
+Источник: src/PullRequestsPage.tsx:497.
 
 ### Элемент
 
 Сортировка PR
 
-Источник: src/PullRequestsPage.tsx:505.
+Источник: src/PullRequestsPage.tsx:500.
 
 ### Элемент
 
 Созданы: сначала новые
 
-Источник: src/PullRequestsPage.tsx:511.
+Источник: src/PullRequestsPage.tsx:506.
 
 ### Элемент
 
 Созданы: сначала старые
 
-Источник: src/PullRequestsPage.tsx:512.
+Источник: src/PullRequestsPage.tsx:507.
 
 ### Элемент
 
 Номер: по убыванию
 
-Источник: src/PullRequestsPage.tsx:513.
+Источник: src/PullRequestsPage.tsx:508.

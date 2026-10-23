@@ -10007,3 +10007,22 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .chat-markdown .chat-quote-ticket { display:inline-flex; align-items:center; justify-content:center; padding:1px 5px; min-height:18px; border:1px solid #bfd3c6; border-radius:5px; background:#eaf4ed; color:#41634c; font-size:10px; line-height:14px; font-weight:500; white-space:nowrap; }
 .chat-markdown .chat-quote-ticket:hover { background:#d8eadc; border-color:#8db69b; }
 .chat-markdown .chat-quote-ticket:focus-visible { outline:2px solid #709c7e; outline-offset:2px; }
+
+.pr-review-detail { min-width: 0; overflow-wrap: anywhere; }
+.pr-review-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #dfe5e1;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pr-review-detail-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+.pr-review-detail-meta strong { color: var(--text); font-weight: 600; }
+.pr-review-detail-header .pr-review-token-usage {
+  padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
+}
+.pr-review-detail-header p { margin: 0; }
+.pr-review-detail > .chat-markdown > :first-child { margin-top: 0; }

@@ -133,26 +133,21 @@ function ReviewResult({ pr }: any) {
       className={`icon-button pr-open-review${result.summary ? "" : " is-preparing"}`}
       trigger={<Eye size={16} aria-hidden="true" />}
     >
-      <div className="pr-review-result">
-        <small className="muted">
-          Модель: {result.model || "Не сохранена для этого ревью"}
-        </small>
-        <ReviewTokenUsage usage={result.review_usage} />
-        {previous && (
-          <p className="muted">
-            Ревью предыдущей версии PR: {result.head?.slice(0, 10)} →{" "}
-            {result.target?.slice(0, 10)}.
-          </p>
-        )}
-        {coverage && (
-          <p className="muted">
-            Покрытие: {coverage.files} файлов.{" "}
-            {(coverage.notes || []).join("; ")}
-          </p>
-        )}
-        {result.finished_at && (
-          <small>{new Date(result.finished_at).toLocaleString("ru-RU")}</small>
-        )}
+      <div className="pr-review-detail">
+        <header className="pr-review-detail-header">
+          <div className="pr-review-detail-meta">
+            <span><strong>Модель:</strong> {result.model || "Не сохранена для этого ревью"}</span>
+            {result.finished_at && <time dateTime={result.finished_at}>{new Date(result.finished_at).toLocaleString("ru-RU")}</time>}
+            {coverage && <span><strong>Покрытие:</strong> {coverage.files} файлов</span>}
+          </div>
+          <ReviewTokenUsage usage={result.review_usage} />
+          {previous && (
+            <p className="muted">
+              Ревью предыдущей версии PR: {result.head?.slice(0, 10)} → {result.target?.slice(0, 10)}.
+            </p>
+          )}
+          {!!coverage?.notes?.length && <p className="muted">{coverage.notes.join("; ")}</p>}
+        </header>
         {result.summary ? (
           <ChatMarkdown text={result.summary} />
         ) : (
