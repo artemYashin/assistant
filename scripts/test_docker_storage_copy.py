@@ -148,5 +148,38 @@ class StorageCopyTests(unittest.TestCase):
                 with self.assertRaisesRegex(copy.StorageCopyError, 'step=after-permissions-read-copy'):
                     copy.verify_copy(Path(tmp), Path(tmp), phase='after-permissions')
 
+
+    def test_readonly_copy_with_stricter_permissions_needs_no_chmod(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, target = Path(tmp) / 'source', Path(tmp) / 'target'
+            source.mkdir()
+            (source / 'object').write_bytes(b'git object')
+            (source / 'object').chmod(0o444)
+            copy.copy_verified(source, target)
+            (target / 'object').chmod(0o400)
+            with patch.object(copy.os, 'chmod', side_effect=PermissionError(13, 'Denied')):
+                copy.prepare_copy(source, target, os.getuid())
+            copy.check_service_access(target)
+            self.assertEqual((target / 'object').stat().st_mode & 0o777, 0o400)
+
+    def test_permissions_set_before_ownership_children_before_parent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, target = Path(tmp) / 'source', Path(tmp) / 'target'
+            source.mkdir()
+            (source / 'file').write_text('data')
+            (source / 'file').chmod(0o600)
+            copy.copy_verified(source, target)
+            (target / 'file').chmod(0o644)
+            events = []
+            chmod = copy.os.chmod
+            def record_chmod(path, mode):
+                events.append(('chmod', path.name))
+                chmod(path, mode)
+            def record_chown(path, *args, **kwargs):
+                events.append(('chown', path.name))
+            with patch.object(copy.os, 'chmod', side_effect=record_chmod), patch.object(copy.os, 'chown', side_effect=record_chown):
+                copy.prepare_copy(source, target, os.getuid() + 1)
+            self.assertEqual(events, [('chmod', 'file'), ('chown', 'file'), ('chown', 'target')])
+
 if __name__ == '__main__':
     unittest.main()

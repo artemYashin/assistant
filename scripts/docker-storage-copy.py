@@ -110,19 +110,32 @@ def prepare_copy(source, destination, uid):
     # No permission changes until all bytes, paths and symlinks are verified.
     original = verify_copy(source, destination, require_metadata=False)
     ownership_warnings = 0
-    for relative, entry in original.items():
+    # Children first: changing a directory owner must not block traversal.
+    for relative, entry in reversed(list(original.items())):
         target = destination / relative
+        if entry[0] != stat.S_IFLNK:
+            with filesystem_step('set-copy-permissions', target, destination):
+                desired = entry[1] & 0o777
+                actual = stat.S_IMODE(target.lstat().st_mode)
+                # Host sharing can represent 0444 as 0400. Preserve stricter
+                # group/other permissions when owner access is sufficient.
+                # The actual service UID still must pass the access check.
+                suitable = (actual & 0o700 == desired & 0o700
+                            and actual & ~desired == 0)
+                if not suitable:
+                    os.chmod(target, desired)
+                actual = stat.S_IMODE(target.lstat().st_mode)
+                if actual & 0o077 & ~(desired & 0o077):
+                    raise StorageCopyError('UNSAFE_PERMISSIONS: copy grants broader group/other access than the source')
+        # Set permissions before handing ownership away.
         try:
-            os.chown(target, uid, uid, follow_symlinks=False)
+            info = target.lstat()
+            if (info.st_uid, info.st_gid) != (uid, uid):
+                os.chown(target, uid, uid, follow_symlinks=False)
         except PermissionError:
             # Some host-shared filesystems map ownership. Runtime access is
             # checked separately in a container running as the actual service UID.
             ownership_warnings += 1
-        if entry[0] != stat.S_IFLNK:
-            with filesystem_step('set-copy-permissions', target, destination):
-                os.chmod(target, entry[1] & 0o777)
-                if stat.S_IMODE(target.lstat().st_mode) & 0o077 & ~(entry[1] & 0o077):
-                    raise StorageCopyError('UNSAFE_PERMISSIONS: copy grants broader group/other access than the source')
     if ownership_warnings:
         print(f'Ownership mapping: {ownership_warnings} entries could not be chowned; service access check is mandatory.')
     verify_copy(source, destination, require_metadata=False, phase="after-permissions")
