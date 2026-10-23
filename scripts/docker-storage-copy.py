@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline Docker volume copy/verification. Never prints data or filenames."""
 from collections import Counter
+from contextlib import contextmanager
 import errno
 import hashlib
 import os
@@ -14,6 +15,27 @@ import tempfile
 class StorageCopyError(RuntimeError):
     """Messages are safe to display: no file paths or data."""
 
+
+
+@contextmanager
+def filesystem_step(step, path, root=None):
+    """Report operation and numeric permissions, never private paths."""
+    try:
+        yield
+    except OSError as error:
+        if error.filename is not None:
+            path = Path(error.filename)
+        metadata = 'metadata=unavailable'
+        try:
+            info = path.lstat()
+            metadata = f'owner={info.st_uid}:{info.st_gid} mode={stat.S_IMODE(info.st_mode):04o}'
+        except OSError:
+            pass
+        location = 'root' if root is not None and path == root else 'entry'
+        raise StorageCopyError(
+            f'FILESYSTEM_ERROR: {errno.errorcode.get(error.errno, "UNKNOWN")} '
+            f'step={step} location={location} process={os.getuid()}:{os.getgid()} {metadata}'
+        ) from error
 
 def inventory(root):
     result = {}
@@ -48,11 +70,13 @@ def copy_verified(source, destination):
     verify_copy(source, destination)
 
 
-def verify_copy(source, destination, require_metadata=True):
+def verify_copy(source, destination, require_metadata=True, phase="verify"):
     if not destination.is_dir() or destination.is_symlink():
         raise StorageCopyError('COPY_NOT_FOUND: no completed directory copy at this stage')
-    original = inventory(source)
-    copied = inventory(destination)
+    with filesystem_step(phase + '-read-source', source, source):
+        original = inventory(source)
+    with filesystem_step(phase + '-read-copy', destination, destination):
+        copied = inventory(destination)
     differences = Counter()
     for path in original.keys() - copied.keys():
         differences['missing_entries'] += 1
@@ -95,12 +119,13 @@ def prepare_copy(source, destination, uid):
             # checked separately in a container running as the actual service UID.
             ownership_warnings += 1
         if entry[0] != stat.S_IFLNK:
-            os.chmod(target, entry[1] & 0o777)
-            if stat.S_IMODE(target.lstat().st_mode) & 0o077 & ~(entry[1] & 0o077):
-                raise StorageCopyError('UNSAFE_PERMISSIONS: copy grants broader group/other access than the source')
+            with filesystem_step('set-copy-permissions', target, destination):
+                os.chmod(target, entry[1] & 0o777)
+                if stat.S_IMODE(target.lstat().st_mode) & 0o077 & ~(entry[1] & 0o077):
+                    raise StorageCopyError('UNSAFE_PERMISSIONS: copy grants broader group/other access than the source')
     if ownership_warnings:
         print(f'Ownership mapping: {ownership_warnings} entries could not be chowned; service access check is mandatory.')
-    verify_copy(source, destination, require_metadata=False)
+    verify_copy(source, destination, require_metadata=False, phase="after-permissions")
     print(f'Copy prepared for service UID/GID {uid}; actual access must be checked before use.')
 
 
@@ -123,15 +148,17 @@ def check_service_access(root):
         if stat.S_ISDIR(info.st_mode):
             for child in path.iterdir():
                 visit(child)
-    visit(root)
+    with filesystem_step('service-read-access', root, root):
+        visit(root)
     # Check real create/write/fsync/rename/delete, not just metadata bits.
-    with tempfile.TemporaryDirectory(prefix='.orbit-access-', dir=root) as temporary:
-        path = Path(temporary) / 'probe'
-        with path.open('wb') as stream:
-            stream.write(b'access test')
-            stream.flush()
-            os.fsync(stream.fileno())
-        path.rename(Path(temporary) / 'renamed')
+    with filesystem_step('service-write-probe', root, root):
+        with tempfile.TemporaryDirectory(prefix='.orbit-access-', dir=root) as temporary:
+            path = Path(temporary) / 'probe'
+            with path.open('wb') as stream:
+                stream.write(b'access test')
+                stream.flush()
+                os.fsync(stream.fileno())
+            path.rename(Path(temporary) / 'renamed')
     print(f'Service access verified: UID/GID {os.getuid()}/{os.getgid()}, {entries} entries, read/write/rename/delete succeeded.')
 
 

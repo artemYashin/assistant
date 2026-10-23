@@ -125,5 +125,28 @@ class StorageCopyTests(unittest.TestCase):
                 with self.assertRaisesRegex(copy.StorageCopyError, 'DATA_MISMATCH'):
                     copy.verify_copy(Path(tmp), Path(tmp), require_metadata=False)
 
+
+    def test_permission_diagnostic_identifies_operation_without_private_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            private = root / 'secret-file'
+            private.write_text('private contents')
+            private.chmod(0o600)
+            with self.assertRaises(copy.StorageCopyError) as result:
+                with copy.filesystem_step('set-copy-permissions', private, root):
+                    raise PermissionError(13, 'Denied', str(private))
+            message = str(result.exception)
+            self.assertIn('step=set-copy-permissions', message)
+            self.assertIn('location=entry', message)
+            self.assertIn('mode=0600', message)
+            self.assertNotIn('secret-file', message)
+            self.assertNotIn('private contents', message)
+
+    def test_copy_read_failure_has_distinct_stage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(copy, 'inventory', side_effect=[{}, PermissionError(13, 'Denied')]):
+                with self.assertRaisesRegex(copy.StorageCopyError, 'step=after-permissions-read-copy'):
+                    copy.verify_copy(Path(tmp), Path(tmp), phase='after-permissions')
+
 if __name__ == '__main__':
     unittest.main()
