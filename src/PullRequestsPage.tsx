@@ -120,22 +120,17 @@ function ReviewTokenUsage({ usage }: { usage?: { inputTokens: number | null; out
   </div>;
 }
 
-function ReviewResult({ pr }: any) {
-  const result = pr.summary ? pr : pr.last_saved_review || pr;
+function ReviewDetail({ result, pr }: any) {
   let coverage: any = null;
   try {
     coverage = result.coverage ? JSON.parse(result.coverage) : null;
   } catch {}
   const previous = result.head !== pr.head || result.target !== pr.target;
   return (
-    <PrInfoPopup
-      title="Открыть результат ревью"
-      className={`icon-button pr-open-review${result.summary ? "" : " is-preparing"}`}
-      trigger={<Eye size={16} aria-hidden="true" />}
-    >
       <div className="pr-review-detail">
         <header className="pr-review-detail-header">
           <div className="pr-review-detail-meta">
+            {result.status && <span>{statuses[result.status] || result.status}</span>}
             <span><strong>Модель:</strong> {result.model || "Не сохранена для этого ревью"}</span>
             {result.finished_at && <time dateTime={result.finished_at}>{new Date(result.finished_at).toLocaleString("ru-RU")}</time>}
             {coverage && <span><strong>Покрытие:</strong> {coverage.files} файлов</span>}
@@ -148,6 +143,7 @@ function ReviewResult({ pr }: any) {
           )}
           {!!coverage?.notes?.length && <p className="muted">{coverage.notes.join("; ")}</p>}
         </header>
+        {result.error && <p className="error">{result.error}</p>}
         {result.summary ? (
           <ChatMarkdown text={result.summary} />
         ) : (
@@ -156,6 +152,16 @@ function ReviewResult({ pr }: any) {
           </p>
         )}
       </div>
+  );
+}
+
+function ReviewResult({ pr }: any) {
+  const result = pr.summary ? pr : pr.last_saved_review || pr;
+  return (
+    <PrInfoPopup title="Открыть результат ревью"
+      className={`icon-button pr-open-review${result.summary ? "" : " is-preparing"}`}
+      trigger={<Eye size={16} aria-hidden="true" />}>
+      <ReviewDetail result={result} pr={pr} />
     </PrInfoPopup>
   );
 }
@@ -204,24 +210,24 @@ function ReviewHistory({ pr }: any) {
       {!loading && !error && !items.length && (
         <p className="muted">Ревью ещё не запускалось.</p>
       )}
-      {items.map((r) => (
-        <section className="pr-review-result" key={r.id}>
-          <h3>Ревью версии {r.head.slice(0, 10)}</h3>
-          <small>
-            {new Date(r.created_at).toLocaleString("ru-RU")} ·{" "}
-            {r.head.slice(0, 10)} → {r.target.slice(0, 10)} ·{" "}
-            {statuses[r.status]}
-          </small>
-          <div>
-            <small className="muted">
-              Модель: {r.model || "Не сохранена для этого ревью"}
-            </small>
-          </div>
-          <ReviewTokenUsage usage={r.review_usage} />
-          {r.summary && <ChatMarkdown text={r.summary} />}
-          {r.error && <p className="error">{r.error}</p>}
-        </section>
-      ))}
+      <div className="pr-review-history-list">
+        {items.map((r) => (
+          <PrInfoPopup key={r.id}
+            title={`Ревью версии ${r.head.slice(0, 10)}`}
+            className="pr-review-history-row"
+            trigger={<>
+              <ClipboardCheck size={18} aria-hidden="true" />
+              <span className="pr-review-history-row-info">
+                <strong>Ревью версии {r.head.slice(0, 10)}</strong>
+                <span>{new Date(r.created_at).toLocaleString("ru-RU")} · {statuses[r.status] || r.status}</span>
+                <span>{r.model || "Модель не сохранена"}{r.review_usage?.totalTokens != null ? ` · ${r.review_usage.totalTokens.toLocaleString("ru-RU")} токенов` : ""}</span>
+              </span>
+              <Eye size={16} aria-hidden="true" />
+            </>}>
+            <ReviewDetail result={r} pr={pr} />
+          </PrInfoPopup>
+        ))}
+      </div>
     </PrInfoPopup>
   );
 }

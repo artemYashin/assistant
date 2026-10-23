@@ -55,7 +55,9 @@ function Popup({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    ref.current?.showModal();
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
   }, []);
   return (
     <dialog
@@ -64,6 +66,7 @@ function Popup({
       aria-label={title}
       onCancel={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
       }}
     >

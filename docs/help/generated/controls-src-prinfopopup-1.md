@@ -9,4 +9,4 @@
 
 Закрыть
 
-Источник: src/PrInfoPopup.tsx:72.
+Источник: src/PrInfoPopup.tsx:75.
