@@ -15,22 +15,22 @@
 
 Открыть тикет #{…} · #
 
-Источник: src/ChatMarkdown.tsx:80.
+Источник: src/ChatMarkdown.tsx:81.
 
 ### Элемент
 
 {…}{…} · {…} · :{…}{…} /
 
-Источник: src/ChatMarkdown.tsx:99.
+Источник: src/ChatMarkdown.tsx:100.
 
 ### Элемент
 
 Перейти к pull request
 
-Источник: src/ChatMarkdown.tsx:109.
+Источник: src/ChatMarkdown.tsx:110.
 
 ### Элемент
 
 Показать в тикете
 
-Источник: src/ChatMarkdown.tsx:117.
+Источник: src/ChatMarkdown.tsx:118.

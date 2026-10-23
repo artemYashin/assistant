@@ -1,4 +1,4 @@
-import { rehypeReviewFormat, reviewText } from "./rehype-review-format.js";
+import { rehypeReviewFormat, reviewText, reviewLabelKind } from "./rehype-review-format.js";
 import type { Element, ElementContent } from "hast";
 import { MarkdownCodeBlock } from "./MarkdownCodeBlock.js";
 import { chatCodeBranch } from "./chat-code-branch.js";
@@ -68,9 +68,10 @@ export function ChatMarkdown({
           pre: MarkdownCodeBlock,
           strong: ({ children, node, ...props }) => {
             const label = reviewText(node || {});
-            const Icon = review && /^Критичность\s*:/i.test(label) ? ShieldAlert
-              : review && /^Проблема\s*:/i.test(label) ? CircleAlert
-              : review && /^Предлагаемое решение\s*:/i.test(label) ? Lightbulb : null;
+            const kind = review ? reviewLabelKind(label) : undefined;
+            const Icon = kind === "severity" ? ShieldAlert
+              : kind === "problem" ? CircleAlert
+              : kind === "solution" ? Lightbulb : null;
             return <strong {...props}>{Icon && <Icon size={15} className="review-label-icon" aria-hidden="true" />}{children}</strong>;
           },
           blockquote: ({ children, node }) => (
