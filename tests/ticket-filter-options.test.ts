@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { createApp } from "../server/app.js";
 
-test("filter options use the full imported Azure catalog and scoped priority count without Azure calls", async (t) => {
+test("filter options use the full imported Azure catalog without configured priority levels without Azure calls", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-filter-options-"));
   const store = new Store(dir);
   t.after(() => {
@@ -52,13 +52,13 @@ test("filter options use the full imported Azure catalog and scoped priority cou
     .expect(200);
   assert.deepEqual(result.body.types, ["Bug", "User Story"]);
   assert.deepEqual(result.body.states, ["Active", "Resolved", "New", "Done"]);
-  assert.equal(result.body.priorityCount, 6);
+  assert.equal(result.body.priorityCount, undefined);
   const fallback = await request(app)
     .get("/api/tickets/filter-options")
     .query({ client: "Customer", project: "Other" })
     .set(auth)
     .expect(200);
-  assert.equal(fallback.body.priorityCount, 4);
+  assert.equal(fallback.body.priorityCount, undefined);
   store.set("settings", { ...store.settings(), azureProject: "Different" });
   const other = await request(app)
     .get("/api/tickets/filter-options")
@@ -67,5 +67,5 @@ test("filter options use the full imported Azure catalog and scoped priority cou
     .expect(200);
   assert.deepEqual(other.body.types, []);
   assert.deepEqual(other.body.states, []);
-  assert.equal(other.body.priorityCount, 3);
+  assert.equal(other.body.priorityCount, undefined);
 });

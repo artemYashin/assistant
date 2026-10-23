@@ -3,7 +3,6 @@ import { DeleteContextButton } from "./DeleteContextButton.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
 import { copyRenamedContextStorage, deleteContextStorage } from "./context-storage.js";
 import { ProjectAzureSettings } from "./ProjectAzureSettings.js";
-import { PrioritySettings } from "./TicketMetadata.js";
 import { DeveloperDirectory } from "./DeveloperDirectory.js";
 import { SingleSelect } from "./SingleSelect.js";
 import {
@@ -11,7 +10,6 @@ import {
   Cloud,
   Folder,
   Pencil,
-  Flag,
   GitBranch,
   Plus,
   X,
@@ -33,7 +31,7 @@ export function ContextPicker({
   onSettingsChange: () => void;
 }) {
   const [section, setSection] = useState<
-    "browse" | "catalog" | "repository" | "developers" | "priorities" | "import"
+    "browse" | "catalog" | "repository" | "developers" | "import"
   >("catalog");
   const [catalogClient, setCatalogClient] = useState("");
   const [catalogProject, setCatalogProject] = useState("");
@@ -252,24 +250,10 @@ export function ContextPicker({
                 <Users size={16} />
                 Разработчики
               </button>
-              <button
-                type="button"
-                aria-pressed={section === "priorities"}
-                onClick={() => setSection("priorities")}
-              >
-                <Flag size={16} />
-                Приоритеты
-              </button>
             </div>
             {section === "import" && <div className="context-manager-section">
               <ProjectTicketImport key={JSON.stringify(context)} context={context} onSaved={onSettingsChange}/>
             </div>}
-            {section === "priorities" && (
-              <PrioritySettings
-                key={JSON.stringify(context)}
-                context={context}
-              />
-            )}
             {section === "developers" && (
               <div className="context-manager-section">
                 <DeveloperDirectory

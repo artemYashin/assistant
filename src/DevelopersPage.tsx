@@ -406,7 +406,7 @@ function DeveloperCard({
                   state={ticket.state}
                   colors={settings?.statusColors}
                 />
-                <span className="badge">P{ticket.priority ?? 1}</span>
+                <span className="badge" title="Локальный приоритет">{ticket.priority ?? 1}</span>
                 {ticket.azurePriority != null && <span className="badge" title="Azure приоритет · только чтение">Azure приоритет: {ticket.azurePriority}</span>}
               </div>
             </div>

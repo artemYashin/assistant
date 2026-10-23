@@ -198,7 +198,7 @@ export function TicketTrash({
     ["id", "ID"],
     ["title", "Тикет"],
     ["state", "Статус"],
-    ["priority", "Приоритет"],
+    ["priority", "Локальный приоритет"],
     ["azurePriority", "Azure приоритет"],
     ["tags", "Теги"],
     ["azureTags", "Azure теги"],
@@ -268,13 +268,13 @@ export function TicketTrash({
             <RotateCcw size={15} /> Сбросить
           </button>
           <MultiSelect
-            label="Приоритет"
-            placeholder="Все приоритеты"
+            label="Локальный приоритет"
+            placeholder="Все локальные приоритеты"
             value={priorities}
             onChange={setPriorities}
             options={filterOptions.priorities.map((v) => ({
               value: String(v),
-              label: "P" + v,
+              label: String(v),
             }))}
           />
           <MultiSelect

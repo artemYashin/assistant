@@ -1557,14 +1557,14 @@ function Tickets({
             <RotateCcw size={15} /> Сбросить
           </button>
           <MultiSelect
-            label="Приоритет"
-            placeholder="Все приоритеты"
+            label="Локальный приоритет"
+            placeholder="Все локальные приоритеты"
             value={priorityFilter}
             onChange={setPriorityFilter}
             disabled={!!rawTarget}
             options={filterOptions.priorities.map((v) => ({
               value: String(v),
-              label: "P" + v,
+              label: String(v),
             }))}
           />
           <MultiSelect
@@ -1799,7 +1799,7 @@ function Tickets({
                 {(
                   [
                     ["state", "Статус"],
-                    ["priority", "Приоритет"],
+                    ["priority", "Локальный приоритет"],
                     ["azurePriority", "Azure приоритет"],
                     ["tags", "Теги"],
                     ["azureTags", "Azure теги"],

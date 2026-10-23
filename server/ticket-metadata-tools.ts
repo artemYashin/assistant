@@ -13,7 +13,7 @@ export const editMetadataSchema = z
       })
       .strict()
       .optional(),
-    priority: z.number().int().min(1).max(20).optional(),
+    priority: z.number().int().positive().safe().optional(),
     tags: z
       .object({
         mode: z.enum(["add", "remove", "replace", "clear"]),
@@ -43,7 +43,7 @@ export function ticketMetadataTools(
   return [
     defineTool("update_local_ticket_metadata", {
       description:
-        "Edit LOCAL notes, priority and tags according to the user request and conversation context, including a short confirmation of the preceding plan. IDs and values may come from earlier messages; no repeated read is required for an unambiguous existing selection. If the selection is unclear, clarify or resolve it with one list_tickets call. Ask for conversational confirmation before bulk changes. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. P1 is highest; project priority limits are validated. Repeating the same operation is idempotent within this message. Confirm only success=true.",
+        "Edit LOCAL notes, priority and tags according to the user request and conversation context, including a short confirmation of the preceding plan. IDs and values may come from earlier messages; no repeated read is required for an unambiguous existing selection. If the selection is unclear, clarify or resolve it with one list_tickets call. Ask for conversational confirmation before bulk changes. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. Local priority is a positive integer, 1 is highest/default; there is no configured level count. Repeating the same operation is idempotent within this message. Confirm only success=true.",
       parameters: editMetadataSchema,
       handler: async (input) => {
         assertActive();

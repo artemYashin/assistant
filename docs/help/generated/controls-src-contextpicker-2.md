@@ -7,30 +7,24 @@
 
 ### Элемент
 
-Добавить и выбрать
-
-Источник: src/ContextPicker.tsx:322.
-
-### Элемент
-
 Переименовать: {…} · Переименовать
 
-Источник: src/ContextPicker.tsx:357.
+Источник: src/ContextPicker.tsx:341.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/ContextPicker.tsx:363.
+Источник: src/ContextPicker.tsx:347.
 
 ### Элемент
 
 : новое название
 
-Источник: src/ContextPicker.tsx:371.
+Источник: src/ContextPicker.tsx:355.
 
 ### Элемент
 
 Отмена
 
-Источник: src/ContextPicker.tsx:373.
+Источник: src/ContextPicker.tsx:357.

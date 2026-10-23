@@ -9,16 +9,10 @@
 
 Подключение изменилось. Обновите список.
 
-Источник: server/ticket-metadata.ts:49.
+Источник: server/ticket-metadata.ts:40.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке
 
-Источник: server/ticket-metadata.ts:51.
-
-### Сообщение
-
-Приоритет превышает количество уровней в настройках проекта
-
-Источник: server/ticket-metadata.ts:57.
+Источник: server/ticket-metadata.ts:42.

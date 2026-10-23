@@ -9,7 +9,6 @@ export function useTicketFilterOptions(
   const [options, setOptions] = useState<{
     types: string[];
     states: string[];
-    priorityCount: number;
   } | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -34,7 +33,6 @@ export function useTicketFilterOptions(
     states: unique(options?.states || settings?.azureStates || []),
     priorities: [
       ...new Set<number>([
-        ...Array.from({ length: options?.priorityCount ?? 3 }, (_, i) => i + 1),
         ...tickets.map((t) => t.priority ?? 1),
       ]),
     ].sort((a, b) => a - b),

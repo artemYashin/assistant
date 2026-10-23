@@ -27,7 +27,7 @@ export function ticketFilterSql(type?: string | string[], state?: string | strin
 const tagValues = (max: number) => z.union([z.array(z.string().trim().min(1).max(max)).max(50), z.string().trim().min(1).max(max)]);
 export const ticketMetadataFilters = {
   azurePriority:z.union([z.array(z.number().finite()).max(50),z.number().finite()]).optional().describe("Read-only Azure priorities (Microsoft.VSTS.Common.Priority), distinct from local priority. OR within array; AND with other filters."),
-  priority: z.union([z.array(z.number().int().min(1).max(20)).max(20), z.number().int().min(1).max(20)]).optional().describe("Local priorities, OR within array; 1 is highest. Single number supported. Empty/omitted means no filter."),
+  priority: z.union([z.array(z.number().int().positive().safe()).max(20), z.number().int().positive().safe()]).optional().describe("Local priorities, OR within array; 1 is highest. Single number supported. Empty/omitted means no filter."),
   tag: tagValues(60).optional().describe("Exact local tags: match ANY listed tag. Single string supported. Empty/omitted means no filter; AND with other fields."),
   azureTag: tagValues(400).optional().describe("Exact Azure tags: match ANY listed tag. Single string supported. Empty/omitted means no filter; AND with other fields."),
 };

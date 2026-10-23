@@ -316,7 +316,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                     />
                   ) : (
                     <span className="badge ticket-priority-badge">
-                      P{card.localMetadata.priority}
+                      {card.localMetadata.priority}
                     </span>
                   )}
                 </dd>

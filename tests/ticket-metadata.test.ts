@@ -7,7 +7,6 @@ import { Store } from "../server/store.js";
 import {
   ticketMetadata,
   saveTicketMetadata,
-  priorityCount,
 } from "../server/ticket-metadata.js";
 import { listLocalTickets } from "../server/ticket-list.js";
 function fixture(t: any) {
@@ -28,11 +27,8 @@ const context = { client: "Client", project: "Project" };
 test("local metadata is independent, validates priorities, merges fields, and filters chat lists", (t) => {
   const store = fixture(t);
   assert.equal(ticketMetadata(store, 42).priority, 1);
-  assert.equal(priorityCount(store, context), 3);
   store.set('ticket-priorities:["Client",""]', 5);
-  assert.equal(priorityCount(store, context), 5);
   store.set('ticket-priorities:["Client","Project"]', 4);
-  assert.equal(priorityCount(store, context), 4);
   saveTicketMetadata(store, 42, store.source(), context, {
     notes: "Ready for retest",
     tags: ["UI", "UI", "Bug"],
@@ -47,7 +43,7 @@ test("local metadata is independent, validates priorities, merges fields, and fi
     priority: 4,
   });
   assert.throws(() =>
-    saveTicketMetadata(store, 42, store.source(), context, { priority: 5 }),
+    saveTicketMetadata(store, 42, store.source(), context, { priority: 0 }),
   );
   assert.throws(() =>
     saveTicketMetadata(store, 42, "other", context, { notes: "No" }),
@@ -125,11 +121,13 @@ test("chat metadata edits are local, preserve other fields and deduplicate appen
     ),
   );
 });
-test("chat metadata validates priority limits and source without parsing the confirmation", async (t) => {
+test("chat metadata accepts unrestricted priority numbers and validates input and source without parsing the confirmation", async (t) => {
   const { ticketMetadataTools } = await import("../server/ticket-metadata-tools.js");
   const store = fixture(t);
   const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
-  await assert.rejects(async () => tool.handler!({ id: 42, priority: 4 }, {} as any), /Приоритет/);
+  await assert.rejects(async () => tool.handler!({ id: 42, priority: 0 }, {} as any));
+  await tool.handler!({ id: 42, priority: 1000 }, {} as any);
+  assert.equal(ticketMetadata(store, 42).priority, 1000);
   store.set("settings", { ...store.settings(), azureProject: "Changed" });
   await assert.rejects(async () => tool.handler!({ id: 42, priority: 1 }, {} as any), /Подключение/);
 });
@@ -282,3 +280,13 @@ test("local tag catalog can be read completely through pagination", async t => {
   assert.equal(next.nextOffset, null);
   assert.equal(new Set([...first.tags, ...next.tags]).size, 205);
 });
+
+ test("local priority accepts arbitrary positive integers despite legacy level settings", t => {
+  const store=fixture(t);
+  store.set('ticket-priorities:["Client","Project"]',3);
+  saveTicketMetadata(store,42,store.source(),context,{priority:12345});
+  assert.equal(ticketMetadata(store,42).priority,12345);
+  assert.equal(listLocalTickets(store,{priority:[12345],fields:["priority"]}).tickets[0].priority,12345);
+  for(const priority of [0,-1,1.5,Infinity,Number.MAX_SAFE_INTEGER+1])
+    assert.throws(()=>saveTicketMetadata(store,42,store.source(),context,{priority}));
+ });

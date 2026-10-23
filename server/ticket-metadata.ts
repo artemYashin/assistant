@@ -7,19 +7,10 @@ export const metadataContext = z.object({
 export const metadataPatch = z
   .object({
     notes: z.string().max(20000).optional(),
-    priority: z.number().int().min(1).max(20).optional(),
+    priority: z.number().int().positive().safe().optional(),
     tags: z.array(z.string().trim().min(1).max(60)).max(30).optional(),
   })
   .strict();
-export function priorityCount(store: Store, context: Context) {
-  return store.get<number>(
-    `ticket-priorities:${JSON.stringify([context.client, context.project])}`,
-    store.get<number>(
-      `ticket-priorities:${JSON.stringify([context.client, ""])}`,
-      3,
-    ),
-  );
-}
 export function ticketMetadata(
   store: Store,
   id: number,
@@ -50,14 +41,6 @@ export function saveTicketMetadata(
   if (!store.hasLocalTicket(id, source))
     throw new AppError(404, "Тикет отсутствует в локальном списке");
   const patch = metadataPatch.parse(input);
-  if (
-    patch.priority !== undefined &&
-    patch.priority > priorityCount(store, context)
-  )
-    throw new AppError(
-      400,
-      "Приоритет превышает количество уровней в настройках проекта",
-    );
   const value = { ...ticketMetadata(store, id, source), ...patch };
   value.tags = [...new Set(value.tags)];
   store.db

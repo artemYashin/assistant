@@ -1,7 +1,7 @@
 const fieldNames: Record<string, string> = {
   tags: "теги",
   notes: "заметки",
-  priority: "приоритет",
+  priority: "локальный приоритет",
   developers: "локальное поручение",
   state: "статус",
   assigned: "исполнитель",

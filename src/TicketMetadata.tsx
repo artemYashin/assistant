@@ -1,8 +1,6 @@
-import { ContextSaveButton } from "./ContextSaveButton.js";
 import { useEffect, useRef, useState } from "react";
 import { NotebookPen, Pencil, X } from "lucide-react";
 import { api } from "./api.js";
-import { SingleSelect } from "./SingleSelect.js";
 import { LocalTagsEditor } from "./LocalTagsEditor.js";
 
 export function TicketMetadata({
@@ -19,14 +17,14 @@ export function TicketMetadata({
   showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const label = { notes: "Заметки", priority: "Приоритет", tags: "Теги" }[
+  const label = { notes: "Заметки", priority: "Локальный приоритет", tags: "Теги" }[
     field
   ];
   return (
     <div className="ticket-metadata-control">
       {field === "priority" && (
         <span className="badge ticket-priority-badge">
-          P{ticket.priority ?? 1}
+          {ticket.priority ?? 1}
         </span>
       )}
       {field === "tags" && (
@@ -85,31 +83,8 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
       ? (ticket.tags || []).join("\n")
       : String(ticket[field] ?? (field === "priority" ? 1 : "")),
   );
-  const [count, setCount] = useState(3),
-    [ready, setReady] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  useEffect(() => {
-    ref.current?.showModal();
-    let live = true;
-    if (field !== "priority") {
-      setReady(true);
-      return;
-    }
-    api("/ticket-priorities?" + new URLSearchParams(context))
-      .then((v) => {
-        if (live) {
-          setCount(v.count);
-          setReady(true);
-        }
-      })
-      .catch((e) => {
-        if (live) setError(e.message);
-      });
-    return () => {
-      live = false;
-    };
-  }, []);
+  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  useEffect(() => { ref.current?.showModal(); }, []);
   return (
     <dialog
       ref={ref}
@@ -178,22 +153,11 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
         }}
       >
         {field === "priority" ? (
-          <SingleSelect
-            label="Приоритет (1 — самый высокий)"
-            value={value}
-            onChange={setValue}
-            disabled={!ready || busy}
-            options={Array.from(
-              { length: Math.max(count, Number(value)) },
-              (_, i) => ({
-                value: String(i + 1),
-                label:
-                  "P" +
-                  (i + 1) +
-                  (i + 1 > count ? " — вне настроенного диапазона" : ""),
-              }),
-            )}
-          />
+          <label>
+            Локальный приоритет (1 — самый высокий)
+            <input type="number" min={1} step={1} max={Number.MAX_SAFE_INTEGER} required
+              value={value} onChange={e => setValue(e.target.value)} disabled={busy} />
+          </label>
         ) : field === "tags" ? (
           <LocalTagsEditor value={value} onChange={setValue} source={ticket.source} disabled={busy} />
         ) : (
@@ -224,90 +188,11 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
           >
             Отмена
           </button>
-          <button className="primary" disabled={busy || !ready}>
+          <button className="primary" disabled={busy}>
             {busy ? "Сохраняю…" : "Сохранить"}
           </button>
         </div>
       </form>
     </dialog>
-  );
-}
-export function PrioritySettings({ context }: any) {
-  const [count, setCount] = useState("3"),
-    [error, setError] = useState(""),
-    [saved, setSaved] = useState(false),
-    [busy, setBusy] = useState(false),
-    [ready, setReady] = useState(false);
-  useEffect(() => {
-    let live = true;
-    api("/ticket-priorities?" + new URLSearchParams(context))
-      .then((v) => {
-        if (live) {
-          setCount(String(v.count));
-          setReady(true);
-        }
-      })
-      .catch((e) => {
-        if (live) setError(e.message);
-      });
-    return () => {
-      live = false;
-    };
-  }, [context.client, context.project]);
-  async function save(inherit = false) {
-    setBusy(true);
-    setError("");
-    setSaved(false);
-    try {
-      const v = await api("/ticket-priorities", "PUT", {
-        context,
-        count: inherit ? null : Number(count),
-      });
-      setCount(String(v.count));
-      setSaved(true);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <section className="context-manager-section">
-      <h3>Приоритеты тикетов</h3>
-      <p className="muted">
-        {context.project
-          ? "Настройки текущего проекта; без переопределения наследуются от заказчика."
-          : "Настройки заказчика для его проектов."}{" "}
-        По умолчанию 3 уровня, новый тикет — P1. P1 — самый высокий. Сохранённые
-        приоритеты при уменьшении диапазона не теряются.
-      </p>
-      <SingleSelect
-        label="Количество уровней"
-        value={count}
-        onChange={(v) => {
-          setCount(v);
-          setSaved(false);
-        }}
-        disabled={busy || !ready}
-        options={Array.from({ length: 19 }, (_, i) => ({
-          value: String(i + 2),
-          label: String(i + 2),
-        }))}
-      />
-
-      {saved && <p role="status">Сохранено</p>}
-      {error && <p className="error">{error}</p>}
-      <div className="context-save-actions">
-        <button
-          type="button"
-          className="secondary"
-          disabled={busy || !ready}
-          onClick={() => void save(true)}
-        >
-          Сбросить переопределение
-        </button>
-        <ContextSaveButton busy={busy} disabled={!ready} onClick={() => void save()} />
-      </div>
-    </section>
   );
 }

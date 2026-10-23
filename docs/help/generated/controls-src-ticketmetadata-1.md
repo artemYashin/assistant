@@ -9,52 +9,34 @@
 
 тикета # · /
 
-Источник: src/TicketMetadata.tsx:48.
+Источник: src/TicketMetadata.tsx:46.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/TicketMetadata.tsx:128.
+Источник: src/TicketMetadata.tsx:103.
 
 ### Элемент
 
-Приоритет (1 — самый высокий)
+Локальный приоритет (1 — самый высокий)
 
-Источник: src/TicketMetadata.tsx:181.
-
-### Элемент
-
-P
-
-Источник: src/TicketMetadata.tsx:190.
+Источник: src/TicketMetadata.tsx:156.
 
 ### Элемент
 
 По одному тегу на строку (до 30) / Ваши заметки
 
-Источник: src/TicketMetadata.tsx:200.
+Источник: src/TicketMetadata.tsx:164.
 
 ### Элемент
 
 Отмена
 
-Источник: src/TicketMetadata.tsx:219.
+Источник: src/TicketMetadata.tsx:183.
 
 ### Элемент
 
 Сохраняю… / Сохранить
 
-Источник: src/TicketMetadata.tsx:227.
-
-### Элемент
-
-Количество уровней
-
-Источник: src/TicketMetadata.tsx:284.
-
-### Элемент
-
-Сбросить переопределение
-
-Источник: src/TicketMetadata.tsx:301.
+Источник: src/TicketMetadata.tsx:191.

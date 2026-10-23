@@ -21,7 +21,6 @@ import {
   ticketMetadata,
   localTicketTags,
   saveTicketMetadata,
-  priorityCount,
   metadataContext,
   metadataPatch,
 } from "./ticket-metadata.js";
@@ -958,26 +957,10 @@ export function createApp(
       ),
     );
   });
-  app.get("/api/ticket-priorities", (req, res) => {
-    const context = metadataContext.parse(req.query);
-    res.json({ count: priorityCount(store, context) });
-  });
   app.get("/api/local-ticket-tags", (req, res) => {
     const source = z.string().min(1).max(2000).parse(req.query.source);
     if (source !== store.source()) throw new AppError(409, "Подключение изменилось. Откройте редактор заново.");
     res.json(localTicketTags(store, source));
-  });
-  app.put("/api/ticket-priorities", (req, res) => {
-    const { context, count } = z
-      .object({
-        context: metadataContext,
-        count: z.number().int().min(2).max(20).nullable(),
-      })
-      .parse(req.body);
-    const key = `ticket-priorities:${JSON.stringify([context.client, context.project])}`;
-    if (count === null) store.db.prepare("DELETE FROM kv WHERE key=?").run(key);
-    else store.set(key, count);
-    res.json({ count: priorityCount(store, context) });
   });
   app.get("/api/tickets/:id/metadata", (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id);
@@ -1118,7 +1101,6 @@ export function createApp(
       source: store.source(),
       types: [...new Set(catalog ? catalog.map((type) => type.name) : settings.azureTypes)],
       states: [...new Set(catalog ? catalog.flatMap((type) => type.states) : settings.azureStates)],
-      priorityCount: priorityCount(store, context),
     });
   });
   app.get("/api/tickets/options", async (req, res) =>

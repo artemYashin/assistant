@@ -13,7 +13,7 @@ import { Columns3, GripVertical, X } from "lucide-react";
 
 export const ticketColumns = [
   ["state", "Статус"],
-  ["priority", "Приоритет"],
+  ["priority", "Локальный приоритет"],
   ["azurePriority", "Azure приоритет"],
   ["tags", "Теги"],
   ["azureTags", "Azure теги"],
