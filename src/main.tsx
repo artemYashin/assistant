@@ -2773,6 +2773,9 @@ function Settings({ settings, context, run, busy }: any) {
           <div className="section-heading"><h2><GitPullRequest size={22} />Code Review</h2></div>
           <div className="settings-group">
             <h3>Лимиты ревью</h3>
+            <Field label="Лимит времени ответа ревью, секунд" hint="От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.">
+              <input type="number" min="15" max="86400" step="1" value={form.reviewTimeoutSeconds ?? 600} onChange={event => set("reviewTimeoutSeconds", Number(event.target.value))} />
+            </Field>
           <Field label="Лимит токенов ревью по умолчанию" hint="Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.">
             <input type="number" min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
           </Field>

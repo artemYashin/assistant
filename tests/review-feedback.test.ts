@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { UsageLedger } from "../server/usage.js";
 import { Store } from "../server/store.js";
 import { PullRequests } from "../server/pull-requests.js";
 import { ReviewQuestions, reviewOptionsSchema } from "../server/review-questions.js";
@@ -134,4 +135,28 @@ test("review memory selection defaults to all scopes and preserves explicit opt-
   const options = reviewOptionsSchema.parse({ memoryScopes: ["project_review"], reviewerComment: "Focus on errors" });
   assert.deepEqual(reviewOptionsSchema.parse(JSON.parse(JSON.stringify(options))), options);
   assert.throws(() => reviewOptionsSchema.parse({ memoryScopes: ["unknown"] }));
+});
+
+test("retry after review error gets an isolated usage budget and runtime identity", t => {
+  const store = fixture(t);
+  store.set("settings", { ...store.settings(), azureUrl: "https://ado.test/org", azureProject: "P" });
+  store.setSecret("azure.pat", "pat");
+  store.setSecret("github.token", "token");
+  const service = new PullRequests(store, { active: () => null, chat: async () => ({ body: "", requestId: "" }) });
+  service.save({ ...context, repository: "repo", mode: "all", enabled: true });
+  const monitor = service.monitors()[0].id;
+  store.db.prepare("INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run(monitor, "repo", 1, "Title", "Author", "https://ado.test/pr", "head", "target", 0, 1, "now");
+  const ledger = new UsageLedger(store);
+  const first = service.requestReview(monitor, "repo", 1);
+  const request = ledger.begin("model", context, "pr_review");
+  ledger.registerReviewRequest(first, request);
+  ledger.record(request, "receipt", { inputTokens: 1000, outputTokens: 200 });
+  store.db.prepare("UPDATE pr_reviews SET status='error',usage_id=? WHERE id=?").run(request, first);
+  const second = service.requestReview(monitor, "repo", 1);
+  assert.notEqual(second, first);
+  assert.equal(ledger.reviewTokens(second), 0);
+  assert.equal(ledger.reviewUsage(second).totalTokens, null);
+  assert.equal(ledger.reviewUsage(first).totalTokens, 1200);
+  assert.equal(service.requestReview(monitor, "repo", 1), second);
 });

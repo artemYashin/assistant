@@ -90,7 +90,8 @@ function fakeAgent(
     abort: async () => {
       aborts++;
     },
-    sendAndWait: async (request: any) => {
+    sendAndWait: async (request: any, timeout: number) => {
+      (session as any).timeout = timeout;
       (session as any).prompt = request.prompt;
       return run(session, config);
     },
@@ -249,7 +250,8 @@ test("chat fetches a mentioned ticket live and persists its UI card reference", 
     prompt = "";
   const session = {
     on: () => {},
-    sendAndWait: async (request: any) => {
+    sendAndWait: async (request: any, timeout: number) => {
+      (session as any).timeout = timeout;
       prompt = request.prompt;
       return { data: { content: "Ticket details" } };
     },
@@ -1317,4 +1319,23 @@ test("chat stores Refine badge as a snapshot even if the proposal is edited late
   proposals.edit(proposal.id!, { summary: "Updated requirement", body: "Updated body" });
   const user = store.conversationPage(context, session.id).messages.find((message: any) => message.role === "user");
   assert.deepEqual(user.message_context, [{ kind: "refine_memory", id: proposal.id, title: "Original requirement", savedMemory: false }]);
+});
+
+test("review timeout is independent of chat timeout in SDK and watchdog", async t => {
+  const store = fixture(t);
+  assert.equal(store.settings().reviewTimeoutSeconds, 600);
+  store.set("settings", { ...store.settings(), llmTimeoutSeconds: 0.02, reviewTimeoutSeconds: 1 });
+  const { agent } = fakeAgent(store, async session => {
+    assert.equal(session.timeout, 1000);
+    await new Promise(resolve => setTimeout(resolve, 60));
+    return { data: { content: "Done" } };
+  });
+  await agent.chat("Review", context, true);
+  store.set("settings", { ...store.settings(), llmTimeoutSeconds: 1, reviewTimeoutSeconds: 0.02 });
+  const stalled = fakeAgent(store, async session => {
+    assert.equal(session.timeout, 20);
+    return new Promise(() => {});
+  });
+  await assert.rejects(stalled.agent.chat("Review", context, true), /Code Review.*Лимит времени ответа ревью/);
+  assert.ok(stalled.counts().aborts);
 });

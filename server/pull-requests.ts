@@ -1518,7 +1518,9 @@ export class PullRequests {
         (old.status === "completed" && !restart))
     )
       return old.id;
-    const id = old && !["completed", "interrupted"].includes(old.status) ? old.id : randomUUID();
+    // Explicit launches start a fresh budget/runtime, including retries after errors.
+    // Answers to questions requeue the existing review through ReviewQuestions.
+    const id = randomUUID();
     this.store.db
       .prepare(
         "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,error=NULL,started_at=NULL,finished_at=NULL,created_at=excluded.created_at,options=excluded.options",
