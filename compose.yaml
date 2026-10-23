@@ -10,8 +10,16 @@ services:
       CODE_BROWSER_URL: "http://code-browser:8010"
       CODE_BROWSER_KEY_FILE: "/repo-control/key"
     volumes:
-      - orbit-data:/data
-      - repo-control:/repo-control
+      - type: bind
+        source: ./docker-data/orbit
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docker-data/repo-control
+        target: /repo-control
+        bind:
+          create_host_path: false
     restart: unless-stopped
     init: true
     security_opt:
@@ -36,8 +44,17 @@ services:
       CODE_BROWSER_MAX_CACHE_BYTES: "${CODE_BROWSER_MAX_CACHE_BYTES:-21474836480}"
       CODE_BROWSER_FETCH_DEPTH: "${CODE_BROWSER_FETCH_DEPTH:-1}"
     volumes:
-      - repository-cache:/cache
-      - repo-control:/control:ro
+      - type: bind
+        source: ./docker-data/repositories
+        target: /cache
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docker-data/repo-control
+        target: /control
+        bind:
+          create_host_path: false
+        read_only: true
     restart: unless-stopped
     init: true
     security_opt:
@@ -62,7 +79,11 @@ services:
       WHISPER_HOTWORDS: "${WHISPER_HOTWORDS-Orbit, Azure DevOps, GitHub, pull request, review, merge, diff, тикет, теги, критерии приёмки, локальное поручение}"
       HF_HOME: "/models"
     volumes:
-      - whisper-models:/models
+      - type: bind
+        source: ./docker-data/whisper
+        target: /models
+        bind:
+          create_host_path: false
     restart: unless-stopped
     init: true
     security_opt:
@@ -80,8 +101,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-volumes:
-  orbit-data:
-  whisper-models:
-  repository-cache:
-  repo-control:

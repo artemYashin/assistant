@@ -5,3 +5,6 @@ data
 dist
 dist-server
 *.log
+
+# Local Docker bind mounts contain databases, keys and repository caches.
+docker-data/

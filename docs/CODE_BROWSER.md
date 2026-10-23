@@ -4,7 +4,7 @@
 
 1. The sidebar opens `/code` for the currently selected Orbit customer/project.
 2. Orbit resolves its configured Azure repository and authenticates requests using the existing session, Origin and CSRF middleware. The browser never supplies a Git URL or a credential.
-3. Orbit calls `code-browser` over the Compose network, authenticating with a random service key in a dedicated shared control volume. Only Orbit can write that volume; the service mounts it read-only. The service has no published port and no access to Orbit's database or the user's working tree.
+3. Orbit calls `code-browser` over the Compose network, authenticating with a random service key in a dedicated shared bind mount (`docker-data/repo-control`). Only Orbit can write that volume; the service mounts it read-only. The service has no published port and no access to Orbit's database or the user's working tree.
 4. The service accepts an allowlist of operations: branches, status, pull, tree, file, search. It runs Git/ripgrep directly with argument arrays, never a shell. There is no write/commit/push API and no LLM execution.
 5. Git fetches the selected branch into a bare cache. Reading uses immutable commit IDs. Switching branches changes the requested snapshot, never a working checkout. `pull` advances the cached snapshot to the fetched remote commit (no merge/rebase).
 
@@ -16,7 +16,7 @@ Existing Azure PAT, HTTPS, Code Read and repository Read permission. A token wit
 
 Branch listings are persisted in the service cache and refreshed only on an explicit request or a scheduled background check. Repository IDs are persisted in Orbit with a credential/configuration-specific hashed key. Opening a cached branch uses its saved snapshot regardless of age; only the first opening downloads it automatically. Reloading the page does not fetch objects. Checking updates explicitly fetches the latest remote ref without advancing the displayed snapshot. Pull advances it. The response includes displayed SHA, fetched SHA and last successful check time. History is shallow (one commit by default; CODE_BROWSER_FETCH_DEPTH accepts 1–1000); an exact behind count is shown only when ancestry is proven, otherwise the UI reports changed history/unknown distance. Failed checks never claim that a snapshot is current.
 
-One operation runs at a time with a bounded queue. Git network timeout defaults to 300 seconds and is configurable per repository from 60 to 1800 seconds. The backend allows an additional 180 seconds for queue/processing; queued work expires after 60 seconds and never starts after that expiry. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in its own named volume; existing Orbit data volumes are unchanged.
+One operation runs at a time with a bounded queue. Git network timeout defaults to 300 seconds and is configurable per repository from 60 to 1800 seconds. The backend allows an additional 180 seconds for queue/processing; queued work expires after 60 seconds and never starts after that expiry. Files/tree/search read from the cache without Azure requests. Only selected branches are fetched. The cache lives in `docker-data/repositories`, separately from Orbit data in `docker-data/orbit`. See DOCKER_STORAGE.md for migration from named volumes.
 
 ## Search and limits
 
@@ -87,7 +87,7 @@ not diagnose host sleep, network failure or a stopped container.
 Compose passes CODE_BROWSER_MAX_CACHE_BYTES (default 21474836480 = 20 GiB)
 and CODE_BROWSER_FETCH_DEPTH (default 1) from the project's .env to the service.
 After changing them, recreate the container with
-`docker compose up -d --build code-browser`. Existing named volumes are retained.
+`docker compose up -d --build code-browser`. Existing bind-mounted data is retained.
 This does not reserve disk space: ensure Docker's disk has sufficient free space.
 Lowering history depth reduces newly requested history, but does not automatically
 remove objects from an existing cache. All files at the selected commit are still

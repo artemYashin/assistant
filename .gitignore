@@ -9,3 +9,6 @@ __pycache__/
 
 # Source archive is unnecessary for Git-based updates.
 /orbit-assistant.tar.gz
+
+# Local Docker bind mounts contain databases, keys and repository caches.
+docker-data/
