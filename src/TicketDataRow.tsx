@@ -1,4 +1,5 @@
 import { ArchiveRestore, LoaderCircle } from "lucide-react";
+import { CopyTicketId } from "./CopyTicketId.js";
 import { TicketTableRow } from "./TicketCard.js";
 import { TicketMetadata } from "./TicketMetadata.js";
 import { LocalDeveloper, StatusBadge, TicketStatus } from "./TicketControls.js";
@@ -70,14 +71,14 @@ export function TicketDataRow({
       </td>
       <td className="ticket-identity-column">
         <div className="ticket-id-type">
-          <a
+          <span className="ticket-id-with-copy"><a
             className="ticket-link"
             href={t.url}
             target="_blank"
             rel="noreferrer"
           >
             #{t.id}
-          </a>
+          </a><CopyTicketId id={t.id} /></span>
           <StatusBadge
             state={t.type || "Тип не указан"}
             kind="type"

@@ -9,118 +9,118 @@
 
 Описание pull request
 
-Источник: src/PullRequestsPage.tsx:78.
+Источник: src/PullRequestsPage.tsx:79.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: src/PullRequestsPage.tsx:98.
+Источник: src/PullRequestsPage.tsx:99.
 
 ### Элемент
 
 Открыть результат ревью · Модель: /
 
-Источник: src/PullRequestsPage.tsx:131.
+Источник: src/PullRequestsPage.tsx:132.
 
 ### Элемент
 
 Сохранённые ревью всех версий
 
-Источник: src/PullRequestsPage.tsx:197.
+Источник: src/PullRequestsPage.tsx:198.
 
 ### Элемент
 
 Синхронизировать PR
 
-Источник: src/PullRequestsPage.tsx:426.
+Источник: src/PullRequestsPage.tsx:427.
 
 ### Элемент
 
 ＋ Создать PR
 
-Источник: src/PullRequestsPage.tsx:434.
+Источник: src/PullRequestsPage.tsx:435.
 
 ### Элемент
 
 Показать все PR текущего проекта
 
-Источник: src/PullRequestsPage.tsx:449.
+Источник: src/PullRequestsPage.tsx:450.
 
 ### Элемент
 
 Сбросить фильтры
 
-Источник: src/PullRequestsPage.tsx:468.
+Источник: src/PullRequestsPage.tsx:469.
 
 ### Элемент
 
 Тип PR
 
-Источник: src/PullRequestsPage.tsx:481.
+Источник: src/PullRequestsPage.tsx:482.
 
 ### Элемент
 
 Все PR
 
-Источник: src/PullRequestsPage.tsx:488.
+Источник: src/PullRequestsPage.tsx:489.
 
 ### Элемент
 
 Черновики
 
-Источник: src/PullRequestsPage.tsx:489.
+Источник: src/PullRequestsPage.tsx:490.
 
 ### Элемент
 
 Не черновики
 
-Источник: src/PullRequestsPage.tsx:490.
+Источник: src/PullRequestsPage.tsx:491.
 
 ### Элемент
 
 Готовность ревью
 
-Источник: src/PullRequestsPage.tsx:493.
+Источник: src/PullRequestsPage.tsx:494.
 
 ### Элемент
 
 Все состояния
 
-Источник: src/PullRequestsPage.tsx:500.
+Источник: src/PullRequestsPage.tsx:501.
 
 ### Элемент
 
 Ревью готово
 
-Источник: src/PullRequestsPage.tsx:501.
+Источник: src/PullRequestsPage.tsx:502.
 
 ### Элемент
 
 Ревью не готово
 
-Источник: src/PullRequestsPage.tsx:502.
+Источник: src/PullRequestsPage.tsx:503.
 
 ### Элемент
 
 Сортировка PR
 
-Источник: src/PullRequestsPage.tsx:505.
+Источник: src/PullRequestsPage.tsx:506.
 
 ### Элемент
 
 Созданы: сначала новые
 
-Источник: src/PullRequestsPage.tsx:511.
+Источник: src/PullRequestsPage.tsx:512.
 
 ### Элемент
 
 Созданы: сначала старые
 
-Источник: src/PullRequestsPage.tsx:512.
+Источник: src/PullRequestsPage.tsx:513.
 
 ### Элемент
 
 Номер: по убыванию
 
-Источник: src/PullRequestsPage.tsx:513.
+Источник: src/PullRequestsPage.tsx:514.

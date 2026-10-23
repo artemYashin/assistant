@@ -98,6 +98,7 @@ export function TicketTrash({
   }, [params]);
   const {
     query,
+    azurePriorityFilter,
     priorityFilter: priorities,
     tagFilter: tags,
     azureTagFilter: azureTags,
@@ -107,6 +108,7 @@ export function TicketTrash({
     localFilter,
   } = filters;
   const setQuery = (value: string) => setFilter("query", value);
+  const setAzurePriorities = (value: string[]) => setFilter("azurePriorityFilter", value);
   const setPriorities = (value: string[]) => setFilter("priorityFilter", value);
   const setTags = (value: string[]) => setFilter("tagFilter", value);
   const setAzureTags = (value: string[]) => setFilter("azureTagFilter", value);
@@ -154,6 +156,7 @@ export function TicketTrash({
             .toLocaleLowerCase()
             .includes(q),
         ) &&
+      (!azurePriorityFilter.length || azurePriorityFilter.includes(t.azurePriority == null ? "" : String(t.azurePriority))) &&
         (!priorities.length || priorities.includes(String(t.priority ?? 1))) &&
         (!tags.length ||
           tags.some((tag) =>
@@ -256,6 +259,7 @@ export function TicketTrash({
             title="Сбросить все фильтры и поиск"
             onClick={() => {
               setPriorities([]);
+              setAzurePriorities([]);
               setTags([]);
               setAzureTags([]);
               setQuery("");
@@ -267,6 +271,9 @@ export function TicketTrash({
           >
             <RotateCcw size={15} /> Сбросить
           </button>
+          <MultiSelect label="Azure приоритет" placeholder="Все Azure приоритеты"
+            value={azurePriorityFilter} onChange={setAzurePriorities}
+            options={[{value:"",label:"Без Azure приоритета"}, ...filterOptions.azurePriorities.map(v => ({value:String(v),label:String(v)}))]} />
           <MultiSelect
             label="Локальный приоритет"
             placeholder="Все локальные приоритеты"

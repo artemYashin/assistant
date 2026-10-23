@@ -10,6 +10,7 @@ import { LastSync } from "./LastSync.js";
 import { PrInfoPopup } from "./PrInfoPopup.js";
 import { PrCommitsDialog } from "./PrCommitsDialog.js";
 import { PrReviewDialog } from "./PrReviewDialog.js";
+import { TicketMetadata } from "./TicketMetadata.js";
 import { PrTicketLink } from "./PrTicketLink.js";
 import { PrHealth } from "./PrHealth.js";
 import { PrDiffDialog } from "./PrDiffDialog.js";
@@ -856,6 +857,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
               {!readOnly && (
                 <PrTicketLink
                   pr={p}
+                  settings={settings}
                   onChange={() => setVersion((v) => v + 1)}
                 />
               )}
@@ -902,6 +904,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                       </div>
                     )}
                     <div className="pr-ticket-actions">
+                      {!t.unavailable && <TicketMetadata ticket={t} context={context} field="notes" onChange={() => setVersion(v => v+1)} />}
                       <button
                         type="button"
                         className="pr-ticket-action is-open"

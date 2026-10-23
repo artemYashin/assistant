@@ -220,3 +220,10 @@ test("exports mark local fields of unimported Azure tickets as unavailable", () 
   );
   assert.match(csv, /"N\/A";"N\/A";"N\/A";"N\/A";"N\/A"/);
 });
+
+ test("Azure priority filters combine choices with OR without requiring local imports", () => {
+  const query=browseQuery(azureBrowseSchema.parse({source:"s",azurePriorityFilter:["1","3"],stateFilter:["Active"]}),[])!;
+  assert.match(query,/\[Microsoft.VSTS.Common.Priority\] = 1 OR \[Microsoft.VSTS.Common.Priority\] = 3/);
+  assert.match(query,/AND.*\[System.State\] = 'Active'/);
+  assert.equal(azureBrowseSchema.safeParse({source:"s",azurePriorityFilter:["1 OR 1=1"]}).success,false);
+ });

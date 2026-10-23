@@ -492,6 +492,8 @@ export class PullRequests {
               .get(source, id);
             return {
               ...(ticket || { id, unavailable: true, removed }),
+              source,
+              notes: ticketMetadata(this.store,id,source).notes,
               disabled: excludedIds.includes(id),
               manual: manualIds.includes(id),
               fromDescription: descriptionIds.includes(id),

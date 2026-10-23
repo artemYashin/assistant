@@ -9,16 +9,16 @@
 
 Восстановить тикет · Восстановить тикет #{…} · /
 
-Источник: src/TicketDataRow.tsx:44.
+Источник: src/TicketDataRow.tsx:45.
 
 ### Элемент
 
 Выбрать тикет #{…}
 
-Источник: src/TicketDataRow.tsx:63.
+Источник: src/TicketDataRow.tsx:64.
 
 ### Элемент
 
 #
 
-Источник: src/TicketDataRow.tsx:73.
+Источник: src/TicketDataRow.tsx:74.

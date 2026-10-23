@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 const empty = {
   query: "",
   sort: "id-desc",
+  azurePriorityFilter: [] as string[],
   priorityFilter: [] as string[],
   tagFilter: [] as string[],
   azureTagFilter: [] as string[],

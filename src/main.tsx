@@ -1293,6 +1293,7 @@ function Tickets({
   const {
     query,
     sort,
+    azurePriorityFilter,
     priorityFilter,
     tagFilter,
     azureTagFilter,
@@ -1309,6 +1310,7 @@ function Tickets({
   }, [sort, azureMode, filters, browser.search]);
   const setQuery = (value: string) => setFilter("query", value);
   const setSort = (value: string) => setFilter("sort", value);
+  const setAzurePriorities = (value: string[]) => setFilter("azurePriorityFilter", value);
   const setPriorityFilter = (value: string[]) =>
     setFilter("priorityFilter", value);
   const setTagFilter = (value: string[]) => setFilter("tagFilter", value);
@@ -1350,6 +1352,7 @@ function Tickets({
     );
     return (
       matchesQuery &&
+      (!azurePriorityFilter.length || azurePriorityFilter.includes(t.azurePriority == null ? "" : String(t.azurePriority))) &&
       (!priorityFilter.length ||
         priorityFilter.includes(String(t.priority ?? 1))) &&
       (!tagFilter.length ||
@@ -1545,6 +1548,7 @@ function Tickets({
             onClick={() => {
               if (rawTarget) navigate("/tickets");
               setPriorityFilter([]);
+              setAzurePriorities([]);
               setTagFilter([]);
               setAzureTagFilter([]);
               setTypeFilter([]);
@@ -1556,6 +1560,9 @@ function Tickets({
           >
             <RotateCcw size={15} /> Сбросить
           </button>
+          <MultiSelect label="Azure приоритет" placeholder="Все Azure приоритеты"
+            value={azurePriorityFilter} onChange={setAzurePriorities}
+            options={[{value:"",label:"Без Azure приоритета"}, ...filterOptions.azurePriorities.map(v => ({value:String(v),label:String(v)}))]} />
           <MultiSelect
             label="Локальный приоритет"
             placeholder="Все локальные приоритеты"

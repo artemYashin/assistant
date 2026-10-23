@@ -5917,7 +5917,7 @@ summary > svg {
   gap: 6px;
   min-width: 0;
 }
-.ticket-id-type > .ticket-link {
+.ticket-id-type .ticket-link {
   flex: 0 0 auto;
   flex-wrap: nowrap;
   white-space: nowrap;
@@ -8415,7 +8415,7 @@ summary > svg {
 
 /* Protect identity at every viewport size, including saved manual proportions. */
 .ticket-table-fit > table > :is(thead, tbody) > tr > :is(th, td).ticket-identity-column {
-  min-width: 90px;
+  min-width: 93px;
 }
 .ticket-table-fit .ticket-id-type {
   width: 100%;
@@ -9989,3 +9989,11 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .chat-message-image .image-thumbnail { width:100%;max-height:200px; }
 .chat-message-image .image-thumbnail img { max-height:200px;object-fit:contain; }
 .chat-message-image figcaption { margin-top:4px;font-size:11px;color:#527261;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+
+.ticket-id-with-copy { display:inline-flex; align-items:center; gap:2px; white-space:nowrap; }
+.ticket-id-with-copy .ticket-id-copy { padding:1px; width:18px; height:18px; min-width:18px; min-height:18px; border:0; flex-shrink:0; }
+.pr-ticket-search { position:relative; flex:1 1 320px; max-width:520px; }
+.pr-ticket-search > input { width:100%; max-width:none; }
+.pr-ticket-suggestions { position:absolute; z-index:30; top:100%; left:0; right:0; max-height:260px; overflow:auto; background:white; border:1px solid #ccd9ce; border-radius:8px; box-shadow:0 6px 20px #0002; padding:4px; }
+.pr-ticket-suggestions > button { display:flex; align-items:center; gap:6px; width:100%; text-align:left; background:white; color:inherit; padding:8px; }
+.pr-ticket-suggestions > button:hover { background:#eef7ed; }

@@ -40,6 +40,7 @@ export const azureBrowseSchema = z
     stateFilter: choices,
     assigneeFilter: choices,
     azureTagFilter: choices,
+    azurePriorityFilter: z.array(z.string().regex(/^(?:\d+)?$/).max(16)).max(100).default([]),
     priorityFilter: choices,
     tagFilter: choices,
     localFilter: choices,
@@ -75,6 +76,8 @@ export function browseQuery(input: AzureBrowse, local: any[]) {
         `(${values.map((v) => `[${field}] = ${quote(v)}`).join(" OR ")})`,
       );
   }
+  if (input.azurePriorityFilter.length)
+    clauses.push(`(${input.azurePriorityFilter.map(v => v === "" ? `[${AZURE_PRIORITY_FIELD}] = ''` : `[${AZURE_PRIORITY_FIELD}] = ${Number(v)}`).join(" OR ")})`);
   if (input.azureTagFilter.length)
     clauses.push(
       `(${input.azureTagFilter.map((v) => (v ? `[System.Tags] CONTAINS ${quote(v)}` : "[System.Tags] = ''")).join(" OR ")})`,

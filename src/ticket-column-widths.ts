@@ -1,7 +1,7 @@
 export const columnMinimum = (key: string) =>
-  key === "selection" ? 44 : key === "id" ? 90 : key === "title" ? 120 : 60;
+  key === "selection" ? 44 : key === "id" ? 93 : key === "title" ? 120 : 60;
 export const columnDefault = (key: string) =>
-  key === "selection" ? 44 : key === "title" ? 260 : key === "id" ? 90 : 110;
+  key === "selection" ? 44 : key === "title" ? 260 : key === "id" ? 93 : 110;
 export function parseColumnWidths(value: unknown): Record<string, number> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(

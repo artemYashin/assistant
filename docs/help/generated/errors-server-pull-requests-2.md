@@ -9,118 +9,118 @@
 
 Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.
 
-Источник: server/pull-requests.ts:660.
+Источник: server/pull-requests.ts:662.
 
 ### Сообщение
 
 URL Azure изменён: настройте мониторинг для нового подключения
 
-Источник: server/pull-requests.ts:665.
+Источник: server/pull-requests.ts:667.
 
 ### Сообщение
 
 Укажите PAT Azure с разрешением Code: Read
 
-Источник: server/pull-requests.ts:671.
+Источник: server/pull-requests.ts:673.
 
 ### Сообщение
 
 Указан адрес корпоративного прокси MCAS. Для Azure REST API проверьте исходный адрес организации, например https://dev.azure.com/организация, и доступ к нему по правилам вашей компании.
 
-Источник: server/pull-requests.ts:697.
+Источник: server/pull-requests.ts:699.
 
 ### Сообщение
 
 Запрос: {…}.
 
-Источник: server/pull-requests.ts:699.
+Источник: server/pull-requests.ts:701.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).
 
-Источник: server/pull-requests.ts:702.
+Источник: server/pull-requests.ts:704.
 
 ### Сообщение
 
 Azure не разрешил доступ к pull request (HTTP {…}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.
 
-Источник: server/pull-requests.ts:704.
+Источник: server/pull-requests.ts:706.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.
 
-Источник: server/pull-requests.ts:705.
+Источник: server/pull-requests.ts:707.
 
 ### Сообщение
 
 Azure PR: пустой ответ
 
-Источник: server/pull-requests.ts:708.
+Источник: server/pull-requests.ts:710.
 
 ### Сообщение
 
 Ответ Azure больше 2 МБ; данные не загружены
 
-Источник: server/pull-requests.ts:719.
+Источник: server/pull-requests.ts:721.
 
 ### Сообщение
 
 Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.
 
-Источник: server/pull-requests.ts:745.
+Источник: server/pull-requests.ts:747.
 
 ### Сообщение
 
 Более 5000 PR: синхронизация не завершена
 
-Источник: server/pull-requests.ts:750.
+Источник: server/pull-requests.ts:752.
 
 ### Сообщение
 
 Azure вернул неверный список PR
 
-Источник: server/pull-requests.ts:760.
+Источник: server/pull-requests.ts:762.
 
 ### Сообщение
 
 Azure вернул неверную деталку PR
 
-Источник: server/pull-requests.ts:777.
+Источник: server/pull-requests.ts:779.
 
 ### Сообщение
 
 Azure не вернул связи PR
 
-Источник: server/pull-requests.ts:789.
+Источник: server/pull-requests.ts:791.
 
 ### Сообщение
 
 Azure вернул некорректные связи PR
 
-Источник: server/pull-requests.ts:794.
+Источник: server/pull-requests.ts:796.
 
 ### Сообщение
 
 Не удалось обновить связи Azure. Список может быть неполным или устаревшим.
 
-Источник: server/pull-requests.ts:805.
+Источник: server/pull-requests.ts:807.
 
 ### Сообщение
 
 Project ID missing
 
-Источник: server/pull-requests.ts:819.
+Источник: server/pull-requests.ts:821.
 
 ### Сообщение
 
 Too many policy evaluations
 
-Источник: server/pull-requests.ts:823.
+Источник: server/pull-requests.ts:825.
 
 ### Сообщение
 
 Invalid policy response
 
-Источник: server/pull-requests.ts:833.
+Источник: server/pull-requests.ts:835.

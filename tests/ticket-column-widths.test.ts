@@ -64,17 +64,17 @@ test("identity keeps its minimum when the workspace narrows or a divider moves",
     { id: 60, title: 500, tags: 300 },
     444,
   );
-  assert.equal(fitted.id, 90);
+  assert.equal(fitted.id, 93);
   assert.equal(
     Object.values(fitted).reduce((sum, width) => sum + width, 0),
     444,
   );
   assert.equal(
     resizeColumnPair({ id: 140, title: 200 }, "id", "title", -200).id,
-    90,
+    93,
   );
   assert.equal(
     resizeColumnPair({ tags: 120, id: 140 }, "tags", "id", 200).id,
-    90,
+    93,
   );
 });

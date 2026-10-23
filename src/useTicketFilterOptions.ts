@@ -31,6 +31,7 @@ export function useTicketFilterOptions(
   return {
     types: unique(options?.types || settings?.azureTypes || []),
     states: unique(options?.states || settings?.azureStates || []),
+    azurePriorities: [...new Set<number>([1, 2, 3, 4, ...tickets.flatMap(t => t.azurePriority == null ? [] : [t.azurePriority])])].sort((a,b) => a-b),
     priorities: [
       ...new Set<number>([
         ...tickets.map((t) => t.priority ?? 1),
