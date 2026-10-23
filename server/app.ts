@@ -1412,6 +1412,10 @@ export function createApp(
     const input = z.object({ client: text.min(1), project: text.min(1), commit: z.string().regex(/^[0-9a-f]{40}$/i) }).parse(req.query);
     res.json(await pullRequests.repositoryCommitDiff(input, input.commit));
   });
+  app.get("/api/pr/counts", async (req, res) => {
+    const input = z.object({monitor:text.min(1),repo:text.min(1),number:z.coerce.number().int().positive()}).parse(req.query);
+    res.json(await pullRequests.counts(input.monitor,input.repo,input.number));
+  });
   app.get("/api/pr/commits", async (req, res) => {
     const input = z
       .object({

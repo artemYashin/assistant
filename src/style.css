@@ -9999,3 +9999,5 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .pr-ticket-suggestions > button:hover { background:#eef7ed; }
 
 .pr-card-info-actions .pr-refresh-one { padding:4px 7px; min-height:28px; font-size:11px; gap:4px; white-space:nowrap; }
+
+.pr-action-count { display:inline-flex; align-items:center; justify-content:center; min-width:18px; padding:1px 5px; border:1px solid #bed3e5; border-radius:10px; background:#e9f2fa; color:#385d7d; font-size:10px; line-height:14px; font-weight:600; }

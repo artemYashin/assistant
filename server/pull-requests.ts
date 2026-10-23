@@ -1,3 +1,4 @@
+import { countPrCommits, countPrFiles } from "./pr-counts.js";
 import { reviewerFilterSchema, matchesReviewers, type ReviewerFilter } from "./pr-reviewer-filter.js";
 import { UsageLedger } from "./usage.js";
 import { ticketMetadata } from "./ticket-metadata.js";
@@ -1009,6 +1010,29 @@ export class PullRequests {
   async repositoryCommitDiff(context: Context, commit: string) {
     const m = this.repositoryMonitor(context);
     return this.readCommitDiff(m, m.repository, commit);
+  }
+  private countCache = new Map<string, {expires: number; result: Promise<any>}>();
+  async counts(monitor: string, repo: string, number: number) {
+    const m = this.monitors().find(entry => entry.id === monitor);
+    const known = this.store.db.prepare("SELECT head,target,synced_at FROM pull_requests WHERE monitor=? AND repo=? AND number=?").get(monitor,repo,number) as any;
+    if (!m || !known) throw new AppError(404, "PR не найден. Синхронизируйте список.");
+    const credentials = this.credentials(m);
+    const key = JSON.stringify([monitor,repo,number,m.source,m.azure_project,known.head,known.target,known.synced_at]);
+    const cached = this.countCache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.result;
+    if (this.countCache.size >= 200) this.countCache.delete(this.countCache.keys().next().value!);
+    const root = `git/repositories/${enc(repo)}`;
+    const result = (async () => {
+      const [files,commits] = await Promise.allSettled([
+        known.head && known.target ? countPrFiles(skip => this.get(m, `${root}/diffs/commits?diffCommonCommit=true&baseVersionType=commit&baseVersion=${enc(known.target)}&targetVersionType=commit&targetVersion=${enc(known.head)}&$top=100&$skip=${skip}`, credentials)) : Promise.reject(new Error("Коммиты PR ещё не загружены")),
+        countPrCommits(token => this.get(m, `${root}/pullRequests/${number}/commits?$top=100&continuationToken=${enc(token)}`, credentials, false, true)),
+      ]);
+      if (this.credentials(m).pat !== credentials.pat) throw new AppError(409,"Подключение Azure изменилось");
+      const value = (result: PromiseSettledResult<any>) => result.status === "fulfilled" ? result.value : {error: result.reason?.message || "Не удалось загрузить количество"};
+      return {files:value(files),commits:value(commits)};
+    })();
+    this.countCache.set(key,{expires:Date.now()+300000,result});
+    try { return await result; } catch(error) {this.countCache.delete(key);throw error;}
   }
   async commits(
     monitor: string,

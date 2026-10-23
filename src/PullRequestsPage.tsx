@@ -1,3 +1,4 @@
+import { PrChangeButtons } from "./PrChangeButtons.js";
 import { defaultPrFilters, usePrFilters } from "./usePrFilters.js";
 import { PrTicketSourcesInfo } from "./PrTicketSourcesInfo.js";
 import { BranchLabel } from "./PrBranchLabel.js";
@@ -25,7 +26,6 @@ import {
   CircleCheck,
   Trash2,
   LockKeyhole,
-  Code2,
   Eye,
   GitMerge,
   GitPullRequestClosed,
@@ -37,7 +37,6 @@ import {
   History,
   Info,
   Layers3,
-  GitCommitHorizontal,
   Ticket,
   ClipboardCheck,
   Sparkles,
@@ -757,20 +756,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  className="secondary pr-diff-action"
-                  onClick={() => setViewingDiff(p)}
-                >
-                  <Code2 size={17} aria-hidden="true" /> View Diff
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setViewingCommits(p)}
-                >
-                  <GitCommitHorizontal size={17} aria-hidden="true" /> Коммиты
-                </button>
+                <PrChangeButtons pr={p} onDiff={() => setViewingDiff(p)} onCommits={() => setViewingCommits(p)} />
                 {readOnly && <ConfirmButton
                   disabled={busy}
                   title={`Переимпортировать PR #${p.number}?`}

@@ -1644,3 +1644,23 @@ test("active reimport refreshes only one PR and preserves local links and exclus
   await assert.rejects(service.reimportActive(monitor,"repo",1),/больше не активен/);
   assert.equal(service.list(context).find(p=>p.number===1).title,"Fresh active");
 });
+
+test("PR counters cache metadata by revision and never read file content",async t=>{
+ const {service,store}=fixture(t);
+ let counting=false;const paths:string[]=[];
+ mock(t,[pr()],url=>{
+   if(!counting)return;
+   paths.push(url.pathname);
+   if(url.pathname.endsWith('/diffs/commits'))return {commonCommit:'base',allChangesIncluded:true,changes:[{item:{path:'/a.ts'}},{item:{path:'/b.ts'}}]};
+   if(url.pathname.endsWith('/commits'))return {value:[{commitId:'one'},{commitId:'two'}]};
+   throw new Error('Unexpected request '+url.pathname);
+ });
+ await service.sync();counting=true;
+ const monitor=service.monitors()[0].id;
+ const first=await service.counts(monitor,'repo',1);
+ assert.deepEqual(first,{files:{value:2,complete:true},commits:{value:2,complete:true}});
+ assert.deepEqual(await service.counts(monitor,'repo',1),first);assert.equal(paths.length,2);
+ store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
+ await service.counts(monitor,'repo',1);assert.equal(paths.length,4);
+ assert.ok(paths.every(path=>!path.endsWith('/items')));
+});
