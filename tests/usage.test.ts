@@ -1,3 +1,4 @@
+import { DEEP_READ_WARNING } from "../server/ticket-display.js";
 import { withToolDiscovery } from "./sdk-discovery-helper.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -231,76 +232,26 @@ test("manual PR review has only memory reads, no chat history and still accounts
   );
 });
 
-test("chat fetches a mentioned ticket live and persists its UI card reference", async (t) => {
-  const store = fixture(t);
-  store.db
-    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(
-      store.source(),
-      123456,
-      "Summary title",
-      "Resolved",
-      "Owner",
-      "Bug",
-      "",
-      "",
-      "now",
-    );
-  let fetched = 0,
-    prompt = "";
-  const session = {
-    on: () => {},
-    sendAndWait: async (request: any, timeout: number) => {
-      (session as any).timeout = timeout;
-      prompt = request.prompt;
-      return { data: { content: "Ticket details" } };
-    },
-    abort: async () => {},
-  };
-  const client = {
-    start: async () => {},
-    createSession: async () => session,
-    stop: async () => {},
-    forceStop: async () => {},
-  };
-  const connectors = {
-    ticketSummary: async (id: number) => ({
-      id,
-      source: store.source(),
-      title: "Summary title",
-      state: "Resolved",
-      assigned: "Owner",
-    }),
-    ticketDetails: async (id: number) => {
-      fetched++;
-      assert.equal(id, 123456);
-      return {
-        cardId: "card-reference",
-        fields: { "System.Title": "Current Azure title" },
-        comments: [{ text: "Latest comment" }],
-      };
-    },
-  };
-  const agent = new Agent(
-    store,
-    new Approvals(store, async () => ({ id: "unused" })),
-    () => client as any,
-    connectors as any,
-  );
-  const result = await agent.chat("Покажи тикет 123456", context);
-  assert.equal(fetched, 1);
-  assert.deepEqual(result.cards, ["card-reference"]);
-  assert.match(prompt, /Current Azure title/);
-  assert.match(prompt, /Latest comment/);
-  assert.equal(
-    (store.history(context).at(-1) as any).cards,
-    '["card-reference"]',
-  );
-  const summary = await agent.chat("Какой статус тикета 123456?", context);
-  assert.equal(fetched, 1, "summary must not fetch full details again");
-  assert.deepEqual(summary.cards, []);
-  assert.match(prompt, /Summary title/);
-  assert.doesNotMatch(prompt, /Latest comment/);
+test("showing a ticket opens UI without fetching bodies into model context", async t => {
+  const store = fixture(t), events: any[] = [];
+  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 123456, "Summary title", "Resolved", "Owner", "Bug", "", "", "now");
+  let reads = 0;
+  const { agent } = fakeAgent(store, async (session, config) => {
+    const show = config.tools.find((tool: any) => tool.name === "show_ticket_details");
+    const result = await show.handler({ ids: [123456] }, {});
+    assert.equal(result.requested, true);
+    assert.equal(result.tickets[0].title, "Summary title");
+    assert.equal(result.tickets[0].fields, undefined);
+    assert.doesNotMatch(session.prompt, /Latest comment/);
+    return { data: { content: "Открываю тикет." } };
+  }, { ticketDetails: async () => { reads++; throw new Error("UI loads details separately"); } });
+  const result = await agent.chat("Покажи тикет 123456", context, false, undefined, undefined, undefined, event => events.push(event));
+  assert.equal(reads, 0);
+  assert.deepEqual(result.cards, []);
+  assert.ok(events.some(event => event.stage === "show_tickets" && event.tickets[0].id === 123456));
+  assert.match(result.body, /123456.*Summary title/);
+  assert.equal((store.history(context).at(-1) as any).body, result.body);
 });
 
 test("status tool requires current user instruction and deduplicates repeated writes", async (t) => {
@@ -799,55 +750,35 @@ test("tool trace records failures without storing note or message bodies", (t) =
   assert.match(result.result, /Validation failed/);
 });
 
-test("list tool blocks unsolicited full content and permits explicit deep analysis without UI cards", async (t) => {
+test("list summaries stay local and extra full Azure reads require fresh consent", async t => {
   const store = fixture(t);
-  t.mock.method(console, "error", () => {});
-  store.db
-    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(store.source(), 42, "Title", "Active", "", "Bug", "", "", "now");
-  let reads = 0,
-    allowed = false;
-  const { agent } = fakeAgent(
-    store,
-    async (_session, config) => {
-      const tool = config.tools.find(
-        (tool: any) => tool.name === "list_tickets",
-      );
-      const summary = await tool.handler({ ids: [42] }, {});
-      assert.equal(summary.tickets[0].content, undefined);
-      const full = await tool.handler({ ids: [42], detail: "full" }, {});
-      if (allowed) assert.match(full.tickets[0].content, /Description/);
-      else {
-        assert.equal(full.success, false);
-        assert.match(full.error, /явной просьбы/);
-      }
-      return { data: { content: "Ответ" } };
-    },
-    {
-      ticketDetails: async () => {
-        reads++;
-        return {
-          fields: { "System.Description": "Description" },
-          comments: [],
-        };
-      },
-    },
-  );
-  await agent.chat("Добавь выбранным тег UI", context);
-  assert.equal(reads, 0);
-  allowed = true;
-  const warning = await agent.chat(
-    "Проведи глубокий анализ выбранных тикетов",
-    context,
-  );
-  assert.match(warning.body, /много токенов/);
-  assert.equal(reads, 0);
-  const result = await agent.chat("Да", context);
+  for (const id of [42, 43]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), id, "Title", "Active", "", "Bug", "", "", "now");
+  let reads = 0, confirmed = false;
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    const list = config.tools.find((tool: any) => tool.name === "list_tickets");
+    const summary = await list.handler({ ids: [42, 43] }, {});
+    assert.ok(summary.tickets.every((ticket: any) => ticket.content === undefined));
+    const full = await list.handler({ ids: [42], detail: "full" }, {});
+    assert.match(full.tickets[0].content, /Description/);
+    const extra = await list.handler({ ids: [43], detail: "full" }, {});
+    if (confirmed) assert.match(extra.tickets[0].content, /Description/);
+    else {
+      assert.equal(extra.success, false);
+      assert.match(extra.error, /продолжить ли чтение/);
+    }
+    return { data: { content: "Ответ" } };
+  }, { ticketDetails: async () => { reads++; return { fields: { "System.Description": "Description" }, comments: [] }; } });
+  await agent.chat("Прочитай описание тикета #42", context);
   assert.equal(reads, 1);
-  assert.deepEqual(result.cards, []);
-  allowed = false;
-  await agent.chat("Покажи список тикетов", context);
-  assert.equal(reads, 1, "consent must not carry into the next request");
+  store.say("user", "Проведи глубокий анализ тикетов #42 и #43", context);
+  store.say("assistant", DEEP_READ_WARNING, context);
+  confirmed = true;
+  await agent.chat("Да", context);
+  assert.equal(reads, 3);
+  confirmed = false;
+  await agent.chat("Прочитай описание тикета #42", context);
+  assert.equal(reads, 4, "bulk consent must not carry into the next request");
 });
 
 test("ordinary ticket lists, known IDs and missing IDs never read Azure", async (t) => {
@@ -942,7 +873,7 @@ test("Azure lookup requires an explicit mode choice and cannot expand the confir
   assert.equal(reads, 1);
 });
 
-test("single local ticket analysis is immediate; missing and multiple tickets ask first", async (t) => {
+test("single local analysis reads one body; missing analysis asks and bulk get stays local", async (t) => {
   const store = fixture(t);
   for (const id of [42, 43])
     store.db
@@ -956,6 +887,11 @@ test("single local ticket analysis is immediate; missing and multiple tickets as
       modelCalls++;
       const get = config.tools.find((tool: any) => tool.name === "get_ticket");
       const result = await get.handler({ id: 42 }, {});
+      if (modelCalls > 1) {
+        assert.equal(result.origin, "local");
+        assert.equal(result.fields, undefined);
+        return { data: { content: "Краткие локальные данные" } };
+      }
       assert.equal(result.fields["System.Description"], "Full description");
       const denied = await get.handler({ id: 43 }, {});
       assert.equal(denied.success, false);
@@ -978,7 +914,7 @@ test("single local ticket analysis is immediate; missing and multiple tickets as
   assert.equal(reads, 1);
   assert.equal(modelCalls, 1);
   assert.deepEqual(opinion.cards, []);
-  const missing = await agent.chat("Покажи описание тикета #99", context);
+  const missing = await agent.chat("Что ты думаешь о тикете #99?", context);
   assert.match(missing.body, /Запросить сведения в Azure/);
   assert.equal(reads, 1);
   assert.equal(modelCalls, 1);
@@ -986,9 +922,9 @@ test("single local ticket analysis is immediate; missing and multiple tickets as
     "Что думаешь о тикетах #42 и #43?",
     context,
   );
-  assert.match(multiple.body, /много токенов/);
+  assert.match(multiple.body, /Краткие локальные данные/);
   assert.equal(reads, 1);
-  assert.equal(modelCalls, 1);
+  assert.equal(modelCalls, 2);
 });
 
 test("short confirmation applies historical local metadata selection without rereading", async (t) => {

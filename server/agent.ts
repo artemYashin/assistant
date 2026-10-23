@@ -641,8 +641,10 @@ export class Agent {
         );
       }
       if (fullDetails) authorizeFullRead([ticketId]);
+      if (fullDetails && !analysisCache.has(ticketId))
+        analysisCache.set(ticketId, await this.connectors!.ticketDetails(ticketId));
       const detail = fullDetails
-        ? await this.connectors!.ticketDetails(ticketId)
+        ? analysisCache.get(ticketId)
         : { ...local!, source: this.store.source(settings), origin: "local" };
       const metadata = ticketMetadata(this.store, ticketId, detail.source);
       const ticket = {
