@@ -222,7 +222,6 @@ test("chat metadata tool reports actionable validation errors instead of generic
   });
   const config = sessionConfig(
     store,
-    {} as any,
     context,
     undefined,
     undefined,
@@ -259,7 +258,7 @@ test("local tag catalog includes retained trash but excludes expired and other c
   assert.deepEqual(localTicketTags(store), ["Inside 2", "UI"]);
   store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,43,'',1,?)").run(store.source(), JSON.stringify(["orphan"]));
   store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES ('other',44,'',1,?)").run(JSON.stringify(["private"]));
-  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, {} as any, context).find(tool => tool.name === "list_local_tags")!;
+  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(tool => tool.name === "list_local_tags")!;
   const result = await tool.handler!({ search: "inside", offset: 0 }, {} as any);
   assert.deepEqual(result, { tags: ["Inside 2"], total: 1, nextOffset: null });
   store.db.prepare("UPDATE ticket_trash SET removed_at=?").run(Date.now() - 31 * 86400000);
@@ -271,7 +270,7 @@ test("local tag catalog can be read completely through pagination", async t => {
   const { makeTools } = await import("../server/agent.js");
   store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,42,'',1,?)")
     .run(store.source(), JSON.stringify(Array.from({ length: 205 }, (_, i) => "tag-" + i)));
-  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, {} as any, context).find(tool => tool.name === "list_local_tags")!;
+  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(tool => tool.name === "list_local_tags")!;
   const first: any = await tool.handler!({ offset: 0 }, {} as any);
   const next: any = await tool.handler!({ offset: first.nextOffset }, {} as any);
   assert.equal(first.total, 205);

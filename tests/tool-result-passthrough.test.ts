@@ -4,7 +4,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store, AppError } from "../server/store.js";
-import { Approvals } from "../server/approvals.js";
 import { sessionConfig } from "../server/agent.js";
 
 test("tool wrapper preserves large structured and binary results and handles failures", async (t) => {
@@ -31,7 +30,6 @@ test("tool wrapper preserves large structured and binary results and handles fai
   const results = [structured, binary, "x".repeat(50000)];
   const tools = sessionConfig(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     { client: "", project: "" },
     undefined,
     undefined,

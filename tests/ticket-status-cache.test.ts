@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 
 test("status cache lasts thirty days, persists, shares concurrent requests and separates credentials/projects", async t => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-states-cache-"));
@@ -18,7 +17,7 @@ test("status cache lasts thirty days, persists, shares concurrent requests and s
   let states = ["Active", "Closed"];
   t.mock.method(Date, "now", () => time);
   const make = () => {
-    const c = new Connectors(store, new IntegrationsAuth(store));
+    const c = new Connectors(store);
     (c as any).azure = async (path: string) => {
       calls++;
       if (fail) throw Error("offline");

@@ -38,7 +38,6 @@ const actions: Record<string, string> = {
   "pr.questions_ignored": "Ревью завершено без ответов",
   "pr.reviewed": "Выполнено ревью PR",
   "github.connected": "GitHub подключён",
-  "teams.connected": "Teams подключён",
 };
 const statuses: Record<string, string> = {
   completed: "Готово",

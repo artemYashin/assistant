@@ -1,7 +1,7 @@
 import type { ExportColumnKey } from "./ticket-export-columns.js";
 export type ChatProgress =
   | { stage: "ticket_export"; ids: number[]; mode: "open" | "edit"; removeIds?: number[]; columns?: ExportColumnKey[] }
-  | { stage: "data_synced"; domain: "tickets" | "prs" | "teams" | "memory" }
+  | { stage: "data_synced"; domain: "tickets" | "prs" | "memory" }
   | { stage: "close_ticket_details" }
   | { stage: "show_tickets"; tickets: { id: number; title: string }[]; source: string }
   | { stage: "preparing"; startedAt?: number }

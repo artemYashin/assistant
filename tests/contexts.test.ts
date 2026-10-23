@@ -97,16 +97,15 @@ test("context registry migrates existing history, isolates projects and persists
   assert.equal(store.contexts().filter((c) => c.client === "A").length, 2);
 });
 
-test("Teams stays disabled and new Azure APIs enforce authentication and filter validation", async (t) => {
+test("unconfigured sync stays offline and Azure APIs enforce authentication and filter validation", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-azure-api-"));
   const store = new Store(dir);
   t.after(() => {
     store.close();
     rmSync(dir, { recursive: true, force: true });
   });
-  store.set("microsoft.connected", true);
   t.mock.method(globalThis, "fetch", async () => {
-    throw new Error("No background Teams calls allowed");
+    throw new Error("No unconfigured background calls allowed");
   });
   const { app, sync } = createApp(store);
   assert.equal((await sync()).state, "ok");

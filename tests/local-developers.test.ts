@@ -139,7 +139,6 @@ test("promoting developers preserves IDs and assignments and widens visibility",
 
 test("chat tools discover inherited developers, assign across scopes and retain existing assignments", async t => {
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const { listLocalTickets } = await import("../server/ticket-list.js");
   const store=fixture(t), service=new LocalDevelopers(store);
   store.set("settings",{...store.rawSettings(),...context});
@@ -168,7 +167,7 @@ test("chat tools discover inherited developers, assign across scopes and retain 
         return {data:{content:"Поручение обновлено."}};
       }};
   }};
-  const agent=new Agent(store,new Approvals(store,async()=>({id:"unused"})),()=>client as any);
+  const agent=new Agent(store,()=>client as any);
   await agent.chat("Назначь Global, Customer dev и Project dev на тикет 42",context);
   assert.equal(calls,3);
   const listed=listLocalTickets(store,{ids:[42],fields:["localDevelopers"]});

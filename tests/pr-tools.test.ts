@@ -87,7 +87,7 @@ test("PR chat tools paginate, isolate context and enqueue only explicit review r
     /явная просьба/,
   );
   const queued = await call("request_pull_request_review", key);
-  assert.equal(queued.job.status, "queued");
+  assert.equal(queued.job.status, "preparing_git");
   assert.equal(queued.azureChanged, false);
   assert.equal(
     (await call("request_pull_request_review", key)).job.id,

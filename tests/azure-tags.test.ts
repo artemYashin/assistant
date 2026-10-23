@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 import { listLocalTickets } from "../server/ticket-list.js";
 import {
   saveTicketMetadata,
@@ -49,7 +48,7 @@ test("Azure tags import, sync, search and trash lifecycle stay separate from loc
       ],
     });
   });
-  const connector = new Connectors(store, new IntegrationsAuth(store));
+  const connector = new Connectors(store);
   await connector.importPrTickets([42]);
   assert.deepEqual(store.azureTags(42), ["API", "Customer"]);
   const context = { client: "C", project: "P" };

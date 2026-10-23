@@ -10,7 +10,6 @@ import {
   prepareChatFiles,
 } from "../server/chat-files.js";
 import { Agent } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 const context = { client: "C", project: "P" };
 const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1]);
 function fixture(t: any) {
@@ -105,7 +104,6 @@ test("agent sends images natively and text files in full on the initial request"
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
   );
   await agent.chat(

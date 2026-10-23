@@ -56,7 +56,6 @@ test("missing or unavailable SDK transcripts never silently discard context", as
 
 test("agent continuation avoids replaying prior messages and keeps new app-only messages", async t => {
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-agent-runtime-")), store = new Store(dir);
   t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
   const context = { client: "A", project: "B" }, chat = store.createChat(context);
@@ -67,7 +66,7 @@ test("agent continuation avoids replaying prior messages and keeps new app-only 
     createSession: async () => { creates++; return session; },
     resumeSession: async (id: string) => { assert.equal(id, session.sessionId); resumes++; return session; } };
   store.say("user", "Legacy context", context, [], chat.id);
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client);
+  const agent = new Agent(store, () => client);
   await agent.chat("Hello", context, false, undefined, chat.id);
   store.say("assistant", "App-only notice", context, [], chat.id);
   await agent.chat("Continue", context, false, undefined, chat.id);
@@ -102,7 +101,6 @@ test("context occupancy is separate from cumulative usage, scoped and cleared wi
 
 test("review resumes one SDK transcript with lazy memory and optional read-only code tools", async t => {
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-review-runtime-")), store = new Store(dir);
   t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
   const context = { client: "A", project: "B" };
@@ -127,7 +125,7 @@ test("review resumes one SDK transcript with lazy memory and optional read-only 
   const client: any = { start: async () => {}, stop: async () => {}, forceStop: async () => {},
     createSession: async (config: any) => { creates++; configs.push(config); return session; },
     resumeSession: async (id: string, config: any) => { assert.equal(id, session.sessionId); resumes++; configs.push(config); return session; } };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client);
+  const agent = new Agent(store, () => client);
   const options = { reviewId: "review-one", memoryScopes: ["project_review"] as const, readCode: true, branch: "feature/test", continuationPrompt: "Answer to the question" };
   await agent.chat("Original multi-file diff", context, true, { ...options, memoryScopes: [...options.memoryScopes] });
   await agent.chat("Original multi-file diff again", context, true, { ...options, memoryScopes: [...options.memoryScopes] });

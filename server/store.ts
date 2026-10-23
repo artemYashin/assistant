@@ -30,17 +30,6 @@ export class AppError extends Error {
     super(message);
   }
 }
-export type Approval = {
-  id: string;
-  chat_id: string;
-  chat_name: string;
-  body: string;
-  status: string;
-  created_at: string;
-  expires_at: string;
-  remote_id: string | null;
-  error: string | null;
-};
 export const defaults = {
   assistantCodeAccess: true,
   memoryLanguage: "English",
@@ -57,12 +46,9 @@ export const defaults = {
   voiceNewKey: "KeyN",
   model: "",
   reviewModel: "",
-  microsoftClientId: "",
-  microsoftTenantId: "",
   azureUrl: "",
   azureProject: "",
   azureVersion: "7.1",
-  teamsEnabled: false,
   azureAutoImport: false,
   azureImportAssignees: [] as {id:string;name:string;email:string}[],
   azureTypes: [] as string[],
@@ -114,13 +100,9 @@ export class Store {
       CREATE TABLE IF NOT EXISTS ticket_content_cache (source TEXT NOT NULL,id INTEGER NOT NULL,section TEXT NOT NULL,body TEXT NOT NULL,search_text TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(source,id,section));
       CREATE TABLE IF NOT EXISTS ticket_cards (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
-      CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, name TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
-      CREATE TABLE IF NOT EXISTS messages (id TEXT NOT NULL, chat_id TEXT NOT NULL, sender TEXT NOT NULL, body TEXT NOT NULL, url TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(chat_id,id));
       CREATE TABLE IF NOT EXISTS ticket_azure_priority (source TEXT NOT NULL,id INTEGER NOT NULL,priority REAL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_azure_tags (source TEXT NOT NULL, id INTEGER NOT NULL, tags TEXT NOT NULL DEFAULT '[]', PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS tickets (source TEXT NOT NULL, id INTEGER NOT NULL, title TEXT NOT NULL, state TEXT NOT NULL, assigned TEXT NOT NULL, type TEXT NOT NULL, url TEXT NOT NULL, changed_at TEXT, synced_at TEXT NOT NULL, PRIMARY KEY(source,id));
-      CREATE TABLE IF NOT EXISTS suggestions (id TEXT PRIMARY KEY, source TEXT NOT NULL, ticket_id INTEGER NOT NULL, chat_id TEXT NOT NULL, message_id TEXT NOT NULL, excerpt TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', created_at TEXT NOT NULL, UNIQUE(source,ticket_id,chat_id,message_id));
-      CREATE TABLE IF NOT EXISTS approvals (id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, chat_name TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL, expires_at TEXT NOT NULL, remote_id TEXT, error TEXT);
       CREATE TABLE IF NOT EXISTS audit (id TEXT PRIMARY KEY, action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS llm_requests (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, finished_at TEXT, model TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, status TEXT NOT NULL, reason TEXT, tool_calls INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS llm_usage (request_id TEXT NOT NULL REFERENCES llm_requests(id), receipt_id TEXT NOT NULL, model TEXT NOT NULL, input_tokens INTEGER, output_tokens INTEGER, cache_read_tokens INTEGER, cache_write_tokens INTEGER, PRIMARY KEY(request_id,receipt_id));
@@ -128,7 +110,6 @@ export class Store {
       CREATE INDEX IF NOT EXISTS llm_tool_trace_request ON llm_tool_traces(request_id);
       CREATE INDEX IF NOT EXISTS llm_request_time ON llm_requests(created_at);
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
-      CREATE INDEX IF NOT EXISTS message_time ON messages(chat_id,created_at);
     `);
     if (
       !(
@@ -378,17 +359,24 @@ export class Store {
         this.set("migration.projectTicketImport",true);
       })();
     }
-    // A crash after Graph accepted a request is ambiguous. Never automatically resend it.
-    this.db
-      .prepare(
-        "UPDATE approvals SET status='unknown',error='Приложение перезапустилось во время отправки. Проверьте Teams.' WHERE status='sending'",
-      )
-      .run();
     this.db
       .prepare(
         "UPDATE llm_requests SET status='interrupted', reason='Перезапуск приложения; отчёт может быть неполным.', finished_at=? WHERE status='running'",
       )
       .run(new Date().toISOString());
+    // Retire the former messaging integration without touching application chats or Azure data.
+    if (!this.get("migration.removeTeams", false)) {
+      this.db.transaction(() => {
+        this.db.exec("DROP TABLE IF EXISTS suggestions; DROP TABLE IF EXISTS approvals; DROP TABLE IF EXISTS messages; DROP TABLE IF EXISTS chats;");
+        const settings = this.get<Record<string, unknown>>("settings", {});
+        delete settings.microsoftClientId;
+        delete settings.microsoftTenantId;
+        delete settings.teamsEnabled;
+        this.set("settings", settings);
+        this.db.exec("DELETE FROM secrets WHERE key LIKE 'msal:%'; DELETE FROM kv WHERE key LIKE 'microsoft.%';");
+        this.set("migration.removeTeams", true);
+      })();
+    }
     this.purgeTicketTrash();
   }
   get<T>(key: string, fallback: T): T {

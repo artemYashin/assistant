@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 
 test("ticket comments escape plain text, update cached cards and reject stale sources", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-comments-"));
@@ -51,7 +50,7 @@ test("ticket comments escape plain text, update cached cards and reject stale so
       fields: { "System.TeamProject": "Project" },
     });
   });
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   const result = await connectors.addTicketComment(
     "one",
     "<b>Hello</b>\nNext & last",
@@ -88,7 +87,7 @@ test("Markdown images reuse completed uploads and comment receipts after a retry
       "one",
       JSON.stringify({ id: 42, source: store.source(), comments: [] }),
     );
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   let uploads = 0,
     posts = 0;
   const imageId = "12345678-1234-1234-1234-123456789012";

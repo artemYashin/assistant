@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 
 for (const trash of [false, true]) {
   test(`verified Azure edits preserve ${trash ? "trash" : "unimported"} membership`, async (t) => {
@@ -78,7 +77,7 @@ for (const trash of [false, true]) {
       } else reads++;
       return Response.json({ id: 42, rev: 1 + writes, fields });
     });
-    const service = new Connectors(store, new IntegrationsAuth(store));
+    const service = new Connectors(store);
     assert.equal(
       (await service.changeTicketStatus(42, "Resolved")).success,
       true,

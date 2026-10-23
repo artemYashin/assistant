@@ -13,7 +13,6 @@ function fixture(t: any) {
   let fail = false;
   const agent = new Agent(
     store,
-    {} as any,
     () =>
       ({
         start: async () => {},

@@ -95,7 +95,6 @@ test("help schemas load lazily and search does not eagerly read articles into mo
 test("greetings and capability questions start with discovery only, no help/article payload", async t => {
   const { Store } = await import("../server/store.js");
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const directory = mkdtempSync(join(tmpdir(), "orbit-help-agent-"));
   const store = new Store(directory);
   t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
@@ -109,7 +108,7 @@ test("greetings and capability questions start with discovery only, no help/arti
         sendAndWait: async () => ({ data: { content: "Помогаю с рабочими задачами." } }) };
     },
   };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const agent = new Agent(store, () => client as any);
   await agent.chat("Привет", { client: "", project: "" });
   await agent.chat("Что ты умеешь?", { client: "", project: "" });
   assert.equal(published, 0);
@@ -118,7 +117,6 @@ test("greetings and capability questions start with discovery only, no help/arti
 test("an app-help turn can discover, search and read the relevant article through agent tools", async t => {
   const { Store } = await import("../server/store.js");
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const directory = mkdtempSync(join(tmpdir(), "orbit-help-flow-"));
   const store = new Store(directory);
   t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
@@ -141,7 +139,7 @@ test("an app-help turn can discover, search and read the relevant article throug
       };
     },
   };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const agent = new Agent(store, () => client as any);
   const result = await agent.chat("Помоги настроить PAT в приложении", { client: "", project: "" });
   assert.match(result.body, /Personal Access Token/);
   assert.deepEqual(loaded, [["load_tools", "search_app_help"], ["load_tools", "search_app_help", "read_app_help"]]);
@@ -150,7 +148,6 @@ test("an app-help turn can discover, search and read the relevant article throug
 test("review sessions do not receive app help tools", async t => {
   const { Store } = await import("../server/store.js");
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const directory = mkdtempSync(join(tmpdir(), "orbit-help-review-"));
   const store = new Store(directory);
   t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
@@ -161,6 +158,6 @@ test("review sessions do not receive app help tools", async t => {
         sendAndWait: async () => ({ data: { content: "Ревью готово." } }) };
     },
   };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const agent = new Agent(store, () => client as any);
   await agent.chat("Review", { client: "", project: "" }, true, { readCode: false });
 });

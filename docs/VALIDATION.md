@@ -10,7 +10,6 @@
 - `python3 -m py_compile voice/app.py`: успешно.
 - Запуск production Node-сервера: успешно; `/api/health`, `/api/auth/session` и страница `/` возвращают HTTP 200. До создания пароля приватные API недоступны.
 
-Тесты покрывают авторизацию и CSRF для отправки, неизменность текста/получателя, параллельные и повторные подтверждения, истечение черновиков, неопределённую доставку, восстановление после перезапуска, шифрование секретов, изоляцию памяти, выбор Microsoft-аккаунта, смену аккаунта, формат Graph-запроса, Azure URL/PAT/проект, пагинацию Teams, дедупликацию и обновление упоминаний, сохранение источника Azure при смене настроек во время запроса.
 
 Дополнительно проверены дедупликация usage-отчётов, неизвестные значения и кеш, периоды отчёта, сохранение после перезапуска, несколько вызовов модели на запрос, остановка по токенам/инструментам/времени и вручную, запрет параллельных запросов, авторизация отчёта и CSRF остановки. Эти сценарии используют подмену клиента модели; реальное получение usage от корпоративной модели пока не проверено.
 
@@ -27,7 +26,6 @@
 
 Обновление UX подключений и контекстов: проверены создание/переключение контекстов, восстановление выбора из SQLite, доступ к старой истории, CSRF и изоляция проектов. Вход без Client ID проверен с подменой CLI: выдача кода, повторный запрос во время входа, сохранение токена, обработка ошибок, удаление временной конфигурации и сокрытие диагностики команды токена. Проверен вариант CLI без флага `--insecure-storage` (совместимость со старой версией в Debian Bookworm). Реальная авторизация GitHub CLI и загрузка доступных корпоративному аккаунту моделей не проверены. Browser QA и сборка Docker по-прежнему требуют проверки в среде с работающими браузером и Docker daemon.
 
-Добавлены проверки PR: фильтр личного required reviewer, все PR, разделение проектов, дедупликация версий, черновики, реальный текстовый diff, неполные данные, дневной лимит, остановка повторов после ошибок/перезапуска, проверка устаревшей версии перед LLM. Отдельно проверены отсутствие инструментов/истории в PR-ревью и учёт токенов. Для задач проверены WIQL-фильтры и экранирование, типы/статусы, пагинация комментариев, запрет посторонних attachment URL, проксирование изображений и блокировка после смены подключения. Проверен сквозной путь «номер тикета в чате → чтение API → сохранённая карточка в истории». Teams по умолчанию не опрашивается; новые API требуют входа и CSRF для изменений. Все внешние API/LLM в этих тестах подменены, корпоративные PR и изображения ещё требуют интеграционной проверки.
 
 Смена статусов: проверены точное имя/RFT, неизвестные статусы, другой проект, отмена перед записью, последовательность GET → states → PATCH с test /rev → GET, несовпадение и недоступность проверки, неопределённый PATCH, уже установленный статус, обновление локального трекера и дедупликация записей внутри ответа. Проверено отсутствие права записи у запроса только на чтение. Реальные переходы в корпоративном Azure не выполнялись.
 
@@ -37,7 +35,6 @@
 
 Текст HTML-ошибки теперь выводится в поле `pageText` записи `[upstream]` в логах orbit, включая HTTP 4xx/5xx. Читается не более 64 КиБ, выводится до 6000 символов с отметкой обрезки. Удаляются HTML-теги/атрибуты, скрипты, стили, комментарии, известные credentials запроса, query/fragment видимых URL и распространённые формы токенов. JSON-тела не логируются. Проверены читаемый текст, редактирование секретов и ограничение объёма; 57 тестов и production-сборка успешны. Произвольный текст страницы может содержать корпоративные сведения, поэтому лог предназначен для локальной диагностики.
 
-UI: устранён конфликт `.assistant` между панелью и сообщением — панель использует `.assistant-panel`, включая media queries. Выровнены отступы форм, импорта, PR и карточек, размеры checkbox и перенос длинных кнопок; в шапке чата показаны уровни памяти. Проверка Chromium/Playwright с подменой API: разделы обзор, настройки, тикеты, память, PR, входящие, подтверждения, Teams и использование LLM открываются без JS-ошибок и горизонтального переполнения при 1440×900; настройки также проверены при 390×844. Короткое сообщение ассистента занимает 70.6 px; checkbox — 16 px. Просмотрены скриншоты настроек и PR. Это проверка тестовых данных, а не корпоративных интеграций. 57 тестов и production-сборка прошли.
 
 Просмотр из таблицы тикетов: кнопка «Посмотреть» загружает свежую полную карточку и раскрывает её под строкой, «Скрыть» закрывает; ошибка показывает повтор загрузки. Chromium с подменой API: проверены открытие, описание/комментарии, закрытие, ошибка и наличие кнопки повтора; скриншот просмотрен. Production-сборка прошла, корпоративный API не вызывался.
 
@@ -47,7 +44,6 @@ UI: устранён конфликт `.assistant` между панелью и 
 
 Markdown чата: сообщения пользователя и ассистента выводятся через react-markdown + remark-gfm; поддерживаются выделение, списки, цитаты, код и таблицы. HTML не исполняется, допускаются ссылки HTTP(S)/mailto; Markdown-изображения выводятся ссылками без автоматической загрузки. Проверки серверного React-рендера покрывают форматирование, блокировку javascript/HTML и отсутствие img. 59 тестов и production-сборка прошли.
 
-Ручные PR и локальный трекер (19 октября 2026): синхронизация PR больше не создаёт ревью; репозиторий задаётся в контексте проекта. Миграция отменяет старую автоматическую очередь один раз. Проверены ручная постановка, дедупликация версий, сохранение результатов, изоляция памяти по проектам, общий/клиентский/проектный контекст ревью без истории чата, суточный лимит попыток (ручной повтор не обнуляет счётчик). Локальный разработчик загружается из Core Teams API и хранится отдельно; API-тест подтверждает отсутствие PATCH/DELETE Azure, сохранение назначения после sync, исключение удалённых тикетов из импорта и явное восстановление по номеру, авторизацию и валидацию цветов. 61 Node-тест, production build и SDK smoke прошли. Python diagnostics tests ранее: 4/4. Chromium с подменой API: обе карточки, отдельные раскрывающиеся секции, отсутствие внешнего аккордеона, кнопка ручного ревью, настройки репозитория и сохранённый Markdown-результат. Просмотрены скриншоты таблицы и PR; реальный корпоративный Azure/LLM не вызывался.
 
 Перед публикацией: стандартный порт изменён с 3000 на 43871 в Compose, Dockerfile, сервере, origin allowlist, Vite proxy, примере окружения и README. Повторно прошли 61 Node-тест, 4 Python-теста voice, production build, docker compose config и git diff --check. У main убран автоматический margin.
 
@@ -237,9 +233,7 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ## Review clarification and proposed memory
 
 - Added durable review-question batches and an awaiting_answers review state. All nonempty answers must be submitted atomically; only then is the same version requeued, once. Prior answers are included in the next review. Existing daily/tool/token/time budgets apply; at most three clarification rounds per version. Changed/out-of-scope/draft/disabled PRs cannot be requeued with old answers. Questions can be dismissed without a rerun.
-- Actual PR reviews now expose only ask_review_questions and propose_memory, under the same tool budget. No Teams sends, state changes, arbitrary tools, or direct memory writes are available during review. The review prompt focuses on concrete defects, evidence and uncertainty. Legacy tool-less review calls remain supported.
 - Memory proposals retain their original scope/context, require explicit UI approval, deduplicate pending/existing exact records and are atomically accepted/rejected. Chat direct saves require explicit current-message memory intent; system instructions request clear paraphrases without changing meaning. Pending proposals are not included in memory context.
-- Inbox and Approvals moved to the sidebar bottom and remain active with counts. Teams is disabled in navigation; stored connection settings are unchanged. Added question forms and memory approval cards; PR cards link to Inbox when waiting.
 - TypeScript check passed. Added lifecycle, approval and tool-boundary regression tests, but did not run tests/build per user's request to reserve tests for push. Live LLM behavior and browser flows are not verified yet.
 
 ## Status editors and local developer directory
@@ -262,7 +256,6 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ## Inbox within Pull Requests
 
 - Moved Inbox to a URL-backed tab at `/pull-requests?tab=inbox`, retaining pending counts and existing question/suggestion actions. Legacy `/inbox` redirects with history replacement; overview actions and review cards open the tab. Direct PR focus links continue to open the list.
-- Approvals is back in the main sidebar navigation with its pending count; Teams remains disabled at the bottom.
 - TypeScript check and diff whitespace check passed. Tests/build deferred until push as requested; browser interaction not exercised.
 
 ## Accordion header hit areas
@@ -1105,7 +1098,6 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 ### Compact English policy and on-demand chat tools (2026-10-21)
 
 - Chat starts with load_tools and an English capability catalog, rather than the full tool schemas. Requested tools are added through SDK session.setTools, retained for the turn and still use the existing handlers, guards, limits and trace logging. Parallel discovery is serialized; failed publications remain retryable.
-- Reduced chat policy from roughly 17,000 to 6,291 characters, preserving local-first reads, consent boundaries, batch confirmations, status verification, local/Azure separation and UI approval for Teams sends. Responses explicitly follow the user's language. Translated review instructions and prompt wrappers; only the exact previous default user instructions are migrated, preserving custom preferences.
 - Workspace directory now loads on demand; history and relevant memory remain included. PR review retains its small dedicated question/memory tool set. Real token savings and latency have not been measured against Copilot.
 - TypeScript and whitespace checks passed. Added discovery tests and adapted SDK business-logic mocks; tests not run yet per the user's preference to run them before push. Live SDK tool-publication behavior and production build were not exercised.
 - Push preparation: tests explicitly skipped at the user's request. No further tests or live model requests were run.
@@ -1298,7 +1290,6 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Link new chat requests and reply messages to their chat session and existing tool traces. History shows ordered calls, requested schema names for load_tools, start offsets/times and durations after completion and reload, without exposing raw tool arguments/results to the message UI or sending telemetry back as model context.
 - Sum deduplicated SDK usage receipts within the exact current chat. Update counts during generation and history loads; identify older unlinked messages as partial coverage instead of attributing other chats' usage. Requests without usage reports show no invented counts.
 - Verified the initial SDK tool list contains only load_tools; loading list_local_tags publishes only that schema plus discovery. Added restart persistence and session isolation coverage.
-- Compact grey header/composer surfaces, single-line context and chat title, styled header controls, token totals, inline model selector and stop control replacing voice/send while busy. Remove the Teams approval footer; server approval enforcement is unchanged.
 - Double M now works in editable controls, removes only the matching first shortcut character (the second is prevented), blurs the field and focuses the voice overlay. Modifiers/IME/repeat protections remain; unrelated edited text is preserved.
 - All 39 focused tests passed (streaming, persisted tools, usage/isolation, selective discovery, voice shortcut). Production build and TypeScript checks passed; the existing bundle-size warning remains. Live browser/microphone and remote Copilot checks were not performed.
 
@@ -1309,3 +1300,10 @@ Compose явно задаёт PORT=43871, не полагаясь на ENV об�
 - Added discoverable search_ticket_content: literal, case-insensitive local substring search, bounded excerpts, ID pagination, active-local scope and cache coverage. It makes no Azure calls and needs no full-read approval. Full reads retain their separate controls. Tested import, bounded snippets, pagination, source isolation, trash retention/expiry and sync clearing.
 - Token warning accepts conversational agreement and naturally phrased warnings. Policy stays below the existing 7000-character budget. Voice dialog initially focuses its non-button surface; Enter finishes recording using existing short-recording/cancellation protections. Added subtle chat shadows and repository search-mode icons.
 - Focused ticket, cache, consent, metadata, tags, voice, discovery and streaming tests passed after updating expectations for opt-in fields. TypeScript and production build passed (existing bundle-size warning). No live Azure, browser or microphone validation.
+
+## Integration retirement and regression checks
+
+- Removed unused messaging integration routes, synchronization, draft delivery, settings, UI and dependency. Azure DevOps Graph/Identity lookup remains available.
+- One-time transactional migration removes only retired tables, OAuth cache and settings. Regression test snapshots all other tables, including populated tickets, local assignments, PRs, memories, proposals and assistant conversations, and verifies two restarts plus encrypted credential preservation.
+- Updated stale expectations for Git preparation, distinct review retry IDs, the 7200-second repository timeout boundary, chat context usage and the current memory approval policy.
+- Full automated suite: 485 tests passed; production build, TypeScript/help checks and Copilot SDK smoke check passed. External Azure/Copilot inference was not invoked.

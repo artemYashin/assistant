@@ -9,118 +9,118 @@
 
 Azure вернул другой PR
 
-Источник: server/pull-requests.ts:1192.
+Источник: server/pull-requests.ts:1189.
 
 ### Сообщение
 
 PR уже закрыт
 
-Источник: server/pull-requests.ts:1193.
+Источник: server/pull-requests.ts:1190.
 
 ### Сообщение
 
 Изменения PR обновились. Откройте diff заново перед комментированием.
 
-Источник: server/pull-requests.ts:1196.
+Источник: server/pull-requests.ts:1193.
 
 ### Сообщение
 
 Не удалось сопоставить версию diff с Azure. Обновите diff.
 
-Источник: server/pull-requests.ts:1205.
+Источник: server/pull-requests.ts:1202.
 
 ### Сообщение
 
 Azure не вернул изменения файлов
 
-Источник: server/pull-requests.ts:1211.
+Источник: server/pull-requests.ts:1208.
 
 ### Сообщение
 
 Файл не найден в правой части изменений PR
 
-Источник: server/pull-requests.ts:1216.
+Источник: server/pull-requests.ts:1213.
 
 ### Сообщение
 
 Строка не найдена в файле выбранной версии
 
-Источник: server/pull-requests.ts:1220.
+Источник: server/pull-requests.ts:1217.
 
 ### Сообщение
 
 Azure не подтвердил комментарий. Проверьте PR перед повторной отправкой.
 
-Источник: server/pull-requests.ts:1250.
+Источник: server/pull-requests.ts:1247.
 
 ### Сообщение
 
 Не удалось сопоставить комментарии с версией diff. Откройте diff заново.
 
-Источник: server/pull-requests.ts:1267.
+Источник: server/pull-requests.ts:1264.
 
 ### Сообщение
 
 Azure не вернул комментарии PR
 
-Источник: server/pull-requests.ts:1270.
+Источник: server/pull-requests.ts:1267.
 
 ### Сообщение
 
 Azure не вернул базу или список изменений
 
-Источник: server/pull-requests.ts:1303.
+Источник: server/pull-requests.ts:1300.
 
 ### Сообщение
 
 Azure изменил базу сравнения при загрузке списка файлов
 
-Источник: server/pull-requests.ts:1321.
+Источник: server/pull-requests.ts:1318.
 
 ### Сообщение
 
 Список изменений загружен не полностью: достигнут лимит загрузки списка файлов.
 
-Источник: server/pull-requests.ts:1368.
+Источник: server/pull-requests.ts:1365.
 
 ### Сообщение
 
 Список файлов неполный: лимит 100 файлов после исключений
 
-Источник: server/pull-requests.ts:1371.
+Источник: server/pull-requests.ts:1368.
 
 ### Сообщение
 
 Неподдерживаемый или большой файл
 
-Источник: server/pull-requests.ts:1384.
+Источник: server/pull-requests.ts:1381.
 
 ### Сообщение
 
 Подготовка diff остановлена по времени или завершению приложения
 
-Источник: server/pull-requests.ts:1391.
+Источник: server/pull-requests.ts:1388.
 
 ### Сообщение
 
 Достигнут лимит diff {…} символов; оставшиеся файлы не проверены.
 
-Источник: server/pull-requests.ts:1399.
+Источник: server/pull-requests.ts:1396.
 
 ### Сообщение
 
 {…}: diff {…} символов превышает лимит одного файла {…}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.
 
-Источник: server/pull-requests.ts:1429.
+Источник: server/pull-requests.ts:1426.
 
 ### Сообщение
 
 {…}: требуется {…} символов, осталось {…} из {…}. Файл не проверен; настройте исключения или лимит diff.
 
-Источник: server/pull-requests.ts:1435.
+Источник: server/pull-requests.ts:1432.
 
 ### Сообщение
 
 {…}: содержимое недоступно, бинарное или слишком большое
 
-Источник: server/pull-requests.ts:1444.
+Источник: server/pull-requests.ts:1441.

@@ -23,8 +23,10 @@ test("repository timeout defaults to five minutes, persists and survives rename"
   assert.throws(() => prs.save({ ...input, codeSyncMinutes: -1 }));
   assert.throws(() => prs.save({ ...input, codeSyncMinutes: 1441 }));
   assert.throws(() => prs.save({ ...input, fetchTimeoutSeconds: 0 }));
-  assert.throws(() => prs.save({ ...input, fetchTimeoutSeconds: 1801 }));
-  prs.save({ ...input, codeSyncMinutes: 0 });
+  assert.throws(() => prs.save({ ...input, fetchTimeoutSeconds: 7201 }));
+  prs.save({ ...input, fetchTimeoutSeconds: 7200 });
+  assert.equal(prs.monitors()[0].fetch_timeout_seconds, 7200);
+  prs.save({ ...input, fetchTimeoutSeconds: 900, codeSyncMinutes: 0 });
   store.renameContext({ client: "A", project: "B" }, "Renamed");
   assert.equal(prs.monitors()[0].fetch_timeout_seconds, 900);
   assert.equal(prs.monitors()[0].code_sync_minutes, 0);

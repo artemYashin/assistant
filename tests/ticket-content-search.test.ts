@@ -6,7 +6,6 @@ import { join } from "node:path";
 import { listLocalTickets } from "../server/ticket-list.js";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 import { readCachedTicket, searchTicketContent } from "../server/ticket-content-search.js";
 
 test("imports cache content, search is bounded/paged/source scoped, sync clears and trash expires", async t => {
@@ -14,7 +13,7 @@ test("imports cache content, search is bounded/paged/source scoped, sync clears 
   const store = new Store(dir);
   t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
   store.set("settings", { ...store.settings(), azureUrl: "https://ado.test/Collection", azureProject: "Project" });
-  const connector = new Connectors(store, new IntegrationsAuth(store));
+  const connector = new Connectors(store);
   let description = "<p>" + "before ".repeat(100) + "Протокол обмена" + " after".repeat(100) + "</p>";
   (connector as any).azure = async (path: string, init: any) => {
     const ids = path === "workitemsbatch" ? JSON.parse(init.body).ids : [Number(path.split("/")[1])];

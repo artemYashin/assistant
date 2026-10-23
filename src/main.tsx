@@ -130,7 +130,6 @@ const navigation = [
   { id: "code", label: "Код репозитория", icon: Code2 },
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
-  { id: "teams", label: "Сообщения Teams", icon: MessageSquare },
   { id: "usage", label: "Использование LLM", icon: Activity },
 ] as const;
 const date = (s?: string) =>
@@ -266,7 +265,7 @@ function App() {
                 <Sparkles size={33} />
               </div>
               <span className="orbit-node n1">
-                <MessageSquare /> Teams
+                <MessageSquare /> Ассистент
               </span>
               <span className="orbit-node n2">
                 <Ticket /> Тикеты
@@ -384,13 +383,10 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   );
   const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
-    [items, setItems] = useState<any[]>([]),
     [reviewQuestions, setReviewQuestions] = useState<any[]>([]),
     [memoryProposals, setMemoryProposals] = useState<any[]>([]),
     [tickets, setTickets] = useState<any[]>([]),
-    [approvals, setApprovals] = useState<any[]>([]),
     [memories, setMemories] = useState<any[]>([]),
-    [chats, setChats] = useState<any[]>([]),
     [context, setContext] = useState<Context>({ client: "", project: "" }),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -437,23 +433,17 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const loadGeneration = useRef(0);
   async function reload() {
     const generation = ++loadGeneration.current;
-    const [o, i, t, a, m, c, rq, mp] = await Promise.all([
+    const [o, t, m, rq, mp] = await Promise.all([
       api(`/overview?${new URLSearchParams(context)}`),
-      api("/inbox"),
       api("/tickets"),
-      api("/approvals"),
       api(`/memories?${new URLSearchParams(context)}`),
-      api("/chats"),
       api("/review-questions"),
       api("/memory-proposals"),
     ]);
     if (generation !== loadGeneration.current) return;
     setOverview(o);
-    setItems(i);
     setTickets(t);
-    setApprovals(a);
     setMemories(m);
-    setChats(c);
     setReviewQuestions(rq);
     setMemoryProposals(mp);
   }
@@ -510,10 +500,8 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
     const t = setTimeout(() => setNotice(""), 4500);
     return () => clearTimeout(t);
   }, [notice]);
-  const pending = approvals.filter((a) => a.status === "pending");
   const connected = [
     !!settings?.githubConnected,
-    !!settings?.microsoftConnected,
     !!settings?.azurePatSet && !!settings?.azureUrl && !!settings?.azureProject,
   ];
   const filtered = (arr: any[], keys: string[]) =>
@@ -560,7 +548,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
           {navigation
-            .filter((n) => !["teams", "inbox"].includes(n.id))
+            .filter((n) => !["inbox"].includes(n.id))
             .map((n) => (
               <Link
                 key={n.id}
@@ -576,13 +564,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 />
                 <span className="sidebar-text">{n.label}</span>
                 {n.id === "approvals" &&
-                  pending.length +
                     memoryProposals.filter((p) => p.status === "pending")
                       .length >
                     0 && (
                     <span className="nav-count">
-                      {pending.length +
-                        memoryProposals.filter((p) => p.status === "pending")
+                      {memoryProposals.filter((p) => p.status === "pending")
                           .length}
                     </span>
                   )}
@@ -603,17 +589,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             />
             <span className="sidebar-text">Настройки</span>
           </Link>
-          <button
-            className="sidebar-disabled"
-            disabled
-            title="Интеграция Teams временно отложена"
-            aria-label="Сообщения Teams — недоступно"
-          >
-            <MessageSquare size={18} />
-            <span className="sidebar-text">
-              Сообщения Teams<small>Позже</small>
-            </span>
-          </button>
           <button
             title="Выйти"
             aria-label="Выйти"
@@ -646,8 +621,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               onClick={() => setPage("approvals")}
             >
               <Bell size={18} />
-              {(pending.length > 0 ||
-                memoryProposals.some((p) => p.status === "pending")) && (
+              {memoryProposals.some((p) => p.status === "pending") && (
                 <i className="notification-dot" />
               )}
             </button>
@@ -712,7 +686,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                     >
                       {[
                         { name: "Copilot", icon: Github },
-                        { name: "Teams", icon: MessageSquare },
                         { name: "DevOps", icon: Ticket },
                       ].map((item, index) => (
                         <button
@@ -720,7 +693,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                           key={item.name}
                           className={`overview-connection${connected[index] ? " is-connected" : ""}`}
                           onClick={() => setPage("settings")}
-                          title={`${item.name}: ${connected[index] ? (index === 2 ? "подключение настроено" : "подключено") : "не подключено"}`}
+                          title={`${item.name}: ${connected[index] ? (index === 1 ? "подключение настроено" : "подключено") : "не подключено"}`}
                           aria-label={`${item.name}: ${connected[index] ? "подключение настроено" : "не подключено"}. Открыть настройки`}
                         >
                           <item.icon size={15} /> {item.name}{" "}
@@ -826,13 +799,11 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   aria-current={inboxTab ? "page" : undefined}
                 >
                   <Inbox size={16} /> Входящие
-                  {items.length +
-                    reviewQuestions.filter((q) => q.status === "pending")
+                  {reviewQuestions.filter((q) => q.status === "pending")
                       .length >
                     0 && (
                     <span className="nav-count">
-                      {items.length +
-                        reviewQuestions.filter((q) => q.status === "pending")
+                      {reviewQuestions.filter((q) => q.status === "pending")
                           .length}
                     </span>
                   )}
@@ -859,70 +830,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   items={reviewQuestions}
                   onChange={() => setRefresh((n) => n + 1)}
                 />
-                {items.length ? (
-                  <div className="card-list">
-                    {items.map((i) => (
-                      <article className="panel suggestion" key={i.id}>
-                        <div className="section-heading">
-                          <Badge tone="violet">
-                            <MessageSquare size={13} /> {i.chat_name}
-                          </Badge>
-                          <small>{date(i.created_at)}</small>
-                        </div>
-                        <h2>Обратите внимание на #{i.ticket_id}</h2>
-                        <p className="source-label">{i.sender} написал(а)</p>
-                        <blockquote>
-                          {i.excerpt || "Упоминание в ссылке на тикет"}
-                        </blockquote>
-                        <div className="card-actions">
-                          <button
-                            className="primary"
-                            disabled={!!busy}
-                            onClick={() =>
-                              run(
-                                i.id,
-                                () =>
-                                  api("/tickets", "POST", { id: i.ticket_id }),
-                                "Тикет загружен из Azure DevOps",
-                              )
-                            }
-                          >
-                            <Plus size={16} />
-                            Добавить в трекер
-                          </button>
-                          <button
-                            className="secondary"
-                            disabled={!!busy}
-                            onClick={() =>
-                              run(i.id, () =>
-                                api(`/inbox/${i.id}/dismiss`, "POST", {}),
-                              )
-                            }
-                          >
-                            Пропустить
-                          </button>
-                          {i.message_url?.startsWith("https://") && (
-                            <a
-                              href={i.message_url}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Открыть Teams <ExternalLink size={14} />
-                            </a>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  !reviewQuestions.length && (
-                    <Empty
-                      icon={Inbox}
-                      title="Входящие разобраны"
-                      description="Если для ревью потребуется уточнение, здесь появится полный набор вопросов."
-                    />
-                  )
-                )}
+                {!reviewQuestions.length && <Empty icon={Inbox} title="Входящие разобраны" description="Если для ревью потребуется уточнение, здесь появится полный набор вопросов." />}
               </>
             )}
             {page === "tickets" && (
@@ -1016,109 +924,13 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
               <>
                 <PageHeading
                   title="Подтверждения"
-                  subtitle="Проверьте предложения ассистента перед сохранением в память или отправкой сообщения."
-                ><ConfirmButton title="Удалить все подтверждения?" message="Будет очищен весь список предложений памяти и черновиков Teams, включая обработанные записи всех заказчиков и проектов. Сохранённая память и отправленные сообщения останутся без изменений. Это действие нельзя отменить." confirmLabel="Удалить всё" disabled={!!busy || (!memoryProposals.length && !approvals.length)} onConfirm={async () => { await api("/confirmations", "DELETE"); setRefresh(n => n + 1); }}><Trash2 size={16} />Удалить всё</ConfirmButton></PageHeading>
+                  subtitle="Проверьте предложения ассистента перед сохранением в память."
+                ><ConfirmButton title="Удалить все подтверждения?" message="Будет очищен весь список предложений памяти, включая обработанные записи всех заказчиков и проектов. Сохранённая память останется без изменений. Это действие нельзя отменить." confirmLabel="Удалить всё" disabled={!!busy || !memoryProposals.length} onConfirm={async () => { await api("/confirmations", "DELETE"); setRefresh(n => n + 1); }}><Trash2 size={16} />Удалить всё</ConfirmButton></PageHeading>
                 <MemoryProposalList
                   context={context}
                   items={memoryProposals}
                   onChange={() => setRefresh((n) => n + 1)}
                 />
-                {approvals.length ? (
-                  <div className="card-list">
-                    {approvals.map((a) => (
-                      <article className="panel approval" key={a.id}>
-                        <div className="section-heading">
-                          <div className="recipient">
-                            <span className="integration-icon">
-                              <MessageSquare size={20} />
-                            </span>
-                            <div>
-                              <small>ПОЛУЧАТЕЛЬ · TEAMS</small>
-                              <b>{a.chat_name}</b>
-                              <code>{a.chat_id}</code>
-                            </div>
-                          </div>
-                          <Badge
-                            tone={
-                              a.status === "pending"
-                                ? "amber"
-                                : a.status === "sent"
-                                  ? "green"
-                                  : "muted"
-                            }
-                          >
-                            {
-                              (
-                                {
-                                  pending: "Ожидает решения",
-                                  sent: "Отправлено",
-                                  rejected: "Отклонено",
-                                  expired: "Истёк срок",
-                                  sending: "Отправляется",
-                                  unknown: "Проверьте Teams",
-                                } as any
-                              )[a.status]
-                            }
-                          </Badge>
-                        </div>
-                        <div className="draft-body">{a.body}</div>
-                        {a.error && <div className="error">{a.error}</div>}
-                        <div className="card-actions">
-                          {a.status === "pending" ? (
-                            <>
-                              <ConfirmButton
-                                title="Отправить сообщение в Teams?" message={`Получатель: ${a.chat_name}. Сообщение будет отправлено в этот чат.`} confirmLabel="Подтвердить и отправить"
-                                className="primary"
-                                disabled={!!busy}
-                                onConfirm={() =>
-                                  run(
-                                    a.id,
-                                    () =>
-                                      api(
-                                        `/approvals/${a.id}/approve`,
-                                        "POST",
-                                        {},
-                                      ),
-                                    "Сообщение отправлено в Teams",
-                                  )
-                                }
-                              >
-                                <Send size={16} />
-                                Подтвердить и отправить
-                              </ConfirmButton>
-                              <ConfirmButton
-                                title="Отклонить черновик?" message="Сообщение не будет отправлено в Teams." confirmLabel="Отклонить"
-                                className="secondary"
-                                disabled={!!busy}
-                                onConfirm={() =>
-                                  run(
-                                    a.id,
-                                    () =>
-                                      api(
-                                        `/approvals/${a.id}/reject`,
-                                        "POST",
-                                        {},
-                                      ),
-                                    "Черновик отклонён",
-                                  )
-                                }
-                              >
-                                <X size={16} />
-                                Отклонить
-                              </ConfirmButton>
-                              <small>Действует до {date(a.expires_at)}</small>
-                            </>
-                          ) : (
-                            <small>
-                              Создано {date(a.created_at)}{" "}
-                              {a.remote_id && `· ID Teams: ${a.remote_id}`}
-                            </small>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : null}
               </>
             )}
             {page === "memory" && (
@@ -1129,7 +941,6 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 busy={busy}
               />
             )}
-            {page === "teams" && <Teams chats={chats} run={run} busy={busy} />}
             {page === "usage" && (
               <Usage onSettings={() => setPage("settings")} />
             )}
@@ -1174,7 +985,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             onChange={() => setRefresh((n) => n + 1)}
             onSettings={() => setPage("settings")}
             onApprovals={() => setPage("approvals")}
-            pending={pending.length}
+            pending={memoryProposals.filter(p => p.status === "pending").length}
           />
         </div>
       </div>
@@ -2159,160 +1970,11 @@ function Memory({ memories, context, run, busy }: any) {
     </>
   );
 }
-function Teams({ chats, run, busy }: any) {
-  const [chatId, setChatId] = useState(""),
-    [body, setBody] = useState(""),
-    [messages, setMessages] = useState<any[]>([]);
-  useEffect(() => {
-    setMessages([]);
-    if (chatId)
-      api(`/chats/${encodeURIComponent(chatId)}/messages`)
-        .then(setMessages)
-        .catch(() => {});
-  }, [chatId, chats]);
-  return (
-    <>
-      <PageHeading
-        title="На связи, без лишнего шума"
-        subtitle="Отметьте чаты для наблюдения. При первом подключении загрузятся последние 50 сообщений."
-      >
-        <button
-          className="secondary"
-          disabled={!!busy}
-          onClick={() =>
-            run(
-              "chats",
-              () => api("/chats/refresh", "POST", {}),
-              "Список чатов обновлён",
-            )
-          }
-        >
-          <RefreshCw size={16} />
-          Загрузить чаты
-        </button>
-      </PageHeading>
-      {!chats.length ? (
-        <Empty
-          icon={MessageSquare}
-          title="Подключите Microsoft Teams"
-          description="После входа в настройках нажмите «Загрузить чаты» и выберите нужные. Поддерживаются личные и групповые чаты."
-        />
-      ) : (
-        <>
-          <div className="panel chat-list">
-            {chats.map((c: any) => (
-              <div className="chat-row" key={c.id}>
-                <button
-                  className={`toggle ${c.watched ? "on" : ""}`}
-                  aria-label={`Наблюдать: ${c.name}`}
-                  aria-pressed={!!c.watched}
-                  disabled={!!busy}
-                  onClick={() =>
-                    run(c.id, () =>
-                      api(`/chats/${encodeURIComponent(c.id)}`, "PUT", {
-                        watched: !c.watched,
-                      }),
-                    )
-                  }
-                >
-                  <span />
-                </button>
-                <button className="chat-select" onClick={() => setChatId(c.id)}>
-                  <b>{c.name}</b>
-                  <small>
-                    {c.watched
-                      ? `Наблюдаем · ${date(c.synced_at)}`
-                      : "Наблюдение выключено"}
-                  </small>
-                </button>
-                <ChevronRight size={16} />
-              </div>
-            ))}
-          </div>
-          <div className="panel compose-panel">
-            <h2>Подготовить сообщение</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                run(
-                  "draft",
-                  async () => {
-                    await api("/approvals", "POST", { chatId, body });
-                    setBody("");
-                  },
-                  "Черновик создан. Откройте «Подтверждения».",
-                );
-              }}
-            >
-              <Field label="Получатель">
-                <select
-                  required
-                  value={chatId}
-                  onChange={(e) => setChatId(e.target.value)}
-                >
-                  <option value="">Выберите чат</option>
-                  {chats.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Текст сообщения">
-                <textarea
-                  required
-                  rows={4}
-                  maxLength={12000}
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Сообщение сначала попадёт на подтверждение…"
-                />
-              </Field>
-              <button className="primary" disabled={!!busy}>
-                <ShieldCheck size={16} />
-                Создать черновик на проверку
-              </button>
-            </form>
-          </div>
-          {chatId && (
-            <section className="panel">
-              <div className="section-heading">
-                <h2>Последние сообщения</h2>
-                <Badge>Локальная копия</Badge>
-              </div>
-              {messages.length ? (
-                <div className="message-list">
-                  {messages.map((m) => (
-                    <article key={m.id}>
-                      <div>
-                        <b>{m.sender}</b>
-                        <time>{date(m.created_at)}</time>
-                      </div>
-                      <p>
-                        {m.body || "Сообщение удалено или не содержит текста"}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  title="Сообщений пока нет"
-                  description="Включите наблюдение за чатом и запустите синхронизацию из Обзора."
-                />
-              )}
-            </section>
-          )}
-        </>
-      )}
-    </>
-  );
-}
 function Settings({ settings, context, run, busy }: any) {
   const [settingsTab, setSettingsTab] = useState("copilot");
   const settingsTabId = useId();
   const settingsTabs = [
     { id: "copilot", label: "Copilot", icon: Github },
-    { id: "teams", label: "Microsoft Teams", icon: MessageSquare, disabled: true },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
     { id: "hotkeys", label: "Горячие клавиши", icon: Command },
@@ -2321,7 +1983,6 @@ function Settings({ settings, context, run, busy }: any) {
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
-    [msFlow, setMsFlow] = useState<any>(null),
     [models, setModels] = useState<any[]>([]),
     [modelsLoading, setModelsLoading] = useState(false),
     [connectionError, setConnectionError] = useState("");
@@ -2349,7 +2010,7 @@ function Settings({ settings, context, run, busy }: any) {
   const set = (key: string, value: any) =>
     setForm((f: any) => ({ ...f, [key]: value }));
   async function save() {
-    const { githubConnected, microsoftConnected, azurePatSet, ...values } =
+    const { githubConnected, azurePatSet, ...values } =
       form;
     await api("/settings", "PUT", {
       ...values,
@@ -2368,18 +2029,9 @@ function Settings({ settings, context, run, busy }: any) {
     return () => clearInterval(t);
   }, [githubFlow?.status]);
   useEffect(() => {
-    if (msFlow?.status !== "pending") return;
-    const t = setInterval(() => {
-      api("/connect/microsoft")
-        .then(setMsFlow)
-        .catch((e) => setConnectionError(e.message));
-    }, 3000);
-    return () => clearInterval(t);
-  }, [msFlow?.status]);
-  useEffect(() => {
-    if (githubFlow?.status === "connected" || msFlow?.status === "connected")
+    if (githubFlow?.status === "connected")
       run("connected", () => Promise.resolve(), "Подключение сохранено");
-  }, [githubFlow?.status, msFlow?.status]);
+  }, [githubFlow?.status]);
   return (
     <>
       <PageHeading
@@ -2388,14 +2040,14 @@ function Settings({ settings, context, run, busy }: any) {
       />
       <div className="settings-stack settings-tabs-layout">
         <div className="settings-tab-list" role="tablist" aria-label="Разделы настроек">
-          {settingsTabs.map(({ id, label, icon: Icon, disabled }) => (
+          {settingsTabs.map(({ id, label, icon: Icon }) => (
             <button key={id} id={`${settingsTabId}-${id}`} type="button" role="tab"
               aria-selected={settingsTab === id} aria-controls={`${settingsTabId}-${id}-panel`}
-              disabled={disabled} tabIndex={settingsTab === id ? 0 : -1}
-              className={`settings-tab is-${id}`} title={disabled ? "Интеграция Teams пока недоступна" : undefined}
+              tabIndex={settingsTab === id ? 0 : -1}
+              className={`settings-tab is-${id}`}
               onClick={() => setSettingsTab(id)}
               onKeyDown={event => {
-                const available = settingsTabs.filter(tab => !tab.disabled);
+                const available = settingsTabs;
                 const at = available.findIndex(tab => tab.id === id);
                 const next = event.key === "ArrowRight" ? (at + 1) % available.length
                   : event.key === "ArrowLeft" ? (at + available.length - 1) % available.length
@@ -2406,7 +2058,6 @@ function Settings({ settings, context, run, busy }: any) {
                 document.getElementById(`${settingsTabId}-${available[next].id}`)?.focus();
               }}>
               <Icon size={17} aria-hidden="true" /><span>{label}</span>
-              {disabled && <small>Скоро</small>}
             </button>
           ))}
         </div>
@@ -2518,74 +2169,6 @@ function Settings({ settings, context, run, busy }: any) {
           </Field>
           </div>
         </section>
-        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-teams-panel`} aria-labelledby={`${settingsTabId}-teams`} hidden={settingsTab !== "teams"}>
-          <div className="section-heading">
-            <h2>
-              <MessageSquare size={22} />
-              Microsoft Teams
-            </h2>
-            <Badge tone={settings.microsoftConnected ? "green" : "muted"}>
-              {settings.microsoftConnected ? "Вход выполнен" : "Не подключён"}
-            </Badge>
-          </div>
-          <div className="settings-group">
-            <h3>Подключение</h3>
-          <p>
-            Зарегистрируйте приложение в Microsoft Entra ID и включите public
-            client flows. Делегированные разрешения: <code>Chat.Read</code>,{" "}
-            <code>ChatMessage.Send</code>, <code>User.Read</code>. Компания
-            может требовать согласие администратора.
-          </p>
-          <div className="form-grid">
-            <Field label="Tenant ID">
-              <input
-                value={form.microsoftTenantId}
-                onChange={(e) => set("microsoftTenantId", e.target.value)}
-                placeholder="ID корпоративного каталога"
-              />
-            </Field>
-            <Field label="Application (Client) ID">
-              <input
-                value={form.microsoftClientId}
-                onChange={(e) => set("microsoftClientId", e.target.value)}
-                placeholder="ID приложения Microsoft Entra"
-              />
-            </Field>
-          </div>
-          <button
-            className="secondary"
-            disabled={!!busy || msFlow?.status === "pending"}
-            onClick={() =>
-              run("microsoft", async () => {
-                await save();
-                setMsFlow(await api("/connect/microsoft", "POST", {}));
-              })
-            }
-          >
-            <MessageSquare size={16} />
-            Войти через Microsoft
-          </button>
-          <LoginCode flow={msFlow} />
-          </div>
-          <div className="settings-group">
-            <h3>Фоновая работа и отправка</h3>
-          <label className="check-option">
-            <input
-              type="checkbox"
-              checked={form.teamsEnabled}
-              onChange={(e) => set("teamsEnabled", e.target.checked)}
-            />{" "}
-            Читать Teams в фоне (по умолчанию выключено)
-          </label>
-          <p className="muted">
-            Teams необязателен: задачи и PR работают напрямую с Azure DevOps.
-          </p>
-          <div className="inline-note">
-            <ShieldCheck size={17} />
-            Разрешение API не отменяет подтверждение каждого сообщения в Orbit.
-          </div>
-          </div>
-        </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-azure-panel`} aria-labelledby={`${settingsTabId}-azure`} hidden={settingsTab !== "azure"}>
           <div className="section-heading">
             <h2>
@@ -2629,7 +2212,7 @@ function Settings({ settings, context, run, busy }: any) {
             <h3>Автоматическая синхронизация</h3>
           <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
           <Field
-            label="Обновлять Teams, тикеты и PR каждые, минут"
+            label="Обновлять тикеты и PR каждые, минут"
             hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
           >
             <input
@@ -2660,7 +2243,7 @@ function Settings({ settings, context, run, busy }: any) {
             <h3>Общие настройки</h3>
           <Field
             label="Инструкции ассистенту"
-            hint="Предпочтения дополняют системные правила. Отключить обязательное подтверждение отправки здесь нельзя."
+            hint="Предпочтения дополняют системные правила. Сохранение памяти требует подтверждения в разделе «Подтверждения»."
           >
             <textarea
               rows={5}
@@ -3449,7 +3032,7 @@ function Assistant({
       {pending > 0 && (
         <button className="pending-bar" onClick={onApprovals}>
           <ShieldCheck size={16} />
-          {pending} сообщ. ждут подтверждения
+          {pending} предлож. ждут подтверждения
           <ChevronRight size={15} />
         </button>
       )}

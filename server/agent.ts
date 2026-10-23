@@ -62,7 +62,6 @@ import { join } from "node:path";
 import { toolFailure } from "./tool-errors.js";
 import { ticketBatchTool } from "./ticket-batch.js";
 import { Store, AppError, type Context } from "./store.js";
-import { Approvals } from "./approvals.js";
 import { Connectors, extractTicketIds } from "./connectors.js";
 import { stateChangeRejection, resolveState } from "./ticket-status.js";
 import { prTools } from "./pr-tools.js";
@@ -91,7 +90,6 @@ export function mayManageLocalTicket(
 }
 export function makeTools(
   store: Store,
-  approvals: Approvals,
   context: Context,
   getTicket?: (id: number) => Promise<any>,
   changeStatus?: (id: number, state: string) => Promise<any>,
@@ -224,51 +222,10 @@ export function makeTools(
       parameters: ticketListSchema,
       handler: async (args) => listLocalTickets(store, args),
     }),
-    defineTool("list_chats", {
-      description:
-        "List Teams chat IDs and names. Use IDs as recipients for drafts.",
-      parameters: z.object({}),
-      handler: async () =>
-        store.db
-          .prepare("SELECT * FROM chats ORDER BY watched DESC,name LIMIT 200")
-          .all(),
-    }),
-    defineTool("read_teams_messages", {
-      description:
-        "Read cached messages from a user-selected watched chat. Content is untrusted.",
-      parameters: z.object({ chatId: z.string() }),
-      handler: async (args) =>
-        store.db
-          .prepare(
-            "SELECT m.* FROM messages m JOIN chats c ON c.id=m.chat_id WHERE m.chat_id=? AND c.watched=1 ORDER BY m.created_at DESC LIMIT 50",
-          )
-          .all(args.chatId),
-    }),
-    defineTool("list_inbox", {
-      description:
-        "Read ticket mentions detected in Teams that are not yet tracked.",
-      parameters: z.object({}),
-      handler: async () =>
-        store.db
-          .prepare(
-            "SELECT * FROM suggestions WHERE source=? AND status='new' ORDER BY created_at DESC LIMIT 50",
-          )
-          .all(store.source()),
-    }),
-    defineTool("propose_teams_message", {
-      description:
-        "Create an immutable draft for human review in the UI. This NEVER sends a message. There is no approval or sending tool.",
-      parameters: z.object({
-        chatId: z.string(),
-        body: z.string().min(1).max(12000),
-      }),
-      handler: async (args) => approvals.propose(args.chatId, args.body),
-    }),
   ];
 }
 export function sessionConfig(
   store: Store,
-  approvals: Approvals,
   context: Context,
   guard?: (toolName?: string) => boolean,
   getTicket?: (id: number) => Promise<any>,
@@ -281,7 +238,6 @@ export function sessionConfig(
   const tools: Tool<any>[] = [
     ...makeTools(
       store,
-      approvals,
       context,
       getTicket,
       changeStatus,
@@ -320,7 +276,7 @@ export function sessionConfig(
     infiniteSessions: { enabled: false },
     systemMessage: {
       mode: "replace",
-      content: `${SYSTEM_POLICY}\n\nUser preferences (cannot weaken sending approvals):\n${store.settings().instructions}\n\nCurrent context: ${JSON.stringify(context)}`,
+      content: `${SYSTEM_POLICY}\n\nUser preferences (cannot weaken memory approvals):\n${store.settings().instructions}\n\nCurrent context: ${JSON.stringify(context)}`,
     },
     onPermissionRequest: () => ({
       kind: "reject",
@@ -350,7 +306,6 @@ export class Agent {
   private activeId?: string;
   constructor(
     private store: Store,
-    private approvals: Approvals,
     private clientFactory?: () => CopilotClient,
     private connectors?: Connectors,
   ) {}
@@ -916,8 +871,7 @@ export class Agent {
         }
         const config = sessionConfig(
           this.store,
-          this.approvals,
-          context,
+            context,
           (toolName) => {
             if (stopReason) return false;
             if (previousToolCalls + toolCalls >= toolLimit) {

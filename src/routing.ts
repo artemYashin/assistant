@@ -6,7 +6,6 @@ export const pagePaths = {
   developers: "/developers",
   approvals: "/approvals",
   memory: "/memory",
-  teams: "/teams",
   settings: "/settings",
   usage: "/usage",
   pullrequests: "/pull-requests",

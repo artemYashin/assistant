@@ -9,7 +9,6 @@ import {
 import { changeTicketState } from "./ticket-status.js";
 import { createHash, randomUUID } from "node:crypto";
 import { Store, AppError, type Settings, type Context } from "./store.js";
-import { IntegrationsAuth } from "./auth.js";
 import { requestJson, azureBase } from "./http.js";
 
 // Candidates only: Azure checks existence and project when the user adds one.
@@ -101,159 +100,7 @@ export class Connectors {
   }>();
   constructor(
     private store: Store,
-    private auth: IntegrationsAuth,
   ) {}
-  private async graph(path: string, init: RequestInit = {}) {
-    const url = path.startsWith("https:")
-      ? new URL(path)
-      : new URL(`https://graph.microsoft.com/v1.0${path}`);
-    if (
-      url.origin !== "https://graph.microsoft.com" ||
-      !url.pathname.startsWith("/v1.0/")
-    )
-      throw new AppError(400, "Недопустимая ссылка Graph");
-    return requestJson(
-      url.href,
-      {
-        ...init,
-        headers: {
-          Authorization: `Bearer ${await this.auth.graphToken()}`,
-          "Content-Type": "application/json",
-          ...init.headers,
-        },
-      },
-      "Microsoft Graph",
-    );
-  }
-  async refreshChats() {
-    let next = "/me/chats?$expand=members&$top=50";
-    let count = 0;
-    while (next) {
-      const result = await this.graph(next);
-      for (const chat of result.value || []) {
-        const name =
-          chat.topic ||
-          (chat.members || [])
-            .map((m: any) => m.displayName)
-            .filter(Boolean)
-            .join(", ") ||
-          `Чат ${chat.id}`;
-        this.store.db
-          .prepare(
-            "INSERT INTO chats(id,name) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name",
-          )
-          .run(chat.id, name);
-        count++;
-      }
-      next = result["@odata.nextLink"] || "";
-      if (count > 5000) throw new AppError(502, "Список чатов слишком большой");
-    }
-    return { count };
-  }
-  async sendMessage(chatId: string, body: string): Promise<{ id: string }> {
-    const result = await this.graph(
-      `/chats/${encodeURIComponent(chatId)}/messages`,
-      {
-        method: "POST",
-        body: JSON.stringify({ body: { contentType: "text", content: body } }),
-      },
-    );
-    if (!result.id) throw new Error("Graph returned no message ID");
-    return { id: result.id };
-  }
-  ingest(chatId: string, message: any, source = this.store.source()) {
-    if (!message.id) return;
-    const text = message.deletedDateTime
-      ? ""
-      : plainText(message.body?.content || "");
-    this.store.db
-      .prepare(
-        "INSERT INTO messages VALUES (?,?,?,?,?,?) ON CONFLICT(chat_id,id) DO UPDATE SET body=excluded.body,sender=excluded.sender,url=excluded.url",
-      )
-      .run(
-        message.id,
-        chatId,
-        message.from?.user?.displayName || "Teams",
-        text,
-        message.webUrl || "",
-        message.createdDateTime || new Date().toISOString(),
-      );
-    const ids = message.deletedDateTime
-      ? []
-      : extractTicketIds(message.body?.content || "");
-    const previous = this.store.db
-      .prepare(
-        "SELECT id,ticket_id FROM suggestions WHERE source=? AND chat_id=? AND message_id=? AND status='new'",
-      )
-      .all(source, chatId, message.id) as { id: string; ticket_id: number }[];
-    for (const suggestion of previous) {
-      if (!ids.includes(suggestion.ticket_id))
-        this.store.db
-          .prepare("DELETE FROM suggestions WHERE id=?")
-          .run(suggestion.id);
-      else
-        this.store.db
-          .prepare("UPDATE suggestions SET excerpt=? WHERE id=?")
-          .run(text.slice(0, 2000), suggestion.id);
-    }
-    for (const ticketId of ids) {
-      const tracked = this.store.db
-        .prepare("SELECT 1 FROM tickets WHERE source=? AND id=?")
-        .get(source, ticketId);
-      if (tracked) continue;
-      this.store.db
-        .prepare(
-          "INSERT OR IGNORE INTO suggestions(id,source,ticket_id,chat_id,message_id,excerpt,created_at) VALUES (?,?,?,?,?,?,?)",
-        )
-        .run(
-          randomUUID(),
-          source,
-          ticketId,
-          chatId,
-          message.id,
-          text.slice(0, 2000),
-          new Date().toISOString(),
-        );
-    }
-  }
-  async syncTeams() {
-    const source = this.store.source();
-    const chats = this.store.db
-      .prepare("SELECT * FROM chats WHERE watched=1")
-      .all() as { id: string; synced_at: string | null }[];
-    let count = 0;
-    for (const chat of chats) {
-      let next = `/chats/${encodeURIComponent(chat.id)}/messages?$top=50&$orderby=lastModifiedDateTime%20desc`;
-      let pages = 0;
-      const started = new Date().toISOString();
-      while (next) {
-        const result = await this.graph(next);
-        let reached = false;
-        for (const message of result.value || []) {
-          const modified =
-            message.lastModifiedDateTime || message.createdDateTime;
-          if (chat.synced_at && modified && modified < chat.synced_at) {
-            reached = true;
-            continue;
-          }
-          this.ingest(chat.id, message, source);
-          count++;
-        }
-        // First import deliberately covers the latest 50 messages. Subsequent imports paginate to the watermark.
-        if (!chat.synced_at || reached) break;
-        next = result["@odata.nextLink"] || "";
-        if (++pages >= 100 && next)
-          throw new AppError(
-            502,
-            "Слишком много сообщений за период. Синхронизация не завершена; отметка времени не изменена.",
-          );
-      }
-      this.store.db
-        .prepare("UPDATE chats SET synced_at=? WHERE id=?")
-        .run(started, chat.id);
-    }
-    return { count, chats: chats.length };
-  }
   private async azure(
     path: string,
     init: RequestInit,
@@ -1496,11 +1343,6 @@ export class Connectors {
         this.store.db
           .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
           .run(source, item.id);
-        this.store.db
-          .prepare(
-            "UPDATE suggestions SET status='tracked' WHERE source=? AND ticket_id=?",
-          )
-          .run(source, item.id);
         added.push(item.id);
       }
       this.store.audit("tickets.imported", `Из Azure: ${added.join(", ")}`);
@@ -1653,11 +1495,6 @@ export class Connectors {
     this.saveTicket(item, s);
     this.store.db
       .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
-      .run(this.store.source(s), id);
-    this.store.db
-      .prepare(
-        "UPDATE suggestions SET status='tracked' WHERE source=? AND ticket_id=?",
-      )
       .run(this.store.source(s), id);
     this.store.audit("ticket.tracked", String(id));
     return item.id;

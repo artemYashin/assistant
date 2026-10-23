@@ -7,7 +7,6 @@ import {
 } from "../server/ticket-status.js";
 import { Store, AppError } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -181,7 +180,6 @@ test("connector PATCH uses revision guard, updates tracked state and preserves c
   });
   const result = await new Connectors(
     store,
-    new IntegrationsAuth(store),
   ).changeTicketStatus(123456, "RFT");
   assert.equal(result.success, true);
   assert.deepEqual(methods, ["GET", "GET", "PATCH", "GET"]);
@@ -269,7 +267,6 @@ test("connector bulk update preserves collection URL and verifies with one bulk 
   });
   const results = await new Connectors(
     store,
-    new IntegrationsAuth(store),
   ).changeTicketStatuses([
     { id: 1, state: "RFT" },
     { id: 2, state: "RFT" },

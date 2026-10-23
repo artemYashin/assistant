@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Agent } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 import {
   ticketAnalysisAttachment,
   attachmentPreview,
@@ -103,7 +102,6 @@ test("agent receives attached criteria and full comments without Azure or anothe
   });
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
   );
   const result = await agent.chat(

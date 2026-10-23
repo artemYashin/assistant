@@ -6,7 +6,6 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { codeTools, configuredCodeBranch } from "../server/code-tools.js";
 import { makeTools } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 import { MemoryProposals } from "../server/memory-proposals.js";
 
 function setup(t: any) {
@@ -41,7 +40,7 @@ test("code tools are scoped, local-only, paginated and disabled at invocation ti
 });
 test("save_memory only creates a proposal until UI approval", async t => {
   const store = setup(t);
-  const tools = makeTools(store, new Approvals(store, async () => ({ id: "unused" })), { client: "", project: "" });
+  const tools = makeTools(store, { client: "", project: "" });
   const save = tools.find(tool => tool.name === "save_memory") as import("@github/copilot-sdk").Tool<any>;
   const result: any = await save.handler!({ scope: "general", body: "Verified short fact" }, {} as any);
   assert.equal(result.status, "pending");

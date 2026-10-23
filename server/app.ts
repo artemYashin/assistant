@@ -45,7 +45,6 @@ import {
 import { resolve } from "node:path";
 import { z } from "zod";
 import { Store, AppError, type Context, defaults } from "./store.js";
-import { Approvals } from "./approvals.js";
 import { IntegrationsAuth } from "./auth.js";
 import { Connectors } from "./connectors.js";
 import { PullRequests } from "./pull-requests.js";
@@ -75,14 +74,11 @@ const settingsSchema = z
     voiceNewKey: z.string().max(80).regex(voiceBindingPattern).default("KeyN"),
     model: text,
     reviewModel: text.default(""),
-    microsoftClientId: text,
-    microsoftTenantId: text,
     azureUrl: z.string().trim().max(1000),
     azureProject: text,
     azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
     syncSeconds: z.number().int().min(60).max(3600),
     syncSchedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
-    teamsEnabled: z.boolean().default(false),
     azureAutoImport: z.boolean().default(false),
     azureImportAssignees:z.array(z.object({id:text.min(1),name:text.min(1),email:z.string().trim().min(1).max(320)})).max(50).default([]),
     azureTypes: z.array(text.min(1)).max(50).default([]),
@@ -118,18 +114,13 @@ function sessionToken(req: Request) {
 export function createApp(
   store: Store,
   options: {
-    sendMessage?: (id: string, body: string) => Promise<{ id: string }>;
     origins?: string[];
   } = {},
 ) {
   const auth = new IntegrationsAuth(store);
-  const connectors = new Connectors(store, auth);
-  const approvals = new Approvals(
-    store,
-    options.sendMessage || ((id, body) => connectors.sendMessage(id, body)),
-  );
+  const connectors = new Connectors(store);
   const chatFiles = new ChatFiles(store);
-  const agent = new Agent(store, approvals, undefined, connectors);
+  const agent = new Agent(store, undefined, connectors);
   const pullRequests = new PullRequests(store, agent);
   const prMerge = new PrMerge(store, connectors);
   const prCreate = new PrCreate(store);
@@ -384,7 +375,6 @@ export function createApp(
     res.json({
       ...store.settings(),
       githubConnected: !!store.secret("github.token"),
-      microsoftConnected: store.get("microsoft.connected", false),
       azurePatSet: !!store.secret("azure.pat"),
     }),
   );
@@ -400,21 +390,6 @@ export function createApp(
     )
       throw new AppError(400, "Выберите типы и статусы для автоимпорта");
     const old = store.settings();
-    const microsoftChanged =
-      old.microsoftClientId !== settings.microsoftClientId ||
-      old.microsoftTenantId !== settings.microsoftTenantId;
-    if (
-      microsoftChanged &&
-      store.db
-        .prepare(
-          "SELECT 1 FROM approvals WHERE status IN ('pending','sending')",
-        )
-        .get()
-    )
-      throw new AppError(
-        409,
-        "Сначала обработайте ожидающие сообщения перед сменой аккаунта Teams",
-      );
     store.set("settings", {
       ...settings,
       azureAutoImport: store.rawSettings().azureAutoImport,
@@ -426,12 +401,6 @@ export function createApp(
       client: old.client,
       project: old.project,
     });
-    if (microsoftChanged) {
-      store.set("microsoft.connected", false);
-      store.db.exec(
-        "DELETE FROM chats; DELETE FROM messages; DELETE FROM suggestions;",
-      );
-    }
     if (azurePat?.trim()) store.setSecret("azure.pat", azurePat.trim());
     store.audit("settings.updated", "Настройки сохранены");
     res.json({ ok: true });
@@ -441,12 +410,6 @@ export function createApp(
   );
   app.post("/api/connect/github/poll", async (_req, res) =>
     res.json(await auth.pollGitHub()),
-  );
-  app.post("/api/connect/microsoft", async (_req, res) =>
-    res.json(await auth.startMicrosoft()),
-  );
-  app.get("/api/connect/microsoft", (_req, res) =>
-    res.json(auth.microsoftStatus()),
   );
   app.get("/api/copilot/models", async (_req, res) =>
     res.json(await agent.models()),
@@ -468,23 +431,9 @@ export function createApp(
             context.project,
           ) as any
       ).n,
-      pending: (
-        store.db
-          .prepare(
-            "SELECT count(*) AS n FROM approvals WHERE status='pending' AND expires_at>?",
-          )
-          .get(new Date().toISOString()) as any
-      ).n,
       tickets: (
         store.db
           .prepare("SELECT count(*) AS n FROM tickets WHERE source=?")
-          .get(source) as any
-      ).n,
-      inbox: (
-        store.db
-          .prepare(
-            "SELECT count(*) AS n FROM suggestions WHERE source=? AND status='new'",
-          )
           .get(source) as any
       ).n,
       memories: (
@@ -704,30 +653,6 @@ export function createApp(
       } finally { clearInterval(heartbeat); res.end(); }
     },
   );
-  app.get("/api/chats", (_req, res) =>
-    res.json(
-      store.db.prepare("SELECT * FROM chats ORDER BY watched DESC,name").all(),
-    ),
-  );
-  app.post("/api/chats/refresh", async (_req, res) =>
-    res.json(await connectors.refreshChats()),
-  );
-  app.put("/api/chats/:id", (req, res) => {
-    const v = z.object({ watched: z.boolean() }).parse(req.body);
-    store.db
-      .prepare("UPDATE chats SET watched=? WHERE id=?")
-      .run(v.watched ? 1 : 0, req.params.id);
-    res.json({ ok: true });
-  });
-  app.get("/api/chats/:id/messages", (req, res) =>
-    res.json(
-      store.db
-        .prepare(
-          "SELECT * FROM messages WHERE chat_id=? ORDER BY created_at DESC LIMIT 100",
-        )
-        .all(req.params.id),
-    ),
-  );
   const memoryProposals = new MemoryProposals(store);
   app.post("/api/memories/:id/refine", (req, res) => {
     const { context } = z.object({ context: contextSchema }).parse(req.body);
@@ -762,23 +687,10 @@ export function createApp(
     reviewQuestions.dismiss(String(req.params.id));
     res.json({ ok: true });
   });
-  app.get("/api/approvals", (_req, res) => res.json(approvals.list()));
-  app.delete("/api/confirmations", (_req, res) => res.json(approvals.clearAll()));
-  app.post("/api/approvals", (req, res) => {
-    const v = z
-      .object({ chatId: z.string(), body: z.string().min(1).max(12000) })
-      .strict()
-      .parse(req.body);
-    res.json(approvals.propose(v.chatId, v.body));
-  });
-  app.post("/api/approvals/:id/approve", async (req, res) => {
-    // This is the only route capable of sending. It requires an authenticated browser and CSRF token.
-    z.object({}).strict().parse(req.body);
-    res.json(await approvals.approve(String(req.params.id)));
-  });
-  app.post("/api/approvals/:id/reject", (req, res) => {
-    approvals.reject(String(req.params.id));
-    res.json({ ok: true });
+  app.delete("/api/confirmations", (_req, res) => {
+    const proposals = store.db.prepare("DELETE FROM memory_proposals").run().changes;
+    store.audit("approvals.cleared", "all");
+    res.json({ proposals });
   });
   const localDevelopers = new LocalDevelopers(store);
   const developerNoteKey = (context: Context, id: string) =>
@@ -1180,21 +1092,6 @@ export function createApp(
   app.post("/api/tickets/import", async (_req, res) =>
     res.json(await connectors.syncTickets(true)),
   );
-  app.get("/api/inbox", (_req, res) =>
-    res.json(
-      store.db
-        .prepare(
-          "SELECT s.*,c.name AS chat_name,m.sender,m.url AS message_url FROM suggestions s LEFT JOIN chats c ON c.id=s.chat_id LEFT JOIN messages m ON m.chat_id=s.chat_id AND m.id=s.message_id WHERE s.source=? AND s.status='new' ORDER BY s.created_at DESC LIMIT 200",
-        )
-        .all(store.source()),
-    ),
-  );
-  app.post("/api/inbox/:id/dismiss", (req, res) => {
-    store.db
-      .prepare("UPDATE suggestions SET status='dismissed' WHERE id=?")
-      .run(req.params.id);
-    res.json({ ok: true });
-  });
   app.post("/api/pr/reimport", async (req, res) => {
     const input = z.object({ monitor: text.min(1), repo: text.min(1), number: z.number().int().positive() }).strict().parse(req.body);
     res.json(await pullRequests.reimportActive(input.monitor, input.repo, input.number));
@@ -1553,17 +1450,6 @@ export function createApp(
       at: new Date().toISOString(),
     });
     try {
-      if (
-        store.settings().teamsEnabled &&
-        store.get("microsoft.connected", false)
-      )
-        try {
-          await connectors.syncTeams();
-        } catch (e) {
-          errors.push(
-            e instanceof AppError ? e.message : "Ошибка синхронизации Teams",
-          );
-        }
       if (store.secret("azure.pat"))
         try {
           await connectors.syncTickets(false, true);
@@ -1704,5 +1590,5 @@ export function createApp(
       });
     },
   );
-  return { app, sync, agent, approvals, connectors, pullRequests, codeBrowser };
+  return { app, sync, agent, connectors, pullRequests, codeBrowser };
 }

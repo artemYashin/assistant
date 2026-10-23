@@ -20,7 +20,6 @@ import {
   readAzureImage,
 } from "./pr-images.js";
 import { Connectors, plainText } from "./connectors.js";
-import { IntegrationsAuth } from "./auth.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
 import { Store, AppError, type Context } from "./store.js";
@@ -583,7 +582,6 @@ export class PullRequests {
       )
         await new Connectors(
           this.store,
-          new IntegrationsAuth(this.store),
         ).trackTicket(key.ticketId, guard);
       guard();
       this.store.db
@@ -917,7 +915,6 @@ export class PullRequests {
         try {
           await new Connectors(
             this.store,
-            new IntegrationsAuth(this.store),
           ).importPrTickets(
             found.flatMap((p) => [
               ...prTicketIds((p.description || "") + "\n" + (p.title || "")),
@@ -1667,7 +1664,6 @@ export class PullRequests {
           );
         const connectors = new Connectors(
           this.store,
-          new IntegrationsAuth(this.store),
         );
         for (const id of ids) {
           if (!Number.isSafeInteger(id) || id <= 0)

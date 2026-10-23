@@ -52,7 +52,6 @@ test("assistant duration survives history reads without changing legacy messages
 
 test("tool history and token usage persist in the correct chat with selective discovery", async t => {
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const { UsageLedger } = await import("../server/usage.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-chat-traces-"));
   let store = new Store(dir);
@@ -82,7 +81,7 @@ test("tool history and token usage persist in the correct chat with selective di
       };
     },
   };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const agent = new Agent(store, () => client as any);
   const events: any[] = [];
   await agent.chat("Покажи локальные теги", context, false, undefined, first.id, undefined, event => events.push(event));
   assert.equal(events.find(event => event.stage === "usage").inputTokens, 123);
@@ -93,15 +92,15 @@ test("tool history and token usage persist in the correct chat with selective di
   assert.deepEqual(reply.tools[0].names, ["list_local_tags"]);
   assert.ok(reply.tools.every((tool: any) => tool.status === "completed" && tool.durationMs >= 0 && tool.offsetMs >= 0));
   const ledger = new UsageLedger(store);
-  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 123, outputTokens: 45, reports: 1, partial: false });
-  assert.deepEqual(ledger.sessionUsage(context, second.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 123, outputTokens: 45, reports: 1, partial: false, contextUsage: null });
+  assert.deepEqual(ledger.sessionUsage(context, second.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false, contextUsage: null });
   assert.equal(store.conversationPage(context, second.id).messages.length, 0);
   assert.throws(() => ledger.sessionUsage({ client: "Other", project: "" }, first.id));
   store.say("assistant", "Старая переписка", context, [], second.id);
   assert.equal(ledger.sessionUsage(context, second.id).partial, true);
   const receiptsBefore = store.db.prepare("SELECT count(*) AS count FROM llm_usage").get();
   store.clearHistory(context, first.id);
-  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+  assert.deepEqual(ledger.sessionUsage(context, first.id), { inputTokens: 0, outputTokens: 0, reports: 0, partial: false, contextUsage: null });
   assert.deepEqual(store.db.prepare("SELECT count(*) AS count FROM llm_usage").get(), receiptsBefore);
   assert.equal(ledger.sessionUsage(context, second.id).partial, true);
 

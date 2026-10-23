@@ -9,4 +9,4 @@
 
 История активности · последние 100 событий · / /
 
-Источник: src/OverviewActivity.tsx:154.
+Источник: src/OverviewActivity.tsx:153.

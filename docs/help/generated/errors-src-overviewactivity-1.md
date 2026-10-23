@@ -21,10 +21,10 @@ sync.error
 
 Остановлено
 
-Источник: src/OverviewActivity.tsx:47.
+Источник: src/OverviewActivity.tsx:46.
 
 ### Сообщение
 
 Название недоступно
 
-Источник: src/OverviewActivity.tsx:110.
+Источник: src/OverviewActivity.tsx:109.

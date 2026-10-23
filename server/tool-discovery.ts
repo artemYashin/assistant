@@ -22,7 +22,6 @@ const catalog: Record<string, string> = {
   cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
   sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
-  sync_teams_chats: "Explicit user request only: refresh watched Teams messages, not assistant history.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   read_selected_tickets: "Read selected ticket summaries (id/title/state/type), optional extra fields, on demand; export includes column order/format. No bodies or Azure calls.",
   edit_ticket_export: "Edit an existing open/minimized export: add/remove tickets or choose columns. Before EVERY edit first read_selected_tickets(target=export). No deletion from the system.",
@@ -64,11 +63,6 @@ const catalog: Record<string, string> = {
   list_memories: "List memory IDs and short summaries in current scope; read_memory loads selected details.",
   save_memory: "Submit a requested fact for UI approval in general/client/project/project_review memory; never saves directly.",
   propose_memory: "Propose a useful fact for approval, including project_review guidance: scope, text and reason.",
-  list_chats: "List locally synchronized Teams chats.",
-  read_teams_messages: "Read locally stored messages by chat ID.",
-  list_inbox: "Read locally detected ticket mentions.",
-  propose_teams_message:
-    "Draft a Teams message for separate UI approval: chat ID and text.",
 };
 
 const schema = z.object({ names: z.array(z.string()).min(1).max(8) }).strict();

@@ -5,7 +5,6 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {Store} from "../server/store.js";
 import {Connectors} from "../server/connectors.js";
-import {IntegrationsAuth} from "../server/auth.js";
 import {listLocalTickets} from "../server/ticket-list.js";
 import {searchTicketContent} from "../server/ticket-content-search.js";
 import {azureSummary,browseFields} from "../server/azure-browser.js";
@@ -25,7 +24,7 @@ test("Azure priority survives sync/restart/trash, filters independently, and exp
   assert.ok(JSON.parse(init.body).fields.includes(AZURE_PRIORITY_FIELD));
   return Response.json({value:JSON.parse(init.body).ids.map((id:number)=>({id,fields:{"System.Title":"Ticket "+id,"System.TeamProject":"P","System.State":"Active",...(id===3?{}:{[AZURE_PRIORITY_FIELD]:id===1?2:10})}}))});
  });
- await new Connectors(store,new IntegrationsAuth(store)).syncTickets();
+ await new Connectors(store).syncTickets();
  assert.ok(browseFields.includes(AZURE_PRIORITY_FIELD));
  assert.equal(azureSummary({id:1,fields:{[AZURE_PRIORITY_FIELD]:2}},source,"https://ado.test","P").azurePriority,2);
  const rows=listLocalTickets(store,{fields:["priority","azurePriority"],sortBy:"azurePriority",sortDirection:"desc"}).tickets;

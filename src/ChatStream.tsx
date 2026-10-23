@@ -21,8 +21,6 @@ const labels: Record<string, string> = {
   list_pull_requests: "Поиск pull request", get_pull_request: "Чтение pull request",
   request_pull_request_review: "Запуск review", list_memories: "Чтение памяти",
   save_memory: "Сохранение памяти", propose_memory: "Подготовка предложения в память",
-  list_chats: "Чтение чатов Teams", read_teams_messages: "Чтение сообщений Teams",
-  list_inbox: "Чтение входящих", propose_teams_message: "Подготовка черновика Teams",
 };
 type ToolProgress = Extract<ChatProgress, { stage: "tool" }>;
 type Live = { startedAt: number; messageId: string; text: string; tools: ToolProgress[]; timeline: ChatTimelineItem[] };

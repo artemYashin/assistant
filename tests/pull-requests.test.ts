@@ -293,14 +293,15 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
     ).status,
     "cancelled",
   );
-  service.requestReview(service.monitors()[0].id, "repo", 1);
+  const retryId = service.requestReview(service.monitors()[0].id, "repo", 1);
+  assert.notEqual(retryId, id);
   const again = new Store(dir);
   again.close();
   assert.equal(
     (
       store.db
         .prepare("SELECT status FROM pr_reviews WHERE id=?")
-        .get(id) as any
+        .get(retryId) as any
     ).status,
     "preparing_git",
   );

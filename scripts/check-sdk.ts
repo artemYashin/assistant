@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { CopilotClient } from "@github/copilot-sdk";
 import { Store } from "../server/store.js";
-import { Approvals } from "../server/approvals.js";
 import { sessionConfig } from "../server/agent.js";
 const dir = mkdtempSync(join(tmpdir(), "orbit-sdk-check-"));
 const store = new Store(dir);
@@ -25,9 +24,6 @@ try {
   const session = await client.createSession(
     sessionConfig(
       store,
-      new Approvals(store, async () => {
-        throw new Error("Sending forbidden in SDK test");
-      }),
       { client: "", project: "" },
     ),
   );
@@ -42,7 +38,7 @@ try {
   });
   assert.equal(forbidden.resultType, "denied");
   const approval = await session.rpc.tools.execute({
-    name: "approve_teams_message",
+    name: "approve_memory_proposal",
     arguments: { id: "fake" },
   });
   assert.equal(approval.resultType, "denied");

@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 test("identity search is filtered, bounded, excludes groups and merges cached search selections", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-search-")),
     store = new Store(dir);
@@ -19,7 +18,7 @@ test("identity search is filtered, bounded, excludes groups and merges cached se
     azureProject: "Project",
   });
   store.setSecret("azure.pat", "pat");
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   let calls = 0;
   t.mock.method(globalThis, "fetch", async (raw: any) => {
     calls++;
@@ -76,7 +75,7 @@ test("empty general search falls back to explicit display name or mail, without 
     azureProject: "P",
   });
   store.setSecret("azure.pat", "pat");
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   const filters: string[] = [];
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
     const url = new URL(raw);
@@ -123,7 +122,7 @@ test("partial-name Graph search resolves descriptors in one batch and excludes g
     azureProject: "P",
   });
   store.setSecret("azure.pat", "pat");
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   let calls = 0;
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
     calls++;
@@ -188,7 +187,7 @@ test("unavailable Graph keeps cached partial-name results and reports a warning"
     person,
     { id: "other", name: "Other User" },
   ]);
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   let calls = 0;
   t.mock.method(globalThis, "fetch", async (raw: any) => {
     calls++;

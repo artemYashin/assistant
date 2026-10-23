@@ -7,32 +7,22 @@ import { tmpdir } from "node:os";
 import { Store } from "../server/store.js";
 import { createApp } from "../server/app.js";
 import { sessionConfig, makeTools } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 
-test("sending API enforces login, Origin, CSRF, immutable payload and one-shot approval", async (t) => {
+test("memory API enforces login, Origin, CSRF and one-shot approval", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-api-"));
   const store = new Store(dir);
   t.after(() => {
     store.close();
     rmSync(dir, { recursive: true, force: true });
   });
-  const sent: any[] = [];
-  const { app } = createApp(store, {
-    sendMessage: async (id, body) => {
-      sent.push({ id, body });
-      return { id: "remote" };
-    },
-  });
-  store.db
-    .prepare("INSERT INTO chats(id,name) VALUES (?,?)")
-    .run("chat-1", "Team");
+  const { app } = createApp(store);
   const headers = {
     Host: "localhost:43871",
     Origin: "http://localhost:43871",
     "X-Orbit-Request": "1",
   };
   await request(app)
-    .post("/api/approvals/nope/approve")
+    .post("/api/memory-proposals/nope/approve")
     .set(headers)
     .send({})
     .expect(401);
@@ -74,13 +64,9 @@ test("sending API enforces login, Origin, CSRF, immutable payload and one-shot a
     .set(authHeaders)
     .send({})
     .expect(200);
-  const draft = await request(app)
-    .post("/api/approvals")
-    .set(authHeaders)
-    .send({ chatId: "chat-1", body: "Frozen text" })
-    .expect(200);
-  assert.equal(sent.length, 0);
-  const path = `/api/approvals/${draft.body.id}/approve`;
+  const { MemoryProposals } = await import("../server/memory-proposals.js");
+  const draft = new MemoryProposals(store).propose({ scope: "general", summary: "Fact", body: "Frozen text", reason: "Useful" }, {client: "", project: ""});
+  const path = `/api/memory-proposals/${draft.id}/approve`;
   await request(app)
     .post(path)
     .set({ ...headers, Cookie: cookie })
@@ -91,14 +77,12 @@ test("sending API enforces login, Origin, CSRF, immutable payload and one-shot a
     .set({ ...authHeaders, Origin: "https://attacker.invalid" })
     .send({})
     .expect(403);
-  await request(app)
-    .post(path)
-    .set(authHeaders)
-    .send({ body: "Changed text", chatId: "attacker" })
-    .expect(400);
   await request(app).post(path).set(authHeaders).send({}).expect(200);
   await request(app).post(path).set(authHeaders).send({}).expect(409);
-  assert.deepEqual(sent, [{ id: "chat-1", body: "Frozen text" }]);
+  assert.equal((store.memories({client: "", project: ""})[0] as any).body, "Frozen text");
+  await request(app).delete("/api/confirmations").set(authHeaders).expect(200);
+  assert.equal(store.memories({client: "", project: ""}).length, 1);
+  assert.equal((await request(app).get("/api/memory-proposals").set(authHeaders)).body.length, 0);
   store.setSecret("azure.pat", "secret-test-value");
   const settings = await request(app)
     .get("/api/settings")
@@ -120,15 +104,12 @@ test("agent has no send or approval capability, disables builtins and rejects un
     store.close();
     rmSync(dir, { recursive: true, force: true });
   });
-  const approvals = new Approvals(store, async () => {
-    throw new Error("never");
-  });
   const context = { client: "A", project: "One" };
-  const tools = makeTools(store, approvals, context);
+  const tools = makeTools(store, context);
   const names = tools.map((t) => t.name);
-  assert.ok(names.includes("propose_teams_message"));
+  assert.ok(names.includes("list_tickets"));
   assert.ok(!names.some((n) => /approve|^send/.test(n)));
-  const config = sessionConfig(store, approvals, context);
+  const config = sessionConfig(store, context);
   assert.deepEqual(config.excludedTools, ["builtin:*", "mcp:*"]);
   assert.equal(config.enableConfigDiscovery, false);
   assert.equal(config.enableSkills, false);
@@ -152,7 +133,6 @@ test("ticket and PR sync buttons use independent synchronization routes", async 
   const { app, connectors, pullRequests } = createApp(store);
   const calls: string[] = [];
   connectors.syncTickets = async (importMine) => { calls.push(`tickets:${importMine}`); return { count: 0 }; };
-  connectors.syncTeams = async () => { throw new Error("Teams must not be synchronized"); };
   pullRequests.sync = async () => { calls.push("prs"); };
   const headers = { Host: "localhost:43871", Origin: "http://localhost:43871", "X-Orbit-Request": "1" };
   const setup = await request(app).post("/api/auth/setup").set(headers).send({ password: "correct-password-long" }).expect(200);

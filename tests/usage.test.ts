@@ -8,7 +8,6 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { UsageLedger } from "../server/usage.js";
 import { Agent } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 const context = { client: "Customer", project: "Project" };
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-usage-"));
@@ -112,7 +111,6 @@ function fakeAgent(
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
     connectors,
   );
@@ -217,7 +215,7 @@ test("manual PR review has only memory reads, no chat history and still accounts
     assert.deepEqual(c.tools.map((tool: any) => tool.name), ["read_memory"]);
     assert.deepEqual(c.excludedTools, ["builtin:*", "mcp:*"]);
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "propose_teams_message" }))
+      (await c.hooks.onPreToolUse({ toolName: "nonexistent_tool" }))
         .permissionDecision,
       "deny",
     );
@@ -299,7 +297,6 @@ test("status tool requires current user instruction and deduplicates repeated wr
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
     connectors as any,
   );
@@ -427,7 +424,6 @@ test("failed status change invalidates cached ticket without retrying the write"
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
     connectors as any,
   );
@@ -496,7 +492,6 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
     connectors as any,
   );

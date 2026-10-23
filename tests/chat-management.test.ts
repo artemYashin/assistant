@@ -8,7 +8,6 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { createApp } from "../server/app.js";
 import { Agent, mayManageLocalTicket } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 const context = { client: "A", project: "One" };
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-chat-"));
@@ -125,7 +124,6 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
   };
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () => client as any,
     connectors,
   );

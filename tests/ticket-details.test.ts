@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 const image = "11111111-1111-1111-1111-111111111111";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-details-"));
@@ -22,7 +21,7 @@ function fixture(t: any) {
   store.setSecret("azure.pat", "pat");
   return {
     store,
-    connectors: new Connectors(store, new IntegrationsAuth(store)),
+    connectors: new Connectors(store),
   };
 }
 test("automatic import filters by selected assignees, exact type and state with safe WIQL quoting", async (t) => {

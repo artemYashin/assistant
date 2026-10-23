@@ -9,100 +9,100 @@
 
 Pull request недоступен для подготовки ветки.
 
-Источник: server/pull-requests.ts:1476.
+Источник: server/pull-requests.ts:1473.
 
 ### Сообщение
 
 Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся
 
-Источник: server/pull-requests.ts:1503.
+Источник: server/pull-requests.ts:1500.
 
 ### Сообщение
 
 Подключите GitHub Copilot
 
-Источник: server/pull-requests.ts:1509.
+Источник: server/pull-requests.ts:1506.
 
 ### Сообщение
 
 Ревью остановлено пользователем
 
-Источник: server/pull-requests.ts:1567.
+Источник: server/pull-requests.ts:1564.
 
 ### Сообщение
 
 Приложение завершает работу
 
-Источник: server/pull-requests.ts:1604.
+Источник: server/pull-requests.ts:1601.
 
 ### Сообщение
 
 Нет доступного текстового diff для ревью
 
-Источник: server/pull-requests.ts:1621.
+Источник: server/pull-requests.ts:1618.
 
 ### Сообщение
 
 Мониторинг изменён во время подготовки ревью
 
-Источник: server/pull-requests.ts:1631.
+Источник: server/pull-requests.ts:1628.
 
 ### Сообщение
 
 Не удалось прочитать связи тикетов PR
 
-Источник: server/pull-requests.ts:1649.
+Источник: server/pull-requests.ts:1646.
 
 ### Сообщение
 
 Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.
 
-Источник: server/pull-requests.ts:1662.
+Источник: server/pull-requests.ts:1659.
 
 ### Сообщение
 
 Выберите не более 20 связанных тикетов для одного ревью или отключите чтение тикетов.
 
-Источник: server/pull-requests.ts:1664.
+Источник: server/pull-requests.ts:1661.
 
 ### Сообщение
 
 Некорректная связь тикета
 
-Источник: server/pull-requests.ts:1674.
+Источник: server/pull-requests.ts:1670.
 
 ### Сообщение
 
 Источник Azure изменился
 
-Источник: server/pull-requests.ts:1679.
+Источник: server/pull-requests.ts:1675.
 
 ### Сообщение
 
 Тикет #{…}: {…}. Повторите позже или отключите чтение тикетов.
 
-Источник: server/pull-requests.ts:1682.
+Источник: server/pull-requests.ts:1678.
 
 ### Сообщение
 
 Требования, комментарии и локальные заметки превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.
 
-Источник: server/pull-requests.ts:1704.
+Источник: server/pull-requests.ts:1700.
 
 ### Сообщение
 
 Соберите все вопросы в один вызов
 
-Источник: server/pull-requests.ts:1774.
+Источник: server/pull-requests.ts:1770.
 
 ### Сообщение
 
 Слишком много вопросов для выбранного режима
 
-Источник: server/pull-requests.ts:1782.
+Источник: server/pull-requests.ts:1778.
 
 ### Сообщение
 
 Ошибка подготовки или выполнения ревью. Автоповтор отключён.
 
-Источник: server/pull-requests.ts:1819.
+Источник: server/pull-requests.ts:1815.

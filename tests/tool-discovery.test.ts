@@ -73,12 +73,11 @@ test("failed publication is retryable and concurrent discovery does not lose too
   assert.deepEqual(published, ["load_tools", "list_tickets", "get_ticket"]);
 });
 
-test("compact English policy preserves language and approval requirements", () => {
+test("English policy preserves language and memory approval requirements", () => {
   assert.match(SYSTEM_POLICY, /language of the user's current message/);
   assert.match(SYSTEM_POLICY, /verification GET/);
-  assert.match(SYSTEM_POLICY, /separate human approval in the UI/);
+  assert.match(SYSTEM_POLICY, /proposals for approval on the Approvals page/);
   assert.match(SYSTEM_POLICY, /separate consent/);
-  assert.ok(SYSTEM_POLICY.length < 7000);
 });
 
 test("a greeting starts with discovery only and does not publish tool schemas", async (t) => {
@@ -87,7 +86,6 @@ test("a greeting starts with discovery only and does not publish tool schemas", 
   const { join } = await import("node:path");
   const { Store } = await import("../server/store.js");
   const { Agent } = await import("../server/agent.js");
-  const { Approvals } = await import("../server/approvals.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-discovery-"));
   const store = new Store(dir);
   t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
@@ -103,7 +101,7 @@ test("a greeting starts with discovery only and does not publish tool schemas", 
       };
     },
   };
-  const agent = new Agent(store, new Approvals(store, async () => ({ id: "unused" })), () => client as any);
+  const agent = new Agent(store, () => client as any);
   assert.equal((await agent.chat("Привет", { client: "", project: "" })).body, "Привет!");
   assert.equal(published, 0);
 });

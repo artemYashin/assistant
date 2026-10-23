@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 import { azureBrowseSchema, browseQuery, orderBrowseIds } from "../server/azure-browser.js";
 import { ticketsCsv } from "../src/tickets-csv.js";
 
@@ -64,7 +63,7 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     azureProject: "P",
   });
   store.setSecret("azure.pat", "pat");
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   let batches = 0,
     queries = 0,
     resultCount = 51;

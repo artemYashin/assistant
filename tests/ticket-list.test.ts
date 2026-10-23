@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Agent, sessionConfig } from "../server/agent.js";
-import { Approvals } from "../server/approvals.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-list-"));
   const store = new Store(dir);
@@ -56,7 +55,6 @@ test("ticket tool pages beyond 100 with filters, bounded responses and source is
   );
   const tool = sessionConfig(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     { client: "", project: "" },
   ).tools!.find((t) => t.name === "list_tickets")!;
   let afterId = 0;
@@ -93,7 +91,6 @@ test("chat and review use separate models and record the selection, with legacy 
   });
   const agent = new Agent(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     () =>
       ({
         start: async () => {},
@@ -136,7 +133,6 @@ test("ticket list supports exact ID batches and literal title search together", 
       .run(store.source(), id, title, "Active", "", "Bug", "", "", "now");
   const tool = sessionConfig(
     store,
-    new Approvals(store, async () => ({ id: "unused" })),
     { client: "", project: "" },
   ).tools!.find((tool) => tool.name === "list_tickets")!;
   const list: any = await tool.handler!(
@@ -163,7 +159,7 @@ test("summary ticket tool includes Azure dates without reading full content", as
   );
   store.saveTicketCreatedAt(42, store.source(), "2026-09-01T09:00:00Z");
   const tool = sessionConfig(
-    store, new Approvals(store, async () => ({ id: "unused" })),
+    store,
     { client: "", project: "" },
   ).tools!.find((tool) => tool.name === "list_tickets")!;
   const result: any = await tool.handler!({ ids: [42], fields: ["created_at", "changed_at", "synced_at"] }, {} as any);

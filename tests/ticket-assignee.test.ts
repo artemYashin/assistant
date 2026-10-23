@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 
 for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
   test(`Azure assignee ${mode}: revision guard and read-back verification`, async (t) => {
@@ -40,7 +39,7 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
     const previousRecent = Array.from({ length: 8 }, (_, i) => ({ id: `old-${i}`, name: `Old ${i}`, email: `old${i}@example.test` }));
     store.set(recentKey, previousRecent);
     store.set("azure.assignees.recent:other-source", [{ id: "other" }]);
-    const connectors = new Connectors(store, new IntegrationsAuth(store));
+    const connectors = new Connectors(store);
     let reads = 0,
       writes = 0;
     t.mock.method(globalThis, "fetch", async (_url: any, init: any) => {

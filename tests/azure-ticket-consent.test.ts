@@ -7,7 +7,6 @@ import {
 } from "../server/azure-ticket-consent.js";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
-import { IntegrationsAuth } from "../server/auth.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -91,7 +90,7 @@ test("Azure lookup reads basic fields; read-only leaves SQLite untouched and add
       ],
     });
   });
-  const connectors = new Connectors(store, new IntegrationsAuth(store));
+  const connectors = new Connectors(store);
   const read = await connectors.lookupTickets(
     { search: "O'Brien",azurePriority:[2] },
     false,
