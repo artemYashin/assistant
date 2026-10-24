@@ -9,10 +9,10 @@
 
 Браузер не разрешил запрос уведомлений. Проверьте настройки сайта и HTTPS.
 
-Источник: src/CalendarSettings.tsx:137.
+Источник: src/CalendarSettings.tsx:138.
 
 ### Сообщение
 
 Уведомления заблокированы. Разрешите их в настройках сайта браузера.
 
-Источник: src/CalendarSettings.tsx:149.
+Источник: src/CalendarSettings.tsx:150.

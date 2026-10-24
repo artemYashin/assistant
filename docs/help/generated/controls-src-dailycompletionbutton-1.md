@@ -9,4 +9,4 @@
 
 ? · «{…}» · {…}. {…} · /
 
-Источник: src/DailyCompletionButton.tsx:26.
+Источник: src/DailyCompletionButton.tsx:34.

@@ -573,8 +573,9 @@ export function createApp(
   app.get("/api/calendar", (_req,res) => res.json({items:calendar.list(),developers:calendar.developers(),contexts:store.contexts()}));
   app.post("/api/calendar", (req,res) => res.json(calendar.save(req.body)));
   app.put("/api/calendar/:id", (req,res) => res.json(calendar.save(req.body,String(req.params.id))));
-  app.post("/api/calendar/:id/complete-today", (req,res) => res.json(calendar.completeToday(String(req.params.id))));
-  app.post("/api/calendar/:id/reopen-today", (req,res) => res.json(calendar.completeToday(String(req.params.id),false)));
+  app.put("/api/calendar/:id/warning", (req,res) => res.json(calendar.setLead(String(req.params.id),req.body.leadMinutes)));
+  app.post("/api/calendar/:id/complete-today", (req,res) => res.json(calendar.completeToday(String(req.params.id),true,new Date(),z.string().optional().parse(req.body.day))));
+  app.post("/api/calendar/:id/reopen-today", (req,res) => res.json(calendar.completeToday(String(req.params.id),false,new Date(),z.string().optional().parse(req.body.day))));
   app.post("/api/calendar/:id/complete", (req,res) => res.json(calendar.complete(String(req.params.id))));
   app.post("/api/calendar/:id/reopen", (req,res) => res.json(calendar.reopen(String(req.params.id))));
   app.delete("/api/calendar/:id", (req,res) => res.json(calendar.remove(String(req.params.id))));

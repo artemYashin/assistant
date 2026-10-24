@@ -257,3 +257,17 @@ test("ordinary reminder advance does not add a second lead time to ticket deadli
   assert.equal(cal.notifications(new Date("2026-11-10T10:29:59Z")).length, 0);
   assert.equal(cal.notifications(new Date("2026-11-10T10:30:00Z")).length, 1);
 });
+
+test("ticket warning override survives deadline edits and restores global default", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due });
+  const id = cal.list()[0].id;
+  cal.setLead(id, 10);
+  assert.equal(cal.list()[0].start, "2026-11-10T11:50:00.000Z");
+  assert.equal(cal.notifications(new Date("2026-11-10T11:49:00Z")).length, 0);
+  assert.equal(cal.notifications(new Date("2026-11-10T11:50:00Z")).length, 1);
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: "2026-11-11T12:00:00Z" });
+  assert.equal(cal.list()[0].leadMinutes, 10);
+  cal.setLead(id, null);
+  assert.equal(cal.list()[0].start, "2026-11-10T12:00:00.000Z");
+});

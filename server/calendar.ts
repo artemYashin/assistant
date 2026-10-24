@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { dailyOccurrence } from "./calendar-repeat.js";
 import { wallTime } from "./calendar-time.js";
 import { syncTicketDeadlines, activeDeadlineSql } from "./ticket-deadlines.js";
@@ -27,6 +28,7 @@ export class Calendar {
             },
           }
         : {}),
+      leadMinutes: r.lead_minutes ?? null,
       completedDays: JSON.parse(r.completed_days || "[]"),
       repeatDaily: !!r.repeat_daily,
       repeatZone: r.repeat_zone,
@@ -133,18 +135,43 @@ export class Calendar {
           repeatZone,
         );
     }
+    this.setLead(id!, v.leadMinutes ?? null);
     return { id };
   }
-  completeToday(id: string, completed = true, now = new Date()) {
+  setLead(id: string, lead: unknown) {
+    const minutes = z.number().int().min(0).max(525600).nullable().parse(lead);
+    if (
+      !this.store.db
+        .prepare("UPDATE calendar_events SET lead_minutes=? WHERE id=?")
+        .run(minutes, id).changes
+    )
+      throw new AppError(404, "Напоминание не найдено.");
+    syncTicketDeadlines(this.store);
+    return { ok: true };
+  }
+  completeToday(
+    id: string,
+    completed = true,
+    now = new Date(),
+    occurrenceDay?: string,
+  ) {
     return this.store.db.transaction(() => {
       const item = this.list().find((i) => i.id === id);
       if (!item) throw new AppError(404, "Напоминание не найдено.");
-      const day = wallTime(now.toISOString(), item.repeatZone || "UTC").slice(
-        0,
-        10,
-      );
+      const day =
+        occurrenceDay ??
+        wallTime(now.toISOString(), item.repeatZone || "UTC").slice(0, 10);
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
+        !Number.isFinite(Date.parse(day)) ||
+        new Date(day).toISOString().slice(0, 10) !== day
+      )
+        throw new AppError(400, "Некорректная дата итерации.");
       if (!item.repeatDaily || !dailyOccurrence(item, day))
-        throw new AppError(400, "У напоминания нет сегодняшней итерации.");
+        throw new AppError(
+          400,
+          "У напоминания нет итерации за выбранную дату.",
+        );
       const days = new Set(item.completedDays || []);
       if (completed) days.add(day);
       else days.delete(day);
@@ -196,43 +223,44 @@ export class Calendar {
     )
       return [];
     const instant = now.toISOString(),
-      reminderThreshold = new Date(
-        now.getTime() + options.reminderLeadMinutes * 60000,
-      ).toISOString(),
       cutoff = now.getTime() - options.intervalMinutes * 60000;
     return this.store.db.transaction(() => {
       // One persisted batch clock for every project, reminder and browser tab.
       const batchKey = "calendar.notifications.last-batch-at";
       const lastBatch = this.store.get<number | null>(batchKey, null);
       if (lastBatch !== null && lastBatch > cutoff) return [];
-      const due = this.list().filter((item) => {
-        if (item.completed) return false;
-        if (item.repeatDaily) {
-          const zone = item.repeatZone || "UTC";
-          const day = wallTime(instant, zone).slice(0, 10);
+      const due = this.list().flatMap((item) => {
+        if (item.completed) return [];
+        const threshold = new Date(
+          now.getTime() +
+            (item.leadMinutes ?? options.reminderLeadMinutes) * 60000,
+        ).toISOString();
+        if (!item.repeatDaily)
+          return !item.start ||
+            item.start <= (item.ticket ? instant : threshold)
+            ? [item]
+            : [];
+        const zone = item.repeatZone || "UTC";
+        const firstDay = wallTime(instant, zone).slice(0, 10);
+        const lastDay = wallTime(threshold, zone).slice(0, 10);
+        const result: CalendarItem[] = [];
+        for (let day = firstDay; day <= lastDay;) {
           const occurrence = dailyOccurrence(item, day);
-          return (
-            !!occurrence &&
+          if (
+            occurrence &&
             !occurrence.completed &&
-            occurrence.start! <= reminderThreshold
-          );
+            occurrence.start! <= threshold
+          )
+            result.push(occurrence);
+          day = new Date(Date.parse(day + "T12:00:00Z") + 86400000)
+            .toISOString()
+            .slice(0, 10);
         }
-        // Ticket start already includes its separate deadline warning interval.
-        return (
-          !item.start ||
-          item.start <= (item.ticket ? instant : reminderThreshold)
-        );
+        return result;
       });
       // An empty collection sends nothing and does not postpone a future batch.
       if (due.length) this.store.set(batchKey, now.getTime());
-      return due.map((item) =>
-        item.repeatDaily
-          ? dailyOccurrence(
-              item,
-              wallTime(instant, item.repeatZone || "UTC").slice(0, 10),
-            )!
-          : item,
-      );
+      return due;
     })();
   }
 }

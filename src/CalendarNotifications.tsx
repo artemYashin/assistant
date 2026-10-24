@@ -10,6 +10,9 @@ import { dailyOccurrence } from "../server/calendar-repeat.js";
 import { eventTime, wallTime } from "./calendar-time.js";
 import { statusLabels } from "./CalendarPage.js";
 
+const notificationKey = (item: CalendarItem) =>
+  `${item.id}:${item.occurrenceDay || ""}`;
+
 function ReminderToast({
   items,
   developers,
@@ -95,22 +98,52 @@ function ReminderToast({
       </div>
       <div className="calendar-toast-items">
         {items.map((item) => (
-          <div className="calendar-toast-row" key={item.id}>
+          <div className="calendar-toast-row" key={notificationKey(item)}>
             <button
               type="button"
               className="calendar-toast-item"
               onClick={() => onOpen(item)}
             >
+              <span className="calendar-toast-badges">
+                <span
+                  className={
+                    "calendar-state " +
+                    calendarStatus({ ...item, repeatDaily: false })
+                  }
+                >
+                  {
+                    statusLabels[
+                      calendarStatus({ ...item, repeatDaily: false })
+                    ]
+                  }
+                </span>
+                {item.ticket && (
+                  <span className="calendar-ticket-badge">
+                    Тикет #{item.ticket.id}
+                  </span>
+                )}
+              </span>
               <span className="calendar-toast-title">{item.title}</span>
               <small className="calendar-toast-time">
-                {item.ticket ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone) : eventTime(item.start, item.end, zone)}
+                {item.ticket
+                  ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone)
+                  : eventTime(item.start, item.end, zone)}
                 {item.repeatDaily ? " · ежедневно" : ""}
               </small>
-              {item.ticket && <small className="calendar-toast-people">
-                {item.developerIds.length
-                  ? "Поручено: " + item.developerIds.map(id => developers.find(d => d.id === id)?.name || "Недоступный разработчик").join(", ")
-                  : "Локальные разработчики не назначены"}
-              </small>}
+              {item.ticket && (
+                <small className="calendar-toast-people">
+                  {item.developerIds.length
+                    ? "Поручено: " +
+                      item.developerIds
+                        .map(
+                          (id) =>
+                            developers.find((d) => d.id === id)?.name ||
+                            "Недоступный разработчик",
+                        )
+                        .join(", ")
+                    : "Локальные разработчики не назначены"}
+                </small>
+              )}
             </button>
             <DailyCompletionButton item={item} compact />
             {!item.repeatDaily && (
@@ -133,7 +166,7 @@ function ReminderToast({
               className="icon-button calendar-toast-dismiss"
               aria-label={`Закрыть уведомление: ${item.title}`}
               title="Закрыть это уведомление"
-              onClick={() => onDismiss(item.id)}
+              onClick={() => onDismiss(notificationKey(item))}
             >
               <X size={14} />
             </button>
@@ -154,7 +187,9 @@ export function CalendarNotifications({
   const [items, setItems] = useState<CalendarItem[]>([]),
     [toasts, setToasts] = useState<CalendarItem[]>([]),
     [error, setError] = useState("");
-  const [developers, setDevelopers] = useState<{ id: string; name: string }[]>([]);
+  const [developers, setDevelopers] = useState<{ id: string; name: string }[]>(
+    [],
+  );
   const panel = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const zone = settings?.syncSchedule?.timeZone || "UTC";
@@ -181,14 +216,21 @@ export function CalendarNotifications({
         setDevelopers(data.developers);
         setToasts((previous) =>
           previous.flatMap((item) => {
-            const current = active.find(
+            const current = (data.items as CalendarItem[]).find(
               (candidate) => candidate.id === item.id,
             );
-            if (!current) return [];
+            if (!current || current.completed) return [];
             const occurrence = current.repeatDaily
-              ? dailyOccurrence(current, wallTime(new Date().toISOString(), current.repeatZone || "UTC").slice(0, 10))
+              ? dailyOccurrence(
+                  current,
+                  item.occurrenceDay ||
+                    wallTime(
+                      new Date().toISOString(),
+                      current.repeatZone || "UTC",
+                    ).slice(0, 10),
+                )
               : current;
-            return occurrence ? [occurrence] : [];
+            return occurrence && !occurrence.completed ? [occurrence] : [];
           }),
         );
         setError("");
@@ -201,7 +243,10 @@ export function CalendarNotifications({
         if (due.length) {
           setToasts((previous) => [
             ...new Map(
-              [...previous, ...due].map((item) => [item.id, item]),
+              [...previous, ...due].map((item) => [
+                notificationKey(item),
+                item,
+              ]),
             ).values(),
           ]);
           if (
@@ -307,7 +352,7 @@ export function CalendarNotifications({
         {items.map((item) => (
           <button
             className="calendar-notification-row"
-            key={item.id}
+            key={notificationKey(item)}
             onClick={() => go(item)}
           >
             <CalendarDays size={18} />
@@ -337,7 +382,9 @@ export function CalendarNotifications({
           onClose={closeToast}
           onOpen={go}
           onDismiss={(id) =>
-            setToasts((current) => current.filter((item) => item.id !== id))
+            setToasts((current) =>
+              current.filter((item) => notificationKey(item) !== id),
+            )
           }
         />
       )}

@@ -189,3 +189,22 @@ test("assistant status tool only prepares confirmation and distinguishes daily s
     /не найдено/,
   );
 });
+
+test("assistant prepares individual warnings without saving and exposes inherited values", async t => {
+  const store = fixture(t), calendar = new Calendar(store), events: any[] = [];
+  const id = calendar.save({ title: "Daily", start: "2026-10-25T01:00:00Z", end: null, repeatDaily: true }).id;
+  const tools = calendarTools(store, () => {}, e => events.push(e));
+  const tool: any = tools.find(t => t.name === "prepare_calendar_warning_change");
+  await tool.handler({ id, leadMinutes: 120 });
+  assert.equal(events[0].draft.id, id);
+  assert.equal(events[0].draft.leadMinutes, 120);
+  assert.equal(calendar.list()[0].leadMinutes, null);
+  calendar.setLead(id, 120);
+  const row = searchCalendar(store, { ids: [id] }).reminders[0];
+  assert.equal(row.leadMinutes, 120);
+  assert.equal(row.effectiveLeadMinutes, 120);
+  const status: any = tools.find(t => t.name === "prepare_calendar_status_change");
+  await status.handler({ id, completed: true, target: "today", day: "2026-10-25" });
+  assert.equal(events[1].request.day, "2026-10-25");
+  assert.deepEqual(calendar.list()[0].completedDays, []);
+});

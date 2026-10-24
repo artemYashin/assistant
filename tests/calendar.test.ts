@@ -577,3 +577,29 @@ test("advance warnings include upcoming reminders and today's daily iteration wi
   cal.completeToday(daily, true, new Date("2026-10-21T08:30:00Z"));
   assert.deepEqual(cal.notifications(new Date("2026-10-21T09:30:00Z")).map(i => i.id), [future]);
 });
+
+test("individual advance crosses midnight and completes only the notified occurrence", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  const id = cal.save({ ...event, start: "2026-10-22T01:00:00Z", end: null, repeatDaily: true, leadMinutes: 120 }).id;
+  assert.equal(cal.notifications(new Date("2026-10-21T22:59:59Z")).length, 0);
+  const batch = cal.notifications(new Date("2026-10-21T23:00:00Z"));
+  assert.equal(batch.length, 1);
+  assert.equal(batch[0].occurrenceDay, "2026-10-22");
+  cal.completeToday(id, true, new Date("2026-10-21T23:00:00Z"), batch[0].occurrenceDay);
+  assert.deepEqual(cal.list()[0].completedDays, ["2026-10-22"]);
+  assert.equal(cal.notifications(new Date("2026-10-22T00:00:00Z")).length, 0);
+  assert.equal(cal.notifications(new Date("2026-10-22T23:00:00Z"))[0].occurrenceDay, "2026-10-23");
+  assert.throws(() => cal.completeToday(id, true, new Date(), "2026-02-30"), /дата/);
+});
+
+test("per-reminder warning overrides defaults and null restores inheritance after restart", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, reminderLeadMinutes: 120 } });
+  const id = cal.save({ ...event, start: "2026-10-22T01:00:00Z", end: null, leadMinutes: 10 }).id;
+  assert.equal(cal.notifications(new Date("2026-10-21T23:00:00Z")).length, 0);
+  const reopened = new Store(store.dir);
+  try { assert.equal(new Calendar(reopened).list()[0].leadMinutes, 10); } finally { reopened.close(); }
+  cal.setLead(id, null);
+  assert.equal(cal.notifications(new Date("2026-10-21T23:00:00Z"))[0].id, id);
+  assert.throws(() => cal.setLead(id, -1));
+});

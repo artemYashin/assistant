@@ -9,16 +9,16 @@
 
 Закрыть
 
-Источник: src/CalendarActionDialog.tsx:63.
+Источник: src/CalendarActionDialog.tsx:67.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarActionDialog.tsx:95.
+Источник: src/CalendarActionDialog.tsx:99.
 
 ### Элемент
 
 / · Сохраняю… /
 
-Источник: src/CalendarActionDialog.tsx:104.
+Источник: src/CalendarActionDialog.tsx:108.

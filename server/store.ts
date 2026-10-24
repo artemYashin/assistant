@@ -235,7 +235,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 1,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
-    for (const [column, definition] of [["completed_days", "TEXT NOT NULL DEFAULT '[]'"], ["repeat_daily", "INTEGER NOT NULL DEFAULT 0"], ["repeat_zone", "TEXT NOT NULL DEFAULT 'UTC'"]]) {
+    for (const [column, definition] of [["lead_minutes", "INTEGER"], ["completed_days", "TEXT NOT NULL DEFAULT '[]'"], ["repeat_daily", "INTEGER NOT NULL DEFAULT 0"], ["repeat_zone", "TEXT NOT NULL DEFAULT 'UTC'"]]) {
       if (!(this.db.prepare("PRAGMA table_info(calendar_events)").all() as any[]).some(c=>c.name===column)) this.db.exec(`ALTER TABLE calendar_events ADD COLUMN ${column} ${definition}`);
     }
     this.db.exec(`CREATE TABLE IF NOT EXISTS ticket_deadlines (

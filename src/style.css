@@ -10150,3 +10150,5 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-lead-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .calendar-lead-fields label { min-width: 0; margin: 0; }
 .calendar-lead-fields input { width: 100%; min-width: 0; }
+.calendar-toast-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 5px; }
+.calendar-ticket-badge { display: inline-flex; align-items: center; border: 1px solid #b9d6f6; border-radius: 6px; padding: 2px 7px; background: #edf5ff; color: #28629a; font-size: 11px; line-height: 1.4; }

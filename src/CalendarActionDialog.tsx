@@ -39,8 +39,12 @@ export function CalendarActionDialog({
   const label =
     request.target === "today"
       ? request.completed
-        ? "Завершить сегодня"
-        : "Возобновить сегодня"
+        ? request.day
+          ? "Завершить итерацию"
+          : "Завершить сегодня"
+        : request.day
+          ? "Возобновить итерацию"
+          : "Возобновить сегодня"
       : request.target === "series"
         ? request.completed
           ? "Завершить всю серию"
@@ -75,7 +79,7 @@ export function CalendarActionDialog({
         {request.target === "series"
           ? "Действие относится ко всей ежедневной серии."
           : request.target === "today"
-            ? "Изменится только сегодняшняя итерация в часовом поясе серии; остальные дни сохранятся."
+            ? `Изменится только итерация ${request.day || "за сегодня"} в часовом поясе серии; остальные дни сохранятся.`
             : "Изменится отметка завершения напоминания."}{" "}
         {request.completed
           ? "Завершённые напоминания перестают уведомлять."
@@ -117,7 +121,7 @@ export function CalendarActionDialog({
                   endpoint +
                   (request.target === "today" ? "-today" : ""),
                 "POST",
-                {},
+                { day: request.day },
               );
               window.dispatchEvent(new Event("orbit-calendar-changed"));
               ref.current?.close();

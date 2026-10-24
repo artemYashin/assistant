@@ -1,3 +1,4 @@
+import { ReminderLeadFields } from "./ReminderLeadFields.js";
 import { CalendarActionDialog } from "./CalendarActionDialog.js";
 import {
   occurrencesOnDay,
@@ -55,6 +56,7 @@ const fresh = (day: string, context: { client: string; project: string }) => ({
       : "general") as CalendarItem["scope"],
   client: context.client,
   project: context.project,
+  leadMinutes: null as number | null,
   repeatDaily: false,
   title: "",
   description: "",
@@ -97,9 +99,10 @@ export function CalendarPage({
   useEffect(() => {
     const incoming = location.state?.reminderDraft;
     if (!incoming) return;
-    setEditing(null);
+    setEditing(incoming.id || null);
     setDraft({
       ...incoming,
+      leadMinutes: incoming.leadMinutes ?? null,
       repeatDaily: !!incoming.repeatDaily,
       start: incoming.start ? wallTime(incoming.start, zone) : "",
       end: incoming.end ? wallTime(incoming.end, zone) : "",
@@ -135,12 +138,14 @@ export function CalendarPage({
   function openTicket(item: CalendarItem) {
     if (!item.ticket) return;
     dialog.current?.close();
-    window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
-      detail: {
-        source: item.ticket.source,
-        tickets: [{ id: item.ticket.id, title: item.title }],
-      },
-    }));
+    window.dispatchEvent(
+      new CustomEvent("orbit-show-ticket-details", {
+        detail: {
+          source: item.ticket.source,
+          tickets: [{ id: item.ticket.id, title: item.title }],
+        },
+      }),
+    );
   }
   function open(item?: CalendarItem, day = "", time?: string) {
     if (item?.repeatDaily) item = items.find((i) => i.id === item!.id) || item;
@@ -149,6 +154,7 @@ export function CalendarPage({
       item
         ? {
             ...item,
+            leadMinutes: item.leadMinutes ?? null,
             repeatDaily: !!item.repeatDaily,
             start: item.start ? wallTime(item.start, zone) : "",
             end: item.end ? wallTime(item.end, zone) : "",
@@ -259,11 +265,18 @@ export function CalendarPage({
     (!draft.end || (!!draft.start && draft.end >= draft.start));
   return (
     <section className="calendar-page">
-      {location.state?.reminderAction && <CalendarActionDialog
-        key={location.state.requestId}
-        request={location.state.reminderAction}
-        onClose={() => navigate(location.pathname + location.search, { replace: true, state: null })}
-      />}
+      {location.state?.reminderAction && (
+        <CalendarActionDialog
+          key={location.state.requestId}
+          request={location.state.reminderAction}
+          onClose={() =>
+            navigate(location.pathname + location.search, {
+              replace: true,
+              state: null,
+            })
+          }
+        />
+      )}
       <div className="page-heading">
         <div>
           <h1>
@@ -625,7 +638,10 @@ export function CalendarPage({
                 )}
                 <div className="calendar-inline calendar-reminder-actions">
                   {item.ticket && (
-                    <button className="secondary" onClick={() => openTicket(item)}>
+                    <button
+                      className="secondary"
+                      onClick={() => openTicket(item)}
+                    >
                       <Ticket size={15} /> Открыть тикет
                     </button>
                   )}
@@ -702,8 +718,8 @@ export function CalendarPage({
             <p>
               {eventTime(currentItem.ticket.deadline, null, zone)} · изменяется
               в карточке тикета. Удаление напоминания также очистит локальный
-              дедлайн. Разработчики берутся из локальных поручений тикета
-              и меняются там же.
+              дедлайн. Разработчики берутся из локальных поручений тикета и
+              меняются там же.
             </p>
             <button
               className="secondary"
@@ -914,6 +930,15 @@ export function CalendarPage({
             )}
           </details>
         </fieldset>
+        <ReminderLeadFields
+          value={draft.leadMinutes}
+          fallback={
+            currentItem?.ticket
+              ? settings.calendarNotifications.ticketDeadlineLeadMinutes
+              : settings.calendarNotifications.reminderLeadMinutes
+          }
+          onChange={(leadMinutes) => setDraft({ ...draft, leadMinutes })}
+        />
         {currentItem && (
           <div className="calendar-editor-management">
             <span
@@ -974,16 +999,24 @@ export function CalendarPage({
             Отмена
           </button>
           <ConfirmButton
-            disabled={!validDraft || !!currentItem?.ticket}
+            disabled={!validDraft || (!!editing && !currentItem)}
             className="primary"
             title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
             message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
             confirmLabel={editing ? "Сохранить" : "Создать"}
             onConfirm={async () => {
+              if (currentItem?.ticket) {
+                await mutate(`/calendar/${currentItem.id}/warning`, "PUT", {
+                  leadMinutes: draft.leadMinutes,
+                });
+                dialog.current?.close();
+                return;
+              }
               await mutate(
                 "/calendar" + (editing ? "/" + editing : ""),
                 editing ? "PUT" : "POST",
                 {
+                  leadMinutes: draft.leadMinutes,
                   repeatDaily: draft.repeatDaily,
                   title: draft.title,
                   description: draft.description,

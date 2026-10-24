@@ -27,16 +27,16 @@ Asia/Bishkek
 
 Присылать уведомления из браузера
 
-Источник: src/CalendarSettings.tsx:120.
+Источник: src/CalendarSettings.tsx:121.
 
 ### Элемент
 
 Разрешение получено / Разрешить уведомления
 
-Источник: src/CalendarSettings.tsx:128.
+Источник: src/CalendarSettings.tsx:129.
 
 ### Элемент
 
 Общий интервал, минуты
 
-Источник: src/CalendarSettings.tsx:166.
+Источник: src/CalendarSettings.tsx:167.

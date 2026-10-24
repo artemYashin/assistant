@@ -18,6 +18,16 @@ export const calendarNotificationsSchema = z
   .strict();
 export const calendarDraftSchema = z
   .object({
+    leadMinutes: z
+      .number()
+      .int()
+      .min(0)
+      .max(525600)
+      .nullable()
+      .optional()
+      .describe(
+        "Individual advance warning in minutes; null or omitted uses calendar defaults. Applies to every daily occurrence.",
+      ),
     repeatDaily: z
       .boolean()
       .optional()

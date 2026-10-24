@@ -4,6 +4,7 @@ import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
   search_calendar_reminders: "Find reminders across all scopes, including old/completed; literal or regex, filters, date ranges, sorting and pagination.",
+  prepare_calendar_warning_change: "Prepare individual advance warning change for any reminder or ticket deadline; null restores global default; user confirms.",
   prepare_calendar_status_change: "Prepare user confirmation to complete/reopen a reminder, today’s daily occurrence or explicitly requested entire series.",
   get_calendar_context: "Current time, timezone, scopes and developers for reminders and local ticket deadlines.",
   prepare_calendar_reminder: "Prepare reminders (timed, duration, undated, or daily recurring with repeatDaily=true) on user request; user confirms creation in calendar UI.",

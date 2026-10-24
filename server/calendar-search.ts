@@ -129,6 +129,12 @@ export function searchCalendar(store: Store, input: unknown) {
       completed: item.completed,
       start: item.start,
       end: item.end,
+      leadMinutes: item.leadMinutes ?? null,
+      effectiveLeadMinutes:
+        item.leadMinutes ??
+        (item.ticket
+          ? store.settings().calendarNotifications.ticketDeadlineLeadMinutes
+          : store.settings().calendarNotifications.reminderLeadMinutes),
       createdAt: item.createdAt,
       repeatDaily: !!item.repeatDaily,
       repeatZone: item.repeatZone,
