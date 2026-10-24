@@ -313,7 +313,7 @@ test("assistant toggles visibility without completing or losing reminder fields"
   const store = fixture(t), calendar = new Calendar(store);
   const { id } = calendar.save({ title: "Keep", description: "Keep details", start: null, end: null });
   let changes = 0;
-  const tool = calendarTools(store, () => {}, () => { changes++; }).find(t => t.name === "update_calendar_visibility")!;
+  const tool: any = calendarTools(store, () => {}, () => { changes++; }).find(t => t.name === "update_calendar_visibility")!;
   await tool.handler!({ id, notificationsHidden: true, calendarHidden: true }, {} as any);
   await tool.handler!({ id, calendarHidden: false }, {} as any);
   const item = calendar.list()[0];

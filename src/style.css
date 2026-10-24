@@ -10200,3 +10200,18 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-vacation-band span { overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
 .calendar-vacation-band svg { flex-shrink:0; }
 .calendar-vacation-band:hover { background:#d5ebdf;border-color:#539c7d; }
+
+.local-developer-option-name .local-developer-vacation {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 6px;
+  border: 1px solid #f2d391;
+  border-radius: 6px;
+  background: #fff7e6;
+  color: #805514;
+  font-size: 11px;
+}
+.local-developer-vacation svg { flex-shrink: 0; }

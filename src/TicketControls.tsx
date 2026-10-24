@@ -2,7 +2,8 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { useEffect, useRef, useState } from "react";
-import { Pencil, X } from "lucide-react";
+import { developerOnVacation, nextVacationDay } from "./developer-vacation.js";
+import { Pencil, Palmtree, X } from "lucide-react";
 import { api } from "./api.js";
 export function StatusBadge({
   state,
@@ -36,6 +37,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const assigned = ticket.developers || [];
+  const now = new Date().toISOString();
   async function open() {
     setSelected(assigned.map((d: any) => d.id));
     setQuery("");
@@ -48,7 +50,9 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
       );
       setPeople([
         ...new Map(
-          [...available, ...assigned].map((d: any) => [d.id, d]),
+          available.map((d: any) => [d.id, d]).concat(
+            assigned.filter((d: any) => !available.some((person: any) => person.id === d.id)).map((d: any) => [d.id, d]),
+          ),
         ).values(),
       ]);
     } catch (e: any) {
@@ -154,6 +158,12 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
                 <InitialsAvatar name={p.name} />
                 <span className="local-developer-option-name">
                   {p.name}
+                  {developerOnVacation(p, now) && (
+                    <small className="local-developer-vacation">
+                      <Palmtree size={13} aria-hidden="true" />
+                      В отпуске · Возвращение {nextVacationDay(p.vacationEnd).split("-").reverse().join(".")}
+                    </small>
+                  )}
                   {p.active === 0 && <small>Убран из справочника</small>}
                 </span>
               </label>

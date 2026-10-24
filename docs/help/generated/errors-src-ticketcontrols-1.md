@@ -9,10 +9,10 @@
 
 Подключение изменилось. Обновите карточку.
 
-Источник: src/TicketControls.tsx:225.
+Источник: src/TicketControls.tsx:235.
 
 ### Сообщение
 
 Статус не подтверждён
 
-Источник: src/TicketControls.tsx:244.
+Источник: src/TicketControls.tsx:254.

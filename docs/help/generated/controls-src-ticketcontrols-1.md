@@ -9,46 +9,46 @@
 
 Редактировать локальное поручение #{…} · Редактировать локальное поручение
 
-Источник: src/TicketControls.tsx:92.
+Источник: src/TicketControls.tsx:96.
 
 ### Элемент
 
 Закрыть выбор разработчиков
 
-Источник: src/TicketControls.tsx:113.
+Источник: src/TicketControls.tsx:117.
 
 ### Элемент
 
 Поиск локального разработчика · Поиск по имени
 
-Источник: src/TicketControls.tsx:127.
+Источник: src/TicketControls.tsx:131.
 
 ### Элемент
 
 Загрузка… / Сохранить поручение
 
-Источник: src/TicketControls.tsx:170.
+Источник: src/TicketControls.tsx:180.
 
 ### Элемент
 
 Изменить статус тикета #{…} · Изменить статус в Azure DevOps
 
-Источник: src/TicketControls.tsx:262.
+Источник: src/TicketControls.tsx:272.
 
 ### Элемент
 
 Закрыть выбор статуса
 
-Источник: src/TicketControls.tsx:282.
+Источник: src/TicketControls.tsx:292.
 
 ### Элемент
 
 Новый статус
 
-Источник: src/TicketControls.tsx:296.
+Источник: src/TicketControls.tsx:306.
 
 ### Элемент
 
 Загрузка… / Изменить статус
 
-Источник: src/TicketControls.tsx:308.
+Источник: src/TicketControls.tsx:318.
