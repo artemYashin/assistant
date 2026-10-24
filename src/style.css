@@ -10228,3 +10228,19 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .review-private-comment { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
 .ticket-table-date { display: inline-flex; flex-direction: column; white-space: nowrap; }
 .ticket-table-date small { color: var(--muted); font-size: 11px; }
+
+.notes-heading, .notes-heading h1, .notes-actions { display:flex;align-items:center;gap:10px; }
+.notes-heading { justify-content:space-between;margin-bottom:18px; }
+.notes-heading h1 { margin:0; }
+.notes-layout { display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;align-items:start; }
+.notes-list { display:grid;gap:8px;max-height:70vh;overflow:auto;padding:4px; }
+.notes-list>button { display:grid;gap:6px;text-align:left;min-width:0;padding:12px;border:1px solid #dce4ec;border-radius:8px;background:#f7f9fb;color:inherit; }
+.notes-list>button.is-selected { background:#eaf4ff;border-color:#8bb9df; }
+.notes-list strong,.notes-list small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.notes-list small { color:var(--muted);font-weight:400; }
+.notes-content { min-width:0; }
+.notes-title { display:flex;flex-direction:column;gap:6px;margin-bottom:14px; }
+.notes-body-label { margin-bottom:6px; }
+.notes-content .tiptap { min-height:280px; }
+.notes-actions { flex-wrap:wrap;margin:14px 0; }
+@media(max-width:760px) { .notes-layout { grid-template-columns:1fr; } .notes-list { max-height:220px; } }

@@ -1,3 +1,4 @@
+import { registerNotes } from "./notes.js";
 import { azurePatExpirySchema } from "./azure-pat-reminder.js";
 import { developerVacationWarningStart } from "./developer-vacation-status.js";
 import { setDeveloperVacation } from "./developer-vacations.js";
@@ -259,6 +260,7 @@ export function createApp(
       );
     next();
   });
+  registerNotes(app, store);
   app.post("/api/auth/logout", (req, res) => {
     store.db
       .prepare("DELETE FROM sessions WHERE token=?")

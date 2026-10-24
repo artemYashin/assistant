@@ -1,3 +1,5 @@
+import { NotesPage } from "./NotesPage.js";
+import { StickyNote } from "lucide-react";
 import { CalendarDateField } from "./CalendarDateField.js";
 import { useUnreadRelease } from "./useUnreadRelease.js";
 import { UpdatesPage } from "./UpdatesPage.js";
@@ -139,6 +141,7 @@ const navigation = [
   { id: "code", label: "Код репозитория", icon: Code2 },
   { id: "approvals", label: "Подтверждения", icon: ShieldCheck },
   { id: "memory", label: "Память", icon: BookOpen },
+  { id: "notes", label: "Заметки", icon: StickyNote },
   { id: "usage", label: "Использование LLM", icon: Activity },
 ] as const;
 const date = (s?: string) =>
@@ -679,6 +682,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 {notice}
               </div>
             )}
+            {page === "notes" && <NotesPage />}
             {page === "updates" && <UpdatesPage />}
             {page === "calendar" && settings && <CalendarPage settings={settings} context={context} />}
             {page === "code" && <CodeBrowserPage key={JSON.stringify([context, refresh, settings?.azureUrl, settings?.azureProject])} context={context} />}
