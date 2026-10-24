@@ -26,6 +26,7 @@ export function ticketFilterSql(type?: string | string[], state?: string | strin
 
 const tagValues = (max: number) => z.union([z.array(z.string().trim().min(1).max(max)).max(50), z.string().trim().min(1).max(max)]);
 export const ticketMetadataFilters = {
+  overdueDeadline: z.boolean().optional().describe("True: only tickets with a local deadline strictly before the current server time. False/omitted: no deadline restriction. Excludes missing deadlines; independent of Azure status and reminder completion. AND with other filters."),
   deadlineFrom: z.string().datetime().optional().describe("Inclusive local deadline from UTC ISO; excludes tickets without deadline."),
   deadlineTo: z.string().datetime().optional().describe("Inclusive local deadline to UTC ISO; AND with other filters."),
   azurePriority:z.union([z.array(z.number().finite()).max(50),z.number().finite()]).optional().describe("Read-only Azure priorities (Microsoft.VSTS.Common.Priority), distinct from local priority. OR within array; AND with other filters."),
@@ -38,6 +39,10 @@ export function ticketMetadataFilterSql(input: z.infer<z.ZodObject<typeof ticket
   const values = <T extends string | number>(input: T | T[] | undefined): T[] => [...new Set(Array.isArray(input) ? input : input === undefined ? [] : [input])];
   for (const [key,op] of [["deadlineFrom",">="],["deadlineTo","<="]] as const) {
     if (input[key]) { clauses.push(`EXISTS (SELECT 1 FROM ticket_deadlines d WHERE d.source=${alias}.source AND d.id=${alias}.id AND d.deadline ${op} ?)`); params.push(new Date(input[key]!).toISOString()); }
+  }
+  if (input.overdueDeadline) {
+    clauses.push(`EXISTS (SELECT 1 FROM ticket_deadlines d WHERE d.source=${alias}.source AND d.id=${alias}.id AND d.deadline < ?)`);
+    params.push(new Date().toISOString());
   }
   const azurePriorities=values(input.azurePriority);
   if(azurePriorities.length) {

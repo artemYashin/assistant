@@ -99,23 +99,21 @@ function ReminderToast({
               {item.title}
             </button>
             <DailyCompletionButton item={item} compact />
-            <ConfirmButton
-              className="icon-button calendar-toast-complete"
-              ariaLabel={`${item.repeatDaily ? "Завершить всю серию" : "Завершить"}: ${item.title}`}
-              title="Завершить напоминание?"
-              message={`«${item.title}». ${item.repeatDaily ? "Будет завершена вся ежедневная серия. " : ""} Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре.`}
-              confirmLabel="Завершить"
-              onConfirm={async () => {
-                await api("/calendar/" + item.id + "/complete", "POST", {});
-                window.dispatchEvent(new Event("orbit-calendar-changed"));
-              }}
-            >
-              {item.repeatDaily ? (
-                <span aria-hidden="true">✓✓</span>
-              ) : (
+            {!item.repeatDaily && (
+              <ConfirmButton
+                className="icon-button calendar-toast-complete"
+                ariaLabel={`Завершить: ${item.title}`}
+                title="Завершить напоминание?"
+                message={`«${item.title}». Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре.`}
+                confirmLabel="Завершить"
+                onConfirm={async () => {
+                  await api("/calendar/" + item.id + "/complete", "POST", {});
+                  window.dispatchEvent(new Event("orbit-calendar-changed"));
+                }}
+              >
                 <Check size={16} />
-              )}
-            </ConfirmButton>
+              </ConfirmButton>
+            )}
             <button
               type="button"
               className="icon-button calendar-toast-dismiss"

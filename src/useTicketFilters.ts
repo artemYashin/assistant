@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const empty = {
   query: "",
+  overdueDeadline: false,
   sort: "id-desc",
   azurePriorityFilter: [] as string[],
   priorityFilter: [] as string[],
@@ -43,6 +44,8 @@ export function parseTicketFilters(saved: unknown): Filters {
     const value = (saved as Record<string, unknown>)[key];
     if (key === "query") {
       if (typeof value === "string") result.query = value;
+    } else if (key === "overdueDeadline") {
+      result.overdueDeadline = value === true;
     } else if (key === "sort") {
       if (typeof value === "string" && sorts.has(value)) result.sort = value;
     } else if (

@@ -1101,6 +1101,7 @@ function Tickets({
     query,
     sort,
     azurePriorityFilter,
+    overdueDeadline,
     priorityFilter,
     tagFilter,
     azureTagFilter,
@@ -1159,6 +1160,7 @@ function Tickets({
     );
     return (
       matchesQuery &&
+      (!overdueDeadline || (t.localDeadline && Date.parse(t.localDeadline) < Date.now())) &&
       (!azurePriorityFilter.length || azurePriorityFilter.includes(t.azurePriority == null ? "" : String(t.azurePriority))) &&
       (!priorityFilter.length ||
         priorityFilter.includes(String(t.priority ?? 1))) &&
@@ -1356,6 +1358,7 @@ function Tickets({
               if (rawTarget) navigate("/tickets");
               setPriorityFilter([]);
               setAzurePriorities([]);
+              setFilter("overdueDeadline", false);
               setTagFilter([]);
               setAzureTagFilter([]);
               setTypeFilter([]);
@@ -1367,6 +1370,10 @@ function Tickets({
           >
             <RotateCcw size={15} /> Сбросить
           </button>
+          <MultiSelect label="Просрочен дедлайн" placeholder="Любой дедлайн" disabled={!!rawTarget}
+            value={overdueDeadline ? ["overdue"] : []}
+            onChange={(values) => setFilter("overdueDeadline", values.includes("overdue"))}
+            options={[{ value: "overdue", label: "Просрочен дедлайн" }]} />
           <MultiSelect label="Azure приоритет" placeholder="Все Azure приоритеты"
             value={azurePriorityFilter} onChange={setAzurePriorities}
             options={[{value:"",label:"Без Azure приоритета"}, ...filterOptions.azurePriorities.map(v => ({value:String(v),label:String(v)}))]} />

@@ -195,3 +195,29 @@ test("deadline migration and manual completion survive a database reopen", () =>
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("overdue filter uses current time, excludes missing/future deadlines and works in notes and trash", async (t) => {
+  const store = fixture(t);
+  const now = new Date("2026-10-24T12:00:00.000Z");
+  t.mock.timers.enable({ apis: ["Date"], now });
+  const { searchTicketContent } = await import("../server/ticket-content-search.js");
+  for (const id of [43, 44, 45]) {
+    store.db.prepare("INSERT INTO tickets VALUES (?,?,'Bug','Closed','','Example','','','')").run(store.source(), id);
+  }
+  const past = "2026-10-24T11:59:59.999Z";
+  for (const [id, deadline] of [[42, past], [43, now.toISOString()], [44, "2026-10-25T12:00:00.000Z"], [45, null]] as const) {
+    saveTicketMetadata(store, id, store.source(), context, { localDeadline: deadline, notes: "deadline evidence" });
+  }
+  const ids = (input: object) => listLocalTickets(store, input).tickets.map(t => t.id);
+  assert.deepEqual(ids({ overdueDeadline: true }), [42]);
+  assert.equal(ids({ overdueDeadline: false }).length, 4);
+  assert.deepEqual(ids({ overdueDeadline: true, state: ["Closed"] }), []);
+  assert.deepEqual(ids({ overdueDeadline: true, deadlineFrom: now.toISOString() }), []);
+  new Calendar(store).complete(new Calendar(store).list().find(i => i.ticket?.id === 42)!.id);
+  assert.deepEqual(ids({ overdueDeadline: true }), [42]);
+  assert.deepEqual(searchTicketContent(store, { search: "evidence", overdueDeadline: true }).tickets.map(t => t.id), [42]);
+  store.removeLocalTicket(42);
+  assert.deepEqual(ids({ overdueDeadline: true, lifecycle: "active" }), []);
+  assert.deepEqual(ids({ overdueDeadline: true, lifecycle: "deleted" }), [42]);
+  assert.deepEqual(searchTicketContent(store, { search: "evidence", overdueDeadline: true, lifecycle: "deleted" }).tickets.map(t => t.id), [42]);
+});

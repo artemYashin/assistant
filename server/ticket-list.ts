@@ -34,7 +34,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     type,
     state,
     priority,
-    azurePriority, deadlineFrom, deadlineTo,
+    azurePriority, deadlineFrom, deadlineTo, overdueDeadline,
     tag,
     azureTag,
     afterId,
@@ -65,7 +65,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const exactFilters = ticketFilterSql(type, state);
   clauses.push(...exactFilters.clauses);
   params.push(...exactFilters.params);
-  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo }, "local_tickets");
+  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo, overdueDeadline }, "local_tickets");
   clauses.push(...metadataFilters.clauses);
   params.push(...metadataFilters.params);
   const where = clauses.join(" AND ");
@@ -116,7 +116,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   return {
     scope: "local",
     sortBy, sortDirection,
-    filters: { lifecycle, ids, search, searchMode, type, state, priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo },
+    filters: { lifecycle, ids, search, searchMode, type, state, priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo, overdueDeadline },
     total,
     tickets,
     hasMore,

@@ -226,3 +226,19 @@ test("exports mark local fields of unimported Azure tickets as unavailable", () 
   assert.match(query,/AND.*\[System.State\] = 'Active'/);
   assert.equal(azureBrowseSchema.safeParse({source:"s",azurePriorityFilter:["1 OR 1=1"]}).success,false);
  });
+
+test("Azure overdue filter constrains IDs before paging and combines with local filters", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-24T12:00:00Z") });
+  const input = azureBrowseSchema.parse({ source: "s", overdueDeadline: true });
+  const local = [
+    { id: 1, localDeadline: "2026-10-24T11:00:00Z", tags: ["fix"] },
+    { id: 2, localDeadline: "2026-10-24T12:00:00Z" },
+    { id: 3, localDeadline: "2026-10-25T11:00:00Z" },
+    { id: 4, localDeadline: null },
+    { id: 5, localDeadline: "2026-10-23T11:00:00Z", inTrash: true },
+  ];
+  assert.match(browseQuery(input, local)!, /\[System.Id\] IN \(1,5\)/);
+  assert.match(browseQuery({ ...input, tagFilter: ["fix"] }, local)!, /\[System.Id\] IN \(1\)/);
+  assert.equal(browseQuery(input, local.slice(1, 4)), null);
+  assert.doesNotMatch(browseQuery({ ...input, overdueDeadline: false }, local)!, /\[System.Id\] IN/);
+});

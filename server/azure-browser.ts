@@ -42,6 +42,7 @@ export const azureBrowseSchema = z
     assigneeFilter: choices,
     azureTagFilter: choices,
     azurePriorityFilter: z.array(z.string().regex(/^(?:\d+)?$/).max(16)).max(100).default([]),
+    overdueDeadline: z.boolean().default(false),
     priorityFilter: choices,
     tagFilter: choices,
     localFilter: choices,
@@ -84,6 +85,7 @@ export function browseQuery(input: AzureBrowse, local: any[]) {
       `(${input.azureTagFilter.map((v) => (v ? `[System.Tags] CONTAINS ${quote(v)}` : "[System.Tags] = ''")).join(" OR ")})`,
     );
   if (
+    input.overdueDeadline ||
     input.priorityFilter.length ||
     input.tagFilter.length ||
     input.localFilter.length
@@ -91,6 +93,7 @@ export function browseQuery(input: AzureBrowse, local: any[]) {
     const ids = local
       .filter(
         (t) =>
+          (!input.overdueDeadline || (t.localDeadline && Date.parse(t.localDeadline) < Date.now())) &&
           (!input.priorityFilter.length ||
             input.priorityFilter.includes(String(t.priority ?? 1))) &&
           (!input.tagFilter.length ||
