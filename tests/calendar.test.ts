@@ -295,8 +295,9 @@ test("reopening restores notifications globally and respects future start and sc
   assert.equal(calendar.notifications(now).length, 0);
   calendar.reopen(id);
   assert.equal(calendar.list()[0].completed, false);
-  assert.equal(calendar.notifications(now).length, 1);
-  assert.equal(calendar.notifications(now).length, 0);
+  assert.equal(calendar.notifications(now).length, 0, "reopening waits for the shared interval");
+  assert.equal(calendar.notifications(new Date(now.getTime() + 60 * 60000)).length, 1);
+  assert.equal(calendar.notifications(new Date(now.getTime() + 60 * 60000)).length, 0);
   const future = calendar.save({
     ...event,
     start: "2027-01-01T00:00:00Z",
@@ -496,4 +497,65 @@ test("calendar gestures preserve duration and metadata, resize and respect timez
   );
   assert.equal(dst.start, "2026-03-29T07:00:00.000Z");
   assert.equal(Date.parse(dst.end!) - Date.parse(dst.start!), 7200000);
+});
+
+test("one persistent notification clock batches all reminders, including newly due and reopened items", t => {
+  const store = fixture(t);
+  const cal = new Calendar(store);
+  const at = (time: string) => new Date("2026-10-21T" + time + ":00Z");
+  const ids = Array.from({ length: 25 }, (_, i) =>
+    cal.save({ ...event, title: "Batch " + i, start: "2026-10-21T09:00:00Z", end: null }).id,
+  );
+  const later = cal.save({ ...event, title: "Later", start: "2026-10-21T10:20:00Z", end: null }).id;
+  const future = cal.save({ ...event, title: "Future", start: "2026-10-22T10:00:00Z", end: null }).id;
+  assert.equal(cal.notifications(at("10:00")).length, 25, "do not split the batch at 20");
+  assert.equal(cal.notifications(at("10:20")).length, 0, "newly due event waits for global cycle");
+  cal.complete(ids[0]);
+  cal.reopen(ids[0]);
+  assert.equal(cal.notifications(at("10:30")).length, 0, "reopening does not reset global cycle");
+  cal.complete(ids[1]);
+  const general = cal.save({ ...event, title: "General", start: null, end: null }).id;
+  assert.equal(cal.notifications(at("10:59")).length, 0, "new general reminder also waits");
+
+  const secondStore = new Store(store.dir);
+  try {
+    const second = new Calendar(secondStore);
+    assert.equal(second.notifications(at("10:59")).length, 0, "persisted across connections");
+    const batch = second.notifications(at("11:00")).map(i => i.id);
+    assert.equal(batch.length, 26);
+    assert.ok(batch.includes(later));
+    assert.ok(batch.includes(general));
+    assert.ok(batch.includes(ids[0]));
+    assert.ok(!batch.includes(ids[1]));
+    assert.ok(!batch.includes(future));
+    assert.equal(cal.notifications(at("11:00")).length, 0, "another caller cannot claim the same batch");
+  } finally {
+    secondStore.close();
+  }
+});
+
+test("shared cycles omit completed daily occurrences and respect schedule without replaying missed batches", t => {
+  const store = fixture(t);
+  const cal = new Calendar(store);
+  const ordinary = cal.save({ ...event, start: "2026-10-21T09:00:00Z", end: null }).id;
+  const daily = cal.save({ ...event, title: "Daily", start: "2026-10-21T09:00:00Z", end: null, repeatDaily: true }).id;
+  const at = (hour: number) => new Date(`2026-10-21T${String(hour).padStart(2, "0")}:00:00Z`);
+  assert.equal(cal.notifications(at(10)).length, 2);
+  cal.completeToday(daily, true, at(10));
+  assert.deepEqual(cal.notifications(at(11)).map(i => i.id), [ordinary]);
+  cal.completeToday(daily, false, at(11));
+  assert.equal(cal.notifications(at(11)).length, 0);
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: calendarNotificationsSchema.parse({
+      schedule: { mode: "scheduled", days: [] },
+    }),
+  });
+  assert.equal(cal.notifications(at(14)).length, 0);
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: calendarNotificationsSchema.parse({}),
+  });
+  assert.equal(cal.notifications(at(15)).length, 2);
+  assert.equal(cal.notifications(at(15)).length, 0);
 });

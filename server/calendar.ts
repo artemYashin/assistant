@@ -198,17 +198,13 @@ export class Calendar {
     const instant = now.toISOString(),
       cutoff = now.getTime() - options.intervalMinutes * 60000;
     return this.store.db.transaction(() => {
-      const notified = new Map(
-        (
-          this.store.db
-            .prepare("SELECT id,last_notified FROM calendar_events")
-            .all() as { id: string; last_notified: number | null }[]
-        ).map((row) => [row.id, row.last_notified]),
-      );
+      // One persisted batch clock for every project, reminder and browser tab.
+      const batchKey = "calendar.notifications.last-batch-at";
+      const lastBatch = this.store.get<number | null>(batchKey, null);
+      if (lastBatch !== null && lastBatch > cutoff) return [];
       const due = this.list()
         .filter((item) => {
           if (item.completed) return false;
-          const last = notified.get(item.id) ?? null;
           if (item.repeatDaily) {
             const zone = item.repeatZone || "UTC";
             const day = wallTime(instant, zone).slice(0, 10);
@@ -216,23 +212,13 @@ export class Calendar {
             return (
               !!occurrence &&
               !occurrence.completed &&
-              occurrence.start! <= instant &&
-              (last === null ||
-                last <= cutoff ||
-                wallTime(new Date(last).toISOString(), zone).slice(0, 10) < day)
+              occurrence.start! <= instant
             );
           }
-          return (
-            (!item.start || item.start <= instant) &&
-            (last === null || last <= cutoff)
-          );
-        })
-        .slice(0, 20);
-      const ids = due.map((item) => item.id);
-      for (const id of ids)
-        this.store.db
-          .prepare("UPDATE calendar_events SET last_notified=? WHERE id=?")
-          .run(now.getTime(), id);
+          return !item.start || item.start <= instant;
+        });
+      // An empty collection sends nothing and does not postpone a future batch.
+      if (due.length) this.store.set(batchKey, now.getTime());
       return due.map((item) =>
         item.repeatDaily
           ? dailyOccurrence(

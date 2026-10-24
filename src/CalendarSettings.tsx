@@ -110,13 +110,18 @@ export function CalendarSettings({
             : "Системные уведомления требуют разрешения браузера и HTTPS (или localhost). Orbit должен оставаться открытым; при закрытом браузере доставка не выполняется."}
       </p>
       {error && <p className="error">{error}</p>}
+      <p className="muted">
+        Раз в этот интервал собираются все начавшиеся и просроченные
+        незавершённые напоминания. Новые и возобновлённые записи входят
+        в следующую общую подборку, а не запускают отдельный таймер.
+      </p>
       <fieldset
         className="calendar-notification-settings"
         disabled={!options.browser}
       >
         <legend>Повторные уведомления</legend>
         <label>
-          Интервал, минуты
+          Общий интервал, минуты
           <input
             type="number"
             min={1}

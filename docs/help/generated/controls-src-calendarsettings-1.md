@@ -37,6 +37,6 @@ Asia/Bishkek
 
 ### Элемент
 
-Интервал, минуты
+Общий интервал, минуты
 
-Источник: src/CalendarSettings.tsx:118.
+Источник: src/CalendarSettings.tsx:123.
