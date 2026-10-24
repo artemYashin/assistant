@@ -5,6 +5,7 @@ import { AppError } from "./store.js";
 const catalog: Record<string, string> = {
   get_calendar_reminder: "Read full reminder before editing; includes description and completed daily dates.",
   change_calendar_reminders: "Immediately batch complete/reopen/delete reminders or daily occurrences/series on explicit request; no confirmation UI; vacation completion silences notifications without cancelling leave.",
+  update_calendar_visibility: "Hide/show reminders, ticket deadlines or vacations independently in notifications and calendar; preserve records.",
   update_calendar_warning: "Immediately set individual warning interval on explicit request, including ticket deadline reminders.",
   save_calendar_reminder: "Immediately create/edit ordinary, undated (без времени) or recurring reminders with selected weekdays on explicit user request; no confirmation popup.",
   search_calendar_reminders: "Find reminders across all scopes, including old/completed; literal or regex, reminder/ticket-deadline/developer-vacation types, statuses, clients/projects, date ranges, sorting and pagination.",

@@ -10,7 +10,7 @@ export function notificationItems(
 ): CalendarItem[] {
   const instant = now.toISOString();
   return items.flatMap((item) => {
-    if (item.completed) return [];
+    if (item.completed || item.notificationsHidden) return [];
     const threshold = new Date(
       now.getTime() + (item.leadMinutes ?? defaultLeadMinutes) * 60000,
     ).toISOString();
@@ -39,7 +39,7 @@ export function notificationDue(
   now = new Date(),
 ): boolean {
   if (
-    item.completed ||
+    item.completed || item.notificationsHidden ||
     (item.vacation && item.end && Date.parse(item.end) < now.getTime())
   )
     return false;

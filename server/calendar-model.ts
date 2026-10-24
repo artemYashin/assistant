@@ -19,6 +19,8 @@ export const calendarNotificationsSchema = z
   .strict();
 export const calendarDraftSchema = z
   .object({
+    notificationsHidden: z.boolean().optional().describe("Hide from header, popup and browser notifications; does not complete the reminder."),
+    calendarHidden: z.boolean().optional().describe("Hide from calendar grid only; remains in reminder list."),
     leadMinutes: z
       .number()
       .int()

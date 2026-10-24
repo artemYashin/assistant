@@ -41,7 +41,7 @@ test("one inclusive vacation per developer, scope updates, filtering, overrides 
   assert.deepEqual(item.developerIds, [person.id]);
   assert.equal(people.list(context)[0].vacationStart, "2099-11-01");
   calendar.complete(item.id);
-  calendar.setLead(item.id, 45);
+  calendar.setPreferences(item.id, { leadMinutes: 45, calendarHidden: true, notificationsHidden: true });
   setDeveloperVacation(store, person.id, {
     start: "2099-11-01",
     end: "2099-11-10",
@@ -55,6 +55,8 @@ test("one inclusive vacation per developer, scope updates, filtering, overrides 
   assert.equal(calendar.list()[0].id, item.id);
   assert.equal(calendar.list()[0].completed, false);
   assert.equal(calendar.list()[0].leadMinutes, 45);
+  assert.equal(calendar.list()[0].calendarHidden, true);
+  assert.equal(calendar.list()[0].notificationsHidden, true);
   people.edit(person.id, "Alice renamed", { client: "", project: "" });
   assert.equal(calendar.list()[0].scope, "general");
   assert.match(calendar.list()[0].title, /Alice renamed/);

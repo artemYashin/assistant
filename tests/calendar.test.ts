@@ -615,3 +615,48 @@ test("short daily events retain actual duration and do not overlap adjacent even
   const point = calendarSegments([{...daily,end:null}],"2026-10-24","UTC")[0];
   assert.equal(point.bottom-point.top,30);
 });
+
+test("visibility is independent, persists and legacy edits preserve it", (t) => {
+  const store = fixture(t), calendar = new Calendar(store);
+  const { id } = calendar.save(event);
+  assert.equal(calendar.list()[0].notificationsHidden, false);
+  calendar.setPreferences(id!, { leadMinutes: 30, notificationsHidden: true, calendarHidden: true });
+  calendar.save({ ...event, title: "Changed" }, id);
+  let item = calendar.list()[0];
+  assert.equal(item.notificationsHidden, true);
+  assert.equal(item.calendarHidden, true);
+  assert.equal(item.completed, false);
+  assert.equal(item.start, event.start);
+  calendar.setVisibility(id!, { notificationsHidden: false });
+  item = calendar.list()[0];
+  assert.equal(item.notificationsHidden, false);
+  assert.equal(item.calendarHidden, true);
+  assert.throws(() => calendar.setPreferences(id!, { leadMinutes: 5, calendarHidden: "bad" }));
+  assert.equal(calendar.list()[0].leadMinutes, null);
+});
+
+test("populated legacy calendar upgrades repeatedly without dropping content", () => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-visibility-upgrade-"));
+  let store = new Store(dir);
+  try {
+    const { id } = new Calendar(store).save(event);
+    store.db.exec("ALTER TABLE calendar_events DROP COLUMN notifications_hidden");
+    store.db.exec("ALTER TABLE calendar_events DROP COLUMN calendar_hidden");
+    store.close();
+    store = new Store(dir);
+    let item = new Calendar(store).list().find(i => i.id === id)!;
+    assert.equal(item.description, event.description);
+    assert.equal(item.notificationsHidden, false);
+    assert.equal(item.calendarHidden, false);
+    new Calendar(store).setVisibility(id!, { calendarHidden: true, notificationsHidden: true });
+    store.close();
+    store = new Store(dir);
+    item = new Calendar(store).list().find(i => i.id === id)!;
+    assert.equal(item.calendarHidden, true);
+    assert.equal(item.notificationsHidden, true);
+    assert.equal(item.end, event.end);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

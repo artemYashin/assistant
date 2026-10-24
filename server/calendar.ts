@@ -58,6 +58,8 @@ export class Calendar {
               Date.parse(r.start) - (r.lead_minutes ?? vacationLead) * 60000,
             ).toISOString()
           : undefined,
+      notificationsHidden: !!r.notifications_hidden,
+      calendarHidden: !!r.calendar_hidden,
       leadMinutes: r.lead_minutes ?? null,
       completedDays: JSON.parse(r.completed_days || "[]"),
       repeatDaily: !!r.repeat_daily,
@@ -187,7 +189,31 @@ export class Calendar {
         id,
       );
     this.setLead(id!, v.leadMinutes ?? null);
+    this.setVisibility(id!, v);
     return { id };
+  }
+  setVisibility(id: string, input: { notificationsHidden?: boolean; calendarHidden?: boolean }) {
+    const values = z.object({
+      notificationsHidden: z.boolean().optional(),
+      calendarHidden: z.boolean().optional(),
+    }).parse(input);
+    const result = this.store.db.prepare(
+      "UPDATE calendar_events SET notifications_hidden=COALESCE(?,notifications_hidden),calendar_hidden=COALESCE(?,calendar_hidden) WHERE id=?"
+    ).run(values.notificationsHidden === undefined ? null : Number(values.notificationsHidden),
+      values.calendarHidden === undefined ? null : Number(values.calendarHidden), id);
+    if (!result.changes) throw new AppError(404, "Напоминание не найдено.");
+    return { ok: true };
+  }
+  setPreferences(id: string, input: unknown) {
+    const values = z.object({
+      leadMinutes: z.number().int().min(0).max(525600).nullable(),
+      notificationsHidden: z.boolean().optional(),
+      calendarHidden: z.boolean().optional(),
+    }).strict().parse(input);
+    return this.store.db.transaction(() => {
+      this.setLead(id, values.leadMinutes);
+      return this.setVisibility(id, values);
+    })();
   }
   setLead(id: string, lead: unknown) {
     const minutes = z.number().int().min(0).max(525600).nullable().parse(lead);

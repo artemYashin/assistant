@@ -145,6 +145,20 @@ export function calendarTools(
         };
       },
     }),
+    defineTool("update_calendar_visibility", {
+      description: "On explicit user request hide or show any reminder, ticket deadline or developer vacation independently in notifications or the calendar grid. Search exact ID first. Hidden entries remain in reminders and are not completed or deleted. Omitted flags are preserved. No confirmation popup.",
+      parameters: z.object({
+        id: z.string().uuid(),
+        notificationsHidden: z.boolean().optional(),
+        calendarHidden: z.boolean().optional(),
+      }).strict(),
+      handler: async ({ id, ...values }) => {
+        assertActive();
+        new Calendar(store).setVisibility(id, values);
+        send?.({ stage: "calendar_changed" });
+        return { saved: true, id, ...values };
+      },
+    }),
     defineTool("update_calendar_warning", {
       description:
         "Immediately change an existing reminder's individual advance warning on explicit user request, including ticket deadlines and daily series. Search for exact ID first. leadMinutes=null restores global default; 0 means at start/deadline. No confirmation popup. Does not change deadline, completion or Azure.",

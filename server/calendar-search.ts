@@ -145,6 +145,8 @@ export function searchCalendar(store: Store, input: unknown) {
       descriptionSnippet: item.description.slice(0, 240),
       status: calendarStatus(item, now),
       completed: item.completed,
+      notificationsHidden: !!item.notificationsHidden,
+      calendarHidden: !!item.calendarHidden,
       start: item.start,
       warningStart: item.warningStart,
       end: item.end,

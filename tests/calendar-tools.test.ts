@@ -308,3 +308,19 @@ test("broad reminder types include every ordinary kind and combine with active s
   assert.equal(searchCalendar(store,{types:["reminder"],kinds:["daily"]}).total,1);
   assert.equal(searchCalendar(store,{types:["ticket"],statuses:["completed"]}).total,1);
 });
+
+test("assistant toggles visibility without completing or losing reminder fields", async (t) => {
+  const store = fixture(t), calendar = new Calendar(store);
+  const { id } = calendar.save({ title: "Keep", description: "Keep details", start: null, end: null });
+  let changes = 0;
+  const tool = calendarTools(store, () => {}, () => { changes++; }).find(t => t.name === "update_calendar_visibility")!;
+  await tool.handler!({ id, notificationsHidden: true, calendarHidden: true }, {} as any);
+  await tool.handler!({ id, calendarHidden: false }, {} as any);
+  const item = calendar.list()[0];
+  assert.equal(item.notificationsHidden, true);
+  assert.equal(item.calendarHidden, false);
+  assert.equal(item.completed, false);
+  assert.equal(item.description, "Keep details");
+  assert.equal(searchCalendar(store, {}).reminders[0].notificationsHidden, true);
+  assert.equal(changes, 2);
+});

@@ -54,6 +54,8 @@ const fresh = (day: string, context: { client: string; project: string }) => ({
       : "general") as CalendarItem["scope"],
   client: context.client,
   project: context.project,
+  notificationsHidden: false,
+  calendarHidden: false,
   leadMinutes: null as number | null,
   repeatDaily: false,
   repeatWeekdays: [1, 2, 3, 4, 5, 6, 7],
@@ -160,6 +162,8 @@ export function CalendarPage({
       item
         ? {
             ...item,
+            notificationsHidden: !!item.notificationsHidden,
+            calendarHidden: !!item.calendarHidden,
             leadMinutes: item.leadMinutes ?? null,
             repeatDaily: !!item.repeatDaily,
             repeatWeekdays: item.repeatWeekdays ?? [1, 2, 3, 4, 5, 6, 7],
@@ -222,6 +226,7 @@ export function CalendarPage({
             : calendarOverlaps(item, bounds.from, bounds.to))
         );
       });
+  const gridItems = filtered.filter(item => !item.calendarHidden);
   const base = new Date(month + "-01T12:00:00Z");
   const offset = (base.getUTCDay() + 6) % 7;
   const monthDays = new Date(
@@ -515,7 +520,7 @@ export function CalendarPage({
           </div>
           {view !== "month" ? (
             <CalendarTimeGrid
-              items={filtered}
+              items={gridItems}
               anchor={anchor}
               mode={view}
               zone={zone}
@@ -546,10 +551,10 @@ export function CalendarPage({
               ))}
               {Array.from({length:days.length/7},(_,weekIndex) => {
                 const week=days.slice(weekIndex*7,weekIndex*7+7);
-                const vacations=filtered.filter(item=>item.vacation && item.start && item.end && wallTime(item.start,zone).slice(0,10)<=week[6] && wallTime(item.end,zone).slice(0,10)>=week[0]);
+                const vacations=gridItems.filter(item=>item.vacation && item.start && item.end && wallTime(item.start,zone).slice(0,10)<=week[6] && wallTime(item.end,zone).slice(0,10)>=week[0]);
                 return <div className="calendar-month-week" key={week[0]}>
                 {week.map((day) => {
-                const entries = occurrencesOnDay(filtered, day, zone).filter(
+                const entries = occurrencesOnDay(gridItems, day, zone).filter(
                   (i) =>
                     !i.vacation && i.start &&
                     wallTime(i.start, zone).slice(0, 10) <= day &&
@@ -1025,6 +1030,16 @@ export function CalendarPage({
             )}
           </details>
         </fieldset>
+        <label className="calendar-check">
+          <input type="checkbox" checked={draft.notificationsHidden}
+            onChange={e => setDraft({ ...draft, notificationsHidden: e.target.checked })} />
+          <span>Не показывать в уведомлениях</span>
+        </label>
+        <label className="calendar-check">
+          <input type="checkbox" checked={draft.calendarHidden}
+            onChange={e => setDraft({ ...draft, calendarHidden: e.target.checked })} />
+          <span>Не показывать в календаре</span>
+        </label>
         {draft.start && <ReminderLeadFields
           value={draft.leadMinutes}
           fallback={
@@ -1105,6 +1120,8 @@ export function CalendarPage({
             onConfirm={async () => {
               if (currentItem?.ticket || currentItem?.vacation) {
                 await mutate(`/calendar/${currentItem.id}/warning`, "PUT", {
+                  notificationsHidden: draft.notificationsHidden,
+                  calendarHidden: draft.calendarHidden,
                   leadMinutes: draft.leadMinutes,
                 });
                 dialog.current?.close();
@@ -1114,6 +1131,8 @@ export function CalendarPage({
                 "/calendar" + (editing ? "/" + editing : ""),
                 editing ? "PUT" : "POST",
                 {
+                  notificationsHidden: draft.notificationsHidden,
+                  calendarHidden: draft.calendarHidden,
                   leadMinutes: draft.leadMinutes,
                   repeatDaily: draft.repeatDaily,
                   repeatWeekdays: draft.repeatWeekdays,

@@ -66,3 +66,17 @@ test("ordinary reminders use individual lead, undated reminders remain eligible"
     true,
   );
 });
+
+test("hidden notifications exclude every kind and recurring series, not calendar-only hiding", () => {
+  const now = new Date("2026-10-26T16:00:00Z");
+  for (const item of [
+    ticket,
+    { ...ticket, ticket: undefined, repeatDaily: true, repeatZone: "UTC" },
+    { ...ticket, ticket: undefined, start: null, end: null },
+    { ...ticket, ticket: undefined, vacation: { developerId: "dev", start: "2026-10-26", end: "2026-10-29", zone: "UTC", returnDate: "2026-10-30" }, end: "2026-10-29T23:59:59Z" },
+  ]) {
+    assert.equal(notificationItems([{ ...item, notificationsHidden: true }], 0, now).length, 0);
+    assert.equal(notificationDue({ ...item, notificationsHidden: true }, 0, now), false);
+    assert.ok(notificationItems([{ ...item, calendarHidden: true }], 0, now).length > 0);
+  }
+});
