@@ -19,6 +19,23 @@ export function TicketMetadata({
   showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const deadline = field === "localDeadline" && ticket.localDeadline
+    ? Date.parse(ticket.localDeadline)
+    : NaN;
+  const overdue = Number.isFinite(deadline) && deadline < now;
+  useEffect(() => {
+    if (!Number.isFinite(deadline)) return;
+    setNow(Date.now());
+    if (deadline < Date.now()) return;
+    // Keep an open table up to date when a future deadline passes.
+    const timer = window.setInterval(() => {
+      const current = Date.now();
+      setNow(current);
+      if (deadline < current) window.clearInterval(timer);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [deadline]);
   const label = {
     localDeadline: "Локальный дедлайн",
     notes: "Заметки",
@@ -29,10 +46,10 @@ export function TicketMetadata({
     <div className="ticket-metadata-control">
       {field === "localDeadline" && (
         <span
-          className="ticket-deadline-value"
+          className={`ticket-deadline-value${overdue ? " is-overdue" : ""}`}
           title={
             ticket.localDeadline
-              ? new Date(ticket.localDeadline).toLocaleString("ru-RU")
+              ? `${overdue ? "Дедлайн просрочен · " : ""}${new Date(ticket.localDeadline).toLocaleString("ru-RU")}`
               : "Дедлайн не задан"
           }
         >

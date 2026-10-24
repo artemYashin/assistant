@@ -168,7 +168,7 @@
     "src/TicketFilterPresets.tsx": "3c39f0e4dfdf69e0abdf80b80dcdbcf59096d94ae3e7f7ba973eaa3f0c11d247",
     "src/TicketImportSettings.tsx": "001e9dd7a24390b00111aa3edf8f1849c746f1c08a5f552d34038709338f4cd6",
     "src/TicketLookupDialog.tsx": "deac27ccef717c147e00d89171d8f03a17296d8bc3edeb9c3e620647308e6774",
-    "src/TicketMetadata.tsx": "09231ce0144f4ccb58c05ae91b5b5a890f5df0b5ba10dd3cb0efaf4f0feec40a",
+    "src/TicketMetadata.tsx": "13b2e4087d713c7d85dee1d5bd8b1a80be298f107eff686a69596d3815c67d29",
     "src/TicketRichText.tsx": "cfab3ae3155a9b006d7e6232f63cdee9c3222d8966146be61ee28d1bbe69cf88",
     "src/TicketSectionScroll.tsx": "5f183b71789db99de256c7c06cff31dc340bfe53f129fa2306c73bf314490135",
     "src/TicketSelection.tsx": "71b02746ced710427ce64add0cbb7097a68c163eb6751e0c922d5c16b38d6774",
