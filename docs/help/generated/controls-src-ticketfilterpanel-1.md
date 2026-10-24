@@ -9,4 +9,4 @@
 
 Наборы фильтров · / Свернуть / Развернуть
 
-Источник: src/TicketFilterPanel.tsx:45.
+Источник: src/TicketFilterPanel.tsx:80.

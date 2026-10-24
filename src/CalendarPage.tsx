@@ -1,3 +1,5 @@
+import { FilterPanel } from "./TicketFilterPanel.js";
+import { parseCalendarFilters } from "./calendar-filters.js";
 import { sortReminders } from "./calendar-sort.js";
 import { ReminderLeadFields } from "./ReminderLeadFields.js";
 import {
@@ -450,6 +452,10 @@ export function CalendarPage({
         </div>
       ) : (
         <>
+          <FilterPanel storageKey="orbit.calendar.filters" label="Наборы и фильтры напоминаний"
+            filters={{clientFilter, projectFilter, status, query, from, to, sort}}
+            parseFilters={parseCalendarFilters}
+            onApply={(next) => { setClientFilter(next.clientFilter); setProjectFilter(next.projectFilter); setStatus(next.status); setQuery(next.query); setFrom(next.from); setTo(next.to); setSort(next.sort); }}>
           <div className="calendar-filters">
             <SingleSelect
               label="Сортировка"
@@ -539,8 +545,9 @@ export function CalendarPage({
               onChange={setTo}
             />
             <button
-              className="secondary"
+              className="secondary ticket-filter-reset"
               onClick={() => {
+                setSort("nearest");
                 setClientFilter("all");
                 setProjectFilter("all");
                 setStatus("all");
@@ -552,6 +559,7 @@ export function CalendarPage({
               Сбросить
             </button>
           </div>
+          </FilterPanel>
           {(from || to) && (
             <p className="muted">
               Любое пересечение с диапазоном, включая границы. Напоминания без

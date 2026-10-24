@@ -9,118 +9,118 @@
 
 Все проекты
 
-Источник: src/CalendarPage.tsx:499.
+Источник: src/CalendarPage.tsx:505.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/CalendarPage.tsx:500.
+Источник: src/CalendarPage.tsx:506.
 
 ### Элемент
 
 ·
 
-Источник: src/CalendarPage.tsx:514.
+Источник: src/CalendarPage.tsx:520.
 
 ### Элемент
 
 Поиск
 
-Источник: src/CalendarPage.tsx:521.
+Источник: src/CalendarPage.tsx:527.
 
 ### Элемент
 
 Название напоминания
 
-Источник: src/CalendarPage.tsx:523.
+Источник: src/CalendarPage.tsx:529.
 
 ### Элемент
 
 Сбросить
 
-Источник: src/CalendarPage.tsx:541.
+Источник: src/CalendarPage.tsx:547.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/CalendarPage.tsx:622.
+Источник: src/CalendarPage.tsx:630.
 
 ### Элемент
 
 Открыть напоминание / Изменить
 
-Источник: src/CalendarPage.tsx:629.
+Источник: src/CalendarPage.tsx:637.
 
 ### Элемент
 
 Завершить напоминание? · «{…}». {…}Напоминание останется в истории, уведомления прекратятся. · Завершить · Завершить всю серию / Завершить
 
-Источник: src/CalendarPage.tsx:635.
+Источник: src/CalendarPage.tsx:643.
 
 ### Элемент
 
 Вернуть в незавершённые? · «{…}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания. · Вернуть в незавершённые
 
-Источник: src/CalendarPage.tsx:648.
+Источник: src/CalendarPage.tsx:656.
 
 ### Элемент
 
 Удалить напоминание? · «{…}» будет удалено без возможности восстановления. · Удалить
 
-Источник: src/CalendarPage.tsx:661.
+Источник: src/CalendarPage.tsx:669.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarPage.tsx:690.
+Источник: src/CalendarPage.tsx:698.
 
 ### Элемент
 
 Общий
 
-Источник: src/CalendarPage.tsx:728.
+Источник: src/CalendarPage.tsx:736.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: src/CalendarPage.tsx:761.
+Источник: src/CalendarPage.tsx:769.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/CalendarPage.tsx:765.
+Источник: src/CalendarPage.tsx:773.
 
 ### Элемент
 
 Проект напоминания
 
-Источник: src/CalendarPage.tsx:775.
+Источник: src/CalendarPage.tsx:783.
 
 ### Элемент
 
 Выберите проект
 
-Источник: src/CalendarPage.tsx:780.
+Источник: src/CalendarPage.tsx:788.
 
 ### Элемент
 
 Название
 
-Источник: src/CalendarPage.tsx:792.
+Источник: src/CalendarPage.tsx:800.
 
 ### Элемент
 
 Без времени
 
-Источник: src/CalendarPage.tsx:801.
+Источник: src/CalendarPage.tsx:809.
 
 ### Элемент
 
 Повторять каждый день
 
-Источник: src/CalendarPage.tsx:845.
+Источник: src/CalendarPage.tsx:853.

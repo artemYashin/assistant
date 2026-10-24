@@ -9,52 +9,52 @@
 
 Название набора фильтров · Название набора
 
-Источник: src/TicketFilterPresets.tsx:159.
+Источник: src/TicketFilterPresets.tsx:164.
 
 ### Элемент
 
 Сохранить текущие фильтры, поиск и сортировку · Сохранить набор
 
-Источник: src/TicketFilterPresets.tsx:167.
+Источник: src/TicketFilterPresets.tsx:172.
 
 ### Элемент
 
 Сбросить выбранный набор, фильтры и поиск
 
-Источник: src/TicketFilterPresets.tsx:182.
+Источник: src/TicketFilterPresets.tsx:187.
 
 ### Элемент
 
 Перетащить набор · Изменить порядок набора {…}
 
-Источник: src/TicketFilterPresets.tsx:242.
+Источник: src/TicketFilterPresets.tsx:247.
 
 ### Элемент
 
 {…}{…}
 
-Источник: src/TicketFilterPresets.tsx:265.
+Источник: src/TicketFilterPresets.tsx:270.
 
 ### Элемент
 
 Удалить набор {…} · Удалить сохранённый набор
 
-Источник: src/TicketFilterPresets.tsx:279.
+Источник: src/TicketFilterPresets.tsx:284.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/TicketFilterPresets.tsx:323.
+Источник: src/TicketFilterPresets.tsx:328.
 
 ### Элемент
 
 Отмена
 
-Источник: src/TicketFilterPresets.tsx:352.
+Источник: src/TicketFilterPresets.tsx:357.
 
 ### Элемент
 
 Удалить набор / Перезаписать
 
-Источник: src/TicketFilterPresets.tsx:360.
+Источник: src/TicketFilterPresets.tsx:365.

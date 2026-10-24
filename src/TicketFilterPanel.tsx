@@ -4,8 +4,8 @@ import {
 } from "./ticket-preset-storage.js";
 import { useId, useState, type ReactNode } from "react";
 import { Bookmark, ChevronDown, ChevronUp } from "lucide-react";
-import { TicketFilterPresets } from "./TicketFilterPresets.js";
-import type { Filters } from "./useTicketFilters.js";
+import { FilterPresets } from "./TicketFilterPresets.js";
+import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
 export function TicketFilterPanel({
   storageKey,
@@ -27,6 +27,35 @@ export function TicketFilterPanel({
       return customerPresetKey(storageKey);
     }
   });
+  return (
+    <FilterPanel
+      {...{ storageKey, filters, onApply, disabled, children }}
+      presetStorageKey={presetStorageKey}
+      parseFilters={parseTicketFilters}
+      label="Наборы и фильтры тикетов"
+    />
+  );
+}
+
+export function FilterPanel<T extends object>({
+  storageKey,
+  presetStorageKey = storageKey + ".presets",
+  filters,
+  onApply,
+  disabled = false,
+  children,
+  parseFilters,
+  label,
+}: {
+  storageKey: string;
+  presetStorageKey?: string;
+  filters: T;
+  onApply: (value: T) => void;
+  disabled?: boolean;
+  children: ReactNode;
+  parseFilters: (value: unknown) => T;
+  label: string;
+}) {
   const [expanded, setExpanded] = useState(() => {
     try {
       return localStorage.getItem(storageKey + ".expanded") !== "false";
@@ -39,8 +68,14 @@ export function TicketFilterPanel({
   return (
     <section
       className={`ticket-filter-panel${expanded ? "" : " is-collapsed"}`}
-      aria-label="Наборы и фильтры тикетов"
-      onClickCapture={event => { if (event.target instanceof Element && event.target.closest(".ticket-filter-reset")) setResetVersion(value => value + 1); }}
+      aria-label={label}
+      onClickCapture={(event) => {
+        if (
+          event.target instanceof Element &&
+          event.target.closest(".ticket-filter-reset")
+        )
+          setResetVersion((value) => value + 1);
+      }}
     >
       <button
         type="button"
@@ -71,7 +106,8 @@ export function TicketFilterPanel({
         </span>
       </button>
       <div id={id}>
-        <TicketFilterPresets
+        <FilterPresets
+          parseFilters={parseFilters}
           storageKey={presetStorageKey}
           filters={filters}
           onApply={onApply}

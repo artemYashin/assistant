@@ -1,3 +1,4 @@
+import { useUnreadRelease } from "./useUnreadRelease.js";
 import { UpdatesPage } from "./UpdatesPage.js";
 import { NumberInput } from "./NumberInput.js";
 import { CalendarPage } from "./CalendarPage.js";
@@ -367,6 +368,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
   const location = useLocation();
   const navigate = useNavigate();
   const page = pageForPath(location.pathname);
+  const unreadRelease = useUnreadRelease(page === "updates");
   const setPage = (next: Page) =>
     navigate(next === "inbox" ? "/pull-requests?tab=inbox" : pagePaths[next]);
   const completedTab =
@@ -605,6 +607,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
           >
             <Sparkles size={19} className="sidebar-icon sidebar-icon-updates" />
             <span className="sidebar-text">Что нового</span>
+            {unreadRelease && <span className="updates-unread" role="status" aria-label="Есть непрочитанное обновление" title="Есть непрочитанное обновление" />}
           </Link>
           <button
             title="Выйти"

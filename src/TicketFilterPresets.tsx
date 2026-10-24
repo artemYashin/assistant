@@ -3,18 +3,9 @@ import { createPortal } from "react-dom";
 import { GripVertical, RotateCcw, Save, X } from "lucide-react";
 import { parseTicketFilters, type Filters } from "./useTicketFilters.js";
 
-function sameFilters(left: Filters, right: Filters) {
-  const canonical = (value: Filters) =>
-    JSON.stringify(
-      Object.entries(parseTicketFilters(value)).map(([key, entry]) => [
-        key,
-        Array.isArray(entry) ? [...new Set(entry)].sort() : entry,
-      ]),
-    );
-  return canonical(left) === canonical(right);
-}
-type Preset = { id: string; name: string; filters: Filters };
-export function TicketFilterPresets({
+type Preset<T> = { id: string; name: string; filters: T };
+export function FilterPresets<T extends object>({
+  parseFilters,
   storageKey,
   filters,
   onApply,
@@ -22,14 +13,25 @@ export function TicketFilterPresets({
   compact = false,
   resetVersion = 0,
 }: {
+  parseFilters: (value: unknown) => T;
   storageKey: string;
-  filters: Filters;
-  onApply: (filters: Filters) => void;
+  filters: T;
+  onApply: (filters: T) => void;
   disabled: boolean;
   compact?: boolean;
   resetVersion?: number;
 }) {
-  const [presets, setPresets] = useState<Preset[]>(() => {
+  const sameFilters = (left: T, right: T) => {
+    const canonical = (value: T) =>
+      JSON.stringify(
+        Object.entries(parseFilters(value)).map(([key, entry]) => [
+          key,
+          Array.isArray(entry) ? [...new Set(entry)].sort() : entry,
+        ]),
+      );
+    return canonical(left) === canonical(right);
+  };
+  const [presets, setPresets] = useState<Preset<T>[]>(() => {
     try {
       const raw = JSON.parse(localStorage.getItem(storageKey) || "[]");
       return Array.isArray(raw)
@@ -44,7 +46,7 @@ export function TicketFilterPresets({
             .map((p) => ({
               id: p.id,
               name: p.name,
-              filters: parseTicketFilters(p.filters),
+              filters: parseFilters(p.filters),
             }))
         : [];
     } catch {
@@ -61,7 +63,7 @@ export function TicketFilterPresets({
     }
     return presets.find((p) => sameFilters(p.filters, filters))?.id || null;
   });
-  function select(preset: Preset | null) {
+  function select(preset: Preset<T> | null) {
     setSelectedId(preset?.id || null);
     setName(preset?.name || "");
     try {
@@ -73,7 +75,10 @@ export function TicketFilterPresets({
   }
   const lastReset = useRef(resetVersion);
   useEffect(() => {
-    if (lastReset.current !== resetVersion) { lastReset.current = resetVersion; select(null); }
+    if (lastReset.current !== resetVersion) {
+      lastReset.current = resetVersion;
+      select(null);
+    }
   }, [resetVersion]);
   const dragged = useRef<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
@@ -102,8 +107,8 @@ export function TicketFilterPresets({
   }
   const [confirmation, setConfirmation] = useState<{
     kind: "delete" | "overwrite";
-    preset: Preset;
-    replacement?: Preset;
+    preset: Preset<T>;
+    replacement?: Preset<T>;
   } | null>(null);
   const confirmDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -113,7 +118,7 @@ export function TicketFilterPresets({
     () => presets.find((p) => p.id === selectedId)?.name || "",
   );
   const [error, setError] = useState("");
-  function save(next: Preset[]) {
+  function save(next: Preset<T>[]) {
     try {
       localStorage.setItem(storageKey, JSON.stringify(next));
       setPresets(next);
@@ -142,7 +147,7 @@ export function TicketFilterPresets({
               const next = {
                 id: existing?.id || crypto.randomUUID(),
                 name: title,
-                filters: parseTicketFilters(filters),
+                filters: parseFilters(filters),
               };
               setError("");
               if (existing) {
@@ -187,7 +192,7 @@ export function TicketFilterPresets({
                 disabled={disabled}
                 onClick={() => {
                   select(null);
-                  onApply(parseTicketFilters(null));
+                  onApply(parseFilters(null));
                 }}
               >
                 <RotateCcw size={14} aria-hidden="true" />
@@ -340,7 +345,7 @@ export function TicketFilterPresets({
             </p>
             <p className="muted">
               {confirmation.kind === "delete"
-                ? "Текущие фильтры и тикеты останутся без изменений."
+                ? "Текущие фильтры и данные останутся без изменений."
                 : "Прежние настройки набора будут заменены текущими."}
             </p>
             {error && (
@@ -400,4 +405,10 @@ export function TicketFilterPresets({
       )}
     </div>
   );
+}
+
+export function TicketFilterPresets(
+  props: Omit<Parameters<typeof FilterPresets<Filters>>[0], "parseFilters">,
+) {
+  return <FilterPresets {...props} parseFilters={parseTicketFilters} />;
 }
