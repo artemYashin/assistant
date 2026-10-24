@@ -248,3 +248,14 @@ test("assistant warnings and edits save immediately; full read preserves content
   assert.equal(calendar.list()[0].description, "Full description");
   assert.ok(events.every((e) => e.stage === "calendar_changed"));
 });
+
+test("assistant saves selected weekdays and undated reminders directly", async t => {
+  const store = fixture(t);
+  const tool:any=calendarTools(store,()=>{}).find(t=>t.name==="save_calendar_reminder");
+  const recurring=await tool.handler({reminder:{title:"Weekdays",start:"2026-10-26T09:00:00Z",end:null,repeatDaily:true,repeatWeekdays:[1,2,3,4,5]}});
+  const general=await tool.handler({reminder:{title:"Always",start:null,end:null,repeatDaily:false}});
+  const items=new Calendar(store).list();
+  assert.deepEqual(items.find(i=>i.id===recurring.id)!.repeatWeekdays,[1,2,3,4,5]);
+  assert.equal(items.find(i=>i.id===general.id)!.kind,"general");
+  assert.ok(new Calendar(store).notifications(new Date("2026-10-24T12:00:00Z")).some(i=>i.id===general.id));
+});

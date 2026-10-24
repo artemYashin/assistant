@@ -115,3 +115,21 @@ test("daily time follows series timezone through DST and rejects missing start o
     calendarInput.parse({ ...input, end: "2026-10-26T03:00:00Z" }),
   );
 });
+
+test("selected weekdays apply in series timezone to occurrences, ranges and advance notifications", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  const id = cal.save({...input,start:"2026-10-23T19:00:00Z",repeatWeekdays:[1],leadMinutes:120}).id;
+  const series = cal.list()[0];
+  assert.equal(dailyOccurrence(series,"2026-10-24"),null);
+  assert.ok(dailyOccurrence(series,"2026-10-26"));
+  assert.equal(recurringOverlaps(series,"2026-10-23T18:00:00Z","2026-10-25T17:59:59Z"),false);
+  assert.equal(recurringOverlaps(series,"2026-10-25T18:00:00Z","2026-10-26T17:59:59Z"),true);
+  assert.equal(cal.notifications(new Date("2026-10-24T17:00:00Z")).length,0);
+  const batch=cal.notifications(new Date("2026-10-25T17:00:00Z"));
+  assert.equal(batch[0].occurrenceDay,"2026-10-26");
+  assert.throws(()=>cal.completeToday(id,true,new Date("2026-10-24T12:00:00Z")),/итерации/);
+  assert.throws(()=>calendarInput.parse({...input,repeatWeekdays:[] }));
+  assert.throws(()=>calendarInput.parse({...input,repeatWeekdays:[0] }));
+  const reopened=new Store(store.dir);
+  try { assert.deepEqual(new Calendar(reopened).list()[0].repeatWeekdays,[1]); } finally {reopened.close();}
+});

@@ -28,6 +28,14 @@ export const calendarDraftSchema = z
       .describe(
         "Individual advance warning in minutes; null or omitted uses calendar defaults. Applies to every daily occurrence.",
       ),
+    repeatWeekdays: z
+      .array(z.number().int().min(1).max(7))
+      .min(1)
+      .max(7)
+      .optional()
+      .describe(
+        "ISO weekdays for repeating reminders: 1 Monday through 7 Sunday. Omit for every day. At least one selected day.",
+      ),
     repeatDaily: z
       .boolean()
       .optional()
@@ -93,6 +101,7 @@ export function calendarStatus(
     | "ticket"
     | "warningStart"
     | "repeatDaily"
+    | "repeatWeekdays"
     | "repeatZone"
     | "completedDays"
     | "occurrenceDay"

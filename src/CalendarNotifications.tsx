@@ -9,7 +9,7 @@ import { api } from "./api.js";
 import { calendarStatus, type CalendarItem } from "../server/calendar-model.js";
 import { dailyOccurrence } from "../server/calendar-repeat.js";
 import { eventTime, wallTime } from "./calendar-time.js";
-import { calendarStatusLabel } from "./calendar-status.js";
+import { calendarStatusLabel, repeatLabel } from "./calendar-status.js";
 
 const notificationKey = (item: CalendarItem) =>
   `${item.id}:${item.occurrenceDay || ""}`;
@@ -156,7 +156,7 @@ function ReminderToast({
                 {item.ticket
                   ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone)
                   : eventTime(item.start, item.end, zone)}
-                {item.repeatDaily ? " · ежедневно" : ""}
+                {item.repeatDaily ? " · " + repeatLabel(item) : ""}
               </small>
               {item.ticket && (
                 <small className="calendar-toast-people">

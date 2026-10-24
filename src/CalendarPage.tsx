@@ -50,6 +50,7 @@ const fresh = (day: string, context: { client: string; project: string }) => ({
   project: context.project,
   leadMinutes: null as number | null,
   repeatDaily: false,
+  repeatWeekdays: [1, 2, 3, 4, 5, 6, 7],
   title: "",
   description: "",
   kind: "reminder" as CalendarItem["kind"],
@@ -135,6 +136,7 @@ export function CalendarPage({
             ...item,
             leadMinutes: item.leadMinutes ?? null,
             repeatDaily: !!item.repeatDaily,
+            repeatWeekdays: item.repeatWeekdays ?? [1, 2, 3, 4, 5, 6, 7],
             start: item.start ? wallTime(item.start, zone) : "",
             end: item.end ? wallTime(item.end, zone) : "",
           }
@@ -373,6 +375,7 @@ export function CalendarPage({
                   client: item.client,
                   project: item.project,
                   repeatDaily: item.repeatDaily,
+                  repeatWeekdays: item.repeatWeekdays,
                   start: item.start,
                   end: item.end,
                   developerIds: item.developerIds,
@@ -795,6 +798,23 @@ export function CalendarPage({
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
             />
           </label>
+          <label className="calendar-check">
+            <input
+              type="checkbox"
+              checked={!draft.start}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  start: e.target.checked
+                    ? ""
+                    : wallTime(new Date().toISOString(), zone),
+                  end: "",
+                  repeatDaily: false,
+                })
+              }
+            />
+            <span>Без времени</span>
+          </label>
           <div className="calendar-date-fields">
             <CalendarDateField
               zone={zone}
@@ -804,6 +824,7 @@ export function CalendarPage({
                   : "Начало · необязательно"
               }
               value={draft.start}
+              disabled={!draft.start}
               onChange={(start) =>
                 setDraft({
                   ...draft,
@@ -833,8 +854,38 @@ export function CalendarPage({
             <span>Повторять каждый день</span>
           </label>
           {draft.repeatDaily && (
+            <fieldset className="calendar-weekdays">
+              <legend>Дни недели</legend>
+              {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(
+                (label, index) => (
+                  <label key={label}>
+                    <input
+                      type="checkbox"
+                      checked={draft.repeatWeekdays.includes(index + 1)}
+                      disabled={
+                        draft.repeatWeekdays.length === 1 &&
+                        draft.repeatWeekdays.includes(index + 1)
+                      }
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          repeatWeekdays: e.target.checked
+                            ? [...draft.repeatWeekdays, index + 1].sort()
+                            : draft.repeatWeekdays.filter(
+                                (day) => day !== index + 1,
+                              ),
+                        })
+                      }
+                    />
+                    <span>{label}</span>
+                  </label>
+                ),
+              )}
+            </fieldset>
+          )}
+          {draft.repeatDaily && (
             <p className="muted">
-              Одна запись, каждый день в выбранное время начиная с даты начала.
+              Одна запись в выбранные дни недели и время начиная с даты начала.
               Уведомления повторяются по интервалу из настроек, пока не
               завершена сегодняшняя итерация. «Завершить сегодня» отключит
               только сегодняшние уведомления; «Завершить всю серию» остановит
@@ -1004,6 +1055,7 @@ export function CalendarPage({
                 {
                   leadMinutes: draft.leadMinutes,
                   repeatDaily: draft.repeatDaily,
+                  repeatWeekdays: draft.repeatWeekdays,
                   title: draft.title,
                   description: draft.description,
                   scope: draft.scope,

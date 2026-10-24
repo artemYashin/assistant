@@ -10159,3 +10159,8 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-time-event.is-short { justify-content:center;gap:0;padding-top:0;padding-bottom:0; }
 .calendar-time-event.is-short strong { display:block;white-space:nowrap;text-overflow:ellipsis;max-width:100%; }
 .calendar-time-event.is-short small { display:none; }
+.calendar-weekdays { display:flex;flex-wrap:wrap;gap:6px;border:1px solid #dce3eb;border-radius:8px;padding:10px;margin:8px 0 12px; }
+.calendar-weekdays legend { font-size:12px;padding:0 5px; }
+.calendar-weekdays label { display:inline-flex;align-items:center;gap:5px;margin:0;padding:6px 8px;border:1px solid #dce3eb;border-radius:6px;cursor:pointer; }
+.calendar-weekdays label:has(input:checked) { background:#e6f4ec;border-color:#91bfa2; }
+.calendar-weekdays input[type=checkbox] { width:15px;height:15px;margin:0; }

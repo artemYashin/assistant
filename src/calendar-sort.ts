@@ -8,7 +8,7 @@ export function reminderDate(item: CalendarItem, now: string): number | null {
   let day = wallTime(now, item.repeatZone || "UTC").slice(0, 10);
   const first = wallTime(item.start, item.repeatZone || "UTC").slice(0, 10);
   if (day < first) day = first;
-  for (let n = 0; n <= (item.completedDays?.length || 0) + 3; n++) {
+  for (let n = 0; n <= ((item.completedDays?.length || 0) + 1) * 7 + 3; n++) {
     const occurrence = dailyOccurrence(item, day);
     if (
       occurrence &&

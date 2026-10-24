@@ -10,6 +10,9 @@ export function dailyOccurrence(
   const zone = item.repeatZone || "UTC";
   const first = wallTime(item.start, zone);
   if (day < first.slice(0, 10)) return null;
+  const weekday = new Date(day + "T12:00:00Z").getUTCDay() || 7;
+  if (item.repeatWeekdays && !item.repeatWeekdays.includes(weekday))
+    return null;
   const completed = item.completed || !!item.completedDays?.includes(day);
   if (day === first.slice(0, 10))
     return { ...item, completed, occurrenceDay: day };
@@ -60,15 +63,23 @@ export function recurringOverlaps(
   from?: string,
   to?: string,
 ) {
-  if (!item.start || (to && to < item.start)) return false;
-  if (!from || !to || Date.parse(to) - Date.parse(from) >= 2 * 86400000)
-    return true;
-  const day = wallTime(from, item.repeatZone || "UTC").slice(0, 10);
-  for (let n = -1; n <= 3; n++) {
+  if (!item.start || (to && Date.parse(to) < Date.parse(item.start)))
+    return false;
+  if (!to) return true;
+  const lower =
+    from && Date.parse(from) > Date.parse(item.start) ? from : item.start;
+  if (Date.parse(to) - Date.parse(lower) >= 16 * 86400000) return true;
+  const day = wallTime(lower, item.repeatZone || "UTC").slice(0, 10);
+  for (let n = -1; n <= 17; n++) {
     const d = new Date(day + "T12:00:00Z");
     d.setUTCDate(d.getUTCDate() + n);
     const o = dailyOccurrence(item, d.toISOString().slice(0, 10));
-    if (o && o.start! <= to && (o.end || o.start!) >= from) return true;
+    if (
+      o &&
+      Date.parse(o.start!) <= Date.parse(to) &&
+      (!from || Date.parse(o.end || o.start!) >= Date.parse(from))
+    )
+      return true;
   }
   return false;
 }

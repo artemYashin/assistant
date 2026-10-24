@@ -138,6 +138,7 @@ export function searchCalendar(store: Store, input: unknown) {
           : store.settings().calendarNotifications.reminderLeadMinutes),
       createdAt: item.createdAt,
       repeatDaily: !!item.repeatDaily,
+      repeatWeekdays: item.repeatWeekdays,
       repeatZone: item.repeatZone,
       scope: item.scope,
       client: item.client,

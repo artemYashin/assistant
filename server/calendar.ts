@@ -38,6 +38,7 @@ export class Calendar {
       leadMinutes: r.lead_minutes ?? null,
       completedDays: JSON.parse(r.completed_days || "[]"),
       repeatDaily: !!r.repeat_daily,
+      repeatWeekdays: JSON.parse(r.repeat_weekdays),
       repeatZone: r.repeat_zone,
       id: r.id,
       kind: !r.start ? "general" : r.end ? "event" : "reminder",
@@ -142,6 +143,7 @@ export class Calendar {
           repeatZone,
         );
     }
+    this.store.db.prepare("UPDATE calendar_events SET repeat_weekdays=? WHERE id=?").run(JSON.stringify([...new Set(v.repeatWeekdays ?? [1,2,3,4,5,6,7])].sort()), id);
     this.setLead(id!, v.leadMinutes ?? null);
     return { id };
   }

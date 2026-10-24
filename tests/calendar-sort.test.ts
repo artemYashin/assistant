@@ -21,3 +21,9 @@ test("daily series sorts by next unfinished occurrence rather than original seri
   assert.deepEqual(sortReminders([daily,event],"nearest",now).map(i=>i.id),["event","daily"]);
   assert.deepEqual(sortReminders([{...daily,completedDays:[]},event],"nearest",now).map(i=>i.id),["daily","event"]);
 });
+
+test("nearest weekday repeat can fall beyond the next three days", () => {
+  const monday = {...item("monday","2026-10-19T11:00:00Z"),repeatDaily:true,repeatZone:"UTC",repeatWeekdays:[1]};
+  const thursday = item("thursday","2026-10-22T12:00:00Z");
+  assert.deepEqual(sortReminders([monday,thursday],"nearest","2026-10-20T10:00:00Z").map(i=>i.id),["thursday","monday"]);
+});
