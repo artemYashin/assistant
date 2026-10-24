@@ -148,13 +148,22 @@ test("assistant reminder preparation only emits a draft; supports all date forma
     { start: null, end: null },
     { start: due, end: null },
     { start: due, end: "2026-11-10T13:00:00Z" },
+    { start: due, end: null, repeatDaily: true },
   ]) {
     await tools[1].handler!({ title: "Reminder", ...dates } as any, {} as any);
   }
-  assert.equal(emitted.length, 3);
+  assert.equal(emitted.length, 4);
   assert.equal(emitted[0].draft.kind, "general");
   assert.equal(emitted[2].draft.kind, "event");
-  assert.equal(new Calendar(store).list().length, 0);
+  assert.equal(emitted[3].stage, "calendar_draft");
+  assert.equal(emitted[3].draft.repeatDaily, true);
+  assert.equal((tools[1].parameters as any).toJSONSchema().properties.repeatDaily.type, "boolean");
+  const calendar = new Calendar(store);
+  assert.equal(calendar.list().length, 0);
+  // The same draft is saved only after the user's UI confirmation.
+  calendar.save(emitted[3].draft);
+  assert.equal(calendar.list().length, 1);
+  assert.equal(calendar.list()[0].repeatDaily, true);
 });
 
 test("deadline migration and manual completion survive a database reopen", () => {
