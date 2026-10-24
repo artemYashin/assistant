@@ -1,3 +1,32 @@
+# Existing users and data preservation
+
+Orbit is already used by real people with valuable existing data. Treat every
+change as an upgrade of a populated installation, never as a fresh-install-only
+change. Before implementing any change, assess compatibility with saved data.
+
+- When changing stored schemas, formats, keys, defaults or their meaning, provide
+  the necessary migration or backward-compatible reader in the same change.
+  Cover SQLite tables, JSON/settings, browser localStorage (including filters and
+  presets), attachments/files and relationships between records. Renaming or
+  removing a feature must not silently discard useful user data.
+- Preserve existing values, IDs, links, completion/history and explicit user
+  choices. New defaults apply to missing values, not to already configured ones.
+  Never reset databases, recreate storage, clear browser state or delete files as
+  a shortcut to making an upgrade work.
+- Make migrations safe to repeat or explicitly tracked, and transactional where
+  possible. Mark completion only after success. For file moves/copies, verify
+  the destination before removing any original; retain recoverable originals on
+  failure. Plan backup/recovery before any unavoidable destructive conversion.
+- Test upgrades from representative old populated data, preservation of useful
+  fields/relationships, repeated startup and failure paths relevant to the
+  migration. A fresh empty database test alone is not sufficient.
+- For every change, determine whether a migration is needed and explain material
+  compatibility impacts in the change description. Pure presentation changes
+  that do not affect persisted data do not need a dummy migration.
+- Document user-visible upgrade behaviour and include functional changes in the
+  release history under the rules below. Do not claim universal data safety from
+  an untested migration or run migrations against users' live data for testing.
+
 # Orbit: maintaining product help
 
 When adding, changing, or removing user-visible behavior, settings, permissions,
