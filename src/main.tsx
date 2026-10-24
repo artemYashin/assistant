@@ -1,3 +1,7 @@
+import { CalendarPage } from "./CalendarPage.js";
+import { CalendarSettings } from "./CalendarSettings.js";
+import { CalendarNotifications } from "./CalendarNotifications.js";
+import { CalendarDays } from "lucide-react";
 import { useChatFiles, uploadChatFiles, ChatFilePicker, ChatFileRows, ChatFileDropArea, ChatFileErrorDialog } from "./ChatFiles.js";
 import { AzurePatPermissions } from "./AzurePatPermissions.js";
 import { ChatMessageContext } from "./ChatMessageContext.js";
@@ -123,6 +127,7 @@ import { Usage } from "./Usage.js";
 type Context = { client: string; project: string };
 const navigation = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
+  { id: "calendar", label: "Календарь", icon: CalendarDays },
   { id: "inbox", label: "Входящие", icon: Inbox },
   { id: "tickets", label: "Тикеты", icon: Ticket },
   { id: "developers", label: "Разработчики", icon: Users },
@@ -614,17 +619,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <TicketLookupDialog shortcutKey={settings?.ticketOpenKey ?? "KeyT"} shortcutPress={settings?.ticketOpenPress ?? "single"}
               key={`${settings?.azureUrl}:${settings?.azureProject}`}
             />
-            <button
-              className="icon-button"
-              title="Подтверждения"
-              aria-label="Подтверждения"
-              onClick={() => setPage("approvals")}
-            >
-              <Bell size={18} />
-              {memoryProposals.some((p) => p.status === "pending") && (
-                <i className="notification-dot" />
-              )}
-            </button>
+            <CalendarNotifications settings={settings} pending={memoryProposals.filter(p => p.status === "pending").length} />
             <button
               className="icon-button"
               id="assistant-toggle"
@@ -668,6 +663,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 {notice}
               </div>
             )}
+            {page === "calendar" && settings && <CalendarPage settings={settings} />}
             {page === "code" && <CodeBrowserPage key={JSON.stringify([context, refresh, settings?.azureUrl, settings?.azureProject])} context={context} />}
             {page === "overview" && (
               <>
@@ -1980,6 +1976,7 @@ function Settings({ settings, context, run, busy }: any) {
     { id: "hotkeys", label: "Горячие клавиши", icon: Command },
     { id: "review", label: "Code Review", icon: GitPullRequest },
     { id: "memory", label: "Память", icon: BookOpen },
+    { id: "calendar", label: "Календарь", icon: CalendarDays },
   ];
   const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
     [githubFlow, setGithubFlow] = useState<any>(null),
@@ -2168,6 +2165,9 @@ function Settings({ settings, context, run, busy }: any) {
             />
           </Field>
           </div>
+        </section>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-calendar-panel`} aria-labelledby={`${settingsTabId}-calendar`} hidden={settingsTab !== "calendar"}>
+          <CalendarSettings form={form} set={set} />
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-azure-panel`} aria-labelledby={`${settingsTabId}-azure`} hidden={settingsTab !== "azure"}>
           <div className="section-heading">

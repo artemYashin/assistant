@@ -1,0 +1,270 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import request from "supertest";
+import { Store } from "../server/store.js";
+import { Calendar } from "../server/calendar.js";
+import {
+  calendarInput,
+  calendarOverlaps,
+  calendarStatus,
+  calendarNotificationsSchema,
+} from "../server/calendar-model.js";
+import { fromWall, wallTime } from "../src/calendar-time.js";
+import { createApp } from "../server/app.js";
+function fixture(t: any) {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-calendar-"));
+  const store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  return store;
+}
+const event = {
+  kind: "event" as const,
+  title: "Review",
+  description: "Notes",
+  start: "2026-10-21T08:00:00.000Z",
+  end: "2026-10-21T10:00:00.000Z",
+  developerIds: [],
+};
+test("calendar range includes partial overlap, containment, touching endpoints, and open-ended events", () => {
+  assert.equal(
+    calendarOverlaps(event, "2026-10-21T09:00:00Z", "2026-10-21T11:00:00Z"),
+    true,
+  );
+  assert.equal(
+    calendarOverlaps(event, "2026-10-21T08:30:00Z", "2026-10-21T09:00:00Z"),
+    true,
+  );
+  assert.equal(calendarOverlaps(event, "2026-10-21T10:00:00Z"), true);
+  assert.equal(
+    calendarOverlaps(event, undefined, "2026-10-21T08:00:00Z"),
+    true,
+  );
+  assert.equal(calendarOverlaps(event, "2026-10-21T10:00:01Z"), false);
+  assert.equal(
+    calendarOverlaps({ ...event, end: null }, "2027-01-01T00:00:00Z"),
+    true,
+  );
+  assert.equal(
+    calendarOverlaps(
+      { ...event, kind: "reminder", end: null },
+      "2026-10-21T09:00:00Z",
+    ),
+    false,
+  );
+  assert.equal(
+    calendarOverlaps({ ...event, kind: "general", start: null, end: null }),
+    true,
+  );
+  assert.equal(
+    calendarOverlaps({ ...event, start: null, end: null }, event.start),
+    false,
+  );
+});
+test("status distinguishes future, ongoing, overdue, general and completed without automatically completing", () => {
+  const item = { ...event, completed: false };
+  assert.equal(calendarStatus(item, "2026-10-21T07:00:00Z"), "upcoming");
+  assert.equal(calendarStatus(item, "2026-10-21T08:00:00Z"), "ongoing");
+  assert.equal(calendarStatus(item, event.end), "overdue");
+  assert.equal(
+    calendarStatus({ ...item, end: null }, "2027-01-01T00:00:00Z"),
+    "ongoing",
+  );
+  assert.equal(
+    calendarStatus({ ...item, kind: "general", start: null, end: null }),
+    "open",
+  );
+  assert.equal(calendarStatus({ ...item, completed: true }), "completed");
+  assert.equal(
+    calendarStatus({ ...item, kind: "reminder", end: null }, event.start),
+    "overdue",
+  );
+});
+test("calendar dates use configured zone, reject DST gaps and handle repeated times deterministically", () => {
+  assert.equal(
+    fromWall("2026-10-21T08:00", "Asia/Bishkek"),
+    "2026-10-21T02:00:00.000Z",
+  );
+  assert.equal(
+    wallTime("2026-10-21T02:00:00.000Z", "Asia/Bishkek"),
+    "2026-10-21T08:00",
+  );
+  assert.throws(
+    () => fromWall("2026-03-29T02:30", "Europe/Berlin"),
+    /времени нет/,
+  );
+  assert.equal(
+    fromWall("2026-10-25T02:30", "Europe/Berlin"),
+    "2026-10-25T00:30:00.000Z",
+  );
+  assert.throws(() => fromWall("2026-02-30T09:00", "UTC"));
+});
+test("invalid reminder shapes and schedules are rejected", () => {
+  assert.throws(() =>
+    calendarInput.parse({ ...event, end: "2026-10-21T07:00:00Z" }),
+  );
+  assert.throws(() => calendarInput.parse({ ...event, kind: "general" }));
+  assert.throws(() => calendarInput.parse({ ...event, kind: "reminder" }));
+  assert.throws(() => calendarInput.parse({ ...event, start: null }));
+  assert.throws(() =>
+    calendarNotificationsSchema.parse({ intervalMinutes: 0 }),
+  );
+});
+test("reminders persist, validate local developers, and completion/deletion stop repeated notifications", (t) => {
+  const store = fixture(t),
+    calendar = new Calendar(store);
+  store.db
+    .prepare("INSERT INTO local_developers VALUES ('d','Developer','','',1)")
+    .run();
+  assert.throws(
+    () => calendar.save({ ...event, developerIds: ["missing"] }),
+    /недоступен/,
+  );
+  const { id } = calendar.save({ ...event, developerIds: ["d", "d"] });
+  const again = new Calendar(store);
+  assert.deepEqual(again.list()[0].developerIds, ["d"]);
+  assert.equal(again.list()[0].title, event.title);
+  const now = new Date("2026-10-21T11:00:00Z");
+  assert.equal(calendar.notifications(now).length, 1);
+  assert.equal(
+    again.notifications(now).length,
+    0,
+    "another tab cannot claim the same interval",
+  );
+  assert.equal(
+    calendar.notifications(new Date(now.getTime() + 59 * 60000)).length,
+    0,
+  );
+  assert.equal(
+    calendar.notifications(new Date(now.getTime() + 60 * 60000)).length,
+    1,
+  );
+  calendar.complete(id);
+  assert.equal(
+    calendar.notifications(new Date(now.getTime() + 120 * 60000)).length,
+    0,
+  );
+  assert.equal(calendar.list()[0].completed, true);
+  calendar.remove(id);
+  assert.equal(calendar.list().length, 0);
+  assert.throws(() => calendar.complete(id), /не найдено/);
+});
+test("notification schedule uses the shared timezone and never removes future items from the center", (t) => {
+  const store = fixture(t),
+    calendar = new Calendar(store);
+  const settings = store.settings();
+  store.set("settings", {
+    ...settings,
+    syncSchedule: { ...settings.syncSchedule, timeZone: "Asia/Bishkek" },
+    calendarNotifications: calendarNotificationsSchema.parse({
+      schedule: {
+        mode: "scheduled",
+        days: [3],
+        start: "09:00",
+        end: "18:00",
+        timeZone: "UTC",
+      },
+      intervalMinutes: 30,
+    }),
+  });
+  calendar.save({ kind: "general", title: "Open", start: null, end: null });
+  calendar.save({ ...event, start: "2027-01-01T00:00:00Z", end: null });
+  assert.equal(
+    calendar.notifications(new Date("2026-10-21T02:59:00Z")).length,
+    0,
+  );
+  assert.equal(
+    calendar.notifications(new Date("2026-10-21T03:00:00Z")).length,
+    1,
+  );
+  assert.equal(
+    calendar.notifications(new Date("2026-10-21T12:00:00Z")).length,
+    0,
+  );
+  assert.equal(calendar.list().length, 2);
+});
+test("API authenticates mutations, preserves existing timezone, and handles reminder lifecycle", async (t) => {
+  const store = fixture(t),
+    { app } = createApp(store);
+  const headers = {
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
+    "X-Orbit-Request": "1",
+  };
+  await request(app).post("/api/calendar").set(headers).send(event).expect(401);
+  const setup = await request(app)
+    .post("/api/auth/setup")
+    .set(headers)
+    .send({ password: "long-enough-password" })
+    .expect(200);
+  const auth = {
+    ...headers,
+    Cookie: setup.headers["set-cookie"][0].split(";")[0],
+    "X-CSRF-Token": setup.body.csrf,
+  };
+  const settings = store.settings();
+  store.set("settings", {
+    ...settings,
+    syncSchedule: { ...settings.syncSchedule, timeZone: "Asia/Bishkek" },
+  });
+  assert.equal(
+    (await request(app).get("/api/settings").set(auth)).body.syncSchedule
+      .timeZone,
+    "Asia/Bishkek",
+  );
+  const created = await request(app)
+    .post("/api/calendar")
+    .set(auth)
+    .send(event)
+    .expect(200);
+  await request(app)
+    .put("/api/calendar/" + created.body.id)
+    .set(auth)
+    .send({ ...event, title: "Changed" })
+    .expect(200);
+  assert.equal(
+    (await request(app).get("/api/calendar").set(auth)).body.items[0].title,
+    "Changed",
+  );
+  await request(app)
+    .post("/api/calendar/" + created.body.id + "/complete")
+    .set(auth)
+    .send({})
+    .expect(200);
+  await request(app)
+    .delete("/api/calendar/" + created.body.id)
+    .set(auth)
+    .expect(200);
+  assert.deepEqual(
+    (await request(app).get("/api/calendar").set(auth)).body.items,
+    [],
+  );
+});
+
+test("calendar survives a real store restart without changing the existing sync timezone", () => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-calendar-restart-"));
+  let store = new Store(dir);
+  try {
+    store.set("settings", {
+      ...store.settings(),
+      syncSchedule: {
+        ...store.settings().syncSchedule,
+        timeZone: "Asia/Bishkek",
+      },
+    });
+    const { id } = new Calendar(store).save(event);
+    store.close();
+    store = new Store(dir);
+    assert.equal(new Calendar(store).list()[0].id, id);
+    assert.equal(store.settings().syncSchedule.timeZone, "Asia/Bishkek");
+    assert.equal(store.settings().calendarNotifications.browser, false);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

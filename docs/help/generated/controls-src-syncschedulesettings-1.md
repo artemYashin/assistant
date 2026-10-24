@@ -7,42 +7,30 @@
 
 ### Элемент
 
-Автоматическая синхронизация
+Режим уведомлений / Автоматическая синхронизация
 
-Источник: src/SyncScheduleSettings.tsx:13.
+Источник: src/SyncScheduleSettings.tsx:15.
 
 ### Элемент
 
-Обновлять всегда
+В любое время / Обновлять всегда
 
-Источник: src/SyncScheduleSettings.tsx:27.
+Источник: src/SyncScheduleSettings.tsx:24.
 
 ### Элемент
 
 По расписанию
 
-Источник: src/SyncScheduleSettings.tsx:28.
+Источник: src/SyncScheduleSettings.tsx:26.
 
 ### Элемент
 
-Обновлять с
+Показывать с / Обновлять с
 
-Источник: src/SyncScheduleSettings.tsx:34.
+Источник: src/SyncScheduleSettings.tsx:32.
 
 ### Элемент
 
 До
 
-Источник: src/SyncScheduleSettings.tsx:43.
-
-### Элемент
-
-Часовой пояс
-
-Источник: src/SyncScheduleSettings.tsx:52.
-
-### Элемент
-
-Asia/Bishkek
-
-Источник: src/SyncScheduleSettings.tsx:54.
+Источник: src/SyncScheduleSettings.tsx:41.

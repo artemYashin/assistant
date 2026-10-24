@@ -1,3 +1,5 @@
+import { Calendar } from "./calendar.js";
+import { calendarNotificationsSchema } from "./calendar-model.js";
 import { readImageUrl } from "./image-reader.js";
 import { ChatFiles, CHAT_FILE_LIMIT } from "./chat-files.js";
 import { ticketExportContextSchema } from "./ticket-export-context.js";
@@ -79,6 +81,7 @@ const settingsSchema = z
     azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
     syncSeconds: z.number().int().min(60).max(3600),
     syncSchedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
+    calendarNotifications: calendarNotificationsSchema.default(() => calendarNotificationsSchema.parse({})),
     azureAutoImport: z.boolean().default(false),
     azureImportAssignees:z.array(z.object({id:text.min(1),name:text.min(1),email:z.string().trim().min(1).max(320)})).max(50).default([]),
     azureTypes: z.array(text.min(1)).max(50).default([]),
@@ -566,6 +569,13 @@ export function createApp(
       );
     res.json(store.clearHistory(context, id));
   });
+  const calendar = new Calendar(store);
+  app.get("/api/calendar", (_req,res) => res.json({items:calendar.list(),developers:calendar.developers()}));
+  app.post("/api/calendar", (req,res) => res.json(calendar.save(req.body)));
+  app.put("/api/calendar/:id", (req,res) => res.json(calendar.save(req.body,String(req.params.id))));
+  app.post("/api/calendar/:id/complete", (req,res) => res.json(calendar.complete(String(req.params.id))));
+  app.delete("/api/calendar/:id", (req,res) => res.json(calendar.remove(String(req.params.id))));
+  app.post("/api/calendar/notifications/claim", (_req,res) => res.json(calendar.notifications()));
   app.get("/api/usage", (req, res) => {
     const days = z.coerce
       .number()

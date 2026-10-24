@@ -1,5 +1,6 @@
 export const pagePaths = {
   overview: "/",
+  calendar: "/calendar",
   code: "/code",
   inbox: "/inbox",
   tickets: "/tickets",

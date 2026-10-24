@@ -1,3 +1,4 @@
+import { calendarNotificationsSchema } from "./calendar-model.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import type { ChatMessageContext } from "./chat-message-context.js";
 import { createHash } from "node:crypto";
@@ -57,6 +58,7 @@ export const defaults = {
   typeColors: {} as Record<string, string>,
   syncSeconds: 600,
   syncSchedule: syncScheduleSchema.parse({}),
+  calendarNotifications: calendarNotificationsSchema.parse({}),
   prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
@@ -85,6 +87,8 @@ export class Store {
     this.db.pragma("journal_mode = WAL");
     this.db.pragma("foreign_keys = ON");
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS calendar_events (id TEXT PRIMARY KEY,kind TEXT NOT NULL,title TEXT NOT NULL,description TEXT NOT NULL,start TEXT,end TEXT,developers TEXT NOT NULL DEFAULT '[]',completed INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,last_notified INTEGER);
+      CREATE INDEX IF NOT EXISTS calendar_due ON calendar_events(completed,start,last_notified);
       CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS secrets (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires INTEGER NOT NULL);
