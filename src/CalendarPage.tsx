@@ -479,8 +479,18 @@ export function CalendarPage({
                 placeholder="Название напоминания"
               />
             </label>
-            <CalendarDateField label="С" value={from} onChange={setFrom} />
-            <CalendarDateField label="По" value={to} onChange={setTo} />
+            <CalendarDateField
+              zone={zone}
+              label="С"
+              value={from}
+              onChange={setFrom}
+            />
+            <CalendarDateField
+              zone={zone}
+              label="По"
+              value={to}
+              onChange={setTo}
+            />
             <button
               className="secondary"
               onClick={() => {
@@ -701,6 +711,7 @@ export function CalendarPage({
         </label>
         <div className="calendar-date-fields">
           <CalendarDateField
+            zone={zone}
             label="Начало · необязательно"
             value={draft.start}
             onChange={(start) =>
@@ -708,6 +719,7 @@ export function CalendarPage({
             }
           />
           <CalendarDateField
+            zone={zone}
             label="Окончание · необязательно"
             value={draft.end}
             min={draft.start}

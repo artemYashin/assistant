@@ -9,100 +9,100 @@
 
 Изменить
 
-Источник: src/CalendarPage.tsx:556.
+Источник: src/CalendarPage.tsx:566.
 
 ### Элемент
 
 Завершить напоминание? · «{…}» останется в истории, уведомления прекратятся. · Завершить
 
-Источник: src/CalendarPage.tsx:561.
+Источник: src/CalendarPage.tsx:571.
 
 ### Элемент
 
 Вернуть в незавершённые? · «{…}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания. · Вернуть в незавершённые
 
-Источник: src/CalendarPage.tsx:574.
+Источник: src/CalendarPage.tsx:584.
 
 ### Элемент
 
 Удалить напоминание? · «{…}» будет удалено без возможности восстановления. · Удалить
 
-Источник: src/CalendarPage.tsx:586.
+Источник: src/CalendarPage.tsx:596.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarPage.tsx:614.
+Источник: src/CalendarPage.tsx:624.
 
 ### Элемент
 
 Общий
 
-Источник: src/CalendarPage.tsx:631.
+Источник: src/CalendarPage.tsx:641.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: src/CalendarPage.tsx:662.
+Источник: src/CalendarPage.tsx:672.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/CalendarPage.tsx:666.
+Источник: src/CalendarPage.tsx:676.
 
 ### Элемент
 
 Проект напоминания
 
-Источник: src/CalendarPage.tsx:676.
+Источник: src/CalendarPage.tsx:686.
 
 ### Элемент
 
 Выберите проект
 
-Источник: src/CalendarPage.tsx:681.
+Источник: src/CalendarPage.tsx:691.
 
 ### Элемент
 
 Название
 
-Источник: src/CalendarPage.tsx:693.
+Источник: src/CalendarPage.tsx:703.
 
 ### Элемент
 
 Описание
 
-Источник: src/CalendarPage.tsx:723.
+Источник: src/CalendarPage.tsx:735.
 
 ### Элемент
 
 Разработчики · необязательно ( · )
 
-Источник: src/CalendarPage.tsx:735.
+Источник: src/CalendarPage.tsx:747.
 
 ### Элемент
 
 / Общий список
 
-Источник: src/CalendarPage.tsx:740.
+Источник: src/CalendarPage.tsx:752.
 
 ### Элемент
 
 Удалённый разработчик · снимите выбор для сохранения
 
-Источник: src/CalendarPage.tsx:767.
+Источник: src/CalendarPage.tsx:779.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarPage.tsx:790.
+Источник: src/CalendarPage.tsx:802.
 
 ### Элемент
 
 Сохранить изменения? / Создать напоминание? · «{…}» · {…} · Сохранить / Создать
 
-Источник: src/CalendarPage.tsx:793.
+Источник: src/CalendarPage.tsx:805.

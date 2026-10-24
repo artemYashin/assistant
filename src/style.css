@@ -10011,11 +10011,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-filters>.calendar-date-field { flex:1 1 200px; }
 .calendar-filters .single-select .multi-select-panel { z-index:30; }
 .calendar-date-field { min-width:0;position:relative; }
-.calendar-date-control { display:flex;align-items:stretch;position:relative; }
-.calendar-date-control input { min-width:0;flex:1;padding-right:44px!important; }
-.calendar-date-control input::-webkit-calendar-picker-indicator { display:none; }
-.calendar-picker-button { position:absolute;right:3px;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;width:38px;border:1px solid transparent;background:#edf3f7;border-radius:6px;color:#47738c; }
-.calendar-picker-button:hover:not(:disabled),.calendar-picker-button:focus-visible { background:#d7eaff;border-color:#89b5da;box-shadow:0 0 0 2px #dcecff; }
 .calendar-date-clear { display:flex;align-items:center;gap:3px;font-size:10px;padding:0;border:0;background:transparent;color:#6b7982;position:absolute;right:0;top:0; }
 .calendar-date-fields>.calendar-date-field { flex:1;min-width:220px; }
 .calendar-scope-editor { padding:12px;background:#f5f8fa;border:1px solid #dae4ea;border-radius:10px; }
@@ -10070,3 +10065,30 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-reminder .calendar-inline { flex-wrap: wrap; row-gap: 8px; }
 .calendar-reminder .calendar-inline > svg { flex-shrink: 0; }
 .calendar-reminder .calendar-reminder-actions { margin-top: auto; padding-top: 14px; border-top: 1px solid #edf1f4; gap: 8px; }
+
+.calendar-date-label { display:block;font-size:12px;margin-bottom:7px;color:#536775; }
+.calendar-date-trigger { display:flex;align-items:center;gap:10px;width:100%;min-height:42px;text-align:left;padding:10px 12px;border:1px solid #cfdae2;border-radius:9px;background:#f8fafc;color:#6a7c89; }
+.calendar-date-trigger.has-value { color:#284d63;background:#f1f7fc;border-color:#b9cfdf; }
+.calendar-date-trigger:hover:not(:disabled) { border-color:#6eabcf;background:#eaf4fc; }
+.calendar-date-trigger svg { flex-shrink:0;color:#4f88ac; }
+.calendar-date-picker { width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #d5e1e9;border-radius:18px;padding:20px;background:#fff;box-shadow:0 24px 80px #18384c40;color:#294354; }
+.calendar-date-picker::backdrop { background:#102d4526; }
+.calendar-picker-title,.calendar-picker-title>span,.calendar-picker-month,.calendar-picker-time,.calendar-picker-time>span,.calendar-picker-time>div,.calendar-picker-shortcuts,.calendar-picker-actions { display:flex;align-items:center;gap:8px; }
+.calendar-picker-title { justify-content:space-between;font-size:12px;color:#687c89;padding-bottom:12px;border-bottom:1px solid #eaf0f4; }
+.calendar-picker-title>span { min-width:0; }
+.calendar-picker-month { justify-content:space-between;margin:12px 0; }
+.calendar-picker-month strong { text-transform:capitalize;font-size:15px; }
+.calendar-picker-days { display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px; }
+.calendar-picker-weekday { text-align:center;font-size:10px;color:#8b9ba6;padding:5px 0; }
+.calendar-picker-day { aspect-ratio:1;border-radius:9px;font-size:13px;border:1px solid transparent;padding:0; }
+.calendar-picker-day.outside { color:#98a9b4; }
+.calendar-picker-day.today { border-color:#89b9d6;color:#2a719e; }
+.calendar-picker-day:hover:not(:disabled) { background:#eaf4fb; }
+.calendar-picker-day.selected,.calendar-picker-day.selected:hover:not(:disabled) { background:#327fae;color:white;border-color:#327fae;font-weight:600; }
+.calendar-picker-day:disabled { opacity:.3; }
+.calendar-picker-time { justify-content:space-between;background:#f3f7fa;padding:10px 12px;border:1px solid #e4edf3;border-radius:10px;margin-top:14px;font-size:12px; }
+.calendar-picker-time input { width:52px;min-width:0;padding:8px 4px;text-align:center;background:white;border:1px solid #cfdde6;border-radius:7px;font-size:14px; }
+.calendar-picker-shortcuts { justify-content:space-between;margin:12px 0;color:#83949f;font-size:10px; }
+.calendar-picker-shortcuts .secondary { font-size:11px;padding:6px 10px; }
+.calendar-picker-actions { justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #eaf0f4; }
+.calendar-picker-actions button { display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 14px;border-radius:8px; }
