@@ -43,54 +43,110 @@ export function calendarTools(
         return searchCalendar(store, input);
       },
     }),
-    defineTool("prepare_calendar_status_change", {
+    defineTool("get_calendar_reminder", {
       description:
-        "On explicit user request prepare a confirmation popup to complete or reopen a reminder. First search_calendar_reminders to obtain its exact ID and resolve ambiguity. completed=true completes; false reopens. target=reminder for ordinary/ticket-deadline reminders, today for a daily occurrence (optional day YYYY-MM-DD selects a specific date in series timezone, including tomorrow; omitted means today), series for the entire daily series ONLY if explicitly requested; clarify ambiguous daily completion. Never claim changed until user confirms: this only opens a dialog. Completion does not change Azure ticket status, deadline date, or global notification timer.",
+        "Read full local reminder fields before editing, including description, leadMinutes and completed daily dates. No mutations; use search first for exact ID.",
+      parameters: z.object({ id: z.string().uuid() }).strict(),
+      handler: async ({ id }) => {
+        assertActive();
+        const item = new Calendar(store).list().find((item) => item.id === id);
+        if (!item) throw new AppError(404, "Напоминание не найдено.");
+        return item;
+      },
+    }),
+    defineTool("change_calendar_reminders", {
+      description:
+        "Immediately complete, reopen or delete one or many reminders on explicit user request, without confirmation dialogs. FIRST search_calendar_reminders and collect all pages before mutating a filtered result (otherwise pagination can skip records). Pass exact IDs and resolve ambiguity. target=reminder for ordinary and ticket deadlines; occurrence for one daily date (day YYYY-MM-DD, omit for today); series for whole daily series. An explicit request to complete ALL reminders includes entire daily series; otherwise clarify ambiguous daily scope. Entire batch is atomic: any invalid entry rolls back all changes. Completion never changes Azure ticket state or local deadline. For action=delete, ticket deadline reminders are COMPLETED instead of deleted: preserve the local deadline and ticket. Report deleted and completed counts separately. Delete only whole reminders/series, not an individual occurrence (complete it instead). Return accurate affected count and report failures.",
       parameters: z
         .object({
-          id: z.string().uuid(),
-          completed: z.boolean(),
-          target: z.enum(["reminder", "today", "series"]),
-          day: z
-            .string()
-            .regex(/^\d{4}-\d{2}-\d{2}$/)
-            .optional(),
+          action: z.enum(["complete", "reopen", "delete"]),
+          items: z
+            .array(
+              z
+                .object({
+                  id: z.string().uuid(),
+                  target: z.enum(["reminder", "occurrence", "series"]),
+                  day: z
+                    .string()
+                    .regex(/^\d{4}-\d{2}-\d{2}$/)
+                    .optional(),
+                })
+                .strict(),
+            )
+            .min(1)
+            .max(500),
         })
         .strict(),
       handler: async (input) => {
         assertActive();
-        if (!send)
-          throw new AppError(
-            409,
-            "Изменение напоминания требует открытого интерфейса чата.",
+        const calendar = new Calendar(store);
+        const results = store.db.transaction(() => {
+          const available = new Map(
+            calendar.list().map((item) => [item.id, item]),
           );
-        const item = new Calendar(store)
-          .list()
-          .find((item) => item.id === input.id);
-        if (!item) throw new AppError(404, "Напоминание не найдено.");
-        if (!!item.repeatDaily !== (input.target !== "reminder"))
-          throw new AppError(
-            400,
-            "Для ежедневной серии выберите сегодня или всю серию; для обычного напоминания — reminder.",
-          );
-        if (input.day && input.target !== "today")
-          throw new AppError(
-            400,
-            "Дата итерации применяется только к отдельному повтору.",
-          );
-        send({ stage: "calendar_status", request: input });
+          const seen = new Set<string>();
+          return input.items
+            .map((entry) => {
+              assertActive();
+              const item = available.get(entry.id);
+              if (!item)
+                throw new AppError(404, "Напоминание не найдено: " + entry.id);
+              if (!!item.repeatDaily !== (entry.target !== "reminder"))
+                throw new AppError(
+                  400,
+                  "Для ежедневной серии выберите итерацию или всю серию; для обычного напоминания — reminder.",
+                );
+              if (input.action === "delete" && entry.target === "occurrence")
+                throw new AppError(
+                  400,
+                  "Отдельный повтор можно завершить, но удалить можно только всю серию.",
+                );
+              if (entry.day && entry.target !== "occurrence")
+                throw new AppError(
+                  400,
+                  "Дата итерации применяется только к отдельному повтору.",
+                );
+              const key = `${entry.id}:${entry.target}:${entry.day || ""}`;
+              if (seen.has(key)) return null;
+              seen.add(key);
+              const action =
+                input.action === "delete" && item.ticket
+                  ? "complete"
+                  : input.action;
+              if (action === "delete") calendar.remove(entry.id);
+              else if (entry.target === "occurrence")
+                calendar.completeToday(
+                  entry.id,
+                  input.action === "complete",
+                  new Date(),
+                  entry.day,
+                );
+              else if (action === "complete") calendar.complete(entry.id);
+              else calendar.reopen(entry.id);
+              return {
+                id: item.id,
+                title: item.title,
+                target: entry.target,
+                day: entry.day,
+                action,
+              };
+            })
+            .filter((result) => result !== null);
+        })();
+        send?.({ stage: "calendar_changed" });
         return {
-          requested: true,
-          changed: false,
-          id: item.id,
-          title: item.title,
-          note: "User must confirm in calendar UI.",
+          changed: true,
+          count: results.length,
+          deleted: results.filter((r) => r.action === "delete").length,
+          completed: results.filter((r) => r.action === "complete").length,
+          reopened: results.filter((r) => r.action === "reopen").length,
+          reminders: results,
         };
       },
     }),
-    defineTool("prepare_calendar_warning_change", {
+    defineTool("update_calendar_warning", {
       description:
-        "On explicit request open an existing reminder (including ticket deadlines and daily series) to confirm its individual advance warning. First search_calendar_reminders for exact ID. leadMinutes=null restores global default; 0 means at start/deadline. Does not change date, completion, or Azure. User must save and confirm in UI.",
+        "Immediately change an existing reminder's individual advance warning on explicit user request, including ticket deadlines and daily series. Search for exact ID first. leadMinutes=null restores global default; 0 means at start/deadline. No confirmation popup. Does not change deadline, completion or Azure.",
       parameters: z
         .object({
           id: z.string().uuid(),
@@ -99,41 +155,32 @@ export function calendarTools(
         .strict(),
       handler: async ({ id, leadMinutes }) => {
         assertActive();
-        if (!send)
-          throw new AppError(
-            409,
-            "Изменение напоминания требует открытого интерфейса чата.",
-          );
-        const item = new Calendar(store).list().find((item) => item.id === id);
-        if (!item) throw new AppError(404, "Напоминание не найдено.");
-        send({ stage: "calendar_draft", draft: { ...item, leadMinutes } });
-        return {
-          requested: true,
-          saved: false,
-          id,
-          title: item.title,
-          leadMinutes,
-          note: "User must save and confirm in calendar UI.",
-        };
+        new Calendar(store).setLead(id, leadMinutes);
+        send?.({ stage: "calendar_changed" });
+        return { saved: true, id, leadMinutes };
       },
     }),
-    defineTool("prepare_calendar_reminder", {
+    defineTool("save_calendar_reminder", {
       description:
-        "On explicit user request prepare the calendar creation form; user reviews and confirms creation in UI. FIRST get_calendar_context to resolve relative dates (in ten minutes, tonight) in configured timezone, then use UTC ISO dates. start=null/end=null means no date; start plus end=null means timed reminder; start/end means duration. repeatDaily=true repeats daily from start at the configured local time, as one series; duration must not exceed 24 hours. All persist until manually completed (daily reminders allow completing today or the whole series; unfinished occurrences notify at the configured interval). Optional leadMinutes sets individual advance warning (null inherits settings), including before midnight for tomorrow’s daily occurrence. Optional local developerIds and general/client/project scope. Do not claim saved: this only opens an editable draft. Never use for ticket deadline: use update_local_ticket_metadata(localDeadline) instead.",
-      parameters: calendarDraftSchema,
-      handler: async (input) => {
+        "Immediately create or edit a reminder on explicit user request, without confirmation UI. Omit id to create; for editing search exact ID then get_calendar_reminder for full content and preserve unrequested fields. FIRST get_calendar_context for relative times and timezone, use UTC ISO dates. reminder.start=null/end=null means undated; start with end=null means timed; start/end means duration. repeatDaily=true is a daily series; duration max 24 hours. leadMinutes sets individual advance (null inherits settings), including before midnight. Optional local developerIds and general/client/project scope. Never edit ticket deadline through this tool: use update_local_ticket_metadata for the date and update_calendar_warning for advance. Report saved only after success.",
+      parameters: z
+        .object({
+          id: z.string().uuid().optional(),
+          reminder: calendarDraftSchema,
+        })
+        .strict(),
+      handler: async ({ id, reminder }) => {
         assertActive();
-        if (!send)
-          throw new AppError(
-            409,
-            "Создание напоминания требует открытого интерфейса чата.",
-          );
-        const draft = calendarInput.parse(input);
-        send({ stage: "calendar_draft", draft });
+        const result = new Calendar(store).save(
+          calendarInput.parse(reminder),
+          id,
+        );
+        send?.({ stage: "calendar_changed" });
         return {
-          requested: true,
-          saved: false,
-          note: "Confirm creation in the calendar form.",
+          saved: true,
+          id: result.id,
+          title: reminder.title,
+          created: !id,
         };
       },
     }),

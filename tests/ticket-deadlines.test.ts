@@ -74,7 +74,8 @@ test("deadline lifecycle is separate from completion and Azure; survives edits, 
     "2026-11-11T12:00:00.000Z",
   );
   cal.remove(item.id);
-  assert.equal(ticketMetadata(store, 42).localDeadline, null);
+  assert.equal(ticketMetadata(store, 42).localDeadline, "2026-11-11T12:00:00.000Z");
+  assert.equal(cal.list()[0].completed, true);
   save(due);
   save(null);
   assert.equal(cal.list().length, 0);
@@ -131,7 +132,7 @@ test("old settings gain lead default; missing active ticket suspends notificatio
   store.db.prepare("DELETE FROM ticket_metadata WHERE id=42").run();
   assert.equal(cal.list().length, 0);
 });
-test("assistant reminder preparation only emits a draft; supports all date formats and timezone context", async (t) => {
+test("assistant creates reminders immediately and emits refresh events for all date formats", async (t) => {
   const store = fixture(t),
     emitted: any[] = [];
   const tools = calendarTools(
@@ -150,20 +151,15 @@ test("assistant reminder preparation only emits a draft; supports all date forma
     { start: due, end: "2026-11-10T13:00:00Z" },
     { start: due, end: null, repeatDaily: true },
   ]) {
-    await tools.find(t => t.name === "prepare_calendar_reminder")!.handler!({ title: "Reminder", ...dates } as any, {} as any);
+    await tools.find(t => t.name === "save_calendar_reminder")!.handler!({ reminder: { title: "Reminder", ...dates } } as any, {} as any);
   }
   assert.equal(emitted.length, 4);
-  assert.equal(emitted[0].draft.kind, "general");
-  assert.equal(emitted[2].draft.kind, "event");
-  assert.equal(emitted[3].stage, "calendar_draft");
-  assert.equal(emitted[3].draft.repeatDaily, true);
-  assert.equal((tools.find(t => t.name === "prepare_calendar_reminder")!.parameters as any).toJSONSchema().properties.repeatDaily.type, "boolean");
+  assert.ok(emitted.every(e => e.stage === "calendar_changed"));
   const calendar = new Calendar(store);
-  assert.equal(calendar.list().length, 0);
-  // The same draft is saved only after the user's UI confirmation.
-  calendar.save(emitted[3].draft);
-  assert.equal(calendar.list().length, 1);
-  assert.equal(calendar.list()[0].repeatDaily, true);
+  assert.equal(calendar.list().length, 4);
+  assert.ok(calendar.list().some(i => i.kind === "general"));
+  assert.ok(calendar.list().some(i => i.kind === "event"));
+  assert.ok(calendar.list().some(i => i.repeatDaily));
 });
 
 test("deadline migration and manual completion survive a database reopen", () => {
@@ -270,4 +266,24 @@ test("ticket warning override survives deadline edits and restores global defaul
   assert.equal(cal.list()[0].leadMinutes, 10);
   cal.setLead(id, null);
   assert.equal(cal.list()[0].start, "2026-11-10T12:00:00.000Z");
+});
+
+
+test("assistant batch deletion completes ticket deadline reminders and preserves ticket metadata", async t => {
+  const store = fixture(t), calendar = new Calendar(store);
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due, notes: "Keep notes" });
+  const deadline = calendar.list()[0].id;
+  const ordinary = calendar.save({title:"Remove me",start:null,end:null}).id;
+  const tool: any = calendarTools(store, () => {}).find(t => t.name === "change_calendar_reminders");
+  await assert.rejects(() => tool.handler({action:"delete",items:[{id:deadline,target:"reminder"},{id:ordinary,target:"reminder"},{id:"00000000-0000-4000-8000-000000000000",target:"reminder"}]}), /не найдено/);
+  assert.equal(calendar.list().find(i => i.id === deadline)!.completed, false);
+  assert.equal(calendar.list().length,2);
+  const result = await tool.handler({action:"delete",items:[{id:deadline,target:"reminder"},{id:ordinary,target:"reminder"}]});
+  assert.equal(result.deleted,1);
+  assert.equal(result.completed,1);
+  assert.equal(calendar.list().length,1);
+  assert.equal(calendar.list()[0].completed,true);
+  assert.equal(ticketMetadata(store,42).localDeadline,due);
+  assert.equal(ticketMetadata(store,42).notes,"Keep notes");
+  assert.ok(store.db.prepare("SELECT 1 FROM tickets WHERE id=42").get());
 });

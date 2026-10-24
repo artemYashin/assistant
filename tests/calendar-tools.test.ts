@@ -132,11 +132,15 @@ test("calendar search matches assignees and recurring occurrences across scope w
   assert.equal(searchCalendar(store, { kinds: ["ticket"] }).total, 0);
   assert.equal(searchCalendar(store, { developerIds: ["missing"] }).total, 0);
 });
-test("assistant status tool only prepares confirmation and distinguishes daily scope", async (t) => {
+test("assistant batch status executes directly without dialogs and rolls back invalid batches", async (t) => {
   const store = fixture(t),
     calendar = new Calendar(store),
     events: any[] = [];
-  const id = calendar.save({ title: "Ordinary", start: null, end: null }).id;
+  const ids = Array.from(
+    { length: 65 },
+    (_, i) =>
+      calendar.save({ title: `Reminder ${i}`, start: null, end: null }).id,
+  );
   const daily = calendar.save({
     title: "Daily",
     start: "2020-01-01T08:00:00Z",
@@ -147,64 +151,100 @@ test("assistant status tool only prepares confirmation and distinguishes daily s
     store,
     () => {},
     (e) => events.push(e),
-  ).find((t) => t.name === "prepare_calendar_status_change")!;
-  const result = (await tool.handler!(
-    { id, completed: true, target: "reminder" },
-    {} as any,
-  )) as any;
-  assert.equal(result.changed, false);
-  assert.equal(events[0].stage, "calendar_status");
-  assert.equal(calendar.list().find((i) => i.id === id)!.completed, false);
-  calendar.complete(id);
-  await tool.handler!({ id, completed: false, target: "reminder" }, {} as any);
-  assert.equal(calendar.list().find((i) => i.id === id)!.completed, true);
+  ).find((t) => t.name === "change_calendar_reminders");
+  const items = [
+    ...ids.map((id) => ({ id, target: "reminder" })),
+    { id: daily, target: "series" },
+  ];
+  const result = await tool.handler({
+    action: "complete",
+    items: [...items, items[0]],
+  });
+  assert.equal(result.count, 66);
+  assert.equal(result.completed, 66);
+  assert.ok(calendar.list().every((i) => i.completed));
+  assert.deepEqual(events, [{ stage: "calendar_changed" }]);
   await assert.rejects(
     () =>
-      tool.handler!(
-        { id: daily, completed: true, target: "reminder" },
-        {} as any,
-      ),
+      tool.handler({
+        action: "reopen",
+        items: [items[0], { id: daily, target: "reminder" }],
+      }),
     /ежедневной/,
   );
-  await tool.handler!(
-    { id: daily, completed: true, target: "today" },
-    {} as any,
+  assert.ok(
+    calendar.list().every((i) => i.completed),
+    "all writes rolled back",
   );
-  await tool.handler!(
-    { id: daily, completed: true, target: "series" },
-    {} as any,
-  );
-  assert.equal(calendar.list().find((i) => i.id === daily)!.completed, false);
-  const offline: any = calendarTools(store, () => {}).find(
-    (t) => t.name === "prepare_calendar_status_change",
-  )!;
+  assert.equal(events.length, 1, "no success event on rollback");
+  await tool.handler({ action: "reopen", items });
+  await tool.handler({
+    action: "complete",
+    items: [{ id: daily, target: "occurrence", day: "2026-10-25" }],
+  });
+  const series = calendar.list().find((i) => i.id === daily)!;
+  assert.equal(series.completed, false);
+  assert.deepEqual(series.completedDays, ["2026-10-25"]);
   await assert.rejects(
     () =>
-      offline.handler!({ id, completed: true, target: "reminder" }, {} as any),
-    /интерфейса/,
+      tool.handler({
+        action: "delete",
+        items: [
+          items[0],
+          { id: daily, target: "occurrence", day: "2026-10-25" },
+        ],
+      }),
+    /повтор/,
   );
-  calendar.remove(id);
-  await assert.rejects(
-    () => tool.handler!({ id, completed: true, target: "reminder" }, {} as any),
-    /не найдено/,
+  assert.ok(
+    calendar.list().some((i) => i.id === ids[0]),
+    "delete also rolls back",
   );
+  const offline: any = calendarTools(store, () => {}).find(
+    (t) => t.name === "change_calendar_reminders",
+  );
+  await offline.handler({ action: "complete", items: [items[0]] });
+  assert.equal(calendar.list().find((i) => i.id === ids[0])!.completed, true);
 });
 
-test("assistant prepares individual warnings without saving and exposes inherited values", async t => {
-  const store = fixture(t), calendar = new Calendar(store), events: any[] = [];
-  const id = calendar.save({ title: "Daily", start: "2026-10-25T01:00:00Z", end: null, repeatDaily: true }).id;
-  const tools = calendarTools(store, () => {}, e => events.push(e));
-  const tool: any = tools.find(t => t.name === "prepare_calendar_warning_change");
-  await tool.handler({ id, leadMinutes: 120 });
-  assert.equal(events[0].draft.id, id);
-  assert.equal(events[0].draft.leadMinutes, 120);
-  assert.equal(calendar.list()[0].leadMinutes, null);
-  calendar.setLead(id, 120);
+test("assistant warnings and edits save immediately; full read preserves content", async (t) => {
+  const store = fixture(t),
+    calendar = new Calendar(store),
+    events: any[] = [];
+  const id = calendar.save({
+    title: "Daily",
+    description: "Full description",
+    start: "2026-10-25T01:00:00Z",
+    end: null,
+    repeatDaily: true,
+  }).id;
+  const tools = calendarTools(
+    store,
+    () => {},
+    (e) => events.push(e),
+  );
+  const warning: any = tools.find((t) => t.name === "update_calendar_warning");
+  const result = await warning.handler({ id, leadMinutes: 120 });
+  assert.equal(result.saved, true);
+  assert.equal(calendar.list()[0].leadMinutes, 120);
   const row = searchCalendar(store, { ids: [id] }).reminders[0];
-  assert.equal(row.leadMinutes, 120);
   assert.equal(row.effectiveLeadMinutes, 120);
-  const status: any = tools.find(t => t.name === "prepare_calendar_status_change");
-  await status.handler({ id, completed: true, target: "today", day: "2026-10-25" });
-  assert.equal(events[1].request.day, "2026-10-25");
-  assert.deepEqual(calendar.list()[0].completedDays, []);
+  const read: any = tools.find((t) => t.name === "get_calendar_reminder");
+  const full = await read.handler({ id });
+  assert.equal(full.description, "Full description");
+  const save: any = tools.find((t) => t.name === "save_calendar_reminder");
+  await save.handler({
+    id,
+    reminder: {
+      title: "Edited",
+      description: full.description,
+      start: full.start,
+      end: null,
+      repeatDaily: true,
+      leadMinutes: full.leadMinutes,
+    },
+  });
+  assert.equal(calendar.list()[0].title, "Edited");
+  assert.equal(calendar.list()[0].description, "Full description");
+  assert.ok(events.every((e) => e.stage === "calendar_changed"));
 });

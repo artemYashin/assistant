@@ -205,6 +205,14 @@ export class Calendar {
   }
   remove(id: string) {
     if (
+      this.store.db
+        .prepare("SELECT 1 FROM ticket_deadlines WHERE event_id=?")
+        .get(id)
+    ) {
+      this.complete(id);
+      return { ok: true, completed: true };
+    }
+    if (
       !this.store.db.prepare("DELETE FROM calendar_events WHERE id=?").run(id)
         .changes
     )

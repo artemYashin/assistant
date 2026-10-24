@@ -3,11 +3,12 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  get_calendar_reminder: "Read full reminder before editing; includes description and completed daily dates.",
+  change_calendar_reminders: "Immediately batch complete/reopen/delete reminders or daily occurrences/series on explicit request; no confirmation UI.",
+  update_calendar_warning: "Immediately set individual warning interval on explicit request, including ticket deadline reminders.",
+  save_calendar_reminder: "Immediately create/edit ordinary, undated or daily reminders on explicit user request; no confirmation popup.",
   search_calendar_reminders: "Find reminders across all scopes, including old/completed; literal or regex, filters, date ranges, sorting and pagination.",
-  prepare_calendar_warning_change: "Prepare individual advance warning change for any reminder or ticket deadline; null restores global default; user confirms.",
-  prepare_calendar_status_change: "Prepare user confirmation to complete/reopen a reminder, today’s daily occurrence or explicitly requested entire series.",
   get_calendar_context: "Current time, timezone, scopes and developers for reminders and local ticket deadlines.",
-  prepare_calendar_reminder: "Prepare reminders (timed, duration, undated, or daily recurring with repeatDaily=true) on user request; user confirms creation in calendar UI.",
   search_app_help: "On explicit app-help/troubleshooting requests only: search Orbit documentation titles and short excerpts, not live data.",
   read_app_help: "Read a selected Orbit help article by ID, with bounded pagination. Only for app-help requests.",
   read_memory: "Read full details of one relevant memory by its catalog ID.",

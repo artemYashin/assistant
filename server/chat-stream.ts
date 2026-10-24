@@ -1,9 +1,6 @@
 import type { ExportColumnKey } from "./ticket-export-columns.js";
-import type { CalendarItem } from "./calendar-model.js";
-export type CalendarStatusRequest = { id: string; completed: boolean; target: "reminder" | "today" | "series"; day?: string };
 export type ChatProgress =
-  | { stage: "calendar_status"; request: CalendarStatusRequest }
-  | {stage:"calendar_draft"; draft: Omit<CalendarItem,"id"|"completed"|"createdAt"|"ticket"> & {id?: string}}
+  | { stage: "calendar_changed" }
   | { stage: "ticket_export"; ids: number[]; mode: "open" | "edit"; removeIds?: number[]; columns?: ExportColumnKey[] }
   | { stage: "data_synced"; domain: "tickets" | "prs" | "memory" }
   | { stage: "close_ticket_details" }

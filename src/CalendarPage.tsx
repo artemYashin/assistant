@@ -1,5 +1,4 @@
 import { ReminderLeadFields } from "./ReminderLeadFields.js";
-import { CalendarActionDialog } from "./CalendarActionDialog.js";
 import {
   occurrencesOnDay,
   recurringOverlaps,
@@ -96,20 +95,6 @@ export function CalendarPage({
   const dialog = useRef<HTMLDialogElement>(null),
     location = useLocation(),
     navigate = useNavigate();
-  useEffect(() => {
-    const incoming = location.state?.reminderDraft;
-    if (!incoming) return;
-    setEditing(incoming.id || null);
-    setDraft({
-      ...incoming,
-      leadMinutes: incoming.leadMinutes ?? null,
-      repeatDaily: !!incoming.repeatDaily,
-      start: incoming.start ? wallTime(incoming.start, zone) : "",
-      end: incoming.end ? wallTime(incoming.end, zone) : "",
-    });
-    dialog.current?.showModal();
-    navigate(location.pathname, { replace: true, state: null });
-  }, [location.state]);
   const selected = new URLSearchParams(location.search).get("event");
   const loadedSelection = useRef("");
   async function reload() {
@@ -265,18 +250,6 @@ export function CalendarPage({
     (!draft.end || (!!draft.start && draft.end >= draft.start));
   return (
     <section className="calendar-page">
-      {location.state?.reminderAction && (
-        <CalendarActionDialog
-          key={location.state.requestId}
-          request={location.state.reminderAction}
-          onClose={() =>
-            navigate(location.pathname + location.search, {
-              replace: true,
-              state: null,
-            })
-          }
-        />
-      )}
       <div className="page-heading">
         <div>
           <h1>
@@ -676,16 +649,18 @@ export function CalendarPage({
                       Вернуть в незавершённые
                     </ConfirmButton>
                   )}
-                  <ConfirmButton
-                    title="Удалить напоминание?"
-                    message={`«${item.title}» будет удалено без возможности восстановления.${item.ticket ? " Локальный дедлайн тикета также будет очищен." : ""}`}
-                    confirmLabel="Удалить"
-                    className="secondary calendar-delete"
-                    onConfirm={() => mutate("/calendar/" + item.id, "DELETE")}
-                  >
-                    <Trash2 size={15} />
-                    Удалить
-                  </ConfirmButton>
+                  {!item.ticket && (
+                    <ConfirmButton
+                      title="Удалить напоминание?"
+                      message={`«${item.title}» будет удалено без возможности восстановления.`}
+                      confirmLabel="Удалить"
+                      className="secondary calendar-delete"
+                      onConfirm={() => mutate("/calendar/" + item.id, "DELETE")}
+                    >
+                      <Trash2 size={15} />
+                      Удалить
+                    </ConfirmButton>
+                  )}
                 </div>
               </article>
             ))}
@@ -717,7 +692,7 @@ export function CalendarPage({
             <strong>Дедлайн тикета #{currentItem.ticket.id}</strong>
             <p>
               {eventTime(currentItem.ticket.deadline, null, zone)} · изменяется
-              в карточке тикета. Удаление напоминания также очистит локальный
+              в карточке тикета. Завершение напоминания сохраняет локальный
               дедлайн. Разработчики берутся из локальных поручений тикета и
               меняются там же.
             </p>
@@ -978,19 +953,21 @@ export function CalendarPage({
                     ? "Завершить всю серию"
                     : "Завершить"}
               </ConfirmButton>
-              <ConfirmButton
-                className="calendar-delete"
-                title="Удалить напоминание?"
-                message={`«${currentItem.title}» будет удалено без возможности восстановления.${currentItem.ticket ? " Локальный дедлайн тикета также будет очищен." : ""}`}
-                confirmLabel="Удалить"
-                onConfirm={async () => {
-                  await mutate("/calendar/" + currentItem.id, "DELETE");
-                  dialog.current?.close();
-                }}
-              >
-                <Trash2 size={15} />
-                Удалить
-              </ConfirmButton>
+              {!currentItem.ticket && (
+                <ConfirmButton
+                  className="calendar-delete"
+                  title="Удалить напоминание?"
+                  message={`«${currentItem.title}» будет удалено без возможности восстановления.`}
+                  confirmLabel="Удалить"
+                  onConfirm={async () => {
+                    await mutate("/calendar/" + currentItem.id, "DELETE");
+                    dialog.current?.close();
+                  }}
+                >
+                  <Trash2 size={15} />
+                  Удалить
+                </ConfirmButton>
+              )}
             </div>
           </div>
         )}
