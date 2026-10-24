@@ -6,16 +6,21 @@ import { ConfirmButton } from "./ConfirmButton.js";
 import { Bell, Check, CalendarDays, ShieldCheck, X } from "lucide-react";
 import { api } from "./api.js";
 import { calendarStatus, type CalendarItem } from "../server/calendar-model.js";
-import { eventTime } from "./calendar-time.js";
+import { dailyOccurrence } from "../server/calendar-repeat.js";
+import { eventTime, wallTime } from "./calendar-time.js";
 import { statusLabels } from "./CalendarPage.js";
 
 function ReminderToast({
   items,
+  developers,
+  zone,
   onClose,
   onDismiss,
   onOpen,
 }: {
   items: CalendarItem[];
+  developers: { id: string; name: string }[];
+  zone: string;
   onClose: () => void;
   onDismiss: (id: string) => void;
   onOpen: (item: CalendarItem) => void;
@@ -96,7 +101,16 @@ function ReminderToast({
               className="calendar-toast-item"
               onClick={() => onOpen(item)}
             >
-              {item.title}
+              <span className="calendar-toast-title">{item.title}</span>
+              <small className="calendar-toast-time">
+                {item.ticket ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone) : eventTime(item.start, item.end, zone)}
+                {item.repeatDaily ? " · ежедневно" : ""}
+              </small>
+              {item.ticket && <small className="calendar-toast-people">
+                {item.developerIds.length
+                  ? "Поручено: " + item.developerIds.map(id => developers.find(d => d.id === id)?.name || "Недоступный разработчик").join(", ")
+                  : "Локальные разработчики не назначены"}
+              </small>}
             </button>
             <DailyCompletionButton item={item} compact />
             {!item.repeatDaily && (
@@ -140,6 +154,7 @@ export function CalendarNotifications({
   const [items, setItems] = useState<CalendarItem[]>([]),
     [toasts, setToasts] = useState<CalendarItem[]>([]),
     [error, setError] = useState("");
+  const [developers, setDevelopers] = useState<{ id: string; name: string }[]>([]);
   const panel = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const zone = settings?.syncSchedule?.timeZone || "UTC";
@@ -163,12 +178,17 @@ export function CalendarNotifications({
             !i.completed && calendarStatus(i) !== "today_completed",
         ) as CalendarItem[];
         setItems(active);
+        setDevelopers(data.developers);
         setToasts((previous) =>
           previous.flatMap((item) => {
             const current = active.find(
               (candidate) => candidate.id === item.id,
             );
-            return current ? [current] : [];
+            if (!current) return [];
+            const occurrence = current.repeatDaily
+              ? dailyOccurrence(current, wallTime(new Date().toISOString(), current.repeatZone || "UTC").slice(0, 10))
+              : current;
+            return occurrence ? [occurrence] : [];
           }),
         );
         setError("");
@@ -312,6 +332,8 @@ export function CalendarNotifications({
       {!!toasts.length && (
         <ReminderToast
           items={toasts}
+          developers={developers}
+          zone={zone}
           onClose={closeToast}
           onOpen={go}
           onDismiss={(id) =>

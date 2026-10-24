@@ -150,14 +150,14 @@ test("assistant reminder preparation only emits a draft; supports all date forma
     { start: due, end: "2026-11-10T13:00:00Z" },
     { start: due, end: null, repeatDaily: true },
   ]) {
-    await tools[1].handler!({ title: "Reminder", ...dates } as any, {} as any);
+    await tools.find(t => t.name === "prepare_calendar_reminder")!.handler!({ title: "Reminder", ...dates } as any, {} as any);
   }
   assert.equal(emitted.length, 4);
   assert.equal(emitted[0].draft.kind, "general");
   assert.equal(emitted[2].draft.kind, "event");
   assert.equal(emitted[3].stage, "calendar_draft");
   assert.equal(emitted[3].draft.repeatDaily, true);
-  assert.equal((tools[1].parameters as any).toJSONSchema().properties.repeatDaily.type, "boolean");
+  assert.equal((tools.find(t => t.name === "prepare_calendar_reminder")!.parameters as any).toJSONSchema().properties.repeatDaily.type, "boolean");
   const calendar = new Calendar(store);
   assert.equal(calendar.list().length, 0);
   // The same draft is saved only after the user's UI confirmation.

@@ -1,3 +1,4 @@
+import { CalendarActionDialog } from "./CalendarActionDialog.js";
 import {
   occurrencesOnDay,
   recurringOverlaps,
@@ -247,6 +248,11 @@ export function CalendarPage({
     (!draft.end || (!!draft.start && draft.end >= draft.start));
   return (
     <section className="calendar-page">
+      {location.state?.reminderAction && <CalendarActionDialog
+        key={location.state.requestId}
+        request={location.state.reminderAction}
+        onClose={() => navigate(location.pathname + location.search, { replace: true, state: null })}
+      />}
       <div className="page-heading">
         <div>
           <h1>

@@ -9,118 +9,118 @@
 
 Сбросить
 
-Источник: src/CalendarPage.tsx:531.
+Источник: src/CalendarPage.tsx:537.
 
 ### Элемент
 
 Открыть / Изменить
 
-Источник: src/CalendarPage.tsx:610.
+Источник: src/CalendarPage.tsx:616.
 
 ### Элемент
 
 Завершить напоминание? · «{…}». {…}Напоминание останется в истории, уведомления прекратятся. · Завершить · Завершить всю серию / Завершить
 
-Источник: src/CalendarPage.tsx:616.
+Источник: src/CalendarPage.tsx:622.
 
 ### Элемент
 
 Вернуть в незавершённые? · «{…}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания. · Вернуть в незавершённые
 
-Источник: src/CalendarPage.tsx:629.
+Источник: src/CalendarPage.tsx:635.
 
 ### Элемент
 
 Удалить напоминание? · «{…}» будет удалено без возможности восстановления.{…} · Удалить
 
-Источник: src/CalendarPage.tsx:641.
+Источник: src/CalendarPage.tsx:647.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarPage.tsx:669.
+Источник: src/CalendarPage.tsx:675.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/CalendarPage.tsx:686.
+Источник: src/CalendarPage.tsx:692.
 
 ### Элемент
 
 Общий
 
-Источник: src/CalendarPage.tsx:722.
+Источник: src/CalendarPage.tsx:728.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: src/CalendarPage.tsx:755.
+Источник: src/CalendarPage.tsx:761.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/CalendarPage.tsx:759.
+Источник: src/CalendarPage.tsx:765.
 
 ### Элемент
 
 Проект напоминания
 
-Источник: src/CalendarPage.tsx:769.
+Источник: src/CalendarPage.tsx:775.
 
 ### Элемент
 
 Выберите проект
 
-Источник: src/CalendarPage.tsx:774.
+Источник: src/CalendarPage.tsx:780.
 
 ### Элемент
 
 Название
 
-Источник: src/CalendarPage.tsx:786.
+Источник: src/CalendarPage.tsx:792.
 
 ### Элемент
 
 Повторять каждый день
 
-Источник: src/CalendarPage.tsx:817.
+Источник: src/CalendarPage.tsx:823.
 
 ### Элемент
 
 Описание
 
-Источник: src/CalendarPage.tsx:843.
+Источник: src/CalendarPage.tsx:849.
 
 ### Элемент
 
 Разработчики · необязательно ( · )
 
-Источник: src/CalendarPage.tsx:855.
+Источник: src/CalendarPage.tsx:861.
 
 ### Элемент
 
 / Общий список
 
-Источник: src/CalendarPage.tsx:860.
+Источник: src/CalendarPage.tsx:866.
 
 ### Элемент
 
 Удалённый разработчик · снимите выбор для сохранения
 
-Источник: src/CalendarPage.tsx:887.
+Источник: src/CalendarPage.tsx:893.
 
 ### Элемент
 
 Вернуть в незавершённые? / Завершить напоминание? · «{…}». {…} {…} Несохранённые изменения формы не применятся. · Вернуть / Завершить · / · Вернуть в незавершённые / Завершить всю серию / Завершить
 
-Источник: src/CalendarPage.tsx:919.
+Источник: src/CalendarPage.tsx:925.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarPage.tsx:966.
+Источник: src/CalendarPage.tsx:972.

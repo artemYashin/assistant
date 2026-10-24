@@ -10141,3 +10141,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-time-event.recurring,.calendar-event.recurring { background:#fff3d8;border-color:#d5a654;color:#714911; }
 
 .calendar-state.today_completed { background:#e8f5e9;color:#317544; }
+
+.calendar-toast-title { display:block;font-weight:600; }
+.calendar-toast-time,.calendar-toast-people { display:block;margin-top:5px;font-size:11px;line-height:1.45;color:#617b8e; }

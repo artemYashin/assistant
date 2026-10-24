@@ -2841,6 +2841,7 @@ function Assistant({
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
           if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
+          else if (event.stage === "calendar_status") { navigate("/calendar", {state:{reminderAction:event.request,requestId:crypto.randomUUID()}}); }
           else if (event.stage === "calendar_draft") { navigate("/calendar", {state:{reminderDraft:event.draft,requestId:crypto.randomUUID()}}); }
           else if (event.stage === "ticket_export") {
             if (event.mode === "edit") editTicketExport(event.ids, event.removeIds, event.columns);
