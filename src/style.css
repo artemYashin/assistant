@@ -10173,9 +10173,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-time-slot:nth-child(even) { background-color: #f6f7f7; }
 .calendar-time-day .calendar-time-slot:hover,
 .calendar-time-day .calendar-time-slot:focus-visible { background: #eef6ff; }
-.calendar-hour-guides { position: relative; height: calc(var(--calendar-hour-height) * 24); pointer-events: none; z-index: 1; }
+.calendar-hour-guides { position: relative; height: calc(var(--calendar-hour-height) * 24); pointer-events: none; }
 .calendar-hour-guide { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid #bcd9c8; }
-.calendar-hour-guide span { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); border: 1px solid #c7dfd0; border-radius: 6px; background: #f0f7f2; color: #5d7f68; padding: 1px 6px; font-size: 10px; line-height: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.calendar-hour-guide span { position: absolute; z-index: 4; left: 50%; top: 0; transform: translate(-50%, -50%); border: 1px solid #c7dfd0; border-radius: 6px; background: #f0f7f2; color: #5d7f68; padding: 1px 6px; font-size: 10px; line-height: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .calendar-hour-guide:first-child span { transform: translate(-50%, 0); }
 
 .calendar-now-line { position: absolute; left: 0; right: 0; z-index: 4; border-top: 2px solid #278b65; pointer-events: none; }

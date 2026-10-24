@@ -79,7 +79,12 @@ export function CalendarPage({
   const today = wallTime(new Date(clock).toISOString(), zone).slice(0, 10);
   const [nowRequest, setNowRequest] = useState(0);
   const [month, setMonth] = useState(today.slice(0, 7)),
-    [view, setView] = useState("week"),
+    [view, setView] = useState(() => {
+      try {
+        const saved = localStorage.getItem("orbit.calendar.view");
+        return saved && ["day", "week", "month"].includes(saved) ? saved : "week";
+      } catch { return "week"; }
+    }),
     [anchor, setAnchor] = useState(today),
     [contexts, setContexts] = useState<{ client: string; project: string }[]>(
       [],
@@ -87,6 +92,10 @@ export function CalendarPage({
     [clientFilter, setClientFilter] = useState(savedFilters.clientFilter),
     [projectFilter, setProjectFilter] = useState(savedFilters.projectFilter),
     [tab, setTab] = useState("calendar");
+  useEffect(() => {
+    try { localStorage.setItem("orbit.calendar.view", view); }
+    catch { /* Keep navigation usable without persistent browser storage. */ }
+  }, [view]);
   const [items, setItems] = useState<CalendarItem[]>([]),
     [developers, setDevelopers] = useState<Developer[]>([]);
   const [error, setError] = useState(""),
