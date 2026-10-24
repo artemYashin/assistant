@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type CSSProperties,
 } from "react";
 import type { CalendarItem } from "../server/calendar-model.js";
 import { calendarStatus } from "../server/calendar-model.js";
@@ -12,6 +13,8 @@ import {
   shiftCalendarItem,
 } from "./calendar-layout.js";
 import { eventTime, wallTime } from "./calendar-time.js";
+const HOUR_HEIGHT = 120;
+
 export function CalendarTimeGrid({
   items,
   anchor,
@@ -76,7 +79,7 @@ export function CalendarTimeGrid({
       const delta =
         (target - origin) * 1440 +
         Math.round(
-          (((lastY - y + scroller.scrollTop - scroll) / 52) * 60) / 15,
+          (((lastY - y + scroller.scrollTop - scroll) / HOUR_HEIGHT) * 60) / 15,
         ) *
           15;
       try {
@@ -159,7 +162,7 @@ export function CalendarTimeGrid({
         .height ?? 0;
     scroller.scrollTop = Math.max(
       0,
-      hours * 52 - (scroller.clientHeight - headerHeight) / 2,
+      hours * HOUR_HEIGHT - (scroller.clientHeight - headerHeight) / 2,
     );
   }, [anchor, mode, zone]);
   return (
@@ -185,7 +188,8 @@ export function CalendarTimeGrid({
           className={`calendar-time-grid ${mode}`}
           style={{
             gridTemplateColumns: `54px repeat(${days.length},minmax(0,1fr))`,
-          }}
+            "--calendar-hour-height": `${HOUR_HEIGHT}px`,
+          } as CSSProperties}
         >
           <div className="calendar-time-corner">{zone.split("/").at(-1)}</div>
           {days.map((day) => (
@@ -204,7 +208,7 @@ export function CalendarTimeGrid({
           ))}
           <div className="calendar-hours">
             {Array.from({ length: 24 }, (_, hour) => (
-              <span key={hour} style={{ top: hour * 52 }}>
+              <span key={hour} style={{ top: hour * HOUR_HEIGHT }}>
                 {String(hour).padStart(2, "0")}:00
               </span>
             ))}
@@ -233,8 +237,8 @@ export function CalendarTimeGrid({
                   className={`calendar-time-event ${calendarStatus(item)}`}
                   title={`${item.title}\n${eventTime(item.start, item.end, zone)}`}
                   style={{
-                    top: (top / 60) * 52,
-                    height: Math.max(20, ((bottom - top) / 60) * 52 - 2),
+                    top: (top / 60) * HOUR_HEIGHT,
+                    height: Math.max(20, ((bottom - top) / 60) * HOUR_HEIGHT - 2),
                     left: `calc(${(lane / lanes) * 100}% + 2px)`,
                     width: `calc(${100 / lanes}% - 4px)`,
                   }}
@@ -247,11 +251,13 @@ export function CalendarTimeGrid({
                     suppressClick.current = false;
                   }}
                 >
+                  <strong>{item.ticket ? item.title.replace(/^Дедлайн /, "") : item.title}</strong>
                   <small>
-                    {wallTime(item.start!, zone).slice(11)}
-                    {item.end ? "–" + wallTime(item.end, zone).slice(11) : ""}
+                    {item.ticket
+                      ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone)
+                      : wallTime(item.start!, zone).slice(11) +
+                        (item.end ? "–" + wallTime(item.end, zone).slice(11) : "")}
                   </small>
-                  <strong>{item.title}</strong>
                   {!item.repeatDaily && !item.ticket && (!item.end ||
                     wallTime(
                       new Date(Date.parse(item.end) - 1).toISOString(),
@@ -272,7 +278,7 @@ export function CalendarTimeGrid({
                     top:
                       (Number(today.slice(11, 13)) +
                         Number(today.slice(14, 16)) / 60) *
-                      52,
+                      HOUR_HEIGHT,
                   }}
                 />
               )}

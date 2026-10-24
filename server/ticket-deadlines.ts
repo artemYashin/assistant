@@ -43,21 +43,28 @@ export function syncTicketDeadlines(store: Store) {
     store.settings().calendarNotifications.ticketDeadlineLeadMinutes * 60000;
   const rows = store.db
     .prepare(
-      "SELECT d.*,t.title,e.title AS saved_title,e.start AS saved_start FROM ticket_deadlines d JOIN calendar_events e ON e.id=d.event_id LEFT JOIN tickets t ON t.source=d.source AND t.id=d.id",
+      "SELECT d.*,t.title,e.title AS saved_title,e.start AS saved_start,e.developers AS saved_developers FROM ticket_deadlines d JOIN calendar_events e ON e.id=d.event_id LEFT JOIN tickets t ON t.source=d.source AND t.id=d.id",
     )
     .all() as any[];
   const update = store.db.prepare(
-    "UPDATE calendar_events SET title=?,description=?,start=? WHERE id=?",
+    "UPDATE calendar_events SET title=?,description=?,start=?,developers=? WHERE id=?",
+  );
+  const assigned = store.db.prepare(
+    "SELECT developer_id FROM ticket_developers WHERE source=? AND ticket_id=? ORDER BY developer_id",
   );
   store.db.transaction(() => {
     for (const row of rows) {
+      const developers = JSON.stringify(
+        (assigned.all(row.source, row.id) as { developer_id: string }[]).map(d => d.developer_id),
+      );
       const title = `Дедлайн #${row.id}: ${row.title || "тикет"}`;
       const start = new Date(Date.parse(row.deadline) - lead).toISOString();
-      if (title !== row.saved_title || start !== row.saved_start)
+      if (title !== row.saved_title || start !== row.saved_start || developers !== row.saved_developers)
         update.run(
           title,
           `Локальный дедлайн: ${row.deadline}. Напоминание действует до ручного завершения.`,
           start,
+          developers,
           row.event_id,
         );
     }

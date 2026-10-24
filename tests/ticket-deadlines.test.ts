@@ -221,3 +221,29 @@ test("overdue filter uses current time, excludes missing/future deadlines and wo
   assert.deepEqual(ids({ overdueDeadline: true, lifecycle: "deleted" }), [42]);
   assert.deepEqual(searchTicketContent(store, { search: "evidence", overdueDeadline: true, lifecycle: "deleted" }).tickets.map(t => t.id), [42]);
 });
+
+test("deadline reminders follow current local assignees without reopening completed reminders", async t => {
+  const store = fixture(t);
+  const { LocalDevelopers } = await import("../server/local-developers.js");
+  const developers = new LocalDevelopers(store);
+  const people = developers.add(["One", "Two"], context);
+  developers.assign(42, [people[0].id], context);
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due });
+  const calendar = new Calendar(store);
+  const original = calendar.list()[0];
+  assert.deepEqual(original.developerIds, [people[0].id]);
+  calendar.complete(original.id);
+  developers.assign(42, people.map(p => p.id), context);
+  const changed = calendar.list()[0];
+  assert.equal(changed.id, original.id);
+  assert.equal(changed.completed, true);
+  assert.deepEqual(changed.developerIds, people.map(p => p.id).sort());
+  // Existing deadline rows and same ticket ID in another connection cannot leak assignments.
+  store.db.prepare("UPDATE calendar_events SET developers='[]' WHERE id=?").run(original.id);
+  store.db.prepare("INSERT INTO ticket_developers VALUES ('other',42,?)").run(people[1].id);
+  developers.assign(42, [people[0].id], context);
+  assert.deepEqual(calendar.list()[0].developerIds, [people[0].id]);
+  developers.assign(42, [], context);
+  assert.deepEqual(calendar.list()[0].developerIds, []);
+  assert.equal(calendar.list()[0].completed, true);
+});

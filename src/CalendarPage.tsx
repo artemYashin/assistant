@@ -680,7 +680,8 @@ export function CalendarPage({
             <p>
               {eventTime(currentItem.ticket.deadline, null, zone)} · изменяется
               в карточке тикета. Удаление напоминания также очистит локальный
-              дедлайн.
+              дедлайн. Разработчики берутся из локальных поручений тикета
+              и меняются там же.
             </p>
             <button
               className="secondary"
