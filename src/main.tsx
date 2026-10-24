@@ -663,7 +663,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 {notice}
               </div>
             )}
-            {page === "calendar" && settings && <CalendarPage settings={settings} />}
+            {page === "calendar" && settings && <CalendarPage settings={settings} context={context} />}
             {page === "code" && <CodeBrowserPage key={JSON.stringify([context, refresh, settings?.azureUrl, settings?.azureProject])} context={context} />}
             {page === "overview" && (
               <>

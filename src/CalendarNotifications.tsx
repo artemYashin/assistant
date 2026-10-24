@@ -256,6 +256,11 @@ export function CalendarNotifications({
             <CalendarDays size={18} />
             <span>
               <strong>{item.title}</strong>
+              {item.client && (
+                <small>
+                  {[item.client, item.project].filter(Boolean).join(" / ")}
+                </small>
+              )}
               <small>{eventTime(item.start, item.end, zone)}</small>
             </span>
             <span className={"calendar-state " + calendarStatus(item)}>

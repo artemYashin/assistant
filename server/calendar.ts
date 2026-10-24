@@ -15,7 +15,10 @@ export class Calendar {
         .all() as any[]
     ).map((r) => ({
       id: r.id,
-      kind: r.kind,
+      kind: !r.start ? "general" : r.end ? "event" : "reminder",
+      scope: r.scope,
+      client: r.client,
+      project: r.project,
       title: r.title,
       description: r.description,
       start: r.start,
@@ -35,6 +38,17 @@ export class Calendar {
   save(input: unknown, id?: string) {
     const v = calendarInput.parse(input),
       ids = [...new Set(v.developerIds)];
+    if (
+      v.scope !== "general" &&
+      !this.store
+        .contexts()
+        .some(
+          (c) =>
+            c.client === v.client &&
+            (v.scope === "client" || c.project === v.project),
+        )
+    )
+      throw new AppError(400, "Заказчик или проект не найден.");
     if (v.start) v.start = new Date(v.start).toISOString();
     if (v.end) v.end = new Date(v.end).toISOString();
     for (const developer of ids)
@@ -47,9 +61,12 @@ export class Calendar {
     if (id) {
       const result = this.store.db
         .prepare(
-          "UPDATE calendar_events SET kind=?,title=?,description=?,start=?,end=?,developers=?,last_notified=NULL WHERE id=?",
+          "UPDATE calendar_events SET scope=?,client=?,project=?,kind=?,title=?,description=?,start=?,end=?,developers=?,last_notified=NULL WHERE id=?",
         )
         .run(
+          v.scope,
+          v.client,
+          v.project,
           v.kind,
           v.title,
           v.description,
@@ -63,10 +80,13 @@ export class Calendar {
       id = randomUUID();
       this.store.db
         .prepare(
-          "INSERT INTO calendar_events(id,kind,title,description,start,end,developers,created_at) VALUES (?,?,?,?,?,?,?,?)",
+          "INSERT INTO calendar_events(id,scope,client,project,kind,title,description,start,end,developers,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         )
         .run(
           id,
+          v.scope,
+          v.client,
+          v.project,
           v.kind,
           v.title,
           v.description,
@@ -82,6 +102,17 @@ export class Calendar {
     if (
       !this.store.db
         .prepare("UPDATE calendar_events SET completed=1 WHERE id=?")
+        .run(id).changes
+    )
+      throw new AppError(404, "Напоминание не найдено.");
+    return { ok: true };
+  }
+  reopen(id: string) {
+    if (
+      !this.store.db
+        .prepare(
+          "UPDATE calendar_events SET completed=0,last_notified=NULL WHERE id=?",
+        )
         .run(id).changes
     )
       throw new AppError(404, "Напоминание не найдено.");

@@ -115,6 +115,10 @@ export class Store {
       CREATE INDEX IF NOT EXISTS llm_request_time ON llm_requests(created_at);
       CREATE INDEX IF NOT EXISTS memory_scope ON memories(scope,client,project);
     `);
+    for (const column of ["scope", "client", "project"]) {
+      if (!(this.db.prepare("PRAGMA table_info(calendar_events)").all() as any[]).some(c => c.name === column))
+        this.db.exec(`ALTER TABLE calendar_events ADD COLUMN ${column} TEXT NOT NULL DEFAULT '${column === "scope" ? "general" : ""}'`);
+    }
     if (
       !(
         this.db.prepare("PRAGMA table_info(llm_tool_traces)").all() as any[]
@@ -517,7 +521,7 @@ export class Store {
       throw new AppError(409, "Такое название уже используется");
     this.db.transaction(() => {
       this.addContext(context);
-      const tables = ["contexts", "memories", "memory_proposals", "conversations", "chat_sessions", "pr_projects", "llm_requests", "local_developers"];
+      const tables = ["calendar_events", "contexts", "memories", "memory_proposals", "conversations", "chat_sessions", "pr_projects", "llm_requests", "local_developers"];
       for (const table of tables) {
         if (context.project) this.db.prepare(`UPDATE ${table} SET project=? WHERE client=? AND project=?`).run(name, context.client, context.project);
         else this.db.prepare(`UPDATE ${table} SET client=? WHERE client=?`).run(name, context.client);

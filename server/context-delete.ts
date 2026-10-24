@@ -50,7 +50,7 @@ export function deleteContext(store: Store, context: Context, confirmation: stri
       }
       if (remove) store.db.prepare("DELETE FROM kv WHERE key=?").run(key);
     }
-    for (const table of ["contexts", "memories", "memory_proposals", "conversations", "chat_sessions", "pr_projects", "llm_requests", "local_developers"])
+    for (const table of ["calendar_events", "contexts", "memories", "memory_proposals", "conversations", "chat_sessions", "pr_projects", "llm_requests", "local_developers"])
       store.db.prepare(`DELETE FROM ${table} WHERE ${where}`).run(...args);
     const current = store.rawSettings();
     if (current.client === context.client && (!context.project || current.project === context.project))

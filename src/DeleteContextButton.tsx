@@ -17,9 +17,9 @@ export function DeleteContextButton({ context, disabled, onDelete, iconOnly = fa
       <div className="developer-dialog-heading"><h2><TriangleAlert size={20} />Удалить {kind}?</h2><button type="button" className="icon-button" aria-label="Закрыть" disabled={busy} onClick={() => dialog.current?.close()}><X size={18} /></button></div>
       <strong className="context-delete-name">{title}</strong>
       <div className="context-delete-warning"><strong>Внимание: удаление необратимо.</strong>
-        <p>{context.project ? "Все данные этого проекта" : "Заказчик, все его проекты и их данные"} в Orbit будут удалены: память и предложения, чаты, PR и история ревью, отчёты расхода LLM, настройки, разработчики и их локальные назначения.</p>
+        <p>{context.project ? "Все данные этого проекта" : "Заказчик, все его проекты и их данные"} в Orbit будут удалены: память и предложения, привязанные напоминания, чаты, PR и история ревью, отчёты расхода LLM, настройки, разработчики и их локальные назначения.</p>
       </div>
-      <p className="muted">Общая память приложения, данные других заказчиков и проектов, общие тикеты и Git-кэш подключения сохранятся. В Azure ничего не удаляется.</p>
+      <p className="muted">Общая память и общие напоминания приложения, данные других заказчиков и проектов, общие тикеты и Git-кэш подключения сохранятся. В Azure ничего не удаляется.</p>
       <form onSubmit={async event => {
         event.preventDefault();
         if (busy || confirmation !== "удалить") return;

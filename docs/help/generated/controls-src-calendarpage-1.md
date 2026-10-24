@@ -9,118 +9,118 @@
 
 Создать
 
-Источник: src/CalendarPage.tsx:173.
+Источник: src/CalendarPage.tsx:227.
 
 ### Элемент
 
 Календарь
 
-Источник: src/CalendarPage.tsx:179.
+Источник: src/CalendarPage.tsx:233.
 
 ### Элемент
 
 Напоминания ·
 
-Источник: src/CalendarPage.tsx:186.
+Источник: src/CalendarPage.tsx:240.
 
 ### Элемент
 
-Предыдущий месяц
+Предыдущий период
 
-Источник: src/CalendarPage.tsx:206.
+Источник: src/CalendarPage.tsx:260.
 
 ### Элемент
 
-Следующий месяц
+Перейти к дате
 
-Источник: src/CalendarPage.tsx:220.
+Источник: src/CalendarPage.tsx:276.
+
+### Элемент
+
+Следующий период
+
+Источник: src/CalendarPage.tsx:290.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/CalendarPage.tsx:228.
+Источник: src/CalendarPage.tsx:298.
 
 ### Элемент
 
-Создать напоминание
+Создать напоминание на {…} · Создать напоминание
 
-Источник: src/CalendarPage.tsx:258.
+Источник: src/CalendarPage.tsx:361.
 
 ### Элемент
 
 Ещё
 
-Источник: src/CalendarPage.tsx:278.
+Источник: src/CalendarPage.tsx:382.
 
 ### Элемент
 
 Состояние
 
-Источник: src/CalendarPage.tsx:302.
+Источник: src/CalendarPage.tsx:407.
+
+### Элемент
+
+Заказчик
+
+Источник: src/CalendarPage.tsx:418.
+
+### Элемент
+
+Все заказчики
+
+Источник: src/CalendarPage.tsx:427.
+
+### Элемент
+
+Без заказчика
+
+Источник: src/CalendarPage.tsx:428.
+
+### Элемент
+
+Проект
+
+Источник: src/CalendarPage.tsx:434.
+
+### Элемент
+
+Все проекты
+
+Источник: src/CalendarPage.tsx:440.
+
+### Элемент
+
+Без проекта
+
+Источник: src/CalendarPage.tsx:441.
+
+### Элемент
+
+·
+
+Источник: src/CalendarPage.tsx:455.
 
 ### Элемент
 
 Поиск
 
-Источник: src/CalendarPage.tsx:320.
+Источник: src/CalendarPage.tsx:462.
 
 ### Элемент
 
 Название напоминания
 
-Источник: src/CalendarPage.tsx:322.
-
-### Элемент
-
-С
-
-Источник: src/CalendarPage.tsx:328.
-
-### Элемент
-
-По
-
-Источник: src/CalendarPage.tsx:336.
+Источник: src/CalendarPage.tsx:464.
 
 ### Элемент
 
 Сбросить
 
-Источник: src/CalendarPage.tsx:344.
-
-### Элемент
-
-Изменить
-
-Источник: src/CalendarPage.tsx:399.
-
-### Элемент
-
-Завершить напоминание? · «{…}» останется в истории, уведомления прекратятся. · Завершить
-
-Источник: src/CalendarPage.tsx:404.
-
-### Элемент
-
-Удалить напоминание? · «{…}» будет удалено без возможности восстановления. · Удалить
-
-Источник: src/CalendarPage.tsx:416.
-
-### Элемент
-
-Закрыть
-
-Источник: src/CalendarPage.tsx:444.
-
-### Элемент
-
-Название
-
-Источник: src/CalendarPage.tsx:453.
-
-### Элемент
-
-Тип · Напоминание на дату и время Событие с длительностью Общее напоминание без срока
-
-Источник: src/CalendarPage.tsx:462.
+Источник: src/CalendarPage.tsx:472.

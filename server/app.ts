@@ -570,10 +570,11 @@ export function createApp(
     res.json(store.clearHistory(context, id));
   });
   const calendar = new Calendar(store);
-  app.get("/api/calendar", (_req,res) => res.json({items:calendar.list(),developers:calendar.developers()}));
+  app.get("/api/calendar", (_req,res) => res.json({items:calendar.list(),developers:calendar.developers(),contexts:store.contexts()}));
   app.post("/api/calendar", (req,res) => res.json(calendar.save(req.body)));
   app.put("/api/calendar/:id", (req,res) => res.json(calendar.save(req.body,String(req.params.id))));
   app.post("/api/calendar/:id/complete", (req,res) => res.json(calendar.complete(String(req.params.id))));
+  app.post("/api/calendar/:id/reopen", (req,res) => res.json(calendar.reopen(String(req.params.id))));
   app.delete("/api/calendar/:id", (req,res) => res.json(calendar.remove(String(req.params.id))));
   app.post("/api/calendar/notifications/claim", (_req,res) => res.json(calendar.notifications()));
   app.get("/api/usage", (req, res) => {

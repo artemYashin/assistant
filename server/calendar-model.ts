@@ -10,7 +10,10 @@ export const calendarNotificationsSchema = z
   .strict();
 export const calendarInput = z
   .object({
-    kind: z.enum(["reminder", "event", "general"]),
+    kind: z.enum(["reminder", "event", "general"]).optional(),
+    scope: z.enum(["general", "client", "project"]).default("general"),
+    client: z.string().trim().max(200).default(""),
+    project: z.string().trim().max(200).default(""),
     title: z.string().trim().min(1).max(200),
     description: z.string().trim().max(10000).default(""),
     start: z.string().datetime().nullable(),
@@ -19,17 +22,26 @@ export const calendarInput = z
   })
   .strict()
   .refine(
-    (v) => (v.kind === "general" ? !v.start && !v.end : !!v.start),
-    "Укажите дату и время начала.",
-  )
-  .refine(
-    (v) => v.kind === "event" || !v.end,
-    "Окончание доступно только для события.",
+    (v) =>
+      v.scope === "general"
+        ? !v.client && !v.project
+        : v.scope === "client"
+          ? !!v.client && !v.project
+          : !!v.client && !!v.project,
+    "Выберите заказчика и проект для уровня напоминания.",
   )
   .refine(
     (v) => !v.end || (!!v.start && Date.parse(v.end) >= Date.parse(v.start)),
     "Окончание не может быть раньше начала; укажите начало события.",
-  );
+  )
+  .transform((v) => ({
+    ...v,
+    kind: !v.start
+      ? ("general" as const)
+      : v.end
+        ? ("event" as const)
+        : ("reminder" as const),
+  }));
 export type CalendarItem = z.infer<typeof calendarInput> & {
   id: string;
   completed: boolean;
@@ -44,7 +56,8 @@ export function calendarStatus(
   if (Date.parse(item.start) > Date.parse(now)) return "upcoming";
   if (
     item.kind === "event" &&
-    (!item.end || Date.parse(item.end) > Date.parse(now))
+    item.end &&
+    Date.parse(item.end) > Date.parse(now)
   )
     return "ongoing";
   // A start without an end is a timed reminder, not an automatically completed event.
@@ -59,10 +72,7 @@ export function calendarOverlaps(
   return (
     (!to || Date.parse(item.start) <= Date.parse(to)) &&
     (!from ||
-      (item.end
-        ? Date.parse(item.end)
-        : item.kind === "event"
-          ? Infinity
-          : Date.parse(item.start)) >= Date.parse(from))
+      (item.end ? Date.parse(item.end) : Date.parse(item.start)) >=
+        Date.parse(from))
   );
 }

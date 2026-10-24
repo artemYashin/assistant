@@ -1,3 +1,7 @@
+import { SingleSelect } from "./SingleSelect.js";
+import { InitialsAvatar } from "./InitialsAvatar.js";
+import { CalendarTimeGrid } from "./CalendarTimeGrid.js";
+import { CalendarDateField } from "./CalendarDateField.js";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -11,6 +15,10 @@ import {
   X,
   Clock,
   Users,
+  RotateCcw,
+  Globe,
+  Building2,
+  Folder,
 } from "lucide-react";
 import { api } from "./api.js";
 import { ConfirmButton } from "./ConfirmButton.js";
@@ -30,18 +38,38 @@ export const statusLabels: Record<string, string> = {
 export const calendarChanged = () =>
   window.dispatchEvent(new Event("orbit-calendar-changed"));
 type Developer = { id: string; name: string; client: string; project: string };
-const fresh = (day: string) => ({
+const fresh = (day: string, context: { client: string; project: string }) => ({
+  scope: (context.project
+    ? "project"
+    : context.client
+      ? "client"
+      : "general") as CalendarItem["scope"],
+  client: context.client,
+  project: context.project,
   title: "",
   description: "",
   kind: "reminder" as CalendarItem["kind"],
-  start: day + "T09:00",
+  start: day ? day + "T09:00" : "",
   end: "",
   developerIds: [] as string[],
 });
-export function CalendarPage({ settings }: { settings: any }) {
+export function CalendarPage({
+  settings,
+  context,
+}: {
+  settings: any;
+  context: { client: string; project: string };
+}) {
   const zone = settings?.syncSchedule?.timeZone || "UTC";
   const today = wallTime(new Date().toISOString(), zone).slice(0, 10);
   const [month, setMonth] = useState(today.slice(0, 7)),
+    [view, setView] = useState("week"),
+    [anchor, setAnchor] = useState(today),
+    [contexts, setContexts] = useState<{ client: string; project: string }[]>(
+      [],
+    ),
+    [clientFilter, setClientFilter] = useState("all"),
+    [projectFilter, setProjectFilter] = useState("all"),
     [tab, setTab] = useState("calendar");
   const [items, setItems] = useState<CalendarItem[]>([]),
     [developers, setDevelopers] = useState<Developer[]>([]);
@@ -50,7 +78,7 @@ export function CalendarPage({ settings }: { settings: any }) {
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [query, setQuery] = useState("");
-  const [draft, setDraft] = useState(fresh(today)),
+  const [draft, setDraft] = useState(fresh("", context)),
     [editing, setEditing] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null),
@@ -62,6 +90,7 @@ export function CalendarPage({ settings }: { settings: any }) {
     const data = await api("/calendar");
     setItems(data.items);
     setDevelopers(data.developers);
+    setContexts(data.contexts);
   }
   useEffect(() => {
     let alive = true;
@@ -80,7 +109,7 @@ export function CalendarPage({ settings }: { settings: any }) {
       window.removeEventListener("orbit-calendar-changed", load);
     };
   }, []);
-  function open(item?: CalendarItem, day = today) {
+  function open(item?: CalendarItem, day = "", time?: string) {
     setEditing(item?.id || null);
     setDraft(
       item
@@ -89,7 +118,7 @@ export function CalendarPage({ settings }: { settings: any }) {
             start: item.start ? wallTime(item.start, zone) : "",
             end: item.end ? wallTime(item.end, zone) : "",
           }
-        : fresh(day),
+        : { ...fresh(day, context), ...(time ? { start: time } : {}) },
     );
     dialog.current?.showModal();
   }
@@ -106,6 +135,8 @@ export function CalendarPage({ settings }: { settings: any }) {
       setFrom("");
       setTo("");
       setQuery("");
+      setClientFilter("all");
+      setProjectFilter("all");
       open(item);
       setTimeout(
         () =>
@@ -136,21 +167,43 @@ export function CalendarPage({ settings }: { settings: any }) {
         return (
           (status === "all" ||
             (status === "active" ? !item.completed : state === status)) &&
+          (clientFilter === "all" ||
+            (clientFilter === "none"
+              ? !item.client
+              : item.client === clientFilter.slice(1))) &&
+          (projectFilter === "all" ||
+            (projectFilter === "none"
+              ? !item.project
+              : JSON.stringify([item.client, item.project]) ===
+                projectFilter)) &&
           item.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
           calendarOverlaps(item, bounds.from, bounds.to)
         );
       });
   const base = new Date(month + "-01T12:00:00Z");
   const offset = (base.getUTCDay() + 6) % 7;
-  const days = Array.from({ length: 42 }, (_, i) => {
-    const d = new Date(base);
-    d.setUTCDate(1 - offset + i);
-    return d.toISOString().slice(0, 10);
-  });
+  const monthDays = new Date(
+    Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  const days = Array.from(
+    { length: Math.ceil((offset + monthDays) / 7) * 7 },
+    (_, i) => {
+      const d = new Date(base);
+      d.setUTCDate(1 - offset + i);
+      return d.toISOString().slice(0, 10);
+    },
+  );
   function shift(n: number) {
+    if (view !== "month") {
+      const date = new Date(anchor + "T12:00:00Z");
+      date.setUTCDate(date.getUTCDate() + n * (view === "week" ? 7 : 1));
+      setAnchor(date.toISOString().slice(0, 10));
+      return;
+    }
     const d = new Date(base);
     d.setUTCMonth(d.getUTCMonth() + n);
     setMonth(d.toISOString().slice(0, 7));
+    setAnchor(d.toISOString().slice(0, 10));
   }
   async function mutate(path: string, method: string, body?: unknown) {
     await api(path, method, body);
@@ -159,8 +212,9 @@ export function CalendarPage({ settings }: { settings: any }) {
   }
   const validDraft =
     !!draft.title.trim() &&
-    (draft.kind === "general" || !!draft.start) &&
-    (!draft.end || draft.end >= draft.start);
+    (draft.scope === "general" ||
+      (!!draft.client && (draft.scope !== "project" || !!draft.project))) &&
+    (!draft.end || (!!draft.start && draft.end >= draft.start));
   return (
     <section className="calendar-page">
       <div className="page-heading">
@@ -205,7 +259,7 @@ export function CalendarPage({ settings }: { settings: any }) {
             <div className="calendar-inline">
               <button
                 className="icon-button"
-                aria-label="Предыдущий месяц"
+                aria-label="Предыдущий период"
                 onClick={() => shift(-1)}
               >
                 <ChevronLeft size={18} />
@@ -215,11 +269,27 @@ export function CalendarPage({ settings }: { settings: any }) {
                   month: "long",
                   year: "numeric",
                   timeZone: "UTC",
-                }).format(base)}
+                }).format(
+                  view === "month" ? base : new Date(anchor + "T12:00:00Z"),
+                )}
               </h2>
+              <label className="calendar-jump" title="Перейти к дате">
+                <input
+                  aria-label="Перейти к дате"
+                  type="date"
+                  value={anchor}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setAnchor(e.target.value);
+                      setMonth(e.target.value.slice(0, 7));
+                    }
+                  }}
+                />
+              </label>
+
               <button
                 className="icon-button"
-                aria-label="Следующий месяц"
+                aria-label="Следующий период"
                 onClick={() => shift(1)}
               >
                 <ChevronRight size={18} />
@@ -227,96 +297,168 @@ export function CalendarPage({ settings }: { settings: any }) {
             </div>
             <button
               className="secondary"
-              onClick={() => setMonth(today.slice(0, 7))}
+              onClick={() => {
+                setMonth(today.slice(0, 7));
+                setAnchor(today);
+              }}
             >
               Сегодня
             </button>
           </div>
-          <div className="calendar-grid">
-            {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
-              <div className="calendar-weekday" key={d}>
-                {d}
-              </div>
+          <div
+            className="calendar-view-switch"
+            role="group"
+            aria-label="Вид календаря"
+          >
+            {[
+              ["month", "Месяц"],
+              ["week", "Неделя"],
+              ["day", "День"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={view === key}
+                onClick={() => {
+                  setView(key);
+                  if (key === "month") setMonth(anchor.slice(0, 7));
+                }}
+              >
+                {label}
+              </button>
             ))}
-            {days.map((day) => {
-              const entries = items.filter(
-                (i) =>
-                  i.start &&
-                  !i.completed &&
-                  wallTime(i.start, zone).slice(0, 10) <= day &&
-                  (i.end
-                    ? wallTime(i.end, zone).slice(0, 10)
-                    : i.kind === "event"
-                      ? "9999"
-                      : wallTime(i.start, zone).slice(0, 10)) >= day,
-              );
-              return (
-                <div
-                  key={day}
-                  className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : ""}`}
-                >
-                  <button
-                    className="calendar-day-number"
-                    title="Создать напоминание"
-                    onClick={() => open(undefined, day)}
-                  >
-                    {Number(day.slice(-2))}
-                    <Plus size={12} />
-                  </button>
-                  {entries.slice(0, 3).map((i) => (
-                    <button
-                      key={i.id}
-                      className={"calendar-event " + calendarStatus(i, now)}
-                      onClick={() => open(i)}
-                      title={i.title}
-                    >
-                      <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
-                      {i.title}
-                    </button>
-                  ))}
-                  {entries.length > 3 && (
-                    <button
-                      className="calendar-more"
-                      onClick={() => {
-                        setTab("reminders");
-                        setStatus("active");
-                        setFrom(day + "T00:00");
-                        setTo(day + "T23:59");
-                      }}
-                    >
-                      Ещё {entries.length - 3}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
           </div>
+          {view !== "month" ? (
+            <CalendarTimeGrid
+              items={items}
+              anchor={anchor}
+              mode={view}
+              zone={zone}
+              onOpen={open}
+              onCreate={(time) => open(undefined, "", time)}
+            />
+          ) : (
+            <div className="calendar-grid">
+              {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
+                <div className="calendar-weekday" key={d}>
+                  {d}
+                </div>
+              ))}
+              {days.map((day) => {
+                const entries = items.filter(
+                  (i) =>
+                    i.start &&
+                    !i.completed &&
+                    wallTime(i.start, zone).slice(0, 10) <= day &&
+                    (i.end
+                      ? wallTime(i.end, zone).slice(0, 10)
+                      : wallTime(i.start, zone).slice(0, 10)) >= day,
+                );
+                return (
+                  <div
+                    key={day}
+                    className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : ""}`}
+                  >
+                    <button
+                      aria-label={`Создать напоминание на ${day}`}
+                      className="calendar-day-number"
+                      title="Создать напоминание"
+                      onClick={() => open(undefined, day)}
+                    >
+                      {Number(day.slice(-2))}
+                      <Plus size={12} />
+                    </button>
+                    {entries.slice(0, 3).map((i) => (
+                      <button
+                        key={i.id}
+                        className={"calendar-event " + calendarStatus(i, now)}
+                        onClick={() => open(i)}
+                        title={i.title}
+                      >
+                        <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
+                        {i.title}
+                      </button>
+                    ))}
+                    {entries.length > 3 && (
+                      <button
+                        className="calendar-more"
+                        onClick={() => {
+                          setTab("reminders");
+                          setStatus("active");
+                          setFrom(day + "T00:00");
+                          setTo(day + "T23:59");
+                        }}
+                      >
+                        Ещё {entries.length - 3}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <p className="muted calendar-footnote">
             Без срока: {items.filter((i) => !i.completed && !i.start).length}.
-            Общие напоминания доступны во вкладке «Напоминания».
+            Напоминания без даты доступны во вкладке «Напоминания».
           </p>
         </div>
       ) : (
         <>
           <div className="calendar-filters">
-            <label>
-              Состояние
-              <select
-                aria-label="Состояние"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                {Object.entries({
-                  active: "Все активные",
-                  ...statusLabels,
-                  all: "Все, включая завершённые",
-                }).map(([key, name]) => (
-                  <option key={key} value={key}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SingleSelect
+              label="Состояние"
+              value={status}
+              onChange={setStatus}
+              active={status !== "active"}
+              options={Object.entries({
+                active: "Все активные",
+                ...statusLabels,
+                all: "Все, включая завершённые",
+              }).map(([value, label]) => ({ value, label }))}
+            />
+            <SingleSelect
+              label="Заказчик"
+              value={clientFilter}
+              onChange={(value) => {
+                setClientFilter(value);
+                setProjectFilter("all");
+              }}
+              active={clientFilter !== "all"}
+              options={[
+                { value: "all", label: "Все заказчики" },
+                { value: "none", label: "Без заказчика" },
+                ...[...new Set(items.map((i) => i.client).filter(Boolean))]
+                  .sort()
+                  .map((name) => ({ value: "=" + name, label: name })),
+              ]}
+            />
+            <SingleSelect
+              label="Проект"
+              value={projectFilter}
+              onChange={setProjectFilter}
+              active={projectFilter !== "all"}
+              options={[
+                { value: "all", label: "Все проекты" },
+                { value: "none", label: "Без проекта" },
+                ...Array.from(
+                  new Map(
+                    items
+                      .filter(
+                        (i) =>
+                          i.project &&
+                          (clientFilter === "all" ||
+                            clientFilter === "=" + i.client),
+                      )
+                      .map((i) => [
+                        JSON.stringify([i.client, i.project]),
+                        {
+                          value: JSON.stringify([i.client, i.project]),
+                          label: i.project + " · " + i.client,
+                        },
+                      ]),
+                  ).values(),
+                ),
+              ]}
+            />
             <label>
               Поиск
               <input
@@ -325,25 +467,13 @@ export function CalendarPage({ settings }: { settings: any }) {
                 placeholder="Название напоминания"
               />
             </label>
-            <label>
-              С
-              <input
-                type="datetime-local"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
-            </label>
-            <label>
-              По
-              <input
-                type="datetime-local"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            </label>
+            <CalendarDateField label="С" value={from} onChange={setFrom} />
+            <CalendarDateField label="По" value={to} onChange={setTo} />
             <button
               className="secondary"
               onClick={() => {
+                setClientFilter("all");
+                setProjectFilter("all");
                 setStatus("active");
                 setQuery("");
                 setFrom("");
@@ -375,10 +505,21 @@ export function CalendarPage({ settings }: { settings: any }) {
                     {statusLabels[calendarStatus(item, now)]}
                   </span>
                 </div>
+                <p className="calendar-scope-badge">
+                  {item.scope === "general" ? (
+                    <Globe size={13} />
+                  ) : item.scope === "client" ? (
+                    <Building2 size={13} />
+                  ) : (
+                    <Folder size={13} />
+                  )}{" "}
+                  {item.scope === "general"
+                    ? "Общий"
+                    : [item.client, item.project].filter(Boolean).join(" / ")}
+                </p>
                 <p className="calendar-inline muted">
                   <Clock size={15} />
                   {eventTime(item.start, item.end, zone)}
-                  {item.kind === "event" && !item.end ? " · Без окончания" : ""}
                 </p>
                 {item.description && (
                   <p className="calendar-description">{item.description}</p>
@@ -386,13 +527,17 @@ export function CalendarPage({ settings }: { settings: any }) {
                 {!!item.developerIds.length && (
                   <p className="calendar-inline">
                     <Users size={15} />
-                    {item.developerIds
-                      .map(
-                        (id) =>
-                          developers.find((d) => d.id === id)?.name ||
-                          "Удалённый разработчик",
-                      )
-                      .join(", ")}
+                    {item.developerIds.map((id) => {
+                      const name =
+                        developers.find((d) => d.id === id)?.name ||
+                        "Удалённый разработчик";
+                      return (
+                        <span className="calendar-person" key={id}>
+                          <InitialsAvatar name={name} />
+                          {name}
+                        </span>
+                      );
+                    })}
                   </p>
                 )}
                 <div className="calendar-inline">
@@ -411,6 +556,19 @@ export function CalendarPage({ settings }: { settings: any }) {
                     >
                       <Check size={15} />
                       Завершить
+                    </ConfirmButton>
+                  )}
+                  {item.completed && (
+                    <ConfirmButton
+                      title="Вернуть в незавершённые?"
+                      message={`«${item.title}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания.`}
+                      confirmLabel="Вернуть в незавершённые"
+                      onConfirm={() =>
+                        mutate("/calendar/" + item.id + "/reopen", "POST", {})
+                      }
+                    >
+                      <RotateCcw size={15} />
+                      Вернуть в незавершённые
                     </ConfirmButton>
                   )}
                   <ConfirmButton
@@ -449,6 +607,76 @@ export function CalendarPage({ settings }: { settings: any }) {
             <X size={18} />
           </button>
         </div>
+        <section className="calendar-scope-editor">
+          <span className="multi-select-label">Уровень напоминания</span>
+          <div
+            className="calendar-scope-tabs"
+            role="group"
+            aria-label="Уровень напоминания"
+          >
+            {(
+              [
+                { value: "general", label: "Общий", Icon: Globe },
+                { value: "client", label: "Заказчик", Icon: Building2 },
+                { value: "project", label: "Проект", Icon: Folder },
+              ] as const
+            ).map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                aria-pressed={draft.scope === value}
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    scope: value,
+                    client:
+                      value === "general" ? "" : draft.client || context.client,
+                    project:
+                      value !== "project"
+                        ? ""
+                        : draft.project ||
+                          ((draft.client || context.client) === context.client
+                            ? context.project
+                            : ""),
+                  })
+                }
+              >
+                <Icon size={15} />
+                {label}
+              </button>
+            ))}
+          </div>
+          {draft.scope !== "general" && (
+            <div className="calendar-scope-selects">
+              <SingleSelect
+                label="Заказчик напоминания"
+                value={draft.client}
+                options={[
+                  { value: "", label: "Выберите заказчика" },
+                  ...[
+                    ...new Set(contexts.map((c) => c.client).filter(Boolean)),
+                  ].map((name) => ({ value: name, label: name })),
+                ]}
+                onChange={(client) =>
+                  setDraft({ ...draft, client, project: "" })
+                }
+              />
+              {draft.scope === "project" && (
+                <SingleSelect
+                  label="Проект напоминания"
+                  value={draft.project}
+                  disabled={!draft.client}
+                  options={[
+                    { value: "", label: "Выберите проект" },
+                    ...contexts
+                      .filter((c) => c.client === draft.client && c.project)
+                      .map((c) => ({ value: c.project, label: c.project })),
+                  ]}
+                  onChange={(project) => setDraft({ ...draft, project })}
+                />
+              )}
+            </div>
+          )}
+        </section>
         <p className="muted">Дата и время в часовом поясе {zone}</p>
         <label>
           Название
@@ -459,47 +687,27 @@ export function CalendarPage({ settings }: { settings: any }) {
             onChange={(e) => setDraft({ ...draft, title: e.target.value })}
           />
         </label>
-        <label>
-          Тип
-          <select
-            aria-label="Тип"
-            value={draft.kind}
-            onChange={(e) =>
-              setDraft({
-                ...draft,
-                kind: e.target.value as CalendarItem["kind"],
-                end: "",
-              })
+        <div className="calendar-date-fields">
+          <CalendarDateField
+            label="Начало · необязательно"
+            value={draft.start}
+            onChange={(start) =>
+              setDraft({ ...draft, start, ...(!start ? { end: "" } : {}) })
             }
-          >
-            <option value="reminder">Напоминание на дату и время</option>
-            <option value="event">Событие с длительностью</option>
-            <option value="general">Общее напоминание без срока</option>
-          </select>
-        </label>
-        {draft.kind !== "general" && (
-          <div className="calendar-date-fields">
-            <label>
-              Начало
-              <input
-                type="datetime-local"
-                value={draft.start}
-                onChange={(e) => setDraft({ ...draft, start: e.target.value })}
-              />
-            </label>
-            {draft.kind === "event" && (
-              <label>
-                Окончание · необязательно
-                <input
-                  type="datetime-local"
-                  min={draft.start}
-                  value={draft.end}
-                  onChange={(e) => setDraft({ ...draft, end: e.target.value })}
-                />
-              </label>
-            )}
-          </div>
-        )}
+          />
+          <CalendarDateField
+            label="Окончание · необязательно"
+            value={draft.end}
+            min={draft.start}
+            disabled={!draft.start}
+            onChange={(end) => setDraft({ ...draft, end })}
+          />
+        </div>
+        <p className="muted">
+          Без дат — напоминание без срока. Только начало — напоминание на время.
+          Начало и окончание — событие с длительностью. Завершение всегда
+          отмечается вручную.
+        </p>
         <label>
           Описание
           <textarea
@@ -530,6 +738,7 @@ export function CalendarPage({ settings }: { settings: any }) {
                   })
                 }
               />
+              <InitialsAvatar name={d.name} />
               <span>
                 {d.name}
                 <small>
@@ -573,7 +782,7 @@ export function CalendarPage({ settings }: { settings: any }) {
             disabled={!validDraft}
             className="primary"
             title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
-            message={`«${draft.title}» · ${draft.kind === "general" ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
+            message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
             confirmLabel={editing ? "Сохранить" : "Создать"}
             onConfirm={async () => {
               await mutate(
@@ -582,15 +791,11 @@ export function CalendarPage({ settings }: { settings: any }) {
                 {
                   title: draft.title,
                   description: draft.description,
-                  kind: draft.kind,
-                  start:
-                    draft.kind === "general"
-                      ? null
-                      : fromWall(draft.start, zone),
-                  end:
-                    draft.kind === "event" && draft.end
-                      ? fromWall(draft.end, zone)
-                      : null,
+                  scope: draft.scope,
+                  client: draft.client,
+                  project: draft.project,
+                  start: draft.start ? fromWall(draft.start, zone) : null,
+                  end: draft.end ? fromWall(draft.end, zone) : null,
                   developerIds: draft.developerIds,
                 },
               );
