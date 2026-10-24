@@ -9,118 +9,118 @@
 
 Не удалось обновить связи Azure. Список может быть неполным или устаревшим.
 
-Источник: server/pull-requests.ts:855.
+Источник: server/pull-requests.ts:856.
 
 ### Сообщение
 
 Не удалось импортировать тикеты из PR. Проверьте Work Items: Read и подключение Azure.
 
-Источник: server/pull-requests.ts:935.
+Источник: server/pull-requests.ts:936.
 
 ### Сообщение
 
 Не удалось синхронизировать PR. Проверьте соединение и доступ.
 
-Источник: server/pull-requests.ts:948.
+Источник: server/pull-requests.ts:949.
 
 ### Сообщение
 
 Изменение этого PR уже выполняется
 
-Источник: server/pull-requests.ts:957.
+Источник: server/pull-requests.ts:958.
 
 ### Сообщение
 
 PR недоступен. Обновите список.
 
-Источник: server/pull-requests.ts:960.
+Источник: server/pull-requests.ts:961.
 
 ### Сообщение
 
 PR уже закрыт или изменился. Обновите список.
 
-Источник: server/pull-requests.ts:967.
+Источник: server/pull-requests.ts:968.
 
 ### Сообщение
 
 Azure не подтвердил новое состояние PR. Список обновлён; проверьте состояние перед повтором.
 
-Источник: server/pull-requests.ts:978.
+Источник: server/pull-requests.ts:979.
 
 ### Сообщение
 
 Настройте Git-репозиторий в «Заказчики и проекты».
 
-Источник: server/pull-requests.ts:996.
+Источник: server/pull-requests.ts:997.
 
 ### Сообщение
 
 Azure не вернул список коммитов ветки
 
-Источник: server/pull-requests.ts:1009.
+Источник: server/pull-requests.ts:1010.
 
 ### Сообщение
 
 PR не найден. Синхронизируйте список.
 
-Источник: server/pull-requests.ts:1022.
+Источник: server/pull-requests.ts:1023.
 
 ### Сообщение
 
 Коммиты PR ещё не загружены
 
-Источник: server/pull-requests.ts:1031.
+Источник: server/pull-requests.ts:1032.
 
 ### Сообщение
 
 Не удалось загрузить количество
 
-Источник: server/pull-requests.ts:1035.
+Источник: server/pull-requests.ts:1036.
 
 ### Сообщение
 
 Azure не вернул список коммитов
 
-Источник: server/pull-requests.ts:1067.
+Источник: server/pull-requests.ts:1068.
 
 ### Сообщение
 
 Azure повторил страницу коммитов. Обновите историю.
 
-Источник: server/pull-requests.ts:1071.
+Источник: server/pull-requests.ts:1072.
 
 ### Сообщение
 
 Некорректный SHA коммита
 
-Источник: server/pull-requests.ts:1094.
+Источник: server/pull-requests.ts:1095.
 
 ### Сообщение
 
 Коммит не найден среди первых 1000 коммитов текущего PR
 
-Источник: server/pull-requests.ts:1113.
+Источник: server/pull-requests.ts:1114.
 
 ### Сообщение
 
 Azure не вернул данные коммита
 
-Источник: server/pull-requests.ts:1131.
+Источник: server/pull-requests.ts:1132.
 
 ### Сообщение
 
 Azure вернул некорректный родительский коммит
 
-Источник: server/pull-requests.ts:1134.
+Источник: server/pull-requests.ts:1135.
 
 ### Сообщение
 
 Коммиты PR не загружены. Обновите pull request.
 
-Источник: server/pull-requests.ts:1152.
+Источник: server/pull-requests.ts:1153.
 
 ### Сообщение
 
 Версия PR изменилась во время загрузки. Откройте diff заново.
 
-Источник: server/pull-requests.ts:1182.
+Источник: server/pull-requests.ts:1183.

@@ -1763,7 +1763,7 @@ for (const legacy of [false, true]) {
     mock(t, [pr()]);
     await service.sync();
     const monitor = service.monitors()[0].id;
-    const id = service.requestReview(monitor, "repo", 1, { readTickets: false, questionFrequency: "none", maxToolCalls: 7 });
+    const id = service.requestReview(monitor, "repo", 1, { readTickets: false, questionFrequency: "none", maxToolCalls: 7, reviewerComment: "Focus on retries" });
     const options = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options);
     assert.equal(options.maxToolCalls, 7);
     if (legacy) {
@@ -1774,5 +1774,12 @@ for (const legacy of [false, true]) {
     await service.reviewNext();
     assert.equal(calls[0][3].maxToolCalls, legacy ? 43 : 7);
     assert.equal(store.settings().reviewMaxToolCalls, 43);
+    const displayed = service.list(context)[0] as any;
+    assert.equal(displayed.review_metadata.toolLimit, legacy ? 43 : 7);
+    assert.equal(displayed.review_metadata.reviewerComment, "Focus on retries");
+    assert.equal(displayed.last_saved_review.review_metadata.toolLimit, legacy ? 43 : 7);
+    const saved = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options);
+    assert.equal(saved.maxToolCalls, legacy ? 43 : 7);
+    assert.equal(saved.reviewerComment, "Focus on retries");
   });
 }

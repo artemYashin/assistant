@@ -1329,3 +1329,27 @@ test("independent chat and review agents overlap and cancellation stays isolated
   assert.equal(rows.find((r: any) => r.origin === "chat").status, "completed");
   assert.notEqual(rows.find((r: any) => r.origin === "pr_review").status, "completed");
 });
+
+test("review metadata preserves individual budgets/comments and counts continuations independently of traces", t => {
+  const store = fixture(t), ledger = new UsageLedger(store);
+  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)").run(context.client, context.project);
+  const add = (id: string, options: string) => store.db.prepare("INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,'monitor','repo',1,'head','target','completed','2026-01-01',?)").run(id, options);
+  add("one", JSON.stringify({maxToolCalls:12,reviewerComment:"Private\nComment"}));
+  add("old", "{}");
+  const first = ledger.begin("model",context,"pr_review");
+  const second = ledger.begin("model",context,"pr_review");
+  ledger.registerReviewRequest("one",first);
+  ledger.registerReviewRequest("one",second);
+  ledger.tool(first); ledger.tool(first); ledger.tool(second);
+  const other = ledger.begin("model",context,"pr_review"); ledger.tool(other);
+  ledger.registerReviewRequest("old",other);
+  ledger.clearReviewTraces();
+  store.set("settings",{...store.settings(),reviewMaxToolCalls:99});
+  assert.deepEqual(ledger.reviewMetadata("one",second),{toolCalls:3,toolLimit:12,partial:false,reviewerComment:"Private\nComment"});
+  assert.equal(ledger.reviewMetadata("old").toolLimit,null);
+  assert.equal(ledger.reviewMetadata("old").toolCalls,1);
+  assert.equal(ledger.reviewMetadata("unknown").toolCalls,null);
+  ledger.registerReviewRequest("one","missing");
+  assert.equal(ledger.reviewMetadata("one").partial,true);
+  assert.equal(ledger.reviewMetadata("one").toolCalls,3);
+});

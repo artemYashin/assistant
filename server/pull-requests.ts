@@ -466,10 +466,11 @@ export class PullRequests {
           review_progress: this.reviewProgress.text(row.review_id, row.review_status, this.activeReviewId),
           has_review_log: new UsageLedger(this.store).hasReviewLog(context, row.monitor, row.repo, row.number),
           review_usage: new UsageLedger(this.store).reviewUsage(row.review_id, row.usage_id),
+          review_metadata: new UsageLedger(this.store).reviewMetadata(row.review_id, row.usage_id),
           local_source: this.sourcePreparation.status(row),
           last_saved_review: (() => {
             const saved = this.store.db.prepare("SELECT id,usage_id,summary,coverage,finished_at,head,target,model FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND COALESCE(summary,'')!='' ORDER BY rowid DESC LIMIT 1").get(row.monitor, row.repo, row.number) as any;
-            return saved ? { ...saved, review_usage: new UsageLedger(this.store).reviewUsage(saved.id, saved.usage_id) } : null;
+            return saved ? { ...saved, review_usage: new UsageLedger(this.store).reviewUsage(saved.id, saved.usage_id), review_metadata: new UsageLedger(this.store).reviewMetadata(saved.id, saved.usage_id) } : null;
           })(),
           ticket_source: source,
           ticket_links_error: azureLinks.error,
@@ -1597,6 +1598,8 @@ export class PullRequests {
       const m = this.monitors().find((m) => m.id === job.monitor)!;
       const savedOptions = JSON.parse(job.options || "{}");
       const options = reviewOptionsSchema.parse({ ...savedOptions, maxToolCalls: savedOptions.maxToolCalls ?? this.store.settings().reviewMaxToolCalls, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
+      // Record the effective budget for legacy queued jobs before any model call.
+      this.store.db.prepare("UPDATE pr_reviews SET options=json_set(COALESCE(options,'{}'),'$.maxToolCalls',?) WHERE id=?").run(options.maxToolCalls!, job.id);
       this.store.db
         .prepare(
           "UPDATE pr_reviews SET status=?,started_at=? WHERE id=?",

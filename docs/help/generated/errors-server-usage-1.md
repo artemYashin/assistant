@@ -9,22 +9,22 @@
 
 Вызов инструмента не найден
 
-Источник: server/usage.ts:252.
+Источник: server/usage.ts:265.
 
 ### Сообщение
 
 Вызов инструмента не найден в текущем чате
 
-Источник: server/usage.ts:259.
+Источник: server/usage.ts:272.
 
 ### Сообщение
 
 Полный результат не сохранён или вызов ещё выполняется
 
-Источник: server/usage.ts:260.
+Источник: server/usage.ts:273.
 
 ### Сообщение
 
 SELECT count(*) requests,coalesce(sum(model_calls),0) model_calls,coalesce(sum(input_tokens),0) input_tokens,coalesce(sum(output_tokens),0) output_tokens,coalesce(sum(cache_read_tokens),0) cache_read_tokens,coalesce(sum(cache_write_tokens),0) cache_write_tokens,coalesce(sum(CASE WHEN model_calls IS NULL THEN 1 ELSE 0 END),0) unreported_requests,coalesce(sum(CASE WHEN incomplete_calls>0 OR status IN ('error','interrupted','stopped','limited') THEN 1 ELSE 0 END),0) possibly_partial_requests FROM requests
 
-Источник: server/usage.ts:306.
+Источник: server/usage.ts:319.

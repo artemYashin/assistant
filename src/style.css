@@ -10224,3 +10224,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
   text-underline-offset: 3px;
 }
 .pr-diff-toolbar-file h3 a:hover { color: #16476d; }
+
+.review-private-comment { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
+.ticket-table-date { display: inline-flex; flex-direction: column; white-space: nowrap; }
+.ticket-table-date small { color: var(--muted); font-size: 11px; }

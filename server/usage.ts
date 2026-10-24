@@ -101,6 +101,19 @@ export class UsageLedger {
       totalTokens: totals.inputTokens === null && totals.outputTokens === null ? null : (totals.inputTokens ?? 0) + (totals.outputTokens ?? 0),
       partial: !totals.reports || !!totals.missing };
   }
+  reviewMetadata(reviewId?: string, legacyRequestId?: string) {
+    const row = reviewId ? this.store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(reviewId) as { options: string } | undefined : undefined;
+    let options: any = {};
+    try { options = JSON.parse(row?.options || "{}") || {}; } catch { /* Legacy metadata may be unavailable. */ }
+    const ids = [...new Set([...(reviewId ? this.store.get<string[]>(`review.requests:${reviewId}`, []) : []), ...(legacyRequestId ? [legacyRequestId] : [])])];
+    const totals = this.store.db.prepare("SELECT SUM(tool_calls) AS used,COUNT(*) AS requests FROM llm_requests WHERE origin='pr_review' AND id IN (SELECT value FROM json_each(?))").get(JSON.stringify(ids)) as { used: number | null; requests: number };
+    return {
+      toolCalls: totals.used,
+      toolLimit: typeof options.maxToolCalls === "number" && Number.isInteger(options.maxToolCalls) && options.maxToolCalls >= 1 && options.maxToolCalls <= 1000 ? options.maxToolCalls : null,
+      partial: totals.requests < ids.length || totals.requests === 0,
+      reviewerComment: typeof options.reviewerComment === "string" ? options.reviewerComment : "",
+    };
+  }
   reviewTokens(reviewId: string) {
     return this.store.get<string[]>(`review.requests:${reviewId}`, []).reduce((sum, id) => sum + this.tokens(id), 0);
   }

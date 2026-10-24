@@ -111,10 +111,14 @@ function PrDescription({ pr }: any) {
     </details>
   );
 }
-function ReviewTokenUsage({ usage }: { usage?: { inputTokens: number | null; outputTokens: number | null; totalTokens: number | null; partial: boolean } }) {
+function ReviewTokenUsage({ usage, metadata }: { metadata?: {toolCalls: number | null; toolLimit: number | null; partial: boolean}; usage?: { inputTokens: number | null; outputTokens: number | null; totalTokens: number | null; partial: boolean } }) {
   const format = (value: number | null | undefined) => value == null ? "—" : value.toLocaleString("ru-RU");
   return <div className="pr-review-token-usage">
     <strong>Токены: {format(usage?.totalTokens)}</strong>
+    <strong title={metadata?.toolLimit == null ? "Лимит этого запуска не сохранён" : "Вызовы за всё ревью, включая продолжения"}>
+      Инструменты: {format(metadata?.toolCalls)} / {format(metadata?.toolLimit)}
+      {metadata?.partial && metadata.toolCalls != null ? " (частично)" : ""}
+    </strong>
     <span>Вход: {format(usage?.inputTokens)}</span>
     <span>Выход: {format(usage?.outputTokens)}</span>
     {(!usage || usage.partial) && <small>{usage?.totalTokens != null ? "Учёт неполный" : "Данные о расходе недоступны"}</small>}
@@ -136,7 +140,12 @@ function ReviewDetail({ result, pr }: any) {
             {result.finished_at && <time dateTime={result.finished_at}>{new Date(result.finished_at).toLocaleString("ru-RU")}</time>}
             {coverage && <span><strong>Покрытие:</strong> {coverage.files} файлов</span>}
           </div>
-          <ReviewTokenUsage usage={result.review_usage} />
+          <ReviewTokenUsage usage={result.review_usage} metadata={result.review_metadata} />
+          {!!result.review_metadata?.reviewerComment?.trim() && (
+            <PrInfoPopup title="Комментарий к ревью" className="secondary" trigger="Комментарий">
+              <p className="review-private-comment">{result.review_metadata.reviewerComment}</p>
+            </PrInfoPopup>
+          )}
           {previous && (
             <p className="muted">
               Ревью предыдущей версии PR: {result.head?.slice(0, 10)} → {result.target?.slice(0, 10)}.
@@ -222,6 +231,7 @@ function ReviewHistory({ pr }: any) {
                 <strong>Ревью версии {r.head.slice(0, 10)}</strong>
                 <span>{new Date(r.created_at).toLocaleString("ru-RU")} · {statuses[r.status] || r.status}</span>
                 <span>{r.model || "Модель не сохранена"}{r.review_usage?.totalTokens != null ? ` · ${r.review_usage.totalTokens.toLocaleString("ru-RU")} токенов` : ""}</span>
+                <span>Инструменты: {r.review_metadata?.toolCalls?.toLocaleString("ru-RU") ?? "—"} / {r.review_metadata?.toolLimit?.toLocaleString("ru-RU") ?? "—"}{r.review_metadata?.partial && r.review_metadata.toolCalls != null ? " (частично)" : ""}</span>
               </span>
               <Eye size={16} aria-hidden="true" />
             </>}>

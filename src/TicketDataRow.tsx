@@ -1,3 +1,4 @@
+import { TicketDate } from "./TicketDate.js";
 import { ArchiveRestore, LoaderCircle } from "lucide-react";
 import { CopyTicketId } from "./CopyTicketId.js";
 import { TicketTableRow } from "./TicketCard.js";
@@ -20,8 +21,7 @@ export function TicketDataRow({
 }: any) {
   const local = t.imported !== false || t.inTrash;
   const tone = t.inTrash ? "trash" : t.imported === false ? "new" : undefined;
-  const date = (v: string | number) =>
-    v ? new Date(v).toLocaleString("ru-RU") : "—";
+  const date = (v: string | number) => <TicketDate value={v} />;
   return (
     <TicketTableRow
       id={t.id}

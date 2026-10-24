@@ -7,36 +7,42 @@
 
 ### Сообщение
 
+Лимит этого запуска не сохранён
+
+Источник: src/PullRequestsPage.tsx:118.
+
+### Сообщение
+
 Данные о расходе недоступны
 
-Источник: src/PullRequestsPage.tsx:120.
+Источник: src/PullRequestsPage.tsx:124.
 
 ### Сообщение
 
 Этот PR не найден в локальной базе.
 
-Источник: src/PullRequestsPage.tsx:450.
+Источник: src/PullRequestsPage.tsx:460.
 
 ### Сообщение
 
 Pull request станет черновиком. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:777.
+Источник: src/PullRequestsPage.tsx:787.
 
 ### Сообщение
 
 PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.
 
-Источник: src/PullRequestsPage.tsx:783.
+Источник: src/PullRequestsPage.tsx:793.
 
 ### Сообщение
 
 источник больше недоступен
 
-Источник: src/PullRequestsPage.tsx:828.
+Источник: src/PullRequestsPage.tsx:838.
 
 ### Сообщение
 
 Не загружен: проверьте доступ, существование и проект тикета
 
-Источник: src/PullRequestsPage.tsx:839.
+Источник: src/PullRequestsPage.tsx:849.

@@ -99,28 +99,28 @@ Azure не вернул корректные связи PR. Локальный �
 
 PR или подключение изменились. Обновите список.
 
-Источник: server/pull-requests.ts:556.
+Источник: server/pull-requests.ts:557.
 
 ### Сообщение
 
 Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.
 
-Источник: server/pull-requests.ts:581.
+Источник: server/pull-requests.ts:582.
 
 ### Сообщение
 
 Изображение не найдено в описании PR
 
-Источник: server/pull-requests.ts:657.
+Источник: server/pull-requests.ts:658.
 
 ### Сообщение
 
 Это не вложение Azure текущего подключения
 
-Источник: server/pull-requests.ts:668.
+Источник: server/pull-requests.ts:669.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/pull-requests.ts:671.
+Источник: server/pull-requests.ts:672.
