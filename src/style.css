@@ -9987,8 +9987,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-notification-row small { display:block;font-size:11px;color:#667685;margin-top:3px; }
 .calendar-notification-row strong { font-size:13px; }
 .calendar-notification-row svg { flex-shrink:0; }
-.calendar-toast { position:fixed;inset:20px 20px auto auto;margin:0;width:min(390px,calc(100vw - 40px));padding:18px 38px 18px 18px;border:1px solid #9ebfda;border-radius:13px;background:#f4faff;color:#254560;box-shadow:0 12px 48px #142b4a40;overflow:hidden;z-index:2147483647; }
+.calendar-toast { position:fixed;inset:20px 20px auto auto;margin:0;width:min(390px,calc(100vw - 40px));padding:18px;border:1px solid #9ebfda;border-radius:13px;background:#f4faff;color:#254560;box-shadow:0 12px 48px #142b4a40;overflow:hidden;z-index:2147483647; }
 .calendar-toast-close { position:absolute;right:6px;top:6px; }
+.calendar-toast > .calendar-inline { padding-right:20px; }
 .calendar-toast-item { display:block;text-align:left;width:100%;background:transparent;border:0;color:inherit;padding:8px 0 0;font-size:13px;overflow-wrap:anywhere; }
 .calendar-toast-item:hover { text-decoration:underline; }
 @media(max-width:800px) { .calendar-reminders {grid-template-columns:1fr;} .calendar-day {min-height:95px;padding:3px;} .calendar-event {font-size:10px;} .calendar-event span {display:none;} .calendar-toolbar {padding:10px;} }
