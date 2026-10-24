@@ -10061,3 +10061,12 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-time-event:active { cursor: grabbing; }
 .calendar-resize { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; }
 .calendar-resize::after { content: ""; position: absolute; bottom: 2px; left: 35%; right: 35%; border-top: 2px solid currentColor; opacity: .5; }
+
+/* Keep reminder content readable and actions aligned across cards. */
+.calendar-reminder { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.calendar-reminder > p { margin: 0; }
+.calendar-reminder-top { align-items: flex-start; gap: 12px; }
+.calendar-reminder-top .calendar-state { flex-shrink: 0; }
+.calendar-reminder .calendar-inline { flex-wrap: wrap; row-gap: 8px; }
+.calendar-reminder .calendar-inline > svg { flex-shrink: 0; }
+.calendar-reminder .calendar-reminder-actions { margin-top: auto; padding-top: 14px; border-top: 1px solid #edf1f4; gap: 8px; }

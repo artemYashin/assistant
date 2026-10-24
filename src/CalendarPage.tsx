@@ -74,7 +74,7 @@ export function CalendarPage({
   const [items, setItems] = useState<CalendarItem[]>([]),
     [developers, setDevelopers] = useState<Developer[]>([]);
   const [error, setError] = useState(""),
-    [status, setStatus] = useState("active"),
+    [status, setStatus] = useState("all"),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [query, setQuery] = useState("");
@@ -420,11 +420,11 @@ export function CalendarPage({
               label="Состояние"
               value={status}
               onChange={setStatus}
-              active={status !== "active"}
+              active={status !== "all"}
               options={Object.entries({
+                all: "Все",
                 active: "Все активные",
                 ...statusLabels,
-                all: "Все, включая завершённые",
               }).map(([value, label]) => ({ value, label }))}
             />
             <SingleSelect
@@ -486,7 +486,7 @@ export function CalendarPage({
               onClick={() => {
                 setClientFilter("all");
                 setProjectFilter("all");
-                setStatus("active");
+                setStatus("all");
                 setQuery("");
                 setFrom("");
                 setTo("");
@@ -552,7 +552,7 @@ export function CalendarPage({
                     })}
                   </p>
                 )}
-                <div className="calendar-inline">
+                <div className="calendar-inline calendar-reminder-actions">
                   <button className="secondary" onClick={() => open(item)}>
                     <Pencil size={15} />
                     Изменить
