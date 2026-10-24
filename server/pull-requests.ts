@@ -46,6 +46,7 @@ export type Monitor = {
 };
 const now = () => new Date().toISOString();
 const enc = encodeURIComponent;
+class UnsupportedDiffFile extends Error {}
 export function requiredReviewer(pr: any, id: string) {
   return (
     !!id &&
@@ -1138,44 +1139,56 @@ export class PullRequests {
       result.notes.push("Merge-коммит: показано сравнение с первым родителем.");
     return { ...result, title: detail.comment || commit };
   }
+  private diffPending = new Map<string, Promise<Omit<Awaited<ReturnType<PullRequests["changes"]>>, "cacheable">>>();
   async viewDiff(monitor: string, repo: string, number: number) {
     const m = this.monitors().find((entry) => entry.id === monitor);
-    const known = this.store.db
-      .prepare(
-        "SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
-      )
-      .get(monitor, repo, number);
+    const readKnown = () => this.store.db.prepare(
+      "SELECT * FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
+    ).get(monitor, repo, number) as any;
+    const known = readKnown();
     if (!m || !known)
       throw new AppError(404, "PR не найден. Синхронизируйте список.");
+    if (!known.head || !known.target)
+      throw new AppError(409, "Коммиты PR не загружены. Обновите pull request.");
     const credentials = this.credentials(m);
-    const detail = await this.get(
-      m,
-      `git/repositories/${enc(repo)}/pullrequests/${number}`,
-      credentials,
-    );
-    if (
-      detail.pullRequestId !== number ||
-      detail.repository?.id !== repo ||
-      !detail.lastMergeSourceCommit?.commitId ||
-      !detail.lastMergeTargetCommit?.commitId
-    ) {
-      throw new AppError(502, "Azure не вернул коммиты выбранного PR");
-    }
-    const result = await this.changes(
-      m,
-      repo,
-      detail.lastMergeSourceCommit.commitId,
-      detail.lastMergeTargetCommit.commitId,
-    );
-    if (this.credentials(m).pat !== credentials.pat)
-      throw new AppError(409, "Подключение Azure изменилось");
-    return {
-      ...result,
-      title: detail.title,
-      canComment: detail.status === "active",
-      sourceBranch: detail.sourceRefName,
-      targetBranch: detail.targetRefName,
+    const revisionFor = (config: Monitor, pr: any) => JSON.stringify([
+      1, config.source, config.azure_project, config.repository,
+      pr.head, pr.target, reviewFileSettings.parse(JSON.parse(config.review_files || "{}")),
+    ]);
+    const revision = revisionFor(m, known);
+    const decorate = (result: Omit<Awaited<ReturnType<PullRequests["changes"]>>, "cacheable">) => {
+      const current = readKnown() || known;
+      const completed = this.store.db.prepare(
+        "SELECT 1 FROM pr_completed WHERE monitor=? AND repo=? AND number=?",
+      ).get(monitor, repo, number);
+      return {...result, title: current.title, canComment: !!current.in_scope && !completed,
+        sourceBranch: current.source_branch, targetBranch: current.target_branch};
     };
+    const cached = this.store.db.prepare(
+      "SELECT payload FROM pr_diff_cache WHERE monitor=? AND repo=? AND number=? AND revision=?",
+    ).get(monitor, repo, number, revision) as {payload: string} | undefined;
+    if (cached) return decorate(JSON.parse(cached.payload));
+    const key = JSON.stringify([monitor, repo, number, revision]);
+    let task = this.diffPending.get(key);
+    if (!task) {
+      task = (async () => {
+        const {cacheable, ...result} = await this.changes(m, repo, known.head, known.target);
+        if (this.credentials(m).pat !== credentials.pat)
+          throw new AppError(409, "Подключение Azure изменилось");
+        const current = readKnown();
+        const config = this.monitors().find(entry => entry.id === monitor);
+        // An older request must never replace a newer version during sync.
+        if (!current || !config || revisionFor(config, current) !== revision)
+          throw new AppError(409, "Версия PR изменилась во время загрузки. Откройте diff заново.");
+        if (cacheable) this.store.db.prepare(
+          "INSERT INTO pr_diff_cache(monitor,repo,number,revision,payload) VALUES(?,?,?,?,?) ON CONFLICT(monitor,repo,number) DO UPDATE SET revision=excluded.revision,payload=excluded.payload",
+        ).run(monitor, repo, number, revision, JSON.stringify(result));
+        return result;
+      })();
+      this.diffPending.set(key, task);
+    }
+    try { return decorate(await task); }
+    finally { if (this.diffPending.get(key) === task) this.diffPending.delete(key); }
   }
   async commentOnLine(input: {
     monitor: string; repo: string; number: number;
@@ -1304,6 +1317,7 @@ export class PullRequests {
     const diff = await loadChanges();
     if ((target && !diff.commonCommit) || !Array.isArray(diff.changes))
       throw new AppError(502, "Azure не вернул базу или список изменений");
+    let cacheable = true;
     const notes: string[] = [];
     const patches: string[] = [];
     let chars = 0;
@@ -1384,12 +1398,13 @@ export class PullRequests {
         typeof item.content !== "string" ||
         item.content.length > 50000
       )
-        throw new Error("Неподдерживаемый или большой файл");
+        throw new UnsupportedDiffFile("Неподдерживаемый или большой файл");
       fileSizes.set(JSON.stringify([path, commit]), typeof item.size === "number" && Number.isFinite(item.size) && item.size >= 0 ? item.size : Buffer.byteLength(item.content, "utf8"));
       return item.content as string;
     };
     for (const change of candidates.slice(0, 100)) {
       if (this.stopped || Date.now() - preparationStarted > 60000) {
+        cacheable = false;
         notes.push(
           "Подготовка diff остановлена по времени или завершению приложения",
         );
@@ -1442,13 +1457,15 @@ export class PullRequests {
         chars += patch.length;
         includedFiles.push({ path, characters: patch.length, sizeBytes: fileSizes.get(JSON.stringify(kind.includes("delete") ? [oldPath, diff.commonCommit] : [path, head])) ?? 0 });
         patches.push(patch);
-      } catch {
+      } catch (error) {
+        if (!(error instanceof UnsupportedDiffFile)) cacheable = false;
         notes.push(
           `${path}: содержимое недоступно, бинарное или слишком большое`,
         );
       }
     }
     return {
+      cacheable: cacheable && complete,
       patches,
       notes,
       base: diff.commonCommit,

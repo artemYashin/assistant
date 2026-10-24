@@ -101,7 +101,7 @@ export function PrDiffDialog({
     return () => {
       live = false;
     };
-  }, [pr?.monitor, pr?.repo, pr?.number, commit, revision, repositoryContext?.client, repositoryContext?.project]);
+  }, [pr?.monitor, pr?.repo, pr?.number, pr?.head, pr?.target, commit, revision, repositoryContext?.client, repositoryContext?.project]);
   useEffect(() => {
     let live = true;
     if (!data || commit || repositoryContext) { setThreads([]); return; }
@@ -194,8 +194,7 @@ export function PrDiffDialog({
       </header>
       {!data && !error && (
         <p role="status">
-          <LoaderCircle className="spin" size={17} /> Загружаю изменения из
-          Azure…
+          <LoaderCircle className="spin" size={17} /> Загружаю изменения…
         </p>
       )}
       {error && (

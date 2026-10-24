@@ -9,118 +9,118 @@
 
 Некорректная страница
 
-Источник: server/pull-requests.ts:78.
+Источник: server/pull-requests.ts:79.
 
 ### Сообщение
 
 Репозиторий не настроен
 
-Источник: server/pull-requests.ts:80.
+Источник: server/pull-requests.ts:81.
 
 ### Сообщение
 
 Подождите завершения загрузки истории PR
 
-Источник: server/pull-requests.ts:94.
+Источник: server/pull-requests.ts:95.
 
 ### Сообщение
 
 Azure не вернул завершённые PR
 
-Источник: server/pull-requests.ts:102.
+Источник: server/pull-requests.ts:103.
 
 ### Сообщение
 
 Настройки подключения изменились
 
-Источник: server/pull-requests.ts:107.
+Источник: server/pull-requests.ts:108.
 
 ### Сообщение
 
 Не удалось загрузить связи завершённого PR
 
-Источник: server/pull-requests.ts:129.
+Источник: server/pull-requests.ts:130.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: server/pull-requests.ts:134.
+Источник: server/pull-requests.ts:135.
 
 ### Сообщение
 
 Завершённый PR отсутствует в кэше. Обновите список. / Активный PR отсутствует в локальном списке. Выполните синхронизацию.
 
-Источник: server/pull-requests.ts:212.
+Источник: server/pull-requests.ts:213.
 
 ### Сообщение
 
 PR больше не входит в недельный архив завершённых. Обновите список. / PR больше не активен. Выполните синхронизацию списка.
 
-Источник: server/pull-requests.ts:218.
+Источник: server/pull-requests.ts:219.
 
 ### Сообщение
 
 Azure не вернул корректные связи PR. Локальный кэш сохранён.
 
-Источник: server/pull-requests.ts:221.
+Источник: server/pull-requests.ts:222.
 
 ### Сообщение
 
 Настройки подключения изменились. Повторите запрос.
 
-Источник: server/pull-requests.ts:226.
+Источник: server/pull-requests.ts:227.
 
 ### Сообщение
 
 Локальный PR удалён. Обновите список.
 
-Источник: server/pull-requests.ts:236.
+Источник: server/pull-requests.ts:237.
 
 ### Сообщение
 
 Выберите заказчика и проект ассистента
 
-Источник: server/pull-requests.ts:352.
+Источник: server/pull-requests.ts:353.
 
 ### Сообщение
 
 Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Подключение Azure»
 
-Источник: server/pull-requests.ts:356.
+Источник: server/pull-requests.ts:357.
 
 ### Сообщение
 
 Укажите Git-репозиторий в меню «Заказчики и проекты» → «Репозиторий» и сохраните настройки.
 
-Источник: server/pull-requests.ts:359.
+Источник: server/pull-requests.ts:360.
 
 ### Сообщение
 
 PR или подключение изменились. Обновите список.
 
-Источник: server/pull-requests.ts:555.
+Источник: server/pull-requests.ts:556.
 
 ### Сообщение
 
 Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.
 
-Источник: server/pull-requests.ts:580.
+Источник: server/pull-requests.ts:581.
 
 ### Сообщение
 
 Изображение не найдено в описании PR
 
-Источник: server/pull-requests.ts:656.
+Источник: server/pull-requests.ts:657.
 
 ### Сообщение
 
 Это не вложение Azure текущего подключения
 
-Источник: server/pull-requests.ts:667.
+Источник: server/pull-requests.ts:668.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/pull-requests.ts:670.
+Источник: server/pull-requests.ts:671.

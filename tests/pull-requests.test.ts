@@ -602,7 +602,7 @@ test("review clarification pauses work until all answers arrive and passes them 
   );
 });
 
-test("view diff uses live commits and does not invoke LLM or Azure mutations", async (t) => {
+test("view diff uses synchronized commits and does not invoke LLM or Azure mutations", async (t) => {
   const f = fixture(t);
   mock(t, [pr()], (_url, init) => {
     assert.ok(!init.method || init.method === "GET");
@@ -1670,4 +1670,87 @@ test("PR counters cache metadata by revision and never read file content",async 
  store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
  await service.counts(monitor,'repo',1);assert.equal(paths.length,6);
  assert.ok(paths.every(path=>!path.endsWith('/items')));
+});
+
+test("PR diff persists by source/target revision, survives restart and ignores unchanged sync", async (t) => {
+  const f = fixture(t);
+  let reads = 0;
+  mock(t, [pr()], () => { reads++; });
+  await f.service.sync();
+  const m = f.service.monitors()[0];
+  reads = 0;
+  const [first, concurrent] = await Promise.all([
+    f.service.viewDiff(m.id, "repo", 1), f.service.viewDiff(m.id, "repo", 1),
+  ]);
+  assert.deepEqual(first, concurrent);
+  assert.equal(reads, 3, "one diff list plus old/new file; concurrent requests share the work");
+  reads = 0;
+  assert.deepEqual(await f.service.viewDiff(m.id, "repo", 1), first);
+  assert.equal(reads, 0);
+  await f.service.sync();
+  reads = 0;
+  await f.service.viewDiff(m.id, "repo", 1);
+  assert.equal(reads, 0, "same commits after synchronization retain the diff");
+
+  const reopened = new Store(f.dir);
+  try {
+    const restarted = new PullRequests(reopened, f.agent, f.preparation);
+    assert.deepEqual(await restarted.viewDiff(m.id, "repo", 1), first);
+    assert.equal(reads, 0, "SQLite cache survives a new Store and service");
+  } finally { reopened.close(); }
+
+  for (const [column, value] of [["head","new-head"],["target","new-target"],["title","New title"]] as const) {
+    f.store.db.prepare(`UPDATE pull_requests SET ${column}=? WHERE monitor=?`).run(value,m.id);
+    reads = 0;
+    const result = await f.service.viewDiff(m.id,"repo",1);
+    assert.equal(result[column], value);
+    assert.equal(reads, column === "title" ? 0 : 3);
+  }
+  f.store.db.prepare("UPDATE pr_projects SET review_files=? WHERE id=?").run(JSON.stringify({diffBudget:80000,ignoredPaths:[]}),m.id);
+  reads=0;
+  const changedSettings = await f.service.viewDiff(m.id,"repo",1);
+  assert.equal(changedSettings.limits.totalCharacters,80000);
+  assert.equal(reads,3);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,1);
+  f.store.db.prepare("DELETE FROM pull_requests WHERE monitor=?").run(m.id);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
+});
+
+test("partial diff failures are retried and a changing PR cannot populate stale cache", async (t) => {
+  const f = fixture(t);
+  let fail = true;
+  mock(t,[pr()], url => url.pathname.endsWith("/items") && fail ? new Response("unavailable",{status:500}) : undefined);
+  await f.service.sync();
+  const m=f.service.monitors()[0];
+  const partial=await f.service.viewDiff(m.id,"repo",1);
+  assert.equal(partial.patches.length,0);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
+  fail=false;
+  assert.ok((await f.service.viewDiff(m.id,"repo",1)).patches.length);
+  f.store.db.prepare("DELETE FROM pr_diff_cache").run();
+  const changes=f.service.changes.bind(f.service);
+  t.mock.method(f.service,"changes",async (...args: Parameters<typeof changes>) => {
+    const result=await changes(...args);
+    f.store.db.prepare("UPDATE pull_requests SET head='later-head' WHERE monitor=?").run(m.id);
+    return result;
+  });
+  await assert.rejects(()=>f.service.viewDiff(m.id,"repo",1),/Версия PR изменилась/);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
+});
+
+test("permanent binary-file exclusions do not defeat the diff cache", async (t) => {
+  const f=fixture(t);
+  let reads=0;
+  mock(t,[pr()],url=>{
+    reads++;
+    if(url.pathname.endsWith("/items")) return {contentMetadata:{isBinary:true}};
+  });
+  await f.service.sync();
+  const m=f.service.monitors()[0];
+  const first=await f.service.viewDiff(m.id,"repo",1);
+  assert.equal(first.patches.length,0);
+  assert.ok(first.notes.length);
+  reads=0;
+  assert.deepEqual(await f.service.viewDiff(m.id,"repo",1),first);
+  assert.equal(reads,0);
 });
