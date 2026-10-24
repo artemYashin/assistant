@@ -1,3 +1,5 @@
+import { nextVacationDay } from "./developer-vacation-status.js";
+export { nextVacationDay } from "./developer-vacation-status.js";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { AppError, type Store } from "./store.js";
@@ -14,11 +16,6 @@ export const vacationInput = z
   .object({ start: date, end: date })
   .strict()
   .refine((v) => v.end >= v.start, "Окончание отпуска раньше начала.");
-export function nextVacationDay(day: string) {
-  return new Date(Date.parse(day + "T12:00:00Z") + 86400000)
-    .toISOString()
-    .slice(0, 10);
-}
 export function vacationBounds(start: string, end: string, zone: string) {
   return {
     start: fromWall(start + "T00:00", zone),

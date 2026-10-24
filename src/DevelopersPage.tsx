@@ -1,6 +1,6 @@
 import { CalendarDateField } from "./CalendarDateField.js";
 import { useCalendarClock } from "./useCalendarClock.js";
-import { nextVacationDay, developerOnVacation } from "./developer-vacation.js";
+import { nextVacationDay, developerOnVacation, developerVacationStatus } from "./developer-vacation.js";
 import {
   developerGroup,
   type DeveloperStatusGroups,
@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Settings2,
   Palmtree,
+  CalendarClock,
   Save,
   ChevronLeft,
   ChevronRight,
@@ -77,7 +78,7 @@ export function DevelopersPage({
     return () => window.removeEventListener("orbit:developer-board", refresh);
   }, []);
   const [activity, setActivity] = useState<
-    "all" | "active" | "inactive" | "vacation"
+    "all" | "active" | "inactive" | "vacation" | "upcomingVacation"
   >("all");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -113,6 +114,8 @@ export function DevelopersPage({
   const clock = useCalendarClock();
   const onVacation = (person: Developer) =>
     developerOnVacation(person, new Date(clock).toISOString());
+  const upcomingVacation = (person: Developer) => developerVacationStatus(person, new Date(clock).toISOString()) === "upcoming";
+  const upcomingCount = matchingDevelopers.filter(upcomingVacation).length;
   const vacationCount = matchingDevelopers.filter(onVacation).length;
   const activeCount = matchingDevelopers.filter(
     (person) => !onVacation(person) && activeIds.has(person.id),
@@ -120,7 +123,7 @@ export function DevelopersPage({
   const visibleDevelopers = matchingDevelopers.filter(
     (person) =>
       activity === "all" ||
-      (activity === "vacation"
+      (activity === "upcomingVacation" ? upcomingVacation(person) : activity === "vacation"
         ? onVacation(person)
         : !onVacation(person) &&
           (activity === "active"
@@ -186,6 +189,9 @@ export function DevelopersPage({
           onClick={() => setActivity("vacation")}
         >
           <Palmtree size={16} /> В отпуске · {vacationCount}
+        </button>
+        <button type="button" aria-pressed={activity === "upcomingVacation"} onClick={() => setActivity("upcomingVacation")}>
+          <CalendarClock size={16} /> Скоро в отпуск · {upcomingCount}
         </button>
       </nav>
       {error && (

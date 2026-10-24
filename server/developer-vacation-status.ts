@@ -1,0 +1,22 @@
+import { wallTime } from "./calendar-time.js";
+
+type VacationDates = {
+  vacationStart?: string | null;
+  vacationEnd?: string | null;
+  vacationZone?: string | null;
+};
+export function nextVacationDay(day: string) {
+  return new Date(Date.parse(day + "T12:00:00Z") + 86400000)
+    .toISOString()
+    .slice(0, 10);
+}
+export function developerVacationStatus(person: VacationDates, now: string) {
+  if (!person.vacationStart || !person.vacationEnd) return "none";
+  const day = wallTime(now, person.vacationZone || "UTC").slice(0, 10);
+  if (day < person.vacationStart) return "upcoming";
+  if (day > person.vacationEnd) return "past";
+  return "current";
+}
+export function developerOnVacation(person: VacationDates, now: string) {
+  return developerVacationStatus(person, now) === "current";
+}

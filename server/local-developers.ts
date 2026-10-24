@@ -1,3 +1,4 @@
+import { developerVacationStatus } from "./developer-vacation-status.js";
 import { syncDeveloperVacations, setDeveloperVacation, vacationInput, nextVacationDay } from "./developer-vacations.js";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -151,14 +152,17 @@ export function localDeveloperTools(
   return [
     defineTool("list_local_developers", {
       description:
-        "Read locally configured developers manually added to the current project, its customer and the global directory. client/project fields identify scope; vacationStart/vacationEnd are inclusive leave dates in vacationZone. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
+        "Read locally configured developers manually added to the current project, its customer and the global directory. client/project fields identify scope; vacationStart/vacationEnd are inclusive leave dates in vacationZone. vacationStatus=upcoming finds all future vacations (no horizon), current finds people on leave, past finds ended ranges, none finds people without a vacation; all/omitted preserves the full list. Dates use each vacationZone. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
       parameters: z.object({
         ticketId: z.number().int().positive().optional(),
+        vacationStatus: z.enum(["all", "upcoming", "current", "past", "none"]).optional(),
       }),
-      handler: async ({ ticketId }) => {
+      handler: async ({ ticketId, vacationStatus = "all" }) => {
         assertActive();
+        const now = new Date().toISOString();
         return {
-          developers: service.list(context),
+          now,
+          developers: service.list(context).map(person => ({...person, vacationStatus:developerVacationStatus(person,now), returnDate:person.vacationEnd ? nextVacationDay(person.vacationEnd) : null})).filter(person=>vacationStatus === "all" || person.vacationStatus === vacationStatus),
           assigned: ticketId ? service.assigned(ticketId) : undefined,
         };
       },

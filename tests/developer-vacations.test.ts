@@ -332,3 +332,100 @@ test("chat vacation tool creates, changes and cancels one period and refreshes U
   assert.equal(new Calendar(store).list().length, 0);
   assert.equal(updates, 3);
 });
+
+test("upcoming vacation boundaries use the vacation timezone and include arbitrarily distant dates", async () => {
+  const { developerVacationStatus } =
+    await import("../server/developer-vacation-status.js");
+  const person = {
+    vacationStart: "2026-10-26",
+    vacationEnd: "2026-10-27",
+    vacationZone: "Asia/Bishkek",
+  };
+  assert.equal(
+    developerVacationStatus(person, "2026-10-25T17:59:59Z"),
+    "upcoming",
+  );
+  assert.equal(
+    developerVacationStatus(person, "2026-10-25T18:00:00Z"),
+    "current",
+  );
+  assert.equal(
+    developerVacationStatus(person, "2026-10-27T17:59:59Z"),
+    "current",
+  );
+  assert.equal(developerVacationStatus(person, "2026-10-27T18:00:00Z"), "past");
+  assert.equal(
+    developerVacationStatus(
+      { ...person, vacationStart: null },
+      "2026-10-25T00:00:00Z",
+    ),
+    "none",
+  );
+  assert.equal(
+    developerVacationStatus(
+      { ...person, vacationStart: "2099-01-01", vacationEnd: "2099-01-05" },
+      "2026-10-25T00:00:00Z",
+    ),
+    "upcoming",
+  );
+});
+
+test("chat developer search filters vacation status and preserves old unfiltered calls", async (t) => {
+  const { localDeveloperTools } = await import("../server/local-developers.js");
+  const store = fixture(t),
+    people = new LocalDevelopers(store),
+    context = { client: "Customer", project: "Project" };
+  store.set("settings", {
+    ...store.settings(),
+    syncSchedule: { ...store.settings().syncSchedule, timeZone: "UTC" },
+  });
+  const add = (name: string, scope = context) =>
+    people.add([name], scope).find((p) => p.name === name)!;
+  const future = add("Future", { client: "", project: "" }),
+    current = add("Current"),
+    past = add("Past"),
+    none = add("No leave"),
+    foreign = add("Foreign", { client: "Other", project: "Other" });
+  const today = new Date().toISOString().slice(0, 10);
+  setDeveloperVacation(store, future.id, {
+    start: "2099-01-01",
+    end: "2099-01-05",
+  });
+  setDeveloperVacation(store, foreign.id, {
+    start: "2099-01-01",
+    end: "2099-01-05",
+  });
+  setDeveloperVacation(store, current.id, { start: today, end: today });
+  setDeveloperVacation(store, past.id, {
+    start: "2020-01-01",
+    end: "2020-01-05",
+  });
+  const tool = localDeveloperTools(
+    store,
+    context,
+    "Кто скоро в отпуск?",
+    () => {},
+  ).find((t) => t.name === "list_local_developers")!;
+  const read = (args: any) => (tool.handler as any)(args);
+  assert.equal((await read({})).developers.length, 4);
+  for (const [status, id] of [
+    ["upcoming", future.id],
+    ["current", current.id],
+    ["past", past.id],
+    ["none", none.id],
+  ]) {
+    const rows = (await read({ vacationStatus: status })).developers;
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, id);
+    assert.equal(rows[0].vacationStatus, status);
+  }
+  assert.equal(
+    (await read({ vacationStatus: "upcoming" })).developers[0].returnDate,
+    "2099-01-06",
+  );
+  setDeveloperVacation(store, future.id, null);
+  assert.equal(
+    (await read({ vacationStatus: "upcoming" })).developers.length,
+    0,
+  );
+});

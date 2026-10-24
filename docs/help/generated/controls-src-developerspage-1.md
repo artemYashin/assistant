@@ -9,100 +9,106 @@
 
 Поиск разработчика · Найти разработчика…
 
-Источник: src/DevelopersPage.tsx:150.
+Источник: src/DevelopersPage.tsx:153.
 
 ### Элемент
 
 Все ·
 
-Источник: src/DevelopersPage.tsx:161.
+Источник: src/DevelopersPage.tsx:164.
 
 ### Элемент
 
 С активными задачами ·
 
-Источник: src/DevelopersPage.tsx:168.
+Источник: src/DevelopersPage.tsx:171.
 
 ### Элемент
 
 Без активных задач · ·
 
-Источник: src/DevelopersPage.tsx:175.
+Источник: src/DevelopersPage.tsx:178.
 
 ### Элемент
 
 В отпуске ·
 
-Источник: src/DevelopersPage.tsx:183.
+Источник: src/DevelopersPage.tsx:186.
+
+### Элемент
+
+Скоро в отпуск ·
+
+Источник: src/DevelopersPage.tsx:193.
 
 ### Элемент
 
 Проект · {…} / {…} / Заказчик · {…} / Общий список локальных поручений
 
-Источник: src/DevelopersPage.tsx:314.
+Источник: src/DevelopersPage.tsx:320.
 
 ### Элемент
 
 Настройки разработчика · {…} · Один период отпуска, обе даты включительно. Часовой пояс: . Действует во всех проектах, где доступен разработчик. Сохранить отпуск
 
-Источник: src/DevelopersPage.tsx:348.
+Источник: src/DevelopersPage.tsx:354.
 
 ### Элемент
 
 Сохранить отпуск
 
-Источник: src/DevelopersPage.tsx:369.
+Источник: src/DevelopersPage.tsx:375.
 
 ### Элемент
 
 Отменить отпуск
 
-Источник: src/DevelopersPage.tsx:383.
+Источник: src/DevelopersPage.tsx:389.
 
 ### Элемент
 
 Ранее сохранённые заметки
 
-Источник: src/DevelopersPage.tsx:395.
+Источник: src/DevelopersPage.tsx:401.
 
 ### Элемент
 
 Активные ·
 
-Источник: src/DevelopersPage.tsx:413.
+Источник: src/DevelopersPage.tsx:419.
 
 ### Элемент
 
 На проверке ·
 
-Источник: src/DevelopersPage.tsx:424.
+Источник: src/DevelopersPage.tsx:430.
 
 ### Элемент
 
 Завершённые ·
 
-Источник: src/DevelopersPage.tsx:434.
+Источник: src/DevelopersPage.tsx:440.
 
 ### Элемент
 
 Скопировать ссылку на тикет #{…} в Azure DevOps
 
-Источник: src/DevelopersPage.tsx:453.
+Источник: src/DevelopersPage.tsx:459.
 
 ### Элемент
 
 # ·
 
-Источник: src/DevelopersPage.tsx:458.
+Источник: src/DevelopersPage.tsx:464.
 
 ### Элемент
 
 Предыдущие тикеты: {…}
 
-Источник: src/DevelopersPage.tsx:513.
+Источник: src/DevelopersPage.tsx:519.
 
 ### Элемент
 
 Следующие тикеты: {…}
 
-Источник: src/DevelopersPage.tsx:525.
+Источник: src/DevelopersPage.tsx:531.

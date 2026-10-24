@@ -57,7 +57,7 @@ const catalog: Record<string, string> = {
     "Import a user-supplied list of ticket IDs/links: operations with action add, up to 50 per call. Also batch local edits/removal/assignments or Azure statuses.",
   set_developer_vacation: "Set/change/cancel one local developer vacation on explicit request; resolve developer ID and existing dates first. Null cancels actual leave and removes its calendar event.",
   list_local_developers:
-    "List local developers available from global, customer and current project scopes, including inclusive vacation dates and timezone.",
+    "List local developers available from global, customer and current project scopes, including inclusive vacation dates and timezone; filter upcoming/current/past/none vacations via vacationStatus.",
   set_local_ticket_developers:
     "Set local assignees: ticket ID and developer IDs.",
   get_workspace_context:
