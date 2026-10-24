@@ -1281,3 +1281,30 @@ test("review timeout is independent of chat timeout in SDK and watchdog", async 
   await assert.rejects(stalled.agent.chat("Review", context, true), /Code Review.*Лимит времени ответа ревью/);
   assert.ok(stalled.counts().aborts);
 });
+
+test("independent chat and review agents overlap and cancellation stays isolated", async t => {
+  const store = fixture(t);
+  let chatReady!: () => void, reviewReady!: () => void, finishChat!: (value: any) => void;
+  const enteredChat = new Promise<void>(resolve => chatReady = resolve);
+  const enteredReview = new Promise<void>(resolve => reviewReady = resolve);
+  const chat = fakeAgent(store, async () => { chatReady(); return new Promise(resolve => finishChat = resolve); });
+  const review = fakeAgent(store, async () => { reviewReady(); return new Promise(() => {}); });
+  const chatWork = chat.agent.chat("hello", context);
+  await enteredChat;
+  const reviewWork = review.agent.chat("review", context, true);
+  const rejected = assert.rejects(reviewWork, /останов|отмен/i);
+  await enteredReview;
+  assert.ok(chat.agent.active());
+  assert.ok(review.agent.active());
+  assert.notEqual(chat.agent.active(), review.agent.active());
+  review.agent.stop();
+  await rejected;
+  assert.ok(chat.agent.active());
+  assert.equal(chat.counts().aborts, 0);
+  finishChat({ data: { content: "Chat still works" } });
+  assert.equal((await chatWork).body, "Chat still works");
+  assert.equal(review.agent.active(), null);
+  const rows = (new UsageLedger(store).report() as any).requests;
+  assert.equal(rows.find((r: any) => r.origin === "chat").status, "completed");
+  assert.notEqual(rows.find((r: any) => r.origin === "pr_review").status, "completed");
+});

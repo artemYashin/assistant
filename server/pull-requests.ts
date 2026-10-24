@@ -1542,6 +1542,12 @@ export class PullRequests {
     new UsageLedger(this.store).clearReviewTraces();
     return id;
   }
+  hasActiveReview() { return this.working; }
+  stopActiveReview(requestId: string) {
+    if (!this.modelReviewId || this.agent.active() !== requestId)
+      throw new AppError(409, "Этот запрос ревью уже завершён.");
+    return this.stopReview(this.modelReviewId);
+  }
   stopReview(id: string) {
     const result = this.store.db.prepare("UPDATE pr_reviews SET status='interrupted',error='Остановлено пользователем',finished_at=? WHERE id=? AND status IN ('preparing_git','queued','running','awaiting_answers')").run(now(), id);
     if (result.changes && this.modelReviewId === id) this.agent.stop?.();

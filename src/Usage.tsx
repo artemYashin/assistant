@@ -139,25 +139,36 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
               токенов проверяется после отчёта о вызове и может быть превышен
               одним или несколькими уже выполняющимися вызовами.
             </p>
-            {report.activeRequestId && (
+            {!!report.activeRequests?.length && (
               <div className="card-actions">
-                <button
-                  className="secondary"
-                  disabled={stopping}
-                  onClick={async () => {
-                    setStopping(true);
-                    try {
-                      await api("/conversation/stop", "POST", {});
-                    } catch (e: any) {
-                      setError(e.message);
-                    } finally {
-                      setStopping(false);
-                    }
-                  }}
-                >
-                  <Square size={15} />
-                  Остановить текущий запрос
-                </button>
+                {report.activeRequests.map(
+                  (active: { id: string; origin: string }) => (
+                    <button
+                      key={active.id}
+                      className="secondary"
+                      disabled={stopping}
+                      onClick={async () => {
+                        setStopping(true);
+                        try {
+                          await api(
+                            `/usage/requests/${encodeURIComponent(active.id)}/stop`,
+                            "POST",
+                            {},
+                          );
+                        } catch (e: any) {
+                          setError(e.message);
+                        } finally {
+                          setStopping(false);
+                        }
+                      }}
+                    >
+                      <Square size={15} />
+                      {active.origin === "pr_review"
+                        ? "Остановить ревью"
+                        : "Остановить чат"}
+                    </button>
+                  ),
+                )}
                 <small>Уже потраченные токены не возвращаются.</small>
               </div>
             )}
@@ -171,7 +182,8 @@ export function Usage({ onSettings }: { onSettings: () => void }) {
           <Activity size={28} />
           <h3>В этом периоде ещё нет запросов</h3>
           <p>
-            Здесь учитываются ответы ассистента и ручные PR-ревью. Синхронизация задач сама по себе не вызывает LLM.
+            Здесь учитываются ответы ассистента и ручные PR-ревью. Синхронизация
+            задач сама по себе не вызывает LLM.
           </p>
         </div>
       ) : (

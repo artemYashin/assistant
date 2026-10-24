@@ -121,7 +121,8 @@ export function createApp(
   const connectors = new Connectors(store);
   const chatFiles = new ChatFiles(store);
   const agent = new Agent(store, undefined, connectors);
-  const pullRequests = new PullRequests(store, agent);
+  const reviewAgent = new Agent(store, undefined, connectors);
+  const pullRequests = new PullRequests(store, reviewAgent);
   const prMerge = new PrMerge(store, connectors);
   const prCreate = new PrCreate(store);
   const codeBrowser = new CodeBrowser(store);
@@ -266,7 +267,7 @@ export function createApp(
   });
   app.delete("/api/contexts", (req, res) => {
     const input = z.object({ context: contextSchema.strict(), confirmation: z.literal("удалить") }).strict().parse(req.body);
-    if (agent.active() || syncing || syncingPrs || codeBrowser.hasActiveOperations() || activeApiRequests > 1)
+    if (agent.active() || reviewAgent.active() || pullRequests.hasActiveReview() || syncing || syncingPrs || codeBrowser.hasActiveOperations() || activeApiRequests > 1)
       throw new AppError(409, "Дождитесь завершения активных запросов, синхронизации и работы ассистента, затем повторите удаление.");
     res.json(deleteContext(store, input.context, input.confirmation));
   });
@@ -573,6 +574,10 @@ export function createApp(
     res.json({
       ...new UsageLedger(store).report(days),
       activeRequestId: agent.active(),
+      activeRequests: [
+        ...(agent.active() ? [{ id: agent.active(), origin: "chat" }] : []),
+        ...(reviewAgent.active() ? [{ id: reviewAgent.active(), origin: "pr_review" }] : []),
+      ],
     });
   });
   const uploadChatFile = multer({storage:multer.memoryStorage(),limits:{fileSize:CHAT_FILE_LIMIT,files:1,fields:4}}).single("file");
@@ -595,6 +600,11 @@ export function createApp(
     const context=contextSchema.parse(req.query), sessionId=z.string().uuid().parse(req.query.sessionId);
     const file=chatFiles.read(context,sessionId,[z.string().uuid().parse(req.params.id)])[0];
     res.type(file.mime).set("Content-Disposition", `${file.kind === "image" ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`).send(file.bytes);
+  });
+  app.post("/api/usage/requests/:id/stop", (req, res) => {
+    if (agent.active() === req.params.id) return res.json(agent.stop());
+    if (reviewAgent.active() === req.params.id) return res.json(pullRequests.stopActiveReview(req.params.id));
+    throw new AppError(409, "Этот запрос уже завершён. Обновите отчёт использования LLM.");
   });
   app.post("/api/conversation/stop", (_req, res) => res.json(agent.stop()));
   app.post(
@@ -1590,5 +1600,5 @@ export function createApp(
       });
     },
   );
-  return { app, sync, agent, connectors, pullRequests, codeBrowser };
+  return { app, sync, agent, reviewAgent, connectors, pullRequests, codeBrowser };
 }

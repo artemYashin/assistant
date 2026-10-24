@@ -27,3 +27,7 @@ switch back to analysis. Track concurrent tools and clear progress on
 completion/error/stop. Keep it independent of debug-log retention and do not expose
 arguments, code, ticket content or model reasoning in the status. Update the PR
 review help article and tests/review-progress.test.ts in the same change.
+
+When changing tools available to either agent, update docs/help/articles/chat-agent-tools.md
+and docs/help/articles/review-agent-tools.md as applicable. Keep shared implementations;
+chat and review have independent Agent instances, cancellation and session state.

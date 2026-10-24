@@ -161,3 +161,12 @@ test("review sessions do not receive app help tools", async t => {
   const agent = new Agent(store, () => client as any);
   await agent.chat("Review", { client: "", project: "" }, true, { readCode: false });
 });
+
+test("agent help inventories cover the shared chat catalog and review allowlists", async () => {
+  const chat = readFileSync(new URL('../docs/help/articles/chat-agent-tools.md', import.meta.url), 'utf8');
+  const review = readFileSync(new URL('../docs/help/articles/review-agent-tools.md', import.meta.url), 'utf8');
+  const catalog = readFileSync(new URL('../server/tool-discovery.ts', import.meta.url), 'utf8').split('const schema =')[0];
+  for (const match of catalog.matchAll(/^  ([a-z_]+):/gm)) assert.ok(chat.includes('`'+match[1]+'`'), match[1]);
+  const {reviewBaseTools,reviewCodeTools,reviewTicketTools}=await import('../server/review-progress.js');
+  for (const name of [...reviewBaseTools,...reviewCodeTools,...reviewTicketTools]) assert.ok(review.includes('`'+name+'`'),name);
+});

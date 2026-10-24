@@ -74,7 +74,7 @@ test("customer deletion removes all its projects but preserves global memory and
   assert.throws(()=>deleteContext(store,{client:'A',project:''},'удалить'),/не найден/);
 });
 test("delete API requires exact typed confirmation and rejects active agent work", async t=>{
-  const store=fixture(t); const {app,agent}=createApp(store);
+  const store=fixture(t); const {app,agent,reviewAgent,pullRequests}=createApp(store);
   const headers={Host:'localhost:43871',Origin:'http://localhost:43871','X-Orbit-Request':'1'};
   const setup=await request(app).post('/api/auth/setup').set(headers).send({password:'long-enough-password'}).expect(200);
   const auth={...headers,Cookie:setup.headers['set-cookie'][0].split(';')[0],'X-CSRF-Token':setup.body.csrf};
@@ -82,5 +82,40 @@ test("delete API requires exact typed confirmation and rejects active agent work
   const active=t.mock.method(agent,'active',()=>({} as any));
   await request(app).delete('/api/contexts').set(auth).send({context:{client:'A',project:'One'},confirmation:'удалить'}).expect(409);
   active.mock.restore();
+  const reviewing=t.mock.method(reviewAgent,"active",()=>"review-request");
+  await request(app).delete("/api/contexts").set(auth).send({context:{client:"A",project:"One"},confirmation:"удалить"}).expect(409);
+  reviewing.mock.restore();
+  const preparing=t.mock.method(pullRequests,"hasActiveReview",()=>true);
+  await request(app).delete("/api/contexts").set(auth).send({context:{client:"A",project:"One"},confirmation:"удалить"}).expect(409);
+  preparing.mock.restore();
   await request(app).delete('/api/contexts').set(auth).send({context:{client:'A',project:'One'},confirmation:'удалить'}).expect(200);
+});
+
+test("app wires review separately and usage cancellation targets an exact request", async t => {
+  const store=fixture(t);
+  const {app,agent,reviewAgent,pullRequests}=createApp(store);
+  assert.notEqual(agent,reviewAgent);
+  assert.equal((pullRequests as any).agent,reviewAgent);
+  const headers={Host:'localhost:43871',Origin:'http://localhost:43871','X-Orbit-Request':'1'};
+  const setup=await request(app).post('/api/auth/setup').set(headers).send({password:'long-enough-password'}).expect(200);
+  const auth={...headers,Cookie:setup.headers['set-cookie'][0].split(';')[0],'X-CSRF-Token':setup.body.csrf};
+  t.mock.method(agent,'active',()=>"chat-request");
+  t.mock.method(reviewAgent,'active',()=>"review-request");
+  const stopChat=t.mock.method(agent,'stop',()=>({stopping:true}));
+  const stopReview=t.mock.method(reviewAgent,'stop',()=>({stopping:true}));
+  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('m','A','One','source','Azure','all',1)").run();
+  store.db.prepare("INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES ('r','m','repo',1,'head','base','running','now')").run();
+  (pullRequests as any).modelReviewId='r';
+  const report=await request(app).get('/api/usage').set(auth).expect(200);
+  assert.deepEqual(report.body.activeRequests,[{id:'chat-request',origin:'chat'},{id:'review-request',origin:'pr_review'}]);
+  await request(app).post('/api/usage/requests/old-request/stop').set(auth).send({}).expect(409);
+  assert.equal(stopChat.mock.callCount(),0);
+  assert.equal(stopReview.mock.callCount(),0);
+  await request(app).post('/api/conversation/stop').set(auth).send({}).expect(200);
+  assert.equal(stopChat.mock.callCount(),1);
+  assert.equal(stopReview.mock.callCount(),0);
+  await request(app).post('/api/usage/requests/review-request/stop').set(auth).send({}).expect(200);
+  assert.equal(stopChat.mock.callCount(),1);
+  assert.equal(stopReview.mock.callCount(),1);
+  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id='r'").get() as any).status,'interrupted');
 });

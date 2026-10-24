@@ -2,7 +2,7 @@ import { syncAllowed } from "./sync-schedule.js";
 import { Store } from "./store.js";
 import { createApp } from "./app.js";
 const store = new Store(process.env.DATA_DIR || "./data");
-const { app, sync, agent, pullRequests, codeBrowser } = createApp(store);
+const { app, sync, agent, reviewAgent, pullRequests, codeBrowser } = createApp(store);
 const server = app.listen(
   Number(process.env.PORT || 43871),
   process.env.BIND_HOST || "127.0.0.1",
@@ -56,6 +56,7 @@ function stop() {
   clearTimeout(codeTimer);
   pullRequests.shutdown();
   agent.stop();
+  reviewAgent.stop();
   server.close(async () => {
     await Promise.allSettled([syncWork, reviewWork, codeWork]);
     store.close();
