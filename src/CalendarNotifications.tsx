@@ -10,10 +10,12 @@ import { statusLabels } from "./CalendarPage.js";
 function ReminderToast({
   items,
   onClose,
+  onDismiss,
   onOpen,
 }: {
   items: CalendarItem[];
   onClose: () => void;
+  onDismiss: (id: string) => void;
   onOpen: (item: CalendarItem) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -74,7 +76,8 @@ function ReminderToast({
     >
       <button
         className="calendar-toast-close icon-button"
-        aria-label="Закрыть уведомление"
+        aria-label="Закрыть все уведомления"
+        title="Закрыть все уведомления"
         onClick={onClose}
       >
         <X size={16} />
@@ -85,13 +88,24 @@ function ReminderToast({
       </div>
       <div className="calendar-toast-items">
         {items.map((item) => (
-          <button
-            className="calendar-toast-item"
-            key={item.id}
-            onClick={() => onOpen(item)}
-          >
-            {item.title}
-          </button>
+          <div className="calendar-toast-row" key={item.id}>
+            <button
+              type="button"
+              className="calendar-toast-item"
+              onClick={() => onOpen(item)}
+            >
+              {item.title}
+            </button>
+            <button
+              type="button"
+              className="icon-button calendar-toast-dismiss"
+              aria-label={`Закрыть уведомление: ${item.title}`}
+              title="Закрыть это уведомление"
+              onClick={() => onDismiss(item.id)}
+            >
+              <X size={14} />
+            </button>
+          </div>
         ))}
       </div>
     </div>,
@@ -277,7 +291,14 @@ export function CalendarNotifications({
         )}
       </dialog>
       {!!toasts.length && (
-        <ReminderToast items={toasts} onClose={closeToast} onOpen={go} />
+        <ReminderToast
+          items={toasts}
+          onClose={closeToast}
+          onOpen={go}
+          onDismiss={(id) =>
+            setToasts((current) => current.filter((item) => item.id !== id))
+          }
+        />
       )}
     </>
   );

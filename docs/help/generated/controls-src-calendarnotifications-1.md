@@ -7,24 +7,30 @@
 
 ### Элемент
 
-Закрыть уведомление
+Закрыть все уведомления
 
-Источник: src/CalendarNotifications.tsx:75.
+Источник: src/CalendarNotifications.tsx:77.
+
+### Элемент
+
+Закрыть уведомление: {…} · Закрыть это уведомление
+
+Источник: src/CalendarNotifications.tsx:99.
 
 ### Элемент
 
 Уведомления · Уведомления: {…}
 
-Источник: src/CalendarNotifications.tsx:209.
+Источник: src/CalendarNotifications.tsx:223.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarNotifications.tsx:227.
+Источник: src/CalendarNotifications.tsx:241.
 
 ### Элемент
 
 Ожидают подтверждения
 
-Источник: src/CalendarNotifications.tsx:237.
+Источник: src/CalendarNotifications.tsx:251.

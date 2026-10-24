@@ -86,7 +86,7 @@
     "src/AzurePatPermissions.tsx": "d3086dda15ad0d1b2ea8e6817e2f5703e9554eb3fcdc3e1df57d9d46257eadcc",
     "src/BulkTicketStatus.tsx": "6a8a279b3bdfcf555fd7d9b80cd09cbbf42164ceefb6a8e94260fa5c4a396eb8",
     "src/CalendarDateField.tsx": "e2b9104859e9fc36d94a6000a68a6ae84aebffb0cce4b5d7375961590fe488bd",
-    "src/CalendarNotifications.tsx": "5d75ea777bbeba82598ef3f6751b92dd8164b72385245946ee411a94a81d9e33",
+    "src/CalendarNotifications.tsx": "3906412a1bfebac7aa7171f5502fb0f681d8ec29a9444cef5ab41abe45f2ced8",
     "src/CalendarPage.tsx": "6a286a5e86e17975206f49f159d28e9f036acb29ad2feb3d7f2edd0decd5b2e7",
     "src/CalendarSettings.tsx": "be715b1d3a7112b5f17180ec12c034b7c7d681dfade84e8013795830b185e3da",
     "src/CalendarTimeGrid.tsx": "ce33ddfd423b703f12a0a2cd1675a168eaa9b15ba710141f9852b41c97d3b1aa",
