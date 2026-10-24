@@ -603,3 +603,15 @@ test("per-reminder warning overrides defaults and null restores inheritance afte
   assert.equal(cal.notifications(new Date("2026-10-21T23:00:00Z"))[0].id, id);
   assert.throws(() => cal.setLead(id, -1));
 });
+
+test("short daily events retain actual duration and do not overlap adjacent events", async () => {
+  const { calendarSegments } = await import("../src/calendar-layout.js");
+  const daily = {...calendarInput.parse({title:"Quarter hour",start:"2026-10-23T14:00:00Z",end:"2026-10-23T14:15:00Z",repeatDaily:true}),id:"short",completed:false,createdAt:"2026-10-23T00:00:00Z",repeatZone:"UTC"};
+  const next = {...daily,id:"next",start:"2026-10-23T14:15:00Z",end:"2026-10-23T14:30:00Z"};
+  const rows = calendarSegments([daily,next],"2026-10-24","UTC");
+  assert.deepEqual(rows.map(r => [r.top,r.bottom,r.lanes]),[[840,855,1],[855,870,1]]);
+  const five = calendarSegments([{...daily,repeatDaily:false,end:"2026-10-23T14:05:00Z"}],"2026-10-23","UTC")[0];
+  assert.equal(five.bottom-five.top,5);
+  const point = calendarSegments([{...daily,end:null}],"2026-10-24","UTC")[0];
+  assert.equal(point.bottom-point.top,30);
+});

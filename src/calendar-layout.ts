@@ -28,8 +28,8 @@ export function calendarSegments(
       let bottom = end.slice(0, 10) > day ? 1440 : minutes(end);
       if (bottom === 0 && end.slice(0, 10) === day && start.slice(0, 10) < day)
         return [];
-      // Timed reminders receive a minimum visual hit area, not a stored duration.
-      bottom = Math.min(1440, Math.max(top + 30, bottom));
+      // Only point reminders need a visual hit area; explicit durations stay exact.
+      if (!item.end || bottom <= top) bottom = Math.min(1440, top + 30);
       return [{ item, top, bottom, lane: 0, lanes: 1 }];
     })
     .sort((a, b) => a.top - b.top || b.bottom - a.bottom);

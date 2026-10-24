@@ -234,11 +234,11 @@ export function CalendarTimeGrid({
               ).map(({ item, top, bottom, lane, lanes }) => (
                 <button
                   key={item.id+":"+item.start}
-                  className={`calendar-time-event ${calendarStatus(item)}`}
+                  className={`calendar-time-event ${calendarStatus(item)} ${bottom - top <= 20 ? "is-short" : ""}`}
                   title={`${item.title}\n${eventTime(item.start, item.end, zone)}`}
                   style={{
                     top: (top / 60) * HOUR_HEIGHT,
-                    height: Math.max(20, ((bottom - top) / 60) * HOUR_HEIGHT - 2),
+                    height: Math.max(2, ((bottom - top) / 60) * HOUR_HEIGHT - 2),
                     left: `calc(${(lane / lanes) * 100}% + 2px)`,
                     width: `calc(${100 / lanes}% - 4px)`,
                   }}

@@ -10156,3 +10156,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-toast-person { display:inline-flex;align-items:center;gap:5px;max-width:100%; }
 .calendar-toast-person > span:last-child { min-width:0;overflow-wrap:anywhere; }
 .calendar-toast-person .initials-avatar { flex:0 0 20px;width:20px;height:20px;min-width:20px;min-height:20px;font-size:9px; }
+.calendar-time-event.is-short { justify-content:center;gap:0;padding-top:0;padding-bottom:0; }
+.calendar-time-event.is-short strong { display:block;white-space:nowrap;text-overflow:ellipsis;max-width:100%; }
+.calendar-time-event.is-short small { display:none; }
