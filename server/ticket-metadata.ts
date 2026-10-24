@@ -1,3 +1,4 @@
+import { collectTicketNoteImages } from "./ticket-note-images.js";
 import { setTicketDeadline } from "./ticket-deadlines.js";
 import { z } from "zod";
 import { Store, AppError, type Context } from "./store.js";
@@ -65,6 +66,7 @@ export function saveTicketMetadata(
     if (patch.localDeadline !== undefined)
       setTicketDeadline(store, id, source, patch.localDeadline);
   })();
+  if (patch.notes !== undefined) collectTicketNoteImages(store);
   return value;
 }
 

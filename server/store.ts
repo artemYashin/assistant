@@ -1,3 +1,4 @@
+import { collectTicketNoteImages } from "./ticket-note-images.js";
 import { calendarNotificationsSchema } from "./calendar-model.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import type { ChatMessageContext } from "./chat-message-context.js";
@@ -234,6 +235,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pr_review_attempts (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,started_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS ticket_trash (source TEXT NOT NULL,id INTEGER NOT NULL,body TEXT NOT NULL,removed_at INTEGER NOT NULL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 1,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
+      CREATE TABLE IF NOT EXISTS ticket_note_images(image_id TEXT PRIMARY KEY,source TEXT NOT NULL,ticket_id INTEGER NOT NULL,mime TEXT NOT NULL,FOREIGN KEY(source,ticket_id) REFERENCES ticket_metadata(source,id) ON DELETE CASCADE);
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
     for (const [column, definition] of [["notifications_hidden", "INTEGER NOT NULL DEFAULT 0"], ["calendar_hidden", "INTEGER NOT NULL DEFAULT 0"], ["repeat_weekdays", "TEXT NOT NULL DEFAULT '[1,2,3,4,5,6,7]'"], ["lead_minutes", "INTEGER"], ["completed_days", "TEXT NOT NULL DEFAULT '[]'"], ["repeat_daily", "INTEGER NOT NULL DEFAULT 0"], ["repeat_zone", "TEXT NOT NULL DEFAULT 'UTC'"]]) {
@@ -657,7 +659,7 @@ export class Store {
     return row?.added_at ?? null;
   }
   purgeTicketTrash(now = Date.now()) {
-    return this.db.transaction(() => {
+    const count = this.db.transaction(() => {
       const expired = this.db
         .prepare("SELECT source,id FROM ticket_trash WHERE removed_at<=?")
         .all(now - 30 * 86400000) as any[];
@@ -696,6 +698,8 @@ export class Store {
       }
       return expired.length;
     })();
+    if (count) collectTicketNoteImages(this);
+    return count;
   }
   hasLocalTicket(id: number, source = this.source()) {
     return !!this.db

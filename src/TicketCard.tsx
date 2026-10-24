@@ -1,3 +1,4 @@
+import { MemoryMarkdown } from "./MemoryMarkdown.js";
 import { TicketCommentForm } from "./TicketCommentForm.js";
 import { ConfirmButton } from "./ConfirmButton.js";
 import { findCitationRange, highlightCitation, revealCitation } from "./ticket-citation-highlight.js";
@@ -110,7 +111,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
       const { id, source, value } = (event as CustomEvent).detail;
       setCard((old: any) =>
         old?.id === id && old?.source === source
-          ? { ...old, localMetadata: value }
+          ? { ...old, localMetadata: { ...old.localMetadata, ...value } }
           : old,
       );
     };
@@ -400,9 +401,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                   </>
                 }
               >
-                <p style={{ whiteSpace: "pre-wrap" }}>
-                  {card.localMetadata?.notes || "Локальных заметок пока нет."}
-                </p>
+                <MemoryMarkdown body={card.localMetadata?.notes || "Локальных заметок пока нет."}/>
                 <p className="muted">
                   Для редактирования добавьте тикет в локальный список.
                 </p>

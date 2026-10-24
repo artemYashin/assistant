@@ -10244,3 +10244,17 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .notes-content .tiptap { min-height:280px; }
 .notes-actions { flex-wrap:wrap;margin:14px 0; }
 @media(max-width:760px) { .notes-layout { grid-template-columns:1fr; } .notes-list { max-height:220px; } }
+
+.notes-tabs { margin-bottom: 12px; }
+.ticket-notes-list { display: grid; gap: 14px; }
+.ticket-note-card { padding: 16px; background: #fff; border: 1px solid #dce3ea; border-radius: 12px; min-width: 0; }
+.ticket-note-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.ticket-note-heading > a { font-weight: 600; }
+.ticket-note-card .memory-markdown { margin: 12px 0; overflow-wrap: anywhere; }
+.ticket-note-card .memory-markdown img { max-width: min(100%, 480px); max-height: 320px; object-fit: contain; }
+.note-status-added { background: #e6f3e6; color: #2e653a; }
+.note-status-deleted { background: #fff0e1; color: #984b11; }
+.ticket-note-form .tiptap { min-height: 220px; }
+.notes-tabs { display: flex; gap: 6px; padding: 5px; border: 1px solid #dae4ed; border-radius: 10px; background: #f0f5fa; width: fit-content; }
+.notes-tabs button { border: 0; border-radius: 7px; background: transparent; padding: 9px 14px; color: #526579; }
+.notes-tabs button[aria-selected="true"] { background: #fff; color: #245b89; box-shadow: 0 1px 4px #193c5d18; }

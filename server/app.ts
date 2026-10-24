@@ -1,3 +1,4 @@
+import { registerTicketNotes } from "./ticket-note-images.js";
 import { registerNotes } from "./notes.js";
 import { azurePatExpirySchema } from "./azure-pat-reminder.js";
 import { developerVacationWarningStart } from "./developer-vacation-status.js";
@@ -261,6 +262,7 @@ export function createApp(
     next();
   });
   registerNotes(app, store);
+  registerTicketNotes(app, store);
   app.post("/api/auth/logout", (req, res) => {
     store.db
       .prepare("DELETE FROM sessions WHERE token=?")

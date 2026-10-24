@@ -1,3 +1,4 @@
+import { TicketNoteForm } from "./TicketNoteForm.js";
 import { NumberInput } from "./NumberInput.js";
 import { CalendarDateField } from "./CalendarDateField.js";
 import { fromWall, wallTime } from "./calendar-time.js";
@@ -189,7 +190,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
       <p className="muted">
         Только в Orbit. В Azure эти данные не отправляются.
       </p>
-      <form
+      {field === "notes" ? <TicketNoteForm ticket={ticket} onSaved={onChange} onClose={onClose} onBusy={setBusy}/> : <form
         onSubmit={async (e) => {
           e.preventDefault();
           if (!dateReady) return;
@@ -297,7 +298,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
             {busy ? "Сохраняю…" : "Сохранить"}
           </button>
         </div>
-      </form>
+      </form>}
     </dialog>
   );
 }

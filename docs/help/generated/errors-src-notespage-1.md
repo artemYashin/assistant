@@ -9,4 +9,4 @@
 
 https://orbit.invalid/note-image/{…}
 
-Источник: src/NotesPage.tsx:19.
+Источник: src/NotesPage.tsx:20.

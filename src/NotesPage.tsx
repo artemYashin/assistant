@@ -1,3 +1,4 @@
+import { TicketNotesPage } from "./TicketNotesPage.js";
 import { useEffect, useState } from "react";
 import { Plus, Save, Trash2, StickyNote } from "lucide-react";
 import { CommentEditor } from "./CommentEditor.js";
@@ -28,6 +29,39 @@ if (typeof window !== "undefined")
     }
   });
 export function NotesPage() {
+  const [tab, setTab] = useState("free");
+  return (
+    <>
+      <div className="tabs notes-tabs" role="tablist" aria-label="Виды заметок">
+        <button
+          role="tab"
+          aria-selected={tab === "free"}
+          className={tab === "free" ? "active" : ""}
+          onClick={() => setTab("free")}
+        >
+          Свободные заметки
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === "tickets"}
+          className={tab === "tickets" ? "active" : ""}
+          onClick={() => setTab("tickets")}
+        >
+          Заметки тикетов
+        </button>
+      </div>
+      {tab === "free" ? (
+        <FreeNotesPage />
+      ) : (
+        <section className="panel notes-page">
+          <h1>Заметки тикетов</h1>
+          <TicketNotesPage />
+        </section>
+      )}
+    </>
+  );
+}
+function FreeNotesPage() {
   const [list, setList] = useState<
     { id: string; title: string; snippet: string; updated_at: string }[]
   >([]);
