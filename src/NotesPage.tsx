@@ -201,6 +201,7 @@ function FreeNotesPage() {
           Новая заметка
         </button>
       </div>
+      <p className="muted"><small>Свободные заметки недоступны чат-ассистенту.</small></p>
       {error && (
         <p className="error" role="alert">
           {error}
