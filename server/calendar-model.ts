@@ -1,3 +1,4 @@
+import { wallTime } from "./calendar-time.js";
 import { z } from "zod";
 import { syncScheduleSchema } from "./sync-schedule.js";
 
@@ -16,6 +17,12 @@ export const calendarNotificationsSchema = z
   .strict();
 export const calendarDraftSchema = z
   .object({
+    repeatDaily: z
+      .boolean()
+      .optional()
+      .describe(
+        "Repeat daily from start date at the same local time; one series, completing today silences today only; completing the series stops all future occurrences.",
+      ),
     kind: z.enum(["reminder", "event", "general"]).optional(),
     scope: z.enum(["general", "client", "project"]).default("general"),
     client: z.string().trim().max(200).default(""),
@@ -39,6 +46,13 @@ export const calendarDraftSchema = z
   .refine(
     (v) => !v.end || (!!v.start && Date.parse(v.end) >= Date.parse(v.start)),
     "Окончание не может быть раньше начала; укажите начало события.",
+  )
+  .refine(
+    (v) =>
+      !v.repeatDaily ||
+      (!!v.start &&
+        (!v.end || Date.parse(v.end) - Date.parse(v.start) <= 86400000)),
+    "Для ежедневного повтора укажите начало; длительность — не больше суток.",
   );
 export const calendarInput = calendarDraftSchema.transform((v) => ({
   ...v,
@@ -49,17 +63,38 @@ export const calendarInput = calendarDraftSchema.transform((v) => ({
       : ("reminder" as const),
 }));
 export type CalendarItem = z.infer<typeof calendarInput> & {
+  repeatZone?: string;
+  occurrenceDay?: string;
+  completedDays?: string[];
   ticket?: { id: number; source: string; deadline: string };
   id: string;
   completed: boolean;
   createdAt: string;
 };
 export function calendarStatus(
-  item: Pick<CalendarItem, "start" | "end" | "completed" | "kind" | "ticket">,
+  item: Pick<
+    CalendarItem,
+    | "start"
+    | "end"
+    | "completed"
+    | "kind"
+    | "ticket"
+    | "repeatDaily"
+    | "repeatZone"
+    | "completedDays"
+    | "occurrenceDay"
+  >,
   now = new Date().toISOString(),
 ) {
   if (item.completed) return "completed";
   if (!item.start) return "open";
+  if (item.repeatDaily)
+    return !item.occurrenceDay &&
+      item.completedDays?.includes(
+        wallTime(now, item.repeatZone || "UTC").slice(0, 10),
+      )
+      ? "today_completed"
+      : "recurring";
   if (Date.parse(item.start) > Date.parse(now)) return "upcoming";
   if (item.ticket && Date.parse(item.ticket.deadline) > Date.parse(now))
     return "ongoing";

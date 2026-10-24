@@ -29,7 +29,7 @@ export function calendarTools(
     }),
     defineTool("prepare_calendar_reminder", {
       description:
-        "On explicit user request prepare the calendar creation form; user reviews and confirms creation in UI. FIRST get_calendar_context to resolve relative dates (in ten minutes, tonight) in configured timezone, then use UTC ISO dates. start=null/end=null means no date; start plus end=null means timed reminder; start/end means duration. All persist until manually completed. Optional local developerIds and general/client/project scope. Do not claim saved: this only opens an editable draft. Never use for ticket deadline: use update_local_ticket_metadata(localDeadline) instead.",
+        "On explicit user request prepare the calendar creation form; user reviews and confirms creation in UI. FIRST get_calendar_context to resolve relative dates (in ten minutes, tonight) in configured timezone, then use UTC ISO dates. start=null/end=null means no date; start plus end=null means timed reminder; start/end means duration. repeatDaily=true repeats daily from start at the configured local time, as one series; duration must not exceed 24 hours. All persist until manually completed (daily reminders allow completing today or the whole series; unfinished occurrences notify at the configured interval). Optional local developerIds and general/client/project scope. Do not claim saved: this only opens an editable draft. Never use for ticket deadline: use update_local_ticket_metadata(localDeadline) instead.",
       parameters: calendarDraftSchema,
       handler: async (input) => {
         assertActive();

@@ -1,3 +1,4 @@
+import { occurrencesOnDay } from "../server/calendar-repeat.js";
 import type { CalendarItem } from "../server/calendar-model.js";
 import { fromWall, wallTime } from "./calendar-time.js";
 export function calendarWeekDays(anchor: string, mode: string) {
@@ -17,7 +18,7 @@ export function calendarSegments(
 ) {
   const minutes = (value: string) =>
     Number(value.slice(11, 13)) * 60 + Number(value.slice(14, 16));
-  const segments = items
+  const segments = occurrencesOnDay(items, day, zone)
     .filter((i) => i.start)
     .flatMap((item) => {
       const start = wallTime(item.start!, zone),

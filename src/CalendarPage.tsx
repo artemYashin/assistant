@@ -1,3 +1,8 @@
+import {
+  occurrencesOnDay,
+  recurringOverlaps,
+} from "../server/calendar-repeat.js";
+import { DailyCompletionButton } from "./DailyCompletionButton.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { CalendarTimeGrid } from "./CalendarTimeGrid.js";
@@ -29,6 +34,8 @@ import {
 } from "../server/calendar-model.js";
 import { eventTime, fromWall, wallTime } from "./calendar-time.js";
 export const statusLabels: Record<string, string> = {
+  recurring: "Ежедневно",
+  today_completed: "Сегодня завершено",
   open: "Без срока",
   upcoming: "Предстоит",
   ongoing: "Идёт сейчас",
@@ -46,6 +53,7 @@ const fresh = (day: string, context: { client: string; project: string }) => ({
       : "general") as CalendarItem["scope"],
   client: context.client,
   project: context.project,
+  repeatDaily: false,
   title: "",
   description: "",
   kind: "reminder" as CalendarItem["kind"],
@@ -90,6 +98,7 @@ export function CalendarPage({
     setEditing(null);
     setDraft({
       ...incoming,
+      repeatDaily: !!incoming.repeatDaily,
       start: incoming.start ? wallTime(incoming.start, zone) : "",
       end: incoming.end ? wallTime(incoming.end, zone) : "",
     });
@@ -122,11 +131,13 @@ export function CalendarPage({
     };
   }, []);
   function open(item?: CalendarItem, day = "", time?: string) {
+    if (item?.repeatDaily) item = items.find((i) => i.id === item!.id) || item;
     setEditing(item?.id || null);
     setDraft(
       item
         ? {
             ...item,
+            repeatDaily: !!item.repeatDaily,
             start: item.start ? wallTime(item.start, zone) : "",
             end: item.end ? wallTime(item.end, zone) : "",
           }
@@ -189,7 +200,9 @@ export function CalendarPage({
               : JSON.stringify([item.client, item.project]) ===
                 projectFilter)) &&
           item.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
-          calendarOverlaps(item, bounds.from, bounds.to)
+          (item.repeatDaily
+            ? recurringOverlaps(item, bounds.from, bounds.to)
+            : calendarOverlaps(item, bounds.from, bounds.to))
         );
       });
   const base = new Date(month + "-01T12:00:00Z");
@@ -362,6 +375,7 @@ export function CalendarPage({
                   scope: item.scope,
                   client: item.client,
                   project: item.project,
+                  repeatDaily: item.repeatDaily,
                   start: item.start,
                   end: item.end,
                   developerIds: item.developerIds,
@@ -378,7 +392,7 @@ export function CalendarPage({
                 </div>
               ))}
               {days.map((day) => {
-                const entries = items.filter(
+                const entries = occurrencesOnDay(items, day, zone).filter(
                   (i) =>
                     i.start &&
                     wallTime(i.start, zone).slice(0, 10) <= day &&
@@ -402,7 +416,7 @@ export function CalendarPage({
                     </button>
                     {entries.slice(0, 3).map((i) => (
                       <button
-                        key={i.id}
+                        key={i.id + ":" + i.start}
                         className={"calendar-event " + calendarStatus(i, now)}
                         onClick={() => open(i)}
                         title={
@@ -597,17 +611,18 @@ export function CalendarPage({
                     <Pencil size={15} />
                     {item.ticket ? "Открыть" : "Изменить"}
                   </button>
+                  <DailyCompletionButton item={item} onChange={reload} />
                   {!item.completed && (
                     <ConfirmButton
                       title="Завершить напоминание?"
-                      message={`«${item.title}» останется в истории, уведомления прекратятся.`}
+                      message={`«${item.title}». ${item.repeatDaily ? "Будет завершена вся ежедневная серия. " : ""}Напоминание останется в истории, уведомления прекратятся.`}
                       confirmLabel="Завершить"
                       onConfirm={() =>
                         mutate("/calendar/" + item.id + "/complete", "POST", {})
                       }
                     >
                       <Check size={15} />
-                      Завершить
+                      {item.repeatDaily ? "Завершить всю серию" : "Завершить"}
                     </ConfirmButton>
                   )}
                   {item.completed && (
@@ -782,7 +797,11 @@ export function CalendarPage({
               label="Начало · необязательно"
               value={draft.start}
               onChange={(start) =>
-                setDraft({ ...draft, start, ...(!start ? { end: "" } : {}) })
+                setDraft({
+                  ...draft,
+                  start,
+                  ...(!start ? { end: "", repeatDaily: false } : {}),
+                })
               }
             />
             <CalendarDateField
@@ -794,6 +813,27 @@ export function CalendarPage({
               onChange={(end) => setDraft({ ...draft, end })}
             />
           </div>
+          <label className="calendar-check">
+            <input
+              type="checkbox"
+              checked={draft.repeatDaily}
+              disabled={!draft.start}
+              onChange={(e) =>
+                setDraft({ ...draft, repeatDaily: e.target.checked })
+              }
+            />
+            <span>Повторять каждый день</span>
+          </label>
+          {draft.repeatDaily && (
+            <p className="muted">
+              Одна запись, каждый день в выбранное время начиная с даты начала.
+              Уведомления повторяются по интервалу из настроек, пока не
+              завершена сегодняшняя итерация. «Завершить сегодня» отключит
+              только сегодняшние уведомления; «Завершить всю серию» остановит
+              все повторения. Изменения применяются ко всей серии;
+              перетаскивание отключено.
+            </p>
+          )}
           <p className="muted">
             Без дат — напоминание без срока. Только начало — напоминание на
             время. Начало и окончание — событие с длительностью. Завершение
@@ -874,13 +914,14 @@ export function CalendarPage({
               {statusLabels[calendarStatus(currentItem, now)]}
             </span>
             <div className="calendar-inline">
+              <DailyCompletionButton item={currentItem} onChange={reload} />
               <ConfirmButton
                 title={
                   currentItem.completed
                     ? "Вернуть в незавершённые?"
                     : "Завершить напоминание?"
                 }
-                message={`«${currentItem.title}». ${currentItem.completed ? "Уведомления снова будут работать по расписанию." : "Напоминание останется в календаре, уведомления прекратятся."} Несохранённые изменения формы не применятся.`}
+                message={`«${currentItem.title}». ${currentItem.repeatDaily ? "Действие применяется ко всей ежедневной серии. " : ""} ${currentItem.completed ? "Уведомления снова будут работать по расписанию." : "Напоминание останется в календаре, уведомления прекратятся."} Несохранённые изменения формы не применятся.`}
                 confirmLabel={currentItem.completed ? "Вернуть" : "Завершить"}
                 onConfirm={async () => {
                   await mutate(
@@ -900,7 +941,9 @@ export function CalendarPage({
                 )}
                 {currentItem.completed
                   ? "Вернуть в незавершённые"
-                  : "Завершить"}
+                  : currentItem.repeatDaily
+                    ? "Завершить всю серию"
+                    : "Завершить"}
               </ConfirmButton>
               <ConfirmButton
                 className="calendar-delete"
@@ -933,6 +976,7 @@ export function CalendarPage({
                 "/calendar" + (editing ? "/" + editing : ""),
                 editing ? "PUT" : "POST",
                 {
+                  repeatDaily: draft.repeatDaily,
                   title: draft.title,
                   description: draft.description,
                   scope: draft.scope,

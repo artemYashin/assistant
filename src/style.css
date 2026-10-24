@@ -10133,3 +10133,8 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .ticket-deadline-value { display:flex;flex-direction:column;min-width:0; }
 .ticket-deadline-value>span,.ticket-deadline-value>small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .ticket-deadline-value>small { color:var(--muted);font-size:11px; }
+
+.calendar-state.recurring { color:#8a5915;background:#fff3d8; }
+.calendar-time-event.recurring,.calendar-event.recurring { background:#fff3d8;border-color:#d5a654;color:#714911; }
+
+.calendar-state.today_completed { background:#e8f5e9;color:#317544; }

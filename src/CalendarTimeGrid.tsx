@@ -47,7 +47,7 @@ export function CalendarTimeGrid({
     if (pending) confirmation.current?.showModal();
   }, [pending]);
   function begin(event: ReactPointerEvent, item: CalendarItem, day: string) {
-    if (event.button !== 0 || pending || item.ticket) return;
+    if (event.button !== 0 || pending || item.ticket || item.repeatDaily) return;
     const resize =
       (event.target as HTMLElement).closest(".calendar-resize") !== null;
     const scroller = root.current!;
@@ -229,7 +229,7 @@ export function CalendarTimeGrid({
                 zone,
               ).map(({ item, top, bottom, lane, lanes }) => (
                 <button
-                  key={item.id}
+                  key={item.id+":"+item.start}
                   className={`calendar-time-event ${calendarStatus(item)}`}
                   title={`${item.title}\n${eventTime(item.start, item.end, zone)}`}
                   style={{
@@ -252,7 +252,7 @@ export function CalendarTimeGrid({
                     {item.end ? "–" + wallTime(item.end, zone).slice(11) : ""}
                   </small>
                   <strong>{item.title}</strong>
-                  {!item.ticket && (!item.end ||
+                  {!item.repeatDaily && !item.ticket && (!item.end ||
                     wallTime(
                       new Date(Date.parse(item.end) - 1).toISOString(),
                       zone,

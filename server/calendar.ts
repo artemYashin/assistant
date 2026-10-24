@@ -1,3 +1,5 @@
+import { dailyOccurrence } from "./calendar-repeat.js";
+import { wallTime } from "./calendar-time.js";
 import { syncTicketDeadlines, activeDeadlineSql } from "./ticket-deadlines.js";
 import { calendarInput, type CalendarItem } from "./calendar-model.js";
 import { randomUUID } from "node:crypto";
@@ -25,6 +27,9 @@ export class Calendar {
             },
           }
         : {}),
+      completedDays: JSON.parse(r.completed_days || "[]"),
+      repeatDaily: !!r.repeat_daily,
+      repeatZone: r.repeat_zone,
       id: r.id,
       kind: !r.start ? "general" : r.end ? "event" : "reminder",
       scope: r.scope,
@@ -76,10 +81,20 @@ export class Calendar {
           .get(developer)
       )
         throw new AppError(400, "Выбранный разработчик больше недоступен.");
+    const repeatZone =
+      (id
+        ? (
+            this.store.db
+              .prepare(
+                "SELECT repeat_zone FROM calendar_events WHERE id=? AND repeat_daily=1",
+              )
+              .get(id) as any
+          )?.repeat_zone
+        : null) || this.store.settings().syncSchedule.timeZone;
     if (id) {
       const result = this.store.db
         .prepare(
-          "UPDATE calendar_events SET scope=?,client=?,project=?,kind=?,title=?,description=?,start=?,end=?,developers=?,last_notified=NULL WHERE id=?",
+          "UPDATE calendar_events SET scope=?,client=?,project=?,kind=?,title=?,description=?,start=?,end=?,developers=?,repeat_daily=?,repeat_zone=?,last_notified=NULL WHERE id=?",
         )
         .run(
           v.scope,
@@ -91,6 +106,8 @@ export class Calendar {
           v.start,
           v.end,
           JSON.stringify(ids),
+          v.repeatDaily ? 1 : 0,
+          repeatZone,
           id,
         );
       if (!result.changes) throw new AppError(404, "Напоминание не найдено.");
@@ -98,7 +115,7 @@ export class Calendar {
       id = randomUUID();
       this.store.db
         .prepare(
-          "INSERT INTO calendar_events(id,scope,client,project,kind,title,description,start,end,developers,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO calendar_events(id,scope,client,project,kind,title,description,start,end,developers,created_at,repeat_daily,repeat_zone) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         )
         .run(
           id,
@@ -112,9 +129,32 @@ export class Calendar {
           v.end,
           JSON.stringify(ids),
           new Date().toISOString(),
+          v.repeatDaily ? 1 : 0,
+          repeatZone,
         );
     }
     return { id };
+  }
+  completeToday(id: string, completed = true, now = new Date()) {
+    return this.store.db.transaction(() => {
+      const item = this.list().find((i) => i.id === id);
+      if (!item) throw new AppError(404, "Напоминание не найдено.");
+      const day = wallTime(now.toISOString(), item.repeatZone || "UTC").slice(
+        0,
+        10,
+      );
+      if (!item.repeatDaily || !dailyOccurrence(item, day))
+        throw new AppError(400, "У напоминания нет сегодняшней итерации.");
+      const days = new Set(item.completedDays || []);
+      if (completed) days.add(day);
+      else days.delete(day);
+      this.store.db
+        .prepare(
+          "UPDATE calendar_events SET completed_days=?,last_notified=CASE WHEN ?=0 THEN NULL ELSE last_notified END WHERE id=?",
+        )
+        .run(JSON.stringify([...days].sort()), completed ? 1 : 0, id);
+      return { ok: true, day, completed };
+    })();
   }
   complete(id: string) {
     if (
@@ -158,18 +198,49 @@ export class Calendar {
     const instant = now.toISOString(),
       cutoff = now.getTime() - options.intervalMinutes * 60000;
     return this.store.db.transaction(() => {
-      const ids = (
-        this.store.db
-          .prepare(
-            `SELECT e.id FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id WHERE ${activeDeadlineSql} AND completed=0 AND (start IS NULL OR start<=?) AND (last_notified IS NULL OR last_notified<=?) ORDER BY start,e.id LIMIT 20`,
-          )
-          .all(instant, cutoff) as { id: string }[]
-      ).map((r) => r.id);
+      const notified = new Map(
+        (
+          this.store.db
+            .prepare("SELECT id,last_notified FROM calendar_events")
+            .all() as { id: string; last_notified: number | null }[]
+        ).map((row) => [row.id, row.last_notified]),
+      );
+      const due = this.list()
+        .filter((item) => {
+          if (item.completed) return false;
+          const last = notified.get(item.id) ?? null;
+          if (item.repeatDaily) {
+            const zone = item.repeatZone || "UTC";
+            const day = wallTime(instant, zone).slice(0, 10);
+            const occurrence = dailyOccurrence(item, day);
+            return (
+              !!occurrence &&
+              !occurrence.completed &&
+              occurrence.start! <= instant &&
+              (last === null ||
+                last <= cutoff ||
+                wallTime(new Date(last).toISOString(), zone).slice(0, 10) < day)
+            );
+          }
+          return (
+            (!item.start || item.start <= instant) &&
+            (last === null || last <= cutoff)
+          );
+        })
+        .slice(0, 20);
+      const ids = due.map((item) => item.id);
       for (const id of ids)
         this.store.db
           .prepare("UPDATE calendar_events SET last_notified=? WHERE id=?")
           .run(now.getTime(), id);
-      return this.list().filter((item) => ids.includes(item.id));
+      return due.map((item) =>
+        item.repeatDaily
+          ? dailyOccurrence(
+              item,
+              wallTime(instant, item.repeatZone || "UTC").slice(0, 10),
+            )!
+          : item,
+      );
     })();
   }
 }

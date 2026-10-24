@@ -1,3 +1,4 @@
+import { DailyCompletionButton } from "./DailyCompletionButton.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
@@ -97,18 +98,23 @@ function ReminderToast({
             >
               {item.title}
             </button>
+            <DailyCompletionButton item={item} compact />
             <ConfirmButton
               className="icon-button calendar-toast-complete"
-              ariaLabel={`Завершить: ${item.title}`}
+              ariaLabel={`${item.repeatDaily ? "Завершить всю серию" : "Завершить"}: ${item.title}`}
               title="Завершить напоминание?"
-              message={`«${item.title}». Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре.`}
+              message={`«${item.title}». ${item.repeatDaily ? "Будет завершена вся ежедневная серия. " : ""} Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре.`}
               confirmLabel="Завершить"
               onConfirm={async () => {
                 await api("/calendar/" + item.id + "/complete", "POST", {});
                 window.dispatchEvent(new Event("orbit-calendar-changed"));
               }}
             >
-              <Check size={16} />
+              {item.repeatDaily ? (
+                <span aria-hidden="true">✓✓</span>
+              ) : (
+                <Check size={16} />
+              )}
             </ConfirmButton>
             <button
               type="button"
@@ -155,7 +161,8 @@ export function CalendarNotifications({
         const data = await api("/calendar");
         if (!alive) return;
         const active = data.items.filter(
-          (i: CalendarItem) => !i.completed,
+          (i: CalendarItem) =>
+            !i.completed && calendarStatus(i) !== "today_completed",
         ) as CalendarItem[];
         setItems(active);
         setToasts((previous) =>
