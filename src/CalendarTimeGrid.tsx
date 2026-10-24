@@ -341,17 +341,7 @@ export function CalendarTimeGrid({
                     )}
                 </button>
               ))}
-              {today.startsWith(day) && (
-                <div
-                  className="calendar-now"
-                  style={{
-                    top:
-                      (Number(today.slice(11, 13)) +
-                        Number(today.slice(14, 16)) / 60) *
-                      HOUR_HEIGHT,
-                  }}
-                />
-              )}
+
             </div>
           ))}
         </div>

@@ -10050,8 +10050,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-time-event strong { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex-shrink:0;font-size:12px;line-height:16px;font-weight:600;overflow-wrap:anywhere;white-space:normal; }
 .calendar-time-event.overdue { background:#ffede5;border-color:#dfb49c;color:#8e4d2a; }
 .calendar-time-event.ongoing { background:#e2f3e9;border-color:#8cbea3;color:#286a49; }
-.calendar-now { position:absolute;left:0;right:0;border-top:2px solid #d56d60;z-index:4;pointer-events:none; }
-.calendar-now:before { content:'';position:absolute;left:-3px;top:-4px;width:6px;height:6px;border-radius:50%;background:#d56d60; }
 @media(max-width:800px) { .calendar-day {min-height:68px;} .calendar-toolbar h2 {font-size:16px;} .calendar-scope-selects {flex-direction:column;} }
 .calendar-time-scroll { max-height:clamp(260px,calc(100dvh - 440px),530px); }
 .calendar-time-event { display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px; }

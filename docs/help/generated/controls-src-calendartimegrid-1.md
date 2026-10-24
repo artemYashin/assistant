@@ -21,10 +21,10 @@
 
 Отмена
 
-Источник: src/CalendarTimeGrid.tsx:389.
+Источник: src/CalendarTimeGrid.tsx:379.
 
 ### Элемент
 
 Сохраняю… / Подтвердить
 
-Источник: src/CalendarTimeGrid.tsx:397.
+Источник: src/CalendarTimeGrid.tsx:387.
