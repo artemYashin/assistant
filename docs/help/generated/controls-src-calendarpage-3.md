@@ -9,64 +9,64 @@
 
 Выберите проект
 
-Источник: src/CalendarPage.tsx:822.
+Источник: src/CalendarPage.tsx:821.
 
 ### Элемент
 
 Название
 
-Источник: src/CalendarPage.tsx:834.
+Источник: src/CalendarPage.tsx:833.
 
 ### Элемент
 
 Без времени
 
-Источник: src/CalendarPage.tsx:843.
+Источник: src/CalendarPage.tsx:842.
 
 ### Элемент
 
 Повторять каждый день
 
-Источник: src/CalendarPage.tsx:888.
+Источник: src/CalendarPage.tsx:887.
 
 ### Элемент
 
 Описание
 
-Источник: src/CalendarPage.tsx:945.
+Источник: src/CalendarPage.tsx:944.
 
 ### Элемент
 
 Разработчики · необязательно ( · )
 
-Источник: src/CalendarPage.tsx:957.
+Источник: src/CalendarPage.tsx:956.
 
 ### Элемент
 
 / Общий список
 
-Источник: src/CalendarPage.tsx:962.
+Источник: src/CalendarPage.tsx:961.
 
 ### Элемент
 
 Удалённый разработчик · снимите выбор для сохранения
 
-Источник: src/CalendarPage.tsx:989.
+Источник: src/CalendarPage.tsx:988.
 
 ### Элемент
 
 Вернуть в незавершённые? / Завершить напоминание? · «{…}». {…} {…} Несохранённые изменения формы не применятся. · Вернуть / Завершить · / · Вернуть в незавершённые / Завершить всю серию / Завершить
 
-Источник: src/CalendarPage.tsx:1030.
+Источник: src/CalendarPage.tsx:1029.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarPage.tsx:1079.
+Источник: src/CalendarPage.tsx:1078.
 
 ### Элемент
 
 Сохранить изменения? / Создать напоминание? · «{…}» · {…} · Сохранить / Создать
 
-Источник: src/CalendarPage.tsx:1082.
+Источник: src/CalendarPage.tsx:1081.

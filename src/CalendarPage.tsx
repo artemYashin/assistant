@@ -299,192 +299,12 @@ export function CalendarPage({
           {error}
         </p>
       )}
-      {tab === "calendar" ? (
-        <div className="calendar-board">
-          <div className="calendar-toolbar">
-            <div className="calendar-inline">
-              <button
-                className="icon-button"
-                aria-label="Предыдущий период"
-                onClick={() => shift(-1)}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <h2>
-                {new Intl.DateTimeFormat("ru-RU", {
-                  month: "long",
-                  year: "numeric",
-                  timeZone: "UTC",
-                }).format(
-                  view === "month" ? base : new Date(anchor + "T12:00:00Z"),
-                )}
-              </h2>
-              <label className="calendar-jump" title="Перейти к дате">
-                <input
-                  aria-label="Перейти к дате"
-                  type="date"
-                  value={anchor}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setAnchor(e.target.value);
-                      setMonth(e.target.value.slice(0, 7));
-                    }
-                  }}
-                />
-              </label>
-
-              <button
-                className="icon-button"
-                aria-label="Следующий период"
-                onClick={() => shift(1)}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-            <div className="calendar-date-actions">
-            <button
-              className="secondary"
-              onClick={() => {
-                setMonth(today.slice(0, 7));
-                setAnchor(today);
-              }}
-            >
-              Сегодня
-            </button>
-            <button className="secondary" onClick={() => {
-              const date = wallTime(new Date().toISOString(), zone).slice(0, 10);
-              setMonth(date.slice(0, 7));
-              setAnchor(date);
-              if (view === "month") setView("day");
-              setNowRequest(value => value + 1);
-            }} title="Перейти к текущему времени">
-              <Clock size={15} aria-hidden="true" /> Сейчас
-            </button>
-            </div>
-          </div>
-          <div
-            className="calendar-view-switch"
-            role="group"
-            aria-label="Вид календаря"
-          >
-            {[
-              ["month", "Месяц"],
-              ["week", "Неделя"],
-              ["day", "День"],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                aria-pressed={view === key}
-                onClick={() => {
-                  setView(key);
-                  if (key === "month") setMonth(anchor.slice(0, 7));
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="calendar-legend" aria-label="Цвета событий">
-            <span className="calendar-state completed">Завершено</span>
-            <span className="calendar-state upcoming">Не завершено</span>
-            <span className="calendar-state overdue">Просрочено</span>
-          </div>
-          {view !== "month" ? (
-            <CalendarTimeGrid
-              items={items}
-              anchor={anchor}
-              mode={view}
-              zone={zone}
-              nowRequest={nowRequest}
-              onChange={(item) =>
-                mutate("/calendar/" + item.id, "PUT", {
-                  title: item.title,
-                  description: item.description,
-                  scope: item.scope,
-                  client: item.client,
-                  project: item.project,
-                  repeatDaily: item.repeatDaily,
-                  repeatWeekdays: item.repeatWeekdays,
-                  start: item.start,
-                  end: item.end,
-                  developerIds: item.developerIds,
-                })
-              }
-              onOpen={open}
-              onCreate={(time) => open(undefined, "", time)}
-            />
-          ) : (
-            <div className="calendar-grid">
-              {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
-                <div className="calendar-weekday" key={d}>
-                  {d}
-                </div>
-              ))}
-              {days.map((day) => {
-                const entries = occurrencesOnDay(items, day, zone).filter(
-                  (i) =>
-                    i.start &&
-                    wallTime(i.start, zone).slice(0, 10) <= day &&
-                    (i.end
-                      ? wallTime(i.end, zone).slice(0, 10)
-                      : wallTime(i.start, zone).slice(0, 10)) >= day,
-                );
-                return (
-                  <div
-                    key={day}
-                    className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : day < today ? "is-past" : ""}`}
-                  >
-                    <button
-                      aria-label={`Создать напоминание на ${day}`}
-                      className="calendar-day-number"
-                      title="Создать напоминание"
-                      onClick={() => open(undefined, day)}
-                    >
-                      {Number(day.slice(-2))}
-                      <Plus size={12} />
-                    </button>
-                    {entries.slice(0, 3).map((i) => (
-                      <button
-                        key={i.id + ":" + i.start}
-                        className={"calendar-event " + calendarStatus(i, now)}
-                        onClick={() => open(i)}
-                        title={i.title + " · " + calendarStatusLabel(i, now)}
-                      >
-                        <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
-                        {i.title}
-                      </button>
-                    ))}
-                    {entries.length > 3 && (
-                      <button
-                        className="calendar-more"
-                        onClick={() => {
-                          setTab("reminders");
-                          setStatus([]); setTypes([]);
-                          setFrom(day + "T00:00");
-                          setTo(day + "T23:59");
-                        }}
-                      >
-                        Ещё {entries.length - 3}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <p className="muted calendar-footnote">
-            Без срока: {items.filter((i) => !i.completed && !i.start).length}.
-            Напоминания без даты доступны во вкладке «Напоминания».
-          </p>
-        </div>
-      ) : (
-        <>
           <FilterPanel storageKey="orbit.calendar.filters" label="Наборы и фильтры напоминаний"
             filters={{clientFilter, projectFilter, status, types, query, from, to, sort}}
             parseFilters={parseCalendarFilters}
             onApply={(next) => { setClientFilter(next.clientFilter); setProjectFilter(next.projectFilter); setStatus(next.status); setTypes(next.types); setQuery(next.query); setFrom(next.from); setTo(next.to); setSort(next.sort); }}>
           <div className="calendar-filters">
-            <SingleSelect
+            {tab === "reminders" && <SingleSelect
               label="Сортировка"
               value={sort}
               onChange={setSort}
@@ -495,7 +315,7 @@ export function CalendarPage({
                 { value: "desc", label: "По дате: сначала поздние" },
                 { value: "title", label: "По названию" },
               ]}
-            />
+            />}
             <MultiSelect
               placeholder="Все типы"
               label="Тип"
@@ -601,6 +421,185 @@ export function CalendarPage({
             </p>
           )}
           {rangeError && <p className="error">{rangeError}</p>}
+      {tab === "calendar" ? (
+        <div className="calendar-board">
+          <div className="calendar-toolbar">
+            <div className="calendar-inline">
+              <button
+                className="icon-button"
+                aria-label="Предыдущий период"
+                onClick={() => shift(-1)}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <h2>
+                {new Intl.DateTimeFormat("ru-RU", {
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                }).format(
+                  view === "month" ? base : new Date(anchor + "T12:00:00Z"),
+                )}
+              </h2>
+              <label className="calendar-jump" title="Перейти к дате">
+                <input
+                  aria-label="Перейти к дате"
+                  type="date"
+                  value={anchor}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setAnchor(e.target.value);
+                      setMonth(e.target.value.slice(0, 7));
+                    }
+                  }}
+                />
+              </label>
+
+              <button
+                className="icon-button"
+                aria-label="Следующий период"
+                onClick={() => shift(1)}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <div className="calendar-date-actions">
+            <button
+              className="secondary"
+              onClick={() => {
+                setMonth(today.slice(0, 7));
+                setAnchor(today);
+              }}
+            >
+              Сегодня
+            </button>
+            <button className="secondary" onClick={() => {
+              const date = wallTime(new Date().toISOString(), zone).slice(0, 10);
+              setMonth(date.slice(0, 7));
+              setAnchor(date);
+              if (view === "month") setView("day");
+              setNowRequest(value => value + 1);
+            }} title="Перейти к текущему времени">
+              <Clock size={15} aria-hidden="true" /> Сейчас
+            </button>
+            </div>
+          </div>
+          <div
+            className="calendar-view-switch"
+            role="group"
+            aria-label="Вид календаря"
+          >
+            {[
+              ["month", "Месяц"],
+              ["week", "Неделя"],
+              ["day", "День"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={view === key}
+                onClick={() => {
+                  setView(key);
+                  if (key === "month") setMonth(anchor.slice(0, 7));
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="calendar-legend" aria-label="Цвета событий">
+            <span className="calendar-state completed">Завершено</span>
+            <span className="calendar-state upcoming">Не завершено</span>
+            <span className="calendar-state overdue">Просрочено</span>
+          </div>
+          {view !== "month" ? (
+            <CalendarTimeGrid
+              items={filtered}
+              anchor={anchor}
+              mode={view}
+              zone={zone}
+              nowRequest={nowRequest}
+              onChange={(item) =>
+                mutate("/calendar/" + item.id, "PUT", {
+                  title: item.title,
+                  description: item.description,
+                  scope: item.scope,
+                  client: item.client,
+                  project: item.project,
+                  repeatDaily: item.repeatDaily,
+                  repeatWeekdays: item.repeatWeekdays,
+                  start: item.start,
+                  end: item.end,
+                  developerIds: item.developerIds,
+                })
+              }
+              onOpen={open}
+              onCreate={(time) => open(undefined, "", time)}
+            />
+          ) : (
+            <div className="calendar-grid">
+              {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
+                <div className="calendar-weekday" key={d}>
+                  {d}
+                </div>
+              ))}
+              {days.map((day) => {
+                const entries = occurrencesOnDay(filtered, day, zone).filter(
+                  (i) =>
+                    i.start &&
+                    wallTime(i.start, zone).slice(0, 10) <= day &&
+                    (i.end
+                      ? wallTime(i.end, zone).slice(0, 10)
+                      : wallTime(i.start, zone).slice(0, 10)) >= day,
+                );
+                return (
+                  <div
+                    key={day}
+                    className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : day < today ? "is-past" : ""}`}
+                  >
+                    <button
+                      aria-label={`Создать напоминание на ${day}`}
+                      className="calendar-day-number"
+                      title="Создать напоминание"
+                      onClick={() => open(undefined, day)}
+                    >
+                      {Number(day.slice(-2))}
+                      <Plus size={12} />
+                    </button>
+                    {entries.slice(0, 3).map((i) => (
+                      <button
+                        key={i.id + ":" + i.start}
+                        className={"calendar-event " + calendarStatus(i, now)}
+                        onClick={() => open(i)}
+                        title={i.title + " · " + calendarStatusLabel(i, now)}
+                      >
+                        <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
+                        {i.title}
+                      </button>
+                    ))}
+                    {entries.length > 3 && (
+                      <button
+                        className="calendar-more"
+                        onClick={() => {
+                          setTab("reminders");
+                          setFrom(day + "T00:00");
+                          setTo(day + "T23:59");
+                        }}
+                      >
+                        Ещё {entries.length - 3}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p className="muted calendar-footnote">
+            Без срока: {filtered.filter((i) => !i.completed && !i.start).length}.
+            Напоминания без даты доступны во вкладке «Напоминания».
+          </p>
+        </div>
+      ) : (
+        <>
           <div className="calendar-reminders">
             {sortReminders(filtered, sort, now).map((item) => (
               <article
