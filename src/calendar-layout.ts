@@ -18,7 +18,7 @@ export function calendarSegments(
   const minutes = (value: string) =>
     Number(value.slice(11, 13)) * 60 + Number(value.slice(14, 16));
   const segments = items
-    .filter((i) => !i.completed && i.start)
+    .filter((i) => i.start)
     .flatMap((item) => {
       const start = wallTime(item.start!, zone),
         end = item.end ? wallTime(item.end, zone) : start;

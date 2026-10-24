@@ -422,10 +422,15 @@ test("time grid clips multi-day events, assigns overlap lanes and uses a Monday 
     "2026-10-21",
     "UTC",
   );
-  assert.equal(segments.length, 2);
+  assert.equal(segments.length, 3);
+  assert.ok(
+    segments.some(
+      (segment) => segment.item.id === "done" && segment.item.completed,
+    ),
+  );
   assert.equal(segments[0].top, 480);
   assert.equal(segments[0].bottom, 600);
-  assert.equal(segments[0].lanes, 2);
+  assert.equal(segments[0].lanes, 3);
   assert.notEqual(segments[0].lane, segments[1].lane);
   const spanning = {
     ...item,

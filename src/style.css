@@ -10100,3 +10100,13 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-toast-row .calendar-toast-item { flex:1;min-width:0;padding:4px 0; }
 .calendar-toast-dismiss.icon-button { display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;padding:4px;border:1px solid #d5e3ed;border-radius:6px;color:#617b8e;background:#fff; }
 .calendar-toast-dismiss.icon-button:hover { color:#254560;background:#e3eff8;border-color:#a9c6db; }
+
+.calendar-legend { display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 14px 10px; }
+.calendar-event:is(.open,.upcoming,.ongoing),.calendar-time-event:is(.open,.upcoming,.ongoing),.calendar-state:is(.open,.upcoming,.ongoing) { background:#fff1d9;border-color:#dfaf63;color:#87500c; }
+.calendar-event.completed,.calendar-time-event.completed,.calendar-state.completed { background:#e3f4e9;border-color:#83bd99;color:#24653e; }
+.calendar-event.overdue,.calendar-time-event.overdue,.calendar-state.overdue { background:#ffebeb;border-color:#dba0a0;color:#a13131; }
+.calendar-editor-management { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid #e2e9ee;margin-top:18px;padding-top:16px; }
+.calendar-editor-management .calendar-inline { gap:8px; }
+.calendar-editor-management button { display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 12px;border-radius:8px; }
+.calendar-editor-management .calendar-delete { border:1px solid #e2b6b2;background:#fff1ef;color:#a53e36; }
+.calendar-editor-management .calendar-delete:hover { background:#ffe3df;border-color:#ca8b83; }

@@ -210,6 +210,7 @@ export function CalendarPage({
     await reload();
     calendarChanged();
   }
+  const currentItem = items.find((item) => item.id === editing);
   const validDraft =
     !!draft.title.trim() &&
     (draft.scope === "general" ||
@@ -327,6 +328,11 @@ export function CalendarPage({
               </button>
             ))}
           </div>
+          <div className="calendar-legend" aria-label="Цвета событий">
+            <span className="calendar-state completed">Завершено</span>
+            <span className="calendar-state upcoming">Не завершено</span>
+            <span className="calendar-state overdue">Просрочено</span>
+          </div>
           {view !== "month" ? (
             <CalendarTimeGrid
               items={items}
@@ -359,7 +365,6 @@ export function CalendarPage({
                 const entries = items.filter(
                   (i) =>
                     i.start &&
-                    !i.completed &&
                     wallTime(i.start, zone).slice(0, 10) <= day &&
                     (i.end
                       ? wallTime(i.end, zone).slice(0, 10)
@@ -384,7 +389,9 @@ export function CalendarPage({
                         key={i.id}
                         className={"calendar-event " + calendarStatus(i, now)}
                         onClick={() => open(i)}
-                        title={i.title}
+                        title={
+                          i.title + " · " + statusLabels[calendarStatus(i, now)]
+                        }
                       >
                         <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
                         {i.title}
@@ -395,7 +402,7 @@ export function CalendarPage({
                         className="calendar-more"
                         onClick={() => {
                           setTab("reminders");
-                          setStatus("active");
+                          setStatus("all");
                           setFrom(day + "T00:00");
                           setTo(day + "T23:59");
                         }}
@@ -798,6 +805,58 @@ export function CalendarPage({
             <p className="muted">Локальные разработчики пока не добавлены.</p>
           )}
         </details>
+        {currentItem && (
+          <div className="calendar-editor-management">
+            <span
+              className={"calendar-state " + calendarStatus(currentItem, now)}
+            >
+              {statusLabels[calendarStatus(currentItem, now)]}
+            </span>
+            <div className="calendar-inline">
+              <ConfirmButton
+                title={
+                  currentItem.completed
+                    ? "Вернуть в незавершённые?"
+                    : "Завершить напоминание?"
+                }
+                message={`«${currentItem.title}». ${currentItem.completed ? "Уведомления снова будут работать по расписанию." : "Напоминание останется в календаре, уведомления прекратятся."} Несохранённые изменения формы не применятся.`}
+                confirmLabel={currentItem.completed ? "Вернуть" : "Завершить"}
+                onConfirm={async () => {
+                  await mutate(
+                    "/calendar/" +
+                      currentItem.id +
+                      (currentItem.completed ? "/reopen" : "/complete"),
+                    "POST",
+                    {},
+                  );
+                  dialog.current?.close();
+                }}
+              >
+                {currentItem.completed ? (
+                  <RotateCcw size={15} />
+                ) : (
+                  <Check size={15} />
+                )}
+                {currentItem.completed
+                  ? "Вернуть в незавершённые"
+                  : "Завершить"}
+              </ConfirmButton>
+              <ConfirmButton
+                className="calendar-delete"
+                title="Удалить напоминание?"
+                message={`«${currentItem.title}» будет удалено без возможности восстановления.`}
+                confirmLabel="Удалить"
+                onConfirm={async () => {
+                  await mutate("/calendar/" + currentItem.id, "DELETE");
+                  dialog.current?.close();
+                }}
+              >
+                <Trash2 size={15} />
+                Удалить
+              </ConfirmButton>
+            </div>
+          </div>
+        )}
         <div className="dialog-actions">
           <button className="secondary" onClick={() => dialog.current?.close()}>
             Отмена

@@ -9,118 +9,118 @@
 
 Создать
 
-Источник: src/CalendarPage.tsx:227.
+Источник: src/CalendarPage.tsx:228.
 
 ### Элемент
 
 Календарь
 
-Источник: src/CalendarPage.tsx:233.
+Источник: src/CalendarPage.tsx:234.
 
 ### Элемент
 
 Напоминания ·
 
-Источник: src/CalendarPage.tsx:240.
+Источник: src/CalendarPage.tsx:241.
 
 ### Элемент
 
 Предыдущий период
 
-Источник: src/CalendarPage.tsx:260.
+Источник: src/CalendarPage.tsx:261.
 
 ### Элемент
 
 Перейти к дате
 
-Источник: src/CalendarPage.tsx:276.
+Источник: src/CalendarPage.tsx:277.
 
 ### Элемент
 
 Следующий период
 
-Источник: src/CalendarPage.tsx:290.
+Источник: src/CalendarPage.tsx:291.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/CalendarPage.tsx:298.
+Источник: src/CalendarPage.tsx:299.
 
 ### Элемент
 
 Создать напоминание на {…} · Создать напоминание
 
-Источник: src/CalendarPage.tsx:373.
+Источник: src/CalendarPage.tsx:378.
+
+### Элемент
+
+· ·
+
+Источник: src/CalendarPage.tsx:388.
 
 ### Элемент
 
 Ещё
 
-Источник: src/CalendarPage.tsx:394.
+Источник: src/CalendarPage.tsx:401.
 
 ### Элемент
 
 Состояние
 
-Источник: src/CalendarPage.tsx:419.
+Источник: src/CalendarPage.tsx:426.
 
 ### Элемент
 
 Заказчик
 
-Источник: src/CalendarPage.tsx:430.
+Источник: src/CalendarPage.tsx:437.
 
 ### Элемент
 
 Все заказчики
 
-Источник: src/CalendarPage.tsx:439.
+Источник: src/CalendarPage.tsx:446.
 
 ### Элемент
 
 Без заказчика
 
-Источник: src/CalendarPage.tsx:440.
+Источник: src/CalendarPage.tsx:447.
 
 ### Элемент
 
 Проект
 
-Источник: src/CalendarPage.tsx:446.
+Источник: src/CalendarPage.tsx:453.
 
 ### Элемент
 
 Все проекты
 
-Источник: src/CalendarPage.tsx:452.
+Источник: src/CalendarPage.tsx:459.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/CalendarPage.tsx:453.
+Источник: src/CalendarPage.tsx:460.
 
 ### Элемент
 
 ·
 
-Источник: src/CalendarPage.tsx:467.
+Источник: src/CalendarPage.tsx:474.
 
 ### Элемент
 
 Поиск
 
-Источник: src/CalendarPage.tsx:474.
+Источник: src/CalendarPage.tsx:481.
 
 ### Элемент
 
 Название напоминания
 
-Источник: src/CalendarPage.tsx:476.
-
-### Элемент
-
-Сбросить
-
-Источник: src/CalendarPage.tsx:494.
+Источник: src/CalendarPage.tsx:483.
