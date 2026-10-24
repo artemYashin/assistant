@@ -148,3 +148,12 @@ export function calendarOverlaps(
         Date.parse(from))
   );
 }
+
+/** Recurrence describes a series, independently of today's completion state. */
+export function calendarMatchesStatus(item: CalendarItem, statuses: string[] = [], now = new Date().toISOString()) {
+  return !statuses.length || statuses.some(status =>
+    status === "active" ? !item.completed :
+    status === "recurring" ? !!item.repeatDaily :
+    calendarStatus(item, now) === status,
+  );
+}

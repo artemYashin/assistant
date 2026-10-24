@@ -1,3 +1,5 @@
+import { MultiSelect } from "./MultiSelect.js";
+import { calendarMatchesStatus } from "../server/calendar-model.js";
 import { FilterPanel } from "./TicketFilterPanel.js";
 import { parseCalendarFilters } from "./calendar-filters.js";
 import { sortReminders } from "./calendar-sort.js";
@@ -163,12 +165,12 @@ export function CalendarPage({
     if (item && loadedSelection.current !== selected) {
       loadedSelection.current = selected;
       setTab("reminders");
-      setStatus("all");
+      setStatus([]);
       setFrom("");
       setTo("");
       setQuery("");
-      setClientFilter("all");
-      setProjectFilter("all");
+      setClientFilter([]);
+      setProjectFilter([]);
       open(item);
       setTimeout(
         () =>
@@ -195,19 +197,10 @@ export function CalendarPage({
   const filtered = rangeError
     ? []
     : items.filter((item) => {
-        const state = calendarStatus(item, now);
         return (
-          (status === "all" ||
-            (status === "active" ? !item.completed : state === status)) &&
-          (clientFilter === "all" ||
-            (clientFilter === "none"
-              ? !item.client
-              : item.client === clientFilter.slice(1))) &&
-          (projectFilter === "all" ||
-            (projectFilter === "none"
-              ? !item.project
-              : JSON.stringify([item.client, item.project]) ===
-                projectFilter)) &&
+          calendarMatchesStatus(item, status, now) &&
+          (!clientFilter.length || clientFilter.some(value => value === "none" ? !item.client : item.client === value.slice(1))) &&
+          (!projectFilter.length || projectFilter.some(value => value === "none" ? !item.project : JSON.stringify([item.client, item.project]) === value)) &&
           item.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
           (item.repeatDaily
             ? recurringOverlaps(item, bounds.from, bounds.to)
@@ -440,7 +433,7 @@ export function CalendarPage({
                         className="calendar-more"
                         onClick={() => {
                           setTab("reminders");
-                          setStatus("all");
+                          setStatus([]);
                           setFrom(day + "T00:00");
                           setTo(day + "T23:59");
                         }}
@@ -477,40 +470,37 @@ export function CalendarPage({
                 { value: "title", label: "По названию" },
               ]}
             />
-            <SingleSelect
+            <MultiSelect
+              placeholder="Все состояния"
               label="Состояние"
               value={status}
               onChange={setStatus}
-              active={status !== "all"}
               options={Object.entries({
-                all: "Все",
                 active: "Все активные",
                 ...statusLabels,
               }).map(([value, label]) => ({ value, label }))}
             />
-            <SingleSelect
+            <MultiSelect
+              placeholder="Все заказчики"
               label="Заказчик"
               value={clientFilter}
               onChange={(value) => {
                 setClientFilter(value);
-                setProjectFilter("all");
+                setProjectFilter([]);
               }}
-              active={clientFilter !== "all"}
               options={[
-                { value: "all", label: "Все заказчики" },
                 { value: "none", label: "Без заказчика" },
                 ...[...new Set(items.map((i) => i.client).filter(Boolean))]
                   .sort()
                   .map((name) => ({ value: "=" + name, label: name })),
               ]}
             />
-            <SingleSelect
+            <MultiSelect
+              placeholder="Все проекты"
               label="Проект"
               value={projectFilter}
               onChange={setProjectFilter}
-              active={projectFilter !== "all"}
               options={[
-                { value: "all", label: "Все проекты" },
                 { value: "none", label: "Без проекта" },
                 ...Array.from(
                   new Map(
@@ -518,8 +508,8 @@ export function CalendarPage({
                       .filter(
                         (i) =>
                           i.project &&
-                          (clientFilter === "all" ||
-                            clientFilter === "=" + i.client),
+                          (!clientFilter.length ||
+                            clientFilter.includes("=" + i.client)),
                       )
                       .map((i) => [
                         JSON.stringify([i.client, i.project]),
@@ -556,9 +546,9 @@ export function CalendarPage({
               className="secondary ticket-filter-reset"
               onClick={() => {
                 setSort("nearest");
-                setClientFilter("all");
-                setProjectFilter("all");
-                setStatus("all");
+                setClientFilter([]);
+                setProjectFilter([]);
+                setStatus([]);
                 setQuery("");
                 setFrom("");
                 setTo("");

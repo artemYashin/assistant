@@ -276,3 +276,14 @@ test("assistant reminder in five minutes inherits one-hour warning and is eligib
   assert.equal(custom.effectiveLeadMinutes,0);
   assert.equal(notificationItems(new Calendar(store).list(),60,now).length,1);
 });
+
+test("daily completions keep one stored reminder and recurrence search still finds it", t => {
+ const store=fixture(t), calendar=new Calendar(store);
+ const id=calendar.save({title:"One series",description:"",scope:"general",client:"",project:"",start:"2026-10-24T08:00:00Z",end:null,developerIds:[],repeatDaily:true}).id;
+ calendar.completeToday(id,true,new Date("2026-10-24T10:00:00Z"),"2026-10-24");
+ calendar.completeToday(id,true,new Date("2026-10-25T10:00:00Z"),"2026-10-25");
+ assert.equal(calendar.list().length,1);
+ assert.equal(calendar.list()[0].id,id);
+ assert.deepEqual(calendar.list()[0].completedDays,["2026-10-24","2026-10-25"]);
+ assert.equal(searchCalendar(store,{statuses:["recurring"]}).reminders.length,1);
+});

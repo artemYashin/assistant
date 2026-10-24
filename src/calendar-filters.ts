@@ -11,14 +11,25 @@ export function parseCalendarFilters(value: unknown) {
     Number.isFinite(Date.parse(text(key)))
       ? text(key)
       : "";
+  const selections = (key: string) => {
+    const raw = v[key];
+    const values =
+      typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw : [];
+    return [
+      ...new Set(
+        values.filter(
+          (entry): entry is string =>
+            typeof entry === "string" && entry !== "all",
+        ),
+      ),
+    ];
+  };
   return {
-    clientFilter: text("clientFilter", "all"),
-    projectFilter: text("projectFilter", "all"),
-    status: ["all", "active", ...Object.keys(statusLabels)].includes(
-      text("status"),
-    )
-      ? text("status")
-      : "all",
+    clientFilter: selections("clientFilter"),
+    projectFilter: selections("projectFilter"),
+    status: selections("status").filter((value) =>
+      ["active", ...Object.keys(statusLabels)].includes(value),
+    ),
     query: text("query"),
     from: date("from"),
     to: date("to"),

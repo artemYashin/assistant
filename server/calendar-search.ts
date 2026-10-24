@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Calendar } from "./calendar.js";
-import { calendarOverlaps, calendarStatus } from "./calendar-model.js";
+import { calendarOverlaps, calendarStatus, calendarMatchesStatus } from "./calendar-model.js";
 import { recurringOverlaps } from "./calendar-repeat.js";
 import { searchModeSchema, searchPattern } from "./search-pattern.js";
 import type { Store } from "./store.js";
@@ -80,7 +80,7 @@ export function searchCalendar(store: Store, input: unknown) {
       includes(v.ids, item.id) &&
       (v.completed === "all" ||
         item.completed === (v.completed === "completed")) &&
-      includes(v.statuses, calendarStatus(item, now)) &&
+      calendarMatchesStatus(item, v.statuses, now) &&
       includes(v.kinds, kind) &&
       includes(v.scopes, item.scope) &&
       includes(v.clients, item.client) &&
