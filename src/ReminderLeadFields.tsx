@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 export function ReminderLeadFields({
   value,
   fallback,
@@ -28,8 +29,7 @@ export function ReminderLeadFields({
         {["Дней", "Часов", "Минут"].map((label, index) => (
           <label key={label}>
             {label}
-            <input
-              type="number"
+            <NumberInput
               min={0}
               max={index === 0 ? 365 : index === 1 ? 23 : 59}
               step={1}

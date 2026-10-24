@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { CalendarDateField } from "./CalendarDateField.js";
 import { fromWall, wallTime } from "./calendar-time.js";
 import { useEffect, useRef, useState } from "react";
@@ -247,8 +248,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
         ) : field === "priority" ? (
           <label>
             Локальный приоритет (1 — самый высокий)
-            <input
-              type="number"
+            <NumberInput
               min={1}
               step={1}
               max={Number.MAX_SAFE_INTEGER}

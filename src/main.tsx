@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { CalendarPage } from "./CalendarPage.js";
 import { CalendarSettings } from "./CalendarSettings.js";
 import { CalendarNotifications } from "./CalendarNotifications.js";
@@ -1307,9 +1308,8 @@ function Tickets({
                 );
               }}
             >
-              <input
+              <NumberInput
                 aria-label="Номер тикета для добавления"
-                type="number"
                 min="1"
                 required
                 placeholder="Номер тикета"
@@ -2164,8 +2164,7 @@ function Settings({ settings, context, run, busy }: any) {
             label="Лимит ручных PR-ревью за 24 часа"
             hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
           >
-            <input
-              type="number"
+            <NumberInput
               min={1}
               max={100}
               value={form.prDailyLimit}
@@ -2223,8 +2222,7 @@ function Settings({ settings, context, run, busy }: any) {
             label="Обновлять тикеты и PR каждые, минут"
             hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
           >
-            <input
-              type="number"
+            <NumberInput
               min="1"
               max="60"
               step="any"
@@ -2265,8 +2263,7 @@ function Settings({ settings, context, run, busy }: any) {
               label="Лимит времени ответа, секунд"
               hint="От 15 до 600 секунд. При превышении приложение отменяет запрос и завершает runtime."
             >
-              <input
-                type="number"
+              <NumberInput
                 min="15"
                 max="600"
                 value={form.llmTimeoutSeconds}
@@ -2279,8 +2276,7 @@ function Settings({ settings, context, run, busy }: any) {
               label="Максимум вызовов инструментов на запрос"
               hint="Прерывает повторяющиеся циклы чтения данных или создания черновиков."
             >
-              <input
-                type="number"
+              <NumberInput
                 min="1"
                 max="100"
                 value={form.llmMaxToolCalls}
@@ -2292,8 +2288,7 @@ function Settings({ settings, context, run, busy }: any) {
             label="Порог входных + выходных токенов чата на запрос"
             hint="От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит."
           >
-            <input
-              type="number"
+            <NumberInput
               min="1000"
               max="1000000"
               value={form.llmMaxTokens}
@@ -2307,7 +2302,7 @@ function Settings({ settings, context, run, busy }: any) {
             <label className="checkbox-row"><input type="checkbox" checked={form.assistantCodeAccess ?? true} onChange={event => set("assistantCodeAccess", event.target.checked)} />Разрешить ассистенту читать и искать код репозитория</label>
             <p className="muted">Только чтение локально загруженных веток текущего проекта. Ассистент не изменяет файлы и не запускает загрузку из Azure.</p>
             <Field label="Ожидание подготовки Git, секунд" hint="До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.">
-              <input className="assistant-code-wait" type="number" min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
+              <NumberInput className="assistant-code-wait"  min="0" max="120" step="1" disabled={form.assistantCodeAccess === false} value={form.assistantCodeWaitSeconds ?? 20} onChange={event => set("assistantCodeWaitSeconds", Number(event.target.value))} />
             </Field>
           </div>
         </section>
@@ -2365,13 +2360,13 @@ function Settings({ settings, context, run, busy }: any) {
           <div className="settings-group">
             <h3>Лимиты ревью</h3>
             <Field label="Лимит времени ответа ревью, секунд" hint="От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.">
-              <input type="number" min="15" max="86400" step="1" value={form.reviewTimeoutSeconds ?? 600} onChange={event => set("reviewTimeoutSeconds", Number(event.target.value))} />
+              <NumberInput min="15" max="86400" step="1" value={form.reviewTimeoutSeconds ?? 600} onChange={event => set("reviewTimeoutSeconds", Number(event.target.value))} />
             </Field>
           <Field label="Лимит токенов ревью по умолчанию" hint="Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.">
-            <input type="number" min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
+            <NumberInput min="1000" max="100000000" step="1" value={form.reviewMaxTokens ?? 1000000} onChange={event => set("reviewMaxTokens", Number(event.target.value))} />
           </Field>
             <Field label="Максимум вызовов инструментов на ревью" hint="От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.">
-              <input type="number" min="1" max="1000" step="1" value={form.reviewMaxToolCalls ?? 30} onChange={event => set("reviewMaxToolCalls", Number(event.target.value))} />
+              <NumberInput min="1" max="1000" step="1" value={form.reviewMaxToolCalls ?? 30} onChange={event => set("reviewMaxToolCalls", Number(event.target.value))} />
             </Field>
           </div>
         </section>

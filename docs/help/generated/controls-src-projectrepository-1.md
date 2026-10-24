@@ -9,79 +9,79 @@
 
 Git
 
-Источник: src/ProjectRepository.tsx:130.
+Источник: src/ProjectRepository.tsx:131.
 
 ### Элемент
 
 Pull request
 
-Источник: src/ProjectRepository.tsx:131.
+Источник: src/ProjectRepository.tsx:132.
 
 ### Элемент
 
 AI review
 
-Источник: src/ProjectRepository.tsx:132.
+Источник: src/ProjectRepository.tsx:133.
 
 ### Элемент
 
 Git-репозиторий
 
-Источник: src/ProjectRepository.tsx:135.
+Источник: src/ProjectRepository.tsx:136.
 
 ### Элемент
 
 Точное имя или ID репозитория
 
-Источник: src/ProjectRepository.tsx:137.
+Источник: src/ProjectRepository.tsx:138.
 
 ### Элемент
 
 Основная ветка для ассистента
 
-Источник: src/ProjectRepository.tsx:154.
+Источник: src/ProjectRepository.tsx:155.
 
 ### Элемент
 
 По умолчанию — основная ветка репозитория
 
-Источник: src/ProjectRepository.tsx:156.
+Источник: src/ProjectRepository.tsx:157.
 
 ### Элемент
 
 Глубина истории Git, коммитов
 
-Источник: src/ProjectRepository.tsx:159.
+Источник: src/ProjectRepository.tsx:160.
 
 ### Элемент
 
 Частота синхронизации Git, минуты
 
-Источник: src/ProjectRepository.tsx:164.
+Источник: src/ProjectRepository.tsx:165.
 
 ### Элемент
 
 Тайм-аут Git, минуты
 
-Источник: src/ProjectRepository.tsx:170.
+Источник: src/ProjectRepository.tsx:171.
 
 ### Элемент
 
 Исключить из ревью и View Diff (один путь или шаблон на строку)
 
-Источник: src/ProjectRepository.tsx:177.
+Источник: src/ProjectRepository.tsx:178.
 
 ### Элемент
 
 src/api/generated/ src/api/client.ts **/*.generated.ts
 
-Источник: src/ProjectRepository.tsx:179.
+Источник: src/ProjectRepository.tsx:180.
 
 ### Элемент
 
 Общий лимит diff для ревью и просмотра (символы)
 
-Источник: src/ProjectRepository.tsx:196.
+Источник: src/ProjectRepository.tsx:197.
 
 ### Элемент
 

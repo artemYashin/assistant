@@ -9,10 +9,10 @@
 
 Отмена
 
-Источник: src/PrReviewDialog.tsx:212.
+Источник: src/PrReviewDialog.tsx:213.
 
 ### Элемент
 
 Запускаю… / Запустить ревью
 
-Источник: src/PrReviewDialog.tsx:220.
+Источник: src/PrReviewDialog.tsx:221.

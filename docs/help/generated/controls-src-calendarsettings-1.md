@@ -9,19 +9,19 @@
 
 Часовой пояс
 
-Источник: src/CalendarSettings.tsx:28.
+Источник: src/CalendarSettings.tsx:29.
 
 ### Элемент
 
 Asia/Bishkek
 
-Источник: src/CalendarSettings.tsx:30.
+Источник: src/CalendarSettings.tsx:31.
 
 ### Элемент
 
 {…}: {…}
 
-Источник: src/CalendarSettings.tsx:83.
+Источник: src/CalendarSettings.tsx:84.
 
 ### Элемент
 

@@ -43,7 +43,7 @@ for (const path of paths) {
       if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
         const opening = ts.isJsxElement(node) ? node.openingElement : node;
         const tag = opening.tagName.getText(file);
-        if (/^(button|input|textarea|select|summary|label|option|a|Link|NavLink|Field|SingleSelect|MultiSelect|ConfirmButton|PrInfoPopup|TicketCopyButton|ModelOverride|VoiceBinding|ContextSaveButton)$/.test(tag)) {
+        if (/^(button|input|NumberInput|textarea|select|summary|label|option|a|Link|NavLink|Field|SingleSelect|MultiSelect|ConfirmButton|PrInfoPopup|TicketCopyButton|ModelOverride|VoiceBinding|ContextSaveButton)$/.test(tag)) {
           const attrs = opening.attributes.properties.filter(ts.isJsxAttribute)
             .filter(a => /^(aria-label|label|title|placeholder|message|confirmLabel|hint)$/.test(a.name.getText(file)))
             .map(a => a.initializer ? strings(a.initializer) : "").filter(Boolean);

@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { useState } from "react";
 import { Bell, CalendarDays } from "lucide-react";
 import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
@@ -80,8 +81,7 @@ export function CalendarSettings({
               {["Дней", "Часов", "Минут"].map((label, index) => (
                 <label key={label}>
                   {label}
-                  <input
-                    type="number"
+                  <NumberInput
                     min={0}
                     max={index === 0 ? 365 : index === 1 ? 23 : 59}
                     step={1}
@@ -166,8 +166,7 @@ export function CalendarSettings({
         <legend>Повторные уведомления</legend>
         <label>
           Общий интервал, минуты
-          <input
-            type="number"
+          <NumberInput
             min={1}
             max={10080}
             value={options.intervalMinutes}

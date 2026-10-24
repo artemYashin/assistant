@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { useId, useRef, useState } from "react";
 import {
   CalendarDays,
@@ -213,9 +214,8 @@ export function CalendarDateField({
             Время
           </span>
           <div>
-            <input
+            <NumberInput
               aria-label="Часы"
-              type="number"
               min={0}
               max={23}
               value={time.slice(0, 2)}
@@ -224,9 +224,8 @@ export function CalendarDateField({
               }
             />
             <b>:</b>
-            <input
+            <NumberInput
               aria-label="Минуты"
-              type="number"
               min={0}
               max={59}
               value={time.slice(3)}

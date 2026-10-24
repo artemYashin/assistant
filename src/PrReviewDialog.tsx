@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { requestFieldDictation } from "./FieldDictation.js";
 import { ModelOverride } from "./ModelOverride.js";
 import { useEffect, useId, useRef, useState } from "react";
@@ -111,7 +112,7 @@ export function PrReviewDialog({
         />
         </div>
         <label className="review-token-limit">Максимум токенов на ревью
-          <input type="number" min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
+          <NumberInput min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
         </label>
         <div className="review-parameter-hints">
         <p className="muted">

@@ -9,4 +9,4 @@
 
 Использовать общую настройку
 
-Источник: src/ReminderLeadFields.tsx:19.
+Источник: src/ReminderLeadFields.tsx:20.

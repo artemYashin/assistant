@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { GitBranch, GitPullRequest, Sparkles, Download } from "lucide-react";
 import { PrReviewerPicker, type ReviewerPerson } from "./PrReviewerPicker.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
@@ -158,18 +159,18 @@ export function ProjectRepository({
         <div className="repository-fetch-field">
           <label htmlFor="repository-fetch-2">Глубина истории Git, коммитов</label>
           <p id="repository-fetch-2-description" className="muted">По умолчанию 1. Значение 0 — полная история всех веток и теги: существующий кэш докачивается без повторного клонирования. 1–1000 — ограниченная история выбранной ветки. Полная история может ускорить переключение веток, но первая загрузка требует больше времени и места; LFS и подмодули не скачиваются. Применяется при следующем получении данных Git; сохранение настройки само по себе ничего не скачивает.</p>
-          <input id="repository-fetch-2" aria-describedby="repository-fetch-2-description" type="number" min={0} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
+          <NumberInput id="repository-fetch-2" aria-describedby="repository-fetch-2-description" min={0} max={1000} step={1} required value={fetchDepth} onChange={event => setFetchDepth(Number(event.target.value))} />
         </div>
         <div className="repository-fetch-field">
           <label htmlFor="repository-fetch-3">Частота синхронизации Git, минуты</label>
           <p id="repository-fetch-3-description" className="muted">По умолчанию 30 минут; 0 — только вручную. Фоновая проверка обновляет список веток и проверяет последнюю открытую ветку уже загруженного репозитория. Учитываются разрешённые часы и дни общей синхронизации. Открытый снимок обновляется кнопкой Pull.</p>
-          <input id="repository-fetch-3" aria-describedby="repository-fetch-3-description" type="number" min={0} max={1440} step={1} required value={codeSyncMinutes}
+          <NumberInput id="repository-fetch-3" aria-describedby="repository-fetch-3-description" min={0} max={1440} step={1} required value={codeSyncMinutes}
             onChange={event => setCodeSyncMinutes(Number(event.target.value))} />
         </div>
         <div className="repository-fetch-field">
           <label htmlFor="repository-fetch-4">Тайм-аут Git, минуты</label>
           <p id="repository-fetch-4-description" className="muted">От 1 до 120 минут, по умолчанию 5. Применяется к первому скачиванию, получению веток и Pull на странице кода. Сервис не выполняет push.</p>
-          <input id="repository-fetch-4" aria-describedby="repository-fetch-4-description" type="number" min={1} max={120} step={1} required value={fetchTimeoutMinutes}
+          <NumberInput id="repository-fetch-4" aria-describedby="repository-fetch-4-description" min={1} max={120} step={1} required value={fetchTimeoutMinutes}
             onChange={event => setFetchTimeoutMinutes(Number(event.target.value))} />
         </div>
       </div>
@@ -195,8 +196,7 @@ export function ProjectRepository({
       {tab === "review" && <div className="stack repository-tab-body">
       <label>
         Общий лимит diff для ревью и просмотра (символы)
-        <input
-          type="number"
+        <NumberInput
           min={40000}
           max={400000}
           step={1000}

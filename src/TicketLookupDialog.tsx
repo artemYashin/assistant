@@ -1,3 +1,4 @@
+import { NumberInput } from "./NumberInput.js";
 import { useChatToggleShortcut as useAppShortcut } from "./useChatToggleShortcut.js";
 import { useCallback } from "react";
 import { analysisChatReadyEvent } from "./chat-ticket-analysis.js";
@@ -182,9 +183,8 @@ export function TicketLookupDialog({ shortcutKey = "KeyT", shortcutPress = "sing
               >
                 <label>
                   Номер тикета
-                  <input
+                  <NumberInput
                     ref={input}
-                    type="number"
                     min={1}
                     step={1}
                     required

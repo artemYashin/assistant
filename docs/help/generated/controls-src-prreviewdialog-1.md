@@ -9,118 +9,118 @@
 
 Закрыть
 
-Источник: src/PrReviewDialog.tsx:58.
+Источник: src/PrReviewDialog.tsx:59.
 
 ### Элемент
 
 Частота вопросов
 
-Источник: src/PrReviewDialog.tsx:101.
+Источник: src/PrReviewDialog.tsx:102.
 
 ### Элемент
 
 Не задавать
 
-Источник: src/PrReviewDialog.tsx:107.
+Источник: src/PrReviewDialog.tsx:108.
 
 ### Элемент
 
 Средняя
 
-Источник: src/PrReviewDialog.tsx:108.
+Источник: src/PrReviewDialog.tsx:109.
 
 ### Элемент
 
 Высокая
 
-Источник: src/PrReviewDialog.tsx:109.
+Источник: src/PrReviewDialog.tsx:110.
 
 ### Элемент
 
 Максимум токенов на ревью
 
-Источник: src/PrReviewDialog.tsx:113.
+Источник: src/PrReviewDialog.tsx:114.
 
 ### Элемент
 
 Разрешить поиск и чтение кода репозитория · /
 
-Источник: src/PrReviewDialog.tsx:128.
+Источник: src/PrReviewDialog.tsx:129.
 
 ### Элемент
 
 Глубина изучения кода
 
-Источник: src/PrReviewDialog.tsx:135.
+Источник: src/PrReviewDialog.tsx:136.
 
 ### Элемент
 
 Низкая
 
-Источник: src/PrReviewDialog.tsx:136.
+Источник: src/PrReviewDialog.tsx:137.
 
 ### Элемент
 
 Ниже среднего
 
-Источник: src/PrReviewDialog.tsx:137.
+Источник: src/PrReviewDialog.tsx:138.
 
 ### Элемент
 
 Прочитать связанные тикеты, комментарии и локальные заметки
 
-Источник: src/PrReviewDialog.tsx:149.
+Источник: src/PrReviewDialog.tsx:150.
 
 ### Элемент
 
 Снять все / Выбрать все
 
-Источник: src/PrReviewDialog.tsx:161.
+Источник: src/PrReviewDialog.tsx:162.
 
 ### Элемент
 
 #
 
-Источник: src/PrReviewDialog.tsx:162.
+Источник: src/PrReviewDialog.tsx:163.
 
 ### Элемент
 
 Общая
 
-Источник: src/PrReviewDialog.tsx:178.
+Источник: src/PrReviewDialog.tsx:179.
 
 ### Элемент
 
 Заказчика
 
-Источник: src/PrReviewDialog.tsx:179.
+Источник: src/PrReviewDialog.tsx:180.
 
 ### Элемент
 
 Проекта
 
-Источник: src/PrReviewDialog.tsx:180.
+Источник: src/PrReviewDialog.tsx:181.
 
 ### Элемент
 
 Ревью проекта
 
-Источник: src/PrReviewDialog.tsx:181.
+Источник: src/PrReviewDialog.tsx:182.
 
 ### Элемент
 
 Комментарий ревьюеру
 
-Источник: src/PrReviewDialog.tsx:189.
+Источник: src/PrReviewDialog.tsx:190.
 
 ### Элемент
 
 Продиктовать комментарий
 
-Источник: src/PrReviewDialog.tsx:190.
+Источник: src/PrReviewDialog.tsx:191.
 
 ### Элемент
 
 Например: удели внимание обработке ошибок и обратной совместимости
 
-Источник: src/PrReviewDialog.tsx:191.
+Источник: src/PrReviewDialog.tsx:192.
