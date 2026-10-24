@@ -287,3 +287,24 @@ test("daily completions keep one stored reminder and recurrence search still fin
  assert.deepEqual(calendar.list()[0].completedDays,["2026-10-24","2026-10-25"]);
  assert.equal(searchCalendar(store,{statuses:["recurring"]}).reminders.length,1);
 });
+
+test("broad reminder types include every ordinary kind and combine with active status", t => {
+  const store = fixture(t), calendar = new Calendar(store);
+  calendar.save({title:"Undated",start:null,end:null});
+  calendar.save({title:"Dated",start:"2099-01-01T08:00:00Z",end:null});
+  calendar.save({title:"Event",start:"2099-01-01T08:00:00Z",end:"2099-01-01T09:00:00Z"});
+  calendar.save({title:"Daily",start:"2099-01-01T08:00:00Z",end:null,repeatDaily:true});
+  const rows = calendar.list();
+  rows.push({...rows[0],id:"ticket-open",title:"Deadline",ticket:{id:42,source:"test",deadline:"2099-01-01T08:00:00Z"}});
+  rows.push({...rows[4],id:"ticket-completed",completed:true});
+  t.mock.method(Calendar.prototype,"list",()=>rows);
+  assert.equal(searchCalendar(store,{types:["reminder"]}).total,4);
+  assert.equal(searchCalendar(store,{types:["ticket"]}).total,2);
+  assert.equal(searchCalendar(store,{types:["reminder","ticket"]}).total,6);
+  assert.equal(searchCalendar(store,{types:[]}).total,6);
+  const active = searchCalendar(store,{types:["ticket"],statuses:["active"]});
+  assert.equal(active.total,1);
+  assert.equal(active.reminders[0].type,"ticket");
+  assert.equal(searchCalendar(store,{types:["reminder"],kinds:["daily"]}).total,1);
+  assert.equal(searchCalendar(store,{types:["ticket"],statuses:["completed"]}).total,1);
+});

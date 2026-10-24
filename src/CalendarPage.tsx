@@ -1,6 +1,6 @@
 import { useCalendarClock } from "./useCalendarClock.js";
 import { MultiSelect } from "./MultiSelect.js";
-import { calendarMatchesStatus } from "../server/calendar-model.js";
+import { calendarMatchesStatus, calendarMatchesType } from "../server/calendar-model.js";
 import { FilterPanel } from "./TicketFilterPanel.js";
 import { parseCalendarFilters } from "./calendar-filters.js";
 import { sortReminders } from "./calendar-sort.js";
@@ -100,14 +100,15 @@ export function CalendarPage({
     [developers, setDevelopers] = useState<Developer[]>([]);
   const [error, setError] = useState(""),
     [status, setStatus] = useState(savedFilters.status),
+    [types, setTypes] = useState(savedFilters.types),
     [from, setFrom] = useState(savedFilters.from),
     [to, setTo] = useState(savedFilters.to),
     [query, setQuery] = useState(savedFilters.query);
   const [sort, setSort] = useState(savedFilters.sort);
   useEffect(() => {
-    try { localStorage.setItem("orbit.calendar.filters.current", JSON.stringify({clientFilter, projectFilter, status, query, from, to, sort})); }
+    try { localStorage.setItem("orbit.calendar.filters.current", JSON.stringify({clientFilter, projectFilter, status, types, query, from, to, sort})); }
     catch { /* Filtering still works when browser storage is unavailable. */ }
-  }, [clientFilter, projectFilter, status, query, from, to, sort]);
+  }, [clientFilter, projectFilter, status, types, query, from, to, sort]);
   const [draft, setDraft] = useState(fresh("", context)),
     [editing, setEditing] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -177,7 +178,7 @@ export function CalendarPage({
     if (item && loadedSelection.current !== selected) {
       loadedSelection.current = selected;
       setTab("reminders");
-      setStatus([]);
+      setStatus([]); setTypes([]);
       setFrom("");
       setTo("");
       setQuery("");
@@ -211,6 +212,7 @@ export function CalendarPage({
     : items.filter((item) => {
         return (
           calendarMatchesStatus(item, status, now) &&
+          calendarMatchesType(item, types) &&
           (!clientFilter.length || clientFilter.some(value => value === "none" ? !item.client : item.client === value.slice(1))) &&
           (!projectFilter.length || projectFilter.some(value => value === "none" ? !item.project : JSON.stringify([item.client, item.project]) === value)) &&
           item.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
@@ -457,7 +459,7 @@ export function CalendarPage({
                         className="calendar-more"
                         onClick={() => {
                           setTab("reminders");
-                          setStatus([]);
+                          setStatus([]); setTypes([]);
                           setFrom(day + "T00:00");
                           setTo(day + "T23:59");
                         }}
@@ -478,9 +480,9 @@ export function CalendarPage({
       ) : (
         <>
           <FilterPanel storageKey="orbit.calendar.filters" label="Наборы и фильтры напоминаний"
-            filters={{clientFilter, projectFilter, status, query, from, to, sort}}
+            filters={{clientFilter, projectFilter, status, types, query, from, to, sort}}
             parseFilters={parseCalendarFilters}
-            onApply={(next) => { setClientFilter(next.clientFilter); setProjectFilter(next.projectFilter); setStatus(next.status); setQuery(next.query); setFrom(next.from); setTo(next.to); setSort(next.sort); }}>
+            onApply={(next) => { setClientFilter(next.clientFilter); setProjectFilter(next.projectFilter); setStatus(next.status); setTypes(next.types); setQuery(next.query); setFrom(next.from); setTo(next.to); setSort(next.sort); }}>
           <div className="calendar-filters">
             <SingleSelect
               label="Сортировка"
@@ -492,6 +494,16 @@ export function CalendarPage({
                 { value: "asc", label: "По дате: сначала ранние" },
                 { value: "desc", label: "По дате: сначала поздние" },
                 { value: "title", label: "По названию" },
+              ]}
+            />
+            <MultiSelect
+              placeholder="Все типы"
+              label="Тип"
+              value={types}
+              onChange={setTypes}
+              options={[
+                { value: "reminder", label: "Напоминание" },
+                { value: "ticket", label: "Дедлайн тикета" },
               ]}
             />
             <MultiSelect
@@ -572,7 +584,7 @@ export function CalendarPage({
                 setSort("nearest");
                 setClientFilter([]);
                 setProjectFilter([]);
-                setStatus([]);
+                setStatus([]); setTypes([]);
                 setQuery("");
                 setFrom("");
                 setTo("");

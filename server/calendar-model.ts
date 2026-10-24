@@ -157,3 +157,8 @@ export function calendarMatchesStatus(item: CalendarItem, statuses: string[] = [
     calendarStatus(item, now) === status,
   );
 }
+
+/** Broad category shared by the calendar UI and assistant search. */
+export function calendarMatchesType(item: CalendarItem, types: string[] = []) {
+  return !types.length || types.includes(item.ticket ? "ticket" : "reminder");
+}

@@ -30,6 +30,7 @@ export function parseCalendarFilters(value: unknown) {
     status: selections("status").filter((value) =>
       ["active", ...Object.keys(statusLabels)].includes(value),
     ),
+    types: selections("types").filter(value => ["reminder", "ticket"].includes(value)),
     query: text("query"),
     from: date("from"),
     to: date("to"),

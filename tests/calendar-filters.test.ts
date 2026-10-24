@@ -12,6 +12,7 @@ test("reminder preset roundtrip keeps all selections and dates", () => {
     clientFilter: ["=Customer", "none"],
     projectFilter: ['["Customer","Project"]'],
     status: ["overdue", "completed"],
+    types: ["reminder", "ticket"],
     query: "deadline",
     from: "2026-10-24T12:30",
     to: "2026-10-26T15:00",
@@ -31,6 +32,8 @@ test("legacy single-select current filters and presets migrate without losing se
   assert.deepEqual(migrated.clientFilter, ["=Customer"]);
   assert.deepEqual(migrated.projectFilter, []);
   assert.deepEqual(migrated.status, ["recurring"]);
+  assert.deepEqual(migrated.types, []);
+  assert.deepEqual(parseCalendarFilters({types:["ticket", "invalid", "ticket"]}).types, ["ticket"]);
   assert.deepEqual(
     parseCalendarFilters({
       status: "bogus",
