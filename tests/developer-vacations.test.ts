@@ -396,9 +396,10 @@ test("chat developer search filters vacation status and preserves old unfiltered
     none = add("No leave"),
     foreign = add("Foreign", { client: "Other", project: "Other" });
   const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   setDeveloperVacation(store, future.id, {
-    start: "2099-01-01",
-    end: "2099-01-05",
+    start: tomorrow,
+    end: tomorrow,
   });
   setDeveloperVacation(store, foreign.id, {
     start: "2099-01-01",
@@ -430,8 +431,15 @@ test("chat developer search filters vacation status and preserves old unfiltered
   }
   assert.equal(
     (await read({ vacationStatus: "upcoming" })).developers[0].returnDate,
-    "2099-01-06",
+    new Date(Date.parse(tomorrow + "T12:00:00Z") + 86400000).toISOString().slice(0, 10),
   );
+  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 0 } });
+  assert.equal((await read({ vacationStatus: "upcoming" })).developers.length, 0);
+  assert.equal((await read({})).developers.length, 4);
+  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 1440 } });
+  setDeveloperVacation(store, future.id, { start: "2099-01-01", end: "2099-01-05" });
+  assert.equal((await read({ vacationStatus: "upcoming" })).developers.length, 0);
+  assert.equal((await read({})).developers.length, 4);
   setDeveloperVacation(store, future.id, null);
   assert.equal(
     (await read({ vacationStatus: "upcoming" })).developers.length,

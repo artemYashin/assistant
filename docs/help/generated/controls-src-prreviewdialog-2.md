@@ -7,12 +7,18 @@
 
 ### Элемент
 
+Например: удели внимание обработке ошибок и обратной совместимости
+
+Источник: src/PrReviewDialog.tsx:202.
+
+### Элемент
+
 Отмена
 
-Источник: src/PrReviewDialog.tsx:213.
+Источник: src/PrReviewDialog.tsx:223.
 
 ### Элемент
 
 Запускаю… / Запустить ревью
 
-Источник: src/PrReviewDialog.tsx:221.
+Источник: src/PrReviewDialog.tsx:231.

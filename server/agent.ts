@@ -436,7 +436,7 @@ export class Agent {
     const timeoutMessage = review
       ? "Достигнут лимит времени ревью. Изменить его можно в Настройки → Code Review → Лимиты ревью → «Лимит времени ответа ревью, секунд»."
       : "Достигнут лимит времени запроса. Изменить его можно в Настройки → AI Assistant → Общие настройки → «Лимит времени ответа, секунд».";
-    const toolLimit = review ? settings.reviewMaxToolCalls : settings.llmMaxToolCalls;
+    const toolLimit = review ? reviewActions?.maxToolCalls ?? settings.reviewMaxToolCalls : settings.llmMaxToolCalls;
     const previousToolCalls = review && reviewActions?.reviewId ? ledger.reviewToolCalls(reviewActions.reviewId) : 0;
     const tokenLimit = review ? reviewActions?.maxTokens ?? settings.reviewMaxTokens : settings.llmMaxTokens;
     const tokenLimitMessage = review
@@ -881,7 +881,7 @@ export class Agent {
             if (stopReason) return false;
             if (previousToolCalls + toolCalls >= toolLimit) {
               ledger.toolTrace(id, toolName || "unknown", {}, false, "limited");
-              cancel(review ? "Достигнут лимит вызовов инструментов на ревью. Увеличьте его в настройках Code Review для продолжения." : "Достигнут лимит вызовов инструментов.", "limited");
+              cancel(review ? "Достигнут лимит вызовов инструментов на ревью. Для нового запуска увеличьте «Максимум инструментов на ревью» в окне запуска. Значение по умолчанию задаётся в настройках Code Review." : "Достигнут лимит вызовов инструментов.", "limited");
               return false;
             }
             toolCalls++;

@@ -9,11 +9,13 @@ import { api } from "./api.js";
 export function PrReviewDialog({
   pr,
   defaultMaxTokens = 1_000_000,
+  defaultMaxToolCalls = 30,
   onClose,
   onStarted,
 }: {
   pr: any;
   defaultMaxTokens?: number;
+  defaultMaxToolCalls?: number;
   onClose: () => void;
   onStarted: () => void;
 }) {
@@ -36,6 +38,7 @@ export function PrReviewDialog({
   const [readCode, setReadCode] = useState(true);
   const [codeDepth, setCodeDepth] = useState("below_medium");
   const [maxTokens, setMaxTokens] = useState(defaultMaxTokens);
+  const [maxToolCalls, setMaxToolCalls] = useState(defaultMaxToolCalls);
   const [tickets] = useState<{ id: number; title?: string }[]>(() => (pr.tickets || []).filter((ticket: { disabled?: boolean }) => !ticket.disabled));
   const [readTickets, setReadTickets] = useState(() => tickets.length > 0);
   const [ticketIds, setTicketIds] = useState<number[]>(() => (pr.tickets || []).filter((ticket: { disabled?: boolean }) => !ticket.disabled).map((ticket: { id: number }) => ticket.id));
@@ -84,6 +87,7 @@ export function PrReviewDialog({
                 readCode,
                 codeDepth,
                 maxTokens,
+                maxToolCalls,
                 reviewerComment,
               },
               restart: pr.review_status === "completed",
@@ -111,9 +115,15 @@ export function PrReviewDialog({
           ]}
         />
         </div>
+        <div className="review-run-limits">
         <label className="review-token-limit">Максимум токенов на ревью
           <NumberInput min={1000} max={100000000} step={1} required disabled={busy} value={maxTokens || ""} onChange={event => setMaxTokens(Number(event.target.value))} />
         </label>
+        <label className="review-token-limit">Максимум инструментов на ревью
+          <NumberInput min={1} max={1000} step={1} required disabled={busy} value={maxToolCalls || ""} onChange={event => setMaxToolCalls(Number(event.target.value))} />
+        </label>
+        </div>
+        <small className="muted">Количество вызовов инструментов за всё ревью, включая продолжения после вопросов. Лимиты в этой форме действуют только на этот запуск.</small>
         <div className="review-parameter-hints">
         <p className="muted">
           {frequency === "none"

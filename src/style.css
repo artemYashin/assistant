@@ -9204,8 +9204,10 @@ main:has(> .repository-page) > .main-footer { flex-shrink: 0; margin-top: 8px; p
 .pr-review-dialog .review-question-field { margin: 0; gap: 5px; font-size: 12px; }
 .pr-review-dialog .review-question-field small { font-size: 11px; }
 @media (max-width: 520px) { .review-settings-row { grid-template-columns: 1fr; } }
-.review-token-limit { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; font-size: 12px; }
-.review-token-limit input { width: 150px; padding: 6px 8px; }
+.review-run-limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.review-run-limits .review-token-limit { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin: 8px 0 4px; font-size: 12px; }
+@media (max-width: 520px) { .review-run-limits { grid-template-columns: 1fr; } }
+.review-run-limits .review-token-limit input { width: 100%; padding: 6px 8px; }
 .pr-review-dialog .review-code-option { margin-bottom: 8px; }
 .pr-local-source { display: inline-flex; align-items: center; gap: 5px; align-self: flex-end; padding: 4px 7px; font-size: 11px; line-height: 1.3; border: 1px solid #d3dde9; border-radius: 6px; color: #62748b; background: #f0f4f8; }
 .pr-local-source.is-ready, .pr-local-source.is-loading { color: #2c649c; background: #edf5ff; border-color: #c4dbf3; }

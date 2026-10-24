@@ -1130,6 +1130,27 @@ test("review tool limit is independent from chat and cumulative across continuat
   assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
 });
 
+test("per-run review tool override is cumulative and does not change global limits", async t => {
+  const store = fixture(t);
+  assert.equal(store.settings().reviewMaxToolCalls, 30);
+  store.set("settings", { ...store.settings(), llmMaxToolCalls: 1, reviewMaxToolCalls: 50 });
+  let turn = 0;
+  const { agent } = fakeAgent(store, async (_session, config) => {
+    if (++turn === 1) {
+      for (let i = 0; i < 2; i++) assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "allow");
+      return { data: { content: "First review step" } };
+    }
+    assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "deny");
+    return new Promise(() => {});
+  });
+  await agent.chat("Review", context, true, { reviewId: "tool-limit-review", maxToolCalls: 2 });
+  assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
+  await assert.rejects(agent.chat("Continue", context, true, { reviewId: "tool-limit-review", maxToolCalls: 2 }), /лимит вызовов инструментов на ревью/);
+  assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
+  assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
+  assert.equal(store.settings().reviewMaxToolCalls, 50);
+});
+
 test("review debug retains only latest PR traces, preserves continuations and isolates chat and projects", t => {
   const store = fixture(t), ledger = new UsageLedger(store);
   store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)").run(context.client, context.project);

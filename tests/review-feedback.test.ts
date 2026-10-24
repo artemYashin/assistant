@@ -55,6 +55,7 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
     azureUrl: "https://ado.test/org",
     azureProject: "P",
     reviewMaxTokens: 1500000,
+    reviewMaxToolCalls: 47,
   });
   store.setSecret("azure.pat", "pat");
   store.setSecret("github.token", "token");
@@ -84,6 +85,7 @@ test("review answers are all-or-nothing, enqueue once and reject changed PR vers
   const review = service.requestReview(monitor, "repo", 1);
   const options = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(review) as any).options);
   assert.equal(options.maxTokens, 1500000);
+  assert.equal(options.maxToolCalls, 47);
   assert.equal(options.readCode, true);
   store.db
     .prepare("UPDATE pr_reviews SET status='awaiting_answers' WHERE id=?")
@@ -182,4 +184,14 @@ test("review does not call the model when source changes while preparing context
   assert.equal(detailCalls, 2);
   assert.equal(modelCalls, 0);
   assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "outdated");
+});
+
+test("per-review tool limits validate without changing legacy options", () => {
+  assert.equal(reviewOptionsSchema.parse({}).maxToolCalls, undefined);
+  for (const maxToolCalls of [1, 1000]) {
+    assert.equal(reviewOptionsSchema.parse({ maxToolCalls }).maxToolCalls, maxToolCalls);
+  }
+  for (const maxToolCalls of [0, -1, 1001, 1.5, "30", null]) {
+    assert.throws(() => reviewOptionsSchema.parse({ maxToolCalls }));
+  }
 });

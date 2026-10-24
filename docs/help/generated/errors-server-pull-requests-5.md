@@ -99,16 +99,16 @@ Pull request недоступен для подготовки ветки.
 
 Соберите все вопросы в один вызов
 
-Источник: server/pull-requests.ts:1803.
+Источник: server/pull-requests.ts:1804.
 
 ### Сообщение
 
 Слишком много вопросов для выбранного режима
 
-Источник: server/pull-requests.ts:1811.
+Источник: server/pull-requests.ts:1812.
 
 ### Сообщение
 
 Ошибка подготовки или выполнения ревью. Автоповтор отключён.
 
-Источник: server/pull-requests.ts:1849.
+Источник: server/pull-requests.ts:1850.

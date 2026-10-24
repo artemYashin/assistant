@@ -354,6 +354,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
       {reviewing && (
         <PrReviewDialog
           defaultMaxTokens={settings.reviewMaxTokens ?? 1_000_000}
+          defaultMaxToolCalls={settings.reviewMaxToolCalls ?? 30}
           pr={
             prs.find(
               (p) =>

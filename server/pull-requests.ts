@@ -1504,7 +1504,7 @@ export class PullRequests {
     options?: Partial<ReviewOptions>,
     restart = false,
   ) {
-    const reviewOptions = reviewOptionsSchema.parse({ ...options, maxTokens: options?.maxTokens ?? this.store.settings().reviewMaxTokens });
+    const reviewOptions = reviewOptionsSchema.parse({ ...options, maxToolCalls: options?.maxToolCalls ?? this.store.settings().reviewMaxToolCalls, maxTokens: options?.maxTokens ?? this.store.settings().reviewMaxTokens });
     reviewOptions.model ||= this.store.settings().reviewModel || this.store.settings().model;
     const m = this.monitors().find((m) => m.id === monitor);
     const p = this.store.db
@@ -1596,7 +1596,7 @@ export class PullRequests {
     try {
       const m = this.monitors().find((m) => m.id === job.monitor)!;
       const savedOptions = JSON.parse(job.options || "{}");
-      const options = reviewOptionsSchema.parse({ ...savedOptions, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
+      const options = reviewOptionsSchema.parse({ ...savedOptions, maxToolCalls: savedOptions.maxToolCalls ?? this.store.settings().reviewMaxToolCalls, maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens });
       this.store.db
         .prepare(
           "UPDATE pr_reviews SET status=?,started_at=? WHERE id=?",
@@ -1792,6 +1792,7 @@ export class PullRequests {
           readCode: options.readCode,
           codeDepth: options.codeDepth,
           maxTokens: options.maxTokens,
+          maxToolCalls: options.maxToolCalls,
           sourceRevision: job.head,
           branch: String(detail.sourceRefName || "").replace(/^refs\/heads\//, ""),
           continuationPrompt: `Continue the same PR review using the existing diff and previously read memory/code in this session. Updated questions and answers: ${JSON.stringify(answers)}. Reviewer comment: ${options.reviewerComment}`,

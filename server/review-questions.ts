@@ -25,6 +25,7 @@ export const reviewOptionsSchema = z
     ticketIds: z.array(z.number().int().positive().safe()).max(20).optional(),
     readCode: z.boolean().default(true),
     codeDepth: z.enum(["low", "below_medium", "medium", "high"]).default("below_medium"),
+    maxToolCalls: z.number().int().min(1).max(1000).optional(),
     maxTokens: z.number().int().min(1000).max(100_000_000).default(1_000_000),
     memoryScopes: z.array(z.enum(["general", "client", "project", "project_review"])).max(4).default(["general", "client", "project", "project_review"]),
     reviewerComment: z.string().trim().max(4000).default(""),
@@ -59,6 +60,7 @@ export type ReviewActions = {
   ticketEvidence?: TicketCitationEvidence;
   codeDepth?: ReviewOptions["codeDepth"];
   maxTokens?: number;
+  maxToolCalls?: number;
   branch?: string;
   sourceRevision?: string;
   continuationPrompt?: string;

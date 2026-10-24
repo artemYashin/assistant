@@ -696,6 +696,7 @@ test("review options persist and disable questions without fetching tickets", as
     readCode: true,
     codeDepth: "below_medium",
     maxTokens: 1000000,
+    maxToolCalls: 30,
     memoryScopes: ["general", "client", "project", "project_review"],
   });
   await service.reviewNext();
@@ -703,6 +704,7 @@ test("review options persist and disable questions without fetching tickets", as
   assert.equal(calls[0][3].askQuestions, undefined);
   assert.equal(calls[0][3].questionFrequency, "none");
   assert.equal(calls[0][3].codeDepth, "below_medium");
+  assert.equal(calls[0][3].maxToolCalls, 30);
 });
 
 test("review receives requirements, comments and source-scoped local notes before calling model", async (t) => {
@@ -1754,3 +1756,23 @@ test("permanent binary-file exclusions do not defeat the diff cache", async (t) 
   assert.deepEqual(await f.service.viewDiff(m.id,"repo",1),first);
   assert.equal(reads,0);
 });
+
+for (const legacy of [false, true]) {
+  test(`review tool budget ${legacy ? "reads legacy saved options" : "preserves per-run override after settings change"}`, async t => {
+    const { store, service, calls } = fixture(t);
+    mock(t, [pr()]);
+    await service.sync();
+    const monitor = service.monitors()[0].id;
+    const id = service.requestReview(monitor, "repo", 1, { readTickets: false, questionFrequency: "none", maxToolCalls: 7 });
+    const options = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options);
+    assert.equal(options.maxToolCalls, 7);
+    if (legacy) {
+      delete options.maxToolCalls;
+      store.db.prepare("UPDATE pr_reviews SET options=? WHERE id=?").run(JSON.stringify(options), id);
+    }
+    store.set("settings", { ...store.settings(), reviewMaxToolCalls: 43 });
+    await service.reviewNext();
+    assert.equal(calls[0][3].maxToolCalls, legacy ? 43 : 7);
+    assert.equal(store.settings().reviewMaxToolCalls, 43);
+  });
+}
