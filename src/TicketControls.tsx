@@ -2,8 +2,8 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { useEffect, useRef, useState } from "react";
-import { developerOnVacation, nextVacationDay } from "./developer-vacation.js";
-import { Pencil, Palmtree, X } from "lucide-react";
+import { developerOnVacation, developerVacationStatus, nextVacationDay } from "./developer-vacation.js";
+import { Pencil, Palmtree, CalendarClock, X } from "lucide-react";
 import { api } from "./api.js";
 export function StatusBadge({
   state,
@@ -162,6 +162,12 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
                     <small className="local-developer-vacation">
                       <Palmtree size={13} aria-hidden="true" />
                       В отпуске · Возвращение {nextVacationDay(p.vacationEnd).split("-").reverse().join(".")}
+                    </small>
+                  )}
+                  {developerVacationStatus(p, now) === "upcoming" && (
+                    <small className="local-developer-vacation">
+                      <CalendarClock size={13} aria-hidden="true" />
+                      Скоро в отпуск · Уход {p.vacationStart.split("-").reverse().join(".")} · Возвращение {nextVacationDay(p.vacationEnd).split("-").reverse().join(".")}
                     </small>
                   )}
                   {p.active === 0 && <small>Убран из справочника</small>}

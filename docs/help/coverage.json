@@ -168,7 +168,7 @@
     "src/TicketColorLegend.tsx": "1606c90687ccf6746ab767b7d8b5e90c6a12d7973eb9cff6fc2c24b543d9c84d",
     "src/TicketColumns.tsx": "21381b266147057bb46e7475ebbe0871229462224768c8498936f6a090397bac",
     "src/TicketCommentForm.tsx": "cfef138bf0fe15d2771941b549c918bba65ff50560ed9f4e9796a93a9cee49f1",
-    "src/TicketControls.tsx": "0b6f5fc390fd1e9d5c30a83bf68bdbabd73cf89e214dacb5352c4e94af3e8a8f",
+    "src/TicketControls.tsx": "056620b8b99ec5d27bb9f148cdc10852489bd6b7077cc8dcec716f5776a98672",
     "src/TicketDataRow.tsx": "9ed3873ecbd71b1572ae1a966500700005f981f86ef95a46143f43c0a54aaa0e",
     "src/TicketFilterPanel.tsx": "24b67afcb0468c3834083a76ef07cc7c36a82d2841421df0cbacc868970c3fd2",
     "src/TicketFilterPresets.tsx": "b700822534f968d94edaaa060899da5e27d8959e1eb2cc4d1cf872d7ded30e71",

@@ -27,28 +27,28 @@
 
 Загрузка… / Сохранить поручение
 
-Источник: src/TicketControls.tsx:180.
+Источник: src/TicketControls.tsx:186.
 
 ### Элемент
 
 Изменить статус тикета #{…} · Изменить статус в Azure DevOps
 
-Источник: src/TicketControls.tsx:272.
+Источник: src/TicketControls.tsx:278.
 
 ### Элемент
 
 Закрыть выбор статуса
 
-Источник: src/TicketControls.tsx:292.
+Источник: src/TicketControls.tsx:298.
 
 ### Элемент
 
 Новый статус
 
-Источник: src/TicketControls.tsx:306.
+Источник: src/TicketControls.tsx:312.
 
 ### Элемент
 
 Загрузка… / Изменить статус
 
-Источник: src/TicketControls.tsx:318.
+Источник: src/TicketControls.tsx:324.
