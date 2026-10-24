@@ -1,3 +1,4 @@
+import { UpdatesPage } from "./UpdatesPage.js";
 import { NumberInput } from "./NumberInput.js";
 import { CalendarPage } from "./CalendarPage.js";
 import { CalendarSettings } from "./CalendarSettings.js";
@@ -519,7 +520,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
       ),
     );
   const heading =
-    page === "code" ? "Код репозитория" : page === "settings"
+    page === "updates" ? "Что нового" : page === "code" ? "Код репозитория" : page === "settings"
       ? "Настройки"
       : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return (
@@ -595,6 +596,16 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             />
             <span className="sidebar-text">Настройки</span>
           </Link>
+          <Link
+            to={pagePaths.updates}
+            title="Что нового"
+            aria-label="Что нового"
+            aria-current={page === "updates" ? "page" : undefined}
+            className={page === "updates" ? "active" : ""}
+          >
+            <Sparkles size={19} className="sidebar-icon sidebar-icon-updates" />
+            <span className="sidebar-text">Что нового</span>
+          </Link>
           <button
             title="Выйти"
             aria-label="Выйти"
@@ -664,6 +675,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                 {notice}
               </div>
             )}
+            {page === "updates" && <UpdatesPage />}
             {page === "calendar" && settings && <CalendarPage settings={settings} context={context} />}
             {page === "code" && <CodeBrowserPage key={JSON.stringify([context, refresh, settings?.azureUrl, settings?.azureProject])} context={context} />}
             {page === "overview" && (

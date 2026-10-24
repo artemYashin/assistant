@@ -31,3 +31,25 @@ review help article and tests/review-progress.test.ts in the same change.
 When changing tools available to either agent, update docs/help/articles/chat-agent-tools.md
 and docs/help/articles/review-agent-tools.md as applicable. Keep shared implementations;
 chat and review have independent Agent instances, cancellation and session state.
+
+# Release notes and versioning
+
+Before every push containing changes to application logic or capabilities:
+1. Update `src/releases.json` in Russian with concise user-facing release notes.
+   Explain changed behaviour, not implementation details. Include features,
+   behavioural fixes, tools, defaults, limits, persistence and notification logic.
+   Exclude cosmetic-only tweaks, formatting and internal refactors without a
+   behaviour change. Do not include secrets or private user/project information.
+2. Add one newest-first release for the forthcoming push (combine related work
+   into that release). Never rewrite releases that have already been pushed.
+   Record the actual release date in YYYY-MM-DD using the user's timezone.
+3. Increment MAJOR.MINOR.PATCH: MAJOR for substantial incompatible changes,
+   MINOR for compatible new capabilities, PATCH for behavioural fixes. Reset
+   lower components on a higher increment. Before 1.0 use the same intent;
+   do not bump major for every small new feature. Cosmetic-only changes do not
+   require a new release/version.
+4. Keep the newest release version, package.json and both root version entries
+   in package-lock.json identical. Run `npm run check` before pushing.
+5. Continue updating authored help articles in the same change. Release notes
+   do not replace help documentation. The sidebar «Что нового» renders the
+   bundled release history; it is not an updater or a database migration.

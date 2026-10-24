@@ -8,6 +8,7 @@ export const pagePaths = {
   approvals: "/approvals",
   memory: "/memory",
   settings: "/settings",
+  updates: "/updates",
   usage: "/usage",
   pullrequests: "/pull-requests",
 } as const;
