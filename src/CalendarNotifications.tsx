@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "./InitialsAvatar.js";
 import { DailyCompletionButton } from "./DailyCompletionButton.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -28,6 +29,34 @@ function ReminderToast({
   onDismiss: (id: string) => void;
   onOpen: (item: CalendarItem) => void;
 }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => setNow(Date.now()), [items]);
+  // Refresh at actual status boundaries, independently of API polling/batch delivery.
+  useEffect(() => {
+    const refresh = () => setNow(Date.now());
+    const current = Date.now();
+    const future = items
+      .flatMap((item) => [item.start, item.end, item.ticket?.deadline])
+      .filter((value): value is string => !!value)
+      .map((value) => Date.parse(value))
+      .filter((time) => time > now);
+    const next = future.length ? Math.min(...future) : null;
+    const timer =
+      next === null
+        ? undefined
+        : window.setTimeout(
+            refresh,
+            Math.min(2147483647, Math.max(1, next - current)),
+          );
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [items, now]);
+  const instant = new Date(now).toISOString();
   const ref = useRef<HTMLDivElement>(null);
   const [host] = useState(() => document.createElement("div"));
   useEffect(() => {
@@ -108,10 +137,13 @@ function ReminderToast({
                 <span
                   className={
                     "calendar-state " +
-                    calendarStatus({ ...item, repeatDaily: false })
+                    calendarStatus({ ...item, repeatDaily: false }, instant)
                   }
                 >
-                  {calendarStatusLabel({ ...item, repeatDaily: false })}
+                  {calendarStatusLabel(
+                    { ...item, repeatDaily: false },
+                    instant,
+                  )}
                 </span>
                 {item.ticket && (
                   <span className="calendar-ticket-badge">
@@ -128,16 +160,24 @@ function ReminderToast({
               </small>
               {item.ticket && (
                 <small className="calendar-toast-people">
-                  {item.developerIds.length
-                    ? "Поручено: " +
-                      item.developerIds
-                        .map(
-                          (id) =>
-                            developers.find((d) => d.id === id)?.name ||
-                            "Недоступный разработчик",
-                        )
-                        .join(", ")
-                    : "Локальные разработчики не назначены"}
+                  {item.developerIds.length ? (
+                    <>
+                      <span>Поручено:</span>
+                      {item.developerIds.map((id) => {
+                        const name =
+                          developers.find((d) => d.id === id)?.name ||
+                          "Недоступный разработчик";
+                        return (
+                          <span className="calendar-toast-person" key={id}>
+                            <InitialsAvatar name={name} />
+                            <span>{name}</span>
+                          </span>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    "Локальные разработчики не назначены"
+                  )}
                 </small>
               )}
             </button>

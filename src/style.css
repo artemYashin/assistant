@@ -10152,3 +10152,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-lead-fields input { width: 100%; min-width: 0; }
 .calendar-toast-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 5px; }
 .calendar-ticket-badge { display: inline-flex; align-items: center; border: 1px solid #b9d6f6; border-radius: 6px; padding: 2px 7px; background: #edf5ff; color: #28629a; font-size: 11px; line-height: 1.4; }
+.calendar-toast-people { display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px; }
+.calendar-toast-person { display:inline-flex;align-items:center;gap:5px;max-width:100%; }
+.calendar-toast-person > span:last-child { min-width:0;overflow-wrap:anywhere; }
+.calendar-toast-person .initials-avatar { flex:0 0 20px;width:20px;height:20px;min-width:20px;min-height:20px;font-size:9px; }
