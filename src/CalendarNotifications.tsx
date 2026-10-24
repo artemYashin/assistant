@@ -36,7 +36,7 @@ function ReminderToast({
     const refresh = () => setNow(Date.now());
     const current = Date.now();
     const future = items
-      .flatMap((item) => [item.start, item.end, item.ticket?.deadline])
+      .flatMap((item) => [item.start, item.end, item.ticket?.deadline, item.warningStart])
       .filter((value): value is string => !!value)
       .map((value) => Date.parse(value))
       .filter((time) => time > now);

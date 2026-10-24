@@ -39,8 +39,6 @@ export function setTicketDeadline(
   })();
 }
 export function syncTicketDeadlines(store: Store) {
-  const lead =
-    store.settings().calendarNotifications.ticketDeadlineLeadMinutes * 60000;
   const rows = store.db
     .prepare(
       "SELECT d.*,t.title,e.lead_minutes,e.title AS saved_title,e.start AS saved_start,e.developers AS saved_developers FROM ticket_deadlines d JOIN calendar_events e ON e.id=d.event_id LEFT JOIN tickets t ON t.source=d.source AND t.id=d.id",
@@ -58,7 +56,7 @@ export function syncTicketDeadlines(store: Store) {
         (assigned.all(row.source, row.id) as { developer_id: string }[]).map(d => d.developer_id),
       );
       const title = `Дедлайн #${row.id}: ${row.title || "тикет"}`;
-      const start = new Date(Date.parse(row.deadline) - (row.lead_minutes == null ? lead : row.lead_minutes * 60000)).toISOString();
+      const start = new Date(row.deadline).toISOString();
       if (title !== row.saved_title || start !== row.saved_start || developers !== row.saved_developers)
         update.run(
           title,

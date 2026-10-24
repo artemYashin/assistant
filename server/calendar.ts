@@ -12,6 +12,8 @@ export class Calendar {
   constructor(private store: Store) {}
   list(): CalendarItem[] {
     syncTicketDeadlines(this.store);
+    const ticketLead =
+      this.store.settings().calendarNotifications.ticketDeadlineLeadMinutes;
     return (
       this.store.db
         .prepare(
@@ -28,6 +30,11 @@ export class Calendar {
             },
           }
         : {}),
+      warningStart: r.ticket_id
+        ? new Date(
+            Date.parse(r.deadline) - (r.lead_minutes ?? ticketLead) * 60000,
+          ).toISOString()
+        : undefined,
       leadMinutes: r.lead_minutes ?? null,
       completedDays: JSON.parse(r.completed_days || "[]"),
       repeatDaily: !!r.repeat_daily,
@@ -245,7 +252,9 @@ export class Calendar {
         ).toISOString();
         if (!item.repeatDaily)
           return !item.start ||
-            item.start <= (item.ticket ? instant : threshold)
+            (item.ticket
+              ? item.warningStart! <= instant
+              : item.start <= threshold)
             ? [item]
             : [];
         const zone = item.repeatZone || "UTC";

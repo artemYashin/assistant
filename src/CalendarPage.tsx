@@ -1,3 +1,4 @@
+import { sortReminders } from "./calendar-sort.js";
 import { ReminderLeadFields } from "./ReminderLeadFields.js";
 import {
   occurrencesOnDay,
@@ -81,6 +82,7 @@ export function CalendarPage({
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [query, setQuery] = useState("");
+  const [sort, setSort] = useState("nearest");
   const [draft, setDraft] = useState(fresh("", context)),
     [editing, setEditing] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -447,6 +449,18 @@ export function CalendarPage({
         <>
           <div className="calendar-filters">
             <SingleSelect
+              label="Сортировка"
+              value={sort}
+              onChange={setSort}
+              active={sort !== "nearest"}
+              options={[
+                { value: "nearest", label: "По ближайшей дате" },
+                { value: "asc", label: "По дате: сначала ранние" },
+                { value: "desc", label: "По дате: сначала поздние" },
+                { value: "title", label: "По названию" },
+              ]}
+            />
+            <SingleSelect
               label="Состояние"
               value={status}
               onChange={setStatus}
@@ -543,7 +557,7 @@ export function CalendarPage({
           )}
           {rangeError && <p className="error">{rangeError}</p>}
           <div className="calendar-reminders">
-            {filtered.map((item) => (
+            {sortReminders(filtered, sort, now).map((item) => (
               <article
                 id={"event-" + item.id}
                 key={item.id}
@@ -571,12 +585,13 @@ export function CalendarPage({
                 </p>
                 <p className="calendar-inline muted">
                   <Clock size={15} />
-                  {item.ticket ? "Предупреждение: " : ""}
+                  {item.ticket ? "Дедлайн: " : ""}
                   {eventTime(item.start, item.end, zone)}
                   {item.ticket && (
                     <span>
                       {" "}
-                      · Дедлайн: {eventTime(item.ticket.deadline, null, zone)}
+                      · Предупреждать с:{" "}
+                      {eventTime(item.warningStart || null, null, zone)}
                     </span>
                   )}
                 </p>
@@ -785,7 +800,7 @@ export function CalendarPage({
               zone={zone}
               label={
                 currentItem?.ticket
-                  ? "Начало предупреждения"
+                  ? "Дедлайн тикета"
                   : "Начало · необязательно"
               }
               value={draft.start}

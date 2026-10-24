@@ -128,6 +128,7 @@ export function searchCalendar(store: Store, input: unknown) {
       status: calendarStatus(item, now),
       completed: item.completed,
       start: item.start,
+      warningStart: item.warningStart,
       end: item.end,
       leadMinutes: item.leadMinutes ?? null,
       effectiveLeadMinutes:

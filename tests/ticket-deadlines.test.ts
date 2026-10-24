@@ -37,11 +37,12 @@ test("deadline lifecycle is separate from completion and Azure; survives edits, 
     saveTicketMetadata(store, 42, source, context, { localDeadline });
   save(due);
   const item = cal.list()[0];
-  assert.equal(item.start, "2026-11-09T12:00:00.000Z");
+  assert.equal(item.start, due);
+  assert.equal(item.warningStart, "2026-11-09T12:00:00.000Z");
   assert.equal(item.end, null);
   assert.equal(item.ticket?.id, 42);
   assert.equal(cal.notifications(new Date("2026-11-09T11:59:00Z")).length, 0);
-  assert.equal(cal.notifications(new Date(item.start!)).length, 1);
+  assert.equal(cal.notifications(new Date(item.warningStart!)).length, 1);
   assert.equal(calendarStatus(item, "2026-11-09T13:00:00Z"), "ongoing");
   assert.equal(calendarStatus(item, due), "overdue");
   cal.complete(item.id);
@@ -64,7 +65,8 @@ test("deadline lifecycle is separate from completion and Azure; survives edits, 
       ticketDeadlineLeadMinutes: 300,
     },
   });
-  assert.equal(cal.list()[0].start, "2026-11-11T07:00:00.000Z");
+  assert.equal(cal.list()[0].start, "2026-11-11T12:00:00.000Z");
+  assert.equal(cal.list()[0].warningStart, "2026-11-11T07:00:00.000Z");
   assert.throws(
     () => cal.save({ ...item, title: "other" }, item.id),
     /карточке тикета/,
@@ -259,13 +261,15 @@ test("ticket warning override survives deadline edits and restores global defaul
   saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due });
   const id = cal.list()[0].id;
   cal.setLead(id, 10);
-  assert.equal(cal.list()[0].start, "2026-11-10T11:50:00.000Z");
+  assert.equal(cal.list()[0].start, due);
+  assert.equal(cal.list()[0].warningStart, "2026-11-10T11:50:00.000Z");
   assert.equal(cal.notifications(new Date("2026-11-10T11:49:00Z")).length, 0);
   assert.equal(cal.notifications(new Date("2026-11-10T11:50:00Z")).length, 1);
   saveTicketMetadata(store, 42, store.source(), context, { localDeadline: "2026-11-11T12:00:00Z" });
   assert.equal(cal.list()[0].leadMinutes, 10);
   cal.setLead(id, null);
-  assert.equal(cal.list()[0].start, "2026-11-10T12:00:00.000Z");
+  assert.equal(cal.list()[0].start, "2026-11-11T12:00:00.000Z");
+  assert.equal(cal.list()[0].warningStart, "2026-11-10T12:00:00.000Z");
 });
 
 
@@ -302,4 +306,19 @@ test("deadline badge distinguishes warning start from deadline and ignores stale
   assert.equal(calendarStatus({ ...yesterday, kind: "event", end: "2026-10-26T00:00:00Z" }, "2026-10-24T06:00:00Z"), "overdue");
   assert.equal(calendarStatus({ ...yesterday, start: null }, "2026-10-24T06:00:00Z"), "overdue");
   assert.equal(calendarStatusLabel({ ...yesterday, completed: true }, "2026-10-24T06:00:00Z"), "Напоминание завершено");
+});
+
+test("legacy deadline warning positions repair to actual deadline without losing completion or override", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due });
+  const id = cal.list()[0].id;
+  cal.setLead(id, 2040);
+  cal.complete(id);
+  store.db.prepare("UPDATE calendar_events SET start=? WHERE id=?").run("2026-11-09T02:00:00.000Z", id);
+  const restored = cal.list()[0];
+  assert.equal(restored.id, id);
+  assert.equal(restored.start, due);
+  assert.equal(restored.warningStart, "2026-11-09T02:00:00.000Z");
+  assert.equal(restored.leadMinutes,2040);
+  assert.equal(restored.completed,true);
 });

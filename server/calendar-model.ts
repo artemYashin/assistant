@@ -74,6 +74,7 @@ export const calendarInput = calendarDraftSchema.transform((v) => ({
       : ("reminder" as const),
 }));
 export type CalendarItem = z.infer<typeof calendarInput> & {
+  warningStart?: string;
   repeatZone?: string;
   occurrenceDay?: string;
   completedDays?: string[];
@@ -90,6 +91,7 @@ export function calendarStatus(
     | "completed"
     | "kind"
     | "ticket"
+    | "warningStart"
     | "repeatDaily"
     | "repeatZone"
     | "completedDays"
@@ -101,7 +103,8 @@ export function calendarStatus(
   // A ticket's actual deadline wins over warning start, end or stale event kind.
   if (item.ticket) {
     if (Date.parse(item.ticket.deadline) <= Date.parse(now)) return "overdue";
-    return item.start && Date.parse(item.start) > Date.parse(now)
+    return (item.warningStart || item.start) &&
+      Date.parse(item.warningStart || item.start!) > Date.parse(now)
       ? "upcoming"
       : "ongoing";
   }
@@ -132,7 +135,6 @@ export function calendarOverlaps(
   return (
     (!to || Date.parse(item.start) <= Date.parse(to)) &&
     (!from ||
-      !!item.ticket ||
       (item.end ? Date.parse(item.end) : Date.parse(item.start)) >=
         Date.parse(from))
   );
