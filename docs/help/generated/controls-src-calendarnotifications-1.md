@@ -21,28 +21,28 @@
 
 Завершить напоминание? · «{…}». Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре. · Завершить
 
-Источник: src/CalendarNotifications.tsx:150.
+Источник: src/CalendarNotifications.tsx:146.
 
 ### Элемент
 
 Закрыть уведомление: {…} · Закрыть это уведомление
 
-Источник: src/CalendarNotifications.tsx:164.
+Источник: src/CalendarNotifications.tsx:160.
 
 ### Элемент
 
 Уведомления · Уведомления: {…}
 
-Источник: src/CalendarNotifications.tsx:307.
+Источник: src/CalendarNotifications.tsx:303.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarNotifications.tsx:325.
+Источник: src/CalendarNotifications.tsx:321.
 
 ### Элемент
 
 Ожидают подтверждения
 
-Источник: src/CalendarNotifications.tsx:335.
+Источник: src/CalendarNotifications.tsx:331.

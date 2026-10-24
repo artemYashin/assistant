@@ -35,15 +35,7 @@ import {
   type CalendarItem,
 } from "../server/calendar-model.js";
 import { eventTime, fromWall, wallTime } from "./calendar-time.js";
-export const statusLabels: Record<string, string> = {
-  recurring: "Ежедневно",
-  today_completed: "Сегодня завершено",
-  open: "Без срока",
-  upcoming: "Предстоит",
-  ongoing: "Идёт сейчас",
-  overdue: "Просрочено",
-  completed: "Завершено",
-};
+import { statusLabels, calendarStatusLabel } from "./calendar-status.js";
 export const calendarChanged = () =>
   window.dispatchEvent(new Event("orbit-calendar-changed"));
 type Developer = { id: string; name: string; client: string; project: string };
@@ -422,9 +414,7 @@ export function CalendarPage({
                         key={i.id + ":" + i.start}
                         className={"calendar-event " + calendarStatus(i, now)}
                         onClick={() => open(i)}
-                        title={
-                          i.title + " · " + statusLabels[calendarStatus(i, now)]
-                        }
+                        title={i.title + " · " + calendarStatusLabel(i, now)}
                       >
                         <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
                         {i.title}
@@ -564,7 +554,7 @@ export function CalendarPage({
                   <span
                     className={"calendar-state " + calendarStatus(item, now)}
                   >
-                    {statusLabels[calendarStatus(item, now)]}
+                    {calendarStatusLabel(item, now)}
                   </span>
                 </div>
                 <p className="calendar-scope-badge">
@@ -793,7 +783,11 @@ export function CalendarPage({
           <div className="calendar-date-fields">
             <CalendarDateField
               zone={zone}
-              label="Начало · необязательно"
+              label={
+                currentItem?.ticket
+                  ? "Начало предупреждения"
+                  : "Начало · необязательно"
+              }
               value={draft.start}
               onChange={(start) =>
                 setDraft({
@@ -919,7 +913,7 @@ export function CalendarPage({
             <span
               className={"calendar-state " + calendarStatus(currentItem, now)}
             >
-              {statusLabels[calendarStatus(currentItem, now)]}
+              {calendarStatusLabel(currentItem, now)}
             </span>
             <div className="calendar-inline">
               <DailyCompletionButton item={currentItem} onChange={reload} />

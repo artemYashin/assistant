@@ -8,7 +8,7 @@ import { api } from "./api.js";
 import { calendarStatus, type CalendarItem } from "../server/calendar-model.js";
 import { dailyOccurrence } from "../server/calendar-repeat.js";
 import { eventTime, wallTime } from "./calendar-time.js";
-import { statusLabels } from "./CalendarPage.js";
+import { calendarStatusLabel } from "./calendar-status.js";
 
 const notificationKey = (item: CalendarItem) =>
   `${item.id}:${item.occurrenceDay || ""}`;
@@ -111,11 +111,7 @@ function ReminderToast({
                     calendarStatus({ ...item, repeatDaily: false })
                   }
                 >
-                  {
-                    statusLabels[
-                      calendarStatus({ ...item, repeatDaily: false })
-                    ]
-                  }
+                  {calendarStatusLabel({ ...item, repeatDaily: false })}
                 </span>
                 {item.ticket && (
                   <span className="calendar-ticket-badge">
@@ -366,7 +362,7 @@ export function CalendarNotifications({
               <small>{eventTime(item.start, item.end, zone)}</small>
             </span>
             <span className={"calendar-state " + calendarStatus(item)}>
-              {statusLabels[calendarStatus(item)]}
+              {calendarStatusLabel(item)}
             </span>
           </button>
         ))}

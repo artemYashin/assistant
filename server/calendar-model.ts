@@ -98,6 +98,13 @@ export function calendarStatus(
   now = new Date().toISOString(),
 ) {
   if (item.completed) return "completed";
+  // A ticket's actual deadline wins over warning start, end or stale event kind.
+  if (item.ticket) {
+    if (Date.parse(item.ticket.deadline) <= Date.parse(now)) return "overdue";
+    return item.start && Date.parse(item.start) > Date.parse(now)
+      ? "upcoming"
+      : "ongoing";
+  }
   if (!item.start) return "open";
   if (item.repeatDaily)
     return !item.occurrenceDay &&
@@ -107,8 +114,6 @@ export function calendarStatus(
       ? "today_completed"
       : "recurring";
   if (Date.parse(item.start) > Date.parse(now)) return "upcoming";
-  if (item.ticket && Date.parse(item.ticket.deadline) > Date.parse(now))
-    return "ongoing";
   if (
     item.kind === "event" &&
     item.end &&

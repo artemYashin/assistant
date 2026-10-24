@@ -287,3 +287,19 @@ test("assistant batch deletion completes ticket deadline reminders and preserves
   assert.equal(ticketMetadata(store,42).notes,"Keep notes");
   assert.ok(store.db.prepare("SELECT 1 FROM tickets WHERE id=42").get());
 });
+
+test("deadline badge distinguishes warning start from deadline and ignores stale end dates", async () => {
+  const { calendarStatusLabel } = await import("../src/calendar-status.js");
+  const item = {
+    start: "2026-10-23T17:59:00Z", end: null, kind: "reminder" as const, completed: false,
+    ticket: { id: 42, source: "test", deadline: "2026-10-24T17:59:00Z" },
+  };
+  assert.equal(calendarStatusLabel(item, "2026-10-23T17:58:59Z"), "Дедлайн впереди");
+  assert.equal(calendarStatusLabel(item, "2026-10-24T06:00:00Z"), "Дедлайн приближается");
+  assert.equal(calendarStatusLabel(item, "2026-10-24T17:59:00Z"), "Дедлайн просрочен");
+  const yesterday = { ...item, ticket: { ...item.ticket, deadline: "2026-10-23T17:59:00Z" } };
+  assert.equal(calendarStatusLabel(yesterday, "2026-10-24T06:00:00Z"), "Дедлайн просрочен");
+  assert.equal(calendarStatus({ ...yesterday, kind: "event", end: "2026-10-26T00:00:00Z" }, "2026-10-24T06:00:00Z"), "overdue");
+  assert.equal(calendarStatus({ ...yesterday, start: null }, "2026-10-24T06:00:00Z"), "overdue");
+  assert.equal(calendarStatusLabel({ ...yesterday, completed: true }, "2026-10-24T06:00:00Z"), "Напоминание завершено");
+});
