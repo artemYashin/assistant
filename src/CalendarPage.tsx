@@ -77,6 +77,7 @@ export function CalendarPage({
   const zone = settings?.syncSchedule?.timeZone || "UTC";
   const clock = useCalendarClock();
   const today = wallTime(new Date(clock).toISOString(), zone).slice(0, 10);
+  const [nowRequest, setNowRequest] = useState(0);
   const [month, setMonth] = useState(today.slice(0, 7)),
     [view, setView] = useState("week"),
     [anchor, setAnchor] = useState(today),
@@ -329,6 +330,7 @@ export function CalendarPage({
                 <ChevronRight size={18} />
               </button>
             </div>
+            <div className="calendar-date-actions">
             <button
               className="secondary"
               onClick={() => {
@@ -338,6 +340,16 @@ export function CalendarPage({
             >
               Сегодня
             </button>
+            <button className="secondary" onClick={() => {
+              const date = wallTime(new Date().toISOString(), zone).slice(0, 10);
+              setMonth(date.slice(0, 7));
+              setAnchor(date);
+              if (view === "month") setView("day");
+              setNowRequest(value => value + 1);
+            }} title="Перейти к текущему времени">
+              <Clock size={15} aria-hidden="true" /> Сейчас
+            </button>
+            </div>
           </div>
           <div
             className="calendar-view-switch"
@@ -372,6 +384,7 @@ export function CalendarPage({
               anchor={anchor}
               mode={view}
               zone={zone}
+              nowRequest={nowRequest}
               onChange={(item) =>
                 mutate("/calendar/" + item.id, "PUT", {
                   title: item.title,

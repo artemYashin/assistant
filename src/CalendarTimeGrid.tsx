@@ -24,7 +24,9 @@ export function CalendarTimeGrid({
   onOpen,
   onCreate,
   onChange,
+  nowRequest = 0,
 }: {
+  nowRequest?: number;
   items: CalendarItem[];
   anchor: string;
   mode: string;
@@ -169,7 +171,21 @@ export function CalendarTimeGrid({
       0,
       hours * HOUR_HEIGHT - (scroller.clientHeight - headerHeight) / 2,
     );
-  }, [anchor, mode, zone]);
+    if (nowRequest) {
+      const index = days.indexOf(now.slice(0, 10));
+      const column =
+        scroller.querySelectorAll<HTMLElement>(".calendar-time-day")[index];
+      if (column) {
+        const gutter = 54;
+        scroller.scrollLeft = Math.max(
+          0,
+          column.offsetLeft -
+            gutter -
+            (scroller.clientWidth - gutter - column.offsetWidth) / 2,
+        );
+      }
+    }
+  }, [anchor, mode, zone, nowRequest]);
   return (
     <>
       {error && !pending && (
