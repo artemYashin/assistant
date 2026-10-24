@@ -177,7 +177,7 @@
     "src/TicketTrash.tsx": "973711ffd8a6c596bc43b1262e9fc91c3883bfc5c4bd9c9d7296660ce8a757bd",
     "src/Usage.tsx": "33f17f3391bc65fcecb0de9d7f8fa0a3a563803c4023f52d0440314b6b146f87",
     "src/VoiceBinding.tsx": "9de7980876beae6c7c63c252fca7788b4ce4a4843cd14320201f50a9870bd219",
-    "src/VoiceShortcut.tsx": "4f4a40ad3de4b90cc8ba05505bb7d00518d028f8baa18658c339b032300b9557",
+    "src/VoiceShortcut.tsx": "5ae8c45378d7be9bbd4a242f6361d553a73a7e78e378b25b5fa77946edfae67a",
     "src/activity-description.ts": "bfd08eb51534b97dd80d2f677cc0aade1e38805e92e595ec727975073aefa7ec",
     "src/api.ts": "fdcfad05c0d4d4c5a5615f5f7002aff7b4682a075a7de1fc61152ab9187942ed",
     "src/azure-ticket-link.ts": "b8210c213484d965f099ccce447902d6eb04decc08632a678fdc22360d5d7d5a",

@@ -131,16 +131,18 @@ export function VoiceShortcut({ enabled, onText, onBusy, title, onNewChat, onOpe
     let restoreTyping: (() => void) | undefined;
     let previousTarget: EventTarget | null = null;
     const keydown = (event: KeyboardEvent) => {
+      // The active recorder owns Enter regardless of focus or earlier preventDefault.
+      // Stop other window listeners too: there may be several mounted voice modes.
+      if (event.key === "Enter" && phaseRef.current !== "idle") {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat && !event.isComposing && event.keyCode !== 229 && phaseRef.current === "recording")
+          actions.current.finish(true);
+        return;
+      }
       if (event.defaultPrevented || (phaseRef.current === "idle" && document.querySelector(".voice-shortcut-dialog[open]"))) return;
       if (event.target instanceof Element && event.target.closest("[data-voice-binding]")) { restoreTyping = undefined; previousTarget = null; return; }
       if (event.key === "Escape" && phaseRef.current !== "idle") {
         event.preventDefault(); event.stopPropagation(); actions.current.cancel(); return;
-      }
-      if (event.key === "Enter" && phaseRef.current !== "idle" && !event.isComposing
-        && (event.target === document.body || (event.target instanceof Node && dialog.current?.contains(event.target)))) {
-        event.preventDefault(); event.stopPropagation();
-        if (!event.repeat && phaseRef.current === "recording") actions.current.finish(true);
-        return;
       }
       const binding = voiceBinding(event);
       const target = event.target instanceof Element ? event.target : null;
