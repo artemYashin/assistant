@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { diffFileLink } from "./diff-file-link.js";
 import { DiffFileTree } from "./DiffFileTree.js";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Copy, Check, Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
@@ -42,6 +44,7 @@ type CommentThread = {
 export function PrDiffDialog({
   pr,
   onClose,
+  onNavigate,
   commit,
   repositoryContext,
 }: {
@@ -49,6 +52,7 @@ export function PrDiffDialog({
   repositoryContext?: { client: string; project: string };
   commit?: string;
   onClose: () => void;
+  onNavigate?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [warningsOpen, setWarningsOpen] = useState(false);
@@ -115,6 +119,9 @@ export function PrDiffDialog({
     return () => { live = false; };
   }, [data, commit, pr?.monitor, pr?.repo, pr?.number, commentsVersion, repositoryContext]);
   const file = data?.files[selected];
+  const fileHref = diffFileLink(file, data, repositoryContext || data?.diagnostics || pr || {},
+    file?.after === "/dev/null" ? (data?.targetBranch || pr?.target_branch) : (data?.sourceBranch || pr?.source_branch));
+  const fileTitle = file && (file.before !== file.after ? `${file.before} → ${file.after}` : file.after);
   useEffect(() => {
     if (!lineTarget || selected !== lineTarget.file) return;
     const frame = requestAnimationFrame(() => {
@@ -253,8 +260,8 @@ export function PrDiffDialog({
               </div>
               <div className="pr-diff-toolbar-file">
                 <FileCode2 size={18} aria-hidden="true" />
-                <h3>{file && (file.before !== file.after
-                  ? `${file.before} → ${file.after}` : file.after)}</h3>
+                <h3>{fileHref ? <Link to={fileHref} onClick={() => { dialog.current?.close(); onClose(); onNavigate?.(); }}
+                  title={file?.after === "/dev/null" ? "Открыть полный файл до удаления в коде репозитория" : "Открыть полный файл в коде репозитория"}>{fileTitle}</Link> : fileTitle}</h3>
                 {file && <DiffCopy value={file.after === "/dev/null" ? file.before : file.after} label="Скопировать путь файла" />}
               </div>
               <DiffFileTree files={data.files} selected={selected} sizes={data.diagnostics?.includedFiles}

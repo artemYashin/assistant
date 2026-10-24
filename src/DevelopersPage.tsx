@@ -1,6 +1,6 @@
 import { CalendarDateField } from "./CalendarDateField.js";
 import { useCalendarClock } from "./useCalendarClock.js";
-import { nextVacationDay, developerOnVacation, developerVacationStatus } from "./developer-vacation.js";
+import { nextVacationDay, developerOnVacation, developerVacationStatus, developerVacationWarningStart } from "./developer-vacation.js";
 import {
   developerGroup,
   type DeveloperStatusGroups,
@@ -114,7 +114,11 @@ export function DevelopersPage({
   const clock = useCalendarClock();
   const onVacation = (person: Developer) =>
     developerOnVacation(person, new Date(clock).toISOString());
-  const upcomingVacation = (person: Developer) => developerVacationStatus(person, new Date(clock).toISOString()) === "upcoming";
+  const upcomingVacation = (person: Developer) => {
+    const warningStart = developerVacationWarningStart(person, settings.calendarNotifications?.vacationLeadMinutes ?? 1440);
+    return developerVacationStatus(person, new Date(clock).toISOString()) === "upcoming" &&
+      warningStart !== null && clock >= Date.parse(warningStart);
+  };
   const upcomingCount = matchingDevelopers.filter(upcomingVacation).length;
   const vacationCount = matchingDevelopers.filter(onVacation).length;
   const activeCount = matchingDevelopers.filter(

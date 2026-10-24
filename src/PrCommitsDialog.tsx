@@ -121,6 +121,7 @@ export function PrCommitsDialog({
       )}
       {selectedCommit && (
         <PrDiffDialog
+          onNavigate={onClose}
           pr={pr}
           commit={selectedCommit}
           onClose={() => setSelectedCommit("")}

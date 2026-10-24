@@ -9,4 +9,4 @@
 
 Не удалось скопировать
 
-Источник: src/PrDiffDialog.tsx:367.
+Источник: src/PrDiffDialog.tsx:374.

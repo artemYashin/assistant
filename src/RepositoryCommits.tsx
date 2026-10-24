@@ -41,6 +41,6 @@ export function RepositoryCommits({ context, branch, onClose }: {
     {error && <div role="alert"><p className="error">{error}</p><button className="secondary" onClick={() => setVersion(v => v + 1)}>Повторить</button></div>}
     {!busy && !error && !commits.length && <p>В этой ветке коммитов нет.</p>}
     {!busy && !error && next !== null && <button className="secondary" onClick={() => setOffset(next)}>Ещё 50 коммитов</button>}
-    {selected && <PrDiffDialog repositoryContext={context} commit={selected} onClose={() => setSelected(undefined)} />}
+    {selected && <PrDiffDialog onNavigate={onClose} repositoryContext={context} commit={selected} onClose={() => setSelected(undefined)} />}
   </dialog>;
 }
