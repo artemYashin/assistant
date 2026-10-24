@@ -88,7 +88,7 @@
     "src/CalendarDateField.tsx": "e2b9104859e9fc36d94a6000a68a6ae84aebffb0cce4b5d7375961590fe488bd",
     "src/CalendarNotifications.tsx": "3906412a1bfebac7aa7171f5502fb0f681d8ec29a9444cef5ab41abe45f2ced8",
     "src/CalendarPage.tsx": "57683e85a12ab56ece62b7d13053ab71dd059da872c4d8e9816f8c1c88fb5b4c",
-    "src/CalendarSettings.tsx": "be715b1d3a7112b5f17180ec12c034b7c7d681dfade84e8013795830b185e3da",
+    "src/CalendarSettings.tsx": "d4aad87a1f8f07be54d85703c01ecfb0a4d7637153039321480fc805728105d1",
     "src/CalendarTimeGrid.tsx": "ce33ddfd423b703f12a0a2cd1675a168eaa9b15ba710141f9852b41c97d3b1aa",
     "src/ChatCodeSnippet.tsx": "27e435411ae8bfd7160fa3abe27cf3d79624e6fefdf5f0026d9501c3d4869f7a",
     "src/ChatFiles.tsx": "cd6d0f3352539566863b0aac811baad45eb163522fc8575faa1ba2817f386955",

@@ -9,28 +9,28 @@
 
 Часовой пояс
 
-Источник: src/CalendarSettings.tsx:26.
+Источник: src/CalendarSettings.tsx:28.
 
 ### Элемент
 
 Asia/Bishkek
 
-Источник: src/CalendarSettings.tsx:28.
+Источник: src/CalendarSettings.tsx:30.
 
 ### Элемент
 
 Присылать уведомления из браузера
 
-Источник: src/CalendarSettings.tsx:56.
+Источник: src/CalendarSettings.tsx:58.
 
 ### Элемент
 
 Разрешение получено / Разрешить уведомления
 
-Источник: src/CalendarSettings.tsx:64.
+Источник: src/CalendarSettings.tsx:66.
 
 ### Элемент
 
 Интервал, минуты
 
-Источник: src/CalendarSettings.tsx:96.
+Источник: src/CalendarSettings.tsx:98.

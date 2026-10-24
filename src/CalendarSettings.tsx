@@ -20,9 +20,11 @@ export function CalendarSettings({
   }
   return (
     <>
-      <h2>
-        <CalendarDays size={20} /> Календарь
-      </h2>
+      <div className="section-heading">
+        <h2>
+          <CalendarDays size={20} /> Календарь
+        </h2>
+      </div>
       <label>
         Часовой пояс
         <input
