@@ -9,22 +9,22 @@
 
 Создать {…} в {…}:00
 
-Источник: src/CalendarTimeGrid.tsx:205.
+Источник: src/CalendarTimeGrid.tsx:215.
 
 ### Элемент
 
 {…} {…} · – /
 
-Источник: src/CalendarTimeGrid.tsx:221.
+Источник: src/CalendarTimeGrid.tsx:231.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarTimeGrid.tsx:303.
+Источник: src/CalendarTimeGrid.tsx:313.
 
 ### Элемент
 
 Сохраняю… / Подтвердить
 
-Источник: src/CalendarTimeGrid.tsx:311.
+Источник: src/CalendarTimeGrid.tsx:321.

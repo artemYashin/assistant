@@ -150,8 +150,18 @@ export function CalendarTimeGrid({
   }
   const today = wallTime(new Date().toISOString(), zone);
   useEffect(() => {
-    if (root.current) root.current.scrollTop = 8 * 52;
-  }, [anchor, mode]);
+    const scroller = root.current;
+    if (!scroller) return;
+    const now = wallTime(new Date().toISOString(), zone);
+    const hours = Number(now.slice(11, 13)) + Number(now.slice(14, 16)) / 60;
+    const headerHeight =
+      scroller.querySelector(".calendar-time-corner")?.getBoundingClientRect()
+        .height ?? 0;
+    scroller.scrollTop = Math.max(
+      0,
+      hours * 52 - (scroller.clientHeight - headerHeight) / 2,
+    );
+  }, [anchor, mode, zone]);
   return (
     <>
       {error && !pending && (
