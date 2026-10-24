@@ -33,16 +33,16 @@
 
 Уведомления · Уведомления: {…}
 
-Источник: src/CalendarNotifications.tsx:348.
+Источник: src/CalendarNotifications.tsx:350.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarNotifications.tsx:366.
+Источник: src/CalendarNotifications.tsx:368.
 
 ### Элемент
 
 Ожидают подтверждения
 
-Источник: src/CalendarNotifications.tsx:376.
+Источник: src/CalendarNotifications.tsx:378.

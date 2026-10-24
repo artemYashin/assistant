@@ -259,3 +259,20 @@ test("assistant saves selected weekdays and undated reminders directly", async t
   assert.equal(items.find(i=>i.id===general.id)!.kind,"general");
   assert.ok(new Calendar(store).notifications(new Date("2026-10-24T12:00:00Z")).some(i=>i.id===general.id));
 });
+
+test("assistant reminder in five minutes inherits one-hour warning and is eligible immediately", async t => {
+  const store = fixture(t);
+  const settings = store.rawSettings();
+  store.set("settings", {...settings, calendarNotifications: {...settings.calendarNotifications, reminderLeadMinutes: 60}});
+  const now = new Date();
+  const tool: any = calendarTools(store, () => {}).find(t => t.name === "save_calendar_reminder");
+  const result = await tool.handler({reminder:{title:"Five minutes",start:new Date(now.getTime()+300000).toISOString(),end:null}});
+  assert.equal(result.leadMinutes,null);
+  assert.equal(result.effectiveLeadMinutes,60);
+  assert.ok(Date.parse(result.warningStart) <= now.getTime());
+  const {notificationItems}=await import("../server/calendar-notifications.js");
+  assert.equal(notificationItems(new Calendar(store).list(),60,now).length,1);
+  const custom = await tool.handler({reminder:{title:"Only at start",start:new Date(now.getTime()+300000).toISOString(),end:null,leadMinutes:0}});
+  assert.equal(custom.effectiveLeadMinutes,0);
+  assert.equal(notificationItems(new Calendar(store).list(),60,now).length,1);
+});

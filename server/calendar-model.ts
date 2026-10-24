@@ -26,7 +26,7 @@ export const calendarDraftSchema = z
       .nullable()
       .optional()
       .describe(
-        "Individual advance warning in minutes; null or omitted uses calendar defaults. Applies to every daily occurrence.",
+        "Individual advance warning in minutes; null or omitted uses calendar defaults. On creation omit or use null unless the user explicitly requests a custom warning interval. A request to remind in five minutes specifies start, not leadMinutes. Applies to every daily occurrence.",
       ),
     repeatWeekdays: z
       .array(z.number().int().min(1).max(7))

@@ -238,9 +238,10 @@ export function CalendarNotifications({
   useEffect(() => {
     if (!settings) return;
     let alive = true,
-      running = false;
+      running = false,
+      pendingRefresh = false;
     const poll = async () => {
-      if (running) return;
+      if (running) { pendingRefresh = true; return; }
       running = true;
       try {
         const data = await api("/calendar");
@@ -327,6 +328,7 @@ export function CalendarNotifications({
         if (alive) setError(e.message);
       } finally {
         running = false;
+        if (alive && pendingRefresh) { pendingRefresh = false; void poll(); }
       }
     };
     poll();

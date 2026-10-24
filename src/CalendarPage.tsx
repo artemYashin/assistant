@@ -67,6 +67,10 @@ export function CalendarPage({
   settings: any;
   context: { client: string; project: string };
 }) {
+  const [savedFilters] = useState(() => {
+    try { return parseCalendarFilters(JSON.parse(localStorage.getItem("orbit.calendar.filters.current") || "null")); }
+    catch { return parseCalendarFilters(null); }
+  });
   const zone = settings?.syncSchedule?.timeZone || "UTC";
   const today = wallTime(new Date().toISOString(), zone).slice(0, 10);
   const [month, setMonth] = useState(today.slice(0, 7)),
@@ -75,17 +79,21 @@ export function CalendarPage({
     [contexts, setContexts] = useState<{ client: string; project: string }[]>(
       [],
     ),
-    [clientFilter, setClientFilter] = useState("all"),
-    [projectFilter, setProjectFilter] = useState("all"),
+    [clientFilter, setClientFilter] = useState(savedFilters.clientFilter),
+    [projectFilter, setProjectFilter] = useState(savedFilters.projectFilter),
     [tab, setTab] = useState("calendar");
   const [items, setItems] = useState<CalendarItem[]>([]),
     [developers, setDevelopers] = useState<Developer[]>([]);
   const [error, setError] = useState(""),
-    [status, setStatus] = useState("all"),
-    [from, setFrom] = useState(""),
-    [to, setTo] = useState(""),
-    [query, setQuery] = useState("");
-  const [sort, setSort] = useState("nearest");
+    [status, setStatus] = useState(savedFilters.status),
+    [from, setFrom] = useState(savedFilters.from),
+    [to, setTo] = useState(savedFilters.to),
+    [query, setQuery] = useState(savedFilters.query);
+  const [sort, setSort] = useState(savedFilters.sort);
+  useEffect(() => {
+    try { localStorage.setItem("orbit.calendar.filters.current", JSON.stringify({clientFilter, projectFilter, status, query, from, to, sort})); }
+    catch { /* Filtering still works when browser storage is unavailable. */ }
+  }, [clientFilter, projectFilter, status, query, from, to, sort]);
   const [draft, setDraft] = useState(fresh("", context)),
     [editing, setEditing] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
