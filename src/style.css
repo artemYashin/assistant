@@ -10053,3 +10053,11 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-hours { position:sticky;left:0;z-index:4; }
 .calendar-time-corner { left:0;z-index:6; }
 @media(max-height:850px) { .calendar-day {min-height:64px;} }
+
+.calendar-hours span { transform: translateY(-50%); }
+.calendar-hours span:first-child { transform: none; }
+.calendar-time-slot { margin: 0; min-height: 52px; max-height: 52px; }
+.calendar-time-event { touch-action: none; user-select: none; cursor: grab; }
+.calendar-time-event:active { cursor: grabbing; }
+.calendar-resize { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; }
+.calendar-resize::after { content: ""; position: absolute; bottom: 2px; left: 35%; right: 35%; border-top: 2px solid currentColor; opacity: .5; }

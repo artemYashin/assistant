@@ -333,6 +333,18 @@ export function CalendarPage({
               anchor={anchor}
               mode={view}
               zone={zone}
+              onChange={(item) =>
+                mutate("/calendar/" + item.id, "PUT", {
+                  title: item.title,
+                  description: item.description,
+                  scope: item.scope,
+                  client: item.client,
+                  project: item.project,
+                  start: item.start,
+                  end: item.end,
+                  developerIds: item.developerIds,
+                })
+              }
               onOpen={open}
               onCreate={(time) => open(undefined, "", time)}
             />

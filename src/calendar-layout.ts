@@ -1,5 +1,5 @@
 import type { CalendarItem } from "../server/calendar-model.js";
-import { wallTime } from "./calendar-time.js";
+import { fromWall, wallTime } from "./calendar-time.js";
 export function calendarWeekDays(anchor: string, mode: string) {
   const date = new Date(anchor + "T12:00:00Z");
   if (mode === "week")
@@ -53,4 +53,35 @@ export function calendarSegments(
   }
   finish();
   return segments;
+}
+
+// Shift wall-clock time in the configured zone; keep actual duration on moves.
+export function shiftCalendarItem(
+  item: CalendarItem,
+  minutes: number,
+  resize: boolean,
+  zone: string,
+): CalendarItem {
+  if (!item.start) throw new Error("У напоминания нет времени начала");
+  const base = resize
+    ? item.end || new Date(Date.parse(item.start) + 30 * 60000).toISOString()
+    : item.start;
+  const wall = new Date(wallTime(base, zone) + ":00Z");
+  wall.setUTCMinutes(wall.getUTCMinutes() + minutes);
+  const shifted = fromWall(wall.toISOString().slice(0, 16), zone);
+  if (resize) {
+    const end = new Date(
+      Math.max(Date.parse(shifted), Date.parse(item.start) + 15 * 60000),
+    ).toISOString();
+    return { ...item, end, kind: "event" };
+  }
+  return {
+    ...item,
+    start: shifted,
+    end: item.end
+      ? new Date(
+          Date.parse(shifted) + Date.parse(item.end) - Date.parse(item.start),
+        ).toISOString()
+      : null,
+  };
 }

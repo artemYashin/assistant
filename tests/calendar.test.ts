@@ -446,3 +446,49 @@ test("time grid clips multi-day events, assigns overlap lanes and uses a Monday 
     0,
   );
 });
+
+test("calendar gestures preserve duration and metadata, resize and respect timezone transitions", async () => {
+  const { shiftCalendarItem } = await import("../src/calendar-layout.js");
+  const item = {
+    ...calendarInput.parse({
+      title: "Gesture",
+      start: "2026-10-24T03:00:00Z",
+      end: "2026-10-24T04:00:00Z",
+    }),
+    id: "gesture",
+    completed: false,
+    createdAt: "2026-01-01T00:00:00Z",
+  };
+  const moved = shiftCalendarItem(item, 1470, false, "Asia/Bishkek");
+  assert.equal(moved.start, "2026-10-25T03:30:00.000Z");
+  assert.equal(moved.end, "2026-10-25T04:30:00.000Z");
+  assert.equal(moved.title, item.title);
+  assert.equal(
+    shiftCalendarItem(item, -200, true, "Asia/Bishkek").end,
+    "2026-10-24T03:15:00.000Z",
+  );
+  assert.equal(
+    shiftCalendarItem({ ...item, end: null }, 30, false, "Asia/Bishkek").end,
+    null,
+  );
+  assert.equal(
+    shiftCalendarItem({ ...item, end: null }, 30, true, "Asia/Bishkek").end,
+    "2026-10-24T04:00:00.000Z",
+  );
+  assert.throws(() =>
+    shiftCalendarItem(
+      { ...item, start: "2026-03-29T00:30:00Z" },
+      60,
+      false,
+      "Europe/Berlin",
+    ),
+  );
+  const dst = shiftCalendarItem(
+    { ...item, start: "2026-03-28T08:00:00Z", end: "2026-03-28T10:00:00Z" },
+    1440,
+    false,
+    "Europe/Berlin",
+  );
+  assert.equal(dst.start, "2026-03-29T07:00:00.000Z");
+  assert.equal(Date.parse(dst.end!) - Date.parse(dst.start!), 7200000);
+});
