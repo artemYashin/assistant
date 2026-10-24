@@ -45,7 +45,7 @@ test("ordinary finding headings and unbolded labels render cards without swallow
 test("recommended prompt example renders severity, problem and solution labels and a fenced snippet", async () => {
   const { REVIEW_POLICY } = await import("../server/review-questions.js");
   const { reviewLabelKind } = await import("../src/rehype-review-format.js");
-  const example = REVIEW_POLICY.slice(REVIEW_POLICY.indexOf("> ### Проблема: короткое название", REVIEW_POLICY.indexOf("Recommended Russian Markdown example")), REVIEW_POLICY.indexOf("Use actual verified values"));
+  const example = REVIEW_POLICY.slice(REVIEW_POLICY.indexOf("### Проблема: короткое название", REVIEW_POLICY.indexOf("Recommended Russian Markdown example")), REVIEW_POLICY.indexOf("Use actual verified values"));
   const pipeline = unified().use(remarkParse).use(remarkRehype).use(rehypeReviewFormat);
   const tree = await pipeline.run(pipeline.parse(example)) as Root;
   const serialized = JSON.stringify(tree);
@@ -56,4 +56,27 @@ test("recommended prompt example renders severity, problem and solution labels a
   assert.equal(reviewLabelKind("Проблема:"), "problem");
   assert.equal(reviewLabelKind("Предлагаемое решение:"), "solution");
   assert.match(REVIEW_POLICY, /Markdown even when Git\/code tools are enabled/);
+});
+
+test("review prompt avoids nested quotation markup and a ticket quote renders only once", async () => {
+  const { REVIEW_POLICY } = await import("../server/review-questions.js");
+  assert.match(REVIEW_POLICY, /Never nest blockquotes/);
+  assert.doesNotMatch(REVIEW_POLICY, /nested ticket quotes use >>|Prefix every line of that card/);
+  const pipeline = unified().use(remarkParse).use(remarkRehype).use(rehypeReviewFormat);
+  const markdown = "### Проблема: нарушено требование\n\n**Критичность: высокая**\n\n**Проблема:** данные не сохраняются.\n\n> Сохранять изменения автоматически.\n>\n> [Показать в тикете](https://example.test/ticket)\n\n**Предлагаемое решение:** сохранить изменения.\n\n### Улучшение: название\n\nОписание.";
+  const tree = await pipeline.run(pipeline.parse(markdown)) as Root;
+  let quotes = 0;
+  const visit = (node: any, insideQuote = false) => {
+    if (node.tagName === "blockquote") {
+      assert.equal(insideQuote, false, "citation must not be nested in another quote");
+      quotes++;
+      insideQuote = true;
+    }
+    for (const child of node.children || []) visit(child, insideQuote);
+  };
+  visit(tree);
+  assert.equal(quotes, 1);
+  assert.equal(reviewText(tree).split("Сохранять изменения автоматически.").length - 1, 1);
+  assert.match(JSON.stringify(tree), /https:\/\/example.test\/ticket/);
+  assert.equal(tree.children.filter((n: any) => n.tagName === "section").length, 2);
 });
