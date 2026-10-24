@@ -10030,7 +10030,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-scope-selects>.single-select { flex:1;min-width:0; }
 .calendar-scope-badge { display:flex;align-items:center;gap:5px;color:#687d89;font-size:11px;margin:8px 0; }
 .calendar-person { display:inline-flex;align-items:center;gap:6px; }
-.calendar-person .initials-avatar,.calendar-developers .initials-avatar { width:28px;height:28px;min-width:28px;font-size:10px; }
+.calendar-person .initials-avatar,.calendar-developers .initials-avatar { flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;font-size:10px; }
 .calendar-time-scroll { max-height:clamp(310px,calc(100dvh - 355px),590px);overflow:auto;border-top:1px solid #e1e8ee;position:relative;overscroll-behavior:auto; }
 .calendar-time-grid { display:grid;position:relative; }
 .calendar-time-grid.week { min-width:630px; }

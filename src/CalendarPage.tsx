@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
+  Ticket,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -131,6 +132,16 @@ export function CalendarPage({
       window.removeEventListener("orbit-calendar-changed", load);
     };
   }, []);
+  function openTicket(item: CalendarItem) {
+    if (!item.ticket) return;
+    dialog.current?.close();
+    window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
+      detail: {
+        source: item.ticket.source,
+        tickets: [{ id: item.ticket.id, title: item.title }],
+      },
+    }));
+  }
   function open(item?: CalendarItem, day = "", time?: string) {
     if (item?.repeatDaily) item = items.find((i) => i.id === item!.id) || item;
     setEditing(item?.id || null);
@@ -613,9 +624,14 @@ export function CalendarPage({
                   </p>
                 )}
                 <div className="calendar-inline calendar-reminder-actions">
+                  {item.ticket && (
+                    <button className="secondary" onClick={() => openTicket(item)}>
+                      <Ticket size={15} /> Открыть тикет
+                    </button>
+                  )}
                   <button className="secondary" onClick={() => open(item)}>
                     <Pencil size={15} />
-                    {item.ticket ? "Открыть" : "Изменить"}
+                    {item.ticket ? "Открыть напоминание" : "Изменить"}
                   </button>
                   <DailyCompletionButton item={item} onChange={reload} />
                   {!item.completed && (
@@ -691,22 +707,7 @@ export function CalendarPage({
             </p>
             <button
               className="secondary"
-              onClick={() => {
-                dialog.current?.close();
-                window.dispatchEvent(
-                  new CustomEvent("orbit-show-ticket-details", {
-                    detail: {
-                      source: currentItem.ticket!.source,
-                      tickets: [
-                        {
-                          id: currentItem.ticket!.id,
-                          title: currentItem.title,
-                        },
-                      ],
-                    },
-                  }),
-                );
-              }}
+              onClick={() => openTicket(currentItem)}
             >
               Открыть тикет
             </button>
