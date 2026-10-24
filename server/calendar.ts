@@ -1,3 +1,4 @@
+import { notificationItems } from "./calendar-notifications.js";
 import { z } from "zod";
 import { dailyOccurrence } from "./calendar-repeat.js";
 import { wallTime } from "./calendar-time.js";
@@ -239,44 +240,13 @@ export class Calendar {
       )
     )
       return [];
-    const instant = now.toISOString(),
-      cutoff = now.getTime() - options.intervalMinutes * 60000;
+    const cutoff = now.getTime() - options.intervalMinutes * 60000;
     return this.store.db.transaction(() => {
       // One persisted batch clock for every project, reminder and browser tab.
       const batchKey = "calendar.notifications.last-batch-at";
       const lastBatch = this.store.get<number | null>(batchKey, null);
       if (lastBatch !== null && lastBatch > cutoff) return [];
-      const due = this.list().flatMap((item) => {
-        if (item.completed) return [];
-        const threshold = new Date(
-          now.getTime() +
-            (item.leadMinutes ?? options.reminderLeadMinutes) * 60000,
-        ).toISOString();
-        if (!item.repeatDaily)
-          return !item.start ||
-            (item.ticket
-              ? item.warningStart! <= instant
-              : item.start <= threshold)
-            ? [item]
-            : [];
-        const zone = item.repeatZone || "UTC";
-        const firstDay = wallTime(instant, zone).slice(0, 10);
-        const lastDay = wallTime(threshold, zone).slice(0, 10);
-        const result: CalendarItem[] = [];
-        for (let day = firstDay; day <= lastDay;) {
-          const occurrence = dailyOccurrence(item, day);
-          if (
-            occurrence &&
-            !occurrence.completed &&
-            occurrence.start! <= threshold
-          )
-            result.push(occurrence);
-          day = new Date(Date.parse(day + "T12:00:00Z") + 86400000)
-            .toISOString()
-            .slice(0, 10);
-        }
-        return result;
-      });
+      const due = notificationItems(this.list(), options.reminderLeadMinutes, now);
       // An empty collection sends nothing and does not postpone a future batch.
       if (due.length) this.store.set(batchKey, now.getTime());
       return due;

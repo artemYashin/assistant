@@ -1,3 +1,4 @@
+import { notificationItems, notificationDue } from "../server/calendar-notifications.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { DailyCompletionButton } from "./DailyCompletionButton.js";
 import { useEffect, useRef, useState } from "react";
@@ -244,10 +245,10 @@ export function CalendarNotifications({
       try {
         const data = await api("/calendar");
         if (!alive) return;
-        const active = data.items.filter(
-          (i: CalendarItem) =>
-            !i.completed && calendarStatus(i) !== "today_completed",
-        ) as CalendarItem[];
+        const active = notificationItems(
+          data.items,
+          settings.calendarNotifications?.reminderLeadMinutes ?? 0,
+        );
         setItems(active);
         setDevelopers(data.developers);
         setToasts((previous) =>
@@ -266,7 +267,11 @@ export function CalendarNotifications({
                     ).slice(0, 10),
                 )
               : current;
-            return occurrence && !occurrence.completed ? [occurrence] : [];
+            return occurrence && notificationDue(
+              occurrence,
+              settings.calendarNotifications?.reminderLeadMinutes ?? 0,
+            )
+              ? [occurrence] : [];
           }),
         );
         setError("");
