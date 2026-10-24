@@ -9,118 +9,118 @@
 
 Создать
 
-Источник: src/CalendarPage.tsx:259.
+Источник: src/CalendarPage.tsx:261.
 
 ### Элемент
 
 Календарь
 
-Источник: src/CalendarPage.tsx:265.
+Источник: src/CalendarPage.tsx:267.
 
 ### Элемент
 
 Напоминания ·
 
-Источник: src/CalendarPage.tsx:272.
+Источник: src/CalendarPage.tsx:274.
 
 ### Элемент
 
 Предыдущий период
 
-Источник: src/CalendarPage.tsx:292.
+Источник: src/CalendarPage.tsx:294.
 
 ### Элемент
 
 Перейти к дате
 
-Источник: src/CalendarPage.tsx:308.
+Источник: src/CalendarPage.tsx:310.
 
 ### Элемент
 
 Следующий период
 
-Источник: src/CalendarPage.tsx:322.
+Источник: src/CalendarPage.tsx:324.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/CalendarPage.tsx:330.
+Источник: src/CalendarPage.tsx:332.
 
 ### Элемент
 
 Создать напоминание на {…} · Создать напоминание
 
-Источник: src/CalendarPage.tsx:411.
+Источник: src/CalendarPage.tsx:413.
 
 ### Элемент
 
 · ·
 
-Источник: src/CalendarPage.tsx:421.
+Источник: src/CalendarPage.tsx:423.
 
 ### Элемент
 
 Ещё
 
-Источник: src/CalendarPage.tsx:432.
+Источник: src/CalendarPage.tsx:434.
 
 ### Элемент
 
 Сортировка
 
-Источник: src/CalendarPage.tsx:461.
+Источник: src/CalendarPage.tsx:463.
 
 ### Элемент
 
 По ближайшей дате
 
-Источник: src/CalendarPage.tsx:467.
+Источник: src/CalendarPage.tsx:469.
 
 ### Элемент
 
 По дате: сначала ранние
 
-Источник: src/CalendarPage.tsx:468.
+Источник: src/CalendarPage.tsx:470.
 
 ### Элемент
 
 По дате: сначала поздние
 
-Источник: src/CalendarPage.tsx:469.
+Источник: src/CalendarPage.tsx:471.
 
 ### Элемент
 
 По названию
 
-Источник: src/CalendarPage.tsx:470.
+Источник: src/CalendarPage.tsx:472.
 
 ### Элемент
 
 Все состояния · Состояние
 
-Источник: src/CalendarPage.tsx:473.
+Источник: src/CalendarPage.tsx:475.
 
 ### Элемент
 
 Все заказчики · Заказчик
 
-Источник: src/CalendarPage.tsx:483.
+Источник: src/CalendarPage.tsx:485.
 
 ### Элемент
 
 Без заказчика
 
-Источник: src/CalendarPage.tsx:492.
+Источник: src/CalendarPage.tsx:494.
 
 ### Элемент
 
 Все проекты · Проект
 
-Источник: src/CalendarPage.tsx:498.
+Источник: src/CalendarPage.tsx:500.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/CalendarPage.tsx:504.
+Источник: src/CalendarPage.tsx:506.

@@ -1,3 +1,4 @@
+import { useCalendarClock } from "./useCalendarClock.js";
 import {
   useEffect,
   useRef,
@@ -152,7 +153,10 @@ export function CalendarTimeGrid({
     window.addEventListener("pointercancel", cancel);
     window.addEventListener("keydown", key);
   }
-  const today = wallTime(new Date().toISOString(), zone);
+  const clock = useCalendarClock();
+  const today = wallTime(new Date(clock).toISOString(), zone);
+  const currentMinute =
+    Number(today.slice(11, 13)) * 60 + Number(today.slice(14, 16));
   useEffect(() => {
     const scroller = root.current;
     if (!scroller) return;
@@ -233,7 +237,7 @@ export function CalendarTimeGrid({
           </div>
           {days.map((day, index) => (
             <div
-              className={`calendar-time-day${index % 2 ? " is-alternate-day" : ""}`}
+              className="calendar-time-day"
               key={day}
               style={{ gridRow: 2, gridColumn: index + 2 }}
             >
@@ -247,6 +251,22 @@ export function CalendarTimeGrid({
                   }
                 />
               ))}
+              {today.startsWith(day) && (
+                <div
+                  className="calendar-now-line"
+                  style={{ top: (currentMinute / 60) * HOUR_HEIGHT }}
+                >
+                  <span
+                    style={
+                      currentMinute === 0
+                        ? { transform: "translate(-50%, 0)" }
+                        : undefined
+                    }
+                  >
+                    Сейчас · {today.slice(11, 16)}
+                  </span>
+                </div>
+              )}
               {calendarSegments(
                 preview
                   ? items.map((i) => (i.id === preview.id ? preview : i))

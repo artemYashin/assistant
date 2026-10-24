@@ -1,3 +1,4 @@
+import { useCalendarClock } from "./useCalendarClock.js";
 import { MultiSelect } from "./MultiSelect.js";
 import { calendarMatchesStatus } from "../server/calendar-model.js";
 import { FilterPanel } from "./TicketFilterPanel.js";
@@ -74,7 +75,8 @@ export function CalendarPage({
     catch { return parseCalendarFilters(null); }
   });
   const zone = settings?.syncSchedule?.timeZone || "UTC";
-  const today = wallTime(new Date().toISOString(), zone).slice(0, 10);
+  const clock = useCalendarClock();
+  const today = wallTime(new Date(clock).toISOString(), zone).slice(0, 10);
   const [month, setMonth] = useState(today.slice(0, 7)),
     [view, setView] = useState("week"),
     [anchor, setAnchor] = useState(today),
@@ -406,7 +408,7 @@ export function CalendarPage({
                 return (
                   <div
                     key={day}
-                    className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : ""}`}
+                    className={`calendar-day ${day.slice(0, 7) !== month ? "outside" : ""} ${day === today ? "today" : day < today ? "is-past" : ""}`}
                   >
                     <button
                       aria-label={`Создать напоминание на ${day}`}
