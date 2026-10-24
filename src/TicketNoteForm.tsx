@@ -8,7 +8,9 @@ export function TicketNoteForm({
   onSaved,
   onClose,
   onBusy,
+  embedded = false,
 }: {
+  embedded?: boolean;
   ticket: any;
   onSaved: () => void;
   onClose: () => void;
@@ -40,6 +42,15 @@ export function TicketNoteForm({
       images.current.forEach((i) => URL.revokeObjectURL(i.preview));
     };
   }, [ticket.id, ticket.source]);
+  useEffect(() => {
+    if (text === original) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [text, original]);
   async function save() {
     if (!ready || busy) return;
     setBusy(true);
@@ -63,8 +74,12 @@ export function TicketNoteForm({
           },
         }),
       );
+      setText(saved.notes);
+      setOriginal(saved.notes);
+      images.current.forEach((i) => URL.revokeObjectURL(i.preview));
+      images.current = [];
       onSaved();
-      onClose();
+      if (!embedded) onClose();
     } catch (e: any) {
       setError(e.message + " Черновик остаётся в открытом окне.");
     } finally {
@@ -75,6 +90,7 @@ export function TicketNoteForm({
   return (
     <div className="ticket-note-form">
       <CommentEditor
+        notesOnly
         text={text}
         disabled={!ready || busy}
         onChange={setText}
@@ -122,14 +138,16 @@ export function TicketNoteForm({
         </p>
       )}
       <div className="card-actions">
-        <button
-          type="button"
-          className="secondary"
-          disabled={busy}
-          onClick={onClose}
-        >
-          Отмена
-        </button>
+        {!embedded && (
+          <button
+            type="button"
+            className="secondary"
+            disabled={busy}
+            onClick={onClose}
+          >
+            Отмена
+          </button>
+        )}
         <button
           type="button"
           className="primary"

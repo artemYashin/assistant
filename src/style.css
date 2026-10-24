@@ -10258,3 +10258,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .notes-tabs { display: flex; gap: 6px; padding: 5px; border: 1px solid #dae4ed; border-radius: 10px; background: #f0f5fa; width: fit-content; }
 .notes-tabs button { border: 0; border-radius: 7px; background: transparent; padding: 9px 14px; color: #526579; }
 .notes-tabs button[aria-selected="true"] { background: #fff; color: #245b89; box-shadow: 0 1px 4px #193c5d18; }
+.note-image-controls { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.note-image-controls button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; background: #fff; border: 1px solid #cbd6df; border-radius: 6px; color: #32694c; box-shadow: 0 1px 4px #0002; font-size: 20px; }
+.note-image-controls button:last-child { color: #ab3939; }
+.note-image-controls button:hover { background: #e6f3e8; }

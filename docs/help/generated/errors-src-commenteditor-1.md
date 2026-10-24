@@ -9,4 +9,4 @@
 
 https://orbit.invalid/comment-image/
 
-Источник: src/CommentEditor.tsx:448.
+Источник: src/CommentEditor.tsx:516.

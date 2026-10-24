@@ -2545,7 +2545,7 @@ function Assistant({
       void (async () => {
         try {
           let blob: Blob, uploadedId: string | undefined, name: string;
-          if (src.startsWith("blob:") || src.startsWith("data:image/")) {
+          if (src.startsWith("blob:") || src.startsWith("data:image/") || (()=>{ const u=new URL(src,window.location.href);return u.origin===window.location.origin && /^\/api\/(?:notes\/[0-9a-f-]+\/images\/[0-9a-f-]+|ticket-note-images\/[0-9a-f-]+)$/.test(u.pathname); })()) {
             const response=await fetch(src);
             if (!response.ok) throw new Error("Не удалось прочитать изображение.");
             blob=await response.blob();

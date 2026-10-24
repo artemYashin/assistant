@@ -21,19 +21,19 @@
 
 Новая заметка
 
-Источник: src/NotesPage.tsx:196.
+Источник: src/NotesPage.tsx:195.
 
 ### Элемент
 
 · Черновик /
 
-Источник: src/NotesPage.tsx:214.
+Источник: src/NotesPage.tsx:213.
 
 ### Элемент
 
 Название
 
-Источник: src/NotesPage.tsx:231.
+Источник: src/NotesPage.tsx:230.
 
 ### Элемент
 

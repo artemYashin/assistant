@@ -1,3 +1,4 @@
+import { ImageViewer } from "./ImagePreview.js";
 import { useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
@@ -17,6 +18,7 @@ type EditTarget = {
   label: string;
 };
 type Props = {
+  notesOnly?: boolean;
   text: string;
   disabled: boolean;
   onChange: (text: string) => void;
@@ -38,6 +40,10 @@ export function CommentEditor(props: Props) {
   const picker = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"markdown" | "editor" | "preview">("editor");
   const preview = mode === "preview";
+  const [viewImage, setViewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
   const rawInput = useRef<HTMLTextAreaElement>(null);
   const [target, setTarget] = useState<EditTarget | null>(null);
   const [editError, setEditError] = useState("");
@@ -48,12 +54,65 @@ export function CommentEditor(props: Props) {
       Markdown,
       Image.extend({
         addNodeView() {
-          return ({ node, getPos }) => {
+          return ({ node, getPos, editor: nodeEditor }) => {
             const dom = document.createElement("span");
             dom.className = "comment-inline-image";
             const img = document.createElement("img");
             img.src = latest.current.resolveImage(node.attrs.src);
             img.alt = node.attrs.alt || "";
+            if (latest.current.notesOnly) {
+              const controls = document.createElement("span");
+              controls.className = "note-image-controls";
+              const remove = document.createElement("button");
+              remove.type = "button";
+              remove.title = "Удалить изображение";
+              remove.setAttribute("aria-label", "Удалить изображение");
+              remove.textContent = "×";
+              remove.onmousedown = (e) => e.preventDefault();
+              remove.onclick = () => {
+                const from = getPos();
+                if (from !== undefined && !latest.current.disabled)
+                  nodeEditor
+                    .chain()
+                    .focus()
+                    .deleteRange({ from, to: from + node.nodeSize })
+                    .run();
+              };
+              const attach = document.createElement("button");
+              attach.type = "button";
+              attach.title = "Прикрепить изображение к чату";
+              attach.setAttribute("aria-label", attach.title);
+              attach.textContent = "✦";
+              attach.onmousedown = (e) => e.preventDefault();
+              attach.onclick = () =>
+                window.dispatchEvent(
+                  new CustomEvent("orbit:attach-image", {
+                    detail: { src: img.src },
+                  }),
+                );
+              img.style.cursor = "zoom-in";
+              img.tabIndex = 0;
+              img.setAttribute("role", "button");
+              img.setAttribute(
+                "aria-label",
+                "Открыть изображение · масштабирование",
+              );
+              img.onclick = () => setViewImage({ src: img.src, alt: img.alt });
+              img.onkeydown = (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setViewImage({ src: img.src, alt: img.alt });
+                }
+              };
+              controls.append(attach, remove);
+              dom.append(img, controls);
+              return {
+                dom,
+                stopEvent: (event) =>
+                  controls.contains(event.target as Node) ||
+                  event.target === img,
+              };
+            }
             const button = pencil();
             button.setAttribute("aria-label", "Редактировать изображение");
             button.title = "Редактировать изображение";
@@ -342,30 +401,39 @@ export function CommentEditor(props: Props) {
             <action.icon size={17} />
           </button>
         ))}
-        <div
-          className="comment-mode-switch"
-          role="group"
-          aria-label="Режим комментария"
-        >
-          {(
-            [
-              ["markdown", "Markdown"],
-              ["editor", "Редактор"],
-              ["preview", "Предпросмотр"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={mode === value}
-              disabled={!!target}
-              onClick={() => setMode(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!props.notesOnly && (
+          <div
+            className="comment-mode-switch"
+            role="group"
+            aria-label="Режим комментария"
+          >
+            {(
+              [
+                ["markdown", "Markdown"],
+                ["editor", "Редактор"],
+                ["preview", "Предпросмотр"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={mode === value}
+                disabled={!!target}
+                onClick={() => setMode(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+      {viewImage && (
+        <ImageViewer
+          src={viewImage.src}
+          alt={viewImage.alt}
+          onClose={() => setViewImage(null)}
+        />
+      )}
       <input
         ref={picker}
         type="file"

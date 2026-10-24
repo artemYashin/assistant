@@ -7,12 +7,12 @@
 
 ### Элемент
 
-#
+# · · /
 
-Источник: src/TicketNotesPage.tsx:48.
+Источник: src/TicketNotesPage.tsx:53.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/TicketNotesPage.tsx:74.
+Источник: src/TicketNotesPage.tsx:89.

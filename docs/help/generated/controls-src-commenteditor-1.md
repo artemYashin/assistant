@@ -9,34 +9,34 @@
 
 Markdown комментария · Напишите комментарий в Markdown…
 
-Источник: src/CommentEditor.tsx:392.
+Источник: src/CommentEditor.tsx:460.
 
 ### Элемент
 
 Описание изображения / Текст ссылки
 
-Источник: src/CommentEditor.tsx:438.
+Источник: src/CommentEditor.tsx:506.
 
 ### Элемент
 
 Адрес
 
-Источник: src/CommentEditor.tsx:449.
+Источник: src/CommentEditor.tsx:517.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/CommentEditor.tsx:460.
+Источник: src/CommentEditor.tsx:528.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CommentEditor.tsx:463.
+Источник: src/CommentEditor.tsx:531.
 
 ### Элемент
 
 Удалить · картинку / ссылку
 
-Источник: src/CommentEditor.tsx:466.
+Источник: src/CommentEditor.tsx:534.

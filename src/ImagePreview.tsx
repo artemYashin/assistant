@@ -89,7 +89,7 @@ export function ImagePreview({
     </>
   );
 }
-function ImageViewer({
+export function ImageViewer({
   src,
   alt,
   onClose,

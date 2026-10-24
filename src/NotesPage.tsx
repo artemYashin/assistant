@@ -50,14 +50,13 @@ export function NotesPage() {
           Заметки тикетов
         </button>
       </div>
-      {tab === "free" ? (
+      <div hidden={tab !== "free"}>
         <FreeNotesPage />
-      ) : (
-        <section className="panel notes-page">
-          <h1>Заметки тикетов</h1>
-          <TicketNotesPage />
-        </section>
-      )}
+      </div>
+      <section hidden={tab !== "tickets"} className="panel notes-page">
+        <h1>Заметки тикетов</h1>
+        <TicketNotesPage />
+      </section>
     </>
   );
 }
@@ -243,6 +242,7 @@ function FreeNotesPage() {
               </label>
               <div className="notes-body-label">Описание</div>
               <CommentEditor
+                notesOnly
                 text={draft.body}
                 disabled={busy}
                 onChange={change}
