@@ -3959,6 +3959,7 @@ summary > svg {
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-selector-tag { color: #c21845; }
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-string,
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-regexp { color: #006b52; }
+:is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-property,
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-attr { color: #0759ca; }
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-number,
 :is(.pr-diff-line, .repository-source, .repository-search-code) .hljs-literal { color: #b04400; }
