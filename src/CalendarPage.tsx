@@ -155,7 +155,7 @@ export function CalendarPage({
             start: item.start ? wallTime(item.start, zone) : "",
             end: item.end ? wallTime(item.end, zone) : "",
           }
-        : { ...fresh(day, context), ...(time ? { start: time } : {}) },
+        : { ...fresh(day, context), start: time || (day ? day + "T09:00" : wallTime(new Date().toISOString(), zone)) },
     );
     dialog.current?.showModal();
   }
@@ -809,7 +809,7 @@ export function CalendarPage({
               </div>
             )}
           </section>
-          <p className="muted">Дата и время в часовом поясе {zone}</p>
+          {draft.start && <p className="muted">Дата и время в часовом поясе {zone}</p>}
           <label>
             Название
             <input
@@ -836,6 +836,7 @@ export function CalendarPage({
             />
             <span>Без времени</span>
           </label>
+          {draft.start && <>
           <div className="calendar-date-fields">
             <CalendarDateField
               zone={zone}
@@ -919,6 +920,7 @@ export function CalendarPage({
             время. Начало и окончание — событие с длительностью. Завершение
             всегда отмечается вручную.
           </p>
+          </>}
           <label>
             Описание
             <textarea
@@ -986,7 +988,7 @@ export function CalendarPage({
             )}
           </details>
         </fieldset>
-        <ReminderLeadFields
+        {draft.start && <ReminderLeadFields
           value={draft.leadMinutes}
           fallback={
             currentItem?.ticket
@@ -994,7 +996,7 @@ export function CalendarPage({
               : settings.calendarNotifications.reminderLeadMinutes
           }
           onChange={(leadMinutes) => setDraft({ ...draft, leadMinutes })}
-        />
+        />}
         {currentItem && (
           <div className="calendar-editor-management">
             <span
