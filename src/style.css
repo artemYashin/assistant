@@ -9981,8 +9981,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-toast-close { position:absolute;right:6px;top:6px; }
 .calendar-toast-item { display:block;text-align:left;width:100%;background:transparent;border:0;color:inherit;padding:8px 0 0;font-size:13px;overflow-wrap:anywhere; }
 .calendar-toast-item:hover { text-decoration:underline; }
-.calendar-toast-progress { position:absolute;bottom:0;left:0;height:3px;background:#528fc1;width:100%;transform-origin:left;animation:calendar-countdown 10s linear forwards; }
-@keyframes calendar-countdown { to { transform:scaleX(0); } }
 @media(max-width:800px) { .calendar-reminders {grid-template-columns:1fr;} .calendar-day {min-height:95px;padding:3px;} .calendar-event {font-size:10px;} .calendar-event span {display:none;} .calendar-toolbar {padding:10px;} }
 .calendar-reminder .calendar-delete { display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid #e2b6b2;background:#fff1ef;color:#a53e36;border-radius:8px; }
 .calendar-reminder .calendar-delete:hover { background:#ffe3df;border-color:#ca8b83; }
@@ -10093,3 +10091,7 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-picker-shortcuts .secondary { font-size:11px;padding:6px 10px; }
 .calendar-picker-actions { justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #eaf0f4; }
 .calendar-picker-actions button { display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 14px;border-radius:8px; }
+
+.calendar-notifications-trigger.icon-button { display:inline-flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:34px; }
+.calendar-notification-count { display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border:1px solid #9ec6b0;border-radius:9px;background:#e2f2e9;color:#245d41;font-size:10px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums; }
+.calendar-toast-items { max-height:min(50dvh,360px);overflow-y:auto;margin-top:4px; }

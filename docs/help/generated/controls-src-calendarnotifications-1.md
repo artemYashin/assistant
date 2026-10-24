@@ -9,22 +9,22 @@
 
 Закрыть уведомление
 
-Источник: src/CalendarNotifications.tsx:83.
+Источник: src/CalendarNotifications.tsx:75.
 
 ### Элемент
 
 Уведомления · Уведомления: {…}
 
-Источник: src/CalendarNotifications.tsx:207.
+Источник: src/CalendarNotifications.tsx:209.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarNotifications.tsx:223.
+Источник: src/CalendarNotifications.tsx:227.
 
 ### Элемент
 
 Ожидают подтверждения
 
-Источник: src/CalendarNotifications.tsx:233.
+Источник: src/CalendarNotifications.tsx:237.

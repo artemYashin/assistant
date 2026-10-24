@@ -20,7 +20,6 @@ function ReminderToast({
   const [host] = useState(() => document.createElement("div"));
   useEffect(() => {
     const el = ref.current!;
-    const started = Date.now();
     const raise = (modal?: HTMLDialogElement) => {
       if (el.matches(":popover-open")) el.hidePopover();
       const parent =
@@ -32,14 +31,8 @@ function ReminderToast({
         document.body;
       parent.appendChild(host);
       el.showPopover();
-      const progress = el.querySelector<HTMLElement>(
-        ".calendar-toast-progress",
-      );
-      if (progress)
-        progress.style.animationDelay = `-${Date.now() - started}ms`;
     };
     raise();
-    const timer = setTimeout(onClose, 10000);
     // Native dialogs/popovers share the browser top layer, beyond any z-index.
     const observer = new MutationObserver((records) => {
       const changed = records.filter(
@@ -65,13 +58,12 @@ function ReminderToast({
     };
     document.addEventListener("toggle", onToggle, true);
     return () => {
-      clearTimeout(timer);
       observer.disconnect();
       document.removeEventListener("toggle", onToggle, true);
       if (el.matches(":popover-open")) el.hidePopover();
       host.remove();
     };
-  }, [onClose]);
+  }, []);
   return createPortal(
     <div
       ref={ref}
@@ -91,19 +83,17 @@ function ReminderToast({
         <Bell size={20} />
         <strong>Обратите внимание</strong>
       </div>
-      {items.slice(0, 3).map((item) => (
-        <button
-          className="calendar-toast-item"
-          key={item.id}
-          onClick={() => onOpen(item)}
-        >
-          {item.title}
-        </button>
-      ))}
-      {items.length > 3 && (
-        <small>И ещё {items.length - 3} напоминаний в уведомлениях</small>
-      )}
-      <div className="calendar-toast-progress" />
+      <div className="calendar-toast-items">
+        {items.map((item) => (
+          <button
+            className="calendar-toast-item"
+            key={item.id}
+            onClick={() => onOpen(item)}
+          >
+            {item.title}
+          </button>
+        ))}
+      </div>
     </div>,
     host,
   );
@@ -118,14 +108,12 @@ export function CalendarNotifications({
   const [items, setItems] = useState<CalendarItem[]>([]),
     [toasts, setToasts] = useState<CalendarItem[]>([]),
     [error, setError] = useState("");
-  const [version, setVersion] = useState(0);
   const panel = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const zone = settings?.syncSchedule?.timeZone || "UTC";
   const closeToast = useRef(() => setToasts([])).current;
   const go = (item: CalendarItem) => {
     panel.current?.close();
-    setToasts([]);
     navigate("/calendar?event=" + encodeURIComponent(item.id));
   };
   useEffect(() => {
@@ -138,7 +126,18 @@ export function CalendarNotifications({
       try {
         const data = await api("/calendar");
         if (!alive) return;
-        setItems(data.items.filter((i: CalendarItem) => !i.completed));
+        const active = data.items.filter(
+          (i: CalendarItem) => !i.completed,
+        ) as CalendarItem[];
+        setItems(active);
+        setToasts((previous) =>
+          previous.flatMap((item) => {
+            const current = active.find(
+              (candidate) => candidate.id === item.id,
+            );
+            return current ? [current] : [];
+          }),
+        );
         setError("");
         const due: CalendarItem[] = await api(
           "/calendar/notifications/claim",
@@ -147,8 +146,11 @@ export function CalendarNotifications({
         );
         if (!alive) return;
         if (due.length) {
-          setToasts(due);
-          setVersion((n) => n + 1);
+          setToasts((previous) => [
+            ...new Map(
+              [...previous, ...due].map((item) => [item.id, item]),
+            ).values(),
+          ]);
           if (
             settings.calendarNotifications?.browser &&
             typeof Notification !== "undefined" &&
@@ -205,7 +207,7 @@ export function CalendarNotifications({
   return (
     <>
       <button
-        className="icon-button"
+        className="icon-button calendar-notifications-trigger"
         title="Уведомления"
         aria-label={`Уведомления: ${pending + items.length}`}
         onClick={() => {
@@ -214,7 +216,9 @@ export function CalendarNotifications({
       >
         <Bell size={18} />
         {(pending > 0 || items.length > 0) && (
-          <i className="notification-dot" />
+          <span className="calendar-notification-count" aria-hidden="true">
+            {pending + items.length}
+          </span>
         )}
       </button>
       <dialog ref={panel} className="calendar-notification-panel">
@@ -273,12 +277,7 @@ export function CalendarNotifications({
         )}
       </dialog>
       {!!toasts.length && (
-        <ReminderToast
-          key={version}
-          items={toasts}
-          onClose={closeToast}
-          onOpen={go}
-        />
+        <ReminderToast items={toasts} onClose={closeToast} onOpen={go} />
       )}
     </>
   );

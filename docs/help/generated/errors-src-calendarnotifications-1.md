@@ -9,4 +9,4 @@
 
 Системное уведомление не удалось показать. Напоминания доступны здесь.
 
-Источник: src/CalendarNotifications.tsx:180.
+Источник: src/CalendarNotifications.tsx:182.
