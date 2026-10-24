@@ -21,82 +21,82 @@ CREATE TABLE pr_review_runs (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TE
 
 fetch_timeout_seconds
 
-Источник: server/store.ts:342.
+Источник: server/store.ts:347.
 
 ### Сообщение
 
 ticket_error
 
-Источник: server/store.ts:346.
+Источник: server/store.ts:351.
 
 ### Сообщение
 
 Укажите заказчика
 
-Источник: server/store.ts:515.
+Источник: server/store.ts:520.
 
 ### Сообщение
 
 Укажите название длиной до 200 символов
 
-Источник: server/store.ts:526.
+Источник: server/store.ts:531.
 
 ### Сообщение
 
 Заказчик или проект не найден
 
-Источник: server/store.ts:529.
+Источник: server/store.ts:534.
 
 ### Сообщение
 
 Такое название уже используется
 
-Источник: server/store.ts:532.
+Источник: server/store.ts:537.
 
 ### Сообщение
 
 Для этого названия уже существуют настройки
 
-Источник: server/store.ts:557.
+Источник: server/store.ts:562.
 
 ### Сообщение
 
 Запись памяти недоступна в текущем контексте
 
-Источник: server/store.ts:593.
+Источник: server/store.ts:598.
 
 ### Сообщение
 
 Неверная запись памяти
 
-Источник: server/store.ts:604.
+Источник: server/store.ts:609.
 
 ### Сообщение
 
 Выберите заказчика
 
-Источник: server/store.ts:606.
+Источник: server/store.ts:611.
 
 ### Сообщение
 
 Выберите проект
 
-Источник: server/store.ts:608.
+Источник: server/store.ts:613.
 
 ### Сообщение
 
 Подключение изменилось. Обновите корзину.
 
-Источник: server/store.ts:781.
+Источник: server/store.ts:786.
 
 ### Сообщение
 
 Тикет отсутствует в корзине или срок хранения истёк
 
-Источник: server/store.ts:788.
+Источник: server/store.ts:793.
 
 ### Сообщение
 
 Чат не найден в текущем контексте.
 
-Источник: server/store.ts:873.
+Источник: server/store.ts:878.

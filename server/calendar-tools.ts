@@ -26,6 +26,7 @@ export function calendarTools(
           developers: new Calendar(store).developers(),
           contexts: store.contexts(),
           warningDefaults: {
+            vacationLeadMinutes: store.settings().calendarNotifications.vacationLeadMinutes,
             reminderLeadMinutes:
               store.settings().calendarNotifications.reminderLeadMinutes,
             ticketDeadlineLeadMinutes:
@@ -36,7 +37,7 @@ export function calendarTools(
     }),
     defineTool("search_calendar_reminders", {
       description:
-        "Search all local reminders, ticket-deadline reminders and daily series across all scopes, including completed/old reminders. Case-insensitive title/description search; optional RE2 regex. Filter completion, status (active means not completed), broad types (reminder includes dated, undated and recurring reminders; ticket means ticket deadlines), detailed kind, scope, clients/projects, developers, inclusive overlapping date ranges or creation dates. Sort and paginate; read compact summaries, no mutations. Use get_calendar_context for relative dates. Daily series return one row; today_completed is distinct from completion of the entire series.",
+        "Search all local reminders, ticket-deadline reminders and daily series across all scopes, including completed/old reminders. Case-insensitive title/description search; optional RE2 regex. Filter completion, status (active means not completed), broad types (reminder includes dated, undated and recurring reminders; ticket means ticket deadlines; vacation means developer leave), detailed kind, scope, clients/projects, developers, inclusive overlapping date ranges or creation dates. Sort and paginate; read compact summaries, no mutations. Use get_calendar_context for relative dates. Daily series return one row; today_completed is distinct from completion of the entire series.",
       parameters: calendarSearchSchema,
       handler: async (input) => {
         assertActive();
@@ -56,7 +57,7 @@ export function calendarTools(
     }),
     defineTool("change_calendar_reminders", {
       description:
-        "Immediately complete, reopen or delete one or many reminders on explicit user request, without confirmation dialogs. FIRST search_calendar_reminders and collect all pages before mutating a filtered result (otherwise pagination can skip records). Pass exact IDs and resolve ambiguity. target=reminder for ordinary and ticket deadlines; occurrence for one daily date (day YYYY-MM-DD, omit for today); series for whole daily series. An explicit request to complete ALL reminders includes entire daily series; otherwise clarify ambiguous daily scope. Entire batch is atomic: any invalid entry rolls back all changes. Completion never changes Azure ticket state or local deadline. For action=delete, ticket deadline reminders are COMPLETED instead of deleted: preserve the local deadline and ticket. Report deleted and completed counts separately. Delete only whole reminders/series, not an individual occurrence (complete it instead). Return accurate affected count and report failures.",
+        "Immediately complete, reopen or delete one or many reminders on explicit user request, without confirmation dialogs. FIRST search_calendar_reminders and collect all pages before mutating a filtered result (otherwise pagination can skip records). Pass exact IDs and resolve ambiguity. target=reminder for ordinary, ticket deadlines and developer vacations; occurrence for one daily date (day YYYY-MM-DD, omit for today); series for whole daily series. An explicit request to complete ALL reminders includes entire daily series; otherwise clarify ambiguous daily scope. Entire batch is atomic: any invalid entry rolls back all changes. Completion never changes Azure ticket state or local deadline. For action=delete, ticket deadline and developer vacation reminders are COMPLETED instead of deleted: preserve the local deadline and vacation dates. Completing a vacation reminder only silences notifications; dates and developer availability do not change. Report deleted and completed counts separately. Delete only whole reminders/series, not an individual occurrence (complete it instead). Return accurate affected count and report failures.",
       parameters: z
         .object({
           action: z.enum(["complete", "reopen", "delete"]),
@@ -110,7 +111,7 @@ export function calendarTools(
               if (seen.has(key)) return null;
               seen.add(key);
               const action =
-                input.action === "delete" && item.ticket
+                input.action === "delete" && (item.ticket || item.vacation)
                   ? "complete"
                   : input.action;
               if (action === "delete") calendar.remove(entry.id);
@@ -162,7 +163,7 @@ export function calendarTools(
     }),
     defineTool("save_calendar_reminder", {
       description:
-        "Immediately create or edit a reminder on explicit user request, without confirmation UI. Omit id to create; for editing search exact ID then get_calendar_reminder for full content and preserve unrequested fields. FIRST get_calendar_context for relative times and timezone, use UTC ISO dates. reminder.start=null/end=null means undated; start with end=null means timed; start/end means duration. repeatDaily=true repeats on reminder.repeatWeekdays (ISO 1 Monday to 7 Sunday, omitted=all seven days, at least one). duration max 24 hours. For без времени use start=null,end=null,repeatDaily=false: always-active undated reminder until manually completed. For new reminders OMIT leadMinutes or use null to inherit warningDefaults; only set a number when the user explicitly requests a custom advance warning. A request to remind in five minutes sets start=now+5min, NOT leadMinutes=0 or 5. Inherited advance warning may make a new reminder eligible immediately. For edits preserve existing leadMinutes unless asked to change it. Optional local developerIds and general/client/project scope. Never edit ticket deadline through this tool: use update_local_ticket_metadata for the date and update_calendar_warning for advance. Report saved only after success.",
+        "Immediately create or edit a reminder on explicit user request, without confirmation UI. Omit id to create; for editing search exact ID then get_calendar_reminder for full content and preserve unrequested fields. FIRST get_calendar_context for relative times and timezone, use UTC ISO dates. reminder.start=null/end=null means undated; start with end=null means timed; start/end means duration. repeatDaily=true repeats on reminder.repeatWeekdays (ISO 1 Monday to 7 Sunday, omitted=all seven days, at least one). duration max 24 hours. For без времени use start=null,end=null,repeatDaily=false: always-active undated reminder until manually completed. For new reminders OMIT leadMinutes or use null to inherit warningDefaults; only set a number when the user explicitly requests a custom advance warning. A request to remind in five minutes sets start=now+5min, NOT leadMinutes=0 or 5. Inherited advance warning may make a new reminder eligible immediately. For edits preserve existing leadMinutes unless asked to change it. Optional local developerIds and general/client/project scope. Never edit developer vacation dates through this tool; use Developer settings. Never edit ticket deadline through this tool: use update_local_ticket_metadata for the date and update_calendar_warning for advance. Report saved only after success.",
       parameters: z
         .object({
           id: z.string().uuid().optional(),

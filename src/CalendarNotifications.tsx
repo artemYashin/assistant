@@ -146,9 +146,9 @@ function ReminderToast({
                     instant,
                   )}
                 </span>
-                {item.ticket && (
+                {(item.ticket || item.vacation) && (
                   <span className="calendar-ticket-badge">
-                    Тикет #{item.ticket.id}
+                    {item.vacation ? "Отпуск" : `Тикет #${item.ticket!.id}`}
                   </span>
                 )}
               </span>
@@ -159,7 +159,7 @@ function ReminderToast({
                   : eventTime(item.start, item.end, zone)}
                 {item.repeatDaily ? " · " + repeatLabel(item) : ""}
               </small>
-              {item.ticket && (
+              {(item.ticket || item.vacation) && (
                 <small className="calendar-toast-people">
                   {item.developerIds.length ? (
                     <>

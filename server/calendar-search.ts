@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Calendar } from "./calendar.js";
-import { calendarOverlaps, calendarStatus, calendarMatchesStatus, calendarMatchesType } from "./calendar-model.js";
+import {
+  calendarOverlaps,
+  calendarStatus,
+  calendarMatchesStatus,
+  calendarMatchesType,
+} from "./calendar-model.js";
 import { recurringOverlaps } from "./calendar-repeat.js";
 import { searchModeSchema, searchPattern } from "./search-pattern.js";
 import type { Store } from "./store.js";
@@ -26,9 +31,16 @@ export const calendarSearchSchema = z
         ]),
       )
       .optional(),
-    types: z.array(z.enum(["reminder", "ticket"])).optional().describe("Broad UI type: reminder includes dated events, undated reminders and recurring series; ticket means ticket deadline. OR within arrays, AND between filters."),
+    types: z
+      .array(z.enum(["reminder", "ticket", "vacation"]))
+      .optional()
+      .describe(
+        "Broad UI type: reminder includes dated events, undated reminders and recurring series; ticket means ticket deadline; vacation means developer leave. OR within arrays, AND between filters.",
+      ),
     kinds: z
-      .array(z.enum(["reminder", "event", "general", "daily", "ticket"]))
+      .array(
+        z.enum(["reminder", "event", "general", "daily", "ticket", "vacation"]),
+      )
       .optional(),
     scopes: z.array(z.enum(["general", "client", "project"])).optional(),
     clients: values,
@@ -72,11 +84,13 @@ export function searchCalendar(store: Store, input: unknown) {
   const includes = (choices: string[] | undefined, value: string) =>
     !choices?.length || choices.includes(value);
   const rows = calendar.list().filter((item) => {
-    const kind = item.ticket
-      ? "ticket"
-      : item.repeatDaily
-        ? "daily"
-        : item.kind;
+    const kind = item.vacation
+      ? "vacation"
+      : item.ticket
+        ? "ticket"
+        : item.repeatDaily
+          ? "daily"
+          : item.kind;
     return (
       (!match || !!match(item.title) || !!match(item.description)) &&
       includes(v.ids, item.id) &&
@@ -127,7 +141,7 @@ export function searchCalendar(store: Store, input: unknown) {
     reminders: rows.slice(v.offset, v.offset + v.limit).map((item) => ({
       id: item.id,
       title: item.title,
-      type: item.ticket ? "ticket" : "reminder",
+      type: item.vacation ? "vacation" : item.ticket ? "ticket" : "reminder",
       descriptionSnippet: item.description.slice(0, 240),
       status: calendarStatus(item, now),
       completed: item.completed,
@@ -137,9 +151,11 @@ export function searchCalendar(store: Store, input: unknown) {
       leadMinutes: item.leadMinutes ?? null,
       effectiveLeadMinutes:
         item.leadMinutes ??
-        (item.ticket
-          ? store.settings().calendarNotifications.ticketDeadlineLeadMinutes
-          : store.settings().calendarNotifications.reminderLeadMinutes),
+        (item.vacation
+          ? store.settings().calendarNotifications.vacationLeadMinutes
+          : item.ticket
+            ? store.settings().calendarNotifications.ticketDeadlineLeadMinutes
+            : store.settings().calendarNotifications.reminderLeadMinutes),
       createdAt: item.createdAt,
       repeatDaily: !!item.repeatDaily,
       repeatWeekdays: item.repeatWeekdays,
@@ -152,6 +168,7 @@ export function searchCalendar(store: Store, input: unknown) {
         name: people.get(id) || id,
       })),
       ticket: item.ticket,
+      vacation: item.vacation,
       localUrl: "/calendar?event=" + encodeURIComponent(item.id),
     })),
     note: "All scopes, including completed reminders. Each daily series is one row; status reflects today, not historical occurrences. Array values use OR, separate filters use AND. Missing sort dates are last. Date ranges overlap inclusively. No Azure calls.",

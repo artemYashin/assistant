@@ -9,52 +9,52 @@
 
 Проект должен принадлежать заказчику
 
-Источник: server/local-developers.ts:27.
+Источник: server/local-developers.ts:31.
 
 ### Сообщение
 
 Разработчик не найден
 
-Источник: server/local-developers.ts:52.
+Источник: server/local-developers.ts:56.
 
 ### Сообщение
 
 Имя уже есть в этом списке
 
-Источник: server/local-developers.ts:60.
+Источник: server/local-developers.ts:64.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите список тикетов.
 
-Источник: server/local-developers.ts:87.
+Источник: server/local-developers.ts:92.
 
 ### Сообщение
 
 Сначала добавьте тикет в локальный трекер
 
-Источник: server/local-developers.ts:92.
+Источник: server/local-developers.ts:97.
 
 ### Сообщение
 
 Разработчик недоступен в этом контексте. Обновите список.
 
-Источник: server/local-developers.ts:97.
+Источник: server/local-developers.ts:102.
 
 ### Сообщение
 
 Нужна явная команда с именами разработчиков и тикетом из сообщения или инструментов текущего запроса
 
-Источник: server/local-developers.ts:177.
+Источник: server/local-developers.ts:182.
 
 ### Сообщение
 
 Назовите точные имена изменяемых исполнителей из локального списка
 
-Источник: server/local-developers.ts:205.
+Источник: server/local-developers.ts:210.
 
 ### Сообщение
 
 Одно изменение поручения на тикет за сообщение
 
-Источник: server/local-developers.ts:211.
+Источник: server/local-developers.ts:216.

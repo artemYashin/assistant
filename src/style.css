@@ -10188,3 +10188,15 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-date-actions { display: flex; align-items: center; gap: 8px; }
 .calendar-now-line span { z-index: 2; isolation: isolate; }
 .calendar-now-line::before { z-index: 1; }
+
+.developer-scope-badge { align-self:flex-start; font-size:11px; font-weight:400; }
+.developer-vacation-label { display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#886314; }
+.developer-vacation-settings { display:grid;gap:14px; }
+.developer-vacation-dates { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+.developer-vacation-actions { display:flex;gap:8px;flex-wrap:wrap; }
+.calendar-event.vacation { background:#e8f4ef;border-left-color:#33956d; }
+.calendar-month-week { grid-column:1 / -1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding-bottom:4px; }
+.calendar-vacation-band { display:flex;align-items:center;gap:5px;min-width:0;margin:2px 3px;padding:4px 7px;border:1px solid #99c9b4;border-radius:5px;background:#e8f4ef;color:#266f52;font-size:11px;text-align:left; }
+.calendar-vacation-band span { overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
+.calendar-vacation-band svg { flex-shrink:0; }
+.calendar-vacation-band:hover { background:#d5ebdf;border-color:#539c7d; }

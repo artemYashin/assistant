@@ -38,10 +38,17 @@ export function notificationDue(
   defaultLeadMinutes: number,
   now = new Date(),
 ): boolean {
-  if (item.completed) return false;
+  if (
+    item.completed ||
+    (item.vacation && item.end && Date.parse(item.end) < now.getTime())
+  )
+    return false;
   if (!item.start) return true;
-  const startsAt = item.ticket
-    ? Date.parse(item.warningStart || item.ticket.deadline)
-    : Date.parse(item.start) - (item.leadMinutes ?? defaultLeadMinutes) * 60000;
+  const startsAt = item.vacation
+    ? Date.parse(item.warningStart || item.start)
+    : item.ticket
+      ? Date.parse(item.warningStart || item.ticket.deadline)
+      : Date.parse(item.start) -
+        (item.leadMinutes ?? defaultLeadMinutes) * 60000;
   return startsAt <= now.getTime();
 }

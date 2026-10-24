@@ -1,3 +1,5 @@
+import { useCalendarClock } from "./useCalendarClock.js";
+import { nextVacationDay, developerOnVacation } from "./developer-vacation.js";
 import {
   developerGroup,
   type DeveloperStatusGroups,
@@ -9,7 +11,8 @@ import {
   Users,
   UserRoundMinus,
   ClipboardCheck,
-  NotebookPen,
+  Settings2,
+  Palmtree,
   Save,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +27,16 @@ import { StatusBadge } from "./TicketControls.js";
 import { ticketPath } from "./routing.js";
 
 type Context = { client: string; project: string };
-type Developer = { id: string; name: string; notes: string };
+type Developer = {
+  id: string;
+  name: string;
+  notes: string;
+  client: string;
+  project: string;
+  vacationStart: string | null;
+  vacationEnd: string | null;
+  vacationZone: string | null;
+};
 type Task = {
   id: number;
   source: string;
@@ -63,9 +75,9 @@ export function DevelopersPage({
     window.addEventListener("orbit:developer-board", refresh);
     return () => window.removeEventListener("orbit:developer-board", refresh);
   }, []);
-  const [activity, setActivity] = useState<"all" | "active" | "inactive">(
-    "all",
-  );
+  const [activity, setActivity] = useState<
+    "all" | "active" | "inactive" | "vacation"
+  >("all");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
@@ -97,15 +109,22 @@ export function DevelopersPage({
   const matchingDevelopers = (data?.developers || []).filter((person) =>
     person.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   );
-  const activeCount = matchingDevelopers.filter((person) =>
-    activeIds.has(person.id),
+  const clock = useCalendarClock();
+  const onVacation = (person: Developer) =>
+    developerOnVacation(person, new Date(clock).toISOString());
+  const vacationCount = matchingDevelopers.filter(onVacation).length;
+  const activeCount = matchingDevelopers.filter(
+    (person) => !onVacation(person) && activeIds.has(person.id),
   ).length;
   const visibleDevelopers = matchingDevelopers.filter(
     (person) =>
       activity === "all" ||
-      (activity === "active"
-        ? activeIds.has(person.id)
-        : !activeIds.has(person.id)),
+      (activity === "vacation"
+        ? onVacation(person)
+        : !onVacation(person) &&
+          (activity === "active"
+            ? activeIds.has(person.id)
+            : !activeIds.has(person.id))),
   );
   if (!context.project)
     return (
@@ -158,7 +177,14 @@ export function DevelopersPage({
           onClick={() => setActivity("inactive")}
         >
           <UserRoundMinus size={16} /> Без активных задач ·{" "}
-          {matchingDevelopers.length - activeCount}
+          {matchingDevelopers.length - activeCount - vacationCount}
+        </button>
+        <button
+          type="button"
+          aria-pressed={activity === "vacation"}
+          onClick={() => setActivity("vacation")}
+        >
+          <Palmtree size={16} /> В отпуске · {vacationCount}
         </button>
       </nav>
       {error && (
@@ -234,8 +260,14 @@ function DeveloperCard({
   const contentId = useId();
   const [tab, setTab] = useState("active"),
     [page, setPage] = useState(0);
-  const [notes, setNotes] = useState(person.notes),
-    [saved, setSaved] = useState(person.notes);
+  const [vacationStart, setVacationStart] = useState(
+      person.vacationStart || "",
+    ),
+    [vacationEnd, setVacationEnd] = useState(person.vacationEnd || "");
+  useEffect(() => {
+    setVacationStart(person.vacationStart || "");
+    setVacationEnd(person.vacationEnd || "");
+  }, [person.vacationStart, person.vacationEnd]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const done = [
@@ -255,16 +287,20 @@ function DeveloperCard({
   ].sort((a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id);
   const pages = Math.max(1, Math.ceil(list.length / 5)),
     current = Math.min(page, pages - 1);
-  async function save() {
+  async function save(cancel = false) {
     setBusy(true);
     setError("");
     try {
       await api(
-        `/developer-board/${encodeURIComponent(person.id)}/notes`,
+        `/developer-board/${encodeURIComponent(person.id)}/vacation`,
         "PUT",
-        { context, notes },
+        {
+          context,
+          vacation: cancel ? null : { start: vacationStart, end: vacationEnd },
+        },
       );
-      setSaved(notes);
+      window.dispatchEvent(new Event("orbit:developer-board"));
+      window.dispatchEvent(new Event("orbit-calendar-changed"));
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -289,43 +325,95 @@ function DeveloperCard({
           <InitialsAvatar name={person.name} />
           <span className="developer-board-person">
             <span className="developer-board-name">{person.name}</span>
+            <span className="badge developer-scope-badge">
+              {person.project
+                ? `Проект · ${person.client} / ${person.project}`
+                : person.client
+                  ? `Заказчик · ${person.client}`
+                  : "Общий список"}
+            </span>
+            {person.vacationStart && person.vacationEnd && (
+              <small className="developer-vacation-label">
+                <Palmtree size={14} /> Отпуск: {person.vacationStart} —{" "}
+                {person.vacationEnd} · Возвращение{" "}
+                {nextVacationDay(person.vacationEnd)}
+              </small>
+            )}
             <small className="muted">
               {tickets.length + completedTickets.length} локальных поручений
             </small>
           </span>
         </button>
         <PrInfoPopup
-          title={`Внутренние заметки · ${person.name}`}
+          title={`Настройки разработчика · ${person.name}`}
           trigger={
             <>
-              <NotebookPen size={17} />
-              <span>Заметки{notes !== saved ? " •" : ""}</span>
+              <Settings2 size={17} />
+              <span>Настройки</span>
             </>
           }
           className="secondary developer-notes-button"
         >
-          <div className="developer-board-notes">
-            <textarea
-              aria-label={`Заметки: ${person.name}`}
-              rows={4}
-              maxLength={20000}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              disabled={busy}
-              placeholder="Что важно помнить об этом разработчике…"
-            />
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy || notes === saved}
-              onClick={() => void save()}
-            >
-              <Save size={15} />
-              {busy ? "Сохранение…" : "Сохранить заметки"}
-            </button>
-            <small className="muted">
-              Только локально, в рамках этого проекта.
-            </small>
+          <div className="developer-vacation-settings">
+            <p className="muted">
+              Один период отпуска, обе даты включительно. Часовой пояс:{" "}
+              {person.vacationZone || settings.syncSchedule?.timeZone || "UTC"}.
+              Действует во всех проектах, где доступен разработчик.
+            </p>
+            <div className="developer-vacation-dates">
+              <label>
+                Отпуск с
+                <input
+                  type="date"
+                  aria-label={`Отпуск с: ${person.name}`}
+                  value={vacationStart}
+                  onChange={(e) => setVacationStart(e.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <label>
+                Отпуск по
+                <input
+                  type="date"
+                  aria-label={`Отпуск по: ${person.name}`}
+                  value={vacationEnd}
+                  min={vacationStart}
+                  onChange={(e) => setVacationEnd(e.target.value)}
+                  disabled={busy}
+                />
+              </label>
+            </div>
+            <div className="developer-vacation-actions">
+              <button
+                type="button"
+                className="primary"
+                disabled={
+                  busy ||
+                  !vacationStart ||
+                  !vacationEnd ||
+                  vacationEnd < vacationStart
+                }
+                onClick={() => void save()}
+              >
+                <Save size={15} /> Сохранить отпуск
+              </button>
+              {person.vacationStart && (
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() => void save(true)}
+                >
+                  Отменить отпуск
+                </button>
+              )}
+            </div>
+            {person.notes && (
+              <details>
+                <summary>Ранее сохранённые заметки</summary>
+                <p style={{ whiteSpace: "pre-wrap" }}>{person.notes}</p>
+              </details>
+            )}
             {error && (
               <p className="error" role="alert">
                 {error}
@@ -389,11 +477,19 @@ function DeveloperCard({
                   type="button"
                   className="developer-ticket-open"
                   title={ticket.title}
-                  onClick={() => window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", {
-                    detail: { source: ticket.source, tickets: [{ id: ticket.id, title: ticket.title }] },
-                  }))}
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("orbit-show-ticket-details", {
+                        detail: {
+                          source: ticket.source,
+                          tickets: [{ id: ticket.id, title: ticket.title }],
+                        },
+                      }),
+                    )
+                  }
                 >
-                  <span className="developer-ticket-number">#{ticket.id}</span>{" "}{ticket.title}
+                  <span className="developer-ticket-number">#{ticket.id}</span>{" "}
+                  {ticket.title}
                 </button>
               </div>
               <div className="developer-ticket-badges">
@@ -406,8 +502,17 @@ function DeveloperCard({
                   state={ticket.state}
                   colors={settings?.statusColors}
                 />
-                <span className="badge" title="Локальный приоритет">{ticket.priority ?? 1}</span>
-                {ticket.azurePriority != null && <span className="badge" title="Azure приоритет · только чтение">Azure приоритет: {ticket.azurePriority}</span>}
+                <span className="badge" title="Локальный приоритет">
+                  {ticket.priority ?? 1}
+                </span>
+                {ticket.azurePriority != null && (
+                  <span
+                    className="badge"
+                    title="Azure приоритет · только чтение"
+                  >
+                    Azure приоритет: {ticket.azurePriority}
+                  </span>
+                )}
               </div>
             </div>
           ))}

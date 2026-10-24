@@ -270,6 +270,11 @@ export class Store {
     }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS local_developers (id TEXT PRIMARY KEY,name TEXT NOT NULL,client TEXT NOT NULL,project TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
+      CREATE TABLE IF NOT EXISTS developer_vacations (
+        developer_id TEXT PRIMARY KEY REFERENCES local_developers(id) ON DELETE CASCADE,
+        event_id TEXT NOT NULL UNIQUE REFERENCES calendar_events(id) ON DELETE CASCADE,
+        start_date TEXT NOT NULL,end_date TEXT NOT NULL,zone TEXT NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS ticket_developers (source TEXT NOT NULL,ticket_id INTEGER NOT NULL,developer_id TEXT NOT NULL REFERENCES local_developers(id),PRIMARY KEY(source,ticket_id,developer_id));
     `);
     if (!this.get("migration.localDevelopers", false)) {

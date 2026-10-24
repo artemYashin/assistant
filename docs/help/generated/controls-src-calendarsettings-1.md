@@ -21,22 +21,22 @@ Asia/Bishkek
 
 {…}: {…}
 
-Источник: src/CalendarSettings.tsx:84.
+Источник: src/CalendarSettings.tsx:85.
 
 ### Элемент
 
 Присылать уведомления из браузера
 
-Источник: src/CalendarSettings.tsx:121.
+Источник: src/CalendarSettings.tsx:122.
 
 ### Элемент
 
 Разрешение получено / Разрешить уведомления
 
-Источник: src/CalendarSettings.tsx:129.
+Источник: src/CalendarSettings.tsx:130.
 
 ### Элемент
 
 Общий интервал, минуты
 
-Источник: src/CalendarSettings.tsx:167.
+Источник: src/CalendarSettings.tsx:168.

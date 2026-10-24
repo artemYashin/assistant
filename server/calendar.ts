@@ -1,3 +1,7 @@
+import {
+  syncDeveloperVacations,
+  nextVacationDay,
+} from "./developer-vacations.js";
 import { notificationItems } from "./calendar-notifications.js";
 import { z } from "zod";
 import { dailyOccurrence } from "./calendar-repeat.js";
@@ -13,15 +17,29 @@ export class Calendar {
   constructor(private store: Store) {}
   list(): CalendarItem[] {
     syncTicketDeadlines(this.store);
-    const ticketLead =
-      this.store.settings().calendarNotifications.ticketDeadlineLeadMinutes;
+    syncDeveloperVacations(this.store);
+    const {
+      ticketDeadlineLeadMinutes: ticketLead,
+      vacationLeadMinutes: vacationLead,
+    } = this.store.settings().calendarNotifications;
     return (
       this.store.db
         .prepare(
-          `SELECT e.*,d.id AS ticket_id,d.source AS ticket_source,d.deadline FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id WHERE ${activeDeadlineSql} ORDER BY COALESCE(start,created_at),e.id`,
+          `SELECT e.*,d.id AS ticket_id,d.source AS ticket_source,d.deadline,v.developer_id AS vacation_developer,v.start_date AS vacation_start,v.end_date AS vacation_end,v.zone AS vacation_zone FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id LEFT JOIN developer_vacations v ON v.event_id=e.id WHERE ${activeDeadlineSql} AND (v.developer_id IS NULL OR EXISTS (SELECT 1 FROM local_developers ld WHERE ld.id=v.developer_id AND ld.active=1)) ORDER BY COALESCE(start,created_at),e.id`,
         )
         .all() as any[]
     ).map((r) => ({
+      ...(r.vacation_developer
+        ? {
+            vacation: {
+              developerId: r.vacation_developer,
+              start: r.vacation_start,
+              end: r.vacation_end,
+              zone: r.vacation_zone,
+              returnDate: nextVacationDay(r.vacation_end),
+            },
+          }
+        : {}),
       ...(r.ticket_id
         ? {
             ticket: {
@@ -35,7 +53,11 @@ export class Calendar {
         ? new Date(
             Date.parse(r.deadline) - (r.lead_minutes ?? ticketLead) * 60000,
           ).toISOString()
-        : undefined,
+        : r.vacation_developer
+          ? new Date(
+              Date.parse(r.start) - (r.lead_minutes ?? vacationLead) * 60000,
+            ).toISOString()
+          : undefined,
       leadMinutes: r.lead_minutes ?? null,
       completedDays: JSON.parse(r.completed_days || "[]"),
       repeatDaily: !!r.repeat_daily,
@@ -51,7 +73,9 @@ export class Calendar {
       start: r.start,
       end: r.end,
       developerIds: JSON.parse(r.developers),
-      completed: !!r.completed,
+      completed:
+        !!r.completed ||
+        !!(r.vacation_developer && Date.parse(r.end) < Date.now()),
       createdAt: r.created_at,
     }));
   }
@@ -63,6 +87,16 @@ export class Calendar {
       .all();
   }
   save(input: unknown, id?: string) {
+    if (
+      id &&
+      this.store.db
+        .prepare("SELECT 1 FROM developer_vacations WHERE event_id=?")
+        .get(id)
+    )
+      throw new AppError(
+        400,
+        "Измените даты отпуска в настройках разработчика.",
+      );
     if (
       id &&
       this.store.db
@@ -144,7 +178,14 @@ export class Calendar {
           repeatZone,
         );
     }
-    this.store.db.prepare("UPDATE calendar_events SET repeat_weekdays=? WHERE id=?").run(JSON.stringify([...new Set(v.repeatWeekdays ?? [1,2,3,4,5,6,7])].sort()), id);
+    this.store.db
+      .prepare("UPDATE calendar_events SET repeat_weekdays=? WHERE id=?")
+      .run(
+        JSON.stringify(
+          [...new Set(v.repeatWeekdays ?? [1, 2, 3, 4, 5, 6, 7])].sort(),
+        ),
+        id,
+      );
     this.setLead(id!, v.leadMinutes ?? null);
     return { id };
   }
@@ -203,6 +244,16 @@ export class Calendar {
     return { ok: true };
   }
   reopen(id: string) {
+    const vacation = this.store.db
+      .prepare(
+        "SELECT e.end FROM developer_vacations v JOIN calendar_events e ON e.id=v.event_id WHERE e.id=?",
+      )
+      .get(id) as { end: string } | undefined;
+    if (vacation && Date.parse(vacation.end) < Date.now())
+      throw new AppError(
+        400,
+        "Отпуск уже закончился. Новый период задайте в настройках разработчика.",
+      );
     if (
       !this.store.db
         .prepare(
@@ -214,6 +265,14 @@ export class Calendar {
     return { ok: true };
   }
   remove(id: string) {
+    if (
+      this.store.db
+        .prepare("SELECT 1 FROM developer_vacations WHERE event_id=?")
+        .get(id)
+    ) {
+      this.complete(id);
+      return { ok: true, completed: true };
+    }
     if (
       this.store.db
         .prepare("SELECT 1 FROM ticket_deadlines WHERE event_id=?")
@@ -246,7 +305,11 @@ export class Calendar {
       const batchKey = "calendar.notifications.last-batch-at";
       const lastBatch = this.store.get<number | null>(batchKey, null);
       if (lastBatch !== null && lastBatch > cutoff) return [];
-      const due = notificationItems(this.list(), options.reminderLeadMinutes, now);
+      const due = notificationItems(
+        this.list(),
+        options.reminderLeadMinutes,
+        now,
+      );
       // An empty collection sends nothing and does not postpone a future batch.
       if (due.length) this.store.set(batchKey, now.getTime());
       return due;

@@ -53,7 +53,7 @@ export function CalendarTimeGrid({
     if (pending) confirmation.current?.showModal();
   }, [pending]);
   function begin(event: ReactPointerEvent, item: CalendarItem, day: string) {
-    if (event.button !== 0 || pending || item.ticket || item.repeatDaily)
+    if (event.button !== 0 || pending || item.ticket || item.vacation || item.repeatDaily)
       return;
     const resize =
       (event.target as HTMLElement).closest(".calendar-resize") !== null;
@@ -318,7 +318,7 @@ export function CalendarTimeGrid({
                       : item.title}
                   </strong>
                   <small>
-                    {item.ticket
+                    {item.vacation ? `${item.vacation.start} — ${item.vacation.end}` : item.ticket
                       ? "Дедлайн: " +
                         eventTime(item.ticket.deadline, null, zone)
                       : wallTime(item.start!, zone).slice(11) +
@@ -327,7 +327,7 @@ export function CalendarTimeGrid({
                           : "")}
                   </small>
                   {!item.repeatDaily &&
-                    !item.ticket &&
+                    !item.ticket && !item.vacation &&
                     (!item.end ||
                       wallTime(
                         new Date(Date.parse(item.end) - 1).toISOString(),

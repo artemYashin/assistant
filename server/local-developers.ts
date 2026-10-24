@@ -1,3 +1,4 @@
+import { syncDeveloperVacations } from "./developer-vacations.js";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store, AppError, type Context } from "./store.js";
@@ -8,11 +9,14 @@ export class LocalDevelopers {
   list(context: Context) {
     return this.store.db
       .prepare(
-        "SELECT id,name,client,project FROM local_developers WHERE active=1 AND ((client='' AND project='') OR (client=? AND project='') OR (client=? AND project=?)) ORDER BY name COLLATE NOCASE,id",
+        "SELECT id,name,client,project,(SELECT start_date FROM developer_vacations WHERE developer_id=id) AS vacationStart,(SELECT end_date FROM developer_vacations WHERE developer_id=id) AS vacationEnd,(SELECT zone FROM developer_vacations WHERE developer_id=id) AS vacationZone FROM local_developers WHERE active=1 AND ((client='' AND project='') OR (client=? AND project='') OR (client=? AND project=?)) ORDER BY name COLLATE NOCASE,id",
       )
       .all(context.client, context.client, context.project) as {
       id: string;
       name: string;
+      vacationStart: string | null;
+      vacationEnd: string | null;
+      vacationZone: string | null;
       client: string;
       project: string;
     }[];
@@ -61,6 +65,7 @@ export class LocalDevelopers {
     this.store.db
       .prepare("UPDATE local_developers SET name=?,client=?,project=? WHERE id=?")
       .run(parsed, scope.client, scope.project, id);
+    syncDeveloperVacations(this.store);
   }
   remove(id: string) {
     this.store.db
@@ -141,7 +146,7 @@ export function localDeveloperTools(
   return [
     defineTool("list_local_developers", {
       description:
-        "Read locally configured developers manually added to the current project, its customer and the global directory. client/project fields identify scope. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
+        "Read locally configured developers manually added to the current project, its customer and the global directory. client/project fields identify scope; vacationStart/vacationEnd are inclusive leave dates in vacationZone. No Azure lookup. Optionally read current local assignees of a tracked ticket. Names are not Azure identities.",
       parameters: z.object({
         ticketId: z.number().int().positive().optional(),
       }),

@@ -1,3 +1,4 @@
+import { setDeveloperVacation } from "./developer-vacations.js";
 import { Calendar } from "./calendar.js";
 import { calendarNotificationsSchema } from "./calendar-model.js";
 import { readImageUrl } from "./image-reader.js";
@@ -789,6 +790,13 @@ export function createApp(
         true,
       ),
     });
+  });
+  app.put("/api/developer-board/:id/vacation", (req, res) => {
+    const context = contextSchema.parse(req.body.context);
+    const id = String(req.params.id);
+    if (!localDevelopers.list(context).some(person => person.id === id))
+      throw new AppError(404, "Разработчик не найден в этом проекте");
+    res.json(setDeveloperVacation(store, id, req.body.vacation));
   });
   app.put("/api/developer-board/:id/notes", (req, res) => {
     const input = z

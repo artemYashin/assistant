@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
+  Palmtree,
   Ticket,
   Plus,
   ChevronLeft,
@@ -324,6 +325,7 @@ export function CalendarPage({
               options={[
                 { value: "reminder", label: "Напоминание" },
                 { value: "ticket", label: "Дедлайн тикета" },
+                { value: "vacation", label: "Отпуск" },
               ]}
             />
             <MultiSelect
@@ -542,10 +544,14 @@ export function CalendarPage({
                   {d}
                 </div>
               ))}
-              {days.map((day) => {
+              {Array.from({length:days.length/7},(_,weekIndex) => {
+                const week=days.slice(weekIndex*7,weekIndex*7+7);
+                const vacations=filtered.filter(item=>item.vacation && item.start && item.end && wallTime(item.start,zone).slice(0,10)<=week[6] && wallTime(item.end,zone).slice(0,10)>=week[0]);
+                return <div className="calendar-month-week" key={week[0]}>
+                {week.map((day) => {
                 const entries = occurrencesOnDay(filtered, day, zone).filter(
                   (i) =>
-                    i.start &&
+                    !i.vacation && i.start &&
                     wallTime(i.start, zone).slice(0, 10) <= day &&
                     (i.end
                       ? wallTime(i.end, zone).slice(0, 10)
@@ -568,11 +574,11 @@ export function CalendarPage({
                     {entries.slice(0, 3).map((i) => (
                       <button
                         key={i.id + ":" + i.start}
-                        className={"calendar-event " + calendarStatus(i, now)}
+                        className={"calendar-event " + calendarStatus(i, now) + (i.vacation ? " vacation" : "")}
                         onClick={() => open(i)}
                         title={i.title + " · " + calendarStatusLabel(i, now)}
                       >
-                        <span>{wallTime(i.start!, zone).slice(11)}</span>{" "}
+                        <span>{i.vacation ? "Отпуск" : wallTime(i.start!, zone).slice(11)}</span>{" "}
                         {i.title}
                       </button>
                     ))}
@@ -590,6 +596,16 @@ export function CalendarPage({
                     )}
                   </div>
                 );
+                })}
+                {vacations.map((item,index)=>{
+                  const first=wallTime(item.start!,zone).slice(0,10),last=wallTime(item.end!,zone).slice(0,10);
+                  const left=week.findIndex(day=>day>=first);
+                  const right=week.filter(day=>day<=last).length;
+                  return <button key={item.id} className="calendar-vacation-band" style={{gridColumn:`${left+1} / ${right+1}`,gridRow:index+2}} onClick={()=>open(item)} title={`${item.title} · ${item.vacation!.start} — ${item.vacation!.end}`}>
+                    <Palmtree size={13}/><span>{item.title} · {item.vacation!.start} — {item.vacation!.end}</span>
+                  </button>;
+                })}
+                </div>;
               })}
             </div>
           )}
@@ -669,7 +685,7 @@ export function CalendarPage({
                   )}
                   <button className="secondary" onClick={() => open(item)}>
                     <Pencil size={15} />
-                    {item.ticket ? "Открыть напоминание" : "Изменить"}
+                    {item.ticket || item.vacation ? "Открыть напоминание" : "Изменить"}
                   </button>
                   <DailyCompletionButton item={item} onChange={reload} />
                   {!item.completed && (
@@ -685,7 +701,7 @@ export function CalendarPage({
                       {item.repeatDaily ? "Завершить всю серию" : "Завершить"}
                     </ConfirmButton>
                   )}
-                  {item.completed && (
+                  {item.completed && !(item.vacation && item.end && item.end < now) && (
                     <ConfirmButton
                       title="Вернуть в незавершённые?"
                       message={`«${item.title}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания.`}
@@ -698,7 +714,7 @@ export function CalendarPage({
                       Вернуть в незавершённые
                     </ConfirmButton>
                   )}
-                  {!item.ticket && (
+                  {!item.ticket && !item.vacation && (
                     <ConfirmButton
                       title="Удалить напоминание?"
                       message={`«${item.title}» будет удалено без возможности восстановления.`}
@@ -736,6 +752,7 @@ export function CalendarPage({
             <X size={18} />
           </button>
         </div>
+        {currentItem?.vacation && <div className="calendar-ticket-link"><strong>Отпуск разработчика</strong><p>{currentItem.vacation.start} — {currentItem.vacation.end} включительно · Возвращение {currentItem.vacation.returnDate}. Даты и отмена отпуска — в разделе «Разработчики → Настройки». Завершение напоминания отключает уведомления, но не отменяет отпуск.</p></div>}
         {currentItem?.ticket && (
           <div className="calendar-ticket-link">
             <strong>Дедлайн тикета #{currentItem.ticket.id}</strong>
@@ -754,7 +771,7 @@ export function CalendarPage({
           </div>
         )}
         <fieldset
-          disabled={!!currentItem?.ticket}
+          disabled={!!currentItem?.ticket || !!currentItem?.vacation}
           className="calendar-editor-fields"
         >
           <section className="calendar-scope-editor">
@@ -1011,7 +1028,7 @@ export function CalendarPage({
         {draft.start && <ReminderLeadFields
           value={draft.leadMinutes}
           fallback={
-            currentItem?.ticket
+            currentItem?.vacation ? settings.calendarNotifications.vacationLeadMinutes : currentItem?.ticket
               ? settings.calendarNotifications.ticketDeadlineLeadMinutes
               : settings.calendarNotifications.reminderLeadMinutes
           }
@@ -1027,6 +1044,7 @@ export function CalendarPage({
             <div className="calendar-inline">
               <DailyCompletionButton item={currentItem} onChange={reload} />
               <ConfirmButton
+                disabled={!!(currentItem.vacation && currentItem.end && currentItem.end < now)}
                 title={
                   currentItem.completed
                     ? "Вернуть в незавершённые?"
@@ -1056,7 +1074,7 @@ export function CalendarPage({
                     ? "Завершить всю серию"
                     : "Завершить"}
               </ConfirmButton>
-              {!currentItem.ticket && (
+              {!currentItem.ticket && !currentItem.vacation && (
                 <ConfirmButton
                   className="calendar-delete"
                   title="Удалить напоминание?"
@@ -1085,7 +1103,7 @@ export function CalendarPage({
             message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
             confirmLabel={editing ? "Сохранить" : "Создать"}
             onConfirm={async () => {
-              if (currentItem?.ticket) {
+              if (currentItem?.ticket || currentItem?.vacation) {
                 await mutate(`/calendar/${currentItem.id}/warning`, "PUT", {
                   leadMinutes: draft.leadMinutes,
                 });

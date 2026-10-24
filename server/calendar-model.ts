@@ -10,6 +10,7 @@ export const calendarNotificationsSchema = z
       .min(0)
       .max(525600)
       .default(1440),
+    vacationLeadMinutes: z.number().int().min(0).max(525600).default(1440),
     reminderLeadMinutes: z.number().int().min(0).max(525600).default(0),
     browser: z.boolean().default(false),
     intervalMinutes: z.number().int().min(1).max(10080).default(60),
@@ -86,6 +87,13 @@ export type CalendarItem = z.infer<typeof calendarInput> & {
   repeatZone?: string;
   occurrenceDay?: string;
   completedDays?: string[];
+  vacation?: {
+    developerId: string;
+    start: string;
+    end: string;
+    zone: string;
+    returnDate: string;
+  };
   ticket?: { id: number; source: string; deadline: string };
   id: string;
   completed: boolean;
@@ -150,15 +158,29 @@ export function calendarOverlaps(
 }
 
 /** Recurrence describes a series, independently of today's completion state. */
-export function calendarMatchesStatus(item: CalendarItem, statuses: string[] = [], now = new Date().toISOString()) {
-  return !statuses.length || statuses.some(status =>
-    status === "active" ? !item.completed :
-    status === "recurring" ? !!item.repeatDaily :
-    calendarStatus(item, now) === status,
+export function calendarMatchesStatus(
+  item: CalendarItem,
+  statuses: string[] = [],
+  now = new Date().toISOString(),
+) {
+  return (
+    !statuses.length ||
+    statuses.some((status) =>
+      status === "active"
+        ? !item.completed
+        : status === "recurring"
+          ? !!item.repeatDaily
+          : calendarStatus(item, now) === status,
+    )
   );
 }
 
 /** Broad category shared by the calendar UI and assistant search. */
 export function calendarMatchesType(item: CalendarItem, types: string[] = []) {
-  return !types.length || types.includes(item.ticket ? "ticket" : "reminder");
+  return (
+    !types.length ||
+    types.includes(
+      item.vacation ? "vacation" : item.ticket ? "ticket" : "reminder",
+    )
+  );
 }
