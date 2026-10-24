@@ -17,6 +17,7 @@ export function CalendarDateField({
   min,
   disabled = false,
   zone,
+  dateOnly = false,
 }: {
   label: string;
   value: string;
@@ -24,6 +25,7 @@ export function CalendarDateField({
   min?: string;
   disabled?: boolean;
   zone: string;
+  dateOnly?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -34,14 +36,20 @@ export function CalendarDateField({
   const now = wallTime(new Date().toISOString(), zone);
   const valid =
     date &&
-    /^\d{2}:\d{2}$/.test(time) &&
-    Number(time.slice(0, 2)) < 24 &&
-    Number(time.slice(3)) < 60 &&
-    (!min || date + "T" + time >= min);
+    (dateOnly ||
+      (/^\d{2}:\d{2}$/.test(time) &&
+        Number(time.slice(0, 2)) < 24 &&
+        Number(time.slice(3)) < 60)) &&
+    (!min || (dateOnly ? date >= min.slice(0, 10) : date + "T" + time >= min));
   function choose(day: string) {
     setDate(day);
     setMonth(day.slice(0, 7));
-    if (min && day === min.slice(0, 10) && time < min.slice(11, 16))
+    if (
+      !dateOnly &&
+      min &&
+      day === min.slice(0, 10) &&
+      time < min.slice(11, 16)
+    )
       setTime(min.slice(11, 16));
   }
   function shiftMonth(delta: number) {
@@ -52,7 +60,7 @@ export function CalendarDateField({
   function open() {
     const initial = value || (min && min > now ? min : now);
     setDate(initial.slice(0, 10));
-    setTime(initial.slice(11, 16));
+    setTime(initial.slice(11, 16) || "09:00");
     setMonth(initial.slice(0, 7));
     dialog.current?.showModal();
   }
@@ -84,14 +92,17 @@ export function CalendarDateField({
         <CalendarDays size={18} />
         <span>
           {value
-            ? format(value + ":00Z", {
+            ? format(dateOnly ? value + "T12:00:00Z" : value + ":00Z", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
+                ...(dateOnly
+                  ? {}
+                  : { hour: "2-digit" as const, minute: "2-digit" as const }),
               })
-            : "Выбрать дату и время"}
+            : dateOnly
+              ? "Выбрать дату"
+              : "Выбрать дату и время"}
         </span>
       </button>
       {value && (
@@ -208,35 +219,37 @@ export function CalendarDateField({
             </button>
           ))}
         </div>
-        <div className="calendar-picker-time">
-          <span>
-            <Clock size={16} />
-            Время
-          </span>
-          <div>
-            <NumberInput
-              aria-label="Часы"
-              min={0}
-              max={23}
-              value={time.slice(0, 2)}
-              onChange={(e) =>
-                setTime(e.target.value.padStart(2, "0") + ":" + time.slice(3))
-              }
-            />
-            <b>:</b>
-            <NumberInput
-              aria-label="Минуты"
-              min={0}
-              max={59}
-              value={time.slice(3)}
-              onChange={(e) =>
-                setTime(
-                  time.slice(0, 2) + ":" + e.target.value.padStart(2, "0"),
-                )
-              }
-            />
+        {!dateOnly && (
+          <div className="calendar-picker-time">
+            <span>
+              <Clock size={16} />
+              Время
+            </span>
+            <div>
+              <NumberInput
+                aria-label="Часы"
+                min={0}
+                max={23}
+                value={time.slice(0, 2)}
+                onChange={(e) =>
+                  setTime(e.target.value.padStart(2, "0") + ":" + time.slice(3))
+                }
+              />
+              <b>:</b>
+              <NumberInput
+                aria-label="Минуты"
+                min={0}
+                max={59}
+                value={time.slice(3)}
+                onChange={(e) =>
+                  setTime(
+                    time.slice(0, 2) + ":" + e.target.value.padStart(2, "0"),
+                  )
+                }
+              />
+            </div>
           </div>
-        </div>
+        )}
         <div className="calendar-picker-shortcuts">
           <button
             type="button"
@@ -250,7 +263,9 @@ export function CalendarDateField({
         </div>
         {!valid && (
           <p className="error" role="alert">
-            Укажите корректное время, не раньше начала.
+            {dateOnly
+              ? "Выберите дату не раньше начала."
+              : "Укажите корректное время, не раньше начала."}
           </p>
         )}
         <div className="calendar-picker-actions">
@@ -266,7 +281,7 @@ export function CalendarDateField({
             className="primary"
             disabled={!valid}
             onClick={() => {
-              onChange(date + "T" + time);
+              onChange(dateOnly ? date : date + "T" + time);
               dialog.current?.close();
             }}
           >

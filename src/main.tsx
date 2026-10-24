@@ -2851,7 +2851,7 @@ function Assistant({
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
           if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
-          else if (event.stage === "calendar_changed") { window.dispatchEvent(new Event("orbit-calendar-changed")); window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: { domain: "tickets" } })); }
+          else if (event.stage === "calendar_changed") { window.dispatchEvent(new Event("orbit:developer-board")); window.dispatchEvent(new Event("orbit-calendar-changed")); window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: { domain: "tickets" } })); }
           else if (event.stage === "ticket_export") {
             if (event.mode === "edit") editTicketExport(event.ids, event.removeIds, event.columns);
             else openTicketExport(event.ids, event.columns);

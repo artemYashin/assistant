@@ -271,3 +271,64 @@ test("ended vacation completes its reminder automatically and cannot be reopened
     25 * 3600000,
   );
 });
+
+test("chat vacation tool creates, changes and cancels one period and refreshes UI; rejects unavailable people and cancelled runs", async (t) => {
+  const { localDeveloperTools } = await import("../server/local-developers.js");
+  const store = fixture(t),
+    people = new LocalDevelopers(store),
+    context = { client: "Customer", project: "Project" };
+  const person = people.add(["Alice"], { client: "", project: "" })[0];
+  const other = people
+    .add(["Other"], { client: "Other", project: "Other" })
+    .find((p) => p.name === "Other")!;
+  let updates = 0,
+    stopped = false;
+  const tools = localDeveloperTools(
+    store,
+    context,
+    "Поставь Алисе отпуск",
+    () => {
+      if (stopped) throw new Error("Cancelled");
+    },
+    undefined,
+    () => updates++,
+  );
+  const tool = tools.find((t) => t.name === "set_developer_vacation")!;
+  const invoke = (input: any) => (tool.handler as any)(input);
+  const first = await invoke({
+    developerId: person.id,
+    vacation: { start: "2099-11-01", end: "2099-11-05" },
+  });
+  assert.equal(first.returnDate, "2099-11-06");
+  assert.equal(first.azureChanged, false);
+  const id = new Calendar(store).list()[0].id;
+  await invoke({
+    developerId: person.id,
+    vacation: { start: "2099-11-01", end: "2099-11-08" },
+  });
+  assert.equal(new Calendar(store).list()[0].id, id);
+  assert.equal(new Calendar(store).list().length, 1);
+  await assert.rejects(
+    () => invoke({ developerId: other.id, vacation: null }),
+    /недоступен/,
+  );
+  await assert.rejects(() =>
+    invoke({
+      developerId: person.id,
+      vacation: { start: "2099-11-09", end: "2099-11-08" },
+    }),
+  );
+  assert.equal(updates, 2);
+  stopped = true;
+  await assert.rejects(
+    () => invoke({ developerId: person.id, vacation: null }),
+    /Cancelled/,
+  );
+  assert.equal(new Calendar(store).list().length, 1);
+  stopped = false;
+  const cancelled = await invoke({ developerId: person.id, vacation: null });
+  assert.equal(cancelled.cancelled, true);
+  assert.equal(cancelled.developer.vacationStart, null);
+  assert.equal(new Calendar(store).list().length, 0);
+  assert.equal(updates, 3);
+});

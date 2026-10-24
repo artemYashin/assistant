@@ -51,6 +51,7 @@ export function toolFailure(tool: string, args: any, error: unknown) {
     retryable: false,
     ...(tool === "update_local_ticket_metadata" ||
     tool === "set_local_ticket_developers" ||
+    tool === "set_developer_vacation" ||
     tool === "remove_local_ticket"
       ? { scope: "local", azureChanged: false }
       : {}),

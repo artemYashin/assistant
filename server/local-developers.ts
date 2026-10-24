@@ -1,8 +1,8 @@
-import { syncDeveloperVacations } from "./developer-vacations.js";
+import { syncDeveloperVacations, setDeveloperVacation, vacationInput, nextVacationDay } from "./developer-vacations.js";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store, AppError, type Context } from "./store.js";
-import { defineTool } from "@github/copilot-sdk";
+import { defineTool, type Tool } from "@github/copilot-sdk";
 
 export class LocalDevelopers {
   constructor(private store: Store) {}
@@ -139,10 +139,15 @@ export function localDeveloperTools(
   prompt: string,
   assertActive: () => void,
   isKnownTicket: (id: number) => boolean = () => false,
-) {
+  onVacationChanged: () => void = () => {},
+): Tool<any>[] {
   const service = new LocalDevelopers(store),
     source = store.source();
   const written = new Map<number, string>();
+  const vacationChange = z.object({
+    developerId: z.string().uuid(),
+    vacation: vacationInput.nullable().describe("Full inclusive YYYY-MM-DD start/end range to set or replace; null cancels the vacation and removes its linked event. Preserve unrequested dates when editing."),
+  }).strict();
   return [
     defineTool("list_local_developers", {
       description:
@@ -227,6 +232,19 @@ export function localDeveloperTools(
         const result = service.assign(ticketId, developerIds, context, source);
         written.set(ticketId, signature);
         return result;
+      },
+    }),
+    defineTool("set_developer_vacation", {
+      description: "Set, change or cancel a local developer's vacation only on explicit user request. FIRST list_local_developers to resolve exact ID, scope, existing dates and timezone; ask if names are ambiguous. Use get_calendar_context for relative dates. vacation={start,end} sets or replaces the single inclusive date range; preserve the other boundary when only one date is requested. vacation=null CANCELS the actual vacation and removes its linked calendar event, unlike completing the reminder which only silences notifications. Existing vacationZone is preserved; a new vacation uses the current calendar timezone. Applies across projects where this developer is available. No Azure changes or confirmation popup. Do not create an ordinary reminder instead. Report dates/return date only after success.",
+      parameters: vacationChange,
+      handler: async input => {
+        assertActive();
+        const {developerId,vacation}=vacationChange.parse(input);
+        if (!service.list(context).some(person=>person.id===developerId))
+          throw new AppError(404,"Разработчик недоступен в текущем проекте.");
+        setDeveloperVacation(store,developerId,vacation);
+        onVacationChanged();
+        return {saved:true,cancelled:vacation===null,returnDate:vacation ? nextVacationDay(vacation.end) : null,developer:service.list(context).find(person=>person.id===developerId),azureChanged:false};
       },
     }),
   ];

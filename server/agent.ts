@@ -1039,6 +1039,7 @@ export class Agent {
                     mutationPrompt,
                     assertActive,
                     (ticketId) => knownTickets.has(ticketId),
+                    () => emit({stage:"calendar_changed"}),
                   ),
                 ]
               : []),

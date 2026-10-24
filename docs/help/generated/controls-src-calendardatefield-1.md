@@ -7,60 +7,60 @@
 
 ### Элемент
 
-Выбрать дату: {…} · / Выбрать дату и время
+Выбрать дату: {…} · / Выбрать дату / Выбрать дату и время
 
-Источник: src/CalendarDateField.tsx:75.
+Источник: src/CalendarDateField.tsx:83.
 
 ### Элемент
 
 Очистить дату: {…} · Сбросить
 
-Источник: src/CalendarDateField.tsx:98.
+Источник: src/CalendarDateField.tsx:109.
 
 ### Элемент
 
 Закрыть выбор даты
 
-Источник: src/CalendarDateField.tsx:132.
+Источник: src/CalendarDateField.tsx:143.
 
 ### Элемент
 
 Предыдущий месяц
 
-Источник: src/CalendarDateField.tsx:142.
+Источник: src/CalendarDateField.tsx:153.
 
 ### Элемент
 
 Следующий месяц
 
-Источник: src/CalendarDateField.tsx:153.
+Источник: src/CalendarDateField.tsx:164.
 
 ### Элемент
 
 Часы
 
-Источник: src/CalendarDateField.tsx:217.
+Источник: src/CalendarDateField.tsx:229.
 
 ### Элемент
 
 Минуты
 
-Источник: src/CalendarDateField.tsx:227.
+Источник: src/CalendarDateField.tsx:239.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/CalendarDateField.tsx:241.
+Источник: src/CalendarDateField.tsx:254.
 
 ### Элемент
 
 Отмена
 
-Источник: src/CalendarDateField.tsx:257.
+Источник: src/CalendarDateField.tsx:272.
 
 ### Элемент
 
 Выбрать
 
-Источник: src/CalendarDateField.tsx:264.
+Источник: src/CalendarDateField.tsx:279.

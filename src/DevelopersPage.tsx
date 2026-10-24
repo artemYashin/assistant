@@ -1,3 +1,4 @@
+import { CalendarDateField } from "./CalendarDateField.js";
 import { useCalendarClock } from "./useCalendarClock.js";
 import { nextVacationDay, developerOnVacation } from "./developer-vacation.js";
 import {
@@ -361,27 +362,8 @@ function DeveloperCard({
               Действует во всех проектах, где доступен разработчик.
             </p>
             <div className="developer-vacation-dates">
-              <label>
-                Отпуск с
-                <input
-                  type="date"
-                  aria-label={`Отпуск с: ${person.name}`}
-                  value={vacationStart}
-                  onChange={(e) => setVacationStart(e.target.value)}
-                  disabled={busy}
-                />
-              </label>
-              <label>
-                Отпуск по
-                <input
-                  type="date"
-                  aria-label={`Отпуск по: ${person.name}`}
-                  value={vacationEnd}
-                  min={vacationStart}
-                  onChange={(e) => setVacationEnd(e.target.value)}
-                  disabled={busy}
-                />
-              </label>
+              <CalendarDateField label="Отпуск с" dateOnly value={vacationStart} onChange={setVacationStart} disabled={busy} zone={person.vacationZone || settings.syncSchedule?.timeZone || "UTC"}/>
+              <CalendarDateField label="Отпуск по" dateOnly value={vacationEnd} min={vacationStart} onChange={setVacationEnd} disabled={busy} zone={person.vacationZone || settings.syncSchedule?.timeZone || "UTC"}/>
             </div>
             <div className="developer-vacation-actions">
               <button
