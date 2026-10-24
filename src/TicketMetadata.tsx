@@ -1,3 +1,5 @@
+import { CalendarDateField } from "./CalendarDateField.js";
+import { fromWall, wallTime } from "./calendar-time.js";
 import { useEffect, useRef, useState } from "react";
 import { NotebookPen, Pencil, X } from "lucide-react";
 import { api } from "./api.js";
@@ -12,16 +14,49 @@ export function TicketMetadata({
 }: {
   ticket: any;
   context: { client: string; project: string };
-  field: "notes" | "priority" | "tags";
+  field: "notes" | "priority" | "tags" | "localDeadline";
   onChange: () => void;
   showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const label = { notes: "Заметки", priority: "Локальный приоритет", tags: "Теги" }[
-    field
-  ];
+  const label = {
+    localDeadline: "Локальный дедлайн",
+    notes: "Заметки",
+    priority: "Локальный приоритет",
+    tags: "Теги",
+  }[field];
   return (
     <div className="ticket-metadata-control">
+      {field === "localDeadline" && (
+        <span
+          className="ticket-deadline-value"
+          title={
+            ticket.localDeadline
+              ? new Date(ticket.localDeadline).toLocaleString("ru-RU")
+              : "Дедлайн не задан"
+          }
+        >
+          {ticket.localDeadline ? (
+            <>
+              <span>
+                {new Date(ticket.localDeadline).toLocaleDateString("ru-RU", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "2-digit",
+                })}
+              </span>
+              <small>
+                {new Date(ticket.localDeadline).toLocaleTimeString("ru-RU", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </small>
+            </>
+          ) : (
+            "—"
+          )}
+        </span>
+      )}
       {field === "priority" && (
         <span className="badge ticket-priority-badge">
           {ticket.priority ?? 1}
@@ -57,7 +92,10 @@ export function TicketMetadata({
         onClick={() => setOpen(true)}
       >
         {field === "notes" ? (
-          <NotebookPen size={17} fill={showLabel && ticket.notes ? "#e0eada" : "none"} />
+          <NotebookPen
+            size={17}
+            fill={showLabel && ticket.notes ? "#e0eada" : "none"}
+          />
         ) : (
           <Pencil size={14} />
         )}
@@ -79,12 +117,32 @@ export function TicketMetadata({
 function Editor({ ticket, context, field, label, onClose, onChange }: any) {
   const ref = useRef<HTMLDialogElement>(null);
   const [value, setValue] = useState(
-    field === "tags"
-      ? (ticket.tags || []).join("\n")
-      : String(ticket[field] ?? (field === "priority" ? 1 : "")),
+    field === "localDeadline"
+      ? ""
+      : field === "tags"
+        ? (ticket.tags || []).join("\n")
+        : String(ticket[field] ?? (field === "priority" ? 1 : "")),
   );
-  const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  useEffect(() => { ref.current?.showModal(); }, []);
+  const [zone, setZone] = useState("UTC");
+  const [dateReady, setDateReady] = useState(field !== "localDeadline");
+  useEffect(() => {
+    if (field === "localDeadline")
+      api("/settings")
+        .then((s) => {
+          const z = s.syncSchedule.timeZone;
+          setZone(z);
+          setValue(
+            ticket.localDeadline ? wallTime(ticket.localDeadline, z) : "",
+          );
+          setDateReady(true);
+        })
+        .catch((e) => setError(e.message));
+  }, []);
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  useEffect(() => {
+    ref.current?.showModal();
+  }, []);
   return (
     <dialog
       ref={ref}
@@ -116,19 +174,27 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          if (!dateReady) return;
           setBusy(true);
           setError("");
           try {
             const patch = {
               [field]:
-                field === "priority"
-                  ? Number(value)
-                  : field === "tags"
-                    ? value
-                        .split("\n")
-                        .map((s: string) => s.trim())
-                        .filter(Boolean)
-                    : value,
+                field === "localDeadline"
+                  ? value
+                    ? ticket.localDeadline &&
+                      value === wallTime(ticket.localDeadline, zone)
+                      ? ticket.localDeadline
+                      : fromWall(value, zone)
+                    : null
+                  : field === "priority"
+                    ? Number(value)
+                    : field === "tags"
+                      ? value
+                          .split("\n")
+                          .map((s: string) => s.trim())
+                          .filter(Boolean)
+                      : value,
             };
             const saved = await api(
               "/tickets/" + ticket.id + "/metadata",
@@ -144,6 +210,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
                 detail: { id: ticket.id, source: ticket.source, value: saved },
               }),
             );
+            window.dispatchEvent(new Event("orbit-calendar-changed"));
             onChange();
             onClose();
           } catch (e: any) {
@@ -152,14 +219,35 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
           }
         }}
       >
-        {field === "priority" ? (
+        {field === "localDeadline" ? (
+          <CalendarDateField
+            label="Локальный дедлайн"
+            zone={zone}
+            value={value}
+            onChange={setValue}
+            disabled={busy}
+          />
+        ) : field === "priority" ? (
           <label>
             Локальный приоритет (1 — самый высокий)
-            <input type="number" min={1} step={1} max={Number.MAX_SAFE_INTEGER} required
-              value={value} onChange={e => setValue(e.target.value)} disabled={busy} />
+            <input
+              type="number"
+              min={1}
+              step={1}
+              max={Number.MAX_SAFE_INTEGER}
+              required
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              disabled={busy}
+            />
           </label>
         ) : field === "tags" ? (
-          <LocalTagsEditor value={value} onChange={setValue} source={ticket.source} disabled={busy} />
+          <LocalTagsEditor
+            value={value}
+            onChange={setValue}
+            source={ticket.source}
+            disabled={busy}
+          />
         ) : (
           <label>
             {field === "tags"
@@ -188,7 +276,7 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
           >
             Отмена
           </button>
-          <button className="primary" disabled={busy}>
+          <button className="primary" disabled={busy || !dateReady}>
             {busy ? "Сохраняю…" : "Сохранить"}
           </button>
         </div>

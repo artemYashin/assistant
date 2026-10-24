@@ -9,28 +9,28 @@
 
 Этот тикет исключён пользователем из изменения
 
-Источник: server/ticket-metadata-tools.ts:57.
+Источник: server/ticket-metadata-tools.ts:58.
 
 ### Сообщение
 
 Подключение изменилось. Повторите запрос.
 
-Источник: server/ticket-metadata-tools.ts:62.
+Источник: server/ticket-metadata-tools.ts:63.
 
 ### Сообщение
 
 Одно изменение каждого поля за сообщение. Отправьте следующую команду отдельно.
 
-Источник: server/ticket-metadata-tools.ts:73.
+Источник: server/ticket-metadata-tools.ts:74.
 
 ### Сообщение
 
 Укажите текст заметки
 
-Источник: server/ticket-metadata-tools.ts:86.
+Источник: server/ticket-metadata-tools.ts:88.
 
 ### Сообщение
 
 Укажите теги
 
-Источник: server/ticket-metadata-tools.ts:96.
+Источник: server/ticket-metadata-tools.ts:98.

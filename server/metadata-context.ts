@@ -32,7 +32,7 @@ export function metadataContextRequest(
     return { prompt, contextual: false };
   const previous = metadataContextRequest(request.body, rows.slice(0, -2));
   const original = previous.contextual ? previous.prompt : request.body;
-  if (!/тег|тэг|tag|замет|note|приоритет|priority/iu.test(original))
+  if (!/тег|тэг|tag|замет|note|приоритет|priority|дедлайн|deadline/iu.test(original))
     return { prompt, contextual: false };
   return {
     prompt: `${original}\n\nУточнение пользователя к этой просьбе:\n${prompt}`,

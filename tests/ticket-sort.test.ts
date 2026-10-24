@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setTicketDeadline } from "../server/ticket-deadlines.js";
 import { Store } from "../server/store.js";
 import { listLocalTickets } from "../server/ticket-list.js";
 import { searchTicketContent } from "../server/ticket-content-search.js";
@@ -18,6 +19,7 @@ test("every summary sort supports stable pagination for lists and content search
     const date = id === 1 ? "2026-10-22" : "2026-10-21";
     store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, value, value, value, value, "url", date, date);
     store.db.prepare("INSERT INTO ticket_metadata VALUES (?,?,?,?,?)").run(source, id, `${value} needle`, id === 1 ? 5 : 1, JSON.stringify([value]));
+    setTicketDeadline(store,id,source,date+"T12:00:00.000Z");
     store.db.prepare("INSERT INTO ticket_azure_tags VALUES (?,?,?)").run(source, id, JSON.stringify([value]));
     store.db.prepare("UPDATE ticket_tracking_dates SET created_at=?,added_at=? WHERE source=? AND id=?").run(date, date, source, id);
     store.db.prepare("INSERT INTO local_developers VALUES (?,?, '','',1)").run(`dev${id}`, value);

@@ -235,6 +235,13 @@ export class Store {
       CREATE TABLE IF NOT EXISTS ticket_metadata (source TEXT NOT NULL,id INTEGER NOT NULL,notes TEXT NOT NULL DEFAULT '',priority INTEGER NOT NULL DEFAULT 1,tags TEXT NOT NULL DEFAULT '[]',PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_local (source TEXT NOT NULL,id INTEGER NOT NULL,developer_id TEXT NOT NULL DEFAULT '',developer_name TEXT NOT NULL DEFAULT '',removed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(source,id));
     `);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS ticket_deadlines (
+      source TEXT NOT NULL,id INTEGER NOT NULL,deadline TEXT NOT NULL,
+      event_id TEXT NOT NULL UNIQUE REFERENCES calendar_events(id) ON DELETE CASCADE,
+      PRIMARY KEY(source,id));
+      CREATE TRIGGER IF NOT EXISTS ticket_deadline_cleanup AFTER DELETE ON ticket_metadata BEGIN
+        DELETE FROM calendar_events WHERE id IN (SELECT event_id FROM ticket_deadlines WHERE source=OLD.source AND id=OLD.id);
+      END;`);
     this.db.transaction(() => {
       this.db.exec(`
         CREATE TABLE IF NOT EXISTS ticket_tracking_dates (source TEXT NOT NULL,id INTEGER NOT NULL,added_at TEXT,PRIMARY KEY(source,id));
@@ -402,7 +409,7 @@ export class Store {
     const saved = this.get<Partial<Settings>>("settings", {});
     // Ignore the retired custom GitHub OAuth setting in older databases.
     delete (saved as Record<string, unknown>).githubClientId;
-    const settings = { ...defaults, ...saved };
+    const settings = { ...defaults, ...saved, calendarNotifications: calendarNotificationsSchema.parse(saved.calendarNotifications || {}) };
     // Preserve existing custom bindings when introducing the new default shortcut.
     if (saved.ticketOpenKey === undefined && [settings.chatToggleKey, settings.voiceInputKey, settings.voiceCurrentKey, settings.voiceNewKey].includes(settings.ticketOpenKey))
       settings.ticketOpenKey = "";

@@ -1615,6 +1615,7 @@ function Tickets({
                     ["state", "Статус"],
                     ["priority", "Локальный приоритет"],
                     ["azurePriority", "Azure приоритет"],
+                    ["localDeadline", "Локальный дедлайн"],
                     ["tags", "Теги"],
                     ["azureTags", "Azure теги"],
                     ["assigned", "Исполнитель в Azure"],
@@ -2444,6 +2445,7 @@ function Assistant({
   onApprovals,
   pending,
 }: any) {
+  const navigate = useNavigate();
   const [chatUsage, setChatUsage] = useState<{ inputTokens: number; outputTokens: number; reports: number; partial: boolean; contextUsage?: { currentTokens: number; tokenLimit: number; model: string; updatedAt: string } | null }>({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
   const [shortcutBusy, setShortcutBusy] = useState(false);
   const [voiceStartSession, setVoiceStartSession] = useState("");
@@ -2832,6 +2834,7 @@ function Assistant({
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
           if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
+          else if (event.stage === "calendar_draft") { navigate("/calendar", {state:{reminderDraft:event.draft,requestId:crypto.randomUUID()}}); }
           else if (event.stage === "ticket_export") {
             if (event.mode === "edit") editTicketExport(event.ids, event.removeIds, event.columns);
             else openTicketExport(event.ids, event.columns);

@@ -37,7 +37,7 @@ test("local metadata is independent, validates priorities, merges fields, and fi
   saveTicketMetadata(store, 42, store.source(), context, {
     notes: "Not ready",
   });
-  assert.deepEqual(ticketMetadata(store, 42), {
+  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
     notes: "Not ready",
     tags: ["UI", "Bug"],
     priority: 4,
@@ -74,7 +74,7 @@ test("trash retains metadata until expiry and restores it", (t) => {
   assert.equal(ticketMetadata(store, 42).priority, 1);
   store.removeLocalTicket(42);
   store.purgeTicketTrash(Date.now() + 31 * 86400000);
-  assert.deepEqual(ticketMetadata(store, 42), {
+  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
     notes: "",
     priority: 1,
     tags: [],
@@ -109,7 +109,7 @@ test("chat metadata edits are local, preserve other fields and deduplicate appen
   await tool.handler!(args, {} as any);
   assert.equal(first.success, true);
   assert.equal(first.azureChanged, false);
-  assert.deepEqual(ticketMetadata(store, 42), {
+  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
     notes: "Before\n\nReady",
     tags: ["API", "UI"],
     priority: 1,
@@ -154,7 +154,7 @@ test("chat tag removal and explicit notes clearing preserve unrelated metadata",
     },
     {} as any,
   );
-  assert.deepEqual(ticketMetadata(store, 42), {
+  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
     notes: "",
     tags: ["API"],
     priority: 1,
@@ -207,7 +207,7 @@ test("chat metadata accepts historical IDs and values without rereading and stay
   const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
   const result: any = await tool.handler!({ id: 42, tags: { mode: "add", values: ["Inside 2"] }, notes: { mode: "append", text: "Ready" }, priority: 2 }, {} as any);
   assert.equal(result.success, true);
-  assert.deepEqual(ticketMetadata(store, 42), { tags: ["Inside 2"], notes: "Ready", priority: 2 });
+  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null, tags: ["Inside 2"], notes: "Ready", priority: 2 });
   await assert.rejects(async () => tool.handler!({ id: 999, tags: { mode: "add", values: ["Inside 2"] } }, {} as any), /отсутствует/);
 });
 

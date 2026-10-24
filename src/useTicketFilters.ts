@@ -21,6 +21,7 @@ const sorts = new Set(
     "state",
     "priority",
     "azurePriority",
+    "localDeadline",
     "tags",
     "azureTags",
     "assigned",

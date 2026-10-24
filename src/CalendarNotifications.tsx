@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarDays, ShieldCheck, X } from "lucide-react";
+import { ConfirmButton } from "./ConfirmButton.js";
+import { Bell, Check, CalendarDays, ShieldCheck, X } from "lucide-react";
 import { api } from "./api.js";
 import { calendarStatus, type CalendarItem } from "../server/calendar-model.js";
 import { eventTime } from "./calendar-time.js";
@@ -96,6 +97,19 @@ function ReminderToast({
             >
               {item.title}
             </button>
+            <ConfirmButton
+              className="icon-button calendar-toast-complete"
+              ariaLabel={`Завершить: ${item.title}`}
+              title="Завершить напоминание?"
+              message={`«${item.title}». Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре.`}
+              confirmLabel="Завершить"
+              onConfirm={async () => {
+                await api("/calendar/" + item.id + "/complete", "POST", {});
+                window.dispatchEvent(new Event("orbit-calendar-changed"));
+              }}
+            >
+              <Check size={16} />
+            </ConfirmButton>
             <button
               type="button"
               className="icon-button calendar-toast-dismiss"

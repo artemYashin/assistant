@@ -55,6 +55,26 @@ export function CalendarSettings({
         Общий часовой пояс календаря, напоминаний и расписания автообновлений.
         Уже созданные события сохраняют свой момент времени.
       </p>
+      <label>
+        Предупреждать о дедлайне тикета за (часы)
+        <input
+          type="number"
+          min={0}
+          max={8760}
+          step={1 / 60}
+          value={options.ticketDeadlineLeadMinutes / 60}
+          onChange={(e) =>
+            update(
+              "ticketDeadlineLeadMinutes",
+              Math.round(Number(e.target.value) * 60),
+            )
+          }
+        />
+      </label>
+      <p className="muted">
+        По умолчанию за 24 часа. Напоминание остаётся активным до ручного
+        завершения, в том числе после дедлайна.
+      </p>
       <label className="calendar-check">
         <input
           type="checkbox"

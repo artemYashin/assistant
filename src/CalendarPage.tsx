@@ -84,6 +84,18 @@ export function CalendarPage({
   const dialog = useRef<HTMLDialogElement>(null),
     location = useLocation(),
     navigate = useNavigate();
+  useEffect(() => {
+    const incoming = location.state?.reminderDraft;
+    if (!incoming) return;
+    setEditing(null);
+    setDraft({
+      ...incoming,
+      start: incoming.start ? wallTime(incoming.start, zone) : "",
+      end: incoming.end ? wallTime(incoming.end, zone) : "",
+    });
+    dialog.current?.showModal();
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state]);
   const selected = new URLSearchParams(location.search).get("event");
   const loadedSelection = useRef("");
   async function reload() {
@@ -207,6 +219,10 @@ export function CalendarPage({
   }
   async function mutate(path: string, method: string, body?: unknown) {
     await api(path, method, body);
+    if (method === "DELETE")
+      window.dispatchEvent(
+        new CustomEvent("orbit:data-synced", { detail: { domain: "tickets" } }),
+      );
     await reload();
     calendarChanged();
   }
@@ -548,7 +564,14 @@ export function CalendarPage({
                 </p>
                 <p className="calendar-inline muted">
                   <Clock size={15} />
+                  {item.ticket ? "Предупреждение: " : ""}
                   {eventTime(item.start, item.end, zone)}
+                  {item.ticket && (
+                    <span>
+                      {" "}
+                      · Дедлайн: {eventTime(item.ticket.deadline, null, zone)}
+                    </span>
+                  )}
                 </p>
                 {item.description && (
                   <p className="calendar-description">{item.description}</p>
@@ -572,7 +595,7 @@ export function CalendarPage({
                 <div className="calendar-inline calendar-reminder-actions">
                   <button className="secondary" onClick={() => open(item)}>
                     <Pencil size={15} />
-                    Изменить
+                    {item.ticket ? "Открыть" : "Изменить"}
                   </button>
                   {!item.completed && (
                     <ConfirmButton
@@ -602,7 +625,7 @@ export function CalendarPage({
                   )}
                   <ConfirmButton
                     title="Удалить напоминание?"
-                    message={`«${item.title}» будет удалено без возможности восстановления.`}
+                    message={`«${item.title}» будет удалено без возможности восстановления.${item.ticket ? " Локальный дедлайн тикета также будет очищен." : ""}`}
                     confirmLabel="Удалить"
                     className="secondary calendar-delete"
                     onConfirm={() => mutate("/calendar/" + item.id, "DELETE")}
@@ -636,175 +659,213 @@ export function CalendarPage({
             <X size={18} />
           </button>
         </div>
-        <section className="calendar-scope-editor">
-          <span className="multi-select-label">Уровень напоминания</span>
-          <div
-            className="calendar-scope-tabs"
-            role="group"
-            aria-label="Уровень напоминания"
-          >
-            {(
-              [
-                { value: "general", label: "Общий", Icon: Globe },
-                { value: "client", label: "Заказчик", Icon: Building2 },
-                { value: "project", label: "Проект", Icon: Folder },
-              ] as const
-            ).map(({ value, label, Icon }) => (
-              <button
-                key={value}
-                aria-pressed={draft.scope === value}
-                onClick={() =>
-                  setDraft({
-                    ...draft,
-                    scope: value,
-                    client:
-                      value === "general" ? "" : draft.client || context.client,
-                    project:
-                      value !== "project"
-                        ? ""
-                        : draft.project ||
-                          ((draft.client || context.client) === context.client
-                            ? context.project
-                            : ""),
-                  })
-                }
-              >
-                <Icon size={15} />
-                {label}
-              </button>
-            ))}
+        {currentItem?.ticket && (
+          <div className="calendar-ticket-link">
+            <strong>Дедлайн тикета #{currentItem.ticket.id}</strong>
+            <p>
+              {eventTime(currentItem.ticket.deadline, null, zone)} · изменяется
+              в карточке тикета. Удаление напоминания также очистит локальный
+              дедлайн.
+            </p>
+            <button
+              className="secondary"
+              onClick={() => {
+                dialog.current?.close();
+                window.dispatchEvent(
+                  new CustomEvent("orbit-show-ticket-details", {
+                    detail: {
+                      source: currentItem.ticket!.source,
+                      tickets: [
+                        {
+                          id: currentItem.ticket!.id,
+                          title: currentItem.title,
+                        },
+                      ],
+                    },
+                  }),
+                );
+              }}
+            >
+              Открыть тикет
+            </button>
           </div>
-          {draft.scope !== "general" && (
-            <div className="calendar-scope-selects">
-              <SingleSelect
-                label="Заказчик напоминания"
-                value={draft.client}
-                options={[
-                  { value: "", label: "Выберите заказчика" },
-                  ...[
-                    ...new Set(contexts.map((c) => c.client).filter(Boolean)),
-                  ].map((name) => ({ value: name, label: name })),
-                ]}
-                onChange={(client) =>
-                  setDraft({ ...draft, client, project: "" })
-                }
-              />
-              {draft.scope === "project" && (
-                <SingleSelect
-                  label="Проект напоминания"
-                  value={draft.project}
-                  disabled={!draft.client}
-                  options={[
-                    { value: "", label: "Выберите проект" },
-                    ...contexts
-                      .filter((c) => c.client === draft.client && c.project)
-                      .map((c) => ({ value: c.project, label: c.project })),
-                  ]}
-                  onChange={(project) => setDraft({ ...draft, project })}
-                />
-              )}
-            </div>
-          )}
-        </section>
-        <p className="muted">Дата и время в часовом поясе {zone}</p>
-        <label>
-          Название
-          <input
-            autoFocus
-            maxLength={200}
-            value={draft.title}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-          />
-        </label>
-        <div className="calendar-date-fields">
-          <CalendarDateField
-            zone={zone}
-            label="Начало · необязательно"
-            value={draft.start}
-            onChange={(start) =>
-              setDraft({ ...draft, start, ...(!start ? { end: "" } : {}) })
-            }
-          />
-          <CalendarDateField
-            zone={zone}
-            label="Окончание · необязательно"
-            value={draft.end}
-            min={draft.start}
-            disabled={!draft.start}
-            onChange={(end) => setDraft({ ...draft, end })}
-          />
-        </div>
-        <p className="muted">
-          Без дат — напоминание без срока. Только начало — напоминание на время.
-          Начало и окончание — событие с длительностью. Завершение всегда
-          отмечается вручную.
-        </p>
-        <label>
-          Описание
-          <textarea
-            rows={3}
-            maxLength={10000}
-            value={draft.description}
-            onChange={(e) =>
-              setDraft({ ...draft, description: e.target.value })
-            }
-          />
-        </label>
-        <details className="calendar-developers">
-          <summary>
-            <Users size={15} />
-            Разработчики · необязательно ({draft.developerIds.length})
-          </summary>
-          {developers.map((d) => (
-            <label className="calendar-check" key={d.id}>
-              <input
-                type="checkbox"
-                checked={draft.developerIds.includes(d.id)}
-                onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    developerIds: e.target.checked
-                      ? [...draft.developerIds, d.id]
-                      : draft.developerIds.filter((id) => id !== d.id),
-                  })
-                }
-              />
-              <InitialsAvatar name={d.name} />
-              <span>
-                {d.name}
-                <small>
-                  {d.client
-                    ? [d.client, d.project].filter(Boolean).join(" / ")
-                    : "Общий список"}
-                </small>
-              </span>
-            </label>
-          ))}
-          {draft.developerIds
-            .filter((id) => !developers.some((d) => d.id === id))
-            .map((id) => (
-              <label className="calendar-check" key={id}>
-                <input
-                  type="checkbox"
-                  checked
-                  onChange={() =>
+        )}
+        <fieldset
+          disabled={!!currentItem?.ticket}
+          className="calendar-editor-fields"
+        >
+          <section className="calendar-scope-editor">
+            <span className="multi-select-label">Уровень напоминания</span>
+            <div
+              className="calendar-scope-tabs"
+              role="group"
+              aria-label="Уровень напоминания"
+            >
+              {(
+                [
+                  { value: "general", label: "Общий", Icon: Globe },
+                  { value: "client", label: "Заказчик", Icon: Building2 },
+                  { value: "project", label: "Проект", Icon: Folder },
+                ] as const
+              ).map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  aria-pressed={draft.scope === value}
+                  onClick={() =>
                     setDraft({
                       ...draft,
-                      developerIds: draft.developerIds.filter(
-                        (value) => value !== id,
-                      ),
+                      scope: value,
+                      client:
+                        value === "general"
+                          ? ""
+                          : draft.client || context.client,
+                      project:
+                        value !== "project"
+                          ? ""
+                          : draft.project ||
+                            ((draft.client || context.client) === context.client
+                              ? context.project
+                              : ""),
+                    })
+                  }
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            {draft.scope !== "general" && (
+              <div className="calendar-scope-selects">
+                <SingleSelect
+                  label="Заказчик напоминания"
+                  value={draft.client}
+                  options={[
+                    { value: "", label: "Выберите заказчика" },
+                    ...[
+                      ...new Set(contexts.map((c) => c.client).filter(Boolean)),
+                    ].map((name) => ({ value: name, label: name })),
+                  ]}
+                  onChange={(client) =>
+                    setDraft({ ...draft, client, project: "" })
+                  }
+                />
+                {draft.scope === "project" && (
+                  <SingleSelect
+                    label="Проект напоминания"
+                    value={draft.project}
+                    disabled={!draft.client}
+                    options={[
+                      { value: "", label: "Выберите проект" },
+                      ...contexts
+                        .filter((c) => c.client === draft.client && c.project)
+                        .map((c) => ({ value: c.project, label: c.project })),
+                    ]}
+                    onChange={(project) => setDraft({ ...draft, project })}
+                  />
+                )}
+              </div>
+            )}
+          </section>
+          <p className="muted">Дата и время в часовом поясе {zone}</p>
+          <label>
+            Название
+            <input
+              autoFocus
+              maxLength={200}
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+          </label>
+          <div className="calendar-date-fields">
+            <CalendarDateField
+              zone={zone}
+              label="Начало · необязательно"
+              value={draft.start}
+              onChange={(start) =>
+                setDraft({ ...draft, start, ...(!start ? { end: "" } : {}) })
+              }
+            />
+            <CalendarDateField
+              zone={zone}
+              label="Окончание · необязательно"
+              value={draft.end}
+              min={draft.start}
+              disabled={!draft.start}
+              onChange={(end) => setDraft({ ...draft, end })}
+            />
+          </div>
+          <p className="muted">
+            Без дат — напоминание без срока. Только начало — напоминание на
+            время. Начало и окончание — событие с длительностью. Завершение
+            всегда отмечается вручную.
+          </p>
+          <label>
+            Описание
+            <textarea
+              rows={3}
+              maxLength={10000}
+              value={draft.description}
+              onChange={(e) =>
+                setDraft({ ...draft, description: e.target.value })
+              }
+            />
+          </label>
+          <details className="calendar-developers">
+            <summary>
+              <Users size={15} />
+              Разработчики · необязательно ({draft.developerIds.length})
+            </summary>
+            {developers.map((d) => (
+              <label className="calendar-check" key={d.id}>
+                <input
+                  type="checkbox"
+                  checked={draft.developerIds.includes(d.id)}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      developerIds: e.target.checked
+                        ? [...draft.developerIds, d.id]
+                        : draft.developerIds.filter((id) => id !== d.id),
                     })
                   }
                 />
+                <InitialsAvatar name={d.name} />
                 <span>
-                  Удалённый разработчик · снимите выбор для сохранения
+                  {d.name}
+                  <small>
+                    {d.client
+                      ? [d.client, d.project].filter(Boolean).join(" / ")
+                      : "Общий список"}
+                  </small>
                 </span>
               </label>
             ))}
-          {!developers.length && (
-            <p className="muted">Локальные разработчики пока не добавлены.</p>
-          )}
-        </details>
+            {draft.developerIds
+              .filter((id) => !developers.some((d) => d.id === id))
+              .map((id) => (
+                <label className="calendar-check" key={id}>
+                  <input
+                    type="checkbox"
+                    checked
+                    onChange={() =>
+                      setDraft({
+                        ...draft,
+                        developerIds: draft.developerIds.filter(
+                          (value) => value !== id,
+                        ),
+                      })
+                    }
+                  />
+                  <span>
+                    Удалённый разработчик · снимите выбор для сохранения
+                  </span>
+                </label>
+              ))}
+            {!developers.length && (
+              <p className="muted">Локальные разработчики пока не добавлены.</p>
+            )}
+          </details>
+        </fieldset>
         {currentItem && (
           <div className="calendar-editor-management">
             <span
@@ -844,7 +905,7 @@ export function CalendarPage({
               <ConfirmButton
                 className="calendar-delete"
                 title="Удалить напоминание?"
-                message={`«${currentItem.title}» будет удалено без возможности восстановления.`}
+                message={`«${currentItem.title}» будет удалено без возможности восстановления.${currentItem.ticket ? " Локальный дедлайн тикета также будет очищен." : ""}`}
                 confirmLabel="Удалить"
                 onConfirm={async () => {
                   await mutate("/calendar/" + currentItem.id, "DELETE");
@@ -862,7 +923,7 @@ export function CalendarPage({
             Отмена
           </button>
           <ConfirmButton
-            disabled={!validDraft}
+            disabled={!validDraft || !!currentItem?.ticket}
             className="primary"
             title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
             message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}

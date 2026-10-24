@@ -9,10 +9,10 @@
 
 Подключение изменилось. Обновите список.
 
-Источник: server/ticket-metadata.ts:40.
+Источник: server/ticket-metadata.ts:51.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке
 
-Источник: server/ticket-metadata.ts:42.
+Источник: server/ticket-metadata.ts:53.

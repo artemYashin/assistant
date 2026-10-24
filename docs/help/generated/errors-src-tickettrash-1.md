@@ -9,10 +9,10 @@
 
 Не удалось загрузить корзину
 
-Источник: src/TicketTrash.tsx:506.
+Источник: src/TicketTrash.tsx:507.
 
 ### Сообщение
 
 Ничего не найдено
 
-Источник: src/TicketTrash.tsx:508.
+Источник: src/TicketTrash.tsx:509.

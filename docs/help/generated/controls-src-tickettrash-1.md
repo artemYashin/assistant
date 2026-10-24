@@ -9,94 +9,94 @@
 
 Поиск в корзине · Номер, название, исполнитель…
 
-Источник: src/TicketTrash.tsx:236.
+Источник: src/TicketTrash.tsx:237.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: src/TicketTrash.tsx:257.
+Источник: src/TicketTrash.tsx:258.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: src/TicketTrash.tsx:274.
+Источник: src/TicketTrash.tsx:275.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: src/TicketTrash.tsx:276.
+Источник: src/TicketTrash.tsx:277.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: src/TicketTrash.tsx:277.
+Источник: src/TicketTrash.tsx:278.
 
 ### Элемент
 
 Теги · Все теги
 
-Источник: src/TicketTrash.tsx:287.
+Источник: src/TicketTrash.tsx:288.
 
 ### Элемент
 
 Без тегов
 
-Источник: src/TicketTrash.tsx:293.
+Источник: src/TicketTrash.tsx:294.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: src/TicketTrash.tsx:299.
+Источник: src/TicketTrash.tsx:300.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: src/TicketTrash.tsx:305.
+Источник: src/TicketTrash.tsx:306.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: src/TicketTrash.tsx:312.
+Источник: src/TicketTrash.tsx:313.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: src/TicketTrash.tsx:322.
+Источник: src/TicketTrash.tsx:323.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: src/TicketTrash.tsx:337.
+Источник: src/TicketTrash.tsx:338.
 
 ### Элемент
 
 Нет поручения
 
-Источник: src/TicketTrash.tsx:343.
+Источник: src/TicketTrash.tsx:344.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/TicketTrash.tsx:372.
+Источник: src/TicketTrash.tsx:373.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: src/TicketTrash.tsx:437.
+Источник: src/TicketTrash.tsx:438.
 
 ### Элемент
 
 Сортировать: Тип задачи · Тип · /
 
-Источник: src/TicketTrash.tsx:462.
+Источник: src/TicketTrash.tsx:463.

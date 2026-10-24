@@ -26,6 +26,8 @@ export function ticketFilterSql(type?: string | string[], state?: string | strin
 
 const tagValues = (max: number) => z.union([z.array(z.string().trim().min(1).max(max)).max(50), z.string().trim().min(1).max(max)]);
 export const ticketMetadataFilters = {
+  deadlineFrom: z.string().datetime().optional().describe("Inclusive local deadline from UTC ISO; excludes tickets without deadline."),
+  deadlineTo: z.string().datetime().optional().describe("Inclusive local deadline to UTC ISO; AND with other filters."),
   azurePriority:z.union([z.array(z.number().finite()).max(50),z.number().finite()]).optional().describe("Read-only Azure priorities (Microsoft.VSTS.Common.Priority), distinct from local priority. OR within array; AND with other filters."),
   priority: z.union([z.array(z.number().int().positive().safe()).max(20), z.number().int().positive().safe()]).optional().describe("Local priorities, OR within array; 1 is highest. Single number supported. Empty/omitted means no filter."),
   tag: tagValues(60).optional().describe("Exact local tags: match ANY listed tag. Single string supported. Empty/omitted means no filter; AND with other fields."),
@@ -34,6 +36,9 @@ export const ticketMetadataFilters = {
 export function ticketMetadataFilterSql(input: z.infer<z.ZodObject<typeof ticketMetadataFilters>>, alias: "t" | "local_tickets") {
   const clauses: string[] = [], params: (string | number)[] = [];
   const values = <T extends string | number>(input: T | T[] | undefined): T[] => [...new Set(Array.isArray(input) ? input : input === undefined ? [] : [input])];
+  for (const [key,op] of [["deadlineFrom",">="],["deadlineTo","<="]] as const) {
+    if (input[key]) { clauses.push(`EXISTS (SELECT 1 FROM ticket_deadlines d WHERE d.source=${alias}.source AND d.id=${alias}.id AND d.deadline ${op} ?)`); params.push(new Date(input[key]!).toISOString()); }
+  }
   const azurePriorities=values(input.azurePriority);
   if(azurePriorities.length) {
     clauses.push(`(SELECT priority FROM ticket_azure_priority p WHERE p.source=${alias}.source AND p.id=${alias}.id) IN (${azurePriorities.map(()=>"?").join(",")})`);

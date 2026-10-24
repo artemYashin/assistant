@@ -13,6 +13,7 @@ const azureSortFields: Record<string, string> = {
   changed_at: "System.ChangedDate",
 };
 const localSortFields = new Set([
+  "localDeadline",
   "priority",
   "tags",
   "developer_name",

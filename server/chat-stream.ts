@@ -1,5 +1,7 @@
 import type { ExportColumnKey } from "./ticket-export-columns.js";
+import type { CalendarItem } from "./calendar-model.js";
 export type ChatProgress =
+  | {stage:"calendar_draft"; draft: Omit<CalendarItem,"id"|"completed"|"createdAt"|"ticket">}
   | { stage: "ticket_export"; ids: number[]; mode: "open" | "edit"; removeIds?: number[]; columns?: ExportColumnKey[] }
   | { stage: "data_synced"; domain: "tickets" | "prs" | "memory" }
   | { stage: "close_ticket_details" }

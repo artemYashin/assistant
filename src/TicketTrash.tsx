@@ -203,6 +203,7 @@ export function TicketTrash({
     ["state", "Статус"],
     ["priority", "Локальный приоритет"],
     ["azurePriority", "Azure приоритет"],
+                    ["localDeadline", "Локальный дедлайн"],
     ["tags", "Теги"],
     ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],

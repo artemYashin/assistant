@@ -6,6 +6,7 @@ export type CsvTicket = {
   type?: string;
   state?: string;
   priority?: number;
+  localDeadline?: string | null;
   azurePriority?: number | null;
   tags?: string[];
   azureTags?: string[];
@@ -55,6 +56,7 @@ export const exportColumns = [
     value: (t: CsvTicket) =>
       t.imported === false && !t.inTrash ? "N/A" : (t.priority ?? 1),
   },
+  {key:"localDeadline",header:"Local Deadline (UTC)",label:"Локальный дедлайн",width:28,value:(t:CsvTicket)=>t.localDeadline || ""},
   { key:"azurePriority",header:"Azure Priority",label:"Azure приоритет",width:20,value:(t:CsvTicket)=>t.azurePriority ?? "" },
   {
     key: "tags",

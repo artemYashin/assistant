@@ -3,6 +3,7 @@ import { imageReadingTool } from "./image-reader.js";
 import { ChatFiles, prepareChatFiles, type ChatFile } from "./chat-files.js";
 import { selectedTicketTool } from "./selected-ticket-tool.js";
 import type { TicketExportContext } from "./ticket-export-context.js";
+import { calendarTools } from "./calendar-tools.js";
 import { ticketExportTool } from "./ticket-export-tool.js";
 import { helpTools } from "./help.js";
 import { getTicketCatalog } from "./ticket-catalog.js";
@@ -108,7 +109,7 @@ export function makeTools(
     }),
     defineTool("get_local_ticket_metadata", {
       description:
-        "Read LOCAL notes, priority and tags for a ticket. No Azure requests. Independent of Azure fields. Continue reading notes with nextOffset until null.",
+        "Read LOCAL notes, priority, localDeadline and tags for a ticket. No Azure requests. Independent of Azure fields. Continue reading notes with nextOffset until null.",
       parameters: z.object({
         id: z.number().int().positive(),
         offset: z.number().int().min(0).max(20000).default(0),
@@ -906,6 +907,7 @@ export class Agent {
                     });
                   }),
                   workspaceContextTool(this.store, context, assertActive),
+                  ...calendarTools(this.store, assertActive, onProgress ? emit : undefined),
                   ticketExportTool(this.store, assertActive, onProgress ? emit : undefined, ticketExport),
                   ticketExportTool(this.store, assertActive, onProgress ? emit : undefined, ticketExport, true),
                   selectedTicketTool(this.store, selectedTicketIds, ticketExport, assertActive, id => knownTickets.add(id)),

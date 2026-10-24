@@ -1,3 +1,4 @@
+import { syncTicketDeadlines, activeDeadlineSql } from "./ticket-deadlines.js";
 import { calendarInput, type CalendarItem } from "./calendar-model.js";
 import { randomUUID } from "node:crypto";
 import type { Store } from "./store.js";
@@ -7,13 +8,23 @@ import { syncAllowed } from "./sync-schedule.js";
 export class Calendar {
   constructor(private store: Store) {}
   list(): CalendarItem[] {
+    syncTicketDeadlines(this.store);
     return (
       this.store.db
         .prepare(
-          "SELECT * FROM calendar_events ORDER BY COALESCE(start,created_at),id",
+          `SELECT e.*,d.id AS ticket_id,d.source AS ticket_source,d.deadline FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id WHERE ${activeDeadlineSql} ORDER BY COALESCE(start,created_at),e.id`,
         )
         .all() as any[]
     ).map((r) => ({
+      ...(r.ticket_id
+        ? {
+            ticket: {
+              id: r.ticket_id,
+              source: r.ticket_source,
+              deadline: r.deadline,
+            },
+          }
+        : {}),
       id: r.id,
       kind: !r.start ? "general" : r.end ? "event" : "reminder",
       scope: r.scope,
@@ -36,6 +47,13 @@ export class Calendar {
       .all();
   }
   save(input: unknown, id?: string) {
+    if (
+      id &&
+      this.store.db
+        .prepare("SELECT 1 FROM ticket_deadlines WHERE event_id=?")
+        .get(id)
+    )
+      throw new AppError(400, "Измените локальный дедлайн в карточке тикета.");
     const v = calendarInput.parse(input),
       ids = [...new Set(v.developerIds)];
     if (
@@ -127,6 +145,7 @@ export class Calendar {
     return { ok: true };
   }
   notifications(now = new Date()) {
+    syncTicketDeadlines(this.store);
     const settings = this.store.settings(),
       options = settings.calendarNotifications;
     if (
@@ -142,7 +161,7 @@ export class Calendar {
       const ids = (
         this.store.db
           .prepare(
-            "SELECT id FROM calendar_events WHERE completed=0 AND (start IS NULL OR start<=?) AND (last_notified IS NULL OR last_notified<=?) ORDER BY start,id LIMIT 20",
+            `SELECT e.id FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id WHERE ${activeDeadlineSql} AND completed=0 AND (start IS NULL OR start<=?) AND (last_notified IS NULL OR last_notified<=?) ORDER BY start,e.id LIMIT 20`,
           )
           .all(instant, cutoff) as { id: string }[]
       ).map((r) => r.id);

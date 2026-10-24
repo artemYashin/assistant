@@ -3,12 +3,18 @@ import { syncScheduleSchema } from "./sync-schedule.js";
 
 export const calendarNotificationsSchema = z
   .object({
+    ticketDeadlineLeadMinutes: z
+      .number()
+      .int()
+      .min(0)
+      .max(525600)
+      .default(1440),
     browser: z.boolean().default(false),
     intervalMinutes: z.number().int().min(1).max(10080).default(60),
     schedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
   })
   .strict();
-export const calendarInput = z
+export const calendarDraftSchema = z
   .object({
     kind: z.enum(["reminder", "event", "general"]).optional(),
     scope: z.enum(["general", "client", "project"]).default("general"),
@@ -33,27 +39,30 @@ export const calendarInput = z
   .refine(
     (v) => !v.end || (!!v.start && Date.parse(v.end) >= Date.parse(v.start)),
     "Окончание не может быть раньше начала; укажите начало события.",
-  )
-  .transform((v) => ({
-    ...v,
-    kind: !v.start
-      ? ("general" as const)
-      : v.end
-        ? ("event" as const)
-        : ("reminder" as const),
-  }));
+  );
+export const calendarInput = calendarDraftSchema.transform((v) => ({
+  ...v,
+  kind: !v.start
+    ? ("general" as const)
+    : v.end
+      ? ("event" as const)
+      : ("reminder" as const),
+}));
 export type CalendarItem = z.infer<typeof calendarInput> & {
+  ticket?: { id: number; source: string; deadline: string };
   id: string;
   completed: boolean;
   createdAt: string;
 };
 export function calendarStatus(
-  item: Pick<CalendarItem, "start" | "end" | "completed" | "kind">,
+  item: Pick<CalendarItem, "start" | "end" | "completed" | "kind" | "ticket">,
   now = new Date().toISOString(),
 ) {
   if (item.completed) return "completed";
   if (!item.start) return "open";
   if (Date.parse(item.start) > Date.parse(now)) return "upcoming";
+  if (item.ticket && Date.parse(item.ticket.deadline) > Date.parse(now))
+    return "ongoing";
   if (
     item.kind === "event" &&
     item.end &&
@@ -64,7 +73,7 @@ export function calendarStatus(
   return "overdue";
 }
 export function calendarOverlaps(
-  item: Pick<CalendarItem, "start" | "end" | "kind">,
+  item: Pick<CalendarItem, "start" | "end" | "kind" | "ticket">,
   from?: string,
   to?: string,
 ) {
@@ -72,6 +81,7 @@ export function calendarOverlaps(
   return (
     (!to || Date.parse(item.start) <= Date.parse(to)) &&
     (!from ||
+      !!item.ticket ||
       (item.end ? Date.parse(item.end) : Date.parse(item.start)) >=
         Date.parse(from))
   );

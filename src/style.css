@@ -6379,6 +6379,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6400,6 +6401,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6420,6 +6422,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6439,6 +6442,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6467,6 +6471,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6493,6 +6498,7 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+    [data-column="localDeadline"],
       [data-column="tags"],
       [data-column="developer_name"],
       [data-column="assigned"]
@@ -6509,6 +6515,7 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+    [data-column="localDeadline"],
       [data-column="tags"],
       [data-column="developer_name"],
       [data-column="assigned"]
@@ -6536,6 +6543,7 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="localDeadline"],
     [data-column="tags"],
     [data-column="developer_name"],
     [data-column="assigned"]
@@ -6552,6 +6560,7 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+    [data-column="localDeadline"],
       [data-column="tags"],
       [data-column="developer_name"],
       [data-column="assigned"]
@@ -6564,6 +6573,7 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+    [data-column="localDeadline"],
       [data-column="tags"],
       [data-column="developer_name"],
       [data-column="assigned"]
@@ -10110,3 +10120,16 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .calendar-editor-management button { display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 12px;border-radius:8px; }
 .calendar-editor-management .calendar-delete { border:1px solid #e2b6b2;background:#fff1ef;color:#a53e36; }
 .calendar-editor-management .calendar-delete:hover { background:#ffe3df;border-color:#ca8b83; }
+
+/* Local deadlines share the calendar lifecycle, but dates are edited on tickets. */
+.calendar-editor-fields { border:0;padding:0;margin:0;min-width:0; }
+.calendar-editor-fields>label { margin:12px 0; }
+.calendar-ticket-link { padding:12px;border:1px solid #bad5ee;background:#eff7ff;border-radius:10px;margin-bottom:12px; }
+.calendar-toast-row { border:1px solid #d6e3d7;background:#fff;border-radius:9px;padding:10px;align-items:center;margin-top:8px; }
+.calendar-toast-complete { color:#397549;flex:none; }
+
+.ticket-table-fit td[data-column="localDeadline"] .ticket-metadata-control>span { min-width:0;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4; }
+
+.ticket-deadline-value { display:flex;flex-direction:column;min-width:0; }
+.ticket-deadline-value>span,.ticket-deadline-value>small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.ticket-deadline-value>small { color:var(--muted);font-size:11px; }

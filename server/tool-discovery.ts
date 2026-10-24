@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "./store.js";
 
 const catalog: Record<string, string> = {
+  get_calendar_context: "Current time, timezone, scopes and developers for reminders and local ticket deadlines.",
+  prepare_calendar_reminder: "Prepare any reminder (timed, duration, undated) on user request; user confirms creation in calendar UI.",
   search_app_help: "On explicit app-help/troubleshooting requests only: search Orbit documentation titles and short excerpts, not live data.",
   read_app_help: "Read a selected Orbit help article by ID, with bounded pagination. Only for app-help requests.",
   read_memory: "Read full details of one relevant memory by its catalog ID.",
@@ -35,7 +37,7 @@ const catalog: Record<string, string> = {
     "Search/page local summaries (literal or searchMode=regex); exact type/Azure state and other filters, exact IDs, optional sorting by any summary field; full detail requires consent.",
   get_ticket: "Read one ticket by ID; local summary by default.",
   get_local_ticket_metadata:
-    "Read local notes, tags and priority by ticket ID.",
+    "Read local notes, tags, localDeadline and priority by ticket ID.",
   get_ticket_states:
     "Resolve valid Azure status names for ticket IDs and a requested status.",
   request_azure_ticket_lookup:
@@ -46,7 +48,7 @@ const catalog: Record<string, string> = {
     "Move a ticket ID to local trash, never delete in Azure.",
   change_ticket_status: "Change one ticket's Azure status and verify it.",
   update_local_ticket_metadata:
-    "Edit local notes, priority or tags for one ticket ID.",
+    "Edit local notes, priority, localDeadline or tags for one ticket ID.",
   batch_update_tickets:
     "Import a user-supplied list of ticket IDs/links: operations with action add, up to 50 per call. Also batch local edits/removal/assignments or Azure statuses.",
   list_local_developers:

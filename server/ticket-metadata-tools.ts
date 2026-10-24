@@ -13,6 +13,7 @@ export const editMetadataSchema = z
       })
       .strict()
       .optional(),
+    localDeadline: z.string().datetime().nullable().optional().describe("Local deadline UTC ISO; null clears deadline and its reminder. Changing deadline reopens reminder. Never changes Azure."),
     priority: z.number().int().positive().safe().optional(),
     tags: z
       .object({
@@ -28,7 +29,7 @@ export const editMetadataSchema = z
   })
   .strict()
   .refine(
-    (v) => v.notes || v.priority !== undefined || v.tags,
+    (v) => v.notes || v.priority !== undefined || v.tags || v.localDeadline !== undefined,
     "Укажите изменяемое поле",
   );
 
@@ -43,7 +44,7 @@ export function ticketMetadataTools(
   return [
     defineTool("update_local_ticket_metadata", {
       description:
-        "Edit LOCAL notes, priority and tags according to the user request and conversation context, including a short confirmation of the preceding plan. IDs and values may come from earlier messages; no repeated read is required for an unambiguous existing selection. If the selection is unclear, clarify or resolve it with one list_tickets call. Ask for conversational confirmation before bulk changes. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. Local priority is a positive integer, 1 is highest/default; there is no configured level count. Repeating the same operation is idempotent within this message. Confirm only success=true.",
+        "Edit LOCAL notes, priority, localDeadline and tags according to the user request and conversation context, including a short confirmation of the preceding plan. IDs and values may come from earlier messages; no repeated read is required for an unambiguous existing selection. If the selection is unclear, clarify or resolve it with one list_tickets call. Ask for conversational confirmation before bulk changes. Never writes Azure. For notes use append unless replacement/clearing was explicitly requested. For tags use add/remove to preserve others; replace/clear only explicitly. Omit unchanged fields. Local priority is a positive integer, 1 is highest/default; there is no configured level count. Repeating the same operation is idempotent within this message. Confirm only success=true.",
       parameters: editMetadataSchema,
       handler: async (input) => {
         assertActive();
@@ -63,7 +64,7 @@ export function ticketMetadataTools(
         const patch: Record<string, any> = {};
         const pending: [string, string][] = [];
         const current = ticketMetadata(store, args.id, source);
-        for (const field of ["notes", "priority", "tags"] as const) {
+        for (const field of ["notes", "priority", "tags", "localDeadline"] as const) {
           const operation = args[field];
           if (operation === undefined) continue;
           const key = args.id + ":" + field,
@@ -77,7 +78,8 @@ export function ticketMetadataTools(
             continue;
           }
           pending.push([key, signature]);
-          if (field === "priority") {
+          if (field === "localDeadline") { patch.localDeadline = args.localDeadline;
+          } else if (field === "priority") {
             const value = args.priority!;
             patch.priority = value;
           } else if (field === "notes") {
@@ -124,6 +126,7 @@ export function ticketMetadataTools(
           id: args.id,
           scope: "local",
           azureChanged: false,
+          localDeadline: result.localDeadline,
           priority: result.priority,
           tags: result.tags,
           notes: result.notes.slice(0, 300),

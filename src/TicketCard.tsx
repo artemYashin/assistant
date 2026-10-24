@@ -301,6 +301,8 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
             </div>
             {card.localMetadata && (
               <div>
+                <dt>Локальный дедлайн</dt>
+                <dd>{card.locallyAvailable || card.locallyTracked ? <TicketMetadata ticket={{id:card.id,source:card.source,...card.localMetadata}} context={card.localContext} field="localDeadline" onChange={() => {}} /> : "—"}</dd>
                 <dt>Локальный приоритет</dt>
                 <dd>
                   {card.locallyAvailable || card.locallyTracked ? (

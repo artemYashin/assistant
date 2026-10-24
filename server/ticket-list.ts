@@ -11,7 +11,7 @@ export const ticketListSchema = z.object({
   ...ticketSortSchema,
   searchMode: searchModeSchema,
   lifecycle: z.enum(["all", "active", "deleted"]).default("all").describe("Include retained local trash by default; deleted=true marks trash results."),
-  fields: z.array(z.enum(["type", "state", "assigned", "priority", "azurePriority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(14).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
+  fields: z.array(z.enum(["type", "state", "assigned", "priority", "azurePriority", "localDeadline", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"])).max(15).default([]).describe("Extra output fields; id/title always included. Request only what the task needs. Filters work independently of output fields."),
   detail: z.enum(["summary", "full"]).default("summary"),
   contentOffset: z.number().int().nonnegative().default(0),
   ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
@@ -34,7 +34,7 @@ export function listLocalTickets(store: Store, input: unknown) {
     type,
     state,
     priority,
-    azurePriority,
+    azurePriority, deadlineFrom, deadlineTo,
     tag,
     azureTag,
     afterId,
@@ -65,7 +65,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   const exactFilters = ticketFilterSql(type, state);
   clauses.push(...exactFilters.clauses);
   params.push(...exactFilters.params);
-  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag }, "local_tickets");
+  const metadataFilters = ticketMetadataFilterSql({ priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo }, "local_tickets");
   clauses.push(...metadataFilters.clauses);
   params.push(...metadataFilters.params);
   const where = clauses.join(" AND ");
@@ -87,9 +87,9 @@ export function listLocalTickets(store: Store, input: unknown) {
     const ticket: Record<string, any> = { id: row.id, title: row.title, ...(row.deleted ? { deleted: true } : {}) };
     for (const field of ["type", "state", "assigned", "changed_at", "synced_at"])
       if (wanted.has(field as typeof fields[number])) ticket[field] = row[field];
-    if (fields.some(field => ["notes", "priority", "tags"].includes(field))) {
+    if (fields.some(field => ["notes", "priority", "tags", "localDeadline"].includes(field))) {
       const metadata = ticketMetadata(store, row.id);
-      for (const field of ["notes", "priority", "tags"] as const)
+      for (const field of ["notes", "priority", "tags", "localDeadline"] as const)
         if (wanted.has(field)) ticket[field] = metadata[field];
     }
     if (wanted.has("added_at")) ticket.added_at = store.ticketAddedAt(row.id);
@@ -116,7 +116,7 @@ export function listLocalTickets(store: Store, input: unknown) {
   return {
     scope: "local",
     sortBy, sortDirection,
-    filters: { lifecycle, ids, search, searchMode, type, state, priority, tag, azureTag },
+    filters: { lifecycle, ids, search, searchMode, type, state, priority, azurePriority, tag, azureTag, deadlineFrom, deadlineTo },
     total,
     tickets,
     hasMore,

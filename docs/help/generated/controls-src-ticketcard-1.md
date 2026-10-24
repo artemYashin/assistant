@@ -15,100 +15,100 @@
 
 Локальные заметки · #{…} · Для редактирования добавьте тикет в локальный список.
 
-Источник: src/TicketCard.tsx:392.
+Источник: src/TicketCard.tsx:394.
 
 ### Элемент
 
 Все поля тикета #{…}
 
-Источник: src/TicketCard.tsx:409.
+Источник: src/TicketCard.tsx:411.
 
 ### Элемент
 
 / / · Восстановить / Импортировать
 
-Источник: src/TicketCard.tsx:439.
+Источник: src/TicketCard.tsx:441.
 
 ### Элемент
 
 Скопировать ссылку на тикет в Azure DevOps
 
-Источник: src/TicketCard.tsx:505.
+Источник: src/TicketCard.tsx:507.
 
 ### Элемент
 
 Перейти к тикету
 
-Источник: src/TicketCard.tsx:514.
+Источник: src/TicketCard.tsx:516.
 
 ### Элемент
 
 Открыть в Azure DevOps
 
-Источник: src/TicketCard.tsx:518.
+Источник: src/TicketCard.tsx:520.
 
 ### Элемент
 
 Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Удаляю… / Удалить
 
-Источник: src/TicketCard.tsx:523.
+Источник: src/TicketCard.tsx:525.
 
 ### Элемент
 
 / · Analyze with AI
 
-Источник: src/TicketCard.tsx:559.
+Источник: src/TicketCard.tsx:561.
 
 ### Элемент
 
 / /
 
-Источник: src/TicketCard.tsx:624.
+Источник: src/TicketCard.tsx:626.
 
 ### Элемент
 
 Связанные открытые PR ·
 
-Источник: src/TicketCard.tsx:649.
+Источник: src/TicketCard.tsx:651.
 
 ### Элемент
 
 # · ·
 
-Источник: src/TicketCard.tsx:662.
+Источник: src/TicketCard.tsx:664.
 
 ### Элемент
 
 Комментарии ·
 
-Источник: src/TicketCard.tsx:695.
+Источник: src/TicketCard.tsx:697.
 
 ### Элемент
 
 Вложения и изображения ·
 
-Источник: src/TicketCard.tsx:729.
+Источник: src/TicketCard.tsx:731.
 
 ### Элемент
 
 ↗
 
-Источник: src/TicketCard.tsx:754.
+Источник: src/TicketCard.tsx:756.
 
 ### Элемент
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: src/TicketCard.tsx:929.
+Источник: src/TicketCard.tsx:931.
 
 ### Элемент
 
 Удалить тикет #{…}? · Тикет #{…} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины. · Удалить в корзину
 
-Источник: src/TicketCard.tsx:948.
+Источник: src/TicketCard.tsx:950.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/TicketCard.tsx:976.
+Источник: src/TicketCard.tsx:978.

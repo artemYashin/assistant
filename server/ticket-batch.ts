@@ -37,9 +37,10 @@ export const ticketBatchSchema = z
     ids: z.array(id).min(1).max(50).optional(),
     metadata: z.object({
       notes: editMetadataSchema.shape.notes,
+      localDeadline: editMetadataSchema.shape.localDeadline,
       priority: editMetadataSchema.shape.priority,
       tags: editMetadataSchema.shape.tags,
-    }).strict().refine(v => v.notes || v.priority !== undefined || v.tags, "Укажите изменяемое поле").optional(),
+    }).strict().refine(v => v.notes || v.priority !== undefined || v.tags || v.localDeadline !== undefined, "Укажите изменяемое поле").optional(),
   })
   .strict()
   .refine(

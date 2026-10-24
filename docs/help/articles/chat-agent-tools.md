@@ -12,8 +12,9 @@
 | Поиск тикетов | `list_tickets`, `get_ticket`, `get_ticket_catalog`, `search_ticket_content`: локальные сводки, типы/статусы, поиск в содержимом и заметках. |
 | Содержимое | `get_cached_ticket_content`, `get_cached_ticket_content_batch`, `get_ticket_links`, `get_ticket_links_batch`, `cite_ticket_content`: кэшированные тексты, ссылки, картинки и проверенные цитаты. |
 | Azure | `get_ticket_states`: допустимые статусы; `request_azure_ticket_lookup`, `lookup_azure_tickets`: план поиска и выполнение одобренного поиска; `change_ticket_status`: изменение статуса в Azure. |
-| Локальные тикеты | `add_local_ticket`: импорт/восстановление; `remove_local_ticket`: локальная корзина; `get_local_ticket_metadata`, `update_local_ticket_metadata`, `list_local_tags`: заметки, теги, локальный приоритет. `batch_update_tickets`: пакетный импорт и изменения. |
+| Локальные тикеты | `add_local_ticket`: импорт/восстановление; `remove_local_ticket`: локальная корзина; `get_local_ticket_metadata`, `update_local_ticket_metadata`, `list_local_tags`: заметки, теги, локальный приоритет и `localDeadline`. `batch_update_tickets`: пакетный импорт и изменения. |
 | Разработчики | `list_local_developers`, `set_local_ticket_developers`: доступные локальные разработчики из общего, заказчика и проектного уровней, назначения. |
+| Календарь | `get_calendar_context`: текущее время, часовой пояс, уровни и локальные разработчики; `prepare_calendar_reminder`: открыть заполненную форму напоминания без даты, на время или с длительностью. Создание подтверждает пользователь. Только чат, не ревью. |
 | Контекст | `get_workspace_context`: настройки заказчика, проекта, репозитория и разработчиков. |
 | PR | `list_pull_requests`, `get_pull_request`: локальный список, детали и сохранённое ревью; `request_pull_request_review`: постановка ревью в очередь. |
 | Синхронизация | `sync_tickets`, `sync_pull_requests`: только по явному запросу пользователя, согласно настройкам импорта. |

@@ -19,18 +19,24 @@ Asia/Bishkek
 
 ### Элемент
 
-Присылать уведомления из браузера
+Предупреждать о дедлайне тикета за (часы)
 
 Источник: src/CalendarSettings.tsx:58.
 
 ### Элемент
 
+Присылать уведомления из браузера
+
+Источник: src/CalendarSettings.tsx:78.
+
+### Элемент
+
 Разрешение получено / Разрешить уведомления
 
-Источник: src/CalendarSettings.tsx:66.
+Источник: src/CalendarSettings.tsx:86.
 
 ### Элемент
 
 Интервал, минуты
 
-Источник: src/CalendarSettings.tsx:98.
+Источник: src/CalendarSettings.tsx:118.

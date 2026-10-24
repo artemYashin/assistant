@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ticketSortSchema = {
-  sortBy: z.enum(["id", "title", "type", "state", "assigned", "priority", "azurePriority", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"]).default("id"),
+  sortBy: z.enum(["id", "title", "type", "state", "assigned", "priority", "azurePriority", "localDeadline", "tags", "azureTags", "notes", "localDevelopers", "created_at", "changed_at", "added_at", "synced_at", "localUrl"]).default("id"),
   sortDirection: z.enum(["asc", "desc"]).default("asc"),
 };
 export function ticketOrder(sortBy: string, direction: "asc" | "desc", alias = "t") {
@@ -11,6 +11,7 @@ export function ticketOrder(sortBy: string, direction: "asc" | "desc", alias = "
   const expressions: Record<string, string> = {
     id: `${a}.id`, localUrl: `${a}.id`, title: `${a}.title`, type: `${a}.type`, state: `${a}.state`, assigned: `${a}.assigned`,
     changed_at: `${a}.changed_at`, synced_at: `${a}.synced_at`,
+    localDeadline: `(SELECT deadline FROM ticket_deadlines d WHERE d.source=${a}.source AND d.id=${a}.id)`,
     azurePriority: `(SELECT priority FROM ticket_azure_priority p WHERE p.source=${a}.source AND p.id=${a}.id)`,
     priority: `coalesce(${metadata("priority")},1)`, notes: metadata("notes"),
     tags: `(SELECT group_concat(value, char(31)) FROM (SELECT value FROM ticket_metadata m,json_each(m.tags) WHERE m.source=${a}.source AND m.id=${a}.id ORDER BY value COLLATE NOCASE))`,
