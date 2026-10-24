@@ -2918,7 +2918,7 @@ function Assistant({
       hidden={!open}
       style={{ "--chat-width": `${resize.width}px` } as React.CSSProperties}
     >
-      <VoiceShortcut currentPress={voiceCurrentPress} newPress={voiceNewPress} currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording}
+      <VoiceShortcut unavailableReason={working ? "Ассистент сейчас отвечает в чате. Дождитесь ответа или остановите его, затем снова нажмите голосовую горячую клавишу." : clearing ? "История чата сейчас очищается. Дождитесь завершения и попробуйте ещё раз." : !connected ? "Сначала подключите Copilot в настройках." : !sessionId ? "Чат ещё загружается. Дождитесь загрузки и попробуйте ещё раз." : recording ? "Уже идёт голосовая диктовка. Сначала завершите её." : undefined} currentPress={voiceCurrentPress} newPress={voiceNewPress} currentKey={voiceCurrentKey} newKey={voiceNewKey} onOpen={onExpand} key={key + ":" + sessionId} enabled={!!connected && !!sessionId && !working && !clearing && !recording}
         autoStart={voiceStartSession === sessionId} onAutoStarted={() => setVoiceStartSession("")}
         onNewChat={() => { void chooseChat(undefined, true).catch(e => setError(e.message)); }}
         title={sessionTitle} onBusy={setShortcutBusy} onText={text => { onExpand(); void send(undefined, text); }} />
