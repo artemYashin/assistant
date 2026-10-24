@@ -196,27 +196,33 @@ export class Calendar {
     )
       return [];
     const instant = now.toISOString(),
+      reminderThreshold = new Date(
+        now.getTime() + options.reminderLeadMinutes * 60000,
+      ).toISOString(),
       cutoff = now.getTime() - options.intervalMinutes * 60000;
     return this.store.db.transaction(() => {
       // One persisted batch clock for every project, reminder and browser tab.
       const batchKey = "calendar.notifications.last-batch-at";
       const lastBatch = this.store.get<number | null>(batchKey, null);
       if (lastBatch !== null && lastBatch > cutoff) return [];
-      const due = this.list()
-        .filter((item) => {
-          if (item.completed) return false;
-          if (item.repeatDaily) {
-            const zone = item.repeatZone || "UTC";
-            const day = wallTime(instant, zone).slice(0, 10);
-            const occurrence = dailyOccurrence(item, day);
-            return (
-              !!occurrence &&
-              !occurrence.completed &&
-              occurrence.start! <= instant
-            );
-          }
-          return !item.start || item.start <= instant;
-        });
+      const due = this.list().filter((item) => {
+        if (item.completed) return false;
+        if (item.repeatDaily) {
+          const zone = item.repeatZone || "UTC";
+          const day = wallTime(instant, zone).slice(0, 10);
+          const occurrence = dailyOccurrence(item, day);
+          return (
+            !!occurrence &&
+            !occurrence.completed &&
+            occurrence.start! <= reminderThreshold
+          );
+        }
+        // Ticket start already includes its separate deadline warning interval.
+        return (
+          !item.start ||
+          item.start <= (item.ticket ? instant : reminderThreshold)
+        );
+      });
       // An empty collection sends nothing and does not postpone a future batch.
       if (due.length) this.store.set(batchKey, now.getTime());
       return due.map((item) =>

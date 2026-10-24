@@ -10,6 +10,7 @@ export const calendarNotificationsSchema = z
       .min(0)
       .max(525600)
       .default(1440),
+    reminderLeadMinutes: z.number().int().min(0).max(525600).default(0),
     browser: z.boolean().default(false),
     intervalMinutes: z.number().int().min(1).max(10080).default(60),
     schedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),

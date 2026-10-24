@@ -559,3 +559,21 @@ test("shared cycles omit completed daily occurrences and respect schedule withou
   assert.equal(cal.notifications(at(15)).length, 2);
   assert.equal(cal.notifications(at(15)).length, 0);
 });
+
+test("advance warnings include upcoming reminders and today's daily iteration without changing dates", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  assert.equal(store.settings().calendarNotifications.reminderLeadMinutes, 0);
+  store.set("settings", { ...store.settings(), calendarNotifications: {
+    ...store.settings().calendarNotifications, reminderLeadMinutes: 90,
+  }});
+  const reminder = cal.save({ ...event, start: "2026-10-21T10:00:00Z", end: null }).id;
+  const daily = cal.save({ ...event, start: "2026-10-21T10:00:00Z", end: null, repeatDaily: true }).id;
+  const future = cal.save({ ...event, start: "2026-10-21T10:01:00Z", end: null }).id;
+  assert.equal(cal.notifications(new Date("2026-10-21T08:29:59Z")).length, 0);
+  const batch = cal.notifications(new Date("2026-10-21T08:30:00Z"));
+  assert.deepEqual(new Set(batch.map(i => i.id)), new Set([reminder, daily]));
+  assert.ok(batch.every(i => i.start === "2026-10-21T10:00:00.000Z"));
+  cal.complete(reminder);
+  cal.completeToday(daily, true, new Date("2026-10-21T08:30:00Z"));
+  assert.deepEqual(cal.notifications(new Date("2026-10-21T09:30:00Z")).map(i => i.id), [future]);
+});

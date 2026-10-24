@@ -247,3 +247,13 @@ test("deadline reminders follow current local assignees without reopening comple
   assert.deepEqual(calendar.list()[0].developerIds, []);
   assert.equal(calendar.list()[0].completed, true);
 });
+
+test("ordinary reminder advance does not add a second lead time to ticket deadlines", t => {
+  const store = fixture(t), cal = new Calendar(store);
+  store.set("settings", { ...store.settings(), calendarNotifications: {
+    ...store.settings().calendarNotifications, reminderLeadMinutes: 2880, ticketDeadlineLeadMinutes: 90,
+  }});
+  saveTicketMetadata(store, 42, store.source(), context, { localDeadline: due });
+  assert.equal(cal.notifications(new Date("2026-11-10T10:29:59Z")).length, 0);
+  assert.equal(cal.notifications(new Date("2026-11-10T10:30:00Z")).length, 1);
+});

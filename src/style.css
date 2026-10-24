@@ -10144,3 +10144,9 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .calendar-toast-title { display:block;font-weight:600; }
 .calendar-toast-time,.calendar-toast-people { display:block;margin-top:5px;font-size:11px;line-height:1.45;color:#617b8e; }
+
+.calendar-lead-settings { margin: 16px 0; padding: 12px 14px; border: 1px solid #dce3eb; border-radius: 10px; }
+.calendar-lead-settings legend { padding: 0 6px; font-weight: 600; }
+.calendar-lead-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.calendar-lead-fields label { min-width: 0; margin: 0; }
+.calendar-lead-fields input { width: 100%; min-width: 0; }

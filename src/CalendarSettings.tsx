@@ -55,25 +55,67 @@ export function CalendarSettings({
         Общий часовой пояс календаря, напоминаний и расписания автообновлений.
         Уже созданные события сохраняют свой момент времени.
       </p>
-      <label>
-        Предупреждать о дедлайне тикета за (часы)
-        <input
-          type="number"
-          min={0}
-          max={8760}
-          step={1 / 60}
-          value={options.ticketDeadlineLeadMinutes / 60}
-          onChange={(e) =>
-            update(
-              "ticketDeadlineLeadMinutes",
-              Math.round(Number(e.target.value) * 60),
-            )
-          }
-        />
-      </label>
+      {[
+        {
+          key: "ticketDeadlineLeadMinutes",
+          title: "Предупреждать о дедлайне тикета за",
+          fallback: 1440,
+        },
+        {
+          key: "reminderLeadMinutes",
+          title: "Предупреждать о предстоящем напоминании за",
+          fallback: 0,
+        },
+      ].map(({ key, title, fallback }) => {
+        const total = options[key] ?? fallback;
+        const parts = [
+          Math.floor(total / 1440),
+          Math.floor((total % 1440) / 60),
+          total % 60,
+        ];
+        return (
+          <fieldset className="calendar-lead-settings" key={key}>
+            <legend>{title}</legend>
+            <div className="calendar-lead-fields">
+              {["Дней", "Часов", "Минут"].map((label, index) => (
+                <label key={label}>
+                  {label}
+                  <input
+                    type="number"
+                    min={0}
+                    max={index === 0 ? 365 : index === 1 ? 23 : 59}
+                    step={1}
+                    value={parts[index]}
+                    aria-label={`${title}: ${label.toLowerCase()}`}
+                    onChange={(e) => {
+                      const next = [...parts];
+                      next[index] = Math.max(
+                        0,
+                        Math.min(
+                          index === 0 ? 365 : index === 1 ? 23 : 59,
+                          Math.trunc(Number(e.target.value)),
+                        ),
+                      );
+                      update(
+                        key,
+                        Math.min(
+                          525600,
+                          next[0] * 1440 + next[1] * 60 + next[2],
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        );
+      })}
       <p className="muted">
-        По умолчанию за 24 часа. Напоминание остаётся активным до ручного
-        завершения, в том числе после дедлайна.
+        Для тикетов по умолчанию — 1 день, для остальных напоминаний — в момент
+        начала (0 дней, часов и минут). Предупреждение не меняет дату события.
+        Ежедневные серии предупреждают о сегодняшней итерации. Уведомления
+        повторяются по общему интервалу и расписанию до ручного завершения.
       </p>
       <label className="calendar-check">
         <input
@@ -111,9 +153,10 @@ export function CalendarSettings({
       </p>
       {error && <p className="error">{error}</p>}
       <p className="muted">
-        Раз в этот интервал собираются все начавшиеся и просроченные
-        незавершённые напоминания. Новые и возобновлённые записи входят
-        в следующую общую подборку, а не запускают отдельный таймер.
+        Раз в этот интервал собираются все предстоящие в пределах
+        предупреждения, начавшиеся и просроченные незавершённые напоминания.
+        Новые и возобновлённые записи входят в следующую общую подборку, а не
+        запускают отдельный таймер.
       </p>
       <fieldset
         className="calendar-notification-settings"
