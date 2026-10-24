@@ -170,3 +170,23 @@ test("agent help inventories cover the shared chat catalog and review allowlists
   const {reviewBaseTools,reviewCodeTools,reviewTicketTools}=await import('../server/review-progress.js');
   for (const name of [...reviewBaseTools,...reviewCodeTools,...reviewTicketTools]) assert.ok(review.includes('`'+name+'`'),name);
 });
+
+test("ticket row colours are discoverable separately from Azure workflow status colours", () => {
+  const help = new HelpLibrary();
+  for (const query of [
+    "Azure тикеты красные синие оранжевые белые",
+    "цвета строк",
+    "не импортирован",
+    "ажур цвет",
+  ]) {
+    assert.ok(
+      help.search({ query, scope: "titles" }).results.some(r => r.id === "ticket-row-colors"),
+      query,
+    );
+  }
+  const article = help.read({ id: "ticket-row-colors" }).content;
+  assert.match(article, /Не добавлен/);
+  assert.match(article, /находится в корзине/);
+  assert.match(article, /при наведении мыши/);
+  assert.match(article, /не равен фону всей строки/);
+});
