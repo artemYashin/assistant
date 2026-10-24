@@ -239,6 +239,13 @@ test("vacation API enforces authentication/context and board exposes dates witho
     .expect(200);
   assert.equal(result.body.developers[0].notes, "Preserve original notes");
   assert.equal(result.body.developers[0].vacationEnd, vacation.end);
+  for (const lead of [10080, 0, 90]) {
+    store.set("settings", { ...store.rawSettings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: lead } });
+    const response = await request(app).get("/api/local-developers").query(context).set(auth).expect(200);
+    const row = response.body.find((p: any) => p.id === person.id);
+    const start = vacationBounds(vacation.start, vacation.end, row.vacationZone).start;
+    assert.equal(Date.parse(row.vacationWarningStart), Date.parse(start) - lead * 60000);
+  }
   await request(app)
     .put(path)
     .set(auth)
@@ -430,4 +437,14 @@ test("chat developer search filters vacation status and preserves old unfiltered
     (await read({ vacationStatus: "upcoming" })).developers.length,
     0,
   );
+});
+
+test("assignment warning starts at global lead before local midnight, including zero and DST", async () => {
+  const { developerVacationWarningStart } = await import("../server/developer-vacation-status.js");
+  const person = { vacationStart: "2026-11-02", vacationEnd: "2026-11-05", vacationZone: "Asia/Bishkek" };
+  assert.equal(developerVacationWarningStart(person, 7 * 1440), "2026-10-25T18:00:00.000Z");
+  assert.equal(developerVacationWarningStart(person, 0), "2026-11-01T18:00:00.000Z");
+  assert.equal(developerVacationWarningStart(person, 30), "2026-11-01T17:30:00.000Z");
+  assert.equal(developerVacationWarningStart({}, 1440), null);
+  assert.equal(developerVacationWarningStart({ ...person, vacationZone: "America/New_York" }, 1440), "2026-11-01T05:00:00.000Z");
 });

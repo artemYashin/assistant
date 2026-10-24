@@ -1,4 +1,4 @@
-import { wallTime } from "./calendar-time.js";
+import { fromWall, wallTime } from "./calendar-time.js";
 
 type VacationDates = {
   vacationStart?: string | null;
@@ -19,4 +19,13 @@ export function developerVacationStatus(person: VacationDates, now: string) {
 }
 export function developerOnVacation(person: VacationDates, now: string) {
   return developerVacationStatus(person, now) === "current";
+}
+
+
+// The assignment warning follows the global vacation lead, independently of
+// per-event notification visibility or individual calendar warning overrides.
+export function developerVacationWarningStart(person: VacationDates, leadMinutes: number) {
+  if (!person.vacationStart || !person.vacationEnd) return null;
+  const start = fromWall(person.vacationStart + "T00:00", person.vacationZone || "UTC");
+  return new Date(Date.parse(start) - leadMinutes * 60000).toISOString();
 }

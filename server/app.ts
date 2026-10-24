@@ -1,3 +1,4 @@
+import { developerVacationWarningStart } from "./developer-vacation-status.js";
 import { setDeveloperVacation } from "./developer-vacations.js";
 import { Calendar } from "./calendar.js";
 import { calendarNotificationsSchema } from "./calendar-model.js";
@@ -809,7 +810,10 @@ export function createApp(
     res.json({ ok: true });
   });
   app.get("/api/local-developers", (req, res) =>
-    res.json(localDevelopers.list(contextSchema.parse(req.query))),
+    res.json(localDevelopers.list(contextSchema.parse(req.query)).map(person => ({
+      ...person,
+      vacationWarningStart: developerVacationWarningStart(person, store.settings().calendarNotifications.vacationLeadMinutes),
+    }))),
   );
   app.post("/api/local-developers", (req, res) =>
     res.json(

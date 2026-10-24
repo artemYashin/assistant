@@ -164,7 +164,7 @@ export function LocalDeveloper({ ticket, context, onChange }: any) {
                       В отпуске · Возвращение {nextVacationDay(p.vacationEnd).split("-").reverse().join(".")}
                     </small>
                   )}
-                  {developerVacationStatus(p, now) === "upcoming" && (
+                  {developerVacationStatus(p, now) === "upcoming" && p.vacationWarningStart && Date.parse(now) >= Date.parse(p.vacationWarningStart) && (
                     <small className="local-developer-vacation">
                       <CalendarClock size={13} aria-hidden="true" />
                       Скоро в отпуск · Уход {p.vacationStart.split("-").reverse().join(".")} · Возвращение {nextVacationDay(p.vacationEnd).split("-").reverse().join(".")}
