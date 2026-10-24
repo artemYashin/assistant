@@ -44,7 +44,7 @@ export function notificationDue(
   )
     return false;
   if (!item.start) return true;
-  const startsAt = item.vacation
+  const startsAt = item.systemKind ? Date.parse(item.warningStart || item.start) : item.vacation
     ? Date.parse(item.warningStart || item.start)
     : item.ticket
       ? Date.parse(item.warningStart || item.ticket.deadline)

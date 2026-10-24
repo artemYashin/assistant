@@ -85,6 +85,7 @@ export const calendarInput = calendarDraftSchema.transform((v) => ({
       : ("reminder" as const),
 }));
 export type CalendarItem = z.infer<typeof calendarInput> & {
+  systemKind?: "azure_pat";
   warningStart?: string;
   repeatZone?: string;
   occurrenceDay?: string;
@@ -108,6 +109,7 @@ export function calendarStatus(
     | "end"
     | "completed"
     | "kind"
+    | "systemKind"
     | "ticket"
     | "warningStart"
     | "repeatDaily"

@@ -1,3 +1,4 @@
+import { azurePatReminder, azurePatReminderId } from "./azure-pat-reminder.js";
 import {
   syncDeveloperVacations,
   nextVacationDay,
@@ -22,7 +23,7 @@ export class Calendar {
       ticketDeadlineLeadMinutes: ticketLead,
       vacationLeadMinutes: vacationLead,
     } = this.store.settings().calendarNotifications;
-    return (
+    const items: CalendarItem[] = (
       this.store.db
         .prepare(
           `SELECT e.*,d.id AS ticket_id,d.source AS ticket_source,d.deadline,v.developer_id AS vacation_developer,v.start_date AS vacation_start,v.end_date AS vacation_end,v.zone AS vacation_zone FROM calendar_events e LEFT JOIN ticket_deadlines d ON d.event_id=e.id LEFT JOIN developer_vacations v ON v.event_id=e.id WHERE ${activeDeadlineSql} AND (v.developer_id IS NULL OR EXISTS (SELECT 1 FROM local_developers ld WHERE ld.id=v.developer_id AND ld.active=1)) ORDER BY COALESCE(start,created_at),e.id`,
@@ -80,6 +81,11 @@ export class Calendar {
         !!(r.vacation_developer && Date.parse(r.end) < Date.now()),
       createdAt: r.created_at,
     }));
+    return [...items, ...azurePatReminder(this.store)];
+  }
+  private assertEditable(id?: string) {
+    if (id === azurePatReminderId)
+      throw new AppError(400, "Напоминание о PAT нельзя скрыть, завершить или удалить. Обновите токен и дату в Настройки → Azure DevOps.");
   }
   developers() {
     return this.store.db
@@ -89,6 +95,7 @@ export class Calendar {
       .all();
   }
   save(input: unknown, id?: string) {
+    this.assertEditable(id);
     if (
       id &&
       this.store.db
@@ -193,6 +200,7 @@ export class Calendar {
     return { id };
   }
   setVisibility(id: string, input: { notificationsHidden?: boolean; calendarHidden?: boolean }) {
+    this.assertEditable(id);
     const values = z.object({
       notificationsHidden: z.boolean().optional(),
       calendarHidden: z.boolean().optional(),
@@ -216,6 +224,7 @@ export class Calendar {
     })();
   }
   setLead(id: string, lead: unknown) {
+    this.assertEditable(id);
     const minutes = z.number().int().min(0).max(525600).nullable().parse(lead);
     if (
       !this.store.db
@@ -232,6 +241,7 @@ export class Calendar {
     now = new Date(),
     occurrenceDay?: string,
   ) {
+    this.assertEditable(id);
     return this.store.db.transaction(() => {
       const item = this.list().find((i) => i.id === id);
       if (!item) throw new AppError(404, "Напоминание не найдено.");
@@ -261,6 +271,7 @@ export class Calendar {
     })();
   }
   complete(id: string) {
+    this.assertEditable(id);
     if (
       !this.store.db
         .prepare("UPDATE calendar_events SET completed=1 WHERE id=?")
@@ -270,6 +281,7 @@ export class Calendar {
     return { ok: true };
   }
   reopen(id: string) {
+    this.assertEditable(id);
     const vacation = this.store.db
       .prepare(
         "SELECT e.end FROM developer_vacations v JOIN calendar_events e ON e.id=v.event_id WHERE e.id=?",
@@ -291,6 +303,7 @@ export class Calendar {
     return { ok: true };
   }
   remove(id: string) {
+    this.assertEditable(id);
     if (
       this.store.db
         .prepare("SELECT 1 FROM developer_vacations WHERE event_id=?")

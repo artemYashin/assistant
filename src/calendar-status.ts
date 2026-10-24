@@ -15,6 +15,7 @@ export function calendarStatusLabel(
 ) {
   const status = calendarStatus(item, now);
   if (status === "recurring") return repeatLabel(item);
+  if (item.systemKind === "azure_pat") return status === "overdue" ? "Токен просрочен" : "Токен скоро истечёт";
   if (item.ticket) {
     if (status === "overdue") return "Дедлайн просрочен";
     if (status === "ongoing") return "Дедлайн приближается";

@@ -690,10 +690,10 @@ export function CalendarPage({
                   )}
                   <button className="secondary" onClick={() => open(item)}>
                     <Pencil size={15} />
-                    {item.ticket || item.vacation ? "Открыть напоминание" : "Изменить"}
+                    {item.ticket || item.vacation || item.systemKind ? "Открыть напоминание" : "Изменить"}
                   </button>
                   <DailyCompletionButton item={item} onChange={reload} />
-                  {!item.completed && (
+                  {!item.completed && !item.systemKind && (
                     <ConfirmButton
                       title="Завершить напоминание?"
                       message={`«${item.title}». ${item.repeatDaily ? "Будет завершена вся ежедневная серия. " : ""}Напоминание останется в истории, уведомления прекратятся.`}
@@ -719,7 +719,7 @@ export function CalendarPage({
                       Вернуть в незавершённые
                     </ConfirmButton>
                   )}
-                  {!item.ticket && !item.vacation && (
+                  {!item.ticket && !item.vacation && !item.systemKind && (
                     <ConfirmButton
                       title="Удалить напоминание?"
                       message={`«${item.title}» будет удалено без возможности восстановления.`}
@@ -757,6 +757,7 @@ export function CalendarPage({
             <X size={18} />
           </button>
         </div>
+        {currentItem?.systemKind && <div className="calendar-ticket-link"><strong>Срок токена Azure DevOps</strong><p>Это обязательное напоминание. Предупреждение начинается за 7 дней; скрытие, завершение и удаление недоступны. Измените дату вместе с токеном в «Настройки → Azure DevOps».</p></div>}
         {currentItem?.vacation && <div className="calendar-ticket-link"><strong>Отпуск разработчика</strong><p>{currentItem.vacation.start} — {currentItem.vacation.end} включительно · Возвращение {currentItem.vacation.returnDate}. Даты и отмена отпуска — в разделе «Разработчики → Настройки». Завершение напоминания отключает уведомления, но не отменяет отпуск.</p></div>}
         {currentItem?.ticket && (
           <div className="calendar-ticket-link">
@@ -776,7 +777,7 @@ export function CalendarPage({
           </div>
         )}
         <fieldset
-          disabled={!!currentItem?.ticket || !!currentItem?.vacation}
+          disabled={!!currentItem?.ticket || !!currentItem?.vacation || !!currentItem?.systemKind}
           className="calendar-editor-fields"
         >
           <section className="calendar-scope-editor">
@@ -1030,6 +1031,7 @@ export function CalendarPage({
             )}
           </details>
         </fieldset>
+        {!currentItem?.systemKind && <>
         <label className="calendar-check">
           <input type="checkbox" checked={draft.notificationsHidden}
             onChange={e => setDraft({ ...draft, notificationsHidden: e.target.checked })} />
@@ -1049,7 +1051,8 @@ export function CalendarPage({
           }
           onChange={(leadMinutes) => setDraft({ ...draft, leadMinutes })}
         />}
-        {currentItem && (
+        </>}
+        {currentItem && !currentItem.systemKind && (
           <div className="calendar-editor-management">
             <span
               className={"calendar-state " + calendarStatus(currentItem, now)}
@@ -1109,9 +1112,9 @@ export function CalendarPage({
         )}
         <div className="dialog-actions">
           <button className="secondary" onClick={() => dialog.current?.close()}>
-            Отмена
+            {currentItem?.systemKind ? "Закрыть" : "Отмена"}
           </button>
-          <ConfirmButton
+          {!currentItem?.systemKind && <ConfirmButton
             disabled={!validDraft || (!!editing && !currentItem)}
             className="primary"
             title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
@@ -1151,7 +1154,7 @@ export function CalendarPage({
           >
             <Check size={16} />
             {editing ? "Сохранить" : "Создать"}
-          </ConfirmButton>
+          </ConfirmButton>}
         </div>
       </dialog>
     </section>

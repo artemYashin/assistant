@@ -1,3 +1,4 @@
+import { azurePatExpirySchema } from "./azure-pat-reminder.js";
 import { developerVacationWarningStart } from "./developer-vacation-status.js";
 import { setDeveloperVacation } from "./developer-vacations.js";
 import { Calendar } from "./calendar.js";
@@ -105,6 +106,7 @@ const settingsSchema = z
     client: text,
     project: text,
     azurePat: z.string().max(2000).optional(),
+    azurePatExpiresOn: azurePatExpirySchema.optional(),
   })
   .strict().refine(value => {
     const keys = [value.voiceCurrentKey, value.voiceNewKey, value.chatToggleKey, value.voiceInputKey, value.ticketOpenKey].filter(Boolean);
@@ -396,8 +398,12 @@ export function createApp(
     )
       throw new AppError(400, "Выберите типы и статусы для автоимпорта");
     const old = store.settings();
+    if (old.azurePatExpiresOn && settings.azurePatExpiresOn === "")
+      throw new AppError(400, "Укажите новую дату истечения PAT. Скрыть напоминание удалением настроенной даты нельзя.");
+    store.db.transaction(() => {
     store.set("settings", {
       ...settings,
+      azurePatExpiresOn: settings.azurePatExpiresOn ?? old.azurePatExpiresOn,
       azureAutoImport: store.rawSettings().azureAutoImport,
       azureTypes: store.rawSettings().azureTypes,
       azureStates: store.rawSettings().azureStates,
@@ -408,6 +414,7 @@ export function createApp(
       project: old.project,
     });
     if (azurePat?.trim()) store.setSecret("azure.pat", azurePat.trim());
+    })();
     store.audit("settings.updated", "Настройки сохранены");
     res.json({ ok: true });
   });

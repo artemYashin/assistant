@@ -105,22 +105,22 @@
 
 Общий
 
-Источник: src/CalendarPage.tsx:791.
+Источник: src/CalendarPage.tsx:792.
 
 ### Элемент
 
 Заказчик
 
-Источник: src/CalendarPage.tsx:792.
+Источник: src/CalendarPage.tsx:793.
 
 ### Элемент
 
 Проект
 
-Источник: src/CalendarPage.tsx:793.
+Источник: src/CalendarPage.tsx:794.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: src/CalendarPage.tsx:824.
+Источник: src/CalendarPage.tsx:825.

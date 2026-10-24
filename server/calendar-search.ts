@@ -140,6 +140,7 @@ export function searchCalendar(store: Store, input: unknown) {
     nextOffset: v.offset + v.limit < rows.length ? v.offset + v.limit : null,
     reminders: rows.slice(v.offset, v.offset + v.limit).map((item) => ({
       id: item.id,
+      systemKind: item.systemKind,
       title: item.title,
       type: item.vacation ? "vacation" : item.ticket ? "ticket" : "reminder",
       descriptionSnippet: item.description.slice(0, 240),

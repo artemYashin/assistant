@@ -1,3 +1,4 @@
+import { CalendarDateField } from "./CalendarDateField.js";
 import { useUnreadRelease } from "./useUnreadRelease.js";
 import { UpdatesPage } from "./UpdatesPage.js";
 import { NumberInput } from "./NumberInput.js";
@@ -2038,6 +2039,7 @@ function Settings({ settings, context, run, busy }: any) {
       project: context.project,
     });
     set("azurePat", "");
+    window.dispatchEvent(new Event("orbit-calendar-changed"));
   }
   useEffect(() => {
     if (githubFlow?.status !== "pending") return;
@@ -2228,6 +2230,9 @@ function Settings({ settings, context, run, busy }: any) {
               }
             />
           </Field>
+          <CalendarDateField label="Дата истечения PAT" dateOnly value={form.azurePatExpiresOn || ""}
+            onChange={value => set("azurePatExpiresOn", value)} zone={form.syncSchedule.timeZone} />
+          <p className="muted">Дата необязательна до первой настройки. Срок считается с 00:00 выбранного дня в часовом поясе календаря. За 7 дней появится обязательное напоминание. При замене токена обновите дату; настроенную дату можно заменить, но нельзя очистить.</p>
           <AzurePatPermissions />
           </div>
           <div className="settings-group">

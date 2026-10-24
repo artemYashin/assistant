@@ -50,6 +50,7 @@ export const defaults = {
   azureUrl: "",
   azureProject: "",
   azureVersion: "7.1",
+  azurePatExpiresOn: "",
   azureAutoImport: false,
   azureImportAssignees: [] as {id:string;name:string;email:string}[],
   azureTypes: [] as string[],
