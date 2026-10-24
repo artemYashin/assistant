@@ -10170,3 +10170,14 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .sidebar .updates-unread { width: 8px; height: 8px; border-radius: 50%; background: #269459; flex-shrink: 0; margin-left: auto; box-shadow: 0 0 0 3px #26945918; }
 .sidebar-collapsed a[href="/updates"] { position: relative; }
 .sidebar-collapsed .updates-unread { position: absolute; right: 5px; top: 5px; }
+
+/* Quiet hour landmarks: guides never intercept creating or dragging events. */
+.calendar-time-slot:nth-child(even),
+.calendar-time-day.is-alternate-day .calendar-time-slot:nth-child(odd) { background-color: #f6f7f7; }
+.calendar-time-day.is-alternate-day .calendar-time-slot:nth-child(even) { background-color: transparent; }
+.calendar-time-day .calendar-time-slot:hover,
+.calendar-time-day .calendar-time-slot:focus-visible { background: #eef6ff; }
+.calendar-hour-guides { position: relative; height: calc(var(--calendar-hour-height) * 24); pointer-events: none; z-index: 1; }
+.calendar-hour-guide { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #bcd9c8; }
+.calendar-hour-guide span { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); border: 1px solid #c7dfd0; border-radius: 6px; background: #f0f7f2; color: #5d7f68; padding: 1px 6px; font-size: 10px; line-height: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.calendar-hour-guide:first-child span { transform: translate(-50%, 0); }

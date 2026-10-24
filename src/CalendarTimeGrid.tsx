@@ -50,7 +50,8 @@ export function CalendarTimeGrid({
     if (pending) confirmation.current?.showModal();
   }, [pending]);
   function begin(event: ReactPointerEvent, item: CalendarItem, day: string) {
-    if (event.button !== 0 || pending || item.ticket || item.repeatDaily) return;
+    if (event.button !== 0 || pending || item.ticket || item.repeatDaily)
+      return;
     const resize =
       (event.target as HTMLElement).closest(".calendar-resize") !== null;
     const scroller = root.current!;
@@ -186,10 +187,12 @@ export function CalendarTimeGrid({
       >
         <div
           className={`calendar-time-grid ${mode}`}
-          style={{
-            gridTemplateColumns: `54px repeat(${days.length},minmax(0,1fr))`,
-            "--calendar-hour-height": `${HOUR_HEIGHT}px`,
-          } as CSSProperties}
+          style={
+            {
+              gridTemplateColumns: `54px repeat(${days.length},minmax(0,1fr))`,
+              "--calendar-hour-height": `${HOUR_HEIGHT}px`,
+            } as CSSProperties
+          }
         >
           <div className="calendar-time-corner">{zone.split("/").at(-1)}</div>
           {days.map((day) => (
@@ -206,15 +209,34 @@ export function CalendarTimeGrid({
               <strong>{Number(day.slice(-2))}</strong>
             </div>
           ))}
-          <div className="calendar-hours">
+          <div className="calendar-hours" style={{ gridRow: 2, gridColumn: 1 }}>
             {Array.from({ length: 24 }, (_, hour) => (
               <span key={hour} style={{ top: hour * HOUR_HEIGHT }}>
                 {String(hour).padStart(2, "0")}:00
               </span>
             ))}
           </div>
-          {days.map((day) => (
-            <div className="calendar-time-day" key={day}>
+          <div
+            className="calendar-hour-guides"
+            style={{ gridRow: 2, gridColumn: "2 / -1" }}
+            aria-hidden="true"
+          >
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                className="calendar-hour-guide"
+                key={hour}
+                style={{ top: hour * HOUR_HEIGHT }}
+              >
+                <span>{String(hour).padStart(2, "0")}:00</span>
+              </div>
+            ))}
+          </div>
+          {days.map((day, index) => (
+            <div
+              className={`calendar-time-day${index % 2 ? " is-alternate-day" : ""}`}
+              key={day}
+              style={{ gridRow: 2, gridColumn: index + 2 }}
+            >
               {Array.from({ length: 24 }, (_, hour) => (
                 <button
                   key={hour}
@@ -233,12 +255,15 @@ export function CalendarTimeGrid({
                 zone,
               ).map(({ item, top, bottom, lane, lanes }) => (
                 <button
-                  key={item.id+":"+item.start}
+                  key={item.id + ":" + item.start}
                   className={`calendar-time-event ${calendarStatus(item)} ${bottom - top <= 20 ? "is-short" : ""}`}
                   title={`${item.title}\n${eventTime(item.start, item.end, zone)}`}
                   style={{
                     top: (top / 60) * HOUR_HEIGHT,
-                    height: Math.max(2, ((bottom - top) / 60) * HOUR_HEIGHT - 2),
+                    height: Math.max(
+                      2,
+                      ((bottom - top) / 60) * HOUR_HEIGHT - 2,
+                    ),
                     left: `calc(${(lane / lanes) * 100}% + 2px)`,
                     width: `calc(${100 / lanes}% - 4px)`,
                   }}
@@ -251,24 +276,33 @@ export function CalendarTimeGrid({
                     suppressClick.current = false;
                   }}
                 >
-                  <strong>{item.ticket ? item.title.replace(/^Дедлайн /, "") : item.title}</strong>
+                  <strong>
+                    {item.ticket
+                      ? item.title.replace(/^Дедлайн /, "")
+                      : item.title}
+                  </strong>
                   <small>
                     {item.ticket
-                      ? "Дедлайн: " + eventTime(item.ticket.deadline, null, zone)
+                      ? "Дедлайн: " +
+                        eventTime(item.ticket.deadline, null, zone)
                       : wallTime(item.start!, zone).slice(11) +
-                        (item.end ? "–" + wallTime(item.end, zone).slice(11) : "")}
+                        (item.end
+                          ? "–" + wallTime(item.end, zone).slice(11)
+                          : "")}
                   </small>
-                  {!item.repeatDaily && !item.ticket && (!item.end ||
-                    wallTime(
-                      new Date(Date.parse(item.end) - 1).toISOString(),
-                      zone,
-                    ).slice(0, 10) === day) && (
-                    <span
-                      className="calendar-resize"
-                      title="Потяните для изменения длительности"
-                      aria-hidden="true"
-                    />
-                  )}
+                  {!item.repeatDaily &&
+                    !item.ticket &&
+                    (!item.end ||
+                      wallTime(
+                        new Date(Date.parse(item.end) - 1).toISOString(),
+                        zone,
+                      ).slice(0, 10) === day) && (
+                      <span
+                        className="calendar-resize"
+                        title="Потяните для изменения длительности"
+                        aria-hidden="true"
+                      />
+                    )}
                 </button>
               ))}
               {today.startsWith(day) && (
