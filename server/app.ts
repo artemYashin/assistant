@@ -47,8 +47,6 @@ import multer from "multer";
 import {
   randomBytes,
   createHash,
-  scryptSync,
-  timingSafeEqual,
 } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
@@ -207,12 +205,13 @@ export function createApp(
       maxAge: 86400000 * 7,
       path: "/",
     });
-    res.json({ authenticated: true, csrf });
+    res.json({ authenticated: true, csrf, passwordless: true });
   }
   app.get("/api/auth/session", (req, res) => {
     const session = currentSession(req);
     res.json({
-      setupRequired: !store.secret("password"),
+      setupRequired: false,
+      passwordless: true,
       authenticated: !!session,
       csrf: session?.csrf,
     });
@@ -226,30 +225,10 @@ export function createApp(
       error: "Слишком много попыток входа. Повторите через 15 минут.",
     },
   });
-  app.post("/api/auth/setup", loginLimit, (req, res) => {
-    if (store.secret("password"))
-      throw new AppError(409, "Пароль уже настроен");
-    const { password } = z
-      .object({ password: z.string().min(12).max(256) })
-      .parse(req.body);
-    const salt = randomBytes(16).toString("hex");
-    store.setSecret(
-      "password",
-      `${salt}:${scryptSync(password, salt, 64).toString("hex")}`,
-    );
-    login(res);
-  });
-  app.post("/api/auth/login", loginLimit, (req, res) => {
-    const { password } = z
-      .object({ password: z.string().max(256) })
-      .parse(req.body);
-    const stored = store.secret("password");
-    if (!stored) throw new AppError(400, "Сначала создайте пароль");
-    const [salt, key] = stored.split(":");
-    if (
-      !timingSafeEqual(scryptSync(password, salt, 64), Buffer.from(key, "hex"))
-    )
-      throw new AppError(401, "Неверный пароль");
+  // Legacy URLs remain aliases for older clients; password fields are ignored.
+  app.post(["/api/auth/local", "/api/auth/setup", "/api/auth/login"], loginLimit, (req, res) => {
+    const session = currentSession(req);
+    if (session) return res.json({ authenticated: true, csrf: session.csrf, passwordless: true });
     login(res);
   });
   app.use("/api", (req, _res, next) => {

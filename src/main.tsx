@@ -99,7 +99,6 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LockKeyhole,
-  LogOut,
   MessageSquare,
   Mic,
   Plus,
@@ -213,164 +212,28 @@ function Field({
 }
 function App() {
   useEffect(() => installDialogBackdropDismiss(document), []);
-  const [session, setSession] = useState<any>(null),
-    [error, setError] = useState(""),
-    [password, setPassword] = useState(""),
-    [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
   useEffect(() => {
     api("/auth/session")
-      .then((s) => {
-        setSession(s);
-        setCsrf(s.csrf || "");
+      .then(async (session) => {
+        if (!session.authenticated) session = await api("/auth/local", "POST", {});
+        setCsrf(session.csrf);
+        setReady(true);
       })
       .catch((e) => setError(e.message));
   }, []);
-  async function enter(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const s = await api(
-        session.setupRequired ? "/auth/setup" : "/auth/login",
-        "POST",
-        { password },
-      );
-      setCsrf(s.csrf);
-      setSession(s);
-      setPassword("");
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-  if (!session)
+  if (!ready)
     return (
       <div className="loading-page">
         <Mark />
         <p>{error || "Подключаем рабочее пространство…"}</p>
+        {error && <button onClick={() => window.location.reload()}>Повторить</button>}
       </div>
     );
-  if (!session.authenticated)
-    return (
-      <div className="login-layout">
-        <section className="login-story">
-          <div className="brand">
-            <Mark />
-            <b>
-              orbit<span>personal workspace</span>
-            </b>
-          </div>
-          <div>
-            <span className="eyebrow">ВАШ КОНТЕКСТ. ПОД ВАШИМ КОНТРОЛЕМ.</span>
-            <h1>
-              Меньше шума.
-              <br />
-              Больше ясности.
-            </h1>
-            <p>
-              Сообщения, задачи и важные детали —<br />в одном рабочем
-              пространстве.
-            </p>
-            <div className="orbit-illustration">
-              <div className="orbit-ring one" />
-              <div className="orbit-ring two" />
-              <div className="orbit-core">
-                <Sparkles size={33} />
-              </div>
-              <span className="orbit-node n1">
-                <MessageSquare /> Ассистент
-              </span>
-              <span className="orbit-node n2">
-                <Ticket /> Тикеты
-              </span>
-              <span className="orbit-node n3">
-                <BookOpen /> Память
-              </span>
-            </div>
-          </div>
-          <small>
-            <ShieldCheck size={16} /> Сообщения отправляются только с вашего
-            подтверждения
-          </small>
-        </section>
-        <section className="login-form">
-          <div className="login-box">
-            <Badge tone="green">
-              <span className="dot" /> Локальное приложение
-            </Badge>
-            <h2>
-              {session.setupRequired
-                ? "Добро пожаловать в Orbit"
-                : "С возвращением"}
-            </h2>
-            <p>
-              {session.setupRequired
-                ? "Создайте пароль для своего рабочего пространства. Подключения к рабочим сервисам настроим внутри."
-                : "Войдите, чтобы вернуться к сообщениям, задачам и ассистенту."}
-            </p>
-            <form onSubmit={enter}>
-              <Field
-                label={
-                  session.setupRequired ? "Придумайте пароль" : "Ваш пароль"
-                }
-                hint={
-                  session.setupRequired
-                    ? "Не менее 12 символов. Защищает доступ к памяти и подтверждениям."
-                    : undefined
-                }
-              >
-                <input
-                  type="password"
-                  autoComplete={
-                    session.setupRequired ? "new-password" : "current-password"
-                  }
-                  required
-                  minLength={session.setupRequired ? 12 : 1}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoFocus
-                />
-              </Field>
-              {error && (
-                <div role="alert" className="error">
-                  {error}
-                </div>
-              )}
-              <button className="primary wide" disabled={loading}>
-                {loading ? (
-                  <LoaderCircle className="spin" size={18} />
-                ) : (
-                  <>
-                    {session.setupRequired ? "Создать пространство" : "Войти"}
-                    <ArrowUpRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-            <div className="login-note">
-              <LockKeyhole size={17} />
-              <span>
-                Данные хранятся на вашем устройстве.
-                <br />
-                Вы решаете, что и кому отправлять.
-              </span>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  return (
-    <Workspace
-      onLogout={async () => {
-        await api("/auth/logout", "POST", {});
-        setCsrf("");
-        setSession({ authenticated: false, setupRequired: false });
-      }}
-    />
-  );
+  return <Workspace />;
 }
-function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
+function Workspace() {
   const location = useLocation();
   const navigate = useNavigate();
   const page = pageForPath(location.pathname);
@@ -616,14 +479,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
             <span className="sidebar-text">Что нового</span>
             {unreadRelease && <span className="updates-unread" role="status" aria-label="Есть непрочитанное обновление" title="Есть непрочитанное обновление" />}
           </Link>
-          <button
-            title="Выйти"
-            aria-label="Выйти"
-            onClick={() => run("logout", onLogout)}
-          >
-            <LogOut size={18} className="sidebar-icon sidebar-icon-logout" />
-            <span className="sidebar-text">Выйти</span>
-          </button>
+
         </div>
       </aside>
       <div className="main-shell">

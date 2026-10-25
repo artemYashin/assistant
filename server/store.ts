@@ -388,6 +388,13 @@ export class Store {
         this.set("migration.projectTicketImport",true);
       })();
     }
+    if (!this.get("migration.passwordlessAccess", false)) {
+      this.db.transaction(() => {
+        this.deleteSecret("password");
+        this.db.prepare("DELETE FROM sessions").run();
+        this.set("migration.passwordlessAccess", true);
+      })();
+    }
     if (!this.get("migration.fixedAzureApiVersion", false)) {
       this.db.transaction(() => {
         this.set("settings", this.get("settings", {}));

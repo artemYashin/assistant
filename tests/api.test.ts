@@ -46,7 +46,7 @@ test("memory API enforces login, Origin, CSRF and one-shot approval", async (t) 
     .post("/api/auth/setup")
     .set(headers)
     .send({ password: "another-password-long" })
-    .expect(409);
+    .expect(200);
   await request(app).get("/api/usage").set(headers).expect(401);
   const usage = await request(app)
     .get("/api/usage?days=7")
