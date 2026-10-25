@@ -33,6 +33,7 @@ export class AppError extends Error {
   }
 }
 export const defaults = {
+  workMode: "lead" as "lead" | "developer",
   assistantCodeAccess: true,
   memoryLanguage: "English",
   assistantCodeWaitSeconds: 20,

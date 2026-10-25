@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import type { TicketExportContext } from "../server/ticket-export-context.js";
 import { useDragAutoScroll } from "./useDragAutoScroll.js";
 import { StatusBadge } from "./TicketControls.js";
@@ -128,6 +129,7 @@ export function TicketExportDialog({
       window.dispatchEvent(new Event(minimizedEvent));
     };
   }, [minimized]);
+  const management=useLocalManagement();
   const autoScroll = useDragAutoScroll();
   const draftActive = useRef(false),
     minimizedRef = useRef(false);
@@ -162,7 +164,7 @@ export function TicketExportDialog({
   } | null>(null);
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
-  const columns = order.filter((key) => enabled.includes(key));
+  const columns = order.filter((key) => enabled.includes(key) && (management || key!=="developers"));
   useEffect(() => {
     exportContext = {
       state: !active ? "closed" : minimized ? "minimized" : "open",
@@ -171,7 +173,7 @@ export function TicketExportDialog({
       columns,
       format,
     };
-  }, [active, minimized, snapshot, order, enabled, format]);
+  }, [active, minimized, snapshot, order, enabled, format, management]);
   useEffect(
     () => () => {
       exportContext = {
@@ -209,7 +211,7 @@ export function TicketExportDialog({
           exportColumns.some((column) => column.key === key),
         );
         if (selected.length) {
-          setEnabled(selected);
+          setEnabled(previous => management ? selected : [...selected.filter(key => key !== "developers"), ...previous.filter(key => key === "developers")]);
           setOrder((previous) => [
             ...selected,
             ...previous.filter((key) => !selected.includes(key)),
@@ -295,7 +297,7 @@ export function TicketExportDialog({
       window.removeEventListener(eventName, open);
       request.current?.abort();
     };
-  }, []);
+  }, [management]);
   const requestClose = () => {
     if (busy) return;
     if (draftTickets.current.length) closeConfirmation.current?.showModal();
@@ -642,14 +644,14 @@ export function TicketExportDialog({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => setEnabled([...order])}
+                onClick={() => setEnabled(previous => management ? [...order] : [...order.filter(key => key !== "developers"), ...previous.filter(key => key === "developers")])}
               >
                 Выбрать все
               </button>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => setEnabled([])}
+                onClick={() => setEnabled(previous => management ? [] : previous.filter(key => key === "developers"))}
               >
                 Снять выбор
               </button>
@@ -661,7 +663,7 @@ export function TicketExportDialog({
               }
               onDragLeave={autoScroll.onDragLeave}
             >
-              {order.map((key, index) => {
+              {order.filter(key=>management||key!=="developers").map((key, index) => {
                 const column = exportColumns.find((c) => c.key === key)!;
                 return (
                   <div

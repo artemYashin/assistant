@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { useEffect, useState } from "react";
 
 const empty = {
@@ -94,6 +95,7 @@ export function useTicketFilters(
   storageKey: string,
   initialFilters: Partial<Filters> = {},
 ) {
+  const management=useLocalManagement();
   const [{ key, legacyKeys }] = useState(() => customerFilterScope(storageKey));
   const [filters, setFilters] = useState<Filters>(() => {
     for (const candidate of [key, ...legacyKeys]) {
@@ -118,7 +120,8 @@ export function useTicketFilters(
     setFilters((previous) => ({ ...previous, [key]: value }));
   }
   return {
-    filters,
+    filters: management ? filters : {...filters, localFilter:[], sort:filters.sort.startsWith("developer_name-")?"id-desc":filters.sort},
+    rawFilters:filters,
     set,
     apply: (value: Filters) => setFilters(parseTicketFilters(value)),
   };

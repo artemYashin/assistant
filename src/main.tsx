@@ -1,3 +1,5 @@
+import { WorkModeContext } from "./WorkMode.js";
+import { workMode, hasLocalManagement } from "../server/work-mode.js";
 import { useImageAttachmentQueue } from "./useImageAttachmentQueue.js";
 import { NotesPage } from "./NotesPage.js";
 import { StickyNote } from "lucide-react";
@@ -443,6 +445,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
       window.removeEventListener("orbit:ticket-tracked", changed);
     };
   }, []);
+  useEffect(()=>{if(settings && !hasLocalManagement(settings) && page==="developers") navigate("/tickets",{replace:true});},[settings?.workMode,page,navigate]);
   const initialized = useRef(false);
   const loadGeneration = useRef(0);
   async function reload() {
@@ -531,7 +534,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
       ? "Настройки"
       : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return (
-    <div className={`workspace ${assistantOpen ? "with-assistant" : ""}`}>
+    <WorkModeContext.Provider value={workMode(settings)}><div className={`workspace ${assistantOpen ? "with-assistant" : ""}`}>
       <aside
         className={`sidebar ${sidebarCollapsed ? "sidebar-collapsed" : "sidebar-expanded"}`}
         aria-label="Основная навигация"
@@ -562,7 +565,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
         <div className="nav-title">РАБОЧИЙ ДЕНЬ</div>
         <nav>
           {navigation
-            .filter((n) => !["inbox"].includes(n.id))
+            .filter((n) => !["inbox"].includes(n.id) && (n.id!=="developers" || hasLocalManagement(settings)))
             .map((n) => (
               <Link
                 key={n.id}
@@ -926,7 +929,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
                   busy={busy}
                 />
               )}
-            {page === "developers" && (
+            {page === "developers" && hasLocalManagement(settings) && (
               <DevelopersPage
                 key={JSON.stringify([
                   context,
@@ -1007,7 +1010,7 @@ function Workspace({ onLogout }: { onLogout: () => Promise<void> }) {
           />
         </div>
       </div>
-    </div>
+    </div></WorkModeContext.Provider>
   );
 }
 function PageHeading({
@@ -1116,6 +1119,7 @@ function Tickets({
     JSON.stringify([currentSource, context.client, context.project]);
   const {
     filters,
+    rawFilters,
     set: setFilter,
     apply: applyFilters,
   } = useTicketFilters(filterStorageKey);
@@ -1171,7 +1175,7 @@ function Tickets({
       "type",
       "state",
       "assigned",
-      "developer_name",
+      ...(hasLocalManagement(settings)?["developer_name"]:[]),
       "notes",
       "tags",
       "azureTags",
@@ -1362,7 +1366,7 @@ function Tickets({
       </div>
       <TicketFilterPanel
         storageKey={filterStorageKey}
-        filters={filters}
+        filters={rawFilters}
         onApply={applyFilters}
         disabled={!!rawTarget}
       >
@@ -1385,7 +1389,7 @@ function Tickets({
               setTypeFilter([]);
               setStateFilter([]);
               setAssigneeFilter([]);
-              setLocalFilter([]);
+              if (hasLocalManagement(settings)) setLocalFilter([]);
               setQuery("");
             }}
           >
@@ -1473,7 +1477,7 @@ function Tickets({
             onChange={setAssigneeFilter}
             names={values("assigned")}
           />
-          <MultiSelect
+          {hasLocalManagement(settings) && <MultiSelect
             label="Локальное поручение"
             placeholder="Все разработчики"
             disabled={!!rawTarget}
@@ -1487,7 +1491,7 @@ function Tickets({
                 avatarName: name,
               })),
             ]}
-          />
+          />}
         </div>
       </TicketFilterPanel>
       <div className="ticket-export-bar ticket-actions-panel">
@@ -1601,7 +1605,7 @@ function Tickets({
       )}
       {!azureMode && (
         <p className="muted">
-          Удаление и локальное поручение не изменяют Azure. Удалённый тикет
+          {hasLocalManagement(settings) ? "Удаление и локальное поручение не изменяют Azure." : "Локальное удаление не изменяет Azure."} Удалённый тикет
           можно вернуть кнопкой «Добавить по номеру».
         </p>
       )}
@@ -1996,9 +2000,10 @@ function Memory({ memories, context, run, busy }: any) {
   );
 }
 function Settings({ settings, context, run, busy }: any) {
-  const [settingsTab, setSettingsTab] = useState("copilot");
+  const [settingsTab, setSettingsTab] = useState("workspace");
   const settingsTabId = useId();
   const settingsTabs = [
+    {id:"workspace",label:"Рабочее пространство",icon:Settings2},
     { id: "copilot", label: "Copilot", icon: Github },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
@@ -2088,6 +2093,12 @@ function Settings({ settings, context, run, busy }: any) {
             </button>
           ))}
         </div>
+        <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-workspace-panel`} aria-labelledby={`${settingsTabId}-workspace`} hidden={settingsTab !== "workspace"}>
+          <div className="section-heading"><h2><Settings2 size={22}/>Рабочее пространство</h2></div>
+          <Field label="Режим работы" hint="Общий режим для этой установки. Данные и настройки скрытых элементов сохраняются. Это настройка интерфейса и ассистента, а не права доступа.">
+            <select value={form.workMode || "lead"} onChange={e=>set("workMode",e.target.value)}><option value="lead">Lead — все возможности</option><option value="developer">Разработчик — без локальных поручений и отпусков</option></select>
+          </Field><p className="muted">Смена режима доступна после завершения ответа ассистента и ревью. Сохраните настройки для применения.</p>
+        </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-copilot-panel`} aria-labelledby={`${settingsTabId}-copilot`} hidden={settingsTab !== "copilot"}>
           <div className="section-heading">
             <h2>

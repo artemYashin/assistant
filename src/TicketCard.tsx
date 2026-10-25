@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { MemoryMarkdown } from "./MemoryMarkdown.js";
 import { TicketCommentForm } from "./TicketCommentForm.js";
 import { ConfirmButton } from "./ConfirmButton.js";
@@ -63,6 +64,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
       })
       .catch(() => {});
   }, []);
+  const management=useLocalManagement();
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
   useEffect(() => {
@@ -325,7 +327,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                 </dd>
               </div>
             )}
-            <div>
+            {management && <div>
               <dt>Локальное поручение</dt>
               <dd>
                 {card.locallyAvailable || card.locallyTracked ? (
@@ -336,7 +338,7 @@ export function TicketCard({ reference, citation }: { reference: string; citatio
                   />
                 )}
               </dd>
-            </div>
+            </div>}
             <div className="ticket-overview-tags">
               <dt>Теги</dt>
               <dd>

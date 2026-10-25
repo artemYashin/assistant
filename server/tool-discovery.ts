@@ -88,7 +88,7 @@ export function createToolDiscovery(
       "Load full schemas before using a capability. Request only tools needed now; combine related names in one call. Loaded tools remain available for this request. Catalog:\n" +
       tools
         .map(
-          (tool) => tool.name + ": " + (catalog[tool.name] || tool.description),
+          (tool) => tool.name + ": " + ((catalog[tool.name] || tool.description) + (tool.description?.includes("In Developer mode") ? " Developer mode: no local developers, assignments or vacations." : "")),
         )
         .join("\n"),
     parameters: schema,

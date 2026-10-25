@@ -9,4 +9,4 @@
 
 Заказчик или проект не найден в справочнике
 
-Источник: server/workspace-context.ts:60.
+Источник: server/workspace-context.ts:62.

@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { notificationItems, notificationDue } from "../server/calendar-notifications.js";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { DailyCompletionButton } from "./DailyCompletionButton.js";
@@ -30,6 +31,7 @@ function ReminderToast({
   onDismiss: (id: string) => void;
   onOpen: (item: CalendarItem) => void;
 }) {
+  const management=useLocalManagement();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => setNow(Date.now()), [items]);
   // Refresh at actual status boundaries, independently of API polling/batch delivery.
@@ -160,7 +162,7 @@ function ReminderToast({
                   : eventTime(item.start, item.end, zone)}
                 {item.repeatDaily ? " · " + repeatLabel(item) : ""}
               </small>
-              {(item.ticket || item.vacation) && (
+              {management && (item.ticket || item.vacation) && (
                 <small className="calendar-toast-people">
                   {item.developerIds.length ? (
                     <>
@@ -342,6 +344,7 @@ export function CalendarNotifications({
     };
   }, [
     !!settings,
+    settings?.workMode,
     settings?.calendarNotifications?.browser,
     JSON.stringify(settings?.calendarNotifications),
     zone,

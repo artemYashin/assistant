@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { ProjectTicketImport } from "./ProjectTicketImport.js";
 import { DeleteContextButton } from "./DeleteContextButton.js";
 import { ContextSaveButton } from "./ContextSaveButton.js";
@@ -30,9 +31,11 @@ export function ContextPicker({
   onChange: (c: Context) => void;
   onSettingsChange: () => void;
 }) {
+  const management=useLocalManagement();
   const [section, setSection] = useState<
     "browse" | "catalog" | "repository" | "developers" | "import"
   >("catalog");
+  useEffect(() => { if (!management && section === "developers") setSection("catalog"); }, [management, section]);
   const [catalogClient, setCatalogClient] = useState("");
   const [catalogProject, setCatalogProject] = useState("");
   const [creating, setCreating] = useState(false);
@@ -242,19 +245,19 @@ export function ContextPicker({
               <button type="button" aria-pressed={section === "import"} onClick={()=>setSection("import")}>
                 <Plus size={16}/>Автоматический импорт
               </button>
-              <button
+              {management && <button
                 type="button"
                 aria-pressed={section === "developers"}
                 onClick={() => setSection("developers")}
               >
                 <Users size={16} />
                 Разработчики
-              </button>
+              </button>}
             </div>
             {section === "import" && <div className="context-manager-section">
               <ProjectTicketImport key={JSON.stringify(context)} context={context} onSaved={onSettingsChange}/>
             </div>}
-            {section === "developers" && (
+            {management && section === "developers" && (
               <div className="context-manager-section">
                 <DeveloperDirectory
                   key={`${context.client}:${context.project}`}

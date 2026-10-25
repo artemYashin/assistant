@@ -9,106 +9,106 @@
 
 Экспорт · ({…}) /
 
-Источник: src/ExportTickets.tsx:77.
+Источник: src/ExportTickets.tsx:78.
 
 ### Элемент
 
 Добавить в экспорт
 
-Источник: src/ExportTickets.tsx:92.
+Источник: src/ExportTickets.tsx:93.
 
 ### Элемент
 
 Развернуть экспорт
 
-Источник: src/ExportTickets.tsx:407.
+Источник: src/ExportTickets.tsx:409.
 
 ### Элемент
 
 Закрыть экспорт
 
-Источник: src/ExportTickets.tsx:415.
+Источник: src/ExportTickets.tsx:417.
 
 ### Элемент
 
 Свернуть экспорт
 
-Источник: src/ExportTickets.tsx:441.
+Источник: src/ExportTickets.tsx:443.
 
 ### Элемент
 
 Убрать из экспорта #{…}
 
-Источник: src/ExportTickets.tsx:515.
+Источник: src/ExportTickets.tsx:517.
 
 ### Элемент
 
 Номер или название тикета · Найти тикет для экспорта
 
-Источник: src/ExportTickets.tsx:564.
+Источник: src/ExportTickets.tsx:566.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ExportTickets.tsx:572.
+Источник: src/ExportTickets.tsx:574.
 
 ### Элемент
 
 # · · В корзине /
 
-Источник: src/ExportTickets.tsx:590.
+Источник: src/ExportTickets.tsx:592.
 
 ### Элемент
 
 Добавить тикет
 
-Источник: src/ExportTickets.tsx:626.
+Источник: src/ExportTickets.tsx:628.
 
 ### Элемент
 
 Выбрать все
 
-Источник: src/ExportTickets.tsx:642.
+Источник: src/ExportTickets.tsx:644.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/ExportTickets.tsx:649.
+Источник: src/ExportTickets.tsx:651.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: src/ExportTickets.tsx:740.
+Источник: src/ExportTickets.tsx:742.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: src/ExportTickets.tsx:749.
+Источник: src/ExportTickets.tsx:751.
 
 ### Элемент
 
 Подготовка… / Скачать {…}
 
-Источник: src/ExportTickets.tsx:775.
+Источник: src/ExportTickets.tsx:777.
 
 ### Элемент
 
 Отменить закрытие
 
-Источник: src/ExportTickets.tsx:791.
+Источник: src/ExportTickets.tsx:793.
 
 ### Элемент
 
 Продолжить работу
 
-Источник: src/ExportTickets.tsx:795.
+Источник: src/ExportTickets.tsx:797.
 
 ### Элемент
 
 Закрыть и сбросить список
 
-Источник: src/ExportTickets.tsx:796.
+Источник: src/ExportTickets.tsx:798.

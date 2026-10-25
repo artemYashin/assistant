@@ -82,3 +82,11 @@ Before every push containing changes to application logic or capabilities:
 5. Continue updating authored help articles in the same change. Release notes
    do not replace help documentation. The sidebar «Что нового» renders the
    bundled release history; it is not an updater or a database migration.
+
+# Work modes
+Lead always includes the full product. New features remain available in both Lead
+and Developer by default. Exclude a feature from Developer only on the user's
+explicit instruction. The currently agreed exclusions are local developers,
+local assignments and developer vacations, including their related UI and agent
+capabilities. Work mode is not an authorization boundary. Preserve hidden data
+and user preferences when switching modes.

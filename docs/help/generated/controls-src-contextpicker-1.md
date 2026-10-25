@@ -9,118 +9,118 @@
 
 Текущий заказчик
 
-Источник: src/ContextPicker.tsx:146.
+Источник: src/ContextPicker.tsx:149.
 
 ### Элемент
 
 Общий контекст
 
-Источник: src/ContextPicker.tsx:151.
+Источник: src/ContextPicker.tsx:154.
 
 ### Элемент
 
 Текущий проект
 
-Источник: src/ContextPicker.tsx:157.
+Источник: src/ContextPicker.tsx:160.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/ContextPicker.tsx:162.
+Источник: src/ContextPicker.tsx:165.
 
 ### Элемент
 
 Настройки заказчиков и проектов · Заказчики и проекты
 
-Источник: src/ContextPicker.tsx:172.
+Источник: src/ContextPicker.tsx:175.
 
 ### Элемент
 
 Закрыть управление контекстом
 
-Источник: src/ContextPicker.tsx:201.
+Источник: src/ContextPicker.tsx:204.
 
 ### Элемент
 
 Заказчик в настройках
 
-Источник: src/ContextPicker.tsx:216.
+Источник: src/ContextPicker.tsx:219.
 
 ### Элемент
 
 Проект в настройках
 
-Источник: src/ContextPicker.tsx:220.
+Источник: src/ContextPicker.tsx:223.
 
 ### Элемент
 
 Заказчики и проекты
 
-Источник: src/ContextPicker.tsx:228.
+Источник: src/ContextPicker.tsx:231.
 
 ### Элемент
 
 Подключение Azure
 
-Источник: src/ContextPicker.tsx:231.
+Источник: src/ContextPicker.tsx:234.
 
 ### Элемент
 
 Репозиторий
 
-Источник: src/ContextPicker.tsx:234.
+Источник: src/ContextPicker.tsx:237.
 
 ### Элемент
 
 Автоматический импорт
 
-Источник: src/ContextPicker.tsx:242.
+Источник: src/ContextPicker.tsx:245.
 
 ### Элемент
 
 Разработчики
 
-Источник: src/ContextPicker.tsx:245.
+Источник: src/ContextPicker.tsx:248.
 
 ### Элемент
 
 Заказчик
 
-Источник: src/ContextPicker.tsx:275.
+Источник: src/ContextPicker.tsx:278.
 
 ### Элемент
 
 Проект
 
-Источник: src/ContextPicker.tsx:286.
+Источник: src/ContextPicker.tsx:289.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ContextPicker.tsx:297.
+Источник: src/ContextPicker.tsx:300.
 
 ### Элемент
 
 Заказчик проекта
 
-Источник: src/ContextPicker.tsx:300.
+Источник: src/ContextPicker.tsx:303.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/ContextPicker.tsx:301.
+Источник: src/ContextPicker.tsx:304.
 
 ### Элемент
 
 Название заказчика / Название проекта
 
-Источник: src/ContextPicker.tsx:302.
+Источник: src/ContextPicker.tsx:305.
 
 ### Элемент
 
 Добавить и выбрать
 
-Источник: src/ContextPicker.tsx:306.
+Источник: src/ContextPicker.tsx:309.

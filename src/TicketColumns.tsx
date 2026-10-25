@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { useDragAutoScroll } from "./useDragAutoScroll.js";
 import { useTicketColumnResize } from "./useTicketColumnResize.js";
 import {
@@ -27,6 +28,8 @@ export const ticketColumns = [
   ["actions", "Просмотр и действия"],
 ] as const;
 export function useTicketColumns(trash = false, namespace = "active") {
+  const management=useLocalManagement();
+  const allowed=(key:string)=>management||key!=="developer_name";
   const options: readonly (readonly [string, string])[] = trash
     ? [
         ...ticketColumns.filter(([key]) => key !== "actions"),
@@ -89,7 +92,7 @@ export function useTicketColumns(trash = false, namespace = "active") {
     "selection",
     "id",
     "title",
-    ...order.filter((key) => !hidden.includes(key)),
+    ...order.filter((key) => allowed(key) && !hidden.includes(key)),
   ]);
   const [resetWidths, setResetWidths] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -121,9 +124,9 @@ export function useTicketColumns(trash = false, namespace = "active") {
   };
   return {
     resize,
-    order,
-    hidden: (key: string) => hidden.includes(key),
-    count: options.length + 3 - hidden.length,
+    order:order.filter(allowed),
+    hidden: (key: string) => !allowed(key) || hidden.includes(key),
+    count: options.filter(([key])=>allowed(key)&&!hidden.includes(key)).length + 3,
     control: (
       <>
         <button
@@ -165,14 +168,14 @@ export function useTicketColumns(trash = false, namespace = "active") {
             <button
               type="button"
               className="secondary"
-              onClick={() => setDraftHidden([])}
+              onClick={() => setDraftHidden(current => current.filter(key => !allowed(key)))}
             >
               Select All
             </button>
             <button
               type="button"
               className="secondary"
-              onClick={() => setDraftHidden(options.map(([key]) => key))}
+              onClick={() => setDraftHidden(current => [...current.filter(key => !allowed(key)), ...options.map(([key]) => key).filter(allowed)])}
             >
               Deselect All
             </button>
@@ -182,7 +185,7 @@ export function useTicketColumns(trash = false, namespace = "active") {
             видимыми и идут первыми.
           </p>
           <div className="ticket-column-options" onDragOver={event => autoScroll.onDragOver(event, !!dragged)} onDragLeave={autoScroll.onDragLeave}>
-            {draftOrder.map((key) => {
+            {draftOrder.filter(allowed).map((key) => {
               const label = options.find(([id]) => id === key)![1];
               return (
                 <div
@@ -322,6 +325,7 @@ export function OrderedTicketCells({
   order: string[];
   headerResize?: (key: string, label: string) => ReactNode;
 }) {
+  const management=useLocalManagement();
   const rank = (child: ReactNode) => {
     if (!isValidElement<{ "data-column"?: string }>(child)) return -1;
     const key = child.props["data-column"];
@@ -336,6 +340,7 @@ export function OrderedTicketCells({
   return (
     <>
       {flatten(children)
+        .filter(child=>management || !isValidElement<{"data-column"?:string}>(child) || child.props["data-column"]!=="developer_name")
         .sort((a, b) => rank(a) - rank(b))
         .map((child) => {
           if (

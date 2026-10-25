@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, X } from "lucide-react";
 import { api } from "./api.js";
@@ -6,6 +7,7 @@ import { LocalAssigneeNames } from "./LocalAssigneeNames.js";
 
 type Person = { id: string; name: string; email: string };
 export function AzureAssignee({ ticket, onChange }: any) {
+  const management = useLocalManagement();
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -105,8 +107,7 @@ export function AzureAssignee({ ticket, onChange }: any) {
           </button>
         </div>
         <p className="muted">
-          Сохранение изменит исполнителя тикета в Azure DevOps. Локальное
-          поручение останется прежним.
+          Сохранение изменит исполнителя тикета в Azure DevOps.{management && " Локальное поручение останется прежним."}
         </p>
         <input
           aria-label="Поиск пользователей Azure"

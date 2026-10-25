@@ -9,106 +9,106 @@
 
 Поиск в корзине · Номер, название, исполнитель…
 
-Источник: src/TicketTrash.tsx:239.
+Источник: src/TicketTrash.tsx:240.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: src/TicketTrash.tsx:260.
+Источник: src/TicketTrash.tsx:261.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: src/TicketTrash.tsx:278.
+Источник: src/TicketTrash.tsx:279.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: src/TicketTrash.tsx:281.
+Источник: src/TicketTrash.tsx:282.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: src/TicketTrash.tsx:282.
+Источник: src/TicketTrash.tsx:283.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: src/TicketTrash.tsx:284.
+Источник: src/TicketTrash.tsx:285.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: src/TicketTrash.tsx:285.
+Источник: src/TicketTrash.tsx:286.
 
 ### Элемент
 
 Теги · Все теги
 
-Источник: src/TicketTrash.tsx:295.
+Источник: src/TicketTrash.tsx:296.
 
 ### Элемент
 
 Без тегов
 
-Источник: src/TicketTrash.tsx:301.
+Источник: src/TicketTrash.tsx:302.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: src/TicketTrash.tsx:307.
+Источник: src/TicketTrash.tsx:308.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: src/TicketTrash.tsx:313.
+Источник: src/TicketTrash.tsx:314.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: src/TicketTrash.tsx:320.
+Источник: src/TicketTrash.tsx:321.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: src/TicketTrash.tsx:330.
+Источник: src/TicketTrash.tsx:331.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: src/TicketTrash.tsx:345.
+Источник: src/TicketTrash.tsx:346.
 
 ### Элемент
 
 Нет поручения
 
-Источник: src/TicketTrash.tsx:351.
+Источник: src/TicketTrash.tsx:352.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/TicketTrash.tsx:380.
+Источник: src/TicketTrash.tsx:381.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: src/TicketTrash.tsx:445.
+Источник: src/TicketTrash.tsx:446.
 
 ### Элемент
 
 Сортировать: Тип задачи · Тип · /
 
-Источник: src/TicketTrash.tsx:470.
+Источник: src/TicketTrash.tsx:471.

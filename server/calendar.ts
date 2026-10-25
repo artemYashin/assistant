@@ -1,3 +1,4 @@
+import { hasLocalManagement } from "./work-mode.js";
 import { azurePatReminder, azurePatReminderId } from "./azure-pat-reminder.js";
 import {
   syncDeveloperVacations,
@@ -81,13 +82,15 @@ export class Calendar {
         !!(r.vacation_developer && Date.parse(r.end) < Date.now()),
       createdAt: r.created_at,
     }));
-    return [...items, ...azurePatReminder(this.store)];
+    return [...(hasLocalManagement(this.store.settings()) ? items : items.filter(i=>!i.vacation).map(i=>({...i,developerIds:[]}))), ...azurePatReminder(this.store)];
   }
   private assertEditable(id?: string) {
+    if(id && !hasLocalManagement(this.store.settings()) && this.store.db.prepare("SELECT 1 FROM developer_vacations WHERE event_id=?").get(id))throw new AppError(403,"Отпуска недоступны в режиме разработчика.");
     if (id === azurePatReminderId)
       throw new AppError(400, "Напоминание о PAT нельзя скрыть, завершить или удалить. Обновите токен и дату в Настройки → Azure DevOps.");
   }
   developers() {
+    if(!hasLocalManagement(this.store.settings()))return [];
     return this.store.db
       .prepare(
         "SELECT id,name,client,project FROM local_developers WHERE active=1 ORDER BY name,id",
@@ -113,8 +116,10 @@ export class Calendar {
         .get(id)
     )
       throw new AppError(400, "Измените локальный дедлайн в карточке тикета.");
-    const v = calendarInput.parse(input),
-      ids = [...new Set(v.developerIds)];
+    const v = calendarInput.parse(input);
+    const management=hasLocalManagement(this.store.settings());
+    if(!management && v.developerIds.length)throw new AppError(403,"Локальные поручения недоступны в режиме разработчика.");
+    const ids:string[]=management ? [...new Set(v.developerIds)] : id ? JSON.parse((this.store.db.prepare("SELECT developers FROM calendar_events WHERE id=?").get(id) as any)?.developers || "[]") : [];
     if (
       v.scope !== "general" &&
       !this.store
@@ -128,7 +133,7 @@ export class Calendar {
       throw new AppError(400, "Заказчик или проект не найден.");
     if (v.start) v.start = new Date(v.start).toISOString();
     if (v.end) v.end = new Date(v.end).toISOString();
-    for (const developer of ids)
+    for (const developer of management ? ids : [])
       if (
         !this.store.db
           .prepare("SELECT 1 FROM local_developers WHERE id=? AND active=1")

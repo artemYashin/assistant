@@ -1,3 +1,4 @@
+import { hasLocalManagement } from "./work-mode.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
 import { Store, AppError, type Context } from "./store.js";
@@ -5,7 +6,8 @@ import { LocalDevelopers } from "./local-developers.js";
 
 export function workspaceContext(store: Store, context: Context, offset = 0) {
   const registry = store.contexts();
-  const developers = new LocalDevelopers(store).list(context);
+  const management = hasLocalManagement(store.settings());
+  const developers = management ? new LocalDevelopers(store).list(context) : [];
   const repositories = store.db
     .prepare(
       "SELECT id,client,project,azure_project,repository,mode,enabled FROM pr_projects WHERE client=? AND project=? ORDER BY enabled DESC,id",
@@ -25,7 +27,7 @@ export function workspaceContext(store: Store, context: Context, offset = 0) {
       offset + 10
         ? offset + 10
         : null,
-    note: "Developers include global, customer and project scopes; client/project fields identify the owning scope. Developer assignments are local; repository mode required means required-reviewer-only, all means all PRs. No secrets included.",
+    note: management ? "Developers include global, customer and project scopes; client/project fields identify the owning scope. Developer assignments are local; repository mode required means required-reviewer-only, all means all PRs. No secrets included." : "Developer mode: contexts and repositories only. No secrets included.",
   };
 }
 export function workspaceContextTool(

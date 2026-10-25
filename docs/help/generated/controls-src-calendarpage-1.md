@@ -9,118 +9,118 @@
 
 Создать
 
-Источник: src/CalendarPage.tsx:279.
+Источник: src/CalendarPage.tsx:282.
 
 ### Элемент
 
 Календарь
 
-Источник: src/CalendarPage.tsx:285.
+Источник: src/CalendarPage.tsx:288.
 
 ### Элемент
 
 Напоминания ·
 
-Источник: src/CalendarPage.tsx:292.
+Источник: src/CalendarPage.tsx:295.
 
 ### Элемент
 
 Сортировка
 
-Источник: src/CalendarPage.tsx:313.
+Источник: src/CalendarPage.tsx:316.
 
 ### Элемент
 
 По ближайшей дате
 
-Источник: src/CalendarPage.tsx:319.
+Источник: src/CalendarPage.tsx:322.
 
 ### Элемент
 
 По дате: сначала ранние
 
-Источник: src/CalendarPage.tsx:320.
+Источник: src/CalendarPage.tsx:323.
 
 ### Элемент
 
 По дате: сначала поздние
 
-Источник: src/CalendarPage.tsx:321.
+Источник: src/CalendarPage.tsx:324.
 
 ### Элемент
 
 По названию
 
-Источник: src/CalendarPage.tsx:322.
+Источник: src/CalendarPage.tsx:325.
 
 ### Элемент
 
 Все типы · Тип
 
-Источник: src/CalendarPage.tsx:325.
+Источник: src/CalendarPage.tsx:328.
 
 ### Элемент
 
 Напоминание
 
-Источник: src/CalendarPage.tsx:331.
+Источник: src/CalendarPage.tsx:334.
 
 ### Элемент
 
 Дедлайн тикета
 
-Источник: src/CalendarPage.tsx:332.
+Источник: src/CalendarPage.tsx:335.
 
 ### Элемент
 
 Отпуск
 
-Источник: src/CalendarPage.tsx:333.
+Источник: src/CalendarPage.tsx:336.
 
 ### Элемент
 
 Все состояния · Состояние
 
-Источник: src/CalendarPage.tsx:336.
+Источник: src/CalendarPage.tsx:339.
 
 ### Элемент
 
 Все заказчики · Заказчик
 
-Источник: src/CalendarPage.tsx:346.
+Источник: src/CalendarPage.tsx:349.
 
 ### Элемент
 
 Без заказчика
 
-Источник: src/CalendarPage.tsx:355.
+Источник: src/CalendarPage.tsx:358.
 
 ### Элемент
 
 Все проекты · Проект
 
-Источник: src/CalendarPage.tsx:361.
+Источник: src/CalendarPage.tsx:364.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/CalendarPage.tsx:367.
+Источник: src/CalendarPage.tsx:370.
 
 ### Элемент
 
 ·
 
-Источник: src/CalendarPage.tsx:381.
+Источник: src/CalendarPage.tsx:384.
 
 ### Элемент
 
 Поиск
 
-Источник: src/CalendarPage.tsx:388.
+Источник: src/CalendarPage.tsx:391.
 
 ### Элемент
 
 Название напоминания
 
-Источник: src/CalendarPage.tsx:390.
+Источник: src/CalendarPage.tsx:393.

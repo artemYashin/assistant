@@ -9,40 +9,40 @@
 
 Закрыть все уведомления
 
-Источник: src/CalendarNotifications.tsx:117.
+Источник: src/CalendarNotifications.tsx:119.
 
 ### Элемент
 
 Дедлайн: / · /
 
-Источник: src/CalendarNotifications.tsx:133.
+Источник: src/CalendarNotifications.tsx:135.
 
 ### Элемент
 
 Завершить напоминание? · «{…}». Уведомления прекратятся; напоминание можно вернуть в незавершённые в календаре. · Завершить
 
-Источник: src/CalendarNotifications.tsx:188.
+Источник: src/CalendarNotifications.tsx:190.
 
 ### Элемент
 
 Закрыть уведомление: {…} · Закрыть это уведомление
 
-Источник: src/CalendarNotifications.tsx:202.
+Источник: src/CalendarNotifications.tsx:204.
 
 ### Элемент
 
 Уведомления · Уведомления: {…}
 
-Источник: src/CalendarNotifications.tsx:351.
+Источник: src/CalendarNotifications.tsx:354.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/CalendarNotifications.tsx:369.
+Источник: src/CalendarNotifications.tsx:372.
 
 ### Элемент
 
 Ожидают подтверждения
 
-Источник: src/CalendarNotifications.tsx:379.
+Источник: src/CalendarNotifications.tsx:382.

@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { TicketColorLegend } from "./TicketColorLegend.js";
 import { BulkTicketStatus } from "./BulkTicketStatus.js";
 import { TicketDataRow } from "./TicketDataRow.js";
@@ -23,6 +24,7 @@ export function TicketTrash({
   context: { client: string; project: string };
   settings?: any;
 }) {
+  const management=useLocalManagement();
   const display = useTicketColumns(true);
   const [items, setItems] = useState<any[]>([]),
     [loaded, setLoaded] = useState(false),
@@ -83,6 +85,7 @@ export function TicketTrash({
     JSON.stringify([currentSource, context.client, context.project]);
   const {
     filters,
+    rawFilters,
     set: setFilter,
     apply: applyFilters,
   } = useTicketFilters(filterStorageKey, {
@@ -148,7 +151,7 @@ export function TicketTrash({
           t.type,
           t.state,
           t.assigned,
-          localName(t),
+          management ? localName(t) : "",
           t.notes,
           t.tags,
           t.azureTags,
@@ -209,7 +212,7 @@ export function TicketTrash({
     ["tags", "Теги"],
     ["azureTags", "Azure теги"],
     ["assigned", "Исполнитель в Azure"],
-    ["developer_name", "Локальное поручение"],
+    ...(management ? [["developer_name", "Локальное поручение"]] : []),
     ["created_at", "Дата создания"],
     ["changed_at", "Дата изменения"],
     ["added_at", "Добавлено в систему"],
@@ -223,14 +226,12 @@ export function TicketTrash({
         <div>
           <h1>Корзина тикетов</h1>
           <p>
-            Снимки хранятся 30 дней после удаления. Можно восстановить тикет
-            вместе с локальными поручениями.
+            Снимки хранятся 30 дней после удаления. Можно восстановить тикет{management && " вместе с локальными поручениями"}.
           </p>
         </div>
       </div>
       <p className="muted">
-        Статус и исполнитель изменяются в Azure. Заметки, приоритет и поручения
-        сохраняются локально.
+        Статус и исполнитель изменяются в Azure. Заметки и приоритет{management && ", а также поручения"} сохраняются локально.
       </p>
       <div className="ticket-management-toolbar">
         <div className="ticket-search-block">
@@ -247,7 +248,7 @@ export function TicketTrash({
       </div>
       <TicketFilterPanel
         storageKey={filterStorageKey}
-        filters={filters}
+        filters={rawFilters}
         onApply={applyFilters}
         disabled={false}
       >
@@ -270,7 +271,7 @@ export function TicketTrash({
               setTypes([]);
               setStates([]);
               setPeople([]);
-              setLocalFilter([]);
+              if (management) setLocalFilter([]);
             }}
           >
             <RotateCcw size={15} /> Сбросить
@@ -342,7 +343,7 @@ export function TicketTrash({
             onChange={setPeople}
             names={values("assigned")}
           />
-          <MultiSelect
+          {management && <MultiSelect
             label="Локальное поручение"
             placeholder="Все разработчики"
             value={localFilter}
@@ -355,7 +356,7 @@ export function TicketTrash({
                 avatarName: name,
               })),
             ]}
-          />
+          />}
         </div>
       </TicketFilterPanel>
       {error && (

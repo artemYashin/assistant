@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { NumberInput } from "./NumberInput.js";
 import { useState } from "react";
 import { Bell, CalendarDays } from "lucide-react";
@@ -9,6 +10,7 @@ export function CalendarSettings({
   form: any;
   set: (key: string, value: any) => void;
 }) {
+  const management=useLocalManagement();
   const [permission, setPermission] = useState(
     typeof Notification === "undefined"
       ? "unsupported"
@@ -68,7 +70,7 @@ export function CalendarSettings({
           title: "Предупреждать о предстоящем напоминании за",
           fallback: 0,
         },
-      ].map(({ key, title, fallback }) => {
+      ].filter(item=>management||item.key!=="vacationLeadMinutes").map(({ key, title, fallback }) => {
         const total = options[key] ?? fallback;
         const parts = [
           Math.floor(total / 1440),

@@ -1,3 +1,4 @@
+import { hasLocalManagement } from "./work-mode.js";
 import { registerTicketNotes } from "./ticket-note-images.js";
 import { registerNotes } from "./notes.js";
 import { azurePatExpirySchema } from "./azure-pat-reminder.js";
@@ -66,6 +67,7 @@ const contextSchema = z.object({
 });
 const settingsSchema = z
   .object({
+    workMode: z.enum(["lead","developer"]).optional(),
     assistantCodeAccess: z.boolean().default(true),
     memoryLanguage: z.string().trim().min(1).max(100).default("English"),
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
@@ -261,6 +263,10 @@ export function createApp(
       );
     next();
   });
+  app.use((req,_res,next)=>{
+    if(!hasLocalManagement(store.settings()) && (/^\/api\/(?:local-developers|developer-board)(?:\/|$)/.test(req.path) || /^\/api\/tickets\/[^/]+\/developers$/.test(req.path))) return next(new AppError(403,"Локальные разработчики и поручения недоступны в режиме разработчика."));
+    next();
+  });
   registerNotes(app, store);
   registerTicketNotes(app, store);
   app.post("/api/auth/logout", (req, res) => {
@@ -402,11 +408,13 @@ export function createApp(
     )
       throw new AppError(400, "Выберите типы и статусы для автоимпорта");
     const old = store.settings();
+    if(parsed.workMode && parsed.workMode !== old.workMode && (agent.active() || reviewAgent.active() || pullRequests.hasActiveReview())) throw new AppError(409,"Дождитесь завершения ответа ассистента и ревью или остановите их перед сменой режима.");
     if (old.azurePatExpiresOn && settings.azurePatExpiresOn === "")
       throw new AppError(400, "Укажите новую дату истечения PAT. Скрыть напоминание удалением настроенной даты нельзя.");
     store.db.transaction(() => {
     store.set("settings", {
       ...settings,
+      workMode: settings.workMode ?? old.workMode,
       azurePatExpiresOn: settings.azurePatExpiresOn ?? old.azurePatExpiresOn,
       azureAutoImport: store.rawSettings().azureAutoImport,
       azureTypes: store.rawSettings().azureTypes,

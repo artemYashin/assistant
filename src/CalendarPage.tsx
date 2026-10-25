@@ -1,3 +1,4 @@
+import { useLocalManagement } from "./WorkMode.js";
 import { useCalendarClock } from "./useCalendarClock.js";
 import { MultiSelect } from "./MultiSelect.js";
 import { calendarMatchesStatus, calendarMatchesType } from "../server/calendar-model.js";
@@ -73,6 +74,7 @@ export function CalendarPage({
   settings: any;
   context: { client: string; project: string };
 }) {
+  const management=useLocalManagement();
   const [savedFilters] = useState(() => {
     try { return parseCalendarFilters(JSON.parse(localStorage.getItem("orbit.calendar.filters.current") || "null")); }
     catch { return parseCalendarFilters(null); }
@@ -142,7 +144,7 @@ export function CalendarPage({
       clearInterval(timer);
       window.removeEventListener("orbit-calendar-changed", load);
     };
-  }, []);
+  }, [management]);
   function openTicket(item: CalendarItem) {
     if (!item.ticket) return;
     dialog.current?.close();
@@ -216,8 +218,9 @@ export function CalendarPage({
     ? []
     : items.filter((item) => {
         return (
+          (management || !item.vacation) &&
           calendarMatchesStatus(item, status, now) &&
-          calendarMatchesType(item, types) &&
+          calendarMatchesType(item, management ? types : types.filter(t=>t!=="vacation")) &&
           (!clientFilter.length || clientFilter.some(value => value === "none" ? !item.client : item.client === value.slice(1))) &&
           (!projectFilter.length || projectFilter.some(value => value === "none" ? !item.project : JSON.stringify([item.client, item.project]) === value)) &&
           item.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
@@ -325,12 +328,12 @@ export function CalendarPage({
             <MultiSelect
               placeholder="Все типы"
               label="Тип"
-              value={types}
+              value={management?types:types.filter(t=>t!=="vacation")}
               onChange={setTypes}
               options={[
                 { value: "reminder", label: "Напоминание" },
                 { value: "ticket", label: "Дедлайн тикета" },
-                { value: "vacation", label: "Отпуск" },
+                ...(management ? [{ value: "vacation", label: "Отпуск" }] : []),
               ]}
             />
             <MultiSelect
@@ -663,7 +666,7 @@ export function CalendarPage({
                 {item.description && (
                   <p className="calendar-description">{item.description}</p>
                 )}
-                {!!item.developerIds.length && (
+                {management && !!item.developerIds.length && (
                   <p className="calendar-inline">
                     <Users size={15} />
                     {item.developerIds.map((id) => {
@@ -765,8 +768,7 @@ export function CalendarPage({
             <p>
               {eventTime(currentItem.ticket.deadline, null, zone)} · изменяется
               в карточке тикета. Завершение напоминания сохраняет локальный
-              дедлайн. Разработчики берутся из локальных поручений тикета и
-              меняются там же.
+              дедлайн.{management && " Разработчики берутся из локальных поручений тикета и меняются там же."}
             </p>
             <button
               className="secondary"
@@ -975,7 +977,7 @@ export function CalendarPage({
               }
             />
           </label>
-          <details className="calendar-developers">
+          {management && <details className="calendar-developers">
             <summary>
               <Users size={15} />
               Разработчики · необязательно ({draft.developerIds.length})
@@ -1029,7 +1031,7 @@ export function CalendarPage({
             {!developers.length && (
               <p className="muted">Локальные разработчики пока не добавлены.</p>
             )}
-          </details>
+          </details>}
         </fieldset>
         {!currentItem?.systemKind && <>
         <label className="calendar-check">
