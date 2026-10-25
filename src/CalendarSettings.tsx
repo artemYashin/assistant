@@ -1,6 +1,8 @@
+import { SingleSelect } from "./SingleSelect.js";
+import { timeZoneOptions } from "./time-zone-options.js";
 import { useLocalManagement } from "./WorkMode.js";
 import { NumberInput } from "./NumberInput.js";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Bell, CalendarDays } from "lucide-react";
 import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
 export function CalendarSettings({
@@ -11,6 +13,7 @@ export function CalendarSettings({
   set: (key: string, value: any) => void;
 }) {
   const management=useLocalManagement();
+  const zones = useMemo(() => timeZoneOptions(form.syncSchedule.timeZone), [form.syncSchedule.timeZone]);
   const [permission, setPermission] = useState(
     typeof Notification === "undefined"
       ? "unsupported"
@@ -28,35 +31,15 @@ export function CalendarSettings({
           <CalendarDays size={20} /> Календарь
         </h2>
       </div>
-      <label>
-        Часовой пояс
-        <input
-          value={form.syncSchedule.timeZone}
-          onChange={(e) =>
-            set("syncSchedule", {
-              ...form.syncSchedule,
-              timeZone: e.target.value,
-            })
-          }
-          placeholder="Asia/Bishkek"
-          list="calendar-timezones"
-        />
-      </label>
-      <datalist id="calendar-timezones">
-        {[
-          "UTC",
-          "Asia/Bishkek",
-          "Europe/Moscow",
-          "Europe/Berlin",
-          "Asia/Almaty",
-          "America/New_York",
-        ].map((zone) => (
-          <option key={zone} value={zone} />
-        ))}
-      </datalist>
+      <SingleSelect
+        label="Часовой пояс"
+        value={form.syncSchedule.timeZone}
+        options={zones}
+        onChange={timeZone => set("syncSchedule", {...form.syncSchedule, timeZone})}
+      />
       <p className="muted">
         Общий часовой пояс календаря, напоминаний и расписания автообновлений.
-        Уже созданные события сохраняют свой момент времени.
+        Найдите пояс по городу, названию или UTC-смещению. Смещение показано на текущую дату и может меняться при переходе на летнее время. Нажмите «Сохранить», чтобы применить выбор. Уже созданные события сохраняют свой момент времени.
       </p>
       {[
         { key: "vacationLeadMinutes", title: "Предупреждать об отпуске разработчика за", fallback: 1440 },
