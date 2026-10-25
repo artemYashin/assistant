@@ -1,3 +1,4 @@
+import { noteImageBudget } from "./note-image-budget.js";
 import { TicketNotesPage } from "./TicketNotesPage.js";
 import { useEffect, useState } from "react";
 import { Plus, Save, Trash2, StickyNote } from "lucide-react";
@@ -106,21 +107,19 @@ function FreeNotesPage() {
       setBusy(false);
     }
   }
-  async function create() {
-    setBusy(true);
+  function create() {
     setError("");
-    try {
-      const note: Note = await api("/notes", "POST", {
-        id: crypto.randomUUID(),
-      });
-      drafts.set(note.id, { ...note, dirty: false, images: [] });
-      setSelected(note.id);
-      await loadList();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
+    const note: Draft = {
+      id: crypto.randomUUID(),
+      title: "Новая заметка",
+      body: "",
+      revision: 0,
+      updated_at: new Date().toISOString(),
+      dirty: true,
+      images: [],
+    };
+    drafts.set(note.id, note);
+    setSelected(note.id);
   }
   function change(text: string) {
     if (!draft || busy) return;
@@ -132,6 +131,7 @@ function FreeNotesPage() {
     if (!draft || busy) return [];
     setError("");
     const added: { src: string; alt: string }[] = [];
+    const budget = noteImageBudget(draft.body, draft.images, "free");
     for (const file of files) {
       if (
         !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
@@ -141,11 +141,7 @@ function FreeNotesPage() {
         setError("Поддерживаются PNG, JPEG, GIF и WebP до 10 МБ.");
         continue;
       }
-      if (
-        draft.images.length >= 10 ||
-        draft.images.reduce((n, i) => n + i.file.size, 0) + file.size >
-          30 * 1024 * 1024
-      ) {
+      if (budget.count >= 10 || budget.bytes + file.size > 30 * 1024 * 1024) {
         setError(
           "До 10 новых картинок общим размером до 30 МБ. Сохраните заметку перед добавлением следующих.",
         );
@@ -157,6 +153,8 @@ function FreeNotesPage() {
         preview: URL.createObjectURL(file),
       };
       draft.images.push(image);
+      budget.count++;
+      budget.bytes += file.size;
       added.push({ src: marker(image.id), alt: "Изображение" });
     }
     return added;
@@ -179,13 +177,29 @@ function FreeNotesPage() {
       release(draft);
       drafts.set(note.id, { ...note, dirty: false, images: [] });
       refresh();
-      await loadList();
+      setList((old) => [
+        { ...note, snippet: note.body.slice(0, 160) },
+        ...old.filter((n) => n.id !== note.id),
+      ]);
+      try {
+        await loadList();
+      } catch {
+        setError(
+          "Заметка сохранена, но не удалось обновить список. Повторно сохранять не нужно.",
+        );
+      }
     } catch (e: any) {
       setError(e.message + " Черновик сохранён в этом окне.");
     } finally {
       setBusy(false);
     }
   }
+  const visibleList = [
+    ...Array.from(drafts.values())
+      .filter((d) => d.revision === 0)
+      .map((d) => ({ ...d, snippet: d.body.slice(0, 160) })),
+    ...list,
+  ];
   return (
     <section className="panel notes-page">
       <div className="notes-heading">
@@ -201,7 +215,9 @@ function FreeNotesPage() {
           Новая заметка
         </button>
       </div>
-      <p className="muted"><small>Свободные заметки недоступны чат-ассистенту.</small></p>
+      <p className="muted">
+        <small>Свободные заметки недоступны чат-ассистенту.</small>
+      </p>
       {error && (
         <p className="error" role="alert">
           {error}
@@ -209,8 +225,10 @@ function FreeNotesPage() {
       )}
       <div className="notes-layout">
         <aside className="notes-list" aria-label="Список заметок">
-          {!list.length && <p className="muted">Создайте первую заметку.</p>}
-          {list.map((note) => (
+          {!visibleList.length && (
+            <p className="muted">Создайте первую заметку.</p>
+          )}
+          {visibleList.map((note) => (
             <button
               key={note.id}
               className={selected === note.id ? "is-selected" : ""}
@@ -275,9 +293,10 @@ function FreeNotesPage() {
                     setBusy(true);
                     setError("");
                     try {
-                      await api("/notes/" + draft.id, "DELETE", {
-                        revision: draft.revision,
-                      });
+                      if (draft.revision > 0)
+                        await api("/notes/" + draft.id, "DELETE", {
+                          revision: draft.revision,
+                        });
                       release(draft);
                       drafts.delete(draft.id);
                       setSelected("");
@@ -292,7 +311,7 @@ function FreeNotesPage() {
                   <Trash2 size={16} />
                   Удалить
                 </ConfirmButton>
-                {draft.dirty && (
+                {draft.dirty && draft.revision > 0 && (
                   <ConfirmButton
                     className="secondary"
                     disabled={busy}

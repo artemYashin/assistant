@@ -211,3 +211,43 @@ test("note routes require auth and CSRF; multipart save and private image access
     .set(auth)
     .expect(404);
 });
+
+test("first save is atomic and retry after lost response creates no duplicates", (t) => {
+  const { store, notes } = fixture(t),
+    id = randomUUID(),
+    image = randomUUID();
+  const input = {
+    title: "First save",
+    body: `![x](${marker(image)})`,
+    revision: 0,
+    uploadIds: JSON.stringify([image]),
+  };
+  const saved = notes.save(id, input, [png]);
+  assert.equal(saved.revision, 1);
+  assert.deepEqual(notes.save(id, input, [png]), saved);
+  assert.equal(notes.list().length, 1);
+  assert.throws(
+    () => notes.save(id, { ...input, title: "Different" }, [png]),
+    /уже создана/,
+  );
+  const failed = randomUUID(),
+    bad = randomUUID();
+  assert.throws(() =>
+    notes.save(
+      failed,
+      {
+        title: "Rollback",
+        body: `![x](${marker(bad)}) ![missing](/api/notes/${failed}/images/${randomUUID()})`,
+        revision: 0,
+        uploadIds: JSON.stringify([bad]),
+      },
+      [png],
+    ),
+  );
+  assert.equal(
+    store.db.prepare("SELECT 1 FROM personal_notes WHERE id=?").get(failed),
+    undefined,
+  );
+  assert.equal(existsSync(join(notes.directory, bad)), false);
+  assert.equal(notes.read(id).body, saved.body);
+});

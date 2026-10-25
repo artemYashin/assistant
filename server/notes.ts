@@ -16,7 +16,7 @@ const uuid = z.string().uuid();
 const draftSchema = z.object({
   title: z.string().trim().min(1).max(200),
   body: z.string().max(200000),
-  revision: z.coerce.number().int().min(1),
+  revision: z.coerce.number().int().min(0),
   uploadIds: z
     .string()
     .default("[]")
@@ -75,6 +75,7 @@ export class Notes {
     return this.read(id);
   }
   save(id: string, input: unknown, files: Buffer[]) {
+    uuid.parse(id);
     const v = draftSchema.parse(input);
     if (
       files.length !== v.uploadIds.length ||
@@ -93,6 +94,34 @@ export class Notes {
     try {
       this.store.db
         .transaction(() => {
+          if (v.revision === 0) {
+            const existing = this.store.db
+              .prepare("SELECT * FROM personal_notes WHERE id=?")
+              .get(id) as Note | undefined;
+            if (existing) {
+              let canonical = v.body;
+              for (const imageId of v.uploadIds)
+                canonical = canonical.replaceAll(
+                  `https://orbit.invalid/note-image/${imageId}`,
+                  `/api/notes/${id}/images/${imageId}`,
+                );
+              if (
+                existing.revision === 1 &&
+                existing.title === v.title &&
+                existing.body === canonical
+              )
+                return;
+              throw new AppError(
+                409,
+                "Заметка уже создана. Откройте сохранённую версию перед изменением.",
+              );
+            }
+            this.store.db
+              .prepare(
+                "INSERT INTO personal_notes(id,title,revision,updated_at) VALUES (?,?,0,?)",
+              )
+              .run(id, v.title, new Date().toISOString());
+          }
           const old = this.read(id);
           if (old.revision !== v.revision)
             throw new AppError(

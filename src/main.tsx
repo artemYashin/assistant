@@ -1,3 +1,4 @@
+import { useImageAttachmentQueue } from "./useImageAttachmentQueue.js";
 import { NotesPage } from "./NotesPage.js";
 import { StickyNote } from "lucide-react";
 import { CalendarDateField } from "./CalendarDateField.js";
@@ -2532,41 +2533,7 @@ function Assistant({
     [clearing, setClearing] = useState(false),
     [error, setError] = useState(""),
     [recording, setRecording] = useState(false);
-  useEffect(() => {
-    const handle = (event: Event) => {
-      const src=(event as CustomEvent).detail?.src;
-      if (typeof src !== "string") return;
-      onExpand();
-      if (working || clearing || !sessionId) {
-        setChatFileError("Дождитесь окончания ответа и открытия чата, затем прикрепите изображение.");
-        return;
-      }
-      setImageLoading(count=>count+1);
-      void (async () => {
-        try {
-          let blob: Blob, uploadedId: string | undefined, name: string;
-          if (src.startsWith("blob:") || src.startsWith("data:image/") || (()=>{ const u=new URL(src,window.location.href);return u.origin===window.location.origin && /^\/api\/(?:notes\/[0-9a-f-]+\/images\/[0-9a-f-]+|ticket-note-images\/[0-9a-f-]+)$/.test(u.pathname); })()) {
-            const response=await fetch(src);
-            if (!response.ok) throw new Error("Не удалось прочитать изображение.");
-            blob=await response.blob();
-            name="image."+(blob.type==="image/jpeg"?"jpg":blob.type.split("/")[1]);
-          } else {
-            const local=new URL(src,window.location.href);
-            const url=local.origin===window.location.origin ? local.pathname+local.search : local.href;
-            const result=await api("/conversation/image","POST",{...context,sessionId,url});
-            uploadedId=result.id; name=result.name;
-            const response=await fetch("/api/conversation/files/"+encodeURIComponent(result.id)+"?"+new URLSearchParams({...context,sessionId}),{credentials:"same-origin"});
-            if(!response.ok) throw new Error("Не удалось загрузить вложение для предпросмотра.");
-            blob=await response.blob();
-          }
-          fileDraft.add([new File([blob],name,{type:blob.type})], uploadedId?[uploadedId]:[]);
-        } catch(error) { setChatFileError(error instanceof Error?error.message:String(error)); }
-        finally { setImageLoading(count=>Math.max(0,count-1)); }
-      })();
-    };
-    window.addEventListener("orbit:attach-image",handle);
-    return ()=>window.removeEventListener("orbit:attach-image",handle);
-  }, [context.client,context.project,sessionId,working,clearing,onExpand,fileDraft.add]);
+  useImageAttachmentQueue({context,sessionId,working,clearing,onExpand,onError:setChatFileError,onPending:setImageLoading,add:fileDraft.add});
   const bottom = useRef<HTMLDivElement>(null),
     historyGeneration = useRef(0),
     contextKey = useRef("");
@@ -3162,7 +3129,7 @@ function Assistant({
             setPrompt("");
             promptInput.current?.focus();
           }}><X size={14} aria-hidden="true" /></button>}
-          {imageLoading > 0 && <small className="chat-image-loading" role="status">Загружаю изображение…</small>}
+          {imageLoading > 0 && <small className="chat-image-loading" role="status">{working || clearing || !sessionId ? "Изображения в очереди — ожидаю готовности чата…" : "Прикрепляю изображения…"}</small>}
           <ChatFileRows files={fileDraft.files} onRemove={fileDraft.remove}/>
           <div className="composer-bottom">
             <ChatFilePicker disabled={working || clearing || !sessionId} onFiles={fileDraft.add} onError={setChatFileError}/>

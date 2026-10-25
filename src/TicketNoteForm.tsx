@@ -1,3 +1,4 @@
+import { noteImageBudget } from "./note-image-budget.js";
 import { useEffect, useRef, useState } from "react";
 import { Save } from "lucide-react";
 import { CommentEditor } from "./CommentEditor.js";
@@ -100,6 +101,7 @@ export function TicketNoteForm({
         onImages={(files) => {
           const added: { src: string; alt: string }[] = [];
           setError("");
+          const budget = noteImageBudget(text, images.current, "ticket");
           for (const file of files) {
             if (
               !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
@@ -110,9 +112,8 @@ export function TicketNoteForm({
               continue;
             }
             if (
-              images.current.length >= 10 ||
-              images.current.reduce((n, i) => n + i.file.size, 0) + file.size >
-                30 * 1024 * 1024
+              budget.count >= 10 ||
+              budget.bytes + file.size > 30 * 1024 * 1024
             ) {
               setError("До 10 новых картинок общим размером до 30 МБ.");
               break;
@@ -123,6 +124,8 @@ export function TicketNoteForm({
               file,
               preview: URL.createObjectURL(file),
             });
+            budget.count++;
+            budget.bytes += file.size;
             added.push({ src: marker(id), alt: "Изображение" });
           }
           return added;
