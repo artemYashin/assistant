@@ -177,7 +177,7 @@ test("all mode includes optional and unassigned PRs; failed scans preserve prior
   assert.equal((service.list(context)[0] as any).in_scope, 1);
   assert.match((service.monitors()[0] as any).error, /403/);
 });
-test("daily cap and foreground chat defer reviews; errors are not retried automatically", async (t) => {
+test("review agent busy defers reviews; retired daily cap is ignored and errors require explicit retry", async (t) => {
   const { store, service, agent } = fixture(t);
   mock(t, [pr(), pr(2)]);
   await service.sync();
@@ -203,13 +203,15 @@ test("daily cap and foreground chat defer reviews; errors are not retried automa
   store.set("settings", { ...store.settings(), prDailyLimit: 1 });
   await service.reviewNext();
   await service.reviewNext();
-  assert.equal(tries, 1);
+  assert.equal(tries, 2);
+  await service.reviewNext();
+  assert.equal(tries, 2, "failed reviews are not retried automatically");
   const failed = store.db
     .prepare("SELECT * FROM pr_reviews WHERE status='error'")
     .get() as any;
   service.requestReview(failed.monitor, failed.repo, failed.number);
   await service.reviewNext();
-  assert.equal(tries, 1, "manual retry must not reset the daily attempt cap");
+  assert.equal(tries, 3, "explicit retry is allowed despite old daily cap");
   store.db
     .prepare("UPDATE pr_reviews SET status='error' WHERE id=?")
     .run(failed.id);
@@ -219,7 +221,7 @@ test("daily cap and foreground chat defer reviews; errors are not retried automa
         .prepare("SELECT count(*) n FROM pr_reviews WHERE status='error'")
         .get() as any
     ).n,
-    1,
+    3,
   );
 });
 test("binary and truncated diffs are explicitly marked incomplete", async (t) => {

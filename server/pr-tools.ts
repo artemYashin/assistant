@@ -132,7 +132,7 @@ export function prTools(
     }),
     defineTool("request_pull_request_review", {
       description:
-        "Queue automatic LLM code review only when the current user message explicitly requests review. Returns actual job status; queued is not completed. Work starts after chat releases the model, subject to daily limits. No Azure comments, votes or changes.",
+        "Queue LLM code review only when the current user message explicitly requests review. Returns actual job status; queued is not completed. Reviews run sequentially on the independent review agent; queued is waiting for that agent. There is no daily run cap. Per-review token, time and tool budgets still apply. No Azure comments, votes or changes.",
       parameters: identity,
       handler: async (args) => {
         find(args);

@@ -99,7 +99,8 @@ const settingsSchema = z
     statusColors: z
       .record(z.string().min(1).max(200), z.string().regex(/^#[0-9a-fA-F]{6}$/))
       .default({}),
-    prDailyLimit: z.number().int().min(1).max(100).default(20),
+    // Accept, but discard, the retired field sent by already-open older clients.
+    prDailyLimit: z.number().int().min(1).max(100).optional(),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
     llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
     reviewTimeoutSeconds: z.number().int().min(15).max(86400).default(600),
@@ -398,7 +399,7 @@ export function createApp(
   );
   app.put("/api/settings", (req, res) => {
     const parsed = settingsSchema.parse(req.body);
-    const { azurePat, azureImportAssignees: _projectImportAssignees, ...settings } = parsed;
+    const { azurePat, prDailyLimit: _retiredPrDailyLimit, azureImportAssignees: _projectImportAssignees, ...settings } = parsed;
     if (settings.azureUrl) settings.azureUrl = azureBase(settings.azureUrl);
     if (settings.project && !settings.client)
       throw new AppError(400, "Проект должен принадлежать заказчику");

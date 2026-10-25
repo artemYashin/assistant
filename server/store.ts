@@ -62,7 +62,6 @@ export const defaults = {
   syncSeconds: 600,
   syncSchedule: syncScheduleSchema.parse({}),
   calendarNotifications: calendarNotificationsSchema.parse({}),
-  prDailyLimit: 20,
   llmTimeoutSeconds: 180,
   llmMaxTokens: 100000,
   reviewMaxTokens: 1000000,
@@ -421,6 +420,8 @@ export class Store {
     const saved = this.get<Partial<Settings>>("settings", {});
     // Ignore the retired custom GitHub OAuth setting in older databases.
     delete (saved as Record<string, unknown>).githubClientId;
+    // Retired daily review cap: old persisted values no longer affect scheduling.
+    delete (saved as Record<string, unknown>).prDailyLimit;
     const settings = { ...defaults, ...saved, calendarNotifications: calendarNotificationsSchema.parse(saved.calendarNotifications || {}) };
     // Preserve existing custom bindings when introducing the new default shortcut.
     if (saved.ticketOpenKey === undefined && [settings.chatToggleKey, settings.voiceInputKey, settings.voiceCurrentKey, settings.voiceNewKey].includes(settings.ticketOpenKey))

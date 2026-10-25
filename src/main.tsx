@@ -2191,20 +2191,6 @@ function Settings({ settings, context, run, busy }: any) {
           ))}
           </div>
           </div>
-          <div className="settings-group">
-            <h3>PR-ревью</h3>
-          <Field
-            label="Лимит ручных PR-ревью за 24 часа"
-            hint="Общий лимит для всех проектов. По умолчанию 20; оставшиеся PR ждут в очереди. Токены учитываются в разделе использования LLM."
-          >
-            <NumberInput
-              min={1}
-              max={100}
-              value={form.prDailyLimit}
-              onChange={(e) => set("prDailyLimit", Number(e.target.value))}
-            />
-          </Field>
-          </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-calendar-panel`} aria-labelledby={`${settingsTabId}-calendar`} hidden={settingsTab !== "calendar"}>
           <CalendarSettings form={form} set={set} />

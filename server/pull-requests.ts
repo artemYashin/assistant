@@ -1584,10 +1584,7 @@ export class PullRequests {
       !this.store.secret("github.token")
     )
       return;
-    const used = this.store.db
-      .prepare("SELECT count(*) n FROM pr_review_attempts WHERE started_at>=?")
-      .get(new Date(Date.now() - 86400000).toISOString()) as { n: number };
-    const modelPaused = !!this.agent.active() || used.n >= this.store.settings().prDailyLimit;
+    const modelPaused = !!this.agent.active();
     const job = this.store.db
       .prepare(
         `SELECT r.* FROM pr_reviews r JOIN pr_projects m ON m.id=r.monitor JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number AND p.head=r.head AND p.target=r.target WHERE r.status IN ('preparing_git','queued') AND (?=0 OR r.status='preparing_git') AND m.enabled=1 AND m.error IS NULL AND p.in_scope=1 AND p.draft=0 ORDER BY CASE WHEN r.status='preparing_git' THEN 0 ELSE 1 END,r.created_at LIMIT 1`,
@@ -1638,7 +1635,7 @@ export class PullRequests {
       }
       assertReviewActive();
       if (this.stopped) throw new AppError(409, "Приложение завершает работу");
-      if (this.agent.active() || used.n >= this.store.settings().prDailyLimit) {
+      if (this.agent.active()) {
         this.store.db.prepare("UPDATE pr_reviews SET status='queued',started_at=NULL WHERE id=?").run(job.id);
         return;
       }
