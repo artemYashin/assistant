@@ -1,4 +1,4 @@
-import { syncAllowed } from "./sync-schedule.js";
+import { ProjectSyncScheduler } from "./project-sync-scheduler.js";
 import { Store } from "./store.js";
 import { createApp } from "./app.js";
 const store = new Store(process.env.DATA_DIR || "./data");
@@ -31,20 +31,12 @@ async function reviewTick() {
 }
 reviewTimer = setTimeout(reviewTick, 2000);
 let timer: ReturnType<typeof setTimeout>;
-let nextSyncAt = 0;
+const scheduler = new ProjectSyncScheduler(store);
 async function tick() {
   if (stopped) return;
   try {
-    if (!syncAllowed(store.settings().syncSchedule)) {
-      nextSyncAt = 0;
-    } else if (Date.now() >= nextSyncAt) {
-      try {
-        syncWork = sync();
-        await syncWork;
-      } finally {
-        nextSyncAt = Date.now() + store.settings().syncSeconds * 1000;
-      }
-    }
+    syncWork = scheduler.run(sync);
+    await syncWork;
   } catch {}
   if (!stopped) timer = setTimeout(tick, 30000);
 }

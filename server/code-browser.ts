@@ -132,12 +132,12 @@ export class CodeBrowser {
     return { ...data, repository: monitor.repository, fetchDepth: monitor.fetch_depth ?? 1, syncError: this.store.get<CodeSyncState | null>(syncKey, null)?.error || "" };
   }
   async syncDue(now = Date.now()) {
-    if (this.syncing || !process.env.CODE_BROWSER_URL || !this.store.secret("azure.pat") || !syncAllowed(this.store.settings().syncSchedule, new Date(now))) return;
+    if (this.syncing || !process.env.CODE_BROWSER_URL || !this.store.secret("azure.pat")) return;
     this.syncing = true;
     try {
       const monitors = this.store.db.prepare("SELECT * FROM pr_projects WHERE repository!='' AND code_sync_minutes>0").all() as Monitor[];
       for (const monitor of monitors) {
-        if (!syncAllowed(this.store.settings().syncSchedule)) break;
+        if (!syncAllowed(this.store.settings(monitor).syncSchedule, new Date(now))) continue;
         const key = "code-sync:" + monitor.id;
         const state = this.store.get<CodeSyncState | null>(key, null);
         if (!state || state.repository !== monitor.repository || state.source !== monitor.source || state.azureProject !== monitor.azure_project || !state.branch) continue;

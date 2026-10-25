@@ -85,7 +85,7 @@ const settingsSchema = z
     reviewModel: text.default(""),
     azureUrl: z.string().trim().max(1000),
     azureProject: text,
-    azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/),
+    azureVersion: z.string().regex(/^\d+\.\d+(?:-preview\.\d+)?$/).optional(),
     syncSeconds: z.number().int().min(60).max(3600),
     syncSchedule: syncScheduleSchema.default(() => syncScheduleSchema.parse({})),
     calendarNotifications: calendarNotificationsSchema.default(() => calendarNotificationsSchema.parse({})),
@@ -367,6 +367,8 @@ export function createApp(
   app.put("/api/context/ticket-import", (req,res) => {
     const input=z.object({
       context:contextSchema,
+      syncSeconds:z.number().int().min(60).max(3600).optional(),
+      syncSchedule:syncScheduleSchema.optional(),
       azureAutoImport:z.boolean(),
       azureImportAssignees:z.array(z.object({id:text.min(1),name:text.min(1),email:z.string().trim().min(1).max(320)})).max(50).default([]),
       azureTypes:z.array(text.min(1)).max(50),
@@ -383,6 +385,9 @@ export function createApp(
       throw new AppError(400,"Выберите исполнителей для автоимпорта");
     store.db.transaction(()=>{
       store.set(store.ticketImportKey(input.context),{
+        ...store.ticketImport(input.context),
+        ...(input.syncSeconds === undefined ? {} : {syncSeconds:input.syncSeconds}),
+        ...(input.syncSchedule === undefined ? {} : {syncSchedule:{...input.syncSchedule,timeZone:store.rawSettings().syncSchedule.timeZone}}),
         azureImportAssignees:input.azureImportAssignees,
         azureAutoImport:input.azureAutoImport,azureTypes:input.azureTypes,azureStates:input.azureStates,
       });
@@ -416,6 +421,8 @@ export function createApp(
     store.set("settings", {
       ...settings,
       workMode: settings.workMode ?? old.workMode,
+      syncSeconds: store.rawSettings().syncSeconds,
+      syncSchedule: {...store.rawSettings().syncSchedule,timeZone:settings.syncSchedule.timeZone},
       azurePatExpiresOn: settings.azurePatExpiresOn ?? old.azurePatExpiresOn,
       azureAutoImport: store.rawSettings().azureAutoImport,
       azureTypes: store.rawSettings().azureTypes,
@@ -1496,7 +1503,7 @@ export function createApp(
   });
   let syncing = false;
   let syncingPrs = false;
-  async function sync() {
+  async function sync(contexts?: {client:string;project:string}[]) {
     store.purgeTicketTrash();
     if (syncing || syncingPrs) throw new AppError(409, "Синхронизация уже выполняется");
     syncing = true;
@@ -1508,7 +1515,11 @@ export function createApp(
     try {
       if (store.secret("azure.pat"))
         try {
-          await connectors.syncTickets(false, true);
+          const fetched = new Map<string, Set<number>>();
+          for (const context of contexts || [undefined]) {
+            try { await connectors.syncTickets(false, true, context, fetched); }
+            catch (e) { errors.push(e instanceof AppError ? e.message : "Ошибка синхронизации Azure DevOps"); }
+          }
         } catch (e) {
           errors.push(
             e instanceof AppError
@@ -1516,9 +1527,12 @@ export function createApp(
               : "Ошибка синхронизации Azure DevOps",
           );
         }
-      if (store.secret("azure.pat")) await pullRequests.sync();
+      if (store.secret("azure.pat")) {
+        if (!contexts) await pullRequests.sync();
+        else for (const m of pullRequests.monitors().filter(m => contexts.some(c => c.client===m.client && c.project===m.project))) await pullRequests.sync(m.id);
+      }
       for (const m of pullRequests.monitors() as any[])
-        if (m.enabled && m.error) errors.push(`${m.azure_project}: ${m.error}`);
+        if (m.enabled && m.error && (!contexts || contexts.some(c=>c.client===m.client && c.project===m.project))) errors.push(`${m.azure_project}: ${m.error}`);
       const result = {
         state: errors.length ? "error" : "ok",
         at: new Date().toISOString(),

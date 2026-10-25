@@ -39,7 +39,7 @@ test("custom Azure HTTPS collection paths are retained and credential-bearing UR
     assert.throws(() => azureBase(url));
 });
 
-test("Azure adapter uses custom collection, PAT header, project, API version and persists real fields", async (t) => {
+test("Azure adapter uses custom collection, PAT header, project, fixed API version and persists real fields", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-azure-"));
   const store = new Store(dir);
   t.after(() => {
@@ -74,7 +74,7 @@ test("Azure adapter uses custom collection, PAT header, project, API version and
   await connectors.trackTicket(321);
   assert.equal(
     calls[0].url,
-    "https://ado.company.test/tfs/Collection/Project%20One/_apis/wit/workitems/321?api-version=7.0",
+    "https://ado.company.test/tfs/Collection/Project%20One/_apis/wit/workitems/321?api-version=7.1",
   );
   assert.equal(
     calls[0].init.headers.Authorization,

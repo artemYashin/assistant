@@ -308,3 +308,22 @@ test("automatic import without selected assignees never falls back to current us
  await connectors.syncTickets(true);
  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,0);
 });
+test("scheduled projects sharing Azure reuse fetched tickets but apply each project's import selection",async t=>{
+ const {store,connectors}=fixture(t);
+ const a={client:"C",project:"A"},b={client:"C",project:"B"};
+ store.addContext(a);store.addContext(b);
+ for(const [context,id] of [[a,"a"],[b,"b"]] as const)store.set(store.ticketImportKey(context),{
+  azureAutoImport:true,azureImportAssignees:[{id,name:id,email:id+"@example.test"}],azureTypes:["Bug"],azureStates:["New"]
+ });
+ let queries=0;const batches:number[][]=[];
+ t.mock.method(globalThis,"fetch",async(url:any,init:any)=>{
+  if(String(url).includes("/wiql")){queries++;return Response.json({workItems:queries===1?[{id:42}]:[{id:42},{id:43}]});}
+  const ids=JSON.parse(init.body).ids;batches.push(ids);
+  return Response.json({value:ids.map((id:number)=>({id,fields:{"System.Title":"T","System.TeamProject":"P","System.State":"New"}}))});
+ });
+ const fetched=new Map<string,Set<number>>();
+ await connectors.syncTickets(false,true,a,fetched);
+ await connectors.syncTickets(false,true,b,fetched);
+ assert.equal(queries,2);
+ assert.deepEqual(batches,[[42],[43]]);
+});

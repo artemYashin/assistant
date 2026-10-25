@@ -25,7 +25,6 @@ import { SingleSelect } from "./SingleSelect.js";
 import { VoiceBinding } from "./VoiceBinding.js";
 import { currentViewedTicket, useViewedTicket } from "./viewed-ticket.js";
 import { CodeBrowserPage } from "./CodeBrowserPage.js";
-import { SyncScheduleSettings } from "./SyncScheduleSettings.js";
 import { ModelOverride } from "./ModelOverride.js";
 import { installDialogBackdropDismiss } from "./dialog-backdrop.js";
 import { TicketColorLegend } from "./TicketColorLegend.js";
@@ -2207,15 +2206,7 @@ function Settings({ settings, context, run, busy }: any) {
           </div>
           <div className="settings-group">
             <h3>Подключение и доступ</h3>
-          <p className="muted">URL организации / коллекции и проект Azure настраиваются в меню «Заказчики и проекты» → «Подключение Azure»: глобально или отдельно для выбранного проекта. Здесь задаются PAT, версия API и синхронизация.</p>
-          <div className="form-grid">
-            <Field label="Версия REST API">
-              <input
-                value={form.azureVersion}
-                onChange={(e) => set("azureVersion", e.target.value)}
-              />
-            </Field>
-          </div>
+          <p className="muted">URL организации / коллекции и проект Azure настраиваются в меню «Заказчики и проекты» → «Подключение Azure»: глобально или отдельно для выбранного проекта. Здесь задаются PAT и срок его действия. Расписание синхронизации — в «Заказчики и проекты → Автоматический импорт».</p>
           <Field
             label="Personal Access Token"
             hint="Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер."
@@ -2236,33 +2227,6 @@ function Settings({ settings, context, run, busy }: any) {
             onChange={value => set("azurePatExpiresOn", value)} zone={form.syncSchedule.timeZone} />
           <p className="muted">Дата необязательна до первой настройки. Срок считается с 00:00 выбранного дня в часовом поясе календаря. За 7 дней появится обязательное напоминание. При замене токена обновите дату; настроенную дату можно заменить, но нельзя очистить.</p>
           <AzurePatPermissions />
-          </div>
-          <div className="settings-group">
-            <h3>Автоматическая синхронизация</h3>
-          <SyncScheduleSettings value={form.syncSchedule} onChange={(value) => set("syncSchedule", value)} />
-          <Field
-            label="Обновлять тикеты и PR каждые, минут"
-            hint="По умолчанию — 10 минут. Можно выбрать от 1 до 60 минут, например 5 или 10. Отсчёт начинается после завершения предыдущего прохода. Новый интервал применяется при следующем планировании; перезапуск не нужен."
-          >
-            <NumberInput
-              min="1"
-              max="60"
-              step="any"
-              list="sync-intervals"
-              value={form.syncSeconds / 60}
-              onChange={(e) =>
-                set("syncSeconds", Math.round(Number(e.target.value) * 60))
-              }
-            />
-            <datalist id="sync-intervals">
-              <option value="5" />
-              <option value="10" />
-              <option value="15" />
-              <option value="30" />
-              <option value="60" />
-            </datalist>
-          </Field>
-
           </div>
         </section>
         <section className="panel settings-card" role="tabpanel" id={`${settingsTabId}-ai-panel`} aria-labelledby={`${settingsTabId}-ai`} hidden={settingsTab !== "ai"}>

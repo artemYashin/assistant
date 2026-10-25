@@ -32,6 +32,8 @@ export class AppError extends Error {
     super(message);
   }
 }
+export const AZURE_API_VERSION = "7.1";
+
 export const defaults = {
   workMode: "lead" as "lead" | "developer",
   assistantCodeAccess: true,
@@ -51,7 +53,7 @@ export const defaults = {
   reviewModel: "",
   azureUrl: "",
   azureProject: "",
-  azureVersion: "7.1",
+  azureVersion: AZURE_API_VERSION,
   azurePatExpiresOn: "",
   azureAutoImport: false,
   azureImportAssignees: [] as {id:string;name:string;email:string}[],
@@ -386,6 +388,24 @@ export class Store {
         this.set("migration.projectTicketImport",true);
       })();
     }
+    if (!this.get("migration.fixedAzureApiVersion", false)) {
+      this.db.transaction(() => {
+        this.set("settings", this.get("settings", {}));
+        this.set("migration.fixedAzureApiVersion", true);
+      })();
+    }
+    if (!this.get("migration.projectSyncSchedule", false)) {
+      this.db.transaction(() => {
+        const old = this.rawSettings();
+        for (const context of [...this.contexts(), {client:old.client, project:old.project}]) {
+          if (!context.client || !context.project) continue;
+          const key = this.ticketImportKey(context);
+          const saved = this.get<Record<string, unknown>>(key, {});
+          this.set(key, {...saved, syncSeconds:saved.syncSeconds ?? old.syncSeconds, syncSchedule:saved.syncSchedule ?? old.syncSchedule});
+        }
+        this.set("migration.projectSyncSchedule", true);
+      })();
+    }
     this.db
       .prepare(
         "UPDATE llm_requests SET status='interrupted', reason='Перезапуск приложения; отчёт может быть неполным.', finished_at=? WHERE status='running'",
@@ -412,6 +432,10 @@ export class Store {
     return row ? JSON.parse(row.value) : fallback;
   }
   set(key: string, value: unknown) {
+    if (key === "settings" && value && typeof value === "object") {
+      const { azureVersion: _retiredVersion, ...settings } = value as Record<string, unknown>;
+      value = settings;
+    }
     this.db
       .prepare("INSERT OR REPLACE INTO kv VALUES (?,?)")
       .run(key, JSON.stringify(value));
@@ -420,6 +444,7 @@ export class Store {
     const saved = this.get<Partial<Settings>>("settings", {});
     // Ignore the retired custom GitHub OAuth setting in older databases.
     delete (saved as Record<string, unknown>).githubClientId;
+    delete (saved as Record<string, unknown>).azureVersion;
     // Retired daily review cap: old persisted values no longer affect scheduling.
     delete (saved as Record<string, unknown>).prDailyLimit;
     const settings = { ...defaults, ...saved, calendarNotifications: calendarNotificationsSchema.parse(saved.calendarNotifications || {}) };
@@ -473,7 +498,10 @@ export class Store {
       : null;
     const project =
       scope.client && scope.project ? this.azureBinding(scope) : null;
-    return { ...settings, ...(project || customer || {}), ...this.ticketImport(scope) };
+    const imported = this.ticketImport(scope) as Partial<Settings>;
+    return { ...settings, ...(project || customer || {}), ...imported,
+      syncSchedule: {...(imported.syncSchedule || settings.syncSchedule), timeZone:settings.syncSchedule.timeZone} };
+
   }
   secret(key: string): string | undefined {
     const row = this.db

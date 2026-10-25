@@ -1499,8 +1499,9 @@ export class Connectors {
     this.store.audit("ticket.tracked", String(id));
     return item.id;
   }
-  async syncTickets(importSelected = false, automatic = false) {
-    const s = this.store.settings();
+  async syncTickets(importSelected = false, automatic = false, context?: {client:string;project:string}, fetched?: Map<string,Set<number>>) {
+    const s = this.store.settings(context);
+    const already = fetched?.get(this.store.source(s)) || new Set<number>();
     const pat = this.store.secret("azure.pat");
     const ids = new Set(
       (
@@ -1536,7 +1537,7 @@ export class Connectors {
     }
     const list = [...ids].filter(
       (id) =>
-        !this.store.db
+        !already.has(id) && !this.store.db
           .prepare(
             "SELECT 1 FROM ticket_local WHERE source=? AND id=? AND removed=1",
           )
@@ -1576,7 +1577,8 @@ export class Connectors {
           result.value.length !== stage.slice(i, i + 200).length
         )
           throw new AppError(502, "Azure вернул неполный список тикетов");
-        for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); }
+        for (const item of result.value) { this.saveTicket(item, s); this.cacheTicketContent(item, s, true); already.add(item.id); }
+        fetched?.set(this.store.source(s), already);
       }
     }
     if (list.length || importSelected || (automatic && s.azureAutoImport))
