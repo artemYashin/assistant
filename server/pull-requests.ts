@@ -1,7 +1,7 @@
 import type { ChatProgress } from "./chat-stream.js";
 import { ReviewProgress } from "./review-progress.js";
 import { countPrCommits, countPrFiles } from "./pr-counts.js";
-import { reviewerFilterSchema, matchesReviewers, type ReviewerFilter } from "./pr-reviewer-filter.js";
+import { reviewerFilterSchema, reviewerFilter, matchesReviewers, type ReviewerFilter } from "./pr-reviewer-filter.js";
 import { UsageLedger } from "./usage.js";
 import { ticketMetadata } from "./ticket-metadata.js";
 import { PrSourcePreparation } from "./pr-source.js";
@@ -365,7 +365,13 @@ export class PullRequests {
     const mainBranch = input.mainBranch === undefined ? undefined : z.string().trim().max(500).refine(value => !/[\r\n\0]/.test(value)).parse(input.mainBranch);
     const fetchDepth = input.fetchDepth === undefined ? undefined : z.number().int().min(0).max(1000).parse(input.fetchDepth);
     const fetchTimeout = input.fetchTimeoutSeconds === undefined ? undefined : z.number().int().min(60).max(7200).parse(input.fetchTimeoutSeconds);
-    const filter = input.reviewerFilter === undefined ? undefined : JSON.stringify(reviewerFilterSchema.parse(input.reviewerFilter));
+    const previousFilter = this.store.db.prepare("SELECT reviewer_filter FROM pr_projects WHERE client=? AND project=? AND source=? AND azure_project=?").get(input.client, input.project, source, azureProject) as { reviewer_filter: string | null } | undefined;
+    // Older clients omit createdBy: preserve any author selections already saved.
+    const filter = input.reviewerFilter === undefined ? undefined : JSON.stringify({
+      ...reviewerFilterSchema.parse(input.reviewerFilter),
+      ...(input.reviewerFilter.createdBy === undefined && previousFilter?.reviewer_filter && reviewerFilter(previousFilter.reviewer_filter).createdBy.length
+        ? { createdBy: reviewerFilter(previousFilter.reviewer_filter).createdBy } : {}),
+    });
     this.store.addContext(input);
     this.store.db
       .prepare(

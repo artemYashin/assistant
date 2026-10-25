@@ -9,88 +9,88 @@
 
 Git
 
-Источник: src/ProjectRepository.tsx:131.
+Источник: src/ProjectRepository.tsx:134.
 
 ### Элемент
 
 Pull request
 
-Источник: src/ProjectRepository.tsx:132.
+Источник: src/ProjectRepository.tsx:135.
 
 ### Элемент
 
 AI review
 
-Источник: src/ProjectRepository.tsx:133.
+Источник: src/ProjectRepository.tsx:136.
 
 ### Элемент
 
 Git-репозиторий
 
-Источник: src/ProjectRepository.tsx:136.
+Источник: src/ProjectRepository.tsx:139.
 
 ### Элемент
 
 Точное имя или ID репозитория
 
-Источник: src/ProjectRepository.tsx:138.
+Источник: src/ProjectRepository.tsx:141.
 
 ### Элемент
 
 Основная ветка для ассистента
 
-Источник: src/ProjectRepository.tsx:155.
+Источник: src/ProjectRepository.tsx:158.
 
 ### Элемент
 
 По умолчанию — основная ветка репозитория
 
-Источник: src/ProjectRepository.tsx:157.
+Источник: src/ProjectRepository.tsx:160.
 
 ### Элемент
 
 Глубина истории Git, коммитов
 
-Источник: src/ProjectRepository.tsx:160.
+Источник: src/ProjectRepository.tsx:163.
 
 ### Элемент
 
 Частота синхронизации Git, минуты
 
-Источник: src/ProjectRepository.tsx:165.
+Источник: src/ProjectRepository.tsx:168.
 
 ### Элемент
 
 Тайм-аут Git, минуты
 
-Источник: src/ProjectRepository.tsx:171.
+Источник: src/ProjectRepository.tsx:174.
 
 ### Элемент
 
 Исключить из ревью и View Diff (один путь или шаблон на строку)
 
-Источник: src/ProjectRepository.tsx:178.
+Источник: src/ProjectRepository.tsx:181.
 
 ### Элемент
 
 src/api/generated/ src/api/client.ts **/*.generated.ts
 
-Источник: src/ProjectRepository.tsx:180.
+Источник: src/ProjectRepository.tsx:183.
 
 ### Элемент
 
 Общий лимит diff для ревью и просмотра (символы)
 
-Источник: src/ProjectRepository.tsx:197.
+Источник: src/ProjectRepository.tsx:200.
 
 ### Элемент
 
 Синхронизировать PR Обновлять активные pull request этого репозитория при синхронизации.
 
-Источник: src/ProjectRepository.tsx:215.
+Источник: src/ProjectRepository.tsx:218.
 
 ### Элемент
 
-Все активные PR Импортировать независимо от ревьюеров. Снимите галочку, чтобы выбрать людей ниже.
+Все активные PR Импортировать независимо от ревьюеров и автора. Снимите галочку, чтобы выбрать людей ниже.
 
-Источник: src/ProjectRepository.tsx:219.
+Источник: src/ProjectRepository.tsx:222.

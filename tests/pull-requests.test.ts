@@ -1783,3 +1783,33 @@ for (const legacy of [false, true]) {
     assert.equal(saved.reviewerComment, "Focus on retries");
   });
 }
+
+test("author-only import persists across restart, older saves preserve it, explicit clear removes it", async t => {
+  const {store,service}=fixture(t);
+  const input={...context,repository:"repo",mode:"required" as const,enabled:true};
+  const author={id:"author",name:"Author",email:"author@example.invalid"};
+  // Existing populated settings retain the previous reviewer selections.
+  const legacy=service.monitors()[0].reviewer_filter;
+  service.save({...input,reviewerFilter:{required:[],optional:[],createdBy:[author]}});
+  const reopened=new Store(store.dir);
+  try {
+    assert.deepEqual(JSON.parse((reopened.db.prepare("SELECT reviewer_filter FROM pr_projects").get() as any).reviewer_filter).createdBy,[author]);
+  } finally {reopened.close();}
+  const items=[
+    {...pr(1),createdBy:{id:"AUTHOR",displayName:"Author"},reviewers:[]},
+    {...pr(2),createdBy:{id:"someone-else"},reviewers:[{id:"author",isRequired:true}]},
+  ];
+  mock(t,items);
+  await service.sync();
+  assert.deepEqual(service.list(context).map(p=>p.number),[1]);
+  service.save({...input,reviewerFilter:{required:[],optional:[]}});
+  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).createdBy,[author]);
+  await service.sync();
+  assert.deepEqual(service.list(context).map(p=>p.number),[1]);
+  service.save({...input,reviewerFilter:{required:[],optional:[],createdBy:[]}});
+  await service.sync();
+  assert.equal(service.list(context).length,0);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n,1);
+  service.save({...input,reviewerFilter:JSON.parse(legacy!)});
+  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).required,JSON.parse(legacy!).required);
+});

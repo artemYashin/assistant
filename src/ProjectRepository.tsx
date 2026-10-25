@@ -13,6 +13,7 @@ export function ProjectRepository({
 }) {
   const [tab, setTab] = useState<"git" | "pr" | "review">("git");
   const [required, setRequired] = useState<ReviewerPerson[]>([]);
+  const [createdBy, setCreatedBy] = useState<ReviewerPerson[]>([]);
   const [optional, setOptional] = useState<ReviewerPerson[]>([]);
   const [ignoredPaths, setIgnoredPaths] = useState("");
   const [mainBranch, setMainBranch] = useState("");
@@ -33,6 +34,7 @@ export function ProjectRepository({
     setEnabled(true);
     setRequired([]);
     setOptional([]);
+    setCreatedBy([]);
     setLoaded(false);
     setIgnoredPaths("");
     setDiffBudget(160000);
@@ -67,6 +69,7 @@ export function ProjectRepository({
           if (m.reviewer_filter) {
             const filter = JSON.parse(m.reviewer_filter);
             setRequired(filter.required.filter((p: ReviewerPerson) => p.id !== "$self"));
+            setCreatedBy((filter.createdBy || []).filter((p: ReviewerPerson) => p.id !== "$self"));
             setOptional(filter.optional.filter((p: ReviewerPerson) => p.id !== "$self"));
           }
           setEnabled(!!m.enabled);
@@ -100,7 +103,7 @@ export function ProjectRepository({
             repository: repo.trim(),
             mode: all ? "all" : "required",
             enabled,
-            reviewerFilter: { required, optional },
+            reviewerFilter: { required, optional, createdBy },
             codeSyncMinutes,
             fetchDepth,
             mainBranch,
@@ -218,14 +221,15 @@ export function ProjectRepository({
         </label>
         <label className="repository-pr-toggle">
           <input type="checkbox" checked={all} onChange={e => setAll(e.target.checked)} />
-          <span><strong>Все активные PR</strong><small>Импортировать независимо от ревьюеров. Снимите галочку, чтобы выбрать людей ниже.</small></span>
+          <span><strong>Все активные PR</strong><small>Импортировать независимо от ревьюеров и автора. Снимите галочку, чтобы выбрать людей ниже.</small></span>
         </label>
       </div>
-      <div className="pr-reviewer-columns">
+      <div className="pr-reviewer-columns pr-import-people-columns">
         <PrReviewerPicker title="Required" people={required} onChange={setRequired} disabled={all || busy || !loaded} context={context} />
         <PrReviewerPicker title="Optional" people={optional} onChange={setOptional} disabled={all || busy || !loaded} context={context} />
+        <PrReviewerPicker title="Created by" userPicker people={createdBy} onChange={setCreatedBy} disabled={all || busy || !loaded} context={context} />
       </div>
-      <p className="muted">Импортировать PR, где хотя бы один выбранный человек назначен ревьюером в указанной роли. Это не фильтр по автору PR. Пустые списки без галочки «Все» не импортируют PR.</p>
+      <p className="muted">Импортировать PR, где хотя бы один выбранный человек назначен ревьюером в указанной роли или указан автором в Created by. Все три списка работают как ИЛИ. Пустые списки без галочки «Все» не импортируют PR.</p>
       </div>}
 
       {message && <p role="status">{message}</p>}

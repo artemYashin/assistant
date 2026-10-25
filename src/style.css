@@ -10262,3 +10262,6 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 .note-image-controls button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; background: #fff; border: 1px solid #cbd6df; border-radius: 6px; color: #32694c; box-shadow: 0 1px 4px #0002; font-size: 20px; }
 .note-image-controls button:last-child { color: #ab3939; }
 .note-image-controls button:hover { background: #e6f3e8; }
+
+.pr-import-people-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 800px) { .pr-import-people-columns { grid-template-columns: 1fr; } }
