@@ -100,7 +100,7 @@ const settingsSchema = z
     // Accept, but discard, the retired field sent by already-open older clients.
     prDailyLimit: z.number().int().min(1).max(100).optional(),
     llmTimeoutSeconds: z.number().int().min(15).max(600).default(180),
-    llmMaxTokens: z.number().int().min(1000).max(1000000).default(100000),
+    llmMaxTokens: z.number().int().min(1000).max(1000000).default(defaults.llmMaxTokens),
     reviewTimeoutSeconds: z.number().int().min(15).max(86400).default(600),
     reviewMaxToolCalls: z.number().int().min(1).max(1000).default(30),
     reviewMaxTokens: z.number().int().min(1000).max(100000000).default(1000000),
