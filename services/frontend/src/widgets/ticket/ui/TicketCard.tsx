@@ -1,7 +1,7 @@
 import { locateContentLink } from "../lib/locate-content-link.js";
 import type { ContentLink } from "../../../features/render-content/index.js";
 import { useMemo } from "react";
-import { contentLinks, ExternalLinkBadge } from "../../../features/render-content/index.js";
+import { contentLinkGroups, ExternalLinkBadge } from "../../../features/render-content/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { MemoryMarkdown } from "../../../features/render-content/index.js";
 import { TicketCommentForm } from "../../../features/comment-ticket/index.js";
@@ -51,6 +51,12 @@ import { StatusBadge } from "../../../entities/ticket/index.js";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import { api } from "../../../shared/api/http/index.js";
 import { ticketText as text } from "../../../entities/ticket/index.js";
+const ticketContentSections = [
+  ["System.Description", "Описание"],
+  ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
+  ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
+];
+
 export function TicketCard({
   reference,
   citation,
@@ -256,21 +262,19 @@ export function TicketCard({
     window.addEventListener("orbit:ticket-assignee", changed);
     return () => window.removeEventListener("orbit:ticket-assignee", changed);
   }, []);
-  const links = useMemo(
+  const linkGroups = useMemo(
     () =>
       card
-        ? contentLinks(
+        ? contentLinkGroups(
             [
-              ...[
-                "System.Description",
-                "Microsoft.VSTS.Common.AcceptanceCriteria",
-                "Microsoft.VSTS.TCM.ReproSteps",
-              ].map((key) => ({
+              ...ticketContentSections.map(([key, title]) => ({
+                title,
                 value: card.fields[key],
                 source: key,
                 markdown: card.markdownFields?.includes(key),
               })),
-              ...(card.comments || []).map((comment: any) => ({
+              ...(card.comments || []).map((comment: any, index: number) => ({
+                title: `Комментарий ${index + 1}${comment.author ? ` · ${comment.author}` : ""}`,
                 value: comment.richText || comment.text,
                 source: `comment:${comment.id}`,
               })),
@@ -280,6 +284,7 @@ export function TicketCard({
         : [],
     [card],
   );
+  const linkCount = linkGroups.reduce((count, group) => count + group.links.length, 0);
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
   const f = card.fields;
@@ -706,11 +711,7 @@ export function TicketCard({
                   Точный фрагмент не найден в текущей версии тикета. Возможно, текст изменился.
                 </p>
               )}
-              {[
-                ["System.Description", "Описание"],
-                ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
-                ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
-              ]
+              {ticketContentSections
                 .filter(([key]) => f[key])
                 .map(([key, label]) => (
                   <details
@@ -826,11 +827,11 @@ export function TicketCard({
                 draftKey={JSON.stringify([card.source, card.id])}
               />
             </details>
-            {links.length > 0 && (
+            {linkCount > 0 && (
               <details className="ticket-section ticket-section-neutral ticket-links-section">
                 <summary>
                   <Link2 size={17} aria-hidden="true" />
-                  Ссылки <span className="ticket-count">{links.length}</span>
+                  Ссылки <span className="ticket-count">{linkCount}</span>
                 </summary>
                 {linkError && (
                   <p className="error" role="status">
@@ -838,19 +839,30 @@ export function TicketCard({
                   </p>
                 )}
                 <nav className="ticket-content-links" aria-label="Ссылки из содержимого тикета">
-                  {links.map((link) => (
-                    <span className="ticket-content-link" key={link.url}>
-                      <ExternalLinkBadge href={link.url}>{link.label}</ExternalLinkBadge>
-                      <button
-                        type="button"
-                        className="chat-link-copy"
-                        title="Показать в тикете"
-                        aria-label="Показать в тикете"
-                        onClick={() => setLinkSelection({ link })}
-                      >
-                        <LocateFixed size={13} aria-hidden="true" />
-                      </button>
-                    </span>
+                  {linkGroups.map((group) => (
+                    <section
+                      className="ticket-link-group"
+                      key={group.source}
+                      aria-label={group.title}
+                    >
+                      <h4>{group.title}</h4>
+                      <ul>
+                        {group.links.map((link) => (
+                          <li className="ticket-content-link" key={link.url}>
+                            <ExternalLinkBadge href={link.url}>{link.label}</ExternalLinkBadge>
+                            <button
+                              type="button"
+                              className="chat-link-copy"
+                              title="Показать в тикете"
+                              aria-label="Показать в тикете"
+                              onClick={() => setLinkSelection({ link })}
+                            >
+                              <LocateFixed size={13} aria-hidden="true" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
                   ))}
                 </nav>
               </details>

@@ -104,3 +104,13 @@ export function contentLinks(parts: LinkContent[], base: string): ContentLink[] 
   }
   return [...links.values()];
 }
+
+/** Deduplicate within a source, keeping the same URL visible in every relevant section. */
+export function contentLinkGroups(
+  parts: (LinkContent & { source: string; title: string })[],
+  base: string,
+) {
+  return parts
+    .map((part) => ({ source: part.source, title: part.title, links: contentLinks([part], base) }))
+    .filter((group) => group.links.length > 0);
+}

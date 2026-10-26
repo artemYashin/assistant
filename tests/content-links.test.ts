@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { contentLinks } from "../services/frontend/src/features/render-content/lib/content-links.js";
+import {
+  contentLinks,
+  contentLinkGroups,
+} from "../services/frontend/src/features/render-content/lib/content-links.js";
 
 const base = "https://dev.azure.com/example";
 test("ticket links parse Markdown, references and bare URLs, deduplicating across sections", () => {
@@ -68,4 +71,35 @@ test("deduplicated links keep the source and quote of the chosen caption", () =>
       },
     ],
   );
+});
+
+test("link groups preserve section and occurrence order, including shared URLs in different sections", () => {
+  const groups = contentLinkGroups(
+    [
+      {
+        source: "description",
+        title: "Описание",
+        value:
+          "[First](https://example.test/shared) [Second](https://example.test/second) [Again](https://example.test/shared)",
+      },
+      { source: "repro", title: "Шаги воспроизведения", value: "No links" },
+      {
+        source: "criteria",
+        title: "Критерии приёмки",
+        value: "[Shared criterion](https://example.test/shared)",
+      },
+      { source: "comment:1", title: "Комментарий 1", value: "https://example.test/comment" },
+    ],
+    base,
+  );
+  assert.deepEqual(
+    groups.map((group) => group.source),
+    ["description", "criteria", "comment:1"],
+  );
+  assert.deepEqual(
+    groups[0].links.map((link) => link.label),
+    ["First", "Second"],
+  );
+  assert.equal(groups[1].links[0].url, groups[0].links[0].url);
+  assert.equal(groups[1].links[0].source, "criteria");
 });
