@@ -36,6 +36,15 @@ type Loaded = {
   sourceBranch?: string;
   targetBranch?: string;
 };
+// A bounded, in-memory preview avoids blanking the dialog on reopen.
+// The server remains authoritative for revisions, settings and comment permissions.
+const viewedDiffs = new Map<string, Loaded>();
+function rememberDiff(key: string, value: Loaded) {
+  viewedDiffs.delete(key);
+  viewedDiffs.set(key, value);
+  while (viewedDiffs.size > 20) viewedDiffs.delete(viewedDiffs.keys().next().value!);
+}
+
 type CommentThread = {
   id: number; status: string | number; path: string;
   line: number | null; leftLine: number | null;
@@ -80,7 +89,9 @@ export function PrDiffDialog({
   const [lineTarget, setLineTarget] = useState<{
     file: number; side: "left" | "right"; line: number;
   } | null>(null);
-  const [data, setData] = useState<Loaded | null>(null),
+  const previewKey = !commit && !repositoryContext && pr?.head && pr?.target
+    ? JSON.stringify([pr.monitor, pr.repo, pr.number, pr.head, pr.target]) : null;
+  const [data, setData] = useState<Loaded | null>(() => previewKey ? viewedDiffs.get(previewKey) || null : null),
     [error, setError] = useState(""),
     [selected, setSelected] = useState(0),
     [revision, setRevision] = useState(0);
@@ -89,7 +100,7 @@ export function PrDiffDialog({
   }, []);
   useEffect(() => {
     let live = true;
-    setData(null);
+    setData(previewKey ? viewedDiffs.get(previewKey) || null : null);
     setError("");
     setSelected(0);
     api(
@@ -97,7 +108,9 @@ export function PrDiffDialog({
     )
       .then((result) => {
         const parsed = { ...result, files: displayDiffFiles(result.patches, result.skippedFiles) };
-        if (live) setData(parsed);
+        if (previewKey && result.head === pr.head && result.target === pr.target)
+          rememberDiff(previewKey, parsed);
+        if (live) setData(previous => previous && JSON.stringify(previous) === JSON.stringify(parsed) ? previous : parsed);
       })
       .catch((e) => {
         if (live) setError(e.message);
@@ -206,7 +219,7 @@ export function PrDiffDialog({
       )}
       {error && (
         <div role="alert">
-          <p className="error">{error}</p>
+          <p className="error">{data ? `Не удалось проверить актуальность diff. Показана ранее загруженная копия. ${error}` : error}</p>
           <button
             className="secondary"
             onClick={() => setRevision((v) => v + 1)}

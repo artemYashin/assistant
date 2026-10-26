@@ -9,88 +9,88 @@
 
 Покрытие diff и причины пропусков
 
-Источник: src/PrDiffDialog.tsx:186.
+Источник: src/PrDiffDialog.tsx:199.
 
 ### Элемент
 
 Закрыть diff
 
-Источник: src/PrDiffDialog.tsx:194.
+Источник: src/PrDiffDialog.tsx:207.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/PrDiffDialog.tsx:210.
+Источник: src/PrDiffDialog.tsx:223.
 
 ### Элемент
 
 Подсветка кода
 
-Источник: src/PrDiffDialog.tsx:250.
+Источник: src/PrDiffDialog.tsx:263.
 
 ### Элемент
 
 Авто · {…}
 
-Источник: src/PrDiffDialog.tsx:252.
+Источник: src/PrDiffDialog.tsx:265.
 
 ### Элемент
 
 Без подсветки
 
-Источник: src/PrDiffDialog.tsx:253.
+Источник: src/PrDiffDialog.tsx:266.
 
 ### Элемент
 
 Открыть полный файл до удаления в коде репозитория / Открыть полный файл в коде репозитория
 
-Источник: src/PrDiffDialog.tsx:263.
+Источник: src/PrDiffDialog.tsx:276.
 
 ### Элемент
 
 Обновить
 
-Источник: src/PrDiffDialog.tsx:350.
+Источник: src/PrDiffDialog.tsx:363.
 
 ### Элемент
 
 /
 
-Источник: src/PrDiffDialog.tsx:375.
+Источник: src/PrDiffDialog.tsx:388.
 
 ### Элемент
 
 Комментарий к строке {…} · Добавить комментарий в Azure
 
-Источник: src/PrDiffDialog.tsx:412.
+Источник: src/PrDiffDialog.tsx:425.
 
 ### Элемент
 
 Комментарий к строке
 
-Источник: src/PrDiffDialog.tsx:452.
+Источник: src/PrDiffDialog.tsx:465.
 
 ### Элемент
 
 / · Отправляю… / Отправить в Azure
 
-Источник: src/PrDiffDialog.tsx:459.
+Источник: src/PrDiffDialog.tsx:472.
 
 ### Элемент
 
 Отмена
 
-Источник: src/PrDiffDialog.tsx:466.
+Источник: src/PrDiffDialog.tsx:479.
 
 ### Элемент
 
 Строка {…} /
 
-Источник: src/PrDiffDialog.tsx:489.
+Источник: src/PrDiffDialog.tsx:502.
 
 ### Элемент
 
 Показать строку · После / До
 
-Источник: src/PrDiffDialog.tsx:501.
+Источник: src/PrDiffDialog.tsx:514.
