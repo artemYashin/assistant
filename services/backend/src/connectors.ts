@@ -1221,25 +1221,42 @@ export class Connectors {
     const source = this.store.source(settings);
     if (card.source !== source)
       throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    const pat = this.store.secret("azure.pat");
+    const assertCurrent = () => {
+      if (this.store.source() !== source || this.store.secret("azure.pat") !== pat)
+        throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    };
+    // Capture the upper revision once; subsequent pages walk backwards from it.
+    let end = skip;
+    if (!end) {
+      const latest = await this.azure(`workitems/${card.id}?$fields=System.Id`, {}, settings, pat);
+      assertCurrent();
+      if (latest.id !== card.id || !Number.isSafeInteger(latest.rev) || latest.rev < 1)
+        throw new AppError(502, "Azure не вернул версию тикета для истории");
+      end = latest.rev;
+    }
+    const start = Math.max(0, end - 20);
     const page = await this.azure(
-      `workitems/${card.id}/updates?$top=21&$skip=${skip}`,
+      `workitems/${card.id}/updates?$top=${end - start}&$skip=${start}`,
       {},
       settings,
-      this.store.secret("azure.pat"),
+      pat,
     );
-    if (this.store.source() !== source)
-      throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    assertCurrent();
     if (!Array.isArray(page.value) || page.value.some((row: any) => !Number.isSafeInteger(row?.id)))
       throw new AppError(502, "Некорректный ответ истории Azure");
-    const items = page.value.slice(0, 20).map((row: any) => ({
-      id: row.id,
-      revision: row.rev,
-      author: row.revisedBy?.displayName || row.revisedBy?.name || "Автор не указан",
-      date: row.fields?.["System.ChangedDate"]?.newValue || row.revisedDate,
-      fields: row.fields || {},
-      relations: row.relations || {},
-    }));
-    return { items, nextSkip: page.value.length > 20 ? skip + 20 : null };
+    const items = page.value
+      .slice(0, end - start)
+      .reverse()
+      .map((row: any) => ({
+        id: row.id,
+        revision: row.rev,
+        author: row.revisedBy?.displayName || row.revisedBy?.name || "Автор не указан",
+        date: row.fields?.["System.ChangedDate"]?.newValue || row.revisedDate,
+        fields: row.fields || {},
+        relations: row.relations || {},
+      }));
+    return { items, nextSkip: start > 0 ? start : null };
   }
   ticketCard(ref: string) {
     const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as

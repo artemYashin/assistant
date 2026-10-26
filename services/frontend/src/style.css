@@ -17929,3 +17929,23 @@ a.pr-branch-link:focus-visible {
   flex-wrap: wrap;
   gap: 7px;
 }
+
+.ticket-history {
+  gap: 6px;
+}
+.ticket-history-entry {
+  padding: 0;
+}
+.ticket-history-entry > summary {
+  padding: 7px 10px;
+  margin: 0;
+}
+.ticket-history-entry[open] > summary {
+  margin: 0;
+}
+.ticket-history-changes {
+  padding: 0 10px;
+}
+.ticket-history-field {
+  padding: 8px 0;
+}

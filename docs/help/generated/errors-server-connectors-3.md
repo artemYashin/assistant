@@ -7,114 +7,120 @@
 
 ### Сообщение
 
-Карточка не найдена
+Некорректный ответ истории Azure
 
 Источник: services/backend/src/connectors.ts:1247.
 
 ### Сообщение
 
+Карточка не найдена
+
+Источник: services/backend/src/connectors.ts:1264.
+
+### Сообщение
+
 Вложение не найдено в тикете
 
-Источник: services/backend/src/connectors.ts:1253.
+Источник: services/backend/src/connectors.ts:1270.
 
 ### Сообщение
 
 Подключите Azure DevOps
 
-Источник: services/backend/src/connectors.ts:1258.
+Источник: services/backend/src/connectors.ts:1275.
 
 ### Сообщение
 
 Не удалось загрузить вложение
 
-Источник: services/backend/src/connectors.ts:1269.
+Источник: services/backend/src/connectors.ts:1286.
 
 ### Сообщение
 
 Вложение больше 20 МБ
 
-Источник: services/backend/src/connectors.ts:1280.
+Источник: services/backend/src/connectors.ts:1297.
 
 ### Сообщение
 
 В описаниях PR более 500 новых тикетов: сузьте выборку PR.
 
-Источник: services/backend/src/connectors.ts:1315.
+Источник: services/backend/src/connectors.ts:1332.
 
 ### Сообщение
 
 Подключение Azure изменилось во время импорта
 
-Источник: services/backend/src/connectors.ts:1328.
+Источник: services/backend/src/connectors.ts:1345.
 
 ### Сообщение
 
 Azure вернул неверный список тикетов
 
-Источник: services/backend/src/connectors.ts:1330.
+Источник: services/backend/src/connectors.ts:1347.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите поиск.
 
-Источник: services/backend/src/connectors.ts:1347.
+Источник: services/backend/src/connectors.ts:1364.
 
 ### Сообщение
 
 Результаты поиска устарели. Нажмите «Найти», чтобы обновить список страниц.
 
-Источник: services/backend/src/connectors.ts:1361.
+Источник: services/backend/src/connectors.ts:1378.
 
 ### Сообщение
 
 Некорректные номера тикетов Azure
 
-Источник: services/backend/src/connectors.ts:1380.
+Источник: services/backend/src/connectors.ts:1397.
 
 ### Сообщение
 
 Azure не вернул данные тикетов
 
-Источник: services/backend/src/connectors.ts:1414.
+Источник: services/backend/src/connectors.ts:1431.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите импорт.
 
-Источник: services/backend/src/connectors.ts:1436.
+Источник: services/backend/src/connectors.ts:1453.
 
 ### Сообщение
 
 Azure не вернул результаты поиска
 
-Источник: services/backend/src/connectors.ts:1514.
+Источник: services/backend/src/connectors.ts:1531.
 
 ### Сообщение
 
 Azure не вернул тикеты
 
-Источник: services/backend/src/connectors.ts:1552.
+Источник: services/backend/src/connectors.ts:1569.
 
 ### Сообщение
 
 Подключение Azure изменилось во время запроса
 
-Источник: services/backend/src/connectors.ts:1612.
+Источник: services/backend/src/connectors.ts:1629.
 
 ### Сообщение
 
 Azure вернул неверный номер тикета
 
-Источник: services/backend/src/connectors.ts:1613.
+Источник: services/backend/src/connectors.ts:1630.
 
 ### Сообщение
 
 Выберите типы и статусы задач: Заказчики и проекты → Автоматический импорт
 
-Источник: services/backend/src/connectors.ts:1645.
+Источник: services/backend/src/connectors.ts:1662.
 
 ### Сообщение
 
 Azure вернул неполный список тикетов
 
-Источник: services/backend/src/connectors.ts:1709.
+Источник: services/backend/src/connectors.ts:1726.

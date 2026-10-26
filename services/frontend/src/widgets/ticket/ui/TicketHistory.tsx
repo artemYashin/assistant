@@ -82,7 +82,7 @@ export function TicketHistory({ reference }: { reference: string }) {
   return (
     <div className="ticket-history">
       <p className="muted">
-        История Azure, от ранних изменений к новым. Локальные изменения Orbit сюда не входят.
+        История Azure, от новых изменений к старым. Локальные изменения Orbit сюда не входят.
       </p>
       {visibleItems.map((item) => (
         <details className="ticket-history-entry" key={item.id}>

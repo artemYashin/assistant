@@ -33,13 +33,17 @@ test("history pages preserve Azure values, pagination and stored cards; stale so
   t.mock.method(globalThis, "fetch", async (input: any) => {
     calls++;
     const url = new URL(String(input));
+    if (!url.pathname.endsWith("/updates")) {
+      if (changeSource) store.set("settings", { ...store.settings(), azureProject: "Other" });
+      return Response.json({ id: 42, rev: 41 });
+    }
     assert.equal(url.pathname, "/Collection/Project/_apis/wit/workitems/42/updates");
-    assert.equal(url.searchParams.get("$top"), "21");
+
     if (changeSource) store.set("settings", { ...store.settings(), azureProject: "Other" });
     if (invalid) return Response.json({ value: "bad" });
     const skip = Number(url.searchParams.get("$skip"));
     return Response.json({
-      value: Array.from({ length: skip ? 1 : 21 }, (_, index) => ({
+      value: Array.from({ length: Number(url.searchParams.get("$top")) }, (_, index) => ({
         id: skip + index + 1,
         rev: skip + index + 1,
         revisedBy: { displayName: "Reviewer" },
@@ -53,13 +57,22 @@ test("history pages preserve Azure values, pagination and stored cards; stale so
   });
   const first = await connectors.ticketHistory("history");
   assert.equal(first.items.length, 20);
-  assert.equal(first.nextSkip, 20);
+  assert.equal(first.nextSkip, 21);
+  assert.equal(first.items[0].id, 41);
+  assert.equal(first.items.at(-1)?.id, 22);
   assert.deepEqual(first.items[0].fields["Custom.Field"], { oldValue: false, newValue: 0 });
   assert.equal(first.items[0].date, "2026-10-27T00:00:00Z");
   assert.equal(first.items[0].author, "Reviewer");
-  const second = await connectors.ticketHistory("history", 20);
+  const second = await connectors.ticketHistory("history", first.nextSkip!);
   assert.equal(second.items[0].id, 21);
-  assert.equal(second.nextSkip, null);
+  assert.equal(second.nextSkip, 1);
+  assert.equal(second.items.at(-1)?.id, 2);
+  const last = await connectors.ticketHistory("history", second.nextSkip!);
+  assert.deepEqual(
+    last.items.map((item: any) => item.id),
+    [1],
+  );
+  assert.equal(last.nextSkip, null);
   assert.deepEqual(connectors.ticketCard("history"), card);
   await assert.rejects(() => connectors.ticketHistory("history", -1), /страница/);
   invalid = true;

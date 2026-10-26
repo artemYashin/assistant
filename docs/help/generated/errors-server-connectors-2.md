@@ -121,6 +121,6 @@ Azure не вернул номер комментария. Проверьте т
 
 ### Сообщение
 
-Некорректный ответ истории Azure
+Azure не вернул версию тикета для истории
 
-Источник: services/backend/src/connectors.ts:1233.
+Источник: services/backend/src/connectors.ts:1235.
