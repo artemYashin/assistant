@@ -25,6 +25,7 @@ export const AZURE_API_VERSION = "7.1";
 
 export const defaults = {
   workMode: "lead" as "lead" | "developer",
+  ticketClickAction: "inline" as "inline" | "popup" | "select",
   assistantCodeAccess: true,
   memoryLanguage: "English",
   assistantCodeWaitSeconds: 20,

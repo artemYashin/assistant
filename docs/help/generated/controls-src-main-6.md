@@ -7,6 +7,36 @@
 
 ### Элемент
 
+Предпочтительный язык памяти · Ассистент будет использовать этот язык для новых предложений. Существующие записи не переводятся; язык ответов в чате не меняется.
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:660.
+
+### Элемент
+
+English
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:664.
+
+### Элемент
+
+Сохранить настройки
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:679.
+
+### Элемент
+
+Открыть авторизацию
+
+Источник: services/frontend/src/pages/settings/ui/LoginCode.tsx:12.
+
+### Элемент
+
+Свернуть панель чата · Свернуть чат
+
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:708.
+
+### Элемент
+
 Загрузка… / Показать более ранние сообщения
 
 Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:781.

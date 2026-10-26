@@ -1117,6 +1117,8 @@ export function TicketTableRow({
   id,
   children,
   onRemove,
+  onRowActivate,
+  rowSelected,
   highlighted = false,
   actions,
   columns = 7,
@@ -1131,6 +1133,8 @@ export function TicketTableRow({
   columnOrder?: string[];
   highlighted?: boolean;
   onRemove?: () => void;
+  onRowActivate?: () => void;
+  rowSelected?: boolean;
   id: number;
   children: ReactNode;
 }) {
@@ -1174,8 +1178,9 @@ export function TicketTableRow({
         ref={rowRef}
         id={`ticket-${id}`}
         tabIndex={unavailable ? undefined : 0}
-        aria-expanded={open}
-        aria-controls={panelId}
+        aria-selected={rowSelected}
+        aria-expanded={onRowActivate ? undefined : open}
+        aria-controls={onRowActivate ? undefined : panelId}
         className={`${unavailable ? "ticket-azure-unimported" : "ticket-clickable-row"}${tone ? ` ticket-tone-${tone}` : ""}${highlighted ? " ticket-row-highlighted" : ""}`}
         onClick={(event) => {
           if (unavailable) return;
@@ -1188,14 +1193,16 @@ export function TicketTableRow({
             window.getSelection()?.toString()
           )
             return;
-          setOpen((value) => !value);
+          if (onRowActivate) onRowActivate();
+          else setOpen((value) => !value);
         }}
         onKeyDown={(event) => {
           if (unavailable) return;
           if (event.target !== event.currentTarget) return;
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            setOpen((value) => !value);
+            if (onRowActivate) onRowActivate();
+            else setOpen((value) => !value);
           }
         }}
       >

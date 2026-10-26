@@ -9,16 +9,16 @@
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1207.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1214.
 
 ### Элемент
 
 Удалить тикет #{…}? · Тикет #{…} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины. · Удалить в корзину
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1226.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1233.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1254.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1261.

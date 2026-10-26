@@ -57,6 +57,7 @@ const contextSchema = z.object({
 const settingsSchema = z
   .object({
     workMode: z.enum(["lead", "developer"]).optional(),
+    ticketClickAction: z.enum(["inline", "popup", "select"]).optional(),
     assistantCodeAccess: z.boolean().default(true),
     memoryLanguage: z.string().trim().min(1).max(100).default("English"),
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
@@ -487,6 +488,7 @@ export function createApp(
       store.set("settings", {
         ...settings,
         workMode: settings.workMode ?? old.workMode,
+        ticketClickAction: settings.ticketClickAction ?? old.ticketClickAction,
         syncSeconds: store.rawSettings().syncSeconds,
         syncSchedule: {
           ...store.rawSettings().syncSchedule,

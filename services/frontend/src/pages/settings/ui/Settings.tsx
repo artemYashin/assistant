@@ -160,6 +160,19 @@ export function Settings({ settings, context, run, busy }: any) {
             Смена режима доступна после завершения ответа ассистента и ревью. Сохраните настройки
             для применения.
           </p>
+          <Field
+            label="Действие при клике на тикет"
+            hint="В таблицах «Тикеты», «Azure тикеты» и «Корзина». Сохраните настройки для применения. Кнопки и ссылки в строке выполняют свои обычные действия."
+          >
+            <select
+              value={form.ticketClickAction || "inline"}
+              onChange={(event) => set("ticketClickAction", event.target.value)}
+            >
+              <option value="popup">Открыть деталку в попапе</option>
+              <option value="inline">Открыть деталку под тикетом</option>
+              <option value="select">Выбрать</option>
+            </select>
+          </Field>
         </section>
         <section
           className="panel settings-card"

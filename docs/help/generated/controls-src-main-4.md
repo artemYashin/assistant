@@ -97,30 +97,30 @@ Lead — все возможности
 
 ### Элемент
 
-Войти через GitHub
+Действие при клике на тикет · В таблицах «Тикеты», «Azure тикеты» и «Корзина». Сохраните настройки для применения. Кнопки и ссылки в строке выполняют свои обычные действия. · Открыть деталку в попапе Открыть деталку под тикетом Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:192.
-
-### Элемент
-
-Проверить и загрузить модели
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:205.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:163.
 
 ### Элемент
 
-Модель чата / Модель PR-ревью · Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше. · По умолчанию в Copilot / Та же, что для чата
+Открыть деталку в попапе · Открыть деталку под тикетом · Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:230.
-
-### Элемент
-
-Модель чата / Модель PR-ревью · По умолчанию в Copilot / Та же, что для чата
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:235.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:167.
 
 ### Элемент
 
-По умолчанию в Copilot / Та же, что для чата
+Открыть деталку в попапе
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:241.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:171.
+
+### Элемент
+
+Открыть деталку под тикетом
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:172.
+
+### Элемент
+
+Выбрать
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:173.

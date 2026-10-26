@@ -26,6 +26,24 @@ export function TicketDataRow({
   return (
     <TicketTableRow
       id={t.id}
+      rowSelected={settings?.ticketClickAction === "select" ? checked : undefined}
+      onRowActivate={
+        settings?.ticketClickAction === "select"
+          ? onToggle
+          : settings?.ticketClickAction === "popup"
+            ? () =>
+                window.dispatchEvent(
+                  new CustomEvent("orbit-show-ticket-details", {
+                    detail: {
+                      source: t.source,
+                      tickets: [
+                        { id: t.id, title: t.title || `#${t.id}`, type: t.type, state: t.state },
+                      ],
+                    },
+                  }),
+                )
+            : undefined
+      }
       columns={columns.count}
       columnOrder={columns.order}
       hideActions={columns.hidden("actions")}
