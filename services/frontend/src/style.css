@@ -17890,11 +17890,8 @@ a.pr-branch-link:focus-visible {
   margin-bottom: 10px;
 }
 .ticket-history-entry > summary::before {
-  content: "▸";
   color: #8a5b30;
-}
-.ticket-history-entry[open] > summary::before {
-  content: "▾";
+  flex-shrink: 0;
 }
 .ticket-history-entry > summary::-webkit-details-marker {
   display: none;
