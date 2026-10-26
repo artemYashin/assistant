@@ -271,6 +271,12 @@ function DeveloperCard({
   const contentId = useId();
   const [tab, setTab] = useState("active"),
     [page, setPage] = useState(0);
+  const [notes, setNotes] = useState(person.notes || "");
+  const [notesSaved, setNotesSaved] = useState(false);
+  useEffect(() => {
+    setNotes(person.notes || "");
+    setNotesSaved(false);
+  }, [person.id, person.notes, context.client, context.project]);
   const [vacationStart, setVacationStart] = useState(
       person.vacationStart || "",
     ),
@@ -298,6 +304,21 @@ function DeveloperCard({
   ].sort((a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id);
   const pages = Math.max(1, Math.ceil(list.length / 5)),
     current = Math.min(page, pages - 1);
+  async function saveNotes() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setNotesSaved(false);
+    try {
+      await api(`/developer-board/${encodeURIComponent(person.id)}/notes`, "PUT", { context, notes });
+      window.dispatchEvent(new Event("orbit:developer-board"));
+      setNotesSaved(true);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(cancel = false) {
     setBusy(true);
     setError("");
@@ -400,12 +421,18 @@ function DeveloperCard({
                 </button>
               )}
             </div>
-            {person.notes && (
-              <details>
-                <summary>Ранее сохранённые заметки</summary>
-                <p style={{ whiteSpace: "pre-wrap" }}>{person.notes}</p>
-              </details>
-            )}
+            <label>
+              Заметки
+              <textarea rows={3} maxLength={20000} value={notes} disabled={busy}
+                placeholder="Заметки о разработчике для текущего проекта"
+                onChange={event => { setNotes(event.target.value); setNotesSaved(false); }} />
+              <small className="muted">Сохраняются только в текущем проекте.</small>
+            </label>
+            <div className="developer-vacation-actions">
+              <button type="button" className="secondary" disabled={busy}
+                onClick={() => void saveNotes()}><Save size={15} /> Сохранить заметки</button>
+              {notesSaved && <small role="status">Заметки сохранены</small>}
+            </div>
             {error && (
               <p className="error" role="alert">
                 {error}
