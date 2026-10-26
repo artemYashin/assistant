@@ -17943,8 +17943,8 @@ a.pr-branch-link:focus-visible {
 .ticket-history-entry[open] > summary {
   margin: 0;
 }
-.ticket-history-changes {
-  padding: 0 10px;
+.ticket-detail .ticket-history-entry > .ticket-history-changes {
+  padding: 0 12px;
 }
 .ticket-history-field {
   padding: 8px 0;
