@@ -9,55 +9,55 @@
 
 Выберите заказчика для этой области памяти
 
-Источник: server/memory-proposals.ts:25.
+Источник: server/memory-proposals.ts:26.
 
 ### Сообщение
 
 Выберите проект для проектной памяти
 
-Источник: server/memory-proposals.ts:27.
+Источник: server/memory-proposals.ts:28.
 
 ### Сообщение
 
 Предложение недоступно в выбранном заказчике и проекте
 
-Источник: server/memory-proposals.ts:81.
+Источник: server/memory-proposals.ts:82.
 
 ### Сообщение
 
 Предложение уже обработано
 
-Источник: server/memory-proposals.ts:82.
+Источник: server/memory-proposals.ts:83.
 
 ### Сообщение
 
 Предложение не найдено
 
-Источник: server/memory-proposals.ts:89.
+Источник: server/memory-proposals.ts:90.
 
 ### Сообщение
 
 Предложение уже обработано. Сохранённую запись можно изменить на странице памяти.
 
-Источник: server/memory-proposals.ts:90.
+Источник: server/memory-proposals.ts:91.
 
 ### Сообщение
 
 Предложение изменилось. Прочитайте актуальный текст перед редактированием.
 
-Источник: server/memory-proposals.ts:91.
+Источник: server/memory-proposals.ts:92.
 
 ### Сообщение
 
 Краткое описание изменилось. Прочитайте предложение заново.
 
-Источник: server/memory-proposals.ts:92.
+Источник: server/memory-proposals.ts:93.
 
 ### Сообщение
 
 Исходная память изменена или удалена. Создайте новое предложение на основе актуальной записи.
 
-Источник: server/memory-proposals.ts:109.
+Источник: server/memory-proposals.ts:110.
 
 ### Сообщение
 

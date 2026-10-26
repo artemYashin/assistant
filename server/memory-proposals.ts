@@ -1,3 +1,4 @@
+import { memoryWritingGuide } from "./memory-policy.js";
 import { memorySummarySchema, legacyMemorySummary } from "./memory-summary.js";
 import { randomUUID } from "node:crypto";
 import { defineTool } from "@github/copilot-sdk";
@@ -135,8 +136,7 @@ export function memoryProposalTool(
   let calls = 0;
   return defineTool("propose_memory", {
     description:
-      `Preferred memory language: ${JSON.stringify(store.settings().memoryLanguage)}. Omit redundant project/branch labels unless essential to the fact. ` +
-      "Propose a concise durable fact or rule for human approval. Supply summary (one or two sentences, max 320 characters) for the always-visible catalog and body for on-demand Markdown details. For large code examples prefer a concise behavior/path description instead of a long snippet. Use for explicit save requests or useful durable knowledge. Code-related proposals require verified repository evidence; clarify unknowns first. Keep a brief function/path/purpose explanation; include useful Markdown fenced code snippets with a language tag, especially for usage examples or explicit requests to remember code. Preserve indentation and identifiers. Label illustrative examples as examples, not verified source. Prefer relevant excerpts over unrelated whole files; there is no prose-only or sentence-count restriction. Does NOT save memory; never claim saved until approved. No secrets or speculative facts. Use project_review for project-specific PR review guidance; it is not automatically included in chat context. Choose narrowest applicable scope, preserve meaning and remove conversational filler.",
+      "Propose requested or useful durable knowledge for human approval; returns pending, not saved. " + memoryWritingGuide(store.settings().memoryLanguage),
     parameters: proposalSchema.extend({ summary: memorySummarySchema.describe("One or two short sentences identifying this memory; always visible in the catalog. No code blocks.") }),
     handler: async (args) => {
       assertActive();
@@ -156,7 +156,7 @@ export function memoryRefinementTools(store: Store, context: Context, assertActi
       handler: async ({ id }) => { assertActive(); return service.forContext(id, context); },
     }),
     defineTool("edit_memory_proposal", {
-      description: "Refine an existing pending memory proposal at the user's request, including updates to saved memories identified by target_memory_id. For an update, edit only the proposed summary/body; approval later updates the original record. Supply the short summary (one or two sentences) and complete replacement Markdown body, plus exact previous summary and body from attachment/read_memory_proposal to avoid overwriting concurrent edits. Does not approve or save to memory. No extra confirmation needed for this draft edit.",
+      description: "Refine an existing pending memory proposal at the user's request, including updates to saved memories identified by target_memory_id. For an update, edit only the proposed summary/body; approval later updates the original record. Supply the short summary (one or two sentences) and complete replacement Markdown body, plus exact previous summary and body from attachment/read_memory_proposal to avoid overwriting concurrent edits. original_summary/original_body are immutable before-values, not editable fields. Does not approve or save to memory. No extra confirmation needed for this draft edit. " + memoryWritingGuide(store.settings().memoryLanguage),
       parameters: z.object({ id: z.string().uuid(), body: z.string().trim().min(1).max(8000), summary: memorySummarySchema, expectedSummary: z.string().max(320), expectedBody: z.string().max(8000) }),
       handler: async ({ id, body, summary, expectedBody, expectedSummary }) => { assertActive(); service.forContext(id, context); service.edit(id, { body, summary }, expectedBody, expectedSummary); onEdited(); return { id, status: "pending", updated: true }; },
     }),
