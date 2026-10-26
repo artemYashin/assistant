@@ -122,6 +122,18 @@ export function CalendarPage({
     navigate = useNavigate();
   const selected = new URLSearchParams(location.search).get("event");
   const loadedSelection = useRef("");
+  const pendingTicket = useRef<CalendarItem | null>(null);
+  const skipCloseNavigation = useRef(false);
+  useEffect(() => {
+    if (selected || !pendingTicket.current) return;
+    // Wait until all route-change effects (including ticket-dialog reset) finish.
+    const frame = requestAnimationFrame(() => {
+      const item = pendingTicket.current;
+      pendingTicket.current = null;
+      if (item) showTicket(item);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selected, location.key]);
   async function reload() {
     const data = await api("/calendar");
     setItems(data.items);
@@ -147,7 +159,18 @@ export function CalendarPage({
   }, [management]);
   function openTicket(item: CalendarItem) {
     if (!item.ticket) return;
+    if (selected) {
+      pendingTicket.current = item;
+      skipCloseNavigation.current = !!dialog.current?.open;
+      dialog.current?.close();
+      navigate("/calendar", { replace: true });
+      return;
+    }
     dialog.current?.close();
+    showTicket(item);
+  }
+  function showTicket(item: CalendarItem) {
+    if (!item.ticket) return;
     window.dispatchEvent(
       new CustomEvent("orbit-show-ticket-details", {
         detail: {
@@ -746,7 +769,12 @@ export function CalendarPage({
       <dialog
         ref={dialog}
         className="calendar-editor"
-        onClose={() => {
+        onClose={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (skipCloseNavigation.current) {
+            skipCloseNavigation.current = false;
+            return;
+          }
           if (selected) navigate("/calendar", { replace: true });
         }}
       >
