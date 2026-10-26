@@ -784,7 +784,8 @@ function Workspace() {
                   busy={busy}
                 />
               )}
-            {page === "developers" && hasLocalManagement(settings) && (
+            {page === "developers" && !settings && <p role="status">Загружаем настройки разработчиков…</p>}
+            {page === "developers" && settings && hasLocalManagement(settings) && (
               <DevelopersPage
                 key={JSON.stringify([
                   context,

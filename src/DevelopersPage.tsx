@@ -1,3 +1,4 @@
+import type { Settings } from "../server/store.js";
 import { CalendarDateField } from "./CalendarDateField.js";
 import { useCalendarClock } from "./useCalendarClock.js";
 import { nextVacationDay, developerOnVacation, developerVacationStatus, developerVacationWarningStart } from "./developer-vacation.js";
@@ -57,7 +58,7 @@ export function DevelopersPage({
 }: {
   context: Context;
   tickets: Task[];
-  settings: any;
+  settings: Pick<Settings, "calendarNotifications" | "syncSchedule" | "typeColors" | "statusColors">;
 }) {
   const [data, setData] = useState<{
     developers: Developer[];
@@ -265,7 +266,7 @@ function DeveloperCard({
   tickets: Task[];
   completedTickets: Task[];
   groups: DeveloperStatusGroups;
-  settings: any;
+  settings: Pick<Settings, "calendarNotifications" | "syncSchedule" | "typeColors" | "statusColors">;
 }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();

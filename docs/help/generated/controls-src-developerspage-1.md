@@ -9,118 +9,118 @@
 
 Поиск разработчика · Найти разработчика…
 
-Источник: src/DevelopersPage.tsx:157.
+Источник: src/DevelopersPage.tsx:158.
 
 ### Элемент
 
 Все ·
 
-Источник: src/DevelopersPage.tsx:168.
+Источник: src/DevelopersPage.tsx:169.
 
 ### Элемент
 
 С активными задачами ·
 
-Источник: src/DevelopersPage.tsx:175.
+Источник: src/DevelopersPage.tsx:176.
 
 ### Элемент
 
 Без активных задач · ·
 
-Источник: src/DevelopersPage.tsx:182.
+Источник: src/DevelopersPage.tsx:183.
 
 ### Элемент
 
 В отпуске ·
 
-Источник: src/DevelopersPage.tsx:190.
+Источник: src/DevelopersPage.tsx:191.
 
 ### Элемент
 
 Скоро в отпуск ·
 
-Источник: src/DevelopersPage.tsx:197.
+Источник: src/DevelopersPage.tsx:198.
 
 ### Элемент
 
 Проект · {…} / {…} / Заказчик · {…} / Общий список локальных поручений
 
-Источник: src/DevelopersPage.tsx:345.
+Источник: src/DevelopersPage.tsx:346.
 
 ### Элемент
 
 Настройки разработчика · {…} · Один период отпуска, обе даты включительно. Часовой пояс: . Действует во всех проектах, где доступен разработчик. Сохранить отпуск Заметки Сохраняются только в текущем проекте. Сохранить заметки
 
-Источник: src/DevelopersPage.tsx:379.
+Источник: src/DevelopersPage.tsx:380.
 
 ### Элемент
 
 Сохранить отпуск
 
-Источник: src/DevelopersPage.tsx:400.
+Источник: src/DevelopersPage.tsx:401.
 
 ### Элемент
 
 Отменить отпуск
 
-Источник: src/DevelopersPage.tsx:414.
+Источник: src/DevelopersPage.tsx:415.
 
 ### Элемент
 
 Заметки · Сохраняются только в текущем проекте.
 
-Источник: src/DevelopersPage.tsx:424.
+Источник: src/DevelopersPage.tsx:425.
 
 ### Элемент
 
 Заметки о разработчике для текущего проекта
 
-Источник: src/DevelopersPage.tsx:426.
+Источник: src/DevelopersPage.tsx:427.
 
 ### Элемент
 
 Сохранить заметки
 
-Источник: src/DevelopersPage.tsx:432.
+Источник: src/DevelopersPage.tsx:433.
 
 ### Элемент
 
 Активные ·
 
-Источник: src/DevelopersPage.tsx:450.
+Источник: src/DevelopersPage.tsx:451.
 
 ### Элемент
 
 На проверке ·
 
-Источник: src/DevelopersPage.tsx:461.
+Источник: src/DevelopersPage.tsx:462.
 
 ### Элемент
 
 Завершённые ·
 
-Источник: src/DevelopersPage.tsx:471.
+Источник: src/DevelopersPage.tsx:472.
 
 ### Элемент
 
 Скопировать ссылку на тикет #{…} в Azure DevOps
 
-Источник: src/DevelopersPage.tsx:490.
+Источник: src/DevelopersPage.tsx:491.
 
 ### Элемент
 
 # ·
 
-Источник: src/DevelopersPage.tsx:495.
+Источник: src/DevelopersPage.tsx:496.
 
 ### Элемент
 
 Предыдущие тикеты: {…}
 
-Источник: src/DevelopersPage.tsx:550.
+Источник: src/DevelopersPage.tsx:551.
 
 ### Элемент
 
 Следующие тикеты: {…}
 
-Источник: src/DevelopersPage.tsx:562.
+Источник: src/DevelopersPage.tsx:563.
