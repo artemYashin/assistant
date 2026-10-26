@@ -18,7 +18,7 @@ export function ticketCitationTool(store: Store, assertActive: () => void, evide
       const ticket = evidence?.tickets.find(ticket => ticket.id === id);
       const row = evidence ? (ticket ? { body: ticket[section] } : undefined) : store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=? AND section=?").get(source, id, section) as { body: string } | undefined;
       if (!row || !normalize(row.body).includes(normalize(quote))) throw new AppError(400, "Цитата не найдена в доступном тексте этого раздела. Используйте точную цитату из прочитанного тикета.");
-      return { id, section, quote, originalUrl: `/tickets?${new URLSearchParams({ id: String(id), source, section, quote })}`, note: "Use a blockquote with [Показать в тикете](originalUrl) in its final paragraph, translated to the user's language. UI opens current content; it may have changed since this evidence was read." };
+      return { id, section, quote, originalUrl: `/tickets?${new URLSearchParams({ id: String(id), source, section, quote })}`, note: "Use a blockquote with [Показать в тикете](originalUrl) in a separate final paragraph, preceded by a blank quoted line (>), never on the same line as the quote text, translated to the user's language. UI opens current content; it may have changed since this evidence was read." };
     },
   });
 }

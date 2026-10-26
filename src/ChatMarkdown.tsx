@@ -115,9 +115,9 @@ export function ChatMarkdown({
             const local = chatTicketPath(href) || azureTicketPath(href, azureSource);
             if (local) {
               const params = new URLSearchParams(local.split("?")[1]);
-              if (citation) return <button type="button" className="chat-ticket-link" onClick={() => {
+              if (citation) return <span className="chat-ticket-citation-action"><button type="button" className="chat-ticket-link" onClick={() => {
                 window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: { source: citation.source, tickets: [{ id: citation.id, title: `#${citation.id}` }], citation } }));
-              }}>Показать в тикете<ArrowUpRight size={14} aria-hidden="true" /></button>;
+              }}>Показать в тикете<ArrowUpRight size={14} aria-hidden="true" /></button></span>;
               return <CopyableLink href={href} ticket><a className="chat-ticket-link" href={local} onClick={event => {
                 if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
                 event.preventDefault();
