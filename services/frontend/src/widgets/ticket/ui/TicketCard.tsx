@@ -1018,12 +1018,13 @@ export function TicketCard({
                         <>
                           <button
                             type="button"
-                            className="chat-link-copy"
-                            title="Показать изображение в тикете"
+                            className="secondary ticket-attachment-locate"
+                            title="Показать в тикете"
                             aria-label={`Показать изображение в тикете: ${a.name}`}
                             onClick={() => showImage(attachmentUrl(a))}
                           >
-                            <LocateFixed size={13} />
+                            <LocateFixed size={13} aria-hidden="true" />
+                            Показать в тикете
                           </button>
                           <ImagePreview src={attachmentUrl(a)} alt={a.name} thumbnail={false}>
                             {a.name}

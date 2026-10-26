@@ -17855,3 +17855,16 @@ a.pr-branch-link:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.ticket-attachment-locate {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.ticket-attachment-locate > svg {
+  flex-shrink: 0;
+}

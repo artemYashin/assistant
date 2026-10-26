@@ -115,7 +115,7 @@
 
 ### Элемент
 
-Показать изображение в тикете · Показать изображение в тикете: {…}
+Показать в тикете · Показать изображение в тикете: {…}
 
 Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1019.
 
@@ -123,4 +123,4 @@
 
 ↗
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1038.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1039.
