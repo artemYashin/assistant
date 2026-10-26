@@ -2332,7 +2332,19 @@ summary:focus-visible {
 .ticket-footnote {
   margin-top: 12px;
 }
+.ticket-attachment-row + .ticket-attachment-row {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
 .ticket-attachment {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: fit-content;
+  height: fit-content;
+  max-width: 100%;
+  background: #f5f8f6;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -17969,4 +17981,15 @@ a.pr-branch-link:focus-visible {
 .pr-exact-search .muted {
   align-self: center;
   font-size: 12px;
+}
+
+.ticket-attachment .ticket-attachment-locate {
+  color: #216c42;
+  background: #e4f4e9;
+  border-color: #a9d6ba;
+}
+.ticket-attachment .ticket-attachment-locate:hover {
+  color: #17532f;
+  background: #d3ecdc;
+  border-color: #7cbd96;
 }

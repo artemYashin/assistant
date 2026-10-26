@@ -1000,33 +1000,37 @@ export function TicketCard({
               {card.attachments.length ? (
                 <div className="ticket-attachments">
                   {card.attachments.map((a: any) => (
-                    <div className="ticket-attachment" key={a.id}>
-                      {a.image ? (
-                        <>
-                          <button
-                            type="button"
-                            className="secondary ticket-attachment-locate"
-                            title="Показать в тикете"
-                            aria-label={`Показать изображение в тикете: ${a.name}`}
-                            onClick={() => showImage(attachmentUrl(a))}
-                          >
-                            <LocateFixed size={13} aria-hidden="true" />
-                            Показать в тикете
-                          </button>
-                          <ImagePreview src={attachmentUrl(a)} alt={a.name} thumbnail={false}>
-                            {a.name}
-                          </ImagePreview>
-                          <ImagePreview
-                            src={attachmentUrl(a)}
-                            alt={a.name}
-                            className="ticket-attachment-preview"
-                          />
-                        </>
-                      ) : (
-                        <a href={attachmentUrl(a)} target="_blank" rel="noreferrer">
-                          {a.name} ↗
-                        </a>
-                      )}
+                    <div className="ticket-attachment-row" key={a.id}>
+                      <div className="ticket-attachment">
+                        {a.image ? (
+                          <>
+                            <button
+                              type="button"
+                              className="secondary ticket-attachment-locate"
+                              title="Показать в тикете"
+                              aria-label={`Показать изображение в тикете: ${a.name}`}
+                              onClick={() => showImage(attachmentUrl(a))}
+                            >
+                              <LocateFixed size={13} aria-hidden="true" />
+                              Показать в тикете
+                            </button>
+                            {a.name !== "Изображение в тексте" && (
+                              <ImagePreview src={attachmentUrl(a)} alt={a.name} thumbnail={false}>
+                                {a.name}
+                              </ImagePreview>
+                            )}
+                            <ImagePreview
+                              src={attachmentUrl(a)}
+                              alt={a.name}
+                              className="ticket-attachment-preview"
+                            />
+                          </>
+                        ) : (
+                          <a href={attachmentUrl(a)} target="_blank" rel="noreferrer">
+                            {a.name} ↗
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -111,16 +111,16 @@
 
 Показать в тикете · Показать изображение в тикете: {…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1006.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1007.
 
 ### Элемент
 
 ↗
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1026.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1029.
 
 ### Элемент
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1202.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1206.

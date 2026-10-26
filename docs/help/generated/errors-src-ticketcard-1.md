@@ -27,4 +27,4 @@
 
 Не удалось скопировать. Проверьте доступ к буферу обмена.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1069.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1073.

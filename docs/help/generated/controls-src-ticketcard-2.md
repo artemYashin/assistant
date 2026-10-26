@@ -9,10 +9,10 @@
 
 Удалить тикет #{…}? · Тикет #{…} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины. · Удалить в корзину
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1221.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1225.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1249.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1253.
