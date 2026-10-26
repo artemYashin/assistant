@@ -5,7 +5,7 @@ import {
   pageForPath,
   ticketPath,
   pullRequestPath,
-} from "../src/routing.js";
+} from "../src/shared/config/routes/index.js";
 test("every section has a stable route, with trailing slash and unknown path handling", () => {
   for (const [page, path] of Object.entries(pagePaths)) {
     assert.equal(pageForPath(path), page);
@@ -38,7 +38,7 @@ test("PR deep links preserve full monitor and repository identity", () => {
 });
 
 test("chat ticket links accept only source-scoped positive safe ticket IDs", async () => {
-  const { chatTicketPath } = await import("../src/routing.js");
+  const { chatTicketPath } = await import("../src/shared/config/routes/index.js");
   assert.equal(
     chatTicketPath("/tickets?id=42&source=org%7CP"),
     "/tickets?id=42&source=org%7CP",

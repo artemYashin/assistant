@@ -8,8 +8,8 @@ import {Connectors} from "../server/connectors.js";
 import {listLocalTickets} from "../server/ticket-list.js";
 import {searchTicketContent} from "../server/ticket-content-search.js";
 import {azureSummary,browseFields} from "../server/azure-browser.js";
-import {ticketsCsv} from "../src/tickets-csv.js";
-import {ticketsXlsx} from "../src/tickets-xlsx.js";
+import {ticketsCsv} from "../src/features/export-tickets/index.js";
+import {ticketsXlsx} from "../src/features/export-tickets/xlsx/index.js";
 import ExcelJS from "exceljs";
 import {AZURE_PRIORITY_FIELD} from "../server/azure-priority.js";
 test("Azure priority survives sync/restart/trash, filters independently, and exports as a number",async t=>{

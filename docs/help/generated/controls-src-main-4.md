@@ -9,118 +9,118 @@
 
 Разделы памяти · Выберите разделы
 
-Источник: src/main.tsx:1770.
+Источник: src/pages/memory/ui/Memory.tsx:181.
 
 ### Элемент
 
 Поиск памяти по названию · Поиск по названию…
 
-Источник: src/main.tsx:1775.
+Источник: src/pages/memory/ui/Memory.tsx:186.
 
 ### Элемент
 
 Удалить запись
 
-Источник: src/main.tsx:1785.
+Источник: src/pages/memory/ui/Memory.tsx:196.
 
 ### Элемент
 
 Refine with AI
 
-Источник: src/main.tsx:1815.
+Источник: src/pages/memory/ui/Memory.tsx:226.
 
 ### Элемент
 
 Рабочее пространство
 
-Источник: src/main.tsx:1862.
+Источник: src/pages/settings/ui/Settings.tsx:20.
 
 ### Элемент
 
 Copilot
 
-Источник: src/main.tsx:1863.
+Источник: src/pages/settings/ui/Settings.tsx:21.
 
 ### Элемент
 
 Azure DevOps
 
-Источник: src/main.tsx:1864.
+Источник: src/pages/settings/ui/Settings.tsx:22.
 
 ### Элемент
 
 AI Assistant
 
-Источник: src/main.tsx:1865.
+Источник: src/pages/settings/ui/Settings.tsx:23.
 
 ### Элемент
 
 Горячие клавиши
 
-Источник: src/main.tsx:1866.
+Источник: src/pages/settings/ui/Settings.tsx:24.
 
 ### Элемент
 
 Code Review
 
-Источник: src/main.tsx:1867.
+Источник: src/pages/settings/ui/Settings.tsx:25.
 
 ### Элемент
 
 Режим работы · Общий режим для этой установки. Данные и настройки скрытых элементов сохраняются. Это настройка интерфейса и ассистента, а не права доступа. · Lead — все возможности Разработчик — без локальных поручений и отпусков
 
-Источник: src/main.tsx:1954.
+Источник: src/pages/settings/ui/Settings.tsx:112.
 
 ### Элемент
 
 Lead — все возможности · Разработчик — без локальных поручений и отпусков
 
-Источник: src/main.tsx:1955.
+Источник: src/pages/settings/ui/Settings.tsx:113.
 
 ### Элемент
 
 Lead — все возможности
 
-Источник: src/main.tsx:1955.
+Источник: src/pages/settings/ui/Settings.tsx:113.
 
 ### Элемент
 
 Разработчик — без локальных поручений и отпусков
 
-Источник: src/main.tsx:1955.
+Источник: src/pages/settings/ui/Settings.tsx:113.
 
 ### Элемент
 
 Войти через GitHub
 
-Источник: src/main.tsx:1981.
+Источник: src/pages/settings/ui/Settings.tsx:139.
 
 ### Элемент
 
 Проверить и загрузить модели
 
-Источник: src/main.tsx:1994.
+Источник: src/pages/settings/ui/Settings.tsx:152.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше. · По умолчанию в Copilot / Та же, что для чата
 
-Источник: src/main.tsx:2019.
+Источник: src/pages/settings/ui/Settings.tsx:177.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · По умолчанию в Copilot / Та же, что для чата
 
-Источник: src/main.tsx:2024.
+Источник: src/pages/settings/ui/Settings.tsx:182.
 
 ### Элемент
 
 По умолчанию в Copilot / Та же, что для чата
 
-Источник: src/main.tsx:2030.
+Источник: src/pages/settings/ui/Settings.tsx:188.
 
 ### Элемент
 
 — сохранена, доступность не подтверждена
 
-Источник: src/main.tsx:2036.
+Источник: src/pages/settings/ui/Settings.tsx:194.

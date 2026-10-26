@@ -9,4 +9,4 @@
 
 Выбрать все показанные тикеты
 
-Источник: src/TicketSelection.tsx:77.
+Источник: src/entities/ticket/model/TicketSelection.tsx:77.

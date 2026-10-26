@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { diffFileLabel } from "../src/pr-diff.js";
+import { diffFileLabel } from "../src/entities/repository/index.js";
 test("diff paths shorten each long directory but keep full file names", () => {
   assert.deepEqual(
     diffFileLabel("/packages/verylongdirectory/src/VeryLongComponent.tsx"),

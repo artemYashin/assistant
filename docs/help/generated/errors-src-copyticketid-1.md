@@ -9,4 +9,4 @@
 
 Не удалось скопировать. Повторите попытку
 
-Источник: src/CopyTicketId.tsx:5.
+Источник: src/entities/ticket/ui/CopyTicketId.tsx:5.

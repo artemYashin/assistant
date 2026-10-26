@@ -9,118 +9,118 @@
 
 Описание pull request
 
-Источник: src/PullRequestsPage.tsx:79.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:79.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: src/PullRequestsPage.tsx:99.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:99.
 
 ### Элемент
 
 Комментарий к ревью
 
-Источник: src/PullRequestsPage.tsx:145.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:145.
 
 ### Элемент
 
 Открыть результат ревью
 
-Источник: src/PullRequestsPage.tsx:171.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:171.
 
 ### Элемент
 
 Сохранённые ревью всех версий
 
-Источник: src/PullRequestsPage.tsx:208.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:208.
 
 ### Элемент
 
 Ревью версии {…}
 
-Источник: src/PullRequestsPage.tsx:225.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:225.
 
 ### Элемент
 
 Синхронизировать PR
 
-Источник: src/PullRequestsPage.tsx:439.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:439.
 
 ### Элемент
 
 ＋ Создать PR
 
-Источник: src/PullRequestsPage.tsx:447.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:447.
 
 ### Элемент
 
 Показать все PR текущего проекта
 
-Источник: src/PullRequestsPage.tsx:462.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:462.
 
 ### Элемент
 
 Сбросить фильтры
 
-Источник: src/PullRequestsPage.tsx:481.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:481.
 
 ### Элемент
 
 Тип PR
 
-Источник: src/PullRequestsPage.tsx:494.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:494.
 
 ### Элемент
 
 Все PR
 
-Источник: src/PullRequestsPage.tsx:501.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:501.
 
 ### Элемент
 
 Черновики
 
-Источник: src/PullRequestsPage.tsx:502.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:502.
 
 ### Элемент
 
 Не черновики
 
-Источник: src/PullRequestsPage.tsx:503.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:503.
 
 ### Элемент
 
 Готовность ревью
 
-Источник: src/PullRequestsPage.tsx:506.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:506.
 
 ### Элемент
 
 Все состояния
 
-Источник: src/PullRequestsPage.tsx:513.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:513.
 
 ### Элемент
 
 Ревью готово
 
-Источник: src/PullRequestsPage.tsx:514.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:514.
 
 ### Элемент
 
 Ревью не готово
 
-Источник: src/PullRequestsPage.tsx:515.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:515.
 
 ### Элемент
 
 Сортировка PR
 
-Источник: src/PullRequestsPage.tsx:518.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:518.
 
 ### Элемент
 
 Созданы: сначала новые
 
-Источник: src/PullRequestsPage.tsx:524.
+Источник: src/pages/pull-requests/ui/PullRequestsPage.tsx:524.

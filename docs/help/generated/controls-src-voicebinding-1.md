@@ -9,16 +9,16 @@
 
 Записать клавишу · Нажмите клавишу… /
 
-Источник: src/VoiceBinding.tsx:19.
+Источник: src/features/voice-input/ui/VoiceBinding.tsx:19.
 
 ### Элемент
 
 Отменить выбор · Esc · Отмена · Esc
 
-Источник: src/VoiceBinding.tsx:33.
+Источник: src/features/voice-input/ui/VoiceBinding.tsx:33.
 
 ### Элемент
 
 Отключить горячую клавишу
 
-Источник: src/VoiceBinding.tsx:34.
+Источник: src/features/voice-input/ui/VoiceBinding.tsx:34.

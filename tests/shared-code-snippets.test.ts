@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryMarkdown } from "../src/MemoryMarkdown.js";
-import { highlightSnippet } from "../src/diff-highlight.js";
-import { TicketRichText } from "../src/TicketRichText.js";
+import { MemoryMarkdown } from "../src/features/render-content/index.js";
+import { highlightSnippet } from "../src/entities/repository/highlight/index.js";
+import { TicketRichText } from "../src/features/render-content/index.js";
 
 test("memory snippets preserve code text and expose copy control", () => {
   const html = renderToStaticMarkup(createElement(MemoryMarkdown, { body: '```html\n<div>example</div>\n```\n\nInline `value`.' }));

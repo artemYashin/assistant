@@ -9,70 +9,70 @@
 
 Общий · все проекты
 
-Источник: src/DeveloperDirectory.tsx:19.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:19.
 
 ### Элемент
 
 Заказчик ·
 
-Источник: src/DeveloperDirectory.tsx:20.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:20.
 
 ### Элемент
 
 Проект ·
 
-Источник: src/DeveloperDirectory.tsx:21.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:21.
 
 ### Элемент
 
 Уровень нового разработчика
 
-Источник: src/DeveloperDirectory.tsx:76.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:76.
 
 ### Элемент
 
 Добавить разработчиков
 
-Источник: src/DeveloperDirectory.tsx:77.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:77.
 
 ### Элемент
 
 Анна Иванова Иван Петров
 
-Источник: src/DeveloperDirectory.tsx:79.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:79.
 
 ### Элемент
 
 Добавить
 
-Источник: src/DeveloperDirectory.tsx:88.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:88.
 
 ### Элемент
 
 Группировка поручений · ·
 
-Источник: src/DeveloperDirectory.tsx:121.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:121.
 
 ### Элемент
 
 Имя разработчика {…}
 
-Источник: src/DeveloperDirectory.tsx:149.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:149.
 
 ### Элемент
 
 Уровень разработчика {…}
 
-Источник: src/DeveloperDirectory.tsx:156.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:156.
 
 ### Элемент
 
 Убрать из справочника · Убрать {…} из справочника
 
-Источник: src/DeveloperDirectory.tsx:159.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:159.
 
 ### Элемент
 
 Сохранить имя и уровень · Сохранить имя {…}
 
-Источник: src/DeveloperDirectory.tsx:170.
+Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:170.

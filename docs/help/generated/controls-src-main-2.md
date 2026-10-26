@@ -9,118 +9,118 @@
 
 В памяти
 
-Источник: src/main.tsx:620.
+Источник: src/app/ui/OverviewBlock.tsx:104.
 
 ### Элемент
 
 Активные
 
-Источник: src/main.tsx:661.
+Источник: src/app/ui/PullRequestsBlock.tsx:32.
 
 ### Элемент
 
 Завершённые
 
-Источник: src/main.tsx:667.
+Источник: src/app/ui/PullRequestsBlock.tsx:38.
 
 ### Элемент
 
 Azure тикеты
 
-Источник: src/main.tsx:727.
+Источник: src/app/ui/TicketsBlock.tsx:47.
 
 ### Элемент
 
 Корзина
 
-Источник: src/main.tsx:738.
+Источник: src/app/ui/TicketsBlock.tsx:58.
 
 ### Элемент
 
 Удалить все подтверждения? · Будет очищен весь список предложений памяти, включая обработанные записи всех заказчиков и проектов. Сохранённая память останется без изменений. Это действие нельзя отменить. · Удалить всё
 
-Источник: src/main.tsx:805.
+Источник: src/app/ui/ApprovalsBlock.tsx:29.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: src/main.tsx:1070.
+Источник: src/pages/tickets/ui/Tickets.tsx:205.
 
 ### Элемент
 
 Показать все тикеты
 
-Источник: src/main.tsx:1142.
+Источник: src/pages/tickets/ui/Tickets.tsx:277.
 
 ### Элемент
 
 Поиск тикетов · Номер, название или Azure тег… / Номер, название, исполнитель…
 
-Источник: src/main.tsx:1155.
+Источник: src/pages/tickets/ui/Tickets.tsx:290.
 
 ### Элемент
 
 Поиск… / Найти
 
-Источник: src/main.tsx:1169.
+Источник: src/pages/tickets/ui/Tickets.tsx:304.
 
 ### Элемент
 
 Номер тикета для добавления · Номер тикета
 
-Источник: src/main.tsx:1192.
+Источник: src/pages/tickets/ui/Tickets.tsx:327.
 
 ### Элемент
 
 Добавить по номеру
 
-Источник: src/main.tsx:1200.
+Источник: src/pages/tickets/ui/Tickets.tsx:335.
 
 ### Элемент
 
 Синхронизировать тикеты
 
-Источник: src/main.tsx:1205.
+Источник: src/pages/tickets/ui/Tickets.tsx:340.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: src/main.tsx:1235.
+Источник: src/pages/tickets/ui/Tickets.tsx:370.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: src/main.tsx:1254.
+Источник: src/pages/tickets/ui/Tickets.tsx:389.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: src/main.tsx:1257.
+Источник: src/pages/tickets/ui/Tickets.tsx:392.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: src/main.tsx:1258.
+Источник: src/pages/tickets/ui/Tickets.tsx:393.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: src/main.tsx:1260.
+Источник: src/pages/tickets/ui/Tickets.tsx:395.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: src/main.tsx:1261.
+Источник: src/pages/tickets/ui/Tickets.tsx:396.
 
 ### Элемент
 
 Теги · Все теги
 
-Источник: src/main.tsx:1272.
+Источник: src/pages/tickets/ui/Tickets.tsx:407.

@@ -9,4 +9,4 @@
 
 Инструменты · · вызовов
 
-Источник: src/ChatStream.tsx:70.
+Источник: src/widgets/assistant/ui/ChatStream.tsx:70.

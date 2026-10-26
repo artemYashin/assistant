@@ -1,9 +1,13 @@
 import ts from "typescript";
+import { groupHelpSources } from "./help-source-groups.mjs";
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
 const root = resolve(import.meta.dirname, "..");
 const check = process.argv.includes("--check");
+// Keep generated article IDs stable when source files move between FSD layers.
+const sourceMoves = JSON.parse(readFileSync(join(root, "scripts/fsd-moves.json"), "utf8"));
+const originalPaths = new Map(Object.entries(sourceMoves).map(([before, after]) => [after, before]));
 const generated = join(root, "docs/help/generated");
 mkdirSync(generated, { recursive: true });
 const outputs = new Map();
@@ -23,9 +27,10 @@ function strings(node) {
   if (ts.isJsxElement(node)) return node.children.map(strings).filter(Boolean).join(" ");
   return "";
 }
-for (const path of paths) {
-  const source = readFileSync(join(root, path), "utf8");
-  coverage[path] = createHash("sha256").update(source).digest("hex");
+const sources = new Map(paths.map(path => [path, readFileSync(join(root, path), "utf8")]));
+for (const [path, source] of sources) coverage[path] = createHash("sha256").update(source).digest("hex");
+const sourceGroups = JSON.parse(readFileSync(join(root, "scripts/fsd-source-groups.json"), "utf8"));
+for (const { path, source, locations } of groupHelpSources(sources, sourceGroups)) {
   const errors = new Map(), controls = new Map();
   if (path.endsWith(".py")) {
     source.split("\n").forEach((line, index) => {
@@ -56,17 +61,18 @@ for (const path of paths) {
     };
     visit(file);
   }
-  const slug = path.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  const articlePath = originalPaths.get(path) || path;
+  const slug = articlePath.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
   for (const [kind, entries] of [["errors", errors], ["controls", controls]]) {
     if (!entries.size || (kind === "controls" && !path.startsWith("src/"))) continue;
     const list = [...entries].sort((a, b) => a[1] - b[1]);
     for (let start = 0; start < list.length; start += 20) {
       const part = Math.floor(start / 20) + 1;
       const id = kind + "-" + slug + "-" + part;
-      const title = (kind === "errors" ? "Сообщения и ограничения" : "Элементы интерфейса") + ": " + path.split("/").pop() + " · " + part;
+      const title = (kind === "errors" ? "Сообщения и ограничения" : "Элементы интерфейса") + ": " + articlePath.split("/").pop() + " · " + part;
       const summary = kind === "errors" ? "Точные сообщения и шаблоны из кода. Причину определяйте по операции и статье «Ошибки: диагностика»." : "Указатель подписей кнопок, полей и подсказок. Условия видимости и процессы описаны в тематических статьях.";
-      const meta = { id, title, summary, keywords: [kind === "errors" ? "ошибка" : "кнопка", path.split("/").pop()] };
-      const body = list.slice(start, start + 20).map(([text, line]) => "### " + (kind === "errors" ? "Сообщение" : "Элемент") + "\n\n" + text + "\n\nИсточник: " + path + ":" + line + ".").join("\n\n");
+      const meta = { id, title, summary, keywords: [kind === "errors" ? "ошибка" : "кнопка", articlePath.split("/").pop()] };
+      const body = list.slice(start, start + 20).map(([text, line]) => "### " + (kind === "errors" ? "Сообщение" : "Элемент") + "\n\n" + text + "\n\nИсточник: " + (locations?.[line - 1] || path + ":" + line) + ".").join("\n\n");
       outputs.set(id + ".md", "<!-- orbit-help " + JSON.stringify(meta) + " -->\n# " + title + "\n\n" + summary + "\n\nАвтоматический указатель, не инструкция к выполнению. {…} обозначает динамическое значение. Наличие текста в коде не доказывает причину ошибки и не означает, что элемент всегда виден. Подробности: статья errors-troubleshooting; для действий — тематическая статья.\n\n" + body + "\n");
     }
   }

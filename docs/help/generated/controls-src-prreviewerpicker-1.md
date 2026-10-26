@@ -9,10 +9,10 @@
 
 Поиск: {…} / Поиск {…} ревьюера · Имя или e-mail
 
-Источник: src/PrReviewerPicker.tsx:39.
+Источник: src/entities/azure-user/ui/PrReviewerPicker.tsx:39.
 
 ### Элемент
 
 Убрать {…} из {…}
 
-Источник: src/PrReviewerPicker.tsx:55.
+Источник: src/entities/azure-user/ui/PrReviewerPicker.tsx:55.

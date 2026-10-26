@@ -1,0 +1,99 @@
+[
+  {
+    "path": "src/app/ui/App.tsx",
+    "declarations": [
+      {
+        "name": "Context",
+        "path": "src/app/model/useWorkspace.ts"
+      },
+      {
+        "name": "navigation",
+        "path": "src/app/config/navigation.ts"
+      },
+      {
+        "name": "date",
+        "path": "src/pages/memory/ui/Memory.tsx"
+      },
+      {
+        "name": "Mark",
+        "path": "src/app/ui/Mark.tsx"
+      },
+      {
+        "name": "Badge",
+        "path": "src/shared/ui/badge/Badge.tsx"
+      },
+      {
+        "name": "Empty",
+        "path": "src/shared/ui/empty/Empty.tsx"
+      },
+      {
+        "name": "Field",
+        "path": "src/shared/ui/field/Field.tsx"
+      },
+      {
+        "name": "App",
+        "path": "src/app/ui/App.tsx"
+      },
+      {
+        "name": "useWorkspace",
+        "path": "src/app/model/useWorkspace.ts"
+      },
+      {
+        "name": "WorkspaceSidebar",
+        "path": "src/app/ui/WorkspaceSidebar.tsx"
+      },
+      {
+        "name": "WorkspaceHeader",
+        "path": "src/app/ui/WorkspaceHeader.tsx"
+      },
+      {
+        "name": "WorkspacePages",
+        "path": "src/app/ui/WorkspacePages.tsx"
+      },
+      {
+        "name": "OverviewBlock",
+        "path": "src/app/ui/OverviewBlock.tsx"
+      },
+      {
+        "name": "PullRequestsBlock",
+        "path": "src/app/ui/PullRequestsBlock.tsx"
+      },
+      {
+        "name": "TicketsBlock",
+        "path": "src/app/ui/TicketsBlock.tsx"
+      },
+      {
+        "name": "ApprovalsBlock",
+        "path": "src/app/ui/ApprovalsBlock.tsx"
+      },
+      {
+        "name": "Workspace",
+        "path": "src/app/ui/Workspace.tsx"
+      },
+      {
+        "name": "PageHeading",
+        "path": "src/shared/ui/page-heading/PageHeading.tsx"
+      },
+      {
+        "name": "Tickets",
+        "path": "src/pages/tickets/ui/Tickets.tsx"
+      },
+      {
+        "name": "Memory",
+        "path": "src/pages/memory/ui/Memory.tsx"
+      },
+      {
+        "name": "Settings",
+        "path": "src/pages/settings/ui/Settings.tsx"
+      },
+      {
+        "name": "LoginCode",
+        "path": "src/pages/settings/ui/LoginCode.tsx"
+      },
+      {
+        "name": "Assistant",
+        "path": "src/widgets/assistant/ui/Assistant.tsx"
+      }
+    ]
+  }
+]

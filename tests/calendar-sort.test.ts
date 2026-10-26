@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sortReminders } from "../src/calendar-sort.js";
+import { sortReminders } from "../src/entities/calendar/index.js";
 import { calendarInput, calendarOverlaps, type CalendarItem } from "../server/calendar-model.js";
 const now = "2026-10-24T10:00:00.000Z";
 const item = (id: string, start: string | null): CalendarItem => ({...calendarInput.parse({title:id,start,end:null}),id,completed:false,createdAt:now});

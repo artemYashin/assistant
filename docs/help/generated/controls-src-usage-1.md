@@ -9,64 +9,64 @@
 
 Период учёта токенов · Последние 24 часа · Последние 7 дней · Последние 30 дней · Всё время
 
-Источник: src/Usage.tsx:66.
+Источник: src/pages/usage/ui/Usage.tsx:66.
 
 ### Элемент
 
 Последние 24 часа
 
-Источник: src/Usage.tsx:72.
+Источник: src/pages/usage/ui/Usage.tsx:72.
 
 ### Элемент
 
 Последние 7 дней
 
-Источник: src/Usage.tsx:73.
+Источник: src/pages/usage/ui/Usage.tsx:73.
 
 ### Элемент
 
 Последние 30 дней
 
-Источник: src/Usage.tsx:74.
+Источник: src/pages/usage/ui/Usage.tsx:74.
 
 ### Элемент
 
 Всё время
 
-Источник: src/Usage.tsx:75.
+Источник: src/pages/usage/ui/Usage.tsx:75.
 
 ### Элемент
 
 Входные токены
 
-Источник: src/Usage.tsx:96.
+Источник: src/pages/usage/ui/Usage.tsx:96.
 
 ### Элемент
 
 Выходные токены
 
-Источник: src/Usage.tsx:101.
+Источник: src/pages/usage/ui/Usage.tsx:101.
 
 ### Элемент
 
 Запросы к LLM
 
-Источник: src/Usage.tsx:105.
+Источник: src/pages/usage/ui/Usage.tsx:105.
 
 ### Элемент
 
 Вызовы с отчётом SDK
 
-Источник: src/Usage.tsx:107.
+Источник: src/pages/usage/ui/Usage.tsx:107.
 
 ### Элемент
 
 Настроить лимиты
 
-Источник: src/Usage.tsx:124.
+Источник: src/pages/usage/ui/Usage.tsx:124.
 
 ### Элемент
 
 Остановить ревью / Остановить чат
 
-Источник: src/Usage.tsx:146.
+Источник: src/pages/usage/ui/Usage.tsx:146.

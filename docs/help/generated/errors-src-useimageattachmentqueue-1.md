@@ -9,22 +9,22 @@
 
 Не удалось прочитать изображение.
 
-Источник: src/useImageAttachmentQueue.ts:34.
+Источник: src/features/attach-chat-image/model/useImageAttachmentQueue.ts:34.
 
 ### Сообщение
 
 Прикрепление отменено: выбран другой чат или проект. Прикрепите картинку в нужный чат.
 
-Источник: src/useImageAttachmentQueue.ts:71.
+Источник: src/features/attach-chat-image/model/useImageAttachmentQueue.ts:71.
 
 ### Сообщение
 
 Не удалось загрузить вложение для предпросмотра.
 
-Источник: src/useImageAttachmentQueue.ts:106.
+Источник: src/features/attach-chat-image/model/useImageAttachmentQueue.ts:106.
 
 ### Сообщение
 
 Прикрепление отменено: выбран другой чат или проект.
 
-Источник: src/useImageAttachmentQueue.ts:118.
+Источник: src/features/attach-chat-image/model/useImageAttachmentQueue.ts:118.

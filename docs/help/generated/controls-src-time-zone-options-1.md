@@ -9,4 +9,4 @@
 
 ·
 
-Источник: src/time-zone-options.ts:20.
+Источник: src/shared/lib/time-zone/time-zone-options.ts:20.

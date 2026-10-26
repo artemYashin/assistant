@@ -9,4 +9,4 @@
 
 У напоминания нет времени начала
 
-Источник: src/calendar-layout.ts:66.
+Источник: src/entities/calendar/model/calendar-layout.ts:66.

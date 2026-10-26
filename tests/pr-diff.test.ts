@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff, diffFileSize } from "../src/pr-diff.js";
+import { splitDiff, diffFileSize } from "../src/entities/repository/index.js";
 
 test("side-by-side aligns replacements and preserves independent line numbers", () => {
   const patch = createTwoFilesPatch(
@@ -56,7 +56,7 @@ test("file sizes format bytes through gigabytes and preserve unknown sizes", () 
 });
 
 test("skipped files retain paths and never pretend to contain empty text changes", async () => {
-  const { displayDiffFiles } = await import("../src/pr-diff.js");
+  const { displayDiffFiles } = await import("../src/entities/repository/index.js");
   const files = displayDiffFiles([], [
     {before:"/dev/null",after:"/large.ts",reason:"Too large"},
     {before:"/gone.bin",after:"/dev/null",reason:"Binary"},

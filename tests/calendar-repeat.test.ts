@@ -10,7 +10,7 @@ import {
   dailyOccurrence,
   recurringOverlaps,
 } from "../server/calendar-repeat.js";
-import { calendarSegments } from "../src/calendar-layout.js";
+import { calendarSegments } from "../src/entities/calendar/index.js";
 const input = {
   title: "Daily",
   start: "2026-10-24T03:00:00.000Z",

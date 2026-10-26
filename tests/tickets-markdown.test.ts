@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ticketsMarkdown } from "../src/tickets-markdown.js";
+import { ticketsMarkdown } from "../src/features/export-tickets/index.js";
 test("Markdown uses export columns and row order without spreadsheet formula prefixes", () => {
  assert.equal(ticketsMarkdown([{id:42,title:'First',azurePriority:0},{id:7,title:'=1+1'}], ['title','id','azurePriority']),
  '| Title | ID | Azure Priority |\n| --- | --- | --- |\n| First | 42 | 0 |\n| =1+1 | 7 |  |');

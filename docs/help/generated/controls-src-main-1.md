@@ -9,118 +9,118 @@
 
 Обзор
 
-Источник: src/main.tsx:136.
+Источник: src/app/config/navigation.ts:6.
 
 ### Элемент
 
 Календарь
 
-Источник: src/main.tsx:137.
+Источник: src/app/config/navigation.ts:7.
 
 ### Элемент
 
 Входящие
 
-Источник: src/main.tsx:138.
+Источник: src/app/config/navigation.ts:8.
 
 ### Элемент
 
 Тикеты
 
-Источник: src/main.tsx:139.
+Источник: src/app/config/navigation.ts:9.
 
 ### Элемент
 
 Разработчики
 
-Источник: src/main.tsx:140.
+Источник: src/app/config/navigation.ts:10.
 
 ### Элемент
 
 Pull requests
 
-Источник: src/main.tsx:141.
+Источник: src/app/config/navigation.ts:11.
 
 ### Элемент
 
 Код репозитория
 
-Источник: src/main.tsx:142.
+Источник: src/app/config/navigation.ts:12.
 
 ### Элемент
 
 Подтверждения
 
-Источник: src/main.tsx:143.
+Источник: src/app/config/navigation.ts:13.
 
 ### Элемент
 
 Память
 
-Источник: src/main.tsx:144.
+Источник: src/app/config/navigation.ts:14.
 
 ### Элемент
 
 Заметки
 
-Источник: src/main.tsx:145.
+Источник: src/app/config/navigation.ts:15.
 
 ### Элемент
 
 Использование LLM
 
-Источник: src/main.tsx:146.
+Источник: src/app/config/navigation.ts:16.
 
 ### Элемент
 
 Повторить
 
-Источник: src/main.tsx:231.
+Источник: src/app/ui/App.tsx:26.
 
 ### Элемент
 
 Развернуть сайдбар / Свернуть сайдбар · / · Свернуть меню
 
-Источник: src/main.tsx:404.
+Источник: src/app/ui/WorkspaceSidebar.tsx:30.
 
 ### Элемент
 
 Настройки
 
-Источник: src/main.tsx:458.
+Источник: src/app/ui/WorkspaceSidebar.tsx:84.
 
 ### Элемент
 
 Что нового
 
-Источник: src/main.tsx:471.
+Источник: src/app/ui/WorkspaceSidebar.tsx:97.
 
 ### Элемент
 
 Свернуть чат / Развернуть чат · /
 
-Источник: src/main.tsx:501.
+Источник: src/app/ui/WorkspaceHeader.tsx:43.
 
 ### Элемент
 
 Перейти к обзору
 
-Источник: src/main.tsx:524.
+Источник: src/app/ui/WorkspacePages.tsx:70.
 
 ### Элемент
 
 Закрыть ошибку
 
-Источник: src/main.tsx:530.
+Источник: src/app/ui/WorkspacePages.tsx:76.
 
 ### Элемент
 
 {…}: {…} · {…}: {…}. Открыть настройки · · /
 
-Источник: src/main.tsx:567.
+Источник: src/app/ui/OverviewBlock.tsx:51.
 
 ### Элемент
 
 Обновить
 
-Источник: src/main.tsx:584.
+Источник: src/app/ui/OverviewBlock.tsx:68.

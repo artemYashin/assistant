@@ -9,10 +9,10 @@
 
 pr-branch-link is-unavailable
 
-Источник: src/PrBranchLabel.tsx:30.
+Источник: src/entities/repository/ui/PrBranchLabel.tsx:30.
 
 ### Сообщение
 
 Не удалось скопировать
 
-Источник: src/PrBranchLabel.tsx:55.
+Источник: src/entities/repository/ui/PrBranchLabel.tsx:55.

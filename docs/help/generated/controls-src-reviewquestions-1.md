@@ -9,22 +9,22 @@
 
 Перейти к PR #
 
-Источник: src/ReviewQuestions.tsx:89.
+Источник: src/widgets/review-questions/ui/ReviewQuestions.tsx:89.
 
 ### Элемент
 
 . · /
 
-Источник: src/ReviewQuestions.tsx:104.
+Источник: src/widgets/review-questions/ui/ReviewQuestions.tsx:104.
 
 ### Элемент
 
 Сохраняю… / Отправить все ответы и повторить ревью
 
-Источник: src/ReviewQuestions.tsx:136.
+Источник: src/widgets/review-questions/ui/ReviewQuestions.tsx:136.
 
 ### Элемент
 
 Игнорировать вопросы и завершить ревью
 
-Источник: src/ReviewQuestions.tsx:142.
+Источник: src/widgets/review-questions/ui/ReviewQuestions.tsx:142.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ticketsClipboard } from "../src/tickets-clipboard.js";
+import { ticketsClipboard } from "../src/features/export-tickets/index.js";
 
 test("rich clipboard preserves export columns, order and zero values", () => {
   const result = ticketsClipboard([{id:42,title:"First",azurePriority:0},{id:7,title:"Second"}], ["title","id","azurePriority"]);

@@ -9,118 +9,118 @@
 
 Экспорт · ({…}) /
 
-Источник: src/ExportTickets.tsx:83.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:83.
 
 ### Элемент
 
 Добавить в экспорт
 
-Источник: src/ExportTickets.tsx:98.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:98.
 
 ### Элемент
 
 Развернуть экспорт
 
-Источник: src/ExportTickets.tsx:446.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:446.
 
 ### Элемент
 
 Закрыть экспорт
 
-Источник: src/ExportTickets.tsx:454.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:454.
 
 ### Элемент
 
 Свернуть экспорт
 
-Источник: src/ExportTickets.tsx:480.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:480.
 
 ### Элемент
 
 Убрать из экспорта #{…}
 
-Источник: src/ExportTickets.tsx:554.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:554.
 
 ### Элемент
 
 Номер или название тикета · Найти тикет для экспорта
 
-Источник: src/ExportTickets.tsx:603.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:603.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ExportTickets.tsx:611.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:611.
 
 ### Элемент
 
 # · · В корзине /
 
-Источник: src/ExportTickets.tsx:629.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:629.
 
 ### Элемент
 
 Добавить тикет
 
-Источник: src/ExportTickets.tsx:665.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:665.
 
 ### Элемент
 
 Выбрать все
 
-Источник: src/ExportTickets.tsx:681.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:681.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/ExportTickets.tsx:688.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:688.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: src/ExportTickets.tsx:779.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:779.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: src/ExportTickets.tsx:788.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:788.
 
 ### Элемент
 
 Название файла · Будет скачан:
 
-Источник: src/ExportTickets.tsx:810.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:810.
 
 ### Элемент
 
 Форматированная таблица для вставки в редакторы и чаты; оформление зависит от приложения / Текст с Markdown-разметкой для приложений, которые её поддерживают · / · Копирование… / Скопировано / Скопировать таблицу / Скопировать Markdown
 
-Источник: src/ExportTickets.tsx:829.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:829.
 
 ### Элемент
 
 Подготовка… / Скачать {…}
 
-Источник: src/ExportTickets.tsx:841.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:841.
 
 ### Элемент
 
 Отменить закрытие
 
-Источник: src/ExportTickets.tsx:858.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:858.
 
 ### Элемент
 
 Продолжить работу
 
-Источник: src/ExportTickets.tsx:862.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:862.
 
 ### Элемент
 
 Закрыть и сбросить список
 
-Источник: src/ExportTickets.tsx:863.
+Источник: src/features/export-tickets/ui/ExportTickets.tsx:863.

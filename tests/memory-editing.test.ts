@@ -7,7 +7,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Store } from "../server/store.js";
 import { MemoryProposals, memoryProposalTool } from "../server/memory-proposals.js";
-import { MemoryMarkdown } from "../src/MemoryMarkdown.js";
+import { MemoryMarkdown } from "../src/features/render-content/index.js";
 
 test("pending memory edits are approved verbatim, processed proposals cannot change", t => {
   const dir = mkdtempSync(join(tmpdir(), "memory-edit-"));
@@ -162,7 +162,7 @@ test("saved memory refinement requires approval and preserves identity with conf
 });
 
 test("memory update approvals render old and proposed versions separately", async () => {
-  const { MemoryProposalList } = await import("../src/MemoryProposals.js");
+  const { MemoryProposalList } = await import("../src/widgets/memory/index.js");
   const html = renderToStaticMarkup(createElement(MemoryProposalList, {
     context: { client: "C", project: "P" }, onChange() {},
     items: [{ id: "draft", scope: "project", client: "C", project: "P", status: "pending", target_memory_id: "memory",

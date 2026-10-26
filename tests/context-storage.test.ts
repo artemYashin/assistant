@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { copyRenamedContextStorage } from "../src/context-storage.js";
+import { copyRenamedContextStorage } from "../src/entities/workspace/index.js";
 
 test("renaming carries customer presets and legacy filters including collapsed state", () => {
   const values: Record<string, string> = {

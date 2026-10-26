@@ -9,10 +9,10 @@
 
 Модель
 
-Источник: src/ModelOverride.tsx:36.
+Источник: src/entities/llm/ui/ModelOverride.tsx:36.
 
 ### Элемент
 
 Из настроек
 
-Источник: src/ModelOverride.tsx:43.
+Источник: src/entities/llm/ui/ModelOverride.tsx:43.

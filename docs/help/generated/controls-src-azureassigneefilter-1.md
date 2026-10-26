@@ -9,10 +9,10 @@
 
 {…} · {…} /
 
-Источник: src/AzureAssigneeFilter.tsx:16.
+Источник: src/features/filter-tickets/ui/AzureAssigneeFilter.tsx:16.
 
 ### Элемент
 
 Исполнитель Azure · Все исполнители
 
-Источник: src/AzureAssigneeFilter.tsx:44.
+Источник: src/features/filter-tickets/ui/AzureAssigneeFilter.tsx:44.

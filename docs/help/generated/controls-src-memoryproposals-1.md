@@ -9,28 +9,28 @@
 
 Подтвердить изменение памяти? / Сохранить предложение в память? · «{…}». {…} · Подтвердить · Подтвердить изменение / Подтвердить сохранение
 
-Источник: src/MemoryProposals.tsx:81.
+Источник: src/widgets/memory/ui/MemoryProposals.tsx:81.
 
 ### Элемент
 
 Редактировать
 
-Источник: src/MemoryProposals.tsx:91.
+Источник: src/widgets/memory/ui/MemoryProposals.tsx:91.
 
 ### Элемент
 
 Прикрепить к следующему сообщению ассистенту. Выберите соответствующего заказчика и проект. · Refine with AI
 
-Источник: src/MemoryProposals.tsx:92.
+Источник: src/widgets/memory/ui/MemoryProposals.tsx:92.
 
 ### Элемент
 
 Отклонить предложение? · «{…}». Сохранённая память останется без изменений. · Отклонить
 
-Источник: src/MemoryProposals.tsx:93.
+Источник: src/widgets/memory/ui/MemoryProposals.tsx:93.
 
 ### Элемент
 
 Удалить предложение? · «{…}». Предложение будет удалено из списка. Сохранённая память останется без изменений. · Удалить · Удалить предложение
 
-Источник: src/MemoryProposals.tsx:102.
+Источник: src/widgets/memory/ui/MemoryProposals.tsx:102.

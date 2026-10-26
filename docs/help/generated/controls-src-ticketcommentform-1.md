@@ -9,4 +9,4 @@
 
 Отправка… / Отправить
 
-Источник: src/TicketCommentForm.tsx:174.
+Источник: src/features/comment-ticket/ui/TicketCommentForm.tsx:174.

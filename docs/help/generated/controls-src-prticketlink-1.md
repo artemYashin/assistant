@@ -9,16 +9,16 @@
 
 Номер тикета для PR #{…} · Номер или название тикета
 
-Источник: src/PrTicketLink.tsx:59.
+Источник: src/widgets/pull-request/ui/PrTicketLink.tsx:59.
 
 ### Элемент
 
 #
 
-Источник: src/PrTicketLink.tsx:68.
+Источник: src/widgets/pull-request/ui/PrTicketLink.tsx:68.
 
 ### Элемент
 
 Связь сохраняется только в Orbit и не изменяет Azure. Тикет также появится в диалоге Merge при выборе смены статуса. · Привязываю… / Привязать локально
 
-Источник: src/PrTicketLink.tsx:73.
+Источник: src/widgets/pull-request/ui/PrTicketLink.tsx:73.

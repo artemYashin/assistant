@@ -9,4 +9,4 @@
 
 Операция отменена
 
-Источник: src/CodeProgress.tsx:5.
+Источник: src/features/repository-jobs/ui/CodeProgress.tsx:5.

@@ -9,28 +9,28 @@
 
 По пути
 
-Источник: src/RepositorySearch.tsx:111.
+Источник: src/features/search-repository/ui/RepositorySearch.tsx:111.
 
 ### Элемент
 
 По содержимому
 
-Источник: src/RepositorySearch.tsx:112.
+Источник: src/features/search-repository/ui/RepositorySearch.tsx:112.
 
 ### Элемент
 
 Поиск в репозитории · Имя файла или путь… / Текст в коде…
 
-Источник: src/RepositorySearch.tsx:116.
+Источник: src/features/search-repository/ui/RepositorySearch.tsx:116.
 
 ### Элемент
 
 Очистить поиск
 
-Источник: src/RepositorySearch.tsx:131.
+Источник: src/features/search-repository/ui/RepositorySearch.tsx:131.
 
 ### Элемент
 
 /
 
-Источник: src/RepositorySearch.tsx:138.
+Источник: src/features/search-repository/ui/RepositorySearch.tsx:138.

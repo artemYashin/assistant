@@ -9,10 +9,10 @@
 
 https://orbit.invalid/note-image/{…}
 
-Источник: src/NotesPage.tsx:21.
+Источник: src/pages/notes/ui/NotesPage.tsx:21.
 
 ### Сообщение
 
 Заметка сохранена, но не удалось обновить список. Повторно сохранять не нужно.
 
-Источник: src/NotesPage.tsx:188.
+Источник: src/pages/notes/ui/NotesPage.tsx:188.

@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import { build } from "vite";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff } from "../src/pr-diff.js";
-import type { CodeToken } from "../src/diff-highlight.js";
+import { splitDiff } from "../src/entities/repository/index.js";
+import type { CodeToken } from "../src/entities/repository/highlight/index.js";
 
 test("production highlight workers initialize without DOM and highlight TS/TSX", async () => {
   const result = await build({

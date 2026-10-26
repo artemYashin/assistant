@@ -293,7 +293,7 @@ test("assistant batch deletion completes ticket deadline reminders and preserves
 });
 
 test("deadline badge distinguishes warning start from deadline and ignores stale end dates", async () => {
-  const { calendarStatusLabel } = await import("../src/calendar-status.js");
+  const { calendarStatusLabel } = await import("../src/entities/calendar/index.js");
   const item = {
     start: "2026-10-23T17:59:00Z", end: null, kind: "reminder" as const, completed: false,
     ticket: { id: 42, source: "test", deadline: "2026-10-24T17:59:00Z" },

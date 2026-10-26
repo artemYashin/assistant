@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { paginationItems } from "../src/pagination.js";
+import { paginationItems } from "../src/shared/lib/pagination/index.js";
 test("numbered pagination retains endpoints and a bounded current-page window", () => {
   assert.deepEqual(paginationItems(1, 1), [1]);
   assert.deepEqual(paginationItems(2, 4), [1, 2, 3, 4]);

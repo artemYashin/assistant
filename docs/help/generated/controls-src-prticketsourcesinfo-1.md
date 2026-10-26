@@ -9,4 +9,4 @@
 
 Откуда берутся связанные тикеты
 
-Источник: src/PrTicketSourcesInfo.tsx:23.
+Источник: src/widgets/pull-request/ui/PrTicketSourcesInfo.tsx:23.

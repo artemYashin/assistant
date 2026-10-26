@@ -9,118 +9,118 @@
 
 Без тегов
 
-Источник: src/main.tsx:1279.
+Источник: src/pages/tickets/ui/Tickets.tsx:414.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: src/main.tsx:1289.
+Источник: src/pages/tickets/ui/Tickets.tsx:424.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: src/main.tsx:1297.
+Источник: src/pages/tickets/ui/Tickets.tsx:432.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: src/main.tsx:1308.
+Источник: src/pages/tickets/ui/Tickets.tsx:443.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: src/main.tsx:1319.
+Источник: src/pages/tickets/ui/Tickets.tsx:454.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: src/main.tsx:1336.
+Источник: src/pages/tickets/ui/Tickets.tsx:471.
 
 ### Элемент
 
 Нет поручения
 
-Источник: src/main.tsx:1343.
+Источник: src/pages/tickets/ui/Tickets.tsx:478.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/main.tsx:1376.
+Источник: src/pages/tickets/ui/Tickets.tsx:511.
 
 ### Элемент
 
 Назад
 
-Источник: src/main.tsx:1411.
+Источник: src/pages/tickets/ui/Tickets.tsx:546.
 
 ### Элемент
 
 Страница {…}
 
-Источник: src/main.tsx:1421.
+Источник: src/pages/tickets/ui/Tickets.tsx:556.
 
 ### Элемент
 
 Далее
 
-Источник: src/main.tsx:1438.
+Источник: src/pages/tickets/ui/Tickets.tsx:573.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/main.tsx:1648.
+Источник: src/pages/memory/ui/Memory.tsx:59.
 
 ### Элемент
 
 Отмена
 
-Источник: src/main.tsx:1653.
+Источник: src/pages/memory/ui/Memory.tsx:64.
 
 ### Элемент
 
 Удаление… / Удалить
 
-Источник: src/main.tsx:1654.
+Источник: src/pages/memory/ui/Memory.tsx:65.
 
 ### Элемент
 
 Добавить память
 
-Источник: src/main.tsx:1669.
+Источник: src/pages/memory/ui/Memory.tsx:80.
 
 ### Элемент
 
 Название · 1–2 предложения
 
-Источник: src/main.tsx:1738.
+Источник: src/pages/memory/ui/Memory.tsx:149.
 
 ### Элемент
 
 Для чего нужна эта запись
 
-Источник: src/main.tsx:1738.
+Источник: src/pages/memory/ui/Memory.tsx:149.
 
 ### Элемент
 
 Описание · Markdown
 
-Источник: src/main.tsx:1739.
+Источник: src/pages/memory/ui/Memory.tsx:150.
 
 ### Элемент
 
 Например: по этому проекту договорились отправлять статус каждую пятницу…
 
-Источник: src/main.tsx:1740.
+Источник: src/pages/memory/ui/Memory.tsx:151.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/main.tsx:1753.
+Источник: src/pages/memory/ui/Memory.tsx:164.

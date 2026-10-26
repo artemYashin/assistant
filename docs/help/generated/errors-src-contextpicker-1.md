@@ -9,10 +9,10 @@
 
 header-context-error
 
-Источник: src/ContextPicker.tsx:171.
+Источник: src/widgets/context-settings/ui/ContextPicker.tsx:171.
 
 ### Сообщение
 
 Не удалось переименовать
 
-Источник: src/ContextPicker.tsx:356.
+Источник: src/widgets/context-settings/ui/ContextPicker.tsx:356.

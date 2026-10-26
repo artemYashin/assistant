@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
-import { ChatMarkdown } from "../src/ChatMarkdown.js";
-import { chatCodeBranch } from "../src/chat-code-branch.js";
+import { ChatMarkdown } from "../src/features/render-content/index.js";
+import { chatCodeBranch } from "../src/shared/config/routes/index.js";
 const base = "/code?client=C&project=P&branch=feature%2Ftest";
 test("code links preserve file and range and reject unsafe paths", () => {
   const link = chatCodeBranch(base + "&path=src%2Fa.ts&line=501&endLine=505")!;

@@ -9,22 +9,22 @@
 
 Изменить статус ( · )
 
-Источник: src/BulkTicketStatus.tsx:143.
+Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:143.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/BulkTicketStatus.tsx:162.
+Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:162.
 
 ### Элемент
 
 Новый статус для выбранных тикетов
 
-Источник: src/BulkTicketStatus.tsx:178.
+Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:178.
 
 ### Элемент
 
 Обработка… / Применить в Azure DevOps
 
-Источник: src/BulkTicketStatus.tsx:217.
+Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:217.

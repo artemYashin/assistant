@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChatMarkdown } from "../src/ChatMarkdown.js";
+import { ChatMarkdown } from "../src/features/render-content/index.js";
 
 const render = (text: string) =>
   renderToStaticMarkup(createElement(ChatMarkdown, { text }));

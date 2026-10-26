@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { azureTicketPath, shareTicketUrl } from "../src/azure-ticket-link.js";
+import { azureTicketPath, shareTicketUrl } from "../src/entities/ticket/index.js";
 
 test("work item links are scoped to organization and project", () => {
   const source = "https://dev.azure.com/org|My Project";

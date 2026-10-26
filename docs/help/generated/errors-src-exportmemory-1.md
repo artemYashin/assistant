@@ -9,4 +9,4 @@
 
 Не удалось создать архив. Попробуйте скачать ещё раз.
 
-Источник: src/ExportMemory.tsx:39.
+Источник: src/features/export-memory/ui/ExportMemory.tsx:39.

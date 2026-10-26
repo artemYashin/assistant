@@ -9,34 +9,34 @@
 
 Открыть тикет по номеру · Открыть тикет
 
-Источник: src/TicketLookupDialog.tsx:105.
+Источник: src/app/ui/TicketLookupDialog.tsx:105.
 
 ### Элемент
 
 Закрыть деталку и вернуться к вводу номера / Закрыть поиск тикета · Вернуться к вводу номера / Закрыть
 
-Источник: src/TicketLookupDialog.tsx:134.
+Источник: src/app/ui/TicketLookupDialog.tsx:134.
 
 ### Элемент
 
 #
 
-Источник: src/TicketLookupDialog.tsx:153.
+Источник: src/app/ui/TicketLookupDialog.tsx:153.
 
 ### Элемент
 
 Повторить
 
-Источник: src/TicketLookupDialog.tsx:158.
+Источник: src/app/ui/TicketLookupDialog.tsx:158.
 
 ### Элемент
 
 Номер тикета
 
-Источник: src/TicketLookupDialog.tsx:184.
+Источник: src/app/ui/TicketLookupDialog.tsx:184.
 
 ### Элемент
 
 Загрузка… / Показать тикет
 
-Источник: src/TicketLookupDialog.tsx:196.
+Источник: src/app/ui/TicketLookupDialog.tsx:196.

@@ -9,10 +9,10 @@
 
 View Diff
 
-Источник: src/PrChangeButtons.tsx:25.
+Источник: src/widgets/pull-request/ui/PrChangeButtons.tsx:25.
 
 ### Элемент
 
 Коммиты
 
-Источник: src/PrChangeButtons.tsx:26.
+Источник: src/widgets/pull-request/ui/PrChangeButtons.tsx:26.

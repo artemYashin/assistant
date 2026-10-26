@@ -9,118 +9,118 @@
 
 Страница не найдена
 
-Источник: src/main.tsx:397.
+Источник: src/app/model/useWorkspace.ts:174.
 
 ### Сообщение
 
 error dismissible
 
-Источник: src/main.tsx:528.
+Источник: src/app/ui/WorkspacePages.tsx:74.
 
 ### Сообщение
 
 Закрыть ошибку
 
-Источник: src/main.tsx:531.
+Источник: src/app/ui/WorkspacePages.tsx:77.
 
 ### Сообщение
 
 не подключено
 
-Источник: src/main.tsx:572.
+Источник: src/app/ui/OverviewBlock.tsx:56.
 
 ### Сообщение
 
 Проверьте предложения ассистента перед сохранением в память.
 
-Источник: src/main.tsx:804.
+Источник: src/app/ui/ApprovalsBlock.tsx:28.
 
 ### Сообщение
 
 Проект не настроен
 
-Источник: src/main.tsx:1127.
+Источник: src/pages/tickets/ui/Tickets.tsx:262.
 
 ### Сообщение
 
 Некорректный номер тикета в ссылке.
 
-Источник: src/main.tsx:1137.
+Источник: src/pages/tickets/ui/Tickets.tsx:272.
 
 ### Сообщение
 
 Ничего не найдено
 
-Источник: src/main.tsx:1543.
+Источник: src/pages/tickets/ui/Tickets.tsx:678.
 
 ### Сообщение
 
 Не подключён
 
-Источник: src/main.tsx:1965.
+Источник: src/pages/settings/ui/Settings.tsx:123.
 
 ### Сообщение
 
 Не настроен
 
-Источник: src/main.tsx:2061.
+Источник: src/pages/settings/ui/Settings.tsx:219.
 
 ### Сообщение
 
 Лимит времени ответа, секунд
 
-Источник: src/main.tsx:2106.
+Источник: src/pages/settings/ui/Settings.tsx:264.
 
 ### Сообщение
 
 От 15 до 600 секунд. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: src/main.tsx:2107.
+Источник: src/pages/settings/ui/Settings.tsx:265.
 
 ### Сообщение
 
 llmTimeoutSeconds
 
-Источник: src/main.tsx:2114.
+Источник: src/pages/settings/ui/Settings.tsx:272.
 
 ### Сообщение
 
 От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: src/main.tsx:2132.
+Источник: src/pages/settings/ui/Settings.tsx:290.
 
 ### Сообщение
 
 До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: src/main.tsx:2147.
+Источник: src/pages/settings/ui/Settings.tsx:305.
 
 ### Сообщение
 
 Лимит времени ответа ревью, секунд
 
-Источник: src/main.tsx:2205.
+Источник: src/pages/settings/ui/Settings.tsx:363.
 
 ### Сообщение
 
 От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: src/main.tsx:2205.
+Источник: src/pages/settings/ui/Settings.tsx:363.
 
 ### Сообщение
 
 reviewTimeoutSeconds
 
-Источник: src/main.tsx:2206.
+Источник: src/pages/settings/ui/Settings.tsx:364.
 
 ### Сообщение
 
 Лимит токенов ревью по умолчанию
 
-Источник: src/main.tsx:2208.
+Источник: src/pages/settings/ui/Settings.tsx:366.
 
 ### Сообщение
 
 От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: src/main.tsx:2211.
+Источник: src/pages/settings/ui/Settings.tsx:369.

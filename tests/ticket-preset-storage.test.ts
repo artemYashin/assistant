@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { customerPresetKey, migrateCustomerPresets } from "../src/ticket-preset-storage.js";
+import { customerPresetKey, migrateCustomerPresets } from "../src/features/filter-tickets/index.js";
 
 function storage() {
   const values = new Map<string, string>();

@@ -9,4 +9,4 @@
 
 Не удалось загрузить модели. Откройте список ещё раз.
 
-Источник: src/ModelOverride.tsx:28.
+Источник: src/entities/llm/ui/ModelOverride.tsx:28.

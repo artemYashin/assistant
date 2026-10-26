@@ -9,10 +9,10 @@
 
 Не удалось проверить актуальность diff. Показана ранее загруженная копия. {…}
 
-Источник: src/PrDiffDialog.tsx:222.
+Источник: src/features/view-diff/ui/PrDiffDialog.tsx:222.
 
 ### Сообщение
 
 Не удалось скопировать
 
-Источник: src/PrDiffDialog.tsx:389.
+Источник: src/features/view-diff/ui/PrDiffDialog.tsx:389.

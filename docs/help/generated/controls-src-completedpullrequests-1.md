@@ -9,16 +9,16 @@
 
 Обновить
 
-Источник: src/CompletedPullRequests.tsx:74.
+Источник: src/pages/pull-requests/ui/CompletedPullRequests.tsx:74.
 
 ### Элемент
 
 Назад
 
-Источник: src/CompletedPullRequests.tsx:102.
+Источник: src/pages/pull-requests/ui/CompletedPullRequests.tsx:102.
 
 ### Элемент
 
 Далее
 
-Источник: src/CompletedPullRequests.tsx:111.
+Источник: src/pages/pull-requests/ui/CompletedPullRequests.tsx:111.

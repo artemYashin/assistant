@@ -90,3 +90,14 @@ explicit instruction. The currently agreed exclusions are local developers,
 local assignments and developer vacations, including their related UI and agent
 capabilities. Work mode is not an authorization boundary. Preserve hidden data
 and user preferences when switching modes.
+
+# Frontend architecture
+
+Read ARCHITECTURE.md before moving modules or adding frontend areas. Follow FSD
+layers and public index.ts entry points for migrated modules. Keep implementation
+local to its page/slice until sharing is justified. Do not add new root-level
+src TS/TSX files or grow the exact legacy exception list without documenting why.
+Keep storage keys, API routes, browser event names and data semantics unchanged
+in move-only refactors. Run npm run architecture:check (included in check).
+Preserve generated help article IDs through scripts/fsd-moves.json when moving
+indexed source files; do not turn module relocation into a user data migration.

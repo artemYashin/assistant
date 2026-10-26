@@ -9,106 +9,106 @@
 
 Поиск в корзине · Номер, название, исполнитель…
 
-Источник: src/TicketTrash.tsx:240.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:240.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: src/TicketTrash.tsx:261.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:261.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: src/TicketTrash.tsx:279.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:279.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: src/TicketTrash.tsx:282.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:282.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: src/TicketTrash.tsx:283.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:283.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: src/TicketTrash.tsx:285.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:285.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: src/TicketTrash.tsx:286.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:286.
 
 ### Элемент
 
 Теги · Все теги
 
-Источник: src/TicketTrash.tsx:296.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:296.
 
 ### Элемент
 
 Без тегов
 
-Источник: src/TicketTrash.tsx:302.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:302.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: src/TicketTrash.tsx:308.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:308.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: src/TicketTrash.tsx:314.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:314.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: src/TicketTrash.tsx:321.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:321.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: src/TicketTrash.tsx:331.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:331.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: src/TicketTrash.tsx:346.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:346.
 
 ### Элемент
 
 Нет поручения
 
-Источник: src/TicketTrash.tsx:352.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:352.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/TicketTrash.tsx:381.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:381.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: src/TicketTrash.tsx:446.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:446.
 
 ### Элемент
 
 Сортировать: Тип задачи · Тип · /
 
-Источник: src/TicketTrash.tsx:471.
+Источник: src/pages/tickets/ui/TicketTrash.tsx:471.

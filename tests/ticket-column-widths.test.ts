@@ -4,7 +4,7 @@ import {
   fitColumnWidths,
   parseColumnWidths,
   resizeColumnPair,
-} from "../src/ticket-column-widths.js";
+} from "../src/features/ticket-columns/index.js";
 
 test("column width preferences reject invalid values and preserve valid dimensions", () => {
   assert.deepEqual(

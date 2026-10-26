@@ -9,16 +9,16 @@
 
 Закрыть
 
-Источник: src/CodeWorkDialog.tsx:29.
+Источник: src/features/repository-jobs/ui/CodeWorkDialog.tsx:29.
 
 ### Элемент
 
 Отменяю… / Отменить задачу
 
-Источник: src/CodeWorkDialog.tsx:36.
+Источник: src/features/repository-jobs/ui/CodeWorkDialog.tsx:36.
 
 ### Элемент
 
 Технические данные
 
-Источник: src/CodeWorkDialog.tsx:45.
+Источник: src/features/repository-jobs/ui/CodeWorkDialog.tsx:45.

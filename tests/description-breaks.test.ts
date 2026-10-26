@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import type { Root } from "mdast";
-import { remarkDescriptionBreaks } from "../src/remark-description-breaks.js";
+import { remarkDescriptionBreaks } from "../src/features/render-content/index.js";
 
 const parse = (text: string) => {
   const processor = unified().use(remarkParse).use(remarkDescriptionBreaks);

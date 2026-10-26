@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { zoomAtPoint } from "../src/image-zoom.js";
+import { zoomAtPoint } from "../src/shared/lib/image-zoom/index.js";
 test("wheel zoom preserves the image point under the cursor after panning", () => {
   const view = { zoom: 2, pan: { x: 30, y: -20 } };
   const point = { x: 90, y: 40 };

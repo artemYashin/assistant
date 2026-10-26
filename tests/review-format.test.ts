@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import { rehypeReviewFormat, reviewText } from "../src/rehype-review-format.js";
+import { rehypeReviewFormat, reviewText } from "../src/features/render-content/index.js";
 import type { Root } from "hast";
 
 test("optional review cards preserve prose, nested quotes and code; severity gets a badge", async () => {
@@ -44,7 +44,7 @@ test("ordinary finding headings and unbolded labels render cards without swallow
 
 test("recommended prompt example renders severity, problem and solution labels and a fenced snippet", async () => {
   const { REVIEW_POLICY } = await import("../server/review-questions.js");
-  const { reviewLabelKind } = await import("../src/rehype-review-format.js");
+  const { reviewLabelKind } = await import("../src/features/render-content/index.js");
   const example = REVIEW_POLICY.slice(REVIEW_POLICY.indexOf("### Проблема: короткое название", REVIEW_POLICY.indexOf("Recommended Russian Markdown example")), REVIEW_POLICY.indexOf("Use actual verified values"));
   const pipeline = unified().use(remarkParse).use(remarkRehype).use(rehypeReviewFormat);
   const tree = await pipeline.run(pipeline.parse(example)) as Root;

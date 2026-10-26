@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { diffFileLink } from "../src/diff-file-link.js";
+import { diffFileLink } from "../src/entities/repository/index.js";
 const data = { head: "a".repeat(40), base: "b".repeat(40) };
 const context = { client: "Customer", project: "Project" };
 test("diff links pin head for added/changed/renamed and base for deleted files", () => {

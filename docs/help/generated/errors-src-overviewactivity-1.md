@@ -9,22 +9,22 @@
 
 sync.error
 
-Источник: src/OverviewActivity.tsx:29.
+Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:29.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: src/OverviewActivity.tsx:29.
+Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:29.
 
 ### Сообщение
 
 Остановлено
 
-Источник: src/OverviewActivity.tsx:46.
+Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:46.
 
 ### Сообщение
 
 Название недоступно
 
-Источник: src/OverviewActivity.tsx:109.
+Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:109.

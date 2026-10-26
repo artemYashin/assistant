@@ -10,10 +10,10 @@ import {
   setDeveloperVacation,
   vacationBounds,
 } from "../server/developer-vacations.js";
-import { developerOnVacation } from "../src/developer-vacation.js";
+import { developerOnVacation } from "../src/entities/developer/index.js";
 import { notificationDue } from "../server/calendar-notifications.js";
 import { searchCalendar } from "../server/calendar-search.js";
-import { parseCalendarFilters } from "../src/calendar-filters.js";
+import { parseCalendarFilters } from "../src/features/filter-calendar/index.js";
 
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-vacation-"));

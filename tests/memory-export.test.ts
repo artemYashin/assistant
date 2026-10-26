@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { posix } from "node:path";
 import JSZip from "jszip";
 import { Store } from "../server/store.js";
-import { memoryMarkdownFiles, type ExportMemory } from "../src/memory-export.js";
+import { memoryMarkdownFiles, type ExportMemory } from "../src/features/export-memory/index.js";
 const context = { client: "Customer", project: "Project" };
 const rows: ExportMemory[] = [
   { scope: "general", body: "**Fact**\n\n```ts\nfn();\n```", client: "", project: "" },

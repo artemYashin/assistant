@@ -9,28 +9,28 @@
 
 Удалить {…}: {…} · Удалить {…}
 
-Источник: src/DeleteContextButton.tsx:15.
+Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:15.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/DeleteContextButton.tsx:17.
+Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:17.
 
 ### Элемент
 
 Для подтверждения введите · удалить
 
-Источник: src/DeleteContextButton.tsx:31.
+Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:31.
 
 ### Элемент
 
 Отмена
 
-Источник: src/DeleteContextButton.tsx:34.
+Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:34.
 
 ### Элемент
 
 Удаляю… / Удалить {…} навсегда
 
-Источник: src/DeleteContextButton.tsx:34.
+Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:34.

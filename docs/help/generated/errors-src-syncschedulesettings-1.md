@@ -9,4 +9,4 @@
 
 Вне выбранного времени фоновые обновления приостановлены. Ручное обновление доступно всегда.
 
-Источник: src/SyncScheduleSettings.tsx:77.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:77.

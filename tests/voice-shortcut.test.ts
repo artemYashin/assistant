@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createVoiceShortcut, voiceRecordingIsLongEnough, shortcutTextWasInserted } from "../src/voice-shortcut.js";
+import { createVoiceShortcut, voiceRecordingIsLongEnough, shortcutTextWasInserted } from "../src/features/voice-input/index.js";
 const m = { code: "KeyM", repeat: false, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, isComposing: false };
 test("MM needs two separate presses within the interval and resets after a match", () => {
   const press = createVoiceShortcut();

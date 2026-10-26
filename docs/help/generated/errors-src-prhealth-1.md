@@ -9,4 +9,4 @@
 
 Ошибка проверки merge
 
-Источник: src/PrHealth.tsx:25.
+Источник: src/widgets/pull-request/ui/PrHealth.tsx:25.

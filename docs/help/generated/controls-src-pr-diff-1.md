@@ -9,4 +9,4 @@
 
 @@ -{…},{…} +{…},{…} @@
 
-Источник: src/pr-diff.ts:58.
+Источник: src/entities/repository/lib/pr-diff.ts:58.

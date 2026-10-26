@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { ticketCitationTool } from "../server/ticket-citation.js";
-import { chatTicketCitation } from "../src/routing.js";
+import { chatTicketCitation } from "../src/shared/config/routes/index.js";
 
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-cite-review-"));

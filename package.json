@@ -8,12 +8,13 @@
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.server.json",
     "start": "node dist-server/index.js",
     "test": "tsx --test tests/*.test.ts code-browser/*.test.mjs",
-    "check": "npm run releases:check && npm run docs:check && tsc --noEmit",
+    "check": "npm run architecture:check && npm run releases:check && npm run docs:check && tsc --noEmit",
     "test:sdk": "tsx scripts/check-sdk.ts",
     "format": "prettier --write \"server/**/*.ts\" \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\"",
     "docs:generate": "node scripts/generate-help.mjs",
     "docs:check": "node scripts/generate-help.mjs --check",
-    "releases:check": "node scripts/check-releases.mjs"
+    "releases:check": "node scripts/check-releases.mjs",
+    "architecture:check": "node --test scripts/check-architecture.test.mjs && node scripts/check-architecture.mjs"
   },
   "dependencies": {
     "@github/copilot-sdk": "1.0.22",

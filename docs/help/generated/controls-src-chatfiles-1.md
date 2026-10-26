@@ -9,22 +9,22 @@
 
 Убрать вложение {…}
 
-Источник: src/ChatFiles.tsx:139.
+Источник: src/features/chat-attachments/ui/ChatFiles.tsx:139.
 
 ### Элемент
 
 Добавить вложения: картинки и текстовые файлы · Добавить вложения
 
-Источник: src/ChatFiles.tsx:165.
+Источник: src/features/chat-attachments/ui/ChatFiles.tsx:165.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/ChatFiles.tsx:270.
+Источник: src/features/chat-attachments/ui/ChatFiles.tsx:270.
 
 ### Элемент
 
 Понятно
 
-Источник: src/ChatFiles.tsx:274.
+Источник: src/features/chat-attachments/ui/ChatFiles.tsx:274.

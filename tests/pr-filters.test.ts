@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filterPullRequests } from "../src/pr-filters.js";
+import { filterPullRequests } from "../src/features/filter-pull-requests/index.js";
 const items = [
   {
     number: 1,

@@ -9,4 +9,4 @@
 
 Подробнее →
 
-Источник: src/OverviewUsage.tsx:62.
+Источник: src/widgets/overview-usage/ui/OverviewUsage.tsx:62.

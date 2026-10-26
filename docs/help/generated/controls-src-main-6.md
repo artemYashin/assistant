@@ -9,64 +9,64 @@
 
 / /
 
-Источник: src/main.tsx:2828.
+Источник: src/widgets/assistant/ui/Assistant.tsx:578.
 
 ### Элемент
 
 Подключить GitHub Copilot
 
-Источник: src/main.tsx:2842.
+Источник: src/widgets/assistant/ui/Assistant.tsx:592.
 
 ### Элемент
 
 предлож. ждут подтверждения
 
-Источник: src/main.tsx:2881.
+Источник: src/widgets/assistant/ui/Assistant.tsx:631.
 
 ### Элемент
 
 Не прикреплять тикет к сообщению · Убрать прикреплённый тикет. Переписка сохранится.
 
-Источник: src/main.tsx:2902.
+Источник: src/widgets/assistant/ui/Assistant.tsx:652.
 
 ### Элемент
 
 Убрать прикреплённое предложение
 
-Источник: src/main.tsx:2957.
+Источник: src/widgets/assistant/ui/Assistant.tsx:707.
 
 ### Элемент
 
 Сообщение ассистенту · Голосовой ввод… / Спросите или попросите запомнить…
 
-Источник: src/main.tsx:2961.
+Источник: src/widgets/assistant/ui/Assistant.tsx:711.
 
 ### Элемент
 
 Очистить текст сообщения
 
-Источник: src/main.tsx:2980.
+Источник: src/widgets/assistant/ui/Assistant.tsx:730.
 
 ### Элемент
 
 Очистить историю чата · Очистить историю текущего чата · Очистить чат
 
-Источник: src/main.tsx:2988.
+Источник: src/widgets/assistant/ui/Assistant.tsx:738.
 
 ### Элемент
 
 Остановить ответ · Стоп
 
-Источник: src/main.tsx:3007.
+Источник: src/widgets/assistant/ui/Assistant.tsx:757.
 
 ### Элемент
 
 Отправить ассистенту
 
-Источник: src/main.tsx:3013.
+Источник: src/widgets/assistant/ui/Assistant.tsx:763.
 
 ### Элемент
 
 Очищаю… / Очистить чат
 
-Источник: src/main.tsx:3043.
+Источник: src/widgets/assistant/ui/Assistant.tsx:793.

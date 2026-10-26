@@ -9,4 +9,4 @@
 
 смещение недоступно
 
-Источник: src/time-zone-options.ts:9.
+Источник: src/shared/lib/time-zone/time-zone-options.ts:9.

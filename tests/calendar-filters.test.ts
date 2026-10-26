@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseCalendarFilters } from "../src/calendar-filters.js";
+import { parseCalendarFilters } from "../src/features/filter-calendar/index.js";
 import {
   calendarInput,
   calendarMatchesStatus,

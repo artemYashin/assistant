@@ -12,7 +12,7 @@ import {
   calendarStatus,
   calendarNotificationsSchema,
 } from "../server/calendar-model.js";
-import { fromWall, wallTime } from "../src/calendar-time.js";
+import { fromWall, wallTime } from "../src/entities/calendar/index.js";
 import { createApp } from "../server/app.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-calendar-"));
@@ -393,7 +393,7 @@ test("calendar scope migration preserves legacy reminders, completion and notifi
 
 test("time grid clips multi-day events, assigns overlap lanes and uses a Monday week", async () => {
   const { calendarSegments, calendarWeekDays } =
-    await import("../src/calendar-layout.js");
+    await import("../src/entities/calendar/index.js");
   assert.deepEqual(calendarWeekDays("2026-10-21", "week"), [
     "2026-10-19",
     "2026-10-20",
@@ -454,7 +454,7 @@ test("time grid clips multi-day events, assigns overlap lanes and uses a Monday 
 });
 
 test("calendar gestures preserve duration and metadata, resize and respect timezone transitions", async () => {
-  const { shiftCalendarItem } = await import("../src/calendar-layout.js");
+  const { shiftCalendarItem } = await import("../src/entities/calendar/index.js");
   const item = {
     ...calendarInput.parse({
       title: "Gesture",
@@ -605,7 +605,7 @@ test("per-reminder warning overrides defaults and null restores inheritance afte
 });
 
 test("short daily events retain actual duration and do not overlap adjacent events", async () => {
-  const { calendarSegments } = await import("../src/calendar-layout.js");
+  const { calendarSegments } = await import("../src/entities/calendar/index.js");
   const daily = {...calendarInput.parse({title:"Quarter hour",start:"2026-10-23T14:00:00Z",end:"2026-10-23T14:15:00Z",repeatDaily:true}),id:"short",completed:false,createdAt:"2026-10-23T00:00:00Z",repeatZone:"UTC"};
   const next = {...daily,id:"next",start:"2026-10-23T14:15:00Z",end:"2026-10-23T14:30:00Z"};
   const rows = calendarSegments([daily,next],"2026-10-24","UTC");

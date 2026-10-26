@@ -9,4 +9,4 @@
 
 Использовать общую настройку
 
-Источник: src/ReminderLeadFields.tsx:20.
+Источник: src/entities/calendar/ui/ReminderLeadFields.tsx:20.

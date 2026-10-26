@@ -9,22 +9,22 @@
 
 Импортировать выбранное
 
-Источник: src/ImportAzureTickets.tsx:23.
+Источник: src/features/import-tickets/ui/ImportAzureTickets.tsx:23.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/ImportAzureTickets.tsx:49.
+Источник: src/features/import-tickets/ui/ImportAzureTickets.tsx:49.
 
 ### Элемент
 
 Отмена
 
-Источник: src/ImportAzureTickets.tsx:87.
+Источник: src/features/import-tickets/ui/ImportAzureTickets.tsx:87.
 
 ### Элемент
 
 Импортирую… / Добавить тикеты
 
-Источник: src/ImportAzureTickets.tsx:95.
+Источник: src/features/import-tickets/ui/ImportAzureTickets.tsx:95.

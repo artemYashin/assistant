@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff } from "../src/pr-diff.js";
-import { diffLanguage, validDiffLanguage } from "../src/diff-languages.js";
-import { highlightDiff, highlightLines, highlightSnippet } from "../src/diff-highlight.js";
+import { splitDiff } from "../src/entities/repository/index.js";
+import { diffLanguage, validDiffLanguage } from "../src/entities/repository/index.js";
+import { highlightDiff, highlightLines, highlightSnippet } from "../src/entities/repository/highlight/index.js";
 
 test("diff language detects file extensions and safely restores stored choices", () => {
   assert.equal(diffLanguage("/src/Page.TSX"), "tsx");

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
-import { ticketsXlsx } from "../src/tickets-xlsx.js";
+import { ticketsXlsx } from "../src/features/export-tickets/xlsx/index.js";
 
 test("Excel export round-trips ordered tickets as values with formatting", async () => {
   const bytes = await ticketsXlsx(
@@ -72,7 +72,7 @@ test("Excel selected columns retain styling by field and omit unselected data", 
 });
 
 test("creation and change dates can be exported without local import", async () => {
-  const { ticketsCsv } = await import("../src/tickets-csv.js");
+  const { ticketsCsv } = await import("../src/features/export-tickets/index.js");
   const tickets = [
     {
       id: 42,

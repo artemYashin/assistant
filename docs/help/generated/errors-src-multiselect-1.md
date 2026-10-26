@@ -9,4 +9,4 @@
 
 Ошибка поиска
 
-Источник: src/MultiSelect.tsx:221.
+Источник: src/shared/ui/multi-select/MultiSelect.tsx:221.

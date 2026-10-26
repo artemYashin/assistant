@@ -9,28 +9,28 @@
 
 Изменить исполнителя в Azure · Изменить исполнителя Azure #{…}
 
-Источник: src/AzureAssignee.tsx:72.
+Источник: src/features/edit-ticket/ui/AzureAssignee.tsx:72.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/AzureAssignee.tsx:99.
+Источник: src/features/edit-ticket/ui/AzureAssignee.tsx:99.
 
 ### Элемент
 
 Поиск пользователей Azure · Имя, фамилия или e-mail · от 2 символов
 
-Источник: src/AzureAssignee.tsx:112.
+Источник: src/features/edit-ticket/ui/AzureAssignee.tsx:112.
 
 ### Элемент
 
 Не назначен
 
-Источник: src/AzureAssignee.tsx:121.
+Источник: src/features/edit-ticket/ui/AzureAssignee.tsx:121.
 
 ### Элемент
 
 Сохраняю и проверяю… / Сохранить в Azure
 
-Источник: src/AzureAssignee.tsx:173.
+Источник: src/features/edit-ticket/ui/AzureAssignee.tsx:173.

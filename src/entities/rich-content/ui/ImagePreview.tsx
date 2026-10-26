@@ -1,0 +1,374 @@
+import { ImageActions } from "./ImageActions.js";
+import { zoomAtPoint } from "../../../shared/lib/image-zoom/index.js";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { Expand, LoaderCircle, Minus, Plus, X } from "lucide-react";
+
+export function ImagePreview({
+  src,
+  alt = "Изображение",
+  className = "",
+  children,
+  thumbnail = true,
+}: {
+  src: string;
+  alt?: string;
+  className?: string;
+  children?: ReactNode;
+  thumbnail?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [imageState, setImageState] = useState<{
+    src: string;
+    status: "loaded" | "failed";
+    ratio?: number;
+  } | null>(null);
+  const failed = imageState?.src === src && imageState.status === "failed";
+  const loading = imageState?.src !== src;
+  useEffect(() => {
+    setOpen(false);
+  }, [src]);
+  return (
+    <>
+      <span className={children ? "image-preview-compact" : "image-preview-shell"}>
+      <a
+        href={src}
+        className={`image-preview-trigger ${className}`}
+        title="Открыть изображение · масштабирование"
+        aria-haspopup="dialog"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        {children ??
+          (thumbnail ? (
+            <span
+              className={`image-thumbnail${loading ? " is-loading" : ""}`}
+              aria-busy={loading}
+              style={{ "--image-ratio": imageState?.src === src ? imageState.ratio ?? 1.7333 : 1.7333 } as CSSProperties}
+            >
+              {(loading || failed) && (
+                <span className="image-thumbnail-placeholder" role="status">
+                  {loading && <LoaderCircle size={20} className="spin" aria-hidden="true" />}
+                  <span>{failed ? `${alt} · повторить просмотр` : "Загрузка изображения…"}</span>
+                </span>
+              )}
+              {!failed && <img
+                key={src}
+                src={src}
+                alt={alt}
+                loading="lazy"
+                ref={(node) => {
+                  if (node?.complete && node.naturalWidth > 0)
+                    setImageState((old) =>
+                      old?.src === src && old.status === "loaded"
+                        ? old
+                        : { src, status: "loaded", ratio: node.naturalWidth / node.naturalHeight },
+                    );
+                }}
+                onLoad={event => setImageState({ src, status: "loaded", ratio: event.currentTarget.naturalWidth / event.currentTarget.naturalHeight })}
+                onError={() => setImageState({ src, status: "failed" })}
+              />}
+            </span>
+          ) : (
+            <span>
+              {alt}
+              {failed ? " · повторить просмотр" : " · открыть изображение"}
+            </span>
+          ))}
+      </a>
+      {!children && <ImageActions src={src} onAttach={() => setOpen(false)}/>}
+      </span>
+      {open &&
+        createPortal(
+          <ImageViewer src={src} alt={alt} onClose={() => setOpen(false)} />,
+          document.body,
+        )}
+    </>
+  );
+}
+export function ImageViewer({
+  src,
+  alt,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [natural, setNatural] = useState({ width: 0, height: 0 });
+  const [view, setView] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
+  const { zoom, pan } = view;
+  function setZoom(value: number | ((current: number) => number)) {
+    setView((current) => ({
+      ...current,
+      zoom: typeof value === "function" ? value(current.zoom) : value,
+    }));
+  }
+  function setPan(
+    value:
+      | { x: number; y: number }
+      | ((current: { x: number; y: number }) => { x: number; y: number }),
+  ) {
+    setView((current) => ({
+      ...current,
+      pan: typeof value === "function" ? value(current.pan) : value,
+    }));
+  }
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState(false);
+  const drag = useRef<{
+    x: number;
+    y: number;
+    panX: number;
+    panY: number;
+  } | null>(null);
+  const fit =
+    natural.width && size.width
+      ? Math.min(
+          1,
+          (size.width - 24) / natural.width,
+          (size.height - 24) / natural.height,
+        )
+      : 1;
+  const scale = Math.max(0.001, fit) * zoom;
+  const maxZoom = Math.max(8, 1 / Math.max(0.001, fit));
+  const { x, y } = pan;
+  const ready = natural.width > 0 && !error;
+  useEffect(() => {
+    dialog.current?.showModal();
+    const node = stage.current!;
+    const observer = new ResizeObserver(() =>
+      setSize({ width: node.clientWidth, height: node.clientHeight }),
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const node = stage.current!;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (!ready) return;
+      // Trackpad pinch produces small wheel deltas with ctrlKey set.
+      // Normalize line/page wheels and cap each step to avoid sudden jumps.
+      const delta =
+        event.deltaY *
+        (event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? node.clientHeight
+            : 1);
+      const sensitivity = event.ctrlKey ? 0.035 : 0.006;
+      const factor = Math.exp(
+        Math.max(-0.45, Math.min(0.45, -delta * sensitivity)),
+      );
+      const bounds = node.getBoundingClientRect();
+      const point = {
+        x: event.clientX - bounds.left - node.clientWidth / 2,
+        y: event.clientY - bounds.top - node.clientHeight / 2,
+      };
+      setView((current) => zoomAtPoint(current, factor, point, maxZoom));
+    };
+    node.addEventListener("wheel", wheel, { passive: false });
+    return () => node.removeEventListener("wheel", wheel);
+  }, [
+    ready,
+    maxZoom,
+    fit,
+    natural.width,
+    natural.height,
+    size.width,
+    size.height,
+  ]);
+  function adjust(factor: number) {
+    setZoom((value) => Math.max(0.25, Math.min(maxZoom, value * factor)));
+  }
+  function reset() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+  function endDrag() {
+    drag.current = null;
+    setDragging(false);
+  }
+  return (
+    <dialog
+      ref={dialog}
+      className="image-viewer"
+      aria-label={`Просмотр: ${alt}`}
+      onCancel={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }}
+    >
+      <header className="image-viewer-toolbar">
+        <strong title={alt}>{alt}</strong>
+        <div className="image-viewer-controls">
+          <ImageActions src={src} onAttach={onClose}/>
+          <button
+            type="button"
+            className="icon-button"
+            disabled={!ready || zoom <= 0.25}
+            title="Уменьшить"
+            aria-label="Уменьшить изображение"
+            onClick={() => adjust(1 / 1.25)}
+          >
+            <Minus size={19} />
+          </button>
+          <output aria-live="polite">
+            {ready ? `${Math.round(scale * 100)}%` : "—"}
+          </output>
+          <button
+            type="button"
+            className="icon-button"
+            disabled={!ready || zoom >= maxZoom}
+            title="Увеличить"
+            aria-label="Увеличить изображение"
+            onClick={() => adjust(1.25)}
+          >
+            <Plus size={19} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            disabled={!ready}
+            title="Вписать в окно"
+            aria-label="Вписать изображение в окно"
+            onClick={reset}
+          >
+            <Expand size={18} />
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            disabled={!ready}
+            title="Исходный размер"
+            onClick={() => {
+              setZoom(1 / Math.max(0.001, fit));
+              setPan({ x: 0, y: 0 });
+            }}
+          >
+            1:1
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Закрыть просмотр изображения"
+            title="Закрыть · Esc"
+            onClick={onClose}
+          >
+            <X size={21} />
+          </button>
+        </div>
+      </header>
+      <div
+        ref={stage}
+        className={`image-viewer-stage${dragging ? " is-dragging" : ""}`}
+        tabIndex={0}
+        aria-label="Изображение. Щипок трекпада или колесо мыши — масштаб, перетаскивание — перемещение, стрелки — перемещение, 0 — вписать"
+        onDoubleClick={reset}
+        onKeyDown={(event) => {
+          if (!ready) return;
+          if (
+            [
+              "+",
+              "=",
+              "-",
+              "0",
+              "ArrowLeft",
+              "ArrowRight",
+              "ArrowUp",
+              "ArrowDown",
+            ].includes(event.key)
+          )
+            event.preventDefault();
+          if (event.key === "+" || event.key === "=") adjust(1.25);
+          if (event.key === "-") adjust(1 / 1.25);
+          if (event.key === "0") reset();
+          if (event.key.startsWith("Arrow"))
+            setPan({
+              x:
+                x +
+                (event.key === "ArrowLeft"
+                  ? 40
+                  : event.key === "ArrowRight"
+                    ? -40
+                    : 0),
+              y:
+                y +
+                (event.key === "ArrowUp"
+                  ? 40
+                  : event.key === "ArrowDown"
+                    ? -40
+                    : 0),
+            });
+        }}
+        onPointerDown={(event) => {
+          if (event.button !== 0 || !ready) return;
+          event.preventDefault();
+          event.currentTarget.focus({ preventScroll: true });
+          event.currentTarget.setPointerCapture(event.pointerId);
+          drag.current = {
+            x: event.clientX,
+            y: event.clientY,
+            panX: x,
+            panY: y,
+          };
+          setDragging(true);
+        }}
+        onPointerMove={(event) => {
+          if (drag.current)
+            setPan({
+              x: drag.current.panX + event.clientX - drag.current.x,
+              y: drag.current.panY + event.clientY - drag.current.y,
+            });
+        }}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onLostPointerCapture={endDrag}
+      >
+        {!ready && !error && (
+          <span className="image-viewer-message" role="status">
+            <LoaderCircle size={22} className="spin" /> Загружаю изображение…
+          </span>
+        )}
+        {error && (
+          <p className="image-viewer-message" role="alert">
+            Не удалось загрузить изображение. Проверьте доступ к вложению и
+            подключение.
+          </p>
+        )}
+        {!error && (
+          <img
+            src={src}
+            alt={alt}
+            draggable={false}
+            onLoad={(event) =>
+              setNatural({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
+            }
+            onError={() => setError(true)}
+            style={{
+              width: natural.width ? natural.width * scale : undefined,
+              height: natural.height ? natural.height * scale : undefined,
+              transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+              visibility: ready ? "visible" : "hidden",
+            }}
+          />
+        )}
+      </div>
+      <footer>
+        Щипок трекпада / колесо — масштаб к курсору · Перетаскивание —
+        перемещение · Двойной клик — вписать · Esc — закрыть
+      </footer>
+    </dialog>
+  );
+}

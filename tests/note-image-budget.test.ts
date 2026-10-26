@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { noteImageBudget } from "../src/note-image-budget.js";
+import { noteImageBudget } from "../src/entities/note/index.js";
 for (const kind of ["free", "ticket"] as const)
   test(`${kind}: removed drafts do not consume limits and Undo restores accounting`, () => {
     const images = Array.from({ length: 10 }, (_, i) => ({

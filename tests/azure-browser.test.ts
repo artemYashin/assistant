@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Store } from "../server/store.js";
 import { Connectors } from "../server/connectors.js";
 import { azureBrowseSchema, browseQuery, orderBrowseIds } from "../server/azure-browser.js";
-import { ticketsCsv } from "../src/tickets-csv.js";
+import { ticketsCsv } from "../src/features/export-tickets/index.js";
 
 test("Azure browsing escapes filters, uses ID cursors and intersects local filters", () => {
   const input = azureBrowseSchema.parse({

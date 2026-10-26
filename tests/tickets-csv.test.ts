@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ticketsCsv } from "../src/tickets-csv.js";
+import { ticketsCsv } from "../src/features/export-tickets/index.js";
 test("CSV preserves selected order and escapes quotes, delimiters, lines and formulas", () => {
   const csv = ticketsCsv([
     {

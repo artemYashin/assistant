@@ -9,10 +9,10 @@
 
 # · · /
 
-Источник: src/TicketNotesPage.tsx:53.
+Источник: src/pages/notes/ui/TicketNotesPage.tsx:53.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/TicketNotesPage.tsx:89.
+Источник: src/pages/notes/ui/TicketNotesPage.tsx:89.

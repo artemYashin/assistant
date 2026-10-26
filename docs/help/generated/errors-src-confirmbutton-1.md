@@ -9,4 +9,4 @@
 
 Не удалось выполнить действие
 
-Источник: src/ConfirmButton.tsx:27.
+Источник: src/shared/ui/confirm-button/ConfirmButton.tsx:27.

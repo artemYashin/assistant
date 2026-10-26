@@ -1,0 +1,1 @@
+export * from "./InitialsAvatar.js";

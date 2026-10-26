@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { developerGroup } from "../src/developer-status.js";
+import { developerGroup } from "../src/entities/developer/index.js";
 
 test("developer status grouping is type independent, exclusive and defaults to active", () => {
   const groups = {Prod: "done", UAT: "review", "Ready for Testing": "review", Closed: "active"} as const;

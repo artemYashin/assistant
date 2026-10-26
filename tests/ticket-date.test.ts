@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { TicketDate } from "../src/TicketDate.js";
+import { TicketDate } from "../src/entities/ticket/index.js";
 test("table dates render separate date/time and retain full machine readable instant", () => {
   const value = "2026-10-25T14:05:12Z";
   const html = renderToStaticMarkup(createElement(TicketDate,{value}));

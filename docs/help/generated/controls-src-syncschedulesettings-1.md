@@ -9,28 +9,28 @@
 
 Режим уведомлений / Автоматическая синхронизация
 
-Источник: src/SyncScheduleSettings.tsx:15.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:15.
 
 ### Элемент
 
 В любое время / Обновлять всегда
 
-Источник: src/SyncScheduleSettings.tsx:24.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:24.
 
 ### Элемент
 
 По расписанию
 
-Источник: src/SyncScheduleSettings.tsx:26.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:26.
 
 ### Элемент
 
 Показывать с / Обновлять с
 
-Источник: src/SyncScheduleSettings.tsx:32.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:32.
 
 ### Элемент
 
 До
 
-Источник: src/SyncScheduleSettings.tsx:41.
+Источник: src/entities/schedule/ui/SyncScheduleSettings.tsx:41.

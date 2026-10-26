@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { policyChecks } from "../server/pr-health.js";
-import { PrHealth } from "../src/PrHealth.js";
+import { PrHealth } from "../src/widgets/pull-request/index.js";
 test("health follows evaluation status, not internal build context flags", () => {
   const checks = policyChecks([
     {

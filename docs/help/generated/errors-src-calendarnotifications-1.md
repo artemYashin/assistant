@@ -9,10 +9,10 @@
 
 Недоступный разработчик
 
-Источник: src/CalendarNotifications.tsx:173.
+Источник: src/widgets/calendar-notifications/ui/CalendarNotifications.tsx:173.
 
 ### Сообщение
 
 Системное уведомление не удалось показать. Напоминания доступны здесь.
 
-Источник: src/CalendarNotifications.tsx:325.
+Источник: src/widgets/calendar-notifications/ui/CalendarNotifications.tsx:325.

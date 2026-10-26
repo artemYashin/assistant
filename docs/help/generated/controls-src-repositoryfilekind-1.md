@@ -9,28 +9,28 @@
 
 Папка
 
-Источник: src/RepositoryFileKind.tsx:4.
+Источник: src/entities/repository/lib/RepositoryFileKind.tsx:4.
 
 ### Элемент
 
 Ссылка
 
-Источник: src/RepositoryFileKind.tsx:5.
+Источник: src/entities/repository/lib/RepositoryFileKind.tsx:5.
 
 ### Элемент
 
 Подмодуль
 
-Источник: src/RepositoryFileKind.tsx:6.
+Источник: src/entities/repository/lib/RepositoryFileKind.tsx:6.
 
 ### Элемент
 
 Настройки
 
-Источник: src/RepositoryFileKind.tsx:16.
+Источник: src/entities/repository/lib/RepositoryFileKind.tsx:16.
 
 ### Элемент
 
 / Файл
 
-Источник: src/RepositoryFileKind.tsx:18.
+Источник: src/entities/repository/lib/RepositoryFileKind.tsx:18.

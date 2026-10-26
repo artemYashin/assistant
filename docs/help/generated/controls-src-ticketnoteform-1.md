@@ -9,10 +9,10 @@
 
 Отмена
 
-Источник: src/TicketNoteForm.tsx:145.
+Источник: src/features/edit-ticket/ui/TicketNoteForm.tsx:145.
 
 ### Элемент
 
 Сохраняю… / Сохранить
 
-Источник: src/TicketNoteForm.tsx:154.
+Источник: src/features/edit-ticket/ui/TicketNoteForm.tsx:154.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {timeZoneOffset,timeZoneOptions} from "../src/time-zone-options.js";
+import {timeZoneOffset,timeZoneOptions} from "../src/shared/lib/time-zone/index.js";
 test("timezone labels show current offsets including DST and fractional hours",()=>{
  const winter=new Date("2026-01-15T12:00:00Z"), summer=new Date("2026-07-15T12:00:00Z");
  assert.equal(timeZoneOffset("UTC",winter),"UTC");
