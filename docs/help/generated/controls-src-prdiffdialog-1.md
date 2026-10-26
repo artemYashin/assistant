@@ -51,46 +51,46 @@
 
 Обновить
 
-Источник: src/PrDiffDialog.tsx:348.
+Источник: src/PrDiffDialog.tsx:350.
 
 ### Элемент
 
 /
 
-Источник: src/PrDiffDialog.tsx:373.
+Источник: src/PrDiffDialog.tsx:375.
 
 ### Элемент
 
 Комментарий к строке {…} · Добавить комментарий в Azure
 
-Источник: src/PrDiffDialog.tsx:410.
+Источник: src/PrDiffDialog.tsx:412.
 
 ### Элемент
 
 Комментарий к строке
 
-Источник: src/PrDiffDialog.tsx:450.
+Источник: src/PrDiffDialog.tsx:452.
 
 ### Элемент
 
 / · Отправляю… / Отправить в Azure
 
-Источник: src/PrDiffDialog.tsx:457.
+Источник: src/PrDiffDialog.tsx:459.
 
 ### Элемент
 
 Отмена
 
-Источник: src/PrDiffDialog.tsx:464.
+Источник: src/PrDiffDialog.tsx:466.
 
 ### Элемент
 
 Строка {…} /
 
-Источник: src/PrDiffDialog.tsx:487.
+Источник: src/PrDiffDialog.tsx:489.
 
 ### Элемент
 
 Показать строку · После / До
 
-Источник: src/PrDiffDialog.tsx:499.
+Источник: src/PrDiffDialog.tsx:501.

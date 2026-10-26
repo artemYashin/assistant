@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Copy, Check, Code2, FileCode2, LoaderCircle, MessageSquarePlus, Send, CornerUpLeft, X } from "lucide-react";
 import { InitialsAvatar } from "./InitialsAvatar.js";
 import { api } from "./api.js";
-import { splitDiff, type DiffLine } from "./pr-diff.js";
+import { displayDiffFiles, type DiffLine } from "./pr-diff.js";
 import { SingleSelect } from "./SingleSelect.js";
 import { diffLanguage, diffLanguages, diffLanguageStorageKey, validDiffLanguage } from "./diff-languages.js";
 import type { CodeToken, HighlightedFile } from "./diff-highlight.js";
 
 type Loaded = {
-  files: ReturnType<typeof splitDiff>;
+  files: ReturnType<typeof displayDiffFiles>;
   notes: string[];
   base: string;
   head: string;
@@ -96,7 +96,7 @@ export function PrDiffDialog({
       repositoryContext ? `/repository/commit-diff?${new URLSearchParams({ ...repositoryContext, commit: commit! })}` : `/pr/${commit ? "commit-diff" : "diff"}?${new URLSearchParams({ monitor: pr.monitor, repo: pr.repo, number: String(pr.number), ...(commit ? { commit } : {}) })}`,
     )
       .then((result) => {
-        const parsed = { ...result, files: splitDiff(result.patches) };
+        const parsed = { ...result, files: displayDiffFiles(result.patches, result.skippedFiles) };
         if (live) setData(parsed);
       })
       .catch((e) => {
@@ -147,7 +147,7 @@ export function PrDiffDialog({
     ? diffLanguage(file?.after === "/dev/null" ? file.before : file?.after || "") : language;
   useEffect(() => {
     setHighlighted(null);
-    if (!file || effectiveLanguage === "plaintext") return;
+    if (!file || file.skipReason || effectiveLanguage === "plaintext") return;
     let worker: Worker;
     try {
       worker = new Worker(new URL("./diff-highlight.worker.ts", import.meta.url), { type: "module" });
@@ -272,7 +272,9 @@ export function PrDiffDialog({
                   key={selected}
                   aria-label={`Изменения ${file.after}`}
                 >
-                  {!file.hunks.length ? (
+                  {file.skipReason ? (
+                    <p role="status"><AlertTriangle size={18} /> Содержимое не показано. {file.skipReason}</p>
+                  ) : !file.hunks.length ? (
                     <p>Текст не изменился (например, файл переименован).</p>
                   ) : (
                     <div

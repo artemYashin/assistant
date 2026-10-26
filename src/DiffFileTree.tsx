@@ -1,10 +1,10 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { RepositoryFileIcon } from "./RepositoryFileKind.js";
-import { diffFileSize, splitDiff } from "./pr-diff.js";
+import { diffFileSize, type DisplayDiffFile } from "./pr-diff.js";
 
 type Node = { name: string; path: string; children: Map<string, Node>; index?: number };
-export function buildDiffTree(files: ReturnType<typeof splitDiff>) {
+export function buildDiffTree(files: DisplayDiffFile[]) {
   const root: Node = { name: "", path: "", children: new Map() };
   files.forEach((file, index) => {
     const parts = (file.after === "/dev/null" ? file.before : file.after || file.before).split("/").filter(Boolean);
@@ -18,7 +18,7 @@ export function buildDiffTree(files: ReturnType<typeof splitDiff>) {
   return root;
 }
 export function DiffFileTree({ files, selected, onSelect, sizes }: {
-  files: ReturnType<typeof splitDiff>; selected: number; onSelect: (index: number) => void;
+  files: DisplayDiffFile[]; selected: number; onSelect: (index: number) => void;
   sizes?: { path: string; sizeBytes?: number }[];
 }) {
   const tooltipId = useId();
@@ -56,7 +56,7 @@ export function DiffFileTree({ files, selected, onSelect, sizes }: {
           <span className="diff-tree-toggle" style={{ marginLeft: depth * 8 }}>{directory && (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}</span>
           <RepositoryFileIcon name={child.name} type={directory ? "directory" : "file"} size={15} />
           <span className="diff-tree-name">{child.name}</span>
-          {file && <span className="diff-tree-counts"><span className="pr-diff-file-size">{diffFileSize(size)}</span><span className="pr-diff-added">+{file.added}</span><span className="pr-diff-removed">−{file.removed}</span></span>}
+          {file?.skipReason ? <span className="diff-tree-counts" title={file.skipReason}><AlertTriangle size={14} aria-label="Содержимое не показано" /></span> : file && <span className="diff-tree-counts"><span className="pr-diff-file-size">{diffFileSize(size)}</span><span className="pr-diff-added">+{file.added}</span><span className="pr-diff-removed">−{file.removed}</span></span>}
         </button>
         {directory && open && render(child, depth + 1)}
       </div>;

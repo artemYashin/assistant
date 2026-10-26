@@ -1815,3 +1815,47 @@ test("author-only import persists across restart, older saves preserve it, expli
   service.save({...input,reviewerFilter:JSON.parse(legacy!)});
   assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).required,JSON.parse(legacy!).required);
 });
+
+test("skipped diff metadata includes large, deleted binary, renamed excluded and capped files", async t => {
+  const {service}=fixture(t);
+  mock(t,[pr()],url=>{
+    if(url.pathname.endsWith("/diffs/commits")) return {commonCommit:"base",allChangesIncluded:true,changes:[
+      {changeType:"rename",originalPath:"/old",item:{path:"/excluded/new"}},
+      {changeType:"add",item:{path:"/large"}},
+      {changeType:"delete",item:{path:"/binary"}},
+      ...Array.from({length:100},(_,i)=>({changeType:"edit",item:{path:`/file${i}`}})),
+    ]};
+    if(url.pathname.endsWith("/items")){
+      const path=url.searchParams.get("path");
+      if(path==="/large")return {content:"x".repeat(50001)};
+      if(path==="/binary")return {contentMetadata:{isBinary:true}};
+      return {content:"same"};
+    }
+  });
+  service.save({...context,repository:"repo",mode:"required",enabled:true,reviewFiles:{ignoredPaths:["excluded/"],diffBudget:160000}});
+  const result=await service.changes(service.monitors()[0],"repo","head","target");
+  assert.equal(result.skippedFiles.length,5);
+  assert.deepEqual(result.skippedFiles[0],{before:"/old",after:"/excluded/new",reason:"Исключён настройками путей проекта. Содержимое не загружалось."});
+  assert.match(result.skippedFiles[1].reason,/50 000/);
+  assert.equal(result.skippedFiles[1].before,"/dev/null");
+  assert.match(result.skippedFiles[2].reason,/Бинарный/);
+  assert.equal(result.skippedFiles[2].after,"/dev/null");
+  assert.match(result.skippedFiles[4].reason,/100 файлов/);
+});
+
+test("legacy diff cache upgrades on demand and preserves PR data", async t => {
+  const {service,store}=fixture(t);
+  mock(t,[pr()]);
+  await service.sync();
+  const monitor=service.monitors()[0].id;
+  await service.viewDiff(monitor,"repo",1);
+  const cached=store.db.prepare("SELECT revision,payload FROM pr_diff_cache").get() as any;
+  const revision=JSON.parse(cached.revision);revision[0]=1;
+  const payload=JSON.parse(cached.payload);delete payload.skippedFiles;
+  store.db.prepare("UPDATE pr_diff_cache SET revision=?,payload=?").run(JSON.stringify(revision),JSON.stringify(payload));
+  const before=store.db.prepare("SELECT * FROM pull_requests").all();
+  const upgraded=await service.viewDiff(monitor,"repo",1);
+  assert.ok(Array.isArray(upgraded.skippedFiles));
+  assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(),before);
+  assert.deepEqual(await service.viewDiff(monitor,"repo",1),upgraded);
+});

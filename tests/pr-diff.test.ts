@@ -54,3 +54,18 @@ test("file sizes format bytes through gigabytes and preserve unknown sizes", () 
   assert.equal(diffFileSize(1024 ** 2), "1 МБ");
   assert.equal(diffFileSize(1024 ** 3), "1 ГБ");
 });
+
+test("skipped files retain paths and never pretend to contain empty text changes", async () => {
+  const { displayDiffFiles } = await import("../src/pr-diff.js");
+  const files = displayDiffFiles([], [
+    {before:"/dev/null",after:"/large.ts",reason:"Too large"},
+    {before:"/gone.bin",after:"/dev/null",reason:"Binary"},
+    {before:"/old.ts",after:"/new.ts",reason:"Excluded"},
+  ]);
+  assert.equal(files.length, 3);
+  assert.equal(files[0].skipReason, "Too large");
+  assert.equal(files[1].before, "/gone.bin");
+  assert.equal(files[2].after, "/new.ts");
+  assert.ok(files.every(file => file.hunks.length === 0 && file.skipReason));
+  assert.equal(displayDiffFiles([createTwoFilesPatch("/a", "/a", "old", "new")]).length, 1);
+});

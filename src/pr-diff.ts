@@ -83,3 +83,15 @@ export function diffFileSize(bytes?: number) {
   const unit = bytes > 0 ? Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1) : 0;
   return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: unit ? 1 : 0 }).format(bytes / 1024 ** unit)} ${units[unit]}`;
 }
+
+
+export type SkippedDiffFile = { before: string; after: string; reason: string };
+export type DisplayDiffFile = ReturnType<typeof splitDiff>[number] & { skipReason?: string };
+export function displayDiffFiles(patches: string[], skipped: SkippedDiffFile[] = []): DisplayDiffFile[] {
+  const files: DisplayDiffFile[] = splitDiff(patches);
+  for (const file of skipped) {
+    if (!files.some(existing => existing.before === file.before && existing.after === file.after))
+      files.push({ before: file.before, after: file.after, skipReason: file.reason, added: 0, removed: 0, hunks: [] });
+  }
+  return files;
+}

@@ -1159,7 +1159,7 @@ export class PullRequests {
       throw new AppError(409, "Коммиты PR не загружены. Обновите pull request.");
     const credentials = this.credentials(m);
     const revisionFor = (config: Monitor, pr: any) => JSON.stringify([
-      1, config.source, config.azure_project, config.repository,
+      2, config.source, config.azure_project, config.repository,
       pr.head, pr.target, reviewFileSettings.parse(JSON.parse(config.review_files || "{}")),
     ]);
     const revision = revisionFor(m, known);
@@ -1363,6 +1363,19 @@ export class PullRequests {
         complete = page.allChangesIncluded === true;
       }
     }
+    const skipped = new Map<any, { before: string; after: string; reason: string }>();
+    const skip = (change: any, reason: string) => {
+      const kind = String(change.changeType).toLowerCase();
+      skipped.set(change, {
+        before: kind.includes("add") ? "/dev/null" : change.originalPath || change.item.path,
+        after: kind.includes("delete") ? "/dev/null" : change.item.path,
+        reason,
+      });
+    };
+    for (const change of allChanges) {
+      if (change.item?.path && !change.item.isFolder)
+        skip(change, "Достигнут лимит 100 файлов для загрузки содержимого.");
+    }
     let ignored = 0;
     const excludedPaths: string[] = [];
     const includedFiles: { path: string; characters: number; sizeBytes: number }[] = [];
@@ -1378,6 +1391,7 @@ export class PullRequests {
       if (matching.length) {
         matching.forEach((pattern) => matchedRules.add(pattern));
         ignored++;
+        skip(change, "Исключён настройками путей проекта. Содержимое не загружалось.");
         if (excludedPaths.length < 100) excludedPaths.push(change.item.path);
         return false;
       }
@@ -1405,13 +1419,17 @@ export class PullRequests {
         typeof item.content !== "string" ||
         item.content.length > 50000
       )
-        throw new UnsupportedDiffFile("Неподдерживаемый или большой файл");
+        throw new UnsupportedDiffFile(item.contentMetadata?.isBinary
+          ? "Бинарный файл: текстовый diff недоступен."
+          : typeof item.content !== "string" ? "Azure не вернул текстовое содержимое файла."
+          : "Файл слишком большой: более 50 000 символов.");
       fileSizes.set(JSON.stringify([path, commit]), typeof item.size === "number" && Number.isFinite(item.size) && item.size >= 0 ? item.size : Buffer.byteLength(item.content, "utf8"));
       return item.content as string;
     };
-    for (const change of candidates.slice(0, 100)) {
+    for (const [index, change] of candidates.slice(0, 100).entries()) {
       if (this.stopped || Date.now() - preparationStarted > 60000) {
         cacheable = false;
+        for (const remaining of candidates.slice(index, 100)) skip(remaining, "Подготовка diff остановлена по времени или завершению приложения.");
         notes.push(
           "Подготовка diff остановлена по времени или завершению приложения",
         );
@@ -1420,6 +1438,7 @@ export class PullRequests {
       const path = change.item?.path;
       if (!path || change.item?.isFolder) continue;
       if (chars >= budget) {
+        for (const remaining of candidates.slice(index, 100)) skip(remaining, "Достигнут общий лимит размера diff.");
         notes.push(
           `Достигнут лимит diff ${budget} символов; оставшиеся файлы не проверены.`,
         );
@@ -1428,6 +1447,7 @@ export class PullRequests {
       try {
         const kind = String(change.changeType).toLowerCase();
         if (kind.includes("rename") && !change.originalPath) {
+          skip(change, "Azure не вернул исходный путь переименованного файла.");
           notes.push(`${path}: rename без исходного пути, файл пропущен`);
           continue;
         }
@@ -1446,16 +1466,19 @@ export class PullRequests {
           { context: 4, timeout: 1000, maxEditLength: 20000 },
         );
         if (!patch) {
+          skip(change, "Diff слишком сложный для отображения.");
           notes.push(`${path}: diff слишком сложный`);
           continue;
         }
         if (patch.length > perFileBudget) {
+          skip(change, `Размер diff превышает лимит одного файла: ${patch.length} из ${perFileBudget} символов.`);
           notes.push(
             `${path}: diff ${patch.length} символов превышает лимит одного файла ${perFileBudget}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.`,
           );
           continue;
         }
         if (chars + patch.length > budget) {
+          skip(change, `Недостаточно общего бюджета diff: требуется ${patch.length}, осталось ${budget - chars} символов.`);
           notes.push(
             `${path}: требуется ${patch.length} символов, осталось ${budget - chars} из ${budget}. Файл не проверен; настройте исключения или лимит diff.`,
           );
@@ -1464,7 +1487,9 @@ export class PullRequests {
         chars += patch.length;
         includedFiles.push({ path, characters: patch.length, sizeBytes: fileSizes.get(JSON.stringify(kind.includes("delete") ? [oldPath, diff.commonCommit] : [path, head])) ?? 0 });
         patches.push(patch);
+        skipped.delete(change);
       } catch (error) {
+        skip(change, error instanceof UnsupportedDiffFile ? error.message : "Не удалось загрузить содержимое из Azure. Повторите открытие diff.");
         if (!(error instanceof UnsupportedDiffFile)) cacheable = false;
         notes.push(
           `${path}: содержимое недоступно, бинарное или слишком большое`,
@@ -1474,6 +1499,7 @@ export class PullRequests {
     return {
       cacheable: cacheable && complete,
       patches,
+      skippedFiles: [...skipped.values()],
       notes,
       base: diff.commonCommit,
       head,
