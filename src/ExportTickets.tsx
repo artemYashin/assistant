@@ -1,3 +1,4 @@
+import { ticketsClipboard } from "./tickets-clipboard.js";
 import { ticketsMarkdown } from "./tickets-markdown.js";
 import { ticketExportFilename } from "./ticket-export-filename.js";
 import { useLocalManagement } from "./WorkMode.js";
@@ -153,8 +154,8 @@ export function TicketExportDialog({
     updateSnapshot(rows);
     draftTickets.current = rows;
   };
-  const [copying, setCopying] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copying, setCopying] = useState<"table" | "markdown" | null>(null);
+  const [copied, setCopied] = useState<"table" | "markdown" | null>(null);
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<"csv" | "xlsx">("xlsx");
   const [order, setOrder] = useState<ExportColumnKey[]>(
@@ -172,10 +173,10 @@ export function TicketExportDialog({
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
   const columns = order.filter((key) => enabled.includes(key) && (management || key!=="developers"));
-  useEffect(() => { setCopied(false); }, [snapshot, order, enabled, management]);
+  useEffect(() => { setCopied(null); }, [snapshot, order, enabled, management]);
   useEffect(() => {
     if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2500);
+    const timer = setTimeout(() => setCopied(null), 2500);
     return () => clearTimeout(timer);
   }, [copied]);
   useEffect(() => {
@@ -364,20 +365,32 @@ export function TicketExportDialog({
           t.title?.toLocaleLowerCase().includes(search)),
     )
     .slice(0, 20);
-  async function copyTable() {
+  async function copyTable(kind: "table" | "markdown") {
     if (lock.current || !columns.length || !snapshot.length || loading) return;
     lock.current = true;
-    setCopying(true);
-    setCopied(false);
+    setCopying(kind);
+    setCopied(null);
     setError("");
     try {
-      await navigator.clipboard.writeText(ticketsMarkdown(snapshot, columns));
-      setCopied(true);
+      if (kind === "markdown") {
+        await navigator.clipboard.writeText(ticketsMarkdown(snapshot, columns));
+      } else {
+        if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+          setError("Браузер не поддерживает копирование форматированной таблицы. Используйте «Скопировать Markdown» или скачайте файл.");
+          return;
+        }
+        const content = ticketsClipboard(snapshot, columns);
+        await navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([content.html], { type: "text/html" }),
+          "text/plain": new Blob([content.text], { type: "text/plain" }),
+        })]);
+      }
+      setCopied(kind);
     } catch {
       setError("Не удалось скопировать таблицу. Разрешите доступ к буферу обмена в браузере и повторите попытку либо скачайте файл.");
     } finally {
       lock.current = false;
-      setCopying(false);
+      setCopying(null);
     }
   }
   async function download() {
@@ -812,19 +825,23 @@ export function TicketExportDialog({
             Заголовки файла — на английском, значения — без перевода.
           </small>
           <div className="export-download-actions">
-          <button
-            type="button"
-            className="secondary"
-            disabled={busy || copying || loading || !columns.length || !snapshot.length}
-            onClick={() => void copyTable()}
-          >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            <span aria-live="polite">{copying ? "Копирование…" : copied ? "Скопировано" : "Скопировать Markdown"}</span>
-          </button>
+          {(["table", "markdown"] as const).map(kind => (
+            <button
+              key={kind}
+              type="button"
+              className="secondary"
+              title={kind === "table" ? "Форматированная таблица для вставки в редакторы и чаты; оформление зависит от приложения" : "Текст с Markdown-разметкой для приложений, которые её поддерживают"}
+              disabled={busy || copying !== null || loading || !columns.length || !snapshot.length}
+              onClick={() => void copyTable(kind)}
+            >
+              {copied === kind ? <Check size={16} /> : <Copy size={16} />}
+              <span aria-live="polite">{copying === kind ? "Копирование…" : copied === kind ? "Скопировано" : kind === "table" ? "Скопировать таблицу" : "Скопировать Markdown"}</span>
+            </button>
+          ))}
           <button
             type="button"
             className="primary"
-            disabled={busy || copying || loading || !columns.length || !snapshot.length}
+            disabled={busy || copying !== null || loading || !columns.length || !snapshot.length}
             onClick={() => void download()}
           >
             <Download size={16} />
