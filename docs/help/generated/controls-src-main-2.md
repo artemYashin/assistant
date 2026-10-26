@@ -15,13 +15,13 @@
 
 Активные
 
-Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:28.
+Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:30.
 
 ### Элемент
 
 Завершённые
 
-Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:31.
+Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:33.
 
 ### Элемент
 

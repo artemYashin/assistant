@@ -9,118 +9,118 @@
 
 Укажите новую дату истечения PAT. Скрыть напоминание удалением настроенной даты нельзя.
 
-Источник: services/backend/src/app.ts:483.
+Источник: services/backend/src/app.ts:485.
 
 ### Сообщение
 
 Запись памяти не найдена
 
-Источник: services/backend/src/app.ts:564.
+Источник: services/backend/src/app.ts:566.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем удалите чат.
 
-Источник: services/backend/src/app.ts:634.
+Источник: services/backend/src/app.ts:636.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем уберите тикет из контекста.
 
-Источник: services/backend/src/app.ts:641.
+Источник: services/backend/src/app.ts:643.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем очистите историю.
 
-Источник: services/backend/src/app.ts:667.
+Источник: services/backend/src/app.ts:669.
 
 ### Сообщение
 
 Не удалось принять вложение. Максимальный размер файла — 10 МБ.
 
-Источник: services/backend/src/app.ts:740.
+Источник: services/backend/src/app.ts:742.
 
 ### Сообщение
 
 Выберите файл.
 
-Источник: services/backend/src/app.ts:748.
+Источник: services/backend/src/app.ts:750.
 
 ### Сообщение
 
 Этот запрос уже завершён. Обновите отчёт использования LLM.
 
-Источник: services/backend/src/app.ts:778.
+Источник: services/backend/src/app.ts:780.
 
 ### Сообщение
 
 Проект изменился. Отправьте сообщение заново в нужном проекте.
 
-Источник: services/backend/src/app.ts:826.
+Источник: services/backend/src/app.ts:828.
 
 ### Сообщение
 
 Ассистент ещё отвечает на предыдущий запрос
 
-Источник: services/backend/src/app.ts:828.
+Источник: services/backend/src/app.ts:830.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте деталку заново.
 
-Источник: services/backend/src/app.ts:830.
+Источник: services/backend/src/app.ts:832.
 
 ### Сообщение
 
 Подключение Azure изменилось. Выберите тикеты заново.
 
-Источник: services/backend/src/app.ts:832.
+Источник: services/backend/src/app.ts:834.
 
 ### Сообщение
 
 Не удалось завершить ответ ассистента
 
-Источник: services/backend/src/app.ts:913.
+Источник: services/backend/src/app.ts:915.
 
 ### Сообщение
 
 Предложение не найдено
 
-Источник: services/backend/src/app.ts:935.
+Источник: services/backend/src/app.ts:937.
 
 ### Сообщение
 
 Выберите проект
 
-Источник: services/backend/src/app.ts:984.
+Источник: services/backend/src/app.ts:986.
 
 ### Сообщение
 
 Подключение изменилось; откройте настройки заново
 
-Источник: services/backend/src/app.ts:986.
+Источник: services/backend/src/app.ts:988.
 
 ### Сообщение
 
 Статусы не должны повторяться без учёта регистра
 
-Источник: services/backend/src/app.ts:989.
+Источник: services/backend/src/app.ts:991.
 
 ### Сообщение
 
 Разработчик не найден в этом проекте
 
-Источник: services/backend/src/app.ts:1017.
+Источник: services/backend/src/app.ts:1019.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: services/backend/src/app.ts:1080.
+Источник: services/backend/src/app.ts:1082.
 
 ### Сообщение
 
 Подключение изменилось. Обновите карточку тикета.
 
-Источник: services/backend/src/app.ts:1113.
+Источник: services/backend/src/app.ts:1115.

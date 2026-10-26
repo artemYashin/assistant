@@ -1,3 +1,4 @@
+import { azurePrLinks } from "./ticket-pull-requests.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { commentMarkdown, commentImageType } from "./comment-markdown.js";
 import {
@@ -940,6 +941,7 @@ export class Connectors {
       fields,
       markdownFields,
       comments: cachedComments,
+      azurePullRequests: snapshot?.azurePullRequests,
       attachments,
       warnings: [
         ...(snapshot?.warnings || []),
@@ -1058,6 +1060,7 @@ export class Connectors {
       base,
       project: s.azureProject,
       fields: item.fields,
+      azurePullRequests: azurePrLinks(item.relations || []),
       comments: comments.map((c) => ({
         id: c.id,
         author: c.createdBy?.displayName || "",

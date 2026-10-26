@@ -17909,3 +17909,23 @@ a.pr-branch-link:focus-visible {
   outline: 2px solid #8a5b30;
   outline-offset: 4px;
 }
+
+.linked-pr-detail {
+  padding: 20px;
+  margin-top: 14px;
+}
+.linked-pr-detail > header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.linked-pr-detail h2 {
+  overflow-wrap: anywhere;
+}
+.linked-pr-author {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}

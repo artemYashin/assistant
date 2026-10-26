@@ -1,3 +1,4 @@
+import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
 import { hasLocalManagement } from "./work-mode.js";
 import { registerTicketNotes } from "./ticket-note-images.js";
@@ -144,6 +145,7 @@ export function createApp(
   const chatRuns = new ChatRuns();
   const reviewAgent = new Agent(store, undefined, connectors);
   const pullRequests = new PullRequests(store, reviewAgent);
+  const ticketPullRequests = new TicketPullRequests(store, connectors, pullRequests);
   const prMerge = new PrMerge(store, connectors);
   const prCreate = new PrCreate(store);
   const codeBrowser = new CodeBrowser(store);
@@ -1272,6 +1274,25 @@ export function createApp(
     res.json(
       await connectors.ticketDetails(z.coerce.number().int().positive().parse(req.params.id), true),
     );
+  });
+  app.get("/api/ticket-cards/:ref/pull-requests", async (req, res) => {
+    res.json(await ticketPullRequests.list(String(req.params.ref)));
+  });
+  app.get("/api/ticket-cards/:ref/pull-request", async (req, res) => {
+    const link = z
+      .object({
+        projectId: z
+          .string()
+          .uuid()
+          .transform((v) => v.toLowerCase()),
+        repo: z
+          .string()
+          .uuid()
+          .transform((v) => v.toLowerCase()),
+        number: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      })
+      .parse(req.query);
+    res.json(await ticketPullRequests.detail(String(req.params.ref), link));
   });
   app.get("/api/ticket-cards/:ref/history", async (req, res) => {
     const skip = z.coerce

@@ -1,3 +1,4 @@
+import { TicketLinkedPullRequests } from "./TicketLinkedPullRequests.js";
 import { TicketHistory } from "./TicketHistory.js";
 import { locateContentLink } from "../lib/locate-content-link.js";
 import type { ContentLink } from "../../../features/render-content/index.js";
@@ -22,7 +23,7 @@ import { TicketMetadata } from "../../../features/edit-ticket/index.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { LocalAssigneeNames } from "../../../entities/developer/index.js";
 import { Link } from "react-router-dom";
-import { pullRequestPath, ticketPath } from "../../../shared/config/routes/index.js";
+import { ticketPath } from "../../../shared/config/routes/index.js";
 import {
   History,
   Sparkles,
@@ -69,12 +70,15 @@ export function TicketCard({
   const citationRoot = useRef<HTMLDivElement>(null);
   const contentRoot = useRef<HTMLDivElement>(null);
   const tabId = useId();
+  const [prsOpened, setPrsOpened] = useState(false);
+  const [prCount, setPrCount] = useState<number | null>(null);
   const [historyOpened, setHistoryOpened] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
   const tabScroll = useRef<Record<string, number>>({});
   const changeTab = (tab: string) => {
     if (contentRoot.current) tabScroll.current[activeTab] = contentRoot.current.scrollTop;
     setActiveTab(tab);
+    if (tab === "prs") setPrsOpened(true);
     if (tab === "history") setHistoryOpened(true);
   };
   useLayoutEffect(() => {
@@ -118,6 +122,8 @@ export function TicketCard({
   useEffect(() => {
     setActiveTab("content");
     setHistoryOpened(false);
+    setPrsOpened(false);
+    setPrCount(null);
     tabScroll.current = {};
     setImageSelection(null);
     setImageError("");
@@ -765,7 +771,13 @@ export function TicketCard({
                 id: "prs",
                 label: "Связанные PR",
                 icon: GitPullRequest,
-                count: card.linkedPullRequests?.length || 0,
+                count:
+                  prCount ??
+                  new Set(
+                    [...(card.linkedPullRequests || []), ...(card.azurePullRequests || [])].map(
+                      (pr: any) => `${pr.repo.toLowerCase()}:${pr.number}`,
+                    ),
+                  ).size,
               },
               { id: "links", label: "Ссылки", icon: Link2, count: linkCount },
               {
@@ -916,38 +928,13 @@ export function TicketCard({
               aria-labelledby={tabId + "-prs"}
               hidden={activeTab !== "prs"}
             >
-              {card.linkedPullRequests?.length ? (
-                <ul className="ticket-linked-prs">
-                  {card.linkedPullRequests.map((pr: any) => (
-                    <li key={`${pr.monitor}:${pr.repo}:${pr.number}`}>
-                      <div className="ticket-linked-pr-heading">
-                        <span className="ticket-type-badge">PR</span>
-                        <Link to={pullRequestPath(pr)}>
-                          #{pr.number} · {pr.title}
-                        </Link>
-                        {pr.draft ? <span className="ticket-state-badge">Черновик</span> : null}
-                      </div>
-                      <small>
-                        {pr.author || "Автор не указан"} · {pr.client} / {pr.project} ·
-                        Синхронизация: {timestamp(pr.synced_at)}
-                      </small>
-                      {pr.syncError && (
-                        <p className="error">
-                          Последняя синхронизация не удалась: статус PR может быть устаревшим.
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="ticket-empty">
-                  Связанные открытые PR не найдены среди синхронизированных репозиториев.
-                </p>
+              {prsOpened && (
+                <TicketLinkedPullRequests
+                  key={reference}
+                  reference={reference}
+                  onCount={setPrCount}
+                />
               )}
-              <p className="ticket-footnote">
-                Ручные локальные связи и упоминания #номера в описании PR. Открытость — по последней
-                синхронизации с учётом настроенного фильтра ревьюеров.
-              </p>
             </section>
 
             {

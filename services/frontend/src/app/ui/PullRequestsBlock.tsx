@@ -1,6 +1,6 @@
-import { CompletedPullRequests } from "../../pages/pull-requests/index.js";
+import { CompletedPullRequests, LinkedPullRequest } from "../../pages/pull-requests/index.js";
 import { ReviewQuestionInbox } from "../../widgets/review-questions/index.js";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { GitPullRequest, GitMerge, Inbox } from "lucide-react";
 import { PullRequestsPage } from "../../pages/pull-requests/index.js";
 import { Empty } from "../../shared/ui/empty/index.js";
@@ -21,6 +21,8 @@ export function PullRequestsBlock({
   completedTab,
   reviewQuestions,
 }: Props) {
+  const [params] = useSearchParams();
+  const linked = !!params.get("linkedCard");
   return (
     <>
       {page === "pullrequests" && (
@@ -41,17 +43,18 @@ export function PullRequestsBlock({
           </Link>
         </nav>
       )}
-      {page === "pullrequests" && completedTab && (
+      {page === "pullrequests" && linked && <LinkedPullRequest />}
+      {page === "pullrequests" && !linked && completedTab && (
         <CompletedPullRequests
           settings={settings}
           key={JSON.stringify(context)}
           context={context}
         />
       )}
-      {page === "pullrequests" && !inboxTab && !completedTab && (
+      {page === "pullrequests" && !linked && !inboxTab && !completedTab && (
         <PullRequestsPage context={context} settings={settings} />
       )}
-      {page === "pullrequests" && inboxTab && (
+      {page === "pullrequests" && !linked && inboxTab && (
         <>
           <PageHeading
             title="Не упустите важное"
