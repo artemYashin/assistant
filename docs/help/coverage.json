@@ -226,7 +226,7 @@
     "services/frontend/src/features/read-updates/index.ts": "2e069aa9a5821864a1309bbf0dc2fabc9bea7f474c1fcdf6624ea9752494e8b5",
     "services/frontend/src/features/read-updates/model/useUnreadRelease.ts": "9e54a637204f015bd8f734d0b2bc11abaf89b4be6ed05c5df188c05a360e6f43",
     "services/frontend/src/features/render-content/index.ts": "59189b40d97a2fda7008860a6f67ed8f683c275f2a5206e5ea7a225a1f320ae7",
-    "services/frontend/src/features/render-content/lib/content-links.ts": "84056387eabf9c2a4fd0e44559b2c5a381b7f49b9a8f6a94874729d80341cd3a",
+    "services/frontend/src/features/render-content/lib/content-links.ts": "c3f8021b64535baa3199cce7cff668df828a9eade115e6b3c69e43202de9034e",
     "services/frontend/src/features/render-content/lib/rehype-review-format.ts": "7c7dc36e0e9c97986e99997ff4c8445f4176f15617ff70f57ad6aae2b40b530c",
     "services/frontend/src/features/render-content/lib/remark-description-breaks.ts": "8d72c7cbe4d48782b55ce3115c6fa813a80a4bb6837b380577255c7fc577ca08",
     "services/frontend/src/features/render-content/lib/remark-ticket-citations.ts": "3892cd05a450e01ad27f0fdf2ab1410294a17f535cfd710e46683b0ce3a9d26e",
@@ -357,7 +357,8 @@
     "services/frontend/src/widgets/review-questions/index.ts": "142dca0644aa8faf0588ebfaeb4151b26808a164fc865e5af9c24adc47d6682e",
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "7166c8462dff54872f70691b4c4f186066cf6ca1ef4a12b54591565aa4846dbc",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "5725ea32fe02054fb8a827104bb78f01f01cfa0083558a862ad808c68e0b44cd",
+    "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "dbc0c88cefbd670d13a82e1d5038b1e87c4259230780dd64b93665e67946da28",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "8676cc0aa004052ea65320cbe4419572b3be053d43f60db805603d376eac11cf",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }

@@ -9,106 +9,118 @@
 
 Скопировать номер тикета
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:289.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:321.
 
 ### Элемент
 
 Локальные заметки · #{…} · Для редактирования добавьте тикет в локальный список.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:458.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:490.
 
 ### Элемент
 
 Все поля тикета #{…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:471.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:503.
 
 ### Элемент
 
 / / · Восстановить / Импортировать
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:511.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:543.
 
 ### Элемент
 
 Скопировать ссылку на тикет в Azure DevOps
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:576.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:608.
 
 ### Элемент
 
 Перейти к тикету
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:585.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:617.
 
 ### Элемент
 
 Открыть в Azure DevOps
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:589.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:621.
 
 ### Элемент
 
 Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Удаляю… / Удалить
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:594.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:626.
 
 ### Элемент
 
 / · Analyze with AI
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:626.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:658.
 
 ### Элемент
 
 / /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:705.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:729.
 
 ### Элемент
 
 Связанные открытые PR ·
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:730.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:754.
 
 ### Элемент
 
 # · ·
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:741.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:765.
 
 ### Элемент
 
 Комментарии
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:769.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:793.
+
+### Элемент
+
+Ссылки
+
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:831.
+
+### Элемент
+
+Показать в тикете
+
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:844.
 
 ### Элемент
 
 Вложения и изображения ·
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:802.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:859.
 
 ### Элемент
 
 ↗
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:823.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:880.
 
 ### Элемент
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:992.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1049.
 
 ### Элемент
 
 Удалить тикет #{…}? · Тикет #{…} будет перемещён в локальную корзину на 30 дней. В Azure он останется. Автоимпорт не вернёт его в список; при необходимости тикет можно восстановить из корзины. · Удалить в корзину
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1011.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1068.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1039.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1096.

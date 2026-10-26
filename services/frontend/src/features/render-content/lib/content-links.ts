@@ -2,8 +2,8 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 
-export type ContentLink = { url: string; label: string };
-export type LinkContent = { value: unknown; markdown?: boolean };
+export type ContentLink = { url: string; label: string; source?: string; quote?: string };
+export type LinkContent = { value: unknown; markdown?: boolean; source?: string };
 const parser = unified().use(remarkParse).use(remarkGfm);
 const blocked = new Set([
   "SCRIPT",
@@ -23,6 +23,7 @@ const blocked = new Set([
 /** Parse already loaded content only: no fetching, model calls or HTML execution. */
 export function contentLinks(parts: LinkContent[], base: string): ContentLink[] {
   const links = new Map<string, ContentLink>();
+  let source: string | undefined;
   const add = (href: string, text: string) => {
     if (!href.trim() || href.trim().startsWith("#")) return;
     try {
@@ -37,7 +38,11 @@ export function contentLinks(parts: LinkContent[], base: string): ContentLink[] 
       const label = text.replace(/\s+/g, " ").trim() || url.href;
       const previous = links.get(url.href);
       if (!previous || previous.label === previous.url)
-        links.set(url.href, { url: url.href, label });
+        links.set(url.href, {
+          url: url.href,
+          label,
+          ...(source ? { source, quote: text.trim() || href } : {}),
+        });
     } catch {
       /* Ignore malformed addresses. */
     }
@@ -62,6 +67,7 @@ export function contentLinks(parts: LinkContent[], base: string): ContentLink[] 
     });
   };
   for (const part of parts) {
+    source = part.source;
     if (typeof part.value !== "string" || !part.value.trim()) continue;
     const raw = part.value;
     const outsideCode = raw.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?^ {0,3}\1[ \t]*$/gm, "");

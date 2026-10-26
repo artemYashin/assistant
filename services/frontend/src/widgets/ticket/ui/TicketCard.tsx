@@ -1,3 +1,5 @@
+import { locateContentLink } from "../lib/locate-content-link.js";
+import type { ContentLink } from "../../../features/render-content/index.js";
 import { useMemo } from "react";
 import { contentLinks, ExternalLinkBadge } from "../../../features/render-content/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
@@ -22,6 +24,7 @@ import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "../../../shared/config/routes/index.js";
 import {
   Sparkles,
+  LocateFixed,
   ArchiveRestore,
   Download,
   LoaderCircle,
@@ -56,6 +59,13 @@ export function TicketCard({
   citation?: { section: string; quote: string };
 }) {
   const citationRoot = useRef<HTMLDivElement>(null);
+  const contentRoot = useRef<HTMLDivElement>(null);
+  const [linkSelection, setLinkSelection] = useState<{ link: ContentLink } | null>(null);
+  const [linkError, setLinkError] = useState("");
+  useEffect(() => {
+    setLinkSelection(null);
+    setLinkError("");
+  }, [reference]);
   const [citationMissing, setCitationMissing] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [trackingError, setTrackingError] = useState("");
@@ -102,6 +112,26 @@ export function TicketCard({
       clearHighlight();
     };
   }, [card, citation]);
+  useEffect(() => {
+    if (!linkSelection || !card || !contentRoot.current) return;
+    setLinkError("");
+    const range = locateContentLink(contentRoot.current, linkSelection.link, card.base || card.url);
+    if (!range) {
+      setLinkError(
+        "Не удалось найти ссылку в текущем содержимом тикета. Возможно, оно изменилось.",
+      );
+      return;
+    }
+    const clearHighlight = highlightCitation(range);
+    const frame = requestAnimationFrame(() => {
+      range.startContainer.parentElement?.scrollIntoView({ block: "center" });
+      revealCitation(range);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearHighlight();
+    };
+  }, [linkSelection, card]);
   useEffect(() => {
     const update = (event: Event) => {
       const { id, source, comment, attachments = [] } = (event as CustomEvent).detail;
@@ -237,10 +267,12 @@ export function TicketCard({
                 "Microsoft.VSTS.TCM.ReproSteps",
               ].map((key) => ({
                 value: card.fields[key],
+                source: key,
                 markdown: card.markdownFields?.includes(key),
               })),
               ...(card.comments || []).map((comment: any) => ({
                 value: comment.richText || comment.text,
+                source: `comment:${comment.id}`,
               })),
             ],
             card.base || card.url,
@@ -647,16 +679,7 @@ export function TicketCard({
               </button>
             </nav>
           </header>
-          {links.length > 0 && (
-            <nav className="ticket-content-links" aria-label="Ссылки из содержимого тикета">
-              {links.map((link) => (
-                <ExternalLinkBadge key={link.url} href={link.url}>
-                  {link.label}
-                </ExternalLinkBadge>
-              ))}
-            </nav>
-          )}
-          <div className="ticket-card-body">
+          <div ref={contentRoot} className="ticket-card-body">
             {analysisError && (
               <p className="error" role="alert">
                 {analysisError}
@@ -693,6 +716,7 @@ export function TicketCard({
                   <details
                     className={`ticket-section ticket-section-resizable${key === "Microsoft.VSTS.Common.AcceptanceCriteria" ? " ticket-section-acceptance" : key === "System.Description" ? " ticket-section-description" : ""}`}
                     key={key}
+                    data-link-source={key}
                     data-citation-section={
                       key === "System.Description"
                         ? "description"
@@ -773,7 +797,11 @@ export function TicketCard({
               {card.comments.length ? (
                 <div className="ticket-comments">
                   {card.comments.map((c: any) => (
-                    <article className="ticket-comment" key={c.id}>
+                    <article
+                      className="ticket-comment"
+                      key={c.id}
+                      data-link-source={`comment:${c.id}`}
+                    >
                       <header>
                         <span className="ticket-comment-author">
                           <InitialsAvatar name={c.author || ""} />
@@ -798,6 +826,35 @@ export function TicketCard({
                 draftKey={JSON.stringify([card.source, card.id])}
               />
             </details>
+            {links.length > 0 && (
+              <details className="ticket-section ticket-section-neutral ticket-links-section">
+                <summary>
+                  <Link2 size={17} aria-hidden="true" />
+                  Ссылки <span className="ticket-count">{links.length}</span>
+                </summary>
+                {linkError && (
+                  <p className="error" role="status">
+                    {linkError}
+                  </p>
+                )}
+                <nav className="ticket-content-links" aria-label="Ссылки из содержимого тикета">
+                  {links.map((link) => (
+                    <span className="ticket-content-link" key={link.url}>
+                      <ExternalLinkBadge href={link.url}>{link.label}</ExternalLinkBadge>
+                      <button
+                        type="button"
+                        className="chat-link-copy"
+                        title="Показать в тикете"
+                        aria-label="Показать в тикете"
+                        onClick={() => setLinkSelection({ link })}
+                      >
+                        <LocateFixed size={13} aria-hidden="true" />
+                      </button>
+                    </span>
+                  ))}
+                </nav>
+              </details>
+            )}
             <details className="ticket-section ticket-section-neutral">
               <summary>
                 <Paperclip size={17} aria-hidden="true" />

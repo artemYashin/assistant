@@ -17625,10 +17625,17 @@ a.pr-branch-link:focus-visible {
   align-items: center;
   gap: 6px 10px;
   padding: 10px 16px;
-  border-bottom: 1px solid #dce5df;
 }
-.ticket-content-links .chat-copyable-link {
-  max-width: min(100%, 360px);
+.ticket-content-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  max-width: min(100%, 390px);
+}
+.ticket-content-link > .chat-copyable-link {
+  min-width: 0;
+  max-width: calc(100% - 29px);
 }
 .ticket-content-links a.chat-external-link {
   margin: 0;

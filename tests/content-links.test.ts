@@ -48,3 +48,24 @@ test("Markdown autolinks are not mistaken for HTML tags", () => {
     { url: "https://example.test/spec", label: "https://example.test/spec" },
   ]);
 });
+
+test("deduplicated links keep the source and quote of the chosen caption", () => {
+  assert.deepEqual(
+    contentLinks(
+      [
+        { value: "https://example.test/spec", source: "description" },
+        { value: "[Требования](https://example.test/spec)", source: "comment:15" },
+        { value: "[Повтор](https://example.test/spec)", source: "comment:16" },
+      ],
+      base,
+    ),
+    [
+      {
+        url: "https://example.test/spec",
+        label: "Требования",
+        source: "comment:15",
+        quote: "Требования",
+      },
+    ],
+  );
+});
