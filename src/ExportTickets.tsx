@@ -1,3 +1,4 @@
+import { ticketsMarkdown } from "./tickets-markdown.js";
 import { ticketExportFilename } from "./ticket-export-filename.js";
 import { useLocalManagement } from "./WorkMode.js";
 import type { TicketExportContext } from "../server/ticket-export-context.js";
@@ -11,6 +12,8 @@ import {
 import { useEffect, useRef, useState } from "react";
 import {
   Download,
+  Copy,
+  Check,
   FileSpreadsheet,
   X,
   Plus,
@@ -150,6 +153,8 @@ export function TicketExportDialog({
     updateSnapshot(rows);
     draftTickets.current = rows;
   };
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<"csv" | "xlsx">("xlsx");
   const [order, setOrder] = useState<ExportColumnKey[]>(
@@ -167,6 +172,12 @@ export function TicketExportDialog({
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
   const columns = order.filter((key) => enabled.includes(key) && (management || key!=="developers"));
+  useEffect(() => { setCopied(false); }, [snapshot, order, enabled, management]);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2500);
+    return () => clearTimeout(timer);
+  }, [copied]);
   useEffect(() => {
     exportContext = {
       state: !active ? "closed" : minimized ? "minimized" : "open",
@@ -353,6 +364,22 @@ export function TicketExportDialog({
           t.title?.toLocaleLowerCase().includes(search)),
     )
     .slice(0, 20);
+  async function copyTable() {
+    if (lock.current || !columns.length || !snapshot.length || loading) return;
+    lock.current = true;
+    setCopying(true);
+    setCopied(false);
+    setError("");
+    try {
+      await navigator.clipboard.writeText(ticketsMarkdown(snapshot, columns));
+      setCopied(true);
+    } catch {
+      setError("Не удалось скопировать таблицу. Разрешите доступ к буферу обмена в браузере и повторите попытку либо скачайте файл.");
+    } finally {
+      lock.current = false;
+      setCopying(false);
+    }
+  }
   async function download() {
     if (lock.current || !columns.length || !snapshot.length || loading) return;
     lock.current = true;
@@ -784,10 +811,20 @@ export function TicketExportDialog({
           <small>
             Заголовки файла — на английском, значения — без перевода.
           </small>
+          <div className="export-download-actions">
+          <button
+            type="button"
+            className="secondary"
+            disabled={busy || copying || loading || !columns.length || !snapshot.length}
+            onClick={() => void copyTable()}
+          >
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+            <span aria-live="polite">{copying ? "Копирование…" : copied ? "Скопировано" : "Скопировать Markdown"}</span>
+          </button>
           <button
             type="button"
             className="primary"
-            disabled={busy || loading || !columns.length || !snapshot.length}
+            disabled={busy || copying || loading || !columns.length || !snapshot.length}
             onClick={() => void download()}
           >
             <Download size={16} />
@@ -795,6 +832,7 @@ export function TicketExportDialog({
               ? "Подготовка…"
               : `Скачать ${format === "xlsx" ? "Excel" : "CSV"}`}
           </button>
+          </div>
         </footer>
       </dialog>
       <dialog ref={closeConfirmation} className="developer-dialog action-confirm-dialog export-close-dialog" aria-label="Закрыть экспорт?" onCancel={event => event.stopPropagation()}>
