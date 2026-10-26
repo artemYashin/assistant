@@ -123,7 +123,7 @@ import {
 import { VoiceShortcut } from "./VoiceShortcut.js";
 import { ChatStream, ChatTimeline, ChatToolHistory, useChatStream, formatChatDuration } from "./ChatStream.js";
 import type { ChatProgress } from "../server/chat-stream.js";
-import { api, apiProgress, setCsrf } from "./api.js";
+import { api, apiProgress, followChatRun, setCsrf } from "./api.js";
 import "./style.css";
 import { ContextPicker } from "./ContextPicker.js";
 import { PullRequestsPage } from "./PullRequestsPage.js";
@@ -2359,6 +2359,8 @@ function Assistant({
   useEffect(() => {
     let active = true;
     const generation = ++historyGeneration.current;
+    const restoreConnection = new AbortController();
+    setWorking(false);
     setHistory([]);
     setChatUsage({ inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
     chatStream.reset();
@@ -2369,6 +2371,7 @@ function Assistant({
     setError("");
     api(`/conversation/sessions?${new URLSearchParams(context)}`)
       .then(async (result) => {
+        const running = await api(`/conversation/runs?${new URLSearchParams({ ...context, sessionId: result.activeId })}`);
         const page = await api(
           `/conversation?${new URLSearchParams({ ...context, sessionId: result.activeId, page: "true" })}`,
         );
@@ -2382,6 +2385,30 @@ function Assistant({
           setAttachment(page.attachment);
           setHasOlder(page.hasMore);
           setChatUsage(page.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+          if (running.runId) {
+            setWorking(true);
+            let replayRemaining = running.eventCount;
+            try {
+              await followChatRun<ChatProgress>(running.runId, event => {
+                if (active && generation === historyGeneration.current) receiveChatProgress(event, replayRemaining-- > 0);
+              }, restoreConnection.signal);
+            } catch (error: any) {
+              if (active && generation === historyGeneration.current) setError(error.message);
+            } finally {
+              if (active && generation === historyGeneration.current) {
+                try {
+                  const finalPage = await api(`/conversation?${new URLSearchParams({ ...context, sessionId: result.activeId, page: "true" })}`);
+                  if (active && generation === historyGeneration.current) {
+                    setHistory(finalPage.messages);
+                    setHasOlder(finalPage.hasMore);
+                    setChatUsage(finalPage.usage || { inputTokens: 0, outputTokens: 0, reports: 0, partial: false });
+                  }
+                } finally {
+                  if (active && generation === historyGeneration.current) { chatStream.reset(); setWorking(false); onChange(); }
+                }
+              }
+            }
+          }
         }
       })
       .catch((e) => {
@@ -2390,6 +2417,7 @@ function Assistant({
       });
     return () => {
       active = false;
+      restoreConnection.abort();
     };
   }, [key]);
   useEffect(() => {
@@ -2591,6 +2619,24 @@ function Assistant({
       setClearing(false);
     }
   }
+  function receiveChatProgress(event: ChatProgress, replay = false) {
+    if (event.stage === "usage") { setChatUsage(event); return; }
+    if (["preparing", "text", "tool"].includes(event.stage)) { chatStream.receive(event); return; }
+    // Replaying visual history must not repeat exports, navigation or other UI actions.
+    if (replay) return;
+    if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
+    else if (event.stage === "calendar_changed") { window.dispatchEvent(new Event("orbit:developer-board")); window.dispatchEvent(new Event("orbit-calendar-changed")); window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: { domain: "tickets" } })); }
+    else if (event.stage === "ticket_export") {
+      if (event.mode === "edit") editTicketExport(event.ids, event.removeIds, event.columns);
+      else openTicketExport(event.ids, event.columns);
+    }
+    else if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
+    else if (event.stage === "close_ticket_details") {
+      window.dispatchEvent(new Event("orbit-close-ticket-details"));
+      onExpand();
+    }
+    else chatStream.receive(event);
+  }
   async function send(e?: React.FormEvent, voiceText?: string) {
     e?.preventDefault();
     if (imageLoading) {
@@ -2643,19 +2689,7 @@ function Assistant({
         })),
       }, event => {
         if (contextKey.current === captured && generation === historyGeneration.current) {
-          if (event.stage === "data_synced") window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: event }));
-          else if (event.stage === "calendar_changed") { window.dispatchEvent(new Event("orbit:developer-board")); window.dispatchEvent(new Event("orbit-calendar-changed")); window.dispatchEvent(new CustomEvent("orbit:data-synced", { detail: { domain: "tickets" } })); }
-          else if (event.stage === "ticket_export") {
-            if (event.mode === "edit") editTicketExport(event.ids, event.removeIds, event.columns);
-            else openTicketExport(event.ids, event.columns);
-          }
-          else if (event.stage === "show_tickets") window.dispatchEvent(new CustomEvent("orbit-show-ticket-details", { detail: event }));
-          else if (event.stage === "close_ticket_details") {
-            window.dispatchEvent(new Event("orbit-close-ticket-details"));
-            onExpand();
-          }
-          else if (event.stage === "usage") setChatUsage(event);
-          else chatStream.receive(event);
+          receiveChatProgress(event);
         }
       }, chatConnection.current!.signal);
       fileDraft.release(sentFiles);
@@ -2676,7 +2710,7 @@ function Assistant({
             timeline: r.timeline,
           },
         ]);
-      chatStream.reset();
+      if (contextKey.current === captured && generation === historyGeneration.current) chatStream.reset();
       onChange();
     } catch (e: any) {
       fileDraft.restore(sentFiles);
@@ -2692,7 +2726,7 @@ function Assistant({
         setError(e.message);
         setPrompt(current => voiceText ? [current, text].filter(Boolean).join("\n") : text);
       }
-      chatStream.reset();
+      if (contextKey.current === captured && generation === historyGeneration.current) chatStream.reset();
       onChange();
     } finally {
       try {
@@ -2703,8 +2737,8 @@ function Assistant({
           setHasOlder(page.hasMore);
         }
       } catch { /* Keep the received response if history refresh fails. */ }
-      chatStream.reset();
-      setWorking(false);
+      if (contextKey.current === captured && generation === historyGeneration.current) chatStream.reset();
+      if (contextKey.current === captured && generation === historyGeneration.current) setWorking(false);
     }
   }
   return (

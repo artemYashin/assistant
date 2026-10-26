@@ -1,3 +1,4 @@
+import { ChatRuns } from "./chat-runs.js";
 import { hasLocalManagement } from "./work-mode.js";
 import { registerTicketNotes } from "./ticket-note-images.js";
 import { registerNotes } from "./notes.js";
@@ -131,6 +132,7 @@ export function createApp(
   const connectors = new Connectors(store);
   const chatFiles = new ChatFiles(store);
   const agent = new Agent(store, undefined, connectors);
+  const chatRuns = new ChatRuns();
   const reviewAgent = new Agent(store, undefined, connectors);
   const pullRequests = new PullRequests(store, reviewAgent);
   const prMerge = new PrMerge(store, connectors);
@@ -289,6 +291,8 @@ export function createApp(
     )
       throw new AppError(400, "Сначала добавьте заказчика и проект");
     const previous = store.settings();
+    if ((agent.active() || chatRuns.active()) && (context.client !== previous.client || context.project !== previous.project))
+      throw new AppError(409, "Ассистент отвечает в текущем проекте. Дождитесь завершения или остановите ответ перед сменой проекта.");
     if (previous.client)
       store.addContext({ client: previous.client, project: previous.project });
     if (context.client) store.addContext(context);
@@ -308,6 +312,7 @@ export function createApp(
     });
   });
   app.put("/api/context/azure", (req, res) => {
+    if (agent.active() || chatRuns.active()) throw new AppError(409, "Дождитесь завершения ответа ассистента или остановите его перед изменением подключения Azure.");
     const input = contextSchema
       .extend({
         azureProject: text.default(""),
@@ -628,9 +633,18 @@ export function createApp(
     if (reviewAgent.active() === req.params.id) return res.json(pullRequests.stopActiveReview(req.params.id));
     throw new AppError(409, "Этот запрос уже завершён. Обновите отчёт использования LLM.");
   });
+  app.get("/api/conversation/runs", (req, res) => {
+    const { client, project, sessionId } = z.object({ client: z.string(), project: z.string(), sessionId: z.string().uuid() }).parse(req.query);
+    const run = chatRuns.active({ client, project }, sessionId);
+    res.json({ runId: run?.id ?? null, eventCount: run?.events.length ?? 0 });
+  });
+  app.get("/api/conversation/runs/:id", (req, res) => {
+    const after = z.coerce.number().int().nonnegative().default(0).parse(req.query.after);
+    res.json(chatRuns.page(String(req.params.id), after));
+  });
   app.post("/api/conversation/stop", (_req, res) => res.json(agent.stop()));
   app.post(
-    "/api/conversation",
+    ["/api/conversation", "/api/conversation/runs"],
     rateLimit({
       windowMs: 60000,
       limit: 15,
@@ -659,6 +673,10 @@ export function createApp(
             .default([]),
         })
         .parse(req.body);
+      const current = store.settings();
+      if (current.client !== v.context.client || current.project !== v.context.project)
+        throw new AppError(409, "Проект изменился. Отправьте сообщение заново в нужном проекте.");
+      if (agent.active() || chatRuns.active()) throw new AppError(409, "Ассистент ещё отвечает на предыдущий запрос");
       if (v.viewedTicket && v.viewedTicket.source !== store.source()) throw new AppError(409, "Подключение Azure изменилось. Откройте деталку заново.");
       if (v.selectedTickets.some((ticket) => ticket.source !== store.source()))
         throw new AppError(
@@ -668,6 +686,13 @@ export function createApp(
       const ids = [...new Set(v.selectedTickets.map((ticket) => ticket.id))];
       const prompt = v.prompt;
       const files = v.fileIds.length ? chatFiles.read(v.context,store.chatSession(v.context,v.sessionId).id,v.fileIds) : [];
+      if (req.path === "/api/conversation/runs") {
+        const sessionId = store.chatSession(v.context, v.sessionId).id;
+        const runId = chatRuns.start(v.context, sessionId, progress =>
+          agent.chat(prompt, v.context, false, undefined, sessionId, v.model, progress, v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids, files));
+        res.json({ runId });
+        return;
+      }
       if (!req.headers.accept?.includes("application/x-ndjson")) {
         res.json(await agent.chat(prompt, v.context, false, undefined, v.sessionId, v.model, undefined, v.viewedTicket, v.repositoryBranch, v.memoryProposalId, v.ticketExport, ids, files));
         return;

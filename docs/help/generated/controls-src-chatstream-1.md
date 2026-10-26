@@ -9,4 +9,4 @@
 
 Инструменты · · вызовов
 
-Источник: src/ChatStream.tsx:68.
+Источник: src/ChatStream.tsx:70.

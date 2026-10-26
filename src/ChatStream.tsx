@@ -32,13 +32,15 @@ export function useChatStream() {
   function reset() { clearTimeout(timer.current); timer.current = undefined; value.current = empty(); setLive(value.current); }
   function receive(event: ChatProgress) {
     value.current = { ...value.current, timeline: updateChatTimeline(value.current.timeline, event) };
-    if (event.stage === "text") {
+    if (event.stage === "preparing" && event.startedAt) {
+      value.current = { ...value.current, startedAt: event.startedAt };
+    } else if (event.stage === "text") {
       value.current = { ...value.current, messageId: event.messageId,
         text: event.replace || event.messageId !== value.current.messageId ? event.text : value.current.text + event.text };
     } else if (event.stage === "tool") {
       const previous = value.current.tools.find(tool => tool.toolId === event.toolId);
       const tools = value.current.tools.filter(tool => tool.toolId !== event.toolId);
-      value.current = { ...value.current, tools: [...tools, { ...event, startedAt: previous?.startedAt || Date.now() }].slice(-50) };
+      value.current = { ...value.current, tools: [...tools, { ...event, startedAt: previous?.startedAt || event.startedAt || Date.now() }].slice(-50) };
     }
     if (!timer.current) timer.current = setTimeout(() => { timer.current = undefined; setLive(value.current); }, 50);
   }
