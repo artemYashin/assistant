@@ -10910,7 +10910,9 @@ main:has(> .repository-page) > .main-footer {
   display: none;
 }
 .conversation .chat-markdown a.chat-external-link,
-.conversation .chat-markdown a.chat-external-link:visited {
+.ticket-content-links a.chat-external-link,
+.conversation .chat-markdown a.chat-external-link:visited,
+.ticket-content-links a.chat-external-link:visited {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -10930,29 +10932,35 @@ main:has(> .repository-page) > .main-footer {
     background 100ms,
     border-color 100ms;
 }
-.conversation .chat-markdown a.chat-external-link:hover {
+.conversation .chat-markdown a.chat-external-link:hover,
+.ticket-content-links a.chat-external-link:hover {
   background: #e7eee9;
   border-color: #b4c9bc;
   color: #274b36;
 }
-.conversation .chat-markdown a.chat-external-link:focus-visible {
+.conversation .chat-markdown a.chat-external-link:focus-visible,
+.ticket-content-links a.chat-external-link:focus-visible {
   outline-color: #789761;
 }
 .conversation .chat-external-link > span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.conversation .chat-external-icon {
+.conversation .chat-external-icon,
+.ticket-content-links .chat-external-icon {
   display: block;
   flex-shrink: 0;
 }
-.conversation .chat-external-icon.is-figma {
+.conversation .chat-external-icon.is-figma,
+.ticket-content-links .chat-external-icon.is-figma {
   color: #9b59c8;
 }
-.conversation .chat-external-icon.is-azure {
+.conversation .chat-external-icon.is-azure,
+.ticket-content-links .chat-external-icon.is-azure {
   color: #277db5;
 }
-.conversation .chat-external-icon.is-github {
+.conversation .chat-external-icon.is-github,
+.ticket-content-links .chat-external-icon.is-github {
   color: #48505a;
 }
 
@@ -17609,4 +17617,25 @@ a.pr-branch-link:focus-visible {
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.ticket-content-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #dce5df;
+}
+.ticket-content-links .chat-copyable-link {
+  max-width: min(100%, 360px);
+}
+.ticket-content-links a.chat-external-link {
+  margin: 0;
+}
+.ticket-content-links a.chat-external-link > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

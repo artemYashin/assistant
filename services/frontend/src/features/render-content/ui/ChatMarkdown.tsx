@@ -96,6 +96,25 @@ function CopyableLink({
   );
 }
 
+/** Shared external-link presentation for chat and deterministic ticket link lists. */
+export function ExternalLinkBadge({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <CopyableLink href={href}>
+      <a
+        href={href}
+        className="chat-external-link"
+        title={href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <ExternalLinkIcon href={href} />
+        <span>{children}</span>
+        <ArrowUpRight size={13} className="chat-external-icon" aria-hidden="true" />
+      </a>
+    </CopyableLink>
+  );
+}
+
 function quoteTickets(node?: Element) {
   const tickets = new Map<string, { id: number; source: string }>();
   const visit = (child: Element | ElementContent) => {
@@ -295,21 +314,7 @@ export function ChatMarkdown({
             </CopyableLink>
           );
         }
-        return (
-          <CopyableLink href={href}>
-            <a
-              href={href}
-              className="chat-external-link"
-              title={href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLinkIcon href={href} />
-              <span>{children}</span>
-              <ArrowUpRight size={13} className="chat-external-icon" aria-hidden="true" />
-            </a>
-          </CopyableLink>
-        );
+        return <ExternalLinkBadge href={href}>{children}</ExternalLinkBadge>;
       },
       img: ({ src, alt }) => {
         if (typeof src === "string" && ticketAsset(src))

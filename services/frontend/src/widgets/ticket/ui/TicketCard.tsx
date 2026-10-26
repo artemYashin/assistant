@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { contentLinks, ExternalLinkBadge } from "../../../features/render-content/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { MemoryMarkdown } from "../../../features/render-content/index.js";
 import { TicketCommentForm } from "../../../features/comment-ticket/index.js";
@@ -224,6 +226,28 @@ export function TicketCard({
     window.addEventListener("orbit:ticket-assignee", changed);
     return () => window.removeEventListener("orbit:ticket-assignee", changed);
   }, []);
+  const links = useMemo(
+    () =>
+      card
+        ? contentLinks(
+            [
+              ...[
+                "System.Description",
+                "Microsoft.VSTS.Common.AcceptanceCriteria",
+                "Microsoft.VSTS.TCM.ReproSteps",
+              ].map((key) => ({
+                value: card.fields[key],
+                markdown: card.markdownFields?.includes(key),
+              })),
+              ...(card.comments || []).map((comment: any) => ({
+                value: comment.richText || comment.text,
+              })),
+            ],
+            card.base || card.url,
+          )
+        : [],
+    [card],
+  );
   if (error) return <p className="error">{error}</p>;
   if (!card) return <p>Загрузка карточки…</p>;
   const f = card.fields;
@@ -623,6 +647,15 @@ export function TicketCard({
               </button>
             </nav>
           </header>
+          {links.length > 0 && (
+            <nav className="ticket-content-links" aria-label="Ссылки из содержимого тикета">
+              {links.map((link) => (
+                <ExternalLinkBadge key={link.url} href={link.url}>
+                  {link.label}
+                </ExternalLinkBadge>
+              ))}
+            </nav>
+          )}
           <div className="ticket-card-body">
             {analysisError && (
               <p className="error" role="alert">
