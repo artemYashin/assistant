@@ -155,7 +155,7 @@
     "src/PrDiffDialog.tsx": "b920dd76af7c17212d87c17bd95bf71533363f10a2f4ced7982ed1be1d3b881e",
     "src/PrHealth.tsx": "6e19fd32bbcf253ddce7c95f6b87a146bcdf2a442555a0b3db5c8e9c5a4b7860",
     "src/PrInfoPopup.tsx": "03a53c4133f94ba4f9e8cece04966b32568a2220deadf0b0d3551db4430936cb",
-    "src/PrMergeDialog.tsx": "38a91adb85e2030a4759d2a2beff2143a05ca49a73802302526e61b394468b14",
+    "src/PrMergeDialog.tsx": "4c4838788623a5093e97a5039002d597115cd164faf189cf05c0220ea29b17f9",
     "src/PrReviewDialog.tsx": "f8b1dfb183c29d803c3a239f1dab6582d234a07c8141346bcd9daa165080eb89",
     "src/PrReviewerPicker.tsx": "4903c6a525ee31076eb353283459c0526595f6318e5f7d37033dc82a6fa8beae",
     "src/PrTicketLink.tsx": "514f4b7d9346695187bfa69ec5f3ff55c0b9b4a0332f223b2e513b7d48b232f3",

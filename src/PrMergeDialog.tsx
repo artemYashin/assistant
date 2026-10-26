@@ -33,7 +33,7 @@ export function PrMergeDialog({
   const [linksRetry, setLinksRetry] = useState(0);
   const [plan, setPlan] = useState<Plan | null>(null),
     [states, setStates] = useState<Record<number, string>>({});
-  const [strategy, setStrategy] = useState("noFastForward"),
+  const [strategy, setStrategy] = useState(""),
     [busy, setBusy] = useState(true),
     [error, setError] = useState("");
   const [result, setResult] = useState<any>(null),
@@ -87,7 +87,7 @@ export function PrMergeDialog({
     };
   }, [pr.monitor, pr.repo, pr.number, moveTickets, retry]);
   async function submit() {
-    if (!plan || submitted || busy || (bypassPolicy && !bypassReason.trim()))
+    if (!strategy || !plan || submitted || busy || (bypassPolicy && !bypassReason.trim()))
       return;
     setBusy(true);
     setError("");
@@ -352,7 +352,7 @@ export function PrMergeDialog({
         <>
           <button
             className="primary"
-            disabled={busy || (bypassPolicy && !bypassReason.trim())}
+            disabled={!strategy || busy || (bypassPolicy && !bypassReason.trim())}
             onClick={() => void submit()}
           >
             <GitMerge size={17} />{" "}
