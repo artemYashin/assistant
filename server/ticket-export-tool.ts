@@ -16,9 +16,9 @@ export function ticketExportTool(
 ) {
   const source = store.source();
   return defineTool(edit ? "edit_ticket_export" : "show_ticket_export", {
-    description: edit
+    description: (edit
       ? "Edit an existing open or minimized Excel/CSV export only: addIds adds local tickets, removeIds removes tickets from this export only (never deletes tickets). Removal wins if an ID appears in both. Omitted arrays preserve tickets. Optional columns replaces enabled columns in supplied order. Keeps minimized state. Before EVERY edit_ticket_export call, first call read_selected_tickets(target='export', offset=0), including column-only edits and repeated edits in the same turn. Follow nextOffset until null before changing ticket membership. Compare the selected IDs and column order with the user request: add only absent IDs, remove only selected IDs, preserve unrequested tickets/columns, and skip no-op edits. This is the current request snapshot plus previously dispatched edits, not live UI polling. No Azure, download or confirmation. Dispatch is a UI request, not proof of completion."
-      : "Open the Excel/CSV export with local ticket IDs when no export is active. For an open/minimized export use edit_ticket_export instead. Optional columns sets enabled fields in order. No Azure, download or confirmation; user downloads in UI.",
+      : "Open the Excel/CSV export with local ticket IDs when no export is active. For an open/minimized export use edit_ticket_export instead. Optional columns sets enabled fields in order. No Azure, download or confirmation; user downloads in UI.") + " Read selected table/export summaries with read_selected_tickets only when relevant (id/title/state/type by default, extra fields on demand). Never claim a file was downloaded. Missing IDs need separate explicit import authorization; do not silently import.",
     parameters: z
       .object({
         columns: z

@@ -27,7 +27,7 @@ const catalog: Record<string, string> = {
   read_image: "Read actual image pixels from a URL only on explicit user request; resolve references from conversation/ticket image links. Native vision result, max 10 MB.",
   get_ticket_links: "Get only cached links/images for one ticket; filter labels/URLs, no full bodies or Azure.",
   cite_ticket_content: "Verify an exact cached quote and get a link to its highlighted original section.",
-  sync_tickets: "Explicit user request only: refresh/import user's Azure tickets. No extra confirmation.",
+  sync_tickets: "Explicit user request only: refresh tracked tickets and import by the project's configured Azure assignees/types/states. No extra confirmation.",
   sync_pull_requests: "Explicit user request only: refresh PRs in current context. No extra confirmation.",
   close_ticket_details: "Close ticket detail viewer and expand chat automatically; no data changes.",
   read_selected_tickets: "Read selected ticket summaries (id/title/state/type), optional extra fields, on demand; export includes column order/format. No bodies or Azure calls.",
