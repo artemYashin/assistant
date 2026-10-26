@@ -57,25 +57,25 @@ Azure теги · Все Azure теги
 
 Снять выбор
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:505.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:507.
 
 ### Элемент
 
 Назад
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:529.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:531.
 
 ### Элемент
 
 Страница {…}
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:539.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:541.
 
 ### Элемент
 
 Далее
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:556.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:558.
 
 ### Элемент
 

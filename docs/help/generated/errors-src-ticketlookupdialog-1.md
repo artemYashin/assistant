@@ -9,4 +9,4 @@
 
 Подключение Azure изменилось
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:57.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:64.

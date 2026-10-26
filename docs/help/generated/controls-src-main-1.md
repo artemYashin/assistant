@@ -99,7 +99,7 @@ Pull requests
 
 Свернуть чат / Развернуть чат · /
 
-Источник: services/frontend/src/app/ui/WorkspaceHeader.tsx:50.
+Источник: services/frontend/src/app/ui/WorkspaceHeader.tsx:52.
 
 ### Элемент
 

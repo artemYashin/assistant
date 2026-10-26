@@ -17682,3 +17682,14 @@ a.pr-branch-link:focus-visible {
   line-height: 16px;
   font-variant-numeric: tabular-nums;
 }
+
+.ticket-viewer-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+.ticket-viewer-badges > span {
+  white-space: normal;
+}

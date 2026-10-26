@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../entities/ticket/index.js";
 import { NumberInput } from "../../shared/ui/number-input/index.js";
 import { useChatToggleShortcut as useAppShortcut } from "../../features/voice-input/index.js";
 import { useCallback } from "react";
@@ -9,9 +10,13 @@ import { TicketCard } from "../../widgets/ticket/index.js";
 import { api } from "../../shared/api/http/index.js";
 
 export function TicketLookupDialog({
+  typeColors,
+  statusColors,
   shortcutKey = "KeyT",
   shortcutPress = "single",
 }: {
+  typeColors?: Record<string, string>;
+  statusColors?: Record<string, string>;
   shortcutKey?: string;
   shortcutPress?: string;
 }) {
@@ -19,7 +24,9 @@ export function TicketLookupDialog({
   const input = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const request = useRef(0);
-  const [selection, setSelection] = useState<{ id: number; title: string }[]>([]);
+  const [selection, setSelection] = useState<
+    { id: number; title: string; type?: string; state?: string }[]
+  >([]);
   const source = useRef("");
   const [citation, setCitation] = useState<{ section: string; quote: string } | undefined>();
   const [open, setOpen] = useState(false);
@@ -191,6 +198,14 @@ export function TicketLookupDialog({
                       <span>
                         <b>#{ticket.id}</b>
                         <span>{ticket.title}</span>
+                        <span className="ticket-viewer-badges">
+                          {ticket.type && (
+                            <StatusBadge kind="type" state={ticket.type} colors={typeColors} />
+                          )}
+                          {ticket.state && (
+                            <StatusBadge state={ticket.state} colors={statusColors} />
+                          )}
+                        </span>
                       </span>
                     </button>
                   ))}

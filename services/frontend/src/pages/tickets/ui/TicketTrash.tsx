@@ -384,6 +384,8 @@ export function TicketTrash({
                         tickets: selection.selected.map((ticket) => ({
                           id: ticket.id,
                           title: ticket.title || `#${ticket.id}`,
+                          type: ticket.type,
+                          state: ticket.state,
                         })),
                       },
                     }),

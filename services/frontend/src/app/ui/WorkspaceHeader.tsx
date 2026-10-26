@@ -39,6 +39,8 @@ export function WorkspaceHeader({
       />
       <div className="topbar-actions">
         <TicketLookupDialog
+          typeColors={settings?.typeColors}
+          statusColors={settings?.statusColors}
           shortcutKey={settings?.ticketOpenKey ?? "KeyT"}
           shortcutPress={settings?.ticketOpenPress ?? "single"}
           key={`${settings?.azureUrl}:${settings?.azureProject}`}

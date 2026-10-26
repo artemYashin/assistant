@@ -105,16 +105,16 @@ Azure теги · Все Azure теги
 
 Снять выбор
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:406.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:408.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:457.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:459.
 
 ### Элемент
 
 Сортировать: Тип задачи · Тип · /
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:482.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:484.
