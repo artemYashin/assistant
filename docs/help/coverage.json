@@ -358,9 +358,9 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "7166c8462dff54872f70691b4c4f186066cf6ca1ef4a12b54591565aa4846dbc",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "4d40d8b386c0fe6661f0878114622acff6c5da346af2be29630b51b1be435f24",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "9a92eb608ed388c00a6f7509c7dc895350cc20d3f818f5d1f88287e68d0f1c2b",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
-    "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "15c7133e44da9cb6122edf9f6871757b6b84ecd662bce6466ac51861f9840438",
+    "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "1f4ff146b6ff1a51995f1c0897dd1e5492412825a262ec541587a78b26add2e6",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }
 }

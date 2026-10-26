@@ -17800,7 +17800,7 @@ a.pr-branch-link:focus-visible {
   min-width: 0;
   background: #fff;
 }
-.ticket-history-entry > header {
+.ticket-history-entry > summary {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -17816,7 +17816,7 @@ a.pr-branch-link:focus-visible {
   padding: 8px 0;
   min-width: 0;
 }
-.ticket-history-field summary {
+.ticket-history-field h4 {
   cursor: pointer;
   overflow-wrap: anywhere;
   font-size: 12px;
@@ -17867,4 +17867,45 @@ a.pr-branch-link:focus-visible {
 }
 .ticket-attachment-locate > svg {
   flex-shrink: 0;
+}
+
+.ticket-history-entry > summary {
+  cursor: pointer;
+  list-style-position: inside;
+  margin-bottom: 0;
+}
+.ticket-history-entry[open] > summary {
+  margin-bottom: 10px;
+}
+.ticket-history-entry > summary::before {
+  content: "▸";
+  color: #8a5b30;
+}
+.ticket-history-entry[open] > summary::before {
+  content: "▾";
+}
+.ticket-history-entry > summary::-webkit-details-marker {
+  display: none;
+}
+.ticket-history-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.ticket-history-author strong {
+  overflow-wrap: anywhere;
+}
+.ticket-history-author > .initials-avatar {
+  flex-shrink: 0;
+}
+.ticket-history-field h4 {
+  margin: 0;
+}
+.ticket-history-field {
+  padding: 12px 0;
+}
+.ticket-history-entry > summary:focus-visible {
+  outline: 2px solid #8a5b30;
+  outline-offset: 4px;
 }

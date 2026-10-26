@@ -767,7 +767,6 @@ export function TicketCard({
                 icon: GitPullRequest,
                 count: card.linkedPullRequests?.length || 0,
               },
-              { id: "history", label: "История", icon: History },
               { id: "links", label: "Ссылки", icon: Link2, count: linkCount },
               {
                 id: "attachments",
@@ -775,6 +774,7 @@ export function TicketCard({
                 icon: Paperclip,
                 count: card.attachments.length,
               },
+              { id: "history", label: "История", icon: History },
             ].map(({ id, label, icon: Icon, count }) => (
               <button
                 key={id}

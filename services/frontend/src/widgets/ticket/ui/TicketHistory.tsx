@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
@@ -12,19 +13,11 @@ type Update = {
   relations: Record<string, unknown>;
 };
 const labels: Record<string, string> = {
-  "System.Title": "Название",
-  "System.State": "Статус",
   "System.AssignedTo": "Исполнитель",
+  "System.State": "Статус",
   "System.Description": "Описание",
-  "System.WorkItemType": "Тип задачи",
-  "System.Tags": "Теги",
-  "System.ChangedDate": "Дата изменения",
-  "System.ChangedBy": "Изменил",
-  "System.CreatedDate": "Дата создания",
-  "System.CreatedBy": "Создал",
-  "Microsoft.VSTS.Common.Priority": "Azure приоритет",
   "Microsoft.VSTS.Common.AcceptanceCriteria": "Критерии приёмки",
-  "Microsoft.VSTS.TCM.ReproSteps": "Шаги воспроизведения",
+  "System.Tags": "Теги",
 };
 function valueText(value: unknown): string {
   if (value === undefined || value === null) return "—";
@@ -78,58 +71,51 @@ export function TicketHistory({ reference }: { reference: string }) {
       generation.current = request + 1;
     };
   }, [load]);
+  const visibleItems = items
+    .map((item) => ({
+      ...item,
+      changes: Object.entries(labels).flatMap(([field, label]) =>
+        Object.hasOwn(item.fields, field) ? [{ field, label, ...item.fields[field] }] : [],
+      ),
+    }))
+    .filter((item) => item.changes.length > 0);
   return (
     <div className="ticket-history">
       <p className="muted">
         История Azure, от ранних изменений к новым. Локальные изменения Orbit сюда не входят.
       </p>
-      {items.map((item) => (
-        <article className="ticket-history-entry" key={item.id}>
-          <header>
-            <strong>{item.author}</strong>
+      {visibleItems.map((item) => (
+        <details className="ticket-history-entry" key={item.id}>
+          <summary>
+            <span className="ticket-history-author">
+              <InitialsAvatar name={item.author} />
+              <strong>{item.author}</strong>
+            </span>
             <time>
               {item.date && Number.isFinite(Date.parse(item.date))
                 ? new Date(item.date).toLocaleString("ru-RU")
                 : "Дата не указана"}
             </time>
             <span className="ticket-count">#{item.revision || item.id}</span>
-          </header>
-          {Object.entries(item.fields).map(([field, change]) => (
-            <details
-              key={field}
-              className="ticket-history-field"
-              open={
-                ![
-                  "System.Description",
-                  "Microsoft.VSTS.Common.AcceptanceCriteria",
-                  "Microsoft.VSTS.TCM.ReproSteps",
-                ].includes(field) &&
-                Math.max(valueText(change.oldValue).length, valueText(change.newValue).length) < 300
-              }
-            >
-              <summary title={field}>{labels[field] || field}</summary>
-              <div className="ticket-history-values">
-                <div>
-                  <b>Было</b>
-                  <pre>{valueText(change.oldValue)}</pre>
+          </summary>
+          <div className="ticket-history-changes">
+            {item.changes.map((change) => (
+              <section key={change.field} className="ticket-history-field">
+                <h4>{change.label}</h4>
+                <div className="ticket-history-values">
+                  <div>
+                    <b>Было</b>
+                    <pre>{valueText(change.oldValue)}</pre>
+                  </div>
+                  <div>
+                    <b>Стало</b>
+                    <pre>{valueText(change.newValue)}</pre>
+                  </div>
                 </div>
-                <div>
-                  <b>Стало</b>
-                  <pre>{valueText(change.newValue)}</pre>
-                </div>
-              </div>
-            </details>
-          ))}
-          {Object.keys(item.relations).length > 0 && (
-            <details className="ticket-history-field">
-              <summary>Изменения связей и вложений</summary>
-              <pre>{JSON.stringify(item.relations, null, 2)}</pre>
-            </details>
-          )}
-          {!Object.keys(item.fields).length && !Object.keys(item.relations).length && (
-            <p>Azure не вернул изменённых полей для этой записи.</p>
-          )}
-        </article>
+              </section>
+            ))}
+          </div>
+        </details>
       ))}
       {error && (
         <p role="alert" className="error">
@@ -141,7 +127,13 @@ export function TicketHistory({ reference }: { reference: string }) {
           <LoaderCircle size={16} className="spin" /> Загружаю историю…
         </p>
       )}
-      {!busy && !error && !items.length && <p>История изменений отсутствует.</p>}
+      {!busy && !error && !visibleItems.length && (
+        <p>
+          {nextSkip !== null
+            ? "В загруженной части истории нет изменений основных полей. Нажмите «Загрузить ещё», чтобы проверить следующие записи."
+            : "Изменения основных полей отсутствуют."}
+        </p>
+      )}
       {nextSkip !== null && (
         <button
           type="button"

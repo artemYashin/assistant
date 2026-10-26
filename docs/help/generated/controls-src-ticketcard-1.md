@@ -73,21 +73,21 @@
 
 ### Элемент
 
-История
+Ссылки
 
 Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:770.
 
 ### Элемент
 
-Ссылки
+Вложения
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:771.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:773.
 
 ### Элемент
 
-Вложения
+История
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:774.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:777.
 
 ### Элемент
 

@@ -7,12 +7,12 @@
 
 ### Элемент
 
-Изменения связей и вложений
+/ Дата не указана · #
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketHistory.tsx:125.
+Источник: services/frontend/src/widgets/ticket/ui/TicketHistory.tsx:89.
 
 ### Элемент
 
 Повторить / Загрузить ещё
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketHistory.tsx:146.
+Источник: services/frontend/src/widgets/ticket/ui/TicketHistory.tsx:138.
