@@ -17,6 +17,8 @@ type Plan = Key & {
   targetBranch?: string;
   created: number;
   moveTickets: boolean;
+  linkLocalTickets?: boolean;
+  localTicketIds?: number[];
   tickets: { id: number; title?: string; state: string; states: string[] }[];
 };
 // UI-only write workflow. No merge capability is exposed to the agent.
@@ -75,7 +77,9 @@ export class PrMerge {
           status: "rejected",
           retryable: true,
           message:
-            "Azure отклонил предыдущий запрос по правам. PR всё ещё активен. После исправления PAT можно открыть новый диалог и подтвердить merge.",
+            result.phase === "links"
+              ? "Предыдущая операция остановлена до merge. Уже сохранённые связи остаются в Azure. Можно открыть новый диалог."
+              : "Azure отклонил предыдущий запрос по правам. PR всё ещё активен. После исправления PAT можно открыть новый диалог и подтвердить merge.",
         }),
         previous.plan,
       );
@@ -88,7 +92,7 @@ export class PrMerge {
     const pat = this.store.secret("azure.pat");
     if (!pat) throw new AppError(400, "Настройте Azure PAT");
     return requestJson(
-      `${m.source}/${encodeURIComponent(m.azure_project)}/_apis/${path}?api-version=${encodeURIComponent(this.store.settings().azureVersion)}`,
+      `${m.source}/${encodeURIComponent(m.azure_project)}/_apis/${path}${path.includes("?") ? "&" : "?"}api-version=${encodeURIComponent(this.store.settings().azureVersion)}`,
       {
         ...init,
         redirect: "error",
@@ -96,10 +100,77 @@ export class PrMerge {
         headers: {
           Authorization: `Basic ${Buffer.from(":" + pat).toString("base64")}`,
           "Content-Type": "application/json",
+          ...init.headers,
         },
       },
       "Azure DevOps: merge PR",
     );
+  }
+  private localTicketIds(key: Key) {
+    const excluded = excludedPrTicketIds(this.store, key.monitor, key.repo, key.number);
+    const ids = (
+      this.store.db
+        .prepare(
+          "SELECT ticket_id FROM pr_ticket_links WHERE monitor=? AND repo=? AND number=? ORDER BY ticket_id",
+        )
+        .all(key.monitor, key.repo, key.number) as { ticket_id: number }[]
+    )
+      .map((row) => row.ticket_id)
+      .filter((id) => !excluded.includes(id));
+    if (ids.length > 100 || ids.some((id) => !Number.isSafeInteger(id) || id < 1))
+      throw new AppError(
+        400,
+        "Некорректный или слишком большой список локальных связей (максимум 100)",
+      );
+    return ids;
+  }
+  private async linkTicket(m: Monitor, id: number, artifact: string, guard: () => void) {
+    const path = `wit/workitems/${id}`;
+    const read = async () => {
+      guard();
+      const item = await this.request(m, `${path}?$expand=relations`);
+      guard();
+      if (item.id !== id || !Number.isSafeInteger(item.rev) || !Array.isArray(item.relations || []))
+        throw new AppError(502, `Некорректный ответ Azure для тикета #${id}`);
+      return item;
+    };
+    const linked = (item: any) =>
+      (item.relations || []).some((r: any) => {
+        if (r.rel !== "ArtifactLink" || typeof r.url !== "string") return false;
+        try {
+          return (
+            decodeURIComponent(r.url).toLowerCase() === decodeURIComponent(artifact).toLowerCase()
+          );
+        } catch {
+          return false;
+        }
+      });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const item = await read();
+      if (linked(item)) return;
+      guard();
+      try {
+        await this.request(m, path, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json-patch+json" },
+          body: JSON.stringify([
+            { op: "test", path: "/rev", value: item.rev },
+            {
+              op: "add",
+              path: "/relations/-",
+              value: { rel: "ArtifactLink", url: artifact, attributes: { name: "Pull Request" } },
+            },
+          ]),
+        });
+      } catch (error: any) {
+        // A timeout can follow a successful write; read back before reporting failure.
+        if (linked(await read())) return;
+        if (attempt === 0 && [409, 412].includes(error?.upstreamStatus)) continue;
+        throw error;
+      }
+      if (linked(await read())) return;
+      throw new AppError(502, `Связь с тикетом #${id} не подтверждена Azure`);
+    }
   }
   private async snapshot(key: Key, moveTickets = true) {
     const m = this.monitor(key);
@@ -150,7 +221,7 @@ export class PrMerge {
     if (source !== this.store.source()) throw new AppError(409, "Подключение изменилось");
     return { ids };
   }
-  async prepare(key: Key, moveTickets = true) {
+  async prepare(key: Key, moveTickets = true, linkLocalTickets = false) {
     const source = this.store.source();
     const { pr, ids } = await this.snapshot(key, moveTickets);
     this.recoverDeniedAttempt(key, pr);
@@ -177,6 +248,8 @@ export class PrMerge {
       targetBranch: pr.targetRefName || "",
       created: Date.now(),
       moveTickets,
+      linkLocalTickets,
+      localTicketIds: this.localTicketIds(key),
       tickets,
     };
     this.store.db
@@ -218,9 +291,11 @@ export class PrMerge {
     const plan: Plan = JSON.parse(row.body);
     if (Date.now() - plan.created > 15 * 60_000)
       throw new AppError(409, "Диалог устарел. Откройте его заново.");
+    const pat = this.store.secret("azure.pat");
     const guard = () => {
       if (this.store.source() !== plan.source) throw new AppError(409, "Подключение изменилось");
       this.monitor(plan);
+      if (this.store.secret("azure.pat") !== pat) throw new AppError(409, "Подключение изменилось");
     };
     guard();
     // Mode is frozen in the prepared plan; confirmation cannot enable ticket writes.
@@ -232,6 +307,11 @@ export class PrMerge {
       JSON.stringify(ids) !== JSON.stringify(plan.tickets.map((t) => t.id))
     )
       throw new AppError(409, "Коммиты или связанные тикеты изменились. Откройте диалог заново.");
+    if (
+      plan.linkLocalTickets &&
+      JSON.stringify(this.localTicketIds(plan)) !== JSON.stringify(plan.localTicketIds || [])
+    )
+      throw new AppError(409, "Локальные связи изменились. Откройте диалог заново.");
     if (
       selections.length !== ids.length ||
       new Set(selections.map((s) => s.id)).size !== ids.length ||
@@ -263,7 +343,9 @@ export class PrMerge {
       );
       return this.result(id);
     }
+    const linkedTickets: number[] = [];
     const save = (result: any) => {
+      if (plan.linkLocalTickets) result.linkedTickets = [...linkedTickets];
       this.store.db
         .prepare("UPDATE pr_merge_plans SET result=? WHERE id=?")
         .run(JSON.stringify(result), id);
@@ -283,6 +365,38 @@ export class PrMerge {
       }),
       plan,
     );
+    if (plan.linkLocalTickets) {
+      try {
+        const projectId = pr.repository?.project?.id;
+        if (!projectId) throw new AppError(502, "Azure не вернул проект PR для привязки тикетов");
+        const artifact = `vstfs:///Git/PullRequestId/${projectId}%2F${plan.repo}%2F${plan.number}`;
+        for (const ticketId of plan.localTicketIds || []) {
+          await this.linkTicket(m, ticketId, artifact, guard);
+          linkedTickets.push(ticketId);
+          save({
+            status: "running",
+            message: "Связи сохраняются в Azure; merge ещё не отправлен.",
+          });
+        }
+        guard();
+        const current = await this.snapshot(plan, false);
+        if (
+          current.pr.lastMergeSourceCommit.commitId !== plan.head ||
+          current.pr.lastMergeTargetCommit.commitId !== plan.target
+        )
+          throw new AppError(409, "Коммиты PR изменились. Откройте диалог заново.");
+        await new PrCi(this.store).assertReady(plan);
+        guard();
+      } catch (error: any) {
+        return save({
+          status: "rejected",
+          phase: "links",
+          retryable: true,
+          tickets: [],
+          message: `Merge не отправлен: не удалось сохранить все связи или повторно проверить PR. Уже сохранённые связи остаются в Azure. Исправьте причину и откройте диалог заново: ${error.message}`,
+        });
+      }
+    }
     let writeError = "";
     let denied = false;
     try {

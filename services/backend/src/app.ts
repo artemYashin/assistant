@@ -1578,11 +1578,12 @@ export function createApp(
         repo: text.min(1),
         number: z.number().int().positive(),
         moveTickets: z.boolean().default(false),
+        linkLocalTickets: z.boolean().default(false),
       })
       .strict()
       .parse(req.body);
-    const { moveTickets, ...identity } = key;
-    res.json(await prMerge.prepare(identity, moveTickets));
+    const { moveTickets, linkLocalTickets, ...identity } = key;
+    res.json(await prMerge.prepare(identity, moveTickets, linkLocalTickets));
   });
   app.post("/api/pr/merge/:id", async (req, res) => {
     const input = z

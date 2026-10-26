@@ -7,6 +7,7 @@ import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 
 type Plan = {
   id: string;
+  localTicketIds?: number[];
   title: string;
   sourceBranch?: string;
   targetBranch?: string;
@@ -24,6 +25,7 @@ export function PrMergeDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [linkLocalTickets, setLinkLocalTickets] = useState(false);
   const [moveTickets, setMoveTickets] = useState(false);
   const [bypassPolicy, setBypassPolicy] = useState(false);
   const [bypassReason, setBypassReason] = useState("");
@@ -70,6 +72,7 @@ export function PrMergeDialog({
       repo: pr.repo,
       number: pr.number,
       moveTickets,
+      linkLocalTickets,
     })
       .then((p) => {
         if (!live) return;
@@ -85,7 +88,7 @@ export function PrMergeDialog({
     return () => {
       live = false;
     };
-  }, [pr.monitor, pr.repo, pr.number, moveTickets, retry]);
+  }, [pr.monitor, pr.repo, pr.number, moveTickets, linkLocalTickets, retry]);
   async function submit() {
     if (!strategy || !plan || submitted || busy || (bypassPolicy && !bypassReason.trim())) return;
     setBusy(true);
@@ -170,7 +173,7 @@ export function PrMergeDialog({
       <p className="muted">
         {moveTickets
           ? "После подтверждённого merge выбранные статусы изменятся в Azure DevOps."
-          : "Будет выполнен только merge. Статусы связанных тикетов останутся без изменений."}{" "}
+          : "Статусы связанных тикетов останутся без изменений."}{" "}
         Исходная ветка сохранится.{" "}
         {bypassPolicy ? "Запрошен обход политик репозитория." : "Политики репозитория применяются."}
       </p>
@@ -202,6 +205,38 @@ export function PrMergeDialog({
       )}
       {!submitted && (
         <div className="pr-merge-options">
+          <section className="pr-merge-option-block">
+            <label className="pr-merge-toggle">
+              <input
+                type="checkbox"
+                checked={linkLocalTickets}
+                disabled={busy}
+                onChange={(event) => {
+                  setLinkLocalTickets(event.target.checked);
+                  setPlan(null);
+                  setBusy(true);
+                }}
+              />
+              <span>
+                <strong>
+                  <Ticket size={16} /> Сохранить локальные связи с тикетами в Azure
+                </strong>
+                <small>
+                  Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи
+                  не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp;
+                  Write.
+                </small>
+              </span>
+            </label>
+            {linkLocalTickets && plan && (
+              <p className="muted">
+                {plan.localTicketIds?.length
+                  ? `Тикеты для привязки: ${plan.localTicketIds.map((id) => `#${id}`).join(", ")}`
+                  : "Локальных связей для сохранения нет."}{" "}
+                При ошибке привязки merge не отправляется. Уже сохранённые связи остаются в Azure.
+              </p>
+            )}
+          </section>
           <section className="pr-merge-option-block">
             <label className="pr-merge-toggle">
               <input
@@ -376,7 +411,7 @@ export function PrMergeDialog({
                 ? "Готово: merge и статусы подтверждены"
                 : "Готово: merge подтверждён"
               : result.status === "rejected"
-                ? "Merge отклонён: после исправления прав можно повторить"
+                ? "Merge не выполнен: устраните причину и откройте диалог заново"
                 : result.status === "partial"
                   ? "PR смержен, часть статусов не обновлена"
                   : result.status === "prepared"
@@ -386,6 +421,12 @@ export function PrMergeDialog({
                       : "Merge пока не подтверждён"}
           </h3>
           {result.message && <p>{result.message}</p>}
+          {!!result.linkedTickets?.length && (
+            <p>
+              Связи в Azure подтверждены:{" "}
+              {result.linkedTickets.map((id: number) => `#${id}`).join(", ")}
+            </p>
+          )}
           {result.tickets?.map((t: any) => (
             <p key={t.id}>
               #{t.id} ·{" "}

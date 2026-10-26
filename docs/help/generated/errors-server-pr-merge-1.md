@@ -9,94 +9,118 @@
 
 PR или подключение изменились. Обновите список.
 
-Источник: services/backend/src/pr-merge.ts:40.
+Источник: services/backend/src/pr-merge.ts:42.
+
+### Сообщение
+
+Предыдущая операция остановлена до merge. Уже сохранённые связи остаются в Azure. Можно открыть новый диалог.
+
+Источник: services/backend/src/pr-merge.ts:81.
 
 ### Сообщение
 
 Настройте Azure PAT
 
-Источник: services/backend/src/pr-merge.ts:89.
+Источник: services/backend/src/pr-merge.ts:93.
+
+### Сообщение
+
+Некорректный или слишком большой список локальных связей (максимум 100)
+
+Источник: services/backend/src/pr-merge.ts:121.
+
+### Сообщение
+
+Некорректный ответ Azure для тикета #{…}
+
+Источник: services/backend/src/pr-merge.ts:134.
+
+### Сообщение
+
+Связь с тикетом #{…} не подтверждена Azure
+
+Источник: services/backend/src/pr-merge.ts:172.
 
 ### Сообщение
 
 Нужен активный PR без черновика. Обновите список.
 
-Источник: services/backend/src/pr-merge.ts:115.
+Источник: services/backend/src/pr-merge.ts:186.
 
 ### Сообщение
 
 Не удалось загрузить связи PR
 
-Источник: services/backend/src/pr-merge.ts:118.
+Источник: services/backend/src/pr-merge.ts:189.
 
 ### Сообщение
 
 Некорректный или слишком большой список связанных тикетов (максимум 100)
 
-Источник: services/backend/src/pr-merge.ts:137.
+Источник: services/backend/src/pr-merge.ts:208.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: services/backend/src/pr-merge.ts:150.
+Источник: services/backend/src/pr-merge.ts:221.
 
 ### Сообщение
 
 Операция не найдена
 
-Источник: services/backend/src/pr-merge.ts:191.
+Источник: services/backend/src/pr-merge.ts:264.
 
 ### Сообщение
 
 Укажите причину обхода политик (до 2000 символов)
 
-Источник: services/backend/src/pr-merge.ts:214.
+Источник: services/backend/src/pr-merge.ts:287.
 
 ### Сообщение
 
 Подтверждение не найдено
 
-Источник: services/backend/src/pr-merge.ts:216.
+Источник: services/backend/src/pr-merge.ts:289.
 
 ### Сообщение
 
 Диалог устарел. Откройте его заново.
 
-Источник: services/backend/src/pr-merge.ts:220.
+Источник: services/backend/src/pr-merge.ts:293.
 
 ### Сообщение
 
 Коммиты или связанные тикеты изменились. Откройте диалог заново.
 
-Источник: services/backend/src/pr-merge.ts:234.
+Источник: services/backend/src/pr-merge.ts:309.
+
+### Сообщение
+
+Локальные связи изменились. Откройте диалог заново.
+
+Источник: services/backend/src/pr-merge.ts:314.
 
 ### Сообщение
 
 Выберите статус для каждого связанного тикета
 
-Источник: services/backend/src/pr-merge.ts:240.
+Источник: services/backend/src/pr-merge.ts:320.
 
 ### Сообщение
 
 Недоступный статус для #{…}
 
-Источник: services/backend/src/pr-merge.ts:245.
+Источник: services/backend/src/pr-merge.ts:325.
 
 ### Сообщение
 
 Операция начата. При перезапуске сервера проверьте результат в Azure; автоматического повтора нет.
 
-Источник: services/backend/src/pr-merge.ts:275.
+Источник: services/backend/src/pr-merge.ts:357.
 
 ### Сообщение
 
-Merge не подтверждён. Статусы тикетов не менялись. Проверьте PR в Azure; повторного запроса не будет.{…}
+Azure не вернул проект PR для привязки тикетов
 
-Источник: services/backend/src/pr-merge.ts:367.
-
-### Сообщение
-
-Не удалось подтвердить статус
-
-Источник: services/backend/src/pr-merge.ts:385.
+Источник: services/backend/src/pr-merge.ts:371.

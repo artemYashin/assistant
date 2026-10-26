@@ -9,46 +9,46 @@
 
 Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.
 
-Источник: services/backend/src/app.ts:1939.
+Источник: services/backend/src/app.ts:1940.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/app.ts:1954.
+Источник: services/backend/src/app.ts:1955.
 
 ### Сообщение
 
 Не удалось распознать запись. Проверьте логи voice-контейнера.
 
-Источник: services/backend/src/app.ts:1957.
+Источник: services/backend/src/app.ts:1958.
 
 ### Сообщение
 
 Маршрут не найден
 
-Источник: services/backend/src/app.ts:1965.
+Источник: services/backend/src/app.ts:1966.
 
 ### Сообщение
 
 Проверьте поля формы
 
-Источник: services/backend/src/app.ts:1971.
+Источник: services/backend/src/app.ts:1972.
 
 ### Сообщение
 
 Request failed:
 
-Источник: services/backend/src/app.ts:1977.
+Источник: services/backend/src/app.ts:1978.
 
 ### Сообщение
 
 UnknownError
 
-Источник: services/backend/src/app.ts:1977.
+Источник: services/backend/src/app.ts:1978.
 
 ### Сообщение
 
 Внутренняя ошибка. Проверьте настройки и повторите запрос.
 
-Источник: services/backend/src/app.ts:1979.
+Источник: services/backend/src/app.ts:1980.

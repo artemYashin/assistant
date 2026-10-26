@@ -9,10 +9,10 @@
 
 Повторный merge не отправлен. Проверьте результат операции.
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:107.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:110.
 
 ### Сообщение
 
 Не удалось проверить связанные тикеты
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:248.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:283.
