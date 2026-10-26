@@ -17693,3 +17693,26 @@ a.pr-branch-link:focus-visible {
 .ticket-viewer-badges > span {
   white-space: normal;
 }
+
+.ticket-lookup-dialog.is-detail {
+  width: min(1480px, 94dvw);
+  max-width: 94dvw;
+}
+.ticket-lookup-dialog.is-detail.is-multiple {
+  width: 94dvw;
+}
+.ticket-detail-tabs {
+  flex: 0 0 auto;
+  margin: 10px 0;
+}
+.ticket-card-body > [role="tabpanel"][hidden] {
+  display: none;
+}
+.ticket-tab-panel {
+  min-width: 0;
+}
+.ticket-image-target {
+  outline: 3px solid #79a98a;
+  outline-offset: 3px;
+  border-radius: 4px;
+}

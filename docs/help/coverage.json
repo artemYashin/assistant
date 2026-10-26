@@ -105,7 +105,7 @@
     "services/frontend/src/app/ui/Mark.tsx": "908e7461c0a83f5cdf1bcab640b8565188fbc2ba9617cb2ec430a2205e2bc79f",
     "services/frontend/src/app/ui/OverviewBlock.tsx": "d23c6d7a0a7962b943f8e12ba82e4df972c44cfdb61a68d5867693d161f87ac9",
     "services/frontend/src/app/ui/PullRequestsBlock.tsx": "2d271b58ebebc54d83769e894d222c1b05bf40dcc248b9d338be5b749c7b2106",
-    "services/frontend/src/app/ui/TicketLookupDialog.tsx": "00fa48571b17009e35d9898252779e771e67bbdd1c6a50e9e7c5aa4842b02ed5",
+    "services/frontend/src/app/ui/TicketLookupDialog.tsx": "d6f64d90855d512762ddc8b051d98f5f364fec771734836acf8639897bcb30c7",
     "services/frontend/src/app/ui/TicketsBlock.tsx": "f9179f948b4d8bf4e863aebef714d90a6099a4db0bcd0d30d28a44398e665619",
     "services/frontend/src/app/ui/Workspace.tsx": "6aaad0d3dfaf0645cd4b83cb596409036da5b6c2480c9214d3b543ae0e1dfbc7",
     "services/frontend/src/app/ui/WorkspaceHeader.tsx": "15cfcd78d2e70572326bb88de062d99ba11cbe1c655c4257bc432d46625e0d93",
@@ -358,7 +358,7 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "7166c8462dff54872f70691b4c4f186066cf6ca1ef4a12b54591565aa4846dbc",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "57f4c1b185a570d5c5f318d3a5a64196c2b436990efa6006bbdd07a1cae57a61",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "58fedb6a70a4ae008a13b50725f3e90c9a8a6ef21f4582cc59ffa2ed14eae9ad",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "8676cc0aa004052ea65320cbe4419572b3be053d43f60db805603d376eac11cf",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }

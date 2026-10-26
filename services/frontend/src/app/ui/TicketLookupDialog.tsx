@@ -147,7 +147,7 @@ export function TicketLookupDialog({
       </button>
       <dialog
         ref={dialog}
-        className={`ticket-lookup-dialog${cardRef || selection.length ? " is-detail" : " is-lookup"}`}
+        className={`ticket-lookup-dialog${selection.length > 1 ? " is-multiple" : ""}${cardRef || selection.length ? " is-detail" : " is-lookup"}`}
         aria-labelledby={titleId}
         onCancel={(event) => {
           if (event.target !== event.currentTarget) return;

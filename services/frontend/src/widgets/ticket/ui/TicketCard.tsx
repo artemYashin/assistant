@@ -1,6 +1,6 @@
 import { locateContentLink } from "../lib/locate-content-link.js";
 import type { ContentLink } from "../../../features/render-content/index.js";
-import { useMemo } from "react";
+import { useMemo, useLayoutEffect } from "react";
 import { contentLinkGroups, ExternalLinkBadge } from "../../../features/render-content/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { MemoryMarkdown } from "../../../features/render-content/index.js";
@@ -66,9 +66,60 @@ export function TicketCard({
 }) {
   const citationRoot = useRef<HTMLDivElement>(null);
   const contentRoot = useRef<HTMLDivElement>(null);
+  const tabId = useId();
+  const [activeTab, setActiveTab] = useState("content");
+  const tabScroll = useRef<Record<string, number>>({});
+  const changeTab = (tab: string) => {
+    if (contentRoot.current) tabScroll.current[activeTab] = contentRoot.current.scrollTop;
+    setActiveTab(tab);
+  };
+  useLayoutEffect(() => {
+    if (contentRoot.current) contentRoot.current.scrollTop = tabScroll.current[activeTab] || 0;
+  }, [activeTab]);
+  const [imageSelection, setImageSelection] = useState<{ image: HTMLElement } | null>(null);
+  const [imageError, setImageError] = useState("");
+  useEffect(() => {
+    if (!imageSelection) return;
+    const { image } = imageSelection;
+    const frame = requestAnimationFrame(() => {
+      for (let node: HTMLElement | null = image; node; node = node.parentElement) {
+        if (node instanceof HTMLDetailsElement) node.open = true;
+        if (node === contentRoot.current) break;
+      }
+      image.scrollIntoView({ block: "center" });
+      image.classList.add("ticket-image-target");
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      image.classList.remove("ticket-image-target");
+    };
+  }, [imageSelection]);
+  function showImage(url: string) {
+    const image = [
+      ...(contentRoot.current?.querySelectorAll<HTMLAnchorElement>(
+        "[data-link-source] a.image-preview-trigger",
+      ) || []),
+    ].find((node) => node.getAttribute("href") === url);
+    setImageError(
+      image
+        ? ""
+        : "Изображение не найдено в описании или комментариях. Оно доступно только как вложение.",
+    );
+    if (!image) return;
+    changeTab(
+      image.closest("[data-link-source]")?.getAttribute("data-link-source")?.startsWith("comment:")
+        ? "comments"
+        : "content",
+    );
+    setImageSelection({ image });
+  }
   const [linkSelection, setLinkSelection] = useState<{ link: ContentLink } | null>(null);
   const [linkError, setLinkError] = useState("");
   useEffect(() => {
+    setActiveTab("content");
+    tabScroll.current = {};
+    setImageSelection(null);
+    setImageError("");
     setLinkSelection(null);
     setLinkError("");
   }, [reference]);
@@ -98,6 +149,7 @@ export function TicketCard({
     [error, setError] = useState("");
   useEffect(() => {
     if (!card || !citation || !citationRoot.current) return;
+    setActiveTab("content");
     const section = [
       ...citationRoot.current.querySelectorAll<HTMLDetailsElement>(
         "details[data-citation-section]",
@@ -684,6 +736,67 @@ export function TicketCard({
               </button>
             </nav>
           </header>
+          <div
+            className="settings-tab-list ticket-detail-tabs"
+            role="tablist"
+            aria-label="Разделы тикета"
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              const buttons = [
+                ...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+              ];
+              const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+              const next =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? buttons.length - 1
+                    : (index + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) %
+                      buttons.length;
+              event.preventDefault();
+              buttons[next]?.focus();
+              buttons[next]?.click();
+            }}
+          >
+            {[
+              { id: "content", label: "Содержание", icon: FileText },
+              {
+                id: "prs",
+                label: "Связанные PR",
+                icon: GitPullRequest,
+                count: card.linkedPullRequests?.length || 0,
+              },
+              {
+                id: "comments",
+                label: "Комментарии",
+                icon: MessageSquare,
+                count: card.comments.length,
+              },
+              { id: "links", label: "Ссылки", icon: Link2, count: linkCount },
+              {
+                id: "attachments",
+                label: "Вложения",
+                icon: Paperclip,
+                count: card.attachments.length,
+              },
+            ].map(({ id, label, icon: Icon, count }) => (
+              <button
+                key={id}
+                type="button"
+                className="settings-tab"
+                role="tab"
+                id={tabId + "-" + id}
+                aria-controls={tabId + "-panel-" + id}
+                aria-selected={activeTab === id}
+                tabIndex={activeTab === id ? 0 : -1}
+                onClick={() => changeTab(id)}
+              >
+                <Icon size={17} />
+                {label}
+                {count !== undefined && <span className="ticket-count">{count}</span>}
+              </button>
+            ))}
+          </div>
           <div ref={contentRoot} className="ticket-card-body">
             {analysisError && (
               <p className="error" role="alert">
@@ -705,7 +818,14 @@ export function TicketCard({
                 {w}
               </p>
             ))}
-            <div ref={citationRoot} className="ticket-citation-sections">
+            <div
+              ref={citationRoot}
+              className="ticket-citation-sections"
+              role="tabpanel"
+              id={tabId + "-panel-content"}
+              aria-labelledby={tabId + "-content"}
+              hidden={activeTab !== "content"}
+            >
               {citationMissing && (
                 <p role="status" className="muted">
                   Точный фрагмент не найден в текущей версии тикета. Возможно, текст изменился.
@@ -748,15 +868,13 @@ export function TicketCard({
                   </details>
                 ))}
             </div>
-            <details
-              className="ticket-section ticket-section-prs"
-              open={!!card.linkedPullRequests?.length}
+            <section
+              className="ticket-tab-panel ticket-section-neutral"
+              role="tabpanel"
+              id={tabId + "-panel-prs"}
+              aria-labelledby={tabId + "-prs"}
+              hidden={activeTab !== "prs"}
             >
-              <summary>
-                <GitPullRequest size={17} aria-hidden="true" />
-                Связанные открытые PR{" "}
-                <span className="ticket-count">{card.linkedPullRequests?.length || 0}</span>
-              </summary>
               {card.linkedPullRequests?.length ? (
                 <ul className="ticket-linked-prs">
                   {card.linkedPullRequests.map((pr: any) => (
@@ -789,12 +907,14 @@ export function TicketCard({
                 Ручные локальные связи и упоминания #номера в описании PR. Открытость — по последней
                 синхронизации с учётом настроенного фильтра ревьюеров.
               </p>
-            </details>
-            <details className="ticket-section ticket-section-neutral">
-              <summary>
-                <MessageSquare size={17} aria-hidden="true" />
-                Комментарии <span className="ticket-count">{card.comments.length}</span>
-              </summary>
+            </section>
+            <section
+              className="ticket-tab-panel ticket-section-neutral"
+              role="tabpanel"
+              id={tabId + "-panel-comments"}
+              aria-labelledby={tabId + "-comments"}
+              hidden={activeTab !== "comments"}
+            >
               {card.comments.length ? (
                 <div className="ticket-comments">
                   {card.comments.map((c: any) => (
@@ -826,17 +946,22 @@ export function TicketCard({
                 reference={reference}
                 draftKey={JSON.stringify([card.source, card.id])}
               />
-            </details>
-            {linkCount > 0 && (
-              <details className="ticket-section ticket-section-neutral ticket-links-section">
-                <summary>
-                  <Link2 size={17} aria-hidden="true" />
-                  Ссылки <span className="ticket-count">{linkCount}</span>
-                </summary>
+            </section>
+            {
+              <section
+                className="ticket-tab-panel ticket-section-neutral"
+                role="tabpanel"
+                id={tabId + "-panel-links"}
+                aria-labelledby={tabId + "-links"}
+                hidden={activeTab !== "links"}
+              >
                 {linkError && (
                   <p className="error" role="status">
                     {linkError}
                   </p>
+                )}
+                {!linkCount && (
+                  <p className="ticket-empty">Ссылки отсутствуют в загруженных данных.</p>
                 )}
                 <nav className="ticket-content-links" aria-label="Ссылки из содержимого тикета">
                   {linkGroups.map((group) => (
@@ -855,7 +980,12 @@ export function TicketCard({
                               className="chat-link-copy"
                               title="Показать в тикете"
                               aria-label="Показать в тикете"
-                              onClick={() => setLinkSelection({ link })}
+                              onClick={() => {
+                                changeTab(
+                                  link.source?.startsWith("comment:") ? "comments" : "content",
+                                );
+                                setLinkSelection({ link });
+                              }}
                             >
                               <LocateFixed size={13} aria-hidden="true" />
                             </button>
@@ -865,20 +995,35 @@ export function TicketCard({
                     </section>
                   ))}
                 </nav>
-              </details>
-            )}
-            <details className="ticket-section ticket-section-neutral">
-              <summary>
-                <Paperclip size={17} aria-hidden="true" />
-                Вложения и изображения{" "}
-                <span className="ticket-count">{card.attachments.length}</span>
-              </summary>
+              </section>
+            }
+            <section
+              className="ticket-tab-panel ticket-section-neutral"
+              role="tabpanel"
+              id={tabId + "-panel-attachments"}
+              aria-labelledby={tabId + "-attachments"}
+              hidden={activeTab !== "attachments"}
+            >
+              {imageError && (
+                <p className="error" role="status">
+                  {imageError}
+                </p>
+              )}
               {card.attachments.length ? (
                 <div className="ticket-attachments">
                   {card.attachments.map((a: any) => (
                     <div className="ticket-attachment" key={a.id}>
                       {a.image ? (
                         <>
+                          <button
+                            type="button"
+                            className="chat-link-copy"
+                            title="Показать изображение в тикете"
+                            aria-label={`Показать изображение в тикете: ${a.name}`}
+                            onClick={() => showImage(attachmentUrl(a))}
+                          >
+                            <LocateFixed size={13} />
+                          </button>
                           <ImagePreview src={attachmentUrl(a)} alt={a.name} thumbnail={false}>
                             {a.name}
                           </ImagePreview>
@@ -905,7 +1050,7 @@ export function TicketCard({
                   изображения.
                 </p>
               )}
-            </details>
+            </section>
           </div>
         </div>
       </div>
