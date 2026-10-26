@@ -9,16 +9,34 @@
 
 Обновить
 
-Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:73.
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:76.
+
+### Элемент
+
+Номер pull request
+
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:93.
+
+### Элемент
+
+Номер pull request · Например, 12345
+
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:95.
+
+### Элемент
+
+Посмотреть
+
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:103.
 
 ### Элемент
 
 Назад
 
-Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:96.
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:127.
 
 ### Элемент
 
 Далее
 
-Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:105.
+Источник: services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx:136.

@@ -17949,3 +17949,24 @@ a.pr-branch-link:focus-visible {
 .ticket-history-field {
   padding: 8px 0;
 }
+
+.pr-exact-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #cfe1f1;
+  border-radius: 10px;
+  background: #f3f8fd;
+}
+.pr-exact-search label {
+  display: grid;
+  gap: 5px;
+  width: 220px;
+}
+.pr-exact-search .muted {
+  align-self: center;
+  font-size: 12px;
+}

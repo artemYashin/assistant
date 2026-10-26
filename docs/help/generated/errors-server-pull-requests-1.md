@@ -7,120 +7,120 @@
 
 ### Сообщение
 
-Некорректная страница
+Точечный просмотр устарел. Нажмите «Обновить» у PR.
 
-Источник: services/backend/src/pull-requests.ts:74.
-
-### Сообщение
-
-Репозиторий не настроен
-
-Источник: services/backend/src/pull-requests.ts:76.
+Источник: services/backend/src/pull-requests.ts:91.
 
 ### Сообщение
 
-Подождите завершения загрузки истории PR
+Некорректный номер PR
 
-Источник: services/backend/src/pull-requests.ts:90.
-
-### Сообщение
-
-Azure не вернул завершённые PR
-
-Источник: services/backend/src/pull-requests.ts:97.
-
-### Сообщение
-
-Настройки подключения изменились
-
-Источник: services/backend/src/pull-requests.ts:102.
-
-### Сообщение
-
-Не удалось загрузить связи завершённого PR
-
-Источник: services/backend/src/pull-requests.ts:128.
-
-### Сообщение
-
-Подключение изменилось
-
-Источник: services/backend/src/pull-requests.ts:130.
-
-### Сообщение
-
-Завершённый PR отсутствует в кэше. Обновите список. / Активный PR отсутствует в локальном списке. Выполните синхронизацию.
-
-Источник: services/backend/src/pull-requests.ts:211.
-
-### Сообщение
-
-PR больше не входит в недельный архив завершённых. Обновите список. / PR больше не активен. Выполните синхронизацию списка.
-
-Источник: services/backend/src/pull-requests.ts:230.
-
-### Сообщение
-
-Azure не вернул корректные связи PR. Локальный кэш сохранён.
-
-Источник: services/backend/src/pull-requests.ts:245.
-
-### Сообщение
-
-Настройки подключения изменились. Повторите запрос.
-
-Источник: services/backend/src/pull-requests.ts:255.
-
-### Сообщение
-
-Локальный PR удалён. Обновите список.
-
-Источник: services/backend/src/pull-requests.ts:281.
-
-### Сообщение
-
-Выберите заказчика и проект ассистента
-
-Источник: services/backend/src/pull-requests.ts:411.
-
-### Сообщение
-
-Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Подключение Azure»
-
-Источник: services/backend/src/pull-requests.ts:415.
-
-### Сообщение
-
-Укажите Git-репозиторий в меню «Заказчики и проекты» → «Репозиторий» и сохраните настройки.
-
-Источник: services/backend/src/pull-requests.ts:421.
-
-### Сообщение
-
-PR или подключение изменились. Обновите список.
-
-Источник: services/backend/src/pull-requests.ts:671.
-
-### Сообщение
-
-Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.
-
-Источник: services/backend/src/pull-requests.ts:694.
-
-### Сообщение
-
-Изображение не найдено в описании PR
-
-Источник: services/backend/src/pull-requests.ts:756.
-
-### Сообщение
-
-Это не вложение Azure текущего подключения
-
-Источник: services/backend/src/pull-requests.ts:759.
+Источник: services/backend/src/pull-requests.ts:106.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: services/backend/src/pull-requests.ts:762.
+Источник: services/backend/src/pull-requests.ts:121.
+
+### Сообщение
+
+Azure вернул другой PR
+
+Источник: services/backend/src/pull-requests.ts:122.
+
+### Сообщение
+
+Azure не вернул данные PR
+
+Источник: services/backend/src/pull-requests.ts:137.
+
+### Сообщение
+
+Azure не вернул связи PR
+
+Источник: services/backend/src/pull-requests.ts:210.
+
+### Сообщение
+
+Некорректная страница
+
+Источник: services/backend/src/pull-requests.ts:255.
+
+### Сообщение
+
+Репозиторий не настроен
+
+Источник: services/backend/src/pull-requests.ts:257.
+
+### Сообщение
+
+Подождите завершения загрузки истории PR
+
+Источник: services/backend/src/pull-requests.ts:271.
+
+### Сообщение
+
+Azure не вернул завершённые PR
+
+Источник: services/backend/src/pull-requests.ts:278.
+
+### Сообщение
+
+Настройки подключения изменились
+
+Источник: services/backend/src/pull-requests.ts:283.
+
+### Сообщение
+
+Не удалось загрузить связи завершённого PR
+
+Источник: services/backend/src/pull-requests.ts:309.
+
+### Сообщение
+
+Подключение изменилось
+
+Источник: services/backend/src/pull-requests.ts:311.
+
+### Сообщение
+
+Завершённый PR отсутствует в кэше. Обновите список. / Активный PR отсутствует в локальном списке. Выполните синхронизацию.
+
+Источник: services/backend/src/pull-requests.ts:392.
+
+### Сообщение
+
+PR больше не входит в недельный архив завершённых. Обновите список. / PR больше не активен. Выполните синхронизацию списка.
+
+Источник: services/backend/src/pull-requests.ts:411.
+
+### Сообщение
+
+Azure не вернул корректные связи PR. Локальный кэш сохранён.
+
+Источник: services/backend/src/pull-requests.ts:426.
+
+### Сообщение
+
+Настройки подключения изменились. Повторите запрос.
+
+Источник: services/backend/src/pull-requests.ts:436.
+
+### Сообщение
+
+Локальный PR удалён. Обновите список.
+
+Источник: services/backend/src/pull-requests.ts:462.
+
+### Сообщение
+
+Выберите заказчика и проект ассистента
+
+Источник: services/backend/src/pull-requests.ts:592.
+
+### Сообщение
+
+Укажите проект Azure DevOps в разделе «Заказчики и проекты» → «Подключение Azure»
+
+Источник: services/backend/src/pull-requests.ts:596.

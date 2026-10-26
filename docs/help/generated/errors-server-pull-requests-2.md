@@ -7,120 +7,120 @@
 
 ### Сообщение
 
-Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.
+Укажите Git-репозиторий в меню «Заказчики и проекты» → «Репозиторий» и сохраните настройки.
 
-Источник: services/backend/src/pull-requests.ts:767.
+Источник: services/backend/src/pull-requests.ts:602.
 
 ### Сообщение
 
-URL Azure изменён: настройте мониторинг для нового подключения
+PR или подключение изменились. Обновите список.
 
-Источник: services/backend/src/pull-requests.ts:772.
+Источник: services/backend/src/pull-requests.ts:852.
+
+### Сообщение
+
+Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.
+
+Источник: services/backend/src/pull-requests.ts:875.
+
+### Сообщение
+
+Изображение не найдено в описании PR
+
+Источник: services/backend/src/pull-requests.ts:935.
+
+### Сообщение
+
+Это не вложение Azure текущего подключения
+
+Источник: services/backend/src/pull-requests.ts:938.
+
+### Сообщение
+
+Подключение Azure изменилось. Откройте PR заново.
+
+Источник: services/backend/src/pull-requests.ts:953.
 
 ### Сообщение
 
 Укажите PAT Azure с разрешением Code: Read
 
-Источник: services/backend/src/pull-requests.ts:774.
+Источник: services/backend/src/pull-requests.ts:954.
+
+### Сообщение
+
+Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.
+
+Источник: services/backend/src/pull-requests.ts:958.
+
+### Сообщение
+
+URL Azure изменён: настройте мониторинг для нового подключения
+
+Источник: services/backend/src/pull-requests.ts:963.
 
 ### Сообщение
 
 Указан адрес корпоративного прокси MCAS. Для Azure REST API проверьте исходный адрес организации, например https://dev.azure.com/организация, и доступ к нему по правилам вашей компании.
 
-Источник: services/backend/src/pull-requests.ts:806.
+Источник: services/backend/src/pull-requests.ts:997.
 
 ### Сообщение
 
 Запрос: {…}.
 
-Источник: services/backend/src/pull-requests.ts:808.
+Источник: services/backend/src/pull-requests.ts:999.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).
 
-Источник: services/backend/src/pull-requests.ts:814.
+Источник: services/backend/src/pull-requests.ts:1005.
 
 ### Сообщение
 
 Azure не разрешил доступ к pull request (HTTP {…}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.
 
-Источник: services/backend/src/pull-requests.ts:816.
+Источник: services/backend/src/pull-requests.ts:1007.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.
 
-Источник: services/backend/src/pull-requests.ts:817.
+Источник: services/backend/src/pull-requests.ts:1008.
 
 ### Сообщение
 
 Azure PR: пустой ответ
 
-Источник: services/backend/src/pull-requests.ts:820.
+Источник: services/backend/src/pull-requests.ts:1011.
 
 ### Сообщение
 
 Ответ Azure больше 2 МБ; данные не загружены
 
-Источник: services/backend/src/pull-requests.ts:831.
+Источник: services/backend/src/pull-requests.ts:1022.
 
 ### Сообщение
 
 Project ID missing
 
-Источник: services/backend/src/pull-requests.ts:859.
+Источник: services/backend/src/pull-requests.ts:1050.
 
 ### Сообщение
 
 Too many policy evaluations
 
-Источник: services/backend/src/pull-requests.ts:863.
+Источник: services/backend/src/pull-requests.ts:1054.
 
 ### Сообщение
 
 Invalid policy response
 
-Источник: services/backend/src/pull-requests.ts:872.
+Источник: services/backend/src/pull-requests.ts:1063.
 
 ### Сообщение
 
 Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.
 
-Источник: services/backend/src/pull-requests.ts:879.
-
-### Сообщение
-
-Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.
-
-Источник: services/backend/src/pull-requests.ts:888.
-
-### Сообщение
-
-Более 5000 PR: синхронизация не завершена
-
-Источник: services/backend/src/pull-requests.ts:895.
-
-### Сообщение
-
-Azure вернул неверный список PR
-
-Источник: services/backend/src/pull-requests.ts:902.
-
-### Сообщение
-
-Azure вернул неверную деталку PR
-
-Источник: services/backend/src/pull-requests.ts:915.
-
-### Сообщение
-
-Azure не вернул связи PR
-
-Источник: services/backend/src/pull-requests.ts:926.
-
-### Сообщение
-
-Azure вернул некорректные связи PR
-
-Источник: services/backend/src/pull-requests.ts:929.
+Источник: services/backend/src/pull-requests.ts:1070.

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { PullRequestsPage } from "./PullRequestsPage.js";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
@@ -16,6 +17,8 @@ function CompletedProjectPullRequests({
   settings?: any;
   context: { client: string; project: string };
 }) {
+  const navigate = useNavigate();
+  const [number, setNumber] = useState("");
   const [monitor, setMonitor] = useState("");
   const [page, setPage] = useState(0),
     [version, setVersion] = useState(0);
@@ -79,6 +82,34 @@ function CompletedProjectPullRequests({
           Обновить
         </button>
       </div>
+      <form
+        className="pr-exact-search"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (/^[1-9]\d*$/.test(number) && Number.isSafeInteger(Number(number)))
+            navigate(`/pull-requests?${new URLSearchParams({ tab: "completed", lookup: number })}`);
+        }}
+      >
+        <label>
+          Номер pull request
+          <input
+            aria-label="Номер pull request"
+            inputMode="numeric"
+            placeholder="Например, 12345"
+            value={number}
+            onChange={(event) => setNumber(event.target.value.replace(/\D/g, ""))}
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={!/^[1-9]\d*$/.test(number) || !Number.isSafeInteger(Number(number))}
+        >
+          Посмотреть
+        </button>
+        <span className="muted">
+          Любой PR в текущей организации Azure, в том числе старше 7 дней.
+        </span>
+      </form>
       <p className="muted">
         Список загружается из Azure. Описание и связи хранятся локально неделю после завершения PR;
         полное описание из импорта сохраняется. Фильтры ревьюеров здесь не применяются.

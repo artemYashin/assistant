@@ -67,6 +67,187 @@ export function prTicketIds(description: string): number[] {
   ];
 }
 export class PullRequests {
+  // Read-only previews never enter the sync/archive tables or their cleanup lifecycle.
+  private previews = new Map<
+    string,
+    {
+      monitor: Monitor;
+      card: any;
+      connectionProject: string;
+      pat: string;
+      diff?: Promise<
+        Omit<Awaited<ReturnType<PullRequests["changes"]>>, "cacheable"> & {
+          title: string;
+          canComment: boolean;
+          sourceBranch: string;
+          targetBranch: string;
+        }
+      >;
+    }
+  >();
+  private preview(monitor: string, repo: string, number: number) {
+    const entry = this.previews.get(monitor);
+    if (!entry || entry.card.repo !== repo || entry.card.number !== number)
+      throw new AppError(404, "Точечный просмотр устарел. Нажмите «Обновить» у PR.");
+    this.credentials(entry.monitor);
+    return entry;
+  }
+  private readMonitor(id: string) {
+    return this.previews.get(id)?.monitor || this.monitors().find((m) => m.id === id);
+  }
+  private readCard(monitor: string, repo: string, number: number) {
+    if (monitor.startsWith("preview:")) return this.preview(monitor, repo, number).card;
+    return this.store.db
+      .prepare("SELECT * FROM pull_requests WHERE monitor=? AND repo=? AND number=?")
+      .get(monitor, repo, number) as any;
+  }
+  async lookup(number: number) {
+    if (!Number.isSafeInteger(number) || number < 1)
+      throw new AppError(400, "Некорректный номер PR");
+    const settings = this.store.settings();
+    const m: Monitor = {
+      id: "",
+      client: "",
+      project: "",
+      source: azureBase(settings.azureUrl),
+      azure_project: settings.azureProject,
+      repository: "",
+      mode: "all",
+      enabled: 0,
+    };
+    const credentials = this.credentials(m);
+    const detail = await this.get(m, `git/pullrequests/${number}`, credentials, true);
+    if (this.credentials(m).pat !== credentials.pat)
+      throw new AppError(409, "Подключение Azure изменилось");
+    if (detail.pullRequestId !== number) throw new AppError(502, "Azure вернул другой PR");
+    return this.previewDetail(detail);
+  }
+  async previewDetail(detail: any) {
+    const settings = this.store.settings();
+    const source = azureBase(settings.azureUrl);
+    const repo = detail.repository?.id;
+    const project = detail.repository?.project;
+    const number = detail.pullRequestId;
+    if (
+      !repo ||
+      !project?.id ||
+      !Number.isSafeInteger(number) ||
+      !["active", "completed", "abandoned"].includes(detail.status)
+    )
+      throw new AppError(502, "Azure не вернул данные PR");
+    // Existing active cards retain their normal actions, review history and local associations.
+    if (detail.status === "active") {
+      for (const m of this.monitors().filter(
+        (m) =>
+          m.source === source &&
+          m.azure_project === settings.azureProject &&
+          (m.azure_project === project.name || m.azure_project === project.id),
+      )) {
+        const known = this.readCard(m.id, repo, number);
+        if (known?.in_scope && m.enabled)
+          return {
+            href: `/pull-requests?${new URLSearchParams({
+              monitor: m.id,
+              repo,
+              number: String(number),
+            })}`,
+          };
+      }
+    }
+    const id = `preview:${randomUUID()}`;
+    const m: Monitor = {
+      id,
+      client: "",
+      project: "",
+      source,
+      azure_project: project.id,
+      repository: repo,
+      mode: "all",
+      enabled: 0,
+    };
+    const card: any = {
+      monitor: id,
+      repo,
+      number,
+      exactPreview: true,
+      status: detail.status,
+      title: detail.title || "",
+      description: detail.description || "",
+      author: detail.createdBy?.displayName || "",
+      draft: !!detail.isDraft,
+      head: detail.lastMergeSourceCommit?.commitId || "",
+      target: detail.lastMergeTargetCommit?.commitId || "",
+      source_branch: detail.sourceRefName || "",
+      target_branch: detail.targetRefName || "",
+      created_at: detail.creationDate,
+      closedAt: detail.closedDate,
+      synced_at: now(),
+      azure_project: project.name,
+      repository: detail.repository.name,
+      client: "",
+      project: "",
+      url: `${source}/${enc(project.id)}/_git/${enc(repo)}/pullrequest/${number}`,
+      in_scope: 0,
+      enabled: 0,
+      tickets: [],
+      images: [],
+    };
+    const entry = {
+      monitor: m,
+      card,
+      connectionProject: settings.azureProject,
+      pat: this.store.secret("azure.pat") || "",
+    };
+    this.previews.set(id, entry);
+    try {
+      const credentials = this.credentials(m);
+      try {
+        const links = await this.get(
+          m,
+          `git/repositories/${enc(repo)}/pullrequests/${number}/workitems`,
+          credentials,
+        );
+        if (!Array.isArray(links.value)) throw new AppError(502, "Azure не вернул связи PR");
+        const ticketSource = this.store.source({ ...settings, azureProject: project.name });
+        card.ticket_source = ticketSource;
+        card.tickets = [
+          ...new Set([
+            ...prTicketIds(card.title),
+            ...prTicketIds(card.description),
+            ...links.value
+              .map((v: any) => Number(v.id))
+              .filter((n: number) => Number.isSafeInteger(n) && n > 0),
+          ]),
+        ].map((ticketId) => ({
+          id: ticketId,
+          source: ticketSource,
+          unavailable: true,
+          fromAzure: links.value.some((v: any) => Number(v.id) === ticketId),
+          fromTitle: prTicketIds(card.title).includes(ticketId),
+          fromDescription: prTicketIds(card.description).includes(ticketId),
+        }));
+      } catch (error: any) {
+        card.ticket_links_error = error.message;
+      }
+      this.credentials(m);
+      card.images = descriptionImages(card.description).map((imageSource) => ({
+        source: imageSource,
+        preview: azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version)
+          ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, original: new URL(imageSource, card.url).href })}`
+          : null,
+      }));
+      while (this.previews.size > 32) {
+        const oldest = this.previews.keys().next().value!;
+        const old = this.previews.get(oldest)!;
+        this.countCache.delete(JSON.stringify([oldest, old.card.repo, old.card.number]));
+        this.previews.delete(oldest);
+      }
+      return { item: card };
+    } catch (error) {
+      this.previews.delete(id);
+      throw error;
+    }
+  }
   private completedPending = new Map<string, Promise<any>>();
   async completed(monitor: string, page: number) {
     this.purgeCompleted();
@@ -748,10 +929,8 @@ export class PullRequests {
     return items;
   }
   async image(monitor: string, repo: string, number: number, source: string) {
-    const m = this.monitors().find((m) => m.id === monitor);
-    const row = this.store.db
-      .prepare("SELECT description,url FROM pull_requests WHERE monitor=? AND repo=? AND number=?")
-      .get(monitor, repo, number) as any;
+    const m = this.readMonitor(monitor);
+    const row = this.readCard(monitor, repo, number);
     if (!m || !row || !descriptionImages(row.description).includes(source))
       throw new AppError(404, "Изображение не найдено в описании PR");
     const credentials = this.credentials(m);
@@ -762,7 +941,19 @@ export class PullRequests {
       throw new AppError(409, "Подключение Azure изменилось");
     return result;
   }
-  private credentials(m: Monitor) {
+  private credentials(m: Monitor): { pat: string; version: string } {
+    const preview = this.previews.get(m.id);
+    if (preview) {
+      const settings = this.store.settings();
+      if (
+        preview.connectionProject !== settings.azureProject ||
+        m.source !== azureBase(settings.azureUrl) ||
+        preview.pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(409, "Подключение Azure изменилось. Откройте PR заново.");
+      if (!preview.pat) throw new AppError(400, "Укажите PAT Azure с разрешением Code: Read");
+      return { pat: preview.pat, version: settings.azureVersion };
+    }
     if (this.store.settings().azureProject !== m.azure_project)
       throw new AppError(
         400,
@@ -1171,12 +1362,8 @@ export class PullRequests {
   }
   private countCache = new Map<string, { revision: string; result: Promise<any> }>();
   async counts(monitor: string, repo: string, number: number) {
-    const m = this.monitors().find((entry) => entry.id === monitor);
-    const known = this.store.db
-      .prepare(
-        "SELECT head,target,synced_at FROM pull_requests WHERE monitor=? AND repo=? AND number=?",
-      )
-      .get(monitor, repo, number) as any;
+    const m = this.readMonitor(monitor);
+    const known = this.readCard(monitor, repo, number);
     if (!m || !known) throw new AppError(404, "PR не найден. Синхронизируйте список.");
     const credentials = this.credentials(m);
     const key = JSON.stringify([monitor, repo, number]);
@@ -1228,10 +1415,8 @@ export class PullRequests {
     }
   }
   async commits(monitor: string, repo: string, number: number, continuationToken = "") {
-    const m = this.monitors().find((entry) => entry.id === monitor);
-    const known = this.store.db
-      .prepare("SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?")
-      .get(monitor, repo, number);
+    const m = this.readMonitor(monitor);
+    const known = this.readCard(monitor, repo, number);
     if (!m || !known) throw new AppError(404, "PR не найден. Синхронизируйте список.");
     const credentials = this.credentials(m);
     const page = await this.get(
@@ -1274,7 +1459,7 @@ export class PullRequests {
       seen.add(cursor);
     }
     if (!found) throw new AppError(404, "Коммит не найден среди первых 1000 коммитов текущего PR");
-    const m = this.monitors().find((entry) => entry.id === monitor)!;
+    const m = this.readMonitor(monitor)!;
     return this.readCommitDiff(m, repo, commit);
   }
   private async readCommitDiff(m: Monitor, repo: string, commit: string) {
@@ -1304,6 +1489,31 @@ export class PullRequests {
     Promise<Omit<Awaited<ReturnType<PullRequests["changes"]>>, "cacheable">>
   >();
   async viewDiff(monitor: string, repo: string, number: number) {
+    if (monitor.startsWith("preview:")) {
+      const entry = this.preview(monitor, repo, number);
+      const { card, monitor: m } = entry;
+      if (!card.head || !card.target)
+        throw new AppError(409, "Коммиты PR не загружены. Обновите pull request.");
+      if (!entry.diff) {
+        entry.diff = this.changes(m, repo, card.head, card.target)
+          .then(({ cacheable, ...result }) => {
+            this.credentials(m);
+            if (!cacheable) entry.diff = undefined;
+            return {
+              ...result,
+              title: card.title,
+              canComment: false,
+              sourceBranch: card.source_branch,
+              targetBranch: card.target_branch,
+            };
+          })
+          .catch((error) => {
+            entry.diff = undefined;
+            throw error;
+          });
+      }
+      return entry.diff;
+    }
     const m = this.monitors().find((entry) => entry.id === monitor);
     const readKnown = () =>
       this.store.db
@@ -1479,10 +1689,8 @@ export class PullRequests {
     return { id: result.id };
   }
   async lineComments(monitor: string, repo: string, number: number, head: string, base: string) {
-    const m = this.monitors().find((entry) => entry.id === monitor);
-    const known = this.store.db
-      .prepare("SELECT 1 FROM pull_requests WHERE monitor=? AND repo=? AND number=?")
-      .get(monitor, repo, number);
+    const m = this.readMonitor(monitor);
+    const known = this.readCard(monitor, repo, number);
     if (!m || !known) throw new AppError(404, "PR не найден");
     const credentials = this.credentials(m);
     const root = `git/repositories/${enc(repo)}/pullrequests/${number}`;

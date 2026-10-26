@@ -176,7 +176,7 @@ export class TicketPullRequests {
     connection.assertCurrent();
     return { items: [...items.values()], warning };
   }
-  async detail(ref: string, link: AzurePrLink) {
+  async detail(ref: string, link: AzurePrLink, preview = false): Promise<any> {
     const connection = this.connection(ref);
     const links = await this.links(connection);
     if (
@@ -189,6 +189,15 @@ export class TicketPullRequests {
     )
       throw new AppError(404, "Связанный PR не найден в тикете");
     const detail = await this.read(connection, link);
+    if (preview)
+      return {
+        ...(await this.prs.previewDetail(detail)),
+        ticket: {
+          id: connection.card.id,
+          source: connection.card.source,
+          title: connection.card.fields?.["System.Title"] || "",
+        },
+      };
     return {
       ...link,
       title: detail.title || "",

@@ -7,120 +7,120 @@
 
 ### Сообщение
 
+Бинарный файл: текстовый diff недоступен.
+
+Источник: services/backend/src/pull-requests.ts:1853.
+
+### Сообщение
+
+Подготовка diff остановлена по времени или завершению приложения.
+
+Источник: services/backend/src/pull-requests.ts:1870.
+
+### Сообщение
+
+Подготовка diff остановлена по времени или завершению приложения
+
+Источник: services/backend/src/pull-requests.ts:1871.
+
+### Сообщение
+
+Достигнут общий лимит размера diff.
+
+Источник: services/backend/src/pull-requests.ts:1878.
+
+### Сообщение
+
 Достигнут лимит diff {…} символов; оставшиеся файлы не проверены.
 
-Источник: services/backend/src/pull-requests.ts:1671.
+Источник: services/backend/src/pull-requests.ts:1879.
 
 ### Сообщение
 
 Размер diff превышает лимит одного файла: {…} из {…} символов.
 
-Источник: services/backend/src/pull-requests.ts:1701.
+Источник: services/backend/src/pull-requests.ts:1909.
 
 ### Сообщение
 
 {…}: diff {…} символов превышает лимит одного файла {…}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.
 
-Источник: services/backend/src/pull-requests.ts:1704.
+Источник: services/backend/src/pull-requests.ts:1912.
 
 ### Сообщение
 
 Недостаточно общего бюджета diff: требуется {…}, осталось {…} символов.
 
-Источник: services/backend/src/pull-requests.ts:1711.
+Источник: services/backend/src/pull-requests.ts:1919.
 
 ### Сообщение
 
 {…}: требуется {…} символов, осталось {…} из {…}. Файл не проверен; настройте исключения или лимит diff.
 
-Источник: services/backend/src/pull-requests.ts:1714.
+Источник: services/backend/src/pull-requests.ts:1922.
 
 ### Сообщение
 
 Не удалось загрузить содержимое из Azure. Повторите открытие diff.
 
-Источник: services/backend/src/pull-requests.ts:1734.
+Источник: services/backend/src/pull-requests.ts:1942.
 
 ### Сообщение
 
 {…}: содержимое недоступно, бинарное или слишком большое
 
-Источник: services/backend/src/pull-requests.ts:1737.
+Источник: services/backend/src/pull-requests.ts:1945.
 
 ### Сообщение
 
 Pull request недоступен для подготовки ветки.
 
-Источник: services/backend/src/pull-requests.ts:1771.
+Источник: services/backend/src/pull-requests.ts:1979.
 
 ### Сообщение
 
 Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся
 
-Источник: services/backend/src/pull-requests.ts:1793.
+Источник: services/backend/src/pull-requests.ts:2001.
 
 ### Сообщение
 
 Подключите GitHub Copilot
 
-Источник: services/backend/src/pull-requests.ts:1798.
+Источник: services/backend/src/pull-requests.ts:2006.
 
 ### Сообщение
 
 Этот запрос ревью уже завершён.
 
-Источник: services/backend/src/pull-requests.ts:1836.
+Источник: services/backend/src/pull-requests.ts:2044.
 
 ### Сообщение
 
 Ревью остановлено пользователем
 
-Источник: services/backend/src/pull-requests.ts:1864.
+Источник: services/backend/src/pull-requests.ts:2072.
 
 ### Сообщение
 
 Приложение завершает работу
 
-Источник: services/backend/src/pull-requests.ts:1915.
+Источник: services/backend/src/pull-requests.ts:2123.
 
 ### Сообщение
 
 Нет доступного текстового diff для ревью
 
-Источник: services/backend/src/pull-requests.ts:1939.
+Источник: services/backend/src/pull-requests.ts:2147.
 
 ### Сообщение
 
 Мониторинг изменён во время подготовки ревью
 
-Источник: services/backend/src/pull-requests.ts:1949.
+Источник: services/backend/src/pull-requests.ts:2157.
 
 ### Сообщение
 
 Не удалось прочитать связи тикетов PR
 
-Источник: services/backend/src/pull-requests.ts:1966.
-
-### Сообщение
-
-Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.
-
-Источник: services/backend/src/pull-requests.ts:1979.
-
-### Сообщение
-
-Выберите не более 20 связанных тикетов для одного ревью или отключите чтение тикетов.
-
-Источник: services/backend/src/pull-requests.ts:1984.
-
-### Сообщение
-
-Некорректная связь тикета
-
-Источник: services/backend/src/pull-requests.ts:1991.
-
-### Сообщение
-
-Источник Azure изменился
-
-Источник: services/backend/src/pull-requests.ts:1996.
+Источник: services/backend/src/pull-requests.ts:2174.

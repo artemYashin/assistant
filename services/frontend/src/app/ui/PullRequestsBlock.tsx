@@ -22,7 +22,7 @@ export function PullRequestsBlock({
   reviewQuestions,
 }: Props) {
   const [params] = useSearchParams();
-  const linked = !!params.get("linkedCard");
+  const linked = !!params.get("linkedCard") || !!params.get("lookup");
   return (
     <>
       {page === "pullrequests" && (
@@ -43,7 +43,9 @@ export function PullRequestsBlock({
           </Link>
         </nav>
       )}
-      {page === "pullrequests" && linked && <LinkedPullRequest />}
+      {page === "pullrequests" && linked && (
+        <LinkedPullRequest settings={settings} context={context} />
+      )}
       {page === "pullrequests" && !linked && completedTab && (
         <CompletedPullRequests
           settings={settings}

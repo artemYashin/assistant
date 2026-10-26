@@ -63,64 +63,64 @@
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1449.
+Источник: services/backend/src/app.ts:1458.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1475.
+Источник: services/backend/src/app.ts:1484.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1508.
+Источник: services/backend/src/app.ts:1517.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1816.
+Источник: services/backend/src/app.ts:1825.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1831.
+Источник: services/backend/src/app.ts:1840.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1859.
+Источник: services/backend/src/app.ts:1868.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1864.
+Источник: services/backend/src/app.ts:1873.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1897.
+Источник: services/backend/src/app.ts:1906.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1899.
+Источник: services/backend/src/app.ts:1908.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:1916.
+Источник: services/backend/src/app.ts:1925.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:1925.
+Источник: services/backend/src/app.ts:1934.

@@ -1292,7 +1292,7 @@ export function createApp(
         number: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER),
       })
       .parse(req.query);
-    res.json(await ticketPullRequests.detail(String(req.params.ref), link));
+    res.json(await ticketPullRequests.detail(String(req.params.ref), link, true));
   });
   app.get("/api/ticket-cards/:ref/history", async (req, res) => {
     const skip = z.coerce
@@ -1412,6 +1412,15 @@ export function createApp(
       .strict()
       .parse(req.body);
     res.json(await pullRequests.reimportCompleted(input.monitor, input.repo, input.number));
+  });
+  app.get("/api/pr/lookup", async (req, res) => {
+    const number = z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(Number.MAX_SAFE_INTEGER)
+      .parse(req.query.number);
+    res.json(await pullRequests.lookup(number));
   });
   app.get("/api/pr/completed", async (req, res) => {
     const input = z

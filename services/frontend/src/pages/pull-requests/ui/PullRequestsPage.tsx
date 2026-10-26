@@ -317,8 +317,8 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
   const focusRef = useRef<HTMLElement>(null);
   const [loaded, setLoaded] = useState(false);
   const visiblePrs = filterPullRequests(prs, {
-    draft: target ? "all" : draftFilter,
-    review: target ? "all" : reviewFilter,
+    draft: target || readOnly ? "all" : draftFilter,
+    review: target || readOnly ? "all" : reviewFilter,
     sort,
   });
   const query = new URLSearchParams(target || context).toString();
@@ -613,7 +613,15 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   {readOnly && (
                     <span className="pr-completed-label">
                       <LockKeyhole size={14} />
-                      Completed PR
+                      {p.exactPreview
+                        ? (
+                            {
+                              active: "Активен",
+                              completed: "Завершён",
+                              abandoned: "Отклонён",
+                            } as Record<string, string>
+                          )[p.status]
+                        : "Completed PR"}
                     </span>
                   )}
                   <span
@@ -816,7 +824,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   onDiff={() => setViewingDiff(p)}
                   onCommits={() => setViewingCommits(p)}
                 />
-                {readOnly && (
+                {readOnly && !p.exactPreview && (
                   <ConfirmButton
                     disabled={busy}
                     title={`Переимпортировать PR #${p.number}?`}
@@ -1053,7 +1061,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                 ))}
               </div>
             </details>
-            {readOnly && (
+            {readOnly && !p.exactPreview && (
               <p className="pr-retention-note">
                 <LockKeyhole size={14} />
                 Завершён {new Date(p.closedAt).toLocaleString("ru-RU")}. Локальная копия и ревью

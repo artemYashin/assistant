@@ -9,16 +9,16 @@
 
 Обновить
 
-Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:51.
+Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:63.
 
 ### Элемент
 
 Вернуться к списку PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:56.
+Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:67.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:110.
+Источник: services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx:69.
