@@ -9,106 +9,112 @@
 
 Экспорт · ({…}) /
 
-Источник: src/ExportTickets.tsx:78.
+Источник: src/ExportTickets.tsx:79.
 
 ### Элемент
 
 Добавить в экспорт
 
-Источник: src/ExportTickets.tsx:93.
+Источник: src/ExportTickets.tsx:94.
 
 ### Элемент
 
 Развернуть экспорт
 
-Источник: src/ExportTickets.tsx:409.
+Источник: src/ExportTickets.tsx:406.
 
 ### Элемент
 
 Закрыть экспорт
 
-Источник: src/ExportTickets.tsx:417.
+Источник: src/ExportTickets.tsx:414.
 
 ### Элемент
 
 Свернуть экспорт
 
-Источник: src/ExportTickets.tsx:443.
+Источник: src/ExportTickets.tsx:440.
 
 ### Элемент
 
 Убрать из экспорта #{…}
 
-Источник: src/ExportTickets.tsx:517.
+Источник: src/ExportTickets.tsx:514.
 
 ### Элемент
 
 Номер или название тикета · Найти тикет для экспорта
 
-Источник: src/ExportTickets.tsx:566.
+Источник: src/ExportTickets.tsx:563.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/ExportTickets.tsx:574.
+Источник: src/ExportTickets.tsx:571.
 
 ### Элемент
 
 # · · В корзине /
 
-Источник: src/ExportTickets.tsx:592.
+Источник: src/ExportTickets.tsx:589.
 
 ### Элемент
 
 Добавить тикет
 
-Источник: src/ExportTickets.tsx:628.
+Источник: src/ExportTickets.tsx:625.
 
 ### Элемент
 
 Выбрать все
 
-Источник: src/ExportTickets.tsx:644.
+Источник: src/ExportTickets.tsx:641.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/ExportTickets.tsx:651.
+Источник: src/ExportTickets.tsx:648.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: src/ExportTickets.tsx:742.
+Источник: src/ExportTickets.tsx:739.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: src/ExportTickets.tsx:751.
+Источник: src/ExportTickets.tsx:748.
+
+### Элемент
+
+Название файла · Будет скачан:
+
+Источник: src/ExportTickets.tsx:770.
 
 ### Элемент
 
 Подготовка… / Скачать {…}
 
-Источник: src/ExportTickets.tsx:777.
+Источник: src/ExportTickets.tsx:787.
 
 ### Элемент
 
 Отменить закрытие
 
-Источник: src/ExportTickets.tsx:793.
+Источник: src/ExportTickets.tsx:803.
 
 ### Элемент
 
 Продолжить работу
 
-Источник: src/ExportTickets.tsx:797.
+Источник: src/ExportTickets.tsx:807.
 
 ### Элемент
 
 Закрыть и сбросить список
 
-Источник: src/ExportTickets.tsx:798.
+Источник: src/ExportTickets.tsx:808.

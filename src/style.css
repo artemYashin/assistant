@@ -10265,3 +10265,8 @@ a.pr-branch-link:focus-visible { outline: 2px solid #77acd7; outline-offset: 2px
 
 .pr-import-people-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 800px) { .pr-import-people-columns { grid-template-columns: 1fr; } }
+
+.export-filename { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+.export-filename > span { font-size: 12px; font-weight: 600; }
+.export-filename input { width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 10px; }
+.export-filename small { color: #74857b; font-size: 11px; overflow-wrap: anywhere; }

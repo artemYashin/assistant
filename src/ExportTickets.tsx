@@ -1,3 +1,4 @@
+import { ticketExportFilename } from "./ticket-export-filename.js";
 import { useLocalManagement } from "./WorkMode.js";
 import type { TicketExportContext } from "../server/ticket-export-context.js";
 import { useDragAutoScroll } from "./useDragAutoScroll.js";
@@ -149,6 +150,7 @@ export function TicketExportDialog({
     updateSnapshot(rows);
     draftTickets.current = rows;
   };
+  const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<"csv" | "xlsx">("xlsx");
   const [order, setOrder] = useState<ExportColumnKey[]>(
     exportColumns.map((c) => c.key),
@@ -237,6 +239,7 @@ export function TicketExportDialog({
           typeof ticket === "number" ? { id: ticket } : structuredClone(ticket),
         ),
       );
+      if (!draftActive.current) setFileName("");
       draftTickets.current = initial;
       draftActive.current = true;
       setActive(true);
@@ -373,14 +376,8 @@ export function TicketExportDialog({
             );
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
-      const date = new Date();
-      const stamp = [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, "0"),
-        String(date.getDate()).padStart(2, "0"),
-      ].join("-");
       anchor.href = url;
-      anchor.download = `orbit-tickets${trash ? "-trash" : ""}-${stamp}.${format}`;
+      anchor.download = ticketExportFilename(fileName, format, trash);
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -770,6 +767,19 @@ export function TicketExportDialog({
             {error}
           </p>
         )}
+        <label className="export-filename">
+          <span>Название файла</span>
+          <input
+            type="text"
+            value={fileName}
+            maxLength={100}
+            disabled={busy}
+            placeholder={ticketExportFilename("", format, trash).replace(/\.(csv|xlsx)$/, "")}
+            onChange={(event) => setFileName(event.target.value)}
+            onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
+          />
+          <small>Будет скачан: {ticketExportFilename(fileName, format, trash)}</small>
+        </label>
         <footer className="export-footer">
           <small>
             Заголовки файла — на английском, значения — без перевода.
