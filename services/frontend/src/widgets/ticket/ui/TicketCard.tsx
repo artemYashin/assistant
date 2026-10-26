@@ -1,3 +1,4 @@
+import { TicketHistory } from "./TicketHistory.js";
 import { locateContentLink } from "../lib/locate-content-link.js";
 import type { ContentLink } from "../../../features/render-content/index.js";
 import { useMemo, useLayoutEffect } from "react";
@@ -23,6 +24,7 @@ import { LocalAssigneeNames } from "../../../entities/developer/index.js";
 import { Link } from "react-router-dom";
 import { pullRequestPath, ticketPath } from "../../../shared/config/routes/index.js";
 import {
+  History,
   Sparkles,
   LocateFixed,
   ArchiveRestore,
@@ -67,11 +69,13 @@ export function TicketCard({
   const citationRoot = useRef<HTMLDivElement>(null);
   const contentRoot = useRef<HTMLDivElement>(null);
   const tabId = useId();
+  const [historyOpened, setHistoryOpened] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
   const tabScroll = useRef<Record<string, number>>({});
   const changeTab = (tab: string) => {
     if (contentRoot.current) tabScroll.current[activeTab] = contentRoot.current.scrollTop;
     setActiveTab(tab);
+    if (tab === "history") setHistoryOpened(true);
   };
   useLayoutEffect(() => {
     if (contentRoot.current) contentRoot.current.scrollTop = tabScroll.current[activeTab] || 0;
@@ -113,6 +117,7 @@ export function TicketCard({
   const [linkError, setLinkError] = useState("");
   useEffect(() => {
     setActiveTab("content");
+    setHistoryOpened(false);
     tabScroll.current = {};
     setImageSelection(null);
     setImageError("");
@@ -762,6 +767,7 @@ export function TicketCard({
                 icon: GitPullRequest,
                 count: card.linkedPullRequests?.length || 0,
               },
+              { id: "history", label: "История", icon: History },
               { id: "links", label: "Ссылки", icon: Link2, count: linkCount },
               {
                 id: "attachments",
@@ -788,6 +794,14 @@ export function TicketCard({
             ))}
           </div>
           <div ref={contentRoot} className="ticket-card-body">
+            <section
+              role="tabpanel"
+              id={tabId + "-panel-history"}
+              aria-labelledby={tabId + "-history"}
+              hidden={activeTab !== "history"}
+            >
+              {historyOpened && <TicketHistory key={reference} reference={reference} />}
+            </section>
             {analysisError && (
               <p className="error" role="alert">
                 {analysisError}

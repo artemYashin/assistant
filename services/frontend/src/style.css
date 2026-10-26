@@ -17784,3 +17784,74 @@ a.pr-branch-link:focus-visible {
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+.ticket-detail-tab-history {
+  --tab-accent: #8a5b30;
+  --tab-tint: #f8eadc;
+}
+.ticket-history {
+  display: grid;
+  gap: 12px;
+}
+.ticket-history-entry {
+  border: 1px solid #dbe4de;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+  background: #fff;
+}
+.ticket-history-entry > header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.ticket-history-entry time {
+  color: #68776d;
+}
+.ticket-history-field {
+  border-top: 1px solid #e4eae6;
+  padding: 8px 0;
+  min-width: 0;
+}
+.ticket-history-field summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ticket-history-values {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.ticket-history-values > div {
+  padding: 8px;
+  background: #f5f7f6;
+  border-radius: 6px;
+  min-width: 0;
+}
+.ticket-history-values > div:last-child {
+  background: #edf6ef;
+}
+.ticket-history-values b {
+  font-size: 11px;
+  color: #637368;
+}
+.ticket-history-field pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+  margin: 5px 0 0;
+  font: inherit;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .ticket-history-values {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

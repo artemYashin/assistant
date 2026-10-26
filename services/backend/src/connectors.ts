@@ -1210,6 +1210,34 @@ export class Connectors {
     this.store.audit("ticket.comment.added", `${card.id}: ${comment.id}`);
     return response;
   }
+  async ticketHistory(ref: string, skip = 0) {
+    if (!Number.isSafeInteger(skip) || skip < 0)
+      throw new AppError(400, "Некорректная страница истории");
+    const card = this.ticketCard(ref);
+    const settings = this.store.settings();
+    const source = this.store.source(settings);
+    if (card.source !== source)
+      throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    const page = await this.azure(
+      `workitems/${card.id}/updates?$top=21&$skip=${skip}`,
+      {},
+      settings,
+      this.store.secret("azure.pat"),
+    );
+    if (this.store.source() !== source)
+      throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    if (!Array.isArray(page.value) || page.value.some((row: any) => !Number.isSafeInteger(row?.id)))
+      throw new AppError(502, "Некорректный ответ истории Azure");
+    const items = page.value.slice(0, 20).map((row: any) => ({
+      id: row.id,
+      revision: row.rev,
+      author: row.revisedBy?.displayName || row.revisedBy?.name || "Автор не указан",
+      date: row.fields?.["System.ChangedDate"]?.newValue || row.revisedDate,
+      fields: row.fields || {},
+      relations: row.relations || {},
+    }));
+    return { items, nextSkip: page.value.length > 20 ? skip + 20 : null };
+  }
   ticketCard(ref: string) {
     const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as
       { data: string } | undefined;

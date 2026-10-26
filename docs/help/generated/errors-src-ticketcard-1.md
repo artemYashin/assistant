@@ -9,22 +9,22 @@
 
 Изображение не найдено в описании или комментариях. Оно доступно только как вложение.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:106.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:110.
 
 ### Сообщение
 
 Не удалось найти ссылку в текущем содержимом тикета. Возможно, оно изменилось.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:175.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:180.
 
 ### Сообщение
 
 Не удалось импортировать тикет. Проверьте доступ к нему в Azure.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:615.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:620.
 
 ### Сообщение
 
 Не удалось скопировать. Проверьте доступ к буферу обмена.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1067.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1081.

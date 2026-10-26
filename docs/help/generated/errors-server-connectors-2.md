@@ -115,12 +115,12 @@ Azure не вернул номер комментария. Проверьте т
 
 ### Сообщение
 
-Карточка не найдена
+Некорректная страница истории
 
-Источник: services/backend/src/connectors.ts:1216.
+Источник: services/backend/src/connectors.ts:1215.
 
 ### Сообщение
 
-Вложение не найдено в тикете
+Некорректный ответ истории Azure
 
-Источник: services/backend/src/connectors.ts:1222.
+Источник: services/backend/src/connectors.ts:1230.

@@ -1271,6 +1271,16 @@ export function createApp(
       await connectors.ticketDetails(z.coerce.number().int().positive().parse(req.params.id), true),
     );
   });
+  app.get("/api/ticket-cards/:ref/history", async (req, res) => {
+    const skip = z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER)
+      .default(0)
+      .parse(req.query.skip);
+    res.json(await connectors.ticketHistory(String(req.params.ref), skip));
+  });
   app.get("/api/ticket-cards/:ref", (req, res) => {
     const card = connectors.ticketCard(String(req.params.ref));
     res.json({

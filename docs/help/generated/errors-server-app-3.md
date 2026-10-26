@@ -39,88 +39,88 @@
 
 Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: services/backend/src/app.ts:1301.
+Источник: services/backend/src/app.ts:1311.
 
 ### Сообщение
 
 Выберите изображение.
 
-Источник: services/backend/src/app.ts:1311.
+Источник: services/backend/src/app.ts:1321.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: services/backend/src/app.ts:1342.
+Источник: services/backend/src/app.ts:1352.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/app.ts:1347.
+Источник: services/backend/src/app.ts:1357.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1416.
+Источник: services/backend/src/app.ts:1426.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1442.
+Источник: services/backend/src/app.ts:1452.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1475.
+Источник: services/backend/src/app.ts:1485.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1783.
+Источник: services/backend/src/app.ts:1793.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1798.
+Источник: services/backend/src/app.ts:1808.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1826.
+Источник: services/backend/src/app.ts:1836.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1831.
+Источник: services/backend/src/app.ts:1841.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1864.
+Источник: services/backend/src/app.ts:1874.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1866.
+Источник: services/backend/src/app.ts:1876.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:1883.
+Источник: services/backend/src/app.ts:1893.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:1892.
+Источник: services/backend/src/app.ts:1902.
