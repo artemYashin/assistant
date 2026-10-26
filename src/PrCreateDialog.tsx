@@ -16,6 +16,7 @@ function BranchSelect({
   disabled: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{ branches: string[]; more: boolean }>({
     branches: [],
     more: false,
@@ -43,7 +44,7 @@ function BranchSelect({
       live = false;
       clearTimeout(timer);
     };
-  }, [monitor, query]);
+  }, [monitor, query, refresh]);
   return (
     <div>
       <SingleSelect
@@ -54,9 +55,11 @@ function BranchSelect({
         ].map((v) => ({ value: v, label: v.replace(/^refs\/heads\//, "") }))}
         onChange={onChange}
         onSearch={setQuery}
+        onOpen={() => setRefresh((n) => n + 1)}
+        loading={loading}
+        loadingLabel="Ищем ветки в Azure…"
         disabled={disabled}
       />
-      {loading && <small role="status">Поиск веток…</small>}
       {data.more && <small>Первые 100 веток. Уточните поиск.</small>}
       {error && (
         <p className="error" role="alert">

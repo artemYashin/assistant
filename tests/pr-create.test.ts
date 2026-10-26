@@ -32,6 +32,7 @@ test("PR creation validates branches, scopes repository, sends only PR fields an
   });
   const service = new PrCreate(store),
     monitor = prs.monitors()[0].id;
+  let branchReads = 0;
   let writes = 0,
     existing = false;
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
@@ -54,6 +55,11 @@ test("PR creation validates branches, scopes repository, sends only PR fields an
       data = { pullRequestId: 42 };
     } else if (url.pathname.endsWith("/refs")) {
       const f = url.searchParams.get("filter");
+      if (f === "heads/") {
+        branchReads++;
+        assert.equal(url.searchParams.get("filterContains"), "feature");
+        assert.equal(url.searchParams.get("$top"), "100");
+      }
       data = {
         value:
           f === "heads/"
@@ -68,6 +74,8 @@ test("PR creation validates branches, scopes repository, sends only PR fields an
   assert.deepEqual((await service.branches(monitor, "feature")).branches, [
     "refs/heads/feature",
   ]);
+  await service.branches(monitor, "feature");
+  assert.equal(branchReads, 2, "repeated search reads Azure again");
   const input = {
     monitor,
     source: "refs/heads/feature",

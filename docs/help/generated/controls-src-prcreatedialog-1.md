@@ -9,46 +9,46 @@
 
 Закрыть
 
-Источник: src/PrCreateDialog.tsx:106.
+Источник: src/PrCreateDialog.tsx:109.
 
 ### Элемент
 
 Готово
 
-Источник: src/PrCreateDialog.tsx:128.
+Источник: src/PrCreateDialog.tsx:131.
 
 ### Элемент
 
 Репозиторий
 
-Источник: src/PrCreateDialog.tsx:162.
+Источник: src/PrCreateDialog.tsx:165.
 
 ### Элемент
 
 {…} / {…} · {…}
 
-Источник: src/PrCreateDialog.tsx:167.
+Источник: src/PrCreateDialog.tsx:170.
 
 ### Элемент
 
 Название
 
-Источник: src/PrCreateDialog.tsx:199.
+Источник: src/PrCreateDialog.tsx:202.
 
 ### Элемент
 
 Описание
 
-Источник: src/PrCreateDialog.tsx:209.
+Источник: src/PrCreateDialog.tsx:212.
 
 ### Элемент
 
 · Черновик
 
-Источник: src/PrCreateDialog.tsx:219.
+Источник: src/PrCreateDialog.tsx:222.
 
 ### Элемент
 
 Создаём… / Создать PR в Azure
 
-Источник: src/PrCreateDialog.tsx:236.
+Источник: src/PrCreateDialog.tsx:239.

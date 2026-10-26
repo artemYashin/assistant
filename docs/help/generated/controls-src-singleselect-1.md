@@ -7,6 +7,12 @@
 
 ### Элемент
 
+/
+
+Источник: src/SingleSelect.tsx:90.
+
+### Элемент
+
 Поиск: {…} · Найти…
 
-Источник: src/SingleSelect.tsx:114.
+Источник: src/SingleSelect.tsx:122.

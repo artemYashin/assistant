@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, LoaderCircle } from "lucide-react";
 
 export function SingleSelect({
   label,
@@ -10,6 +10,9 @@ export function SingleSelect({
   onSearch,
   searchable = true,
   active = false,
+  loading = false,
+  loadingLabel = "Загрузка…",
+  onOpen,
 }: {
   label: string;
   value: string;
@@ -18,6 +21,9 @@ export function SingleSelect({
   disabled?: boolean;
   searchable?: boolean;
   active?: boolean;
+  loading?: boolean;
+  loadingLabel?: string;
+  onOpen?: () => void;
   onSearch?: (query: string) => void;
 }) {
   const [open, setOpen] = useState(false),
@@ -52,6 +58,7 @@ export function SingleSelect({
       onKeyDown={(e) => {
         if (!open) return;
         if (e.key === "Escape") {
+          e.preventDefault();
           e.stopPropagation();
           setOpen(false);
           trigger.current?.focus();
@@ -92,6 +99,7 @@ export function SingleSelect({
         onClick={() => {
           setQuery("");
           onSearch?.("");
+          if (!open) onOpen?.();
           setOpen(!open);
         }}
       >
@@ -100,7 +108,7 @@ export function SingleSelect({
             value ||
             "Выберите…"}
         </span>
-        <ChevronDown size={16} className={open ? "is-open" : ""} />
+        {loading ? <LoaderCircle size={16} className="spin" aria-label={loadingLabel} /> : <ChevronDown size={16} className={open ? "is-open" : ""} />}
       </button>
       {open && (
         <div
@@ -123,7 +131,8 @@ export function SingleSelect({
             />
           </div>
           }
-          <div className="multi-select-options">
+          <div className="multi-select-options" aria-busy={loading}>
+            {loading && <p className="multi-select-empty" role="status"><LoaderCircle size={15} className="spin" aria-hidden="true" /> {loadingLabel}</p>}
             {visible.map((o) => (
               <button
                 key={o.value}
@@ -140,7 +149,7 @@ export function SingleSelect({
                 {value === o.value && <Check size={16} aria-hidden="true" />}
               </button>
             ))}
-            {!visible.length && (
+            {!loading && !visible.length && (
               <p className="multi-select-empty">Ничего не найдено</p>
             )}
           </div>
