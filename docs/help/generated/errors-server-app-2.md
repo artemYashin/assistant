@@ -93,34 +93,34 @@
 
 Выберите проект
 
-Источник: services/backend/src/app.ts:986.
+Источник: services/backend/src/app.ts:990.
 
 ### Сообщение
 
 Подключение изменилось; откройте настройки заново
 
-Источник: services/backend/src/app.ts:988.
+Источник: services/backend/src/app.ts:992.
 
 ### Сообщение
 
 Статусы не должны повторяться без учёта регистра
 
-Источник: services/backend/src/app.ts:991.
+Источник: services/backend/src/app.ts:995.
 
 ### Сообщение
 
 Разработчик не найден в этом проекте
 
-Источник: services/backend/src/app.ts:1019.
+Источник: services/backend/src/app.ts:1023.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: services/backend/src/app.ts:1082.
+Источник: services/backend/src/app.ts:1086.
 
 ### Сообщение
 
 Подключение изменилось. Обновите карточку тикета.
 
-Источник: services/backend/src/app.ts:1115.
+Источник: services/backend/src/app.ts:1119.

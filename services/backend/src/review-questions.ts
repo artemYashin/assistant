@@ -74,7 +74,7 @@ export class ReviewQuestions {
   list() {
     return this.store.db
       .prepare(
-        `SELECT q.*,r.status review_status,r.monitor,r.repo,r.number,m.client,m.project,m.enabled,p.title,p.head current_head,p.target current_target,p.in_scope,p.draft,r.head reviewed_head,r.target reviewed_target FROM pr_question_batches q JOIN pr_reviews r ON r.id=q.review_id JOIN pr_projects m ON m.id=r.monitor LEFT JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number ORDER BY q.created_at DESC,q.rowid DESC LIMIT 100`,
+        `SELECT q.*,r.status review_status,r.monitor,r.repo,r.number,m.client,m.project,m.enabled,p.title,p.head current_head,p.target current_target,p.in_scope,p.draft,r.head reviewed_head,r.target reviewed_target FROM pr_question_batches q JOIN pr_reviews r ON r.id=q.review_id JOIN pr_projects m ON m.id=r.monitor LEFT JOIN pull_requests p ON p.monitor=r.monitor AND p.repo=r.repo AND p.number=r.number WHERE NOT EXISTS (SELECT 1 FROM pr_question_inbox_hidden h WHERE h.batch_id=q.id) ORDER BY q.created_at DESC,q.rowid DESC LIMIT 100`,
       )
       .all()
       .map((q: any) => ({
@@ -92,6 +92,32 @@ export class ReviewQuestions {
         questions: JSON.parse(q.questions),
         answers: JSON.parse(q.answers),
       }));
+  }
+  remove(id: string) {
+    return this.store.db.transaction(() => {
+      const batch = this.store.db
+        .prepare("SELECT * FROM pr_question_batches WHERE id=?")
+        .get(id) as any;
+      if (!batch) throw new AppError(404, "Вопросы не найдены");
+      if (this.store.db.prepare("SELECT 1 FROM pr_question_inbox_hidden WHERE batch_id=?").get(id))
+        return;
+      if (batch.status === "pending") {
+        const review = this.store.db
+          .prepare("SELECT status FROM pr_reviews WHERE id=?")
+          .get(batch.review_id) as any;
+        if (review?.status === "awaiting_answers") this.dismiss(id);
+        else
+          this.store.db
+            .prepare(
+              "UPDATE pr_question_batches SET status='dismissed' WHERE id=? AND status='pending'",
+            )
+            .run(id);
+      }
+      this.store.db
+        .prepare("INSERT INTO pr_question_inbox_hidden(batch_id,hidden_at) VALUES (?,?)")
+        .run(id, new Date().toISOString());
+      this.store.audit("pr.inbox_removed", id);
+    })();
   }
   history(reviewId: string) {
     return this.store.db

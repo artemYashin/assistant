@@ -7,24 +7,30 @@
 
 ### Элемент
 
+Удалить из входящих? · Набор исчезнет из входящих. Если ревью ещё ожидает эти ответы, оно завершится без них, с сохранением неопределённостей в отчёте. История вопросов и ответы сохранятся. / Набор исчезнет из входящих. Сохранённые ответы, результаты ревью и сам PR останутся без изменений. · Удалить из входящих
+
+Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:65.
+
+### Элемент
+
 Перейти к PR #
 
-Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:77.
+Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:105.
 
 ### Элемент
 
 . · /
 
-Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:92.
+Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:120.
 
 ### Элемент
 
 Сохраняю… / Отправить все ответы и повторить ревью
 
-Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:122.
+Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:150.
 
 ### Элемент
 
 Игнорировать вопросы и завершить ревью
 
-Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:125.
+Источник: services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx:153.

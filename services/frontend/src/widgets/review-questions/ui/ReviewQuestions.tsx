@@ -1,4 +1,5 @@
-import { LockKeyhole } from "lucide-react";
+import { ConfirmButton } from "../../../shared/ui/confirm-button/index.js";
+import { LockKeyhole, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../../shared/api/http/index.js";
@@ -16,6 +17,7 @@ function QuestionBatch({ item, onChange }: { item: any; onChange: () => void }) 
   const [answers, setAnswers] = useState<string[]>(
     item.questions.map((_: any, i: number) => item.answers[i] || ""),
   );
+  const [removed, setRemoved] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = item.status === "pending";
@@ -49,6 +51,7 @@ function QuestionBatch({ item, onChange }: { item: any; onChange: () => void }) 
       setBusy(false);
     }
   }
+  if (removed) return null;
   return (
     <article className={`panel review-questions${pending ? "" : " is-closed"}`}>
       {!pending && (
@@ -59,6 +62,31 @@ function QuestionBatch({ item, onChange }: { item: any; onChange: () => void }) 
       )}
       <div className="section-heading">
         <h2>Вопросы к PR #{item.number}</h2>
+        <ConfirmButton
+          className="icon-button danger"
+          ariaLabel={`Удалить из входящих вопросы к PR #${item.number}`}
+          disabled={busy}
+          title="Удалить из входящих?"
+          message={
+            item.status === "pending" ||
+            (item.status === "outdated" && item.review_status === "awaiting_answers")
+              ? "Набор исчезнет из входящих. Если ревью ещё ожидает эти ответы, оно завершится без них, с сохранением неопределённостей в отчёте. История вопросов и ответы сохранятся."
+              : "Набор исчезнет из входящих. Сохранённые ответы, результаты ревью и сам PR останутся без изменений."
+          }
+          confirmLabel="Удалить из входящих"
+          onConfirm={async () => {
+            setBusy(true);
+            try {
+              await api(`/review-questions/${encodeURIComponent(item.id)}`, "DELETE");
+              setRemoved(true);
+              onChange();
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <Trash2 size={16} />
+        </ConfirmButton>
         <span className="ticket-state-badge">
           {pending
             ? "Нужны ответы"

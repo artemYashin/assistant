@@ -945,6 +945,10 @@ export function createApp(
     res.json(memoryProposals.decide(String(req.params.id), false)),
   );
   app.get("/api/review-questions", (_req, res) => res.json(reviewQuestions.list()));
+  app.delete("/api/review-questions/:id", (req, res) => {
+    reviewQuestions.remove(String(req.params.id));
+    res.json({ ok: true });
+  });
   app.post("/api/review-questions/:id/answers", (req, res) =>
     res.json(reviewQuestions.answer(String(req.params.id), req.body.answers)),
   );

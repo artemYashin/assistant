@@ -88,6 +88,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS memory_proposals (id TEXT PRIMARY KEY,scope TEXT NOT NULL,client TEXT NOT NULL,project TEXT NOT NULL,body TEXT NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS pr_question_batches (id TEXT PRIMARY KEY,review_id TEXT NOT NULL,questions TEXT NOT NULL,answers TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS pr_question_review ON pr_question_batches(review_id);
+      CREATE TABLE IF NOT EXISTS pr_question_inbox_hidden (batch_id TEXT PRIMARY KEY REFERENCES pr_question_batches(id) ON DELETE CASCADE,hidden_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS memories (id TEXT PRIMARY KEY, scope TEXT NOT NULL, client TEXT NOT NULL, project TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, client TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS pr_ticket_exclusions (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,ticket_id INTEGER NOT NULL,PRIMARY KEY(monitor,repo,number,ticket_id));
