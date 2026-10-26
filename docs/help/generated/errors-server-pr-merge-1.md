@@ -9,94 +9,94 @@
 
 PR или подключение изменились. Обновите список.
 
-Источник: server/pr-merge.ts:44.
+Источник: services/backend/src/pr-merge.ts:40.
 
 ### Сообщение
 
 Настройте Azure PAT
 
-Источник: server/pr-merge.ts:98.
+Источник: services/backend/src/pr-merge.ts:89.
 
 ### Сообщение
 
 Нужен активный PR без черновика. Обновите список.
 
-Источник: server/pr-merge.ts:124.
+Источник: services/backend/src/pr-merge.ts:115.
 
 ### Сообщение
 
 Не удалось загрузить связи PR
 
-Источник: server/pr-merge.ts:131.
+Источник: services/backend/src/pr-merge.ts:118.
 
 ### Сообщение
 
 Некорректный или слишком большой список связанных тикетов (максимум 100)
 
-Источник: server/pr-merge.ts:149.
+Источник: services/backend/src/pr-merge.ts:137.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: server/pr-merge.ts:163.
+Источник: services/backend/src/pr-merge.ts:150.
 
 ### Сообщение
 
 Операция не найдена
 
-Источник: server/pr-merge.ts:206.
+Источник: services/backend/src/pr-merge.ts:191.
 
 ### Сообщение
 
 Укажите причину обхода политик (до 2000 символов)
 
-Источник: server/pr-merge.ts:229.
+Источник: services/backend/src/pr-merge.ts:214.
 
 ### Сообщение
 
 Подтверждение не найдено
 
-Источник: server/pr-merge.ts:236.
+Источник: services/backend/src/pr-merge.ts:216.
 
 ### Сообщение
 
 Диалог устарел. Откройте его заново.
 
-Источник: server/pr-merge.ts:240.
+Источник: services/backend/src/pr-merge.ts:220.
 
 ### Сообщение
 
 Коммиты или связанные тикеты изменились. Откройте диалог заново.
 
-Источник: server/pr-merge.ts:258.
+Источник: services/backend/src/pr-merge.ts:234.
 
 ### Сообщение
 
 Выберите статус для каждого связанного тикета
 
-Источник: server/pr-merge.ts:267.
+Источник: services/backend/src/pr-merge.ts:240.
 
 ### Сообщение
 
 Недоступный статус для #{…}
 
-Источник: server/pr-merge.ts:272.
+Источник: services/backend/src/pr-merge.ts:245.
 
 ### Сообщение
 
 Операция начата. При перезапуске сервера проверьте результат в Azure; автоматического повтора нет.
 
-Источник: server/pr-merge.ts:307.
+Источник: services/backend/src/pr-merge.ts:275.
 
 ### Сообщение
 
 Merge не подтверждён. Статусы тикетов не менялись. Проверьте PR в Azure; повторного запроса не будет.{…}
 
-Источник: server/pr-merge.ts:399.
+Источник: services/backend/src/pr-merge.ts:367.
 
 ### Сообщение
 
 Не удалось подтвердить статус
 
-Источник: server/pr-merge.ts:422.
+Источник: services/backend/src/pr-merge.ts:385.

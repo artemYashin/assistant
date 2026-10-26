@@ -9,4 +9,4 @@
 
 Остановлен
 
-Источник: src/pages/usage/ui/Usage.tsx:26.
+Источник: services/frontend/src/pages/usage/ui/Usage.tsx:26.

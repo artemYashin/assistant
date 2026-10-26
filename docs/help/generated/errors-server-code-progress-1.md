@@ -9,34 +9,34 @@
 
 Пустой ответ сервиса кода
 
-Источник: server/code-progress.ts:20.
+Источник: services/backend/src/code-progress.ts:38.
 
 ### Сообщение
 
 Ответ сервиса кода слишком большой
 
-Источник: server/code-progress.ts:28.
+Источник: services/backend/src/code-progress.ts:49.
 
 ### Сообщение
 
 Некорректное завершение операции кода
 
-Источник: server/code-progress.ts:35.
+Источник: services/backend/src/code-progress.ts:57.
 
 ### Сообщение
 
 / Ошибка сервиса кода
 
-Источник: server/code-progress.ts:40.
+Источник: services/backend/src/code-progress.ts:62.
 
 ### Сообщение
 
 Ошибка сервиса кода
 
-Источник: server/code-progress.ts:40.
+Источник: services/backend/src/code-progress.ts:64.
 
 ### Сообщение
 
 Соединение прервано до завершения операции кода
 
-Источник: server/code-progress.ts:46.
+Источник: services/backend/src/code-progress.ts:73.

@@ -9,4 +9,4 @@
 
 Истекает токен Azure DevOps
 
-Источник: server/azure-pat-reminder.ts:20.
+Источник: services/backend/src/azure-pat-reminder.ts:28.

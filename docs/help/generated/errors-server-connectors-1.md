@@ -9,118 +9,118 @@
 
 Настройте URL, проект и PAT Azure DevOps
 
-Источник: server/connectors.ts:111.
+Источник: services/backend/src/connectors.ts:127.
 
 ### Сообщение
 
 Azure не вернул доступные статусы
 
-Источник: server/connectors.ts:233.
+Источник: services/backend/src/connectors.ts:323.
 
 ### Сообщение
 
 Тикет относится к другому проекту
 
-Источник: server/connectors.ts:253.
+Источник: services/backend/src/connectors.ts:357.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: server/connectors.ts:256.
+Источник: services/backend/src/connectors.ts:360.
 
 ### Сообщение
 
 Тикет недоступен или относится к другому проекту
 
-Источник: server/connectors.ts:284.
+Источник: services/backend/src/connectors.ts:397.
 
 ### Сообщение
 
 Azure не вернул список тикетов
 
-Источник: server/connectors.ts:319.
+Источник: services/backend/src/connectors.ts:426.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/connectors.ts:326.
+Источник: services/backend/src/connectors.ts:433.
 
 ### Сообщение
 
 Unexpected error
 
-Источник: server/connectors.ts:396.
+Источник: services/backend/src/connectors.ts:493.
 
 ### Сообщение
 
 Подключение Azure изменилось, запись отменена
 
-Источник: server/connectors.ts:414.
+Источник: services/backend/src/connectors.ts:510.
 
 ### Сообщение
 
 patch_failed
 
-Источник: server/connectors.ts:436.
+Источник: services/backend/src/connectors.ts:529.
 
 ### Сообщение
 
 Введите минимум два символа имени или email без * и ?
 
-Источник: server/connectors.ts:471.
+Источник: services/backend/src/connectors.ts:564.
 
 ### Сообщение
 
 Настройте Azure DevOps
 
-Источник: server/connectors.ts:479.
+Источник: services/backend/src/connectors.ts:568.
 
 ### Сообщение
 
 Для Azure Services укажите URL организации без проекта
 
-Источник: server/connectors.ts:485.
+Источник: services/backend/src/connectors.ts:574.
 
 ### Сообщение
 
 Azure вернул неверный список пользователей
 
-Источник: server/connectors.ts:511.
+Источник: services/backend/src/connectors.ts:597.
 
 ### Сообщение
 
 Azure вернул неверный результат поиска Graph
 
-Источник: server/connectors.ts:546.
+Источник: services/backend/src/connectors.ts:625.
 
 ### Сообщение
 
 API по настроенному адресу не найден (HTTP 404)
 
-Источник: server/connectors.ts:592.
+Источник: services/backend/src/connectors.ts:666.
 
 ### Сообщение
 
 Подключение изменилось; повторите поиск
 
-Источник: server/connectors.ts:616.
+Источник: services/backend/src/connectors.ts:685.
 
 ### Сообщение
 
 Пользователи не найдены в локальном кэше, а онлайн-поиск не завершён. Попробуйте полное имя или e-mail.
 
-Источник: server/connectors.ts:648.
+Источник: services/backend/src/connectors.ts:713.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
-Источник: server/connectors.ts:660.
+Источник: services/backend/src/connectors.ts:723.
 
 ### Сообщение
 
 Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.
 
-Источник: server/connectors.ts:671.
+Источник: services/backend/src/connectors.ts:731.

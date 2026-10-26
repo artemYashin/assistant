@@ -1,7 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createVoiceShortcut, voiceRecordingIsLongEnough, shortcutTextWasInserted } from "../src/features/voice-input/index.js";
-const m = { code: "KeyM", repeat: false, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, isComposing: false };
+import {
+  createVoiceShortcut,
+  voiceRecordingIsLongEnough,
+  shortcutTextWasInserted,
+} from "../services/frontend/src/features/voice-input/index.js";
+const m = {
+  code: "KeyM",
+  repeat: false,
+  ctrlKey: false,
+  metaKey: false,
+  altKey: false,
+  shiftKey: false,
+  isComposing: false,
+};
 test("MM needs two separate presses within the interval and resets after a match", () => {
   const press = createVoiceShortcut();
   assert.equal(press(m, 0, false), false);
@@ -12,7 +24,14 @@ test("MM needs two separate presses within the interval and resets after a match
   assert.equal(press(m, 1000, false), true);
 });
 test("modifiers, composition and other keys cannot trigger voice recording", () => {
-  for (const interrupt of [{ ...m, metaKey: true }, { ...m, ctrlKey: true }, { ...m, altKey: true }, { ...m, shiftKey: true }, { ...m, isComposing: true }, { ...m, code: "KeyX" }]) {
+  for (const interrupt of [
+    { ...m, metaKey: true },
+    { ...m, ctrlKey: true },
+    { ...m, altKey: true },
+    { ...m, shiftKey: true },
+    { ...m, isComposing: true },
+    { ...m, code: "KeyX" },
+  ]) {
     const press = createVoiceShortcut();
     press(m, 0, false);
     assert.equal(press(interrupt, 100, false), false);
@@ -36,7 +55,7 @@ test("shortcut text rollback only removes its own first keystroke and restores s
   assert.equal(shortcutTextWasInserted("привет", "приветь", "ь", 6, 6), true);
 });
 
- test("NN starts a separate shortcut and mixed M/N presses do not match", () => {
+test("NN starts a separate shortcut and mixed M/N presses do not match", () => {
   const press = createVoiceShortcut();
   const n = { ...m, code: "KeyN" };
   assert.equal(press(m, 0), false);
@@ -85,7 +104,6 @@ test("space, standalone modifiers and modifier combinations can be bound", () =>
     assert.equal(press(event, 100), true);
   }
 });
-
 
 test("typing suppresses plain alphanumeric shortcuts and resets double press", () => {
   for (const code of ["KeyM", "Digit1", "Numpad1"]) {

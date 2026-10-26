@@ -9,52 +9,52 @@
 
 Микрофон доступен на localhost или HTTPS в браузере с поддержкой записи.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:78.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:143.
 
 ### Сообщение
 
 Не удалось записать голос. Проверьте микрофон и повторите.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:87.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:161.
 
 ### Сообщение
 
 Речь не распознана. Попробуйте ещё раз.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:100.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:186.
 
 ### Сообщение
 
 Запись слишком длинная для сообщения. Повторите короче.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:101.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:188.
 
 ### Сообщение
 
 Чат сейчас занят. Сообщение не отправлено.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:102.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:190.
 
 ### Сообщение
 
 Не удалось распознать речь.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:106.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:195.
 
 ### Сообщение
 
 NotAllowedError
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:114.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:210.
 
 ### Сообщение
 
 Не удалось включить микрофон.
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:114.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:212.
 
 ### Сообщение
 
 Голосовой чат пока недоступен
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:223.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:423.

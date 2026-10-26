@@ -9,58 +9,58 @@
 
 Нужны от 1 до 25 уникальных тикетов и целевой статус
 
-Источник: server/ticket-status-batch.ts:28.
+Источник: services/backend/src/ticket-status-batch.ts:26.
 
 ### Сообщение
 
 Тикет недоступен или относится к другому проекту
 
-Источник: server/ticket-status-batch.ts:42.
+Источник: services/backend/src/ticket-status-batch.ts:35.
 
 ### Сообщение
 
 Azure не вернул ревизию тикета
 
-Источник: server/ticket-status-batch.ts:59.
+Источник: services/backend/src/ticket-status-batch.ts:49.
 
 ### Сообщение
 
 Не удалось подготовить смену статуса
 
-Источник: server/ticket-status-batch.ts:69.
+Источник: services/backend/src/ticket-status-batch.ts:56.
 
 ### Сообщение
 
 Ошибка пакетной записи Azure
 
-Источник: server/ticket-status-batch.ts:85.
+Источник: services/backend/src/ticket-status-batch.ts:69.
 
 ### Сообщение
 
 Azure HTTP {…}: проверьте PAT и права Work Items Read & Write.
 
-Источник: server/ticket-status-batch.ts:102.
+Источник: services/backend/src/ticket-status-batch.ts:84.
 
 ### Сообщение
 
 Azure HTTP {…}: проверьте правила перехода и обязательные поля тикета.
 
-Источник: server/ticket-status-batch.ts:106.
+Источник: services/backend/src/ticket-status-batch.ts:88.
 
 ### Сообщение
 
 confirmed_after_error
 
-Источник: server/ticket-status-batch.ts:122.
+Источник: services/backend/src/ticket-status-batch.ts:104.
 
 ### Сообщение
 
 Статус #{…} не подтверждён: ожидался «{…}», {…}. {…} Запись не повторялась; проверьте результат перед повтором.
 
-Источник: server/ticket-status-batch.ts:129.
+Источник: services/backend/src/ticket-status-batch.ts:111.
 
 ### Сообщение
 
 повторное чтение не удалось
 
-Источник: server/ticket-status-batch.ts:129.
+Источник: services/backend/src/ticket-status-batch.ts:111.

@@ -4,18 +4,15 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
-import { Store } from "../server/store.js";
-import { Calendar } from "../server/calendar.js";
-import {
-  LocalDevelopers,
-  localDeveloperTools,
-} from "../server/local-developers.js";
-import { setDeveloperVacation } from "../server/developer-vacations.js";
-import { sessionConfig } from "../server/agent.js";
-import { calendarTools } from "../server/calendar-tools.js";
-import { createApp } from "../server/app.js";
-import { hasLocalManagement } from "../server/work-mode.js";
-import { modeTools } from "../server/work-mode-tools.js";
+import { Store } from "../services/backend/src/store.js";
+import { Calendar } from "../services/backend/src/calendar.js";
+import { LocalDevelopers, localDeveloperTools } from "../services/backend/src/local-developers.js";
+import { setDeveloperVacation } from "../services/backend/src/developer-vacations.js";
+import { sessionConfig } from "../services/backend/src/agent.js";
+import { calendarTools } from "../services/backend/src/calendar-tools.js";
+import { createApp } from "../services/backend/src/app.js";
+import { hasLocalManagement } from "../services/backend/src/work-mode.js";
+import { modeTools } from "../services/backend/src/work-mode-tools.js";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
 const context = { client: "", project: "" };
@@ -37,17 +34,7 @@ test("populated upgrade defaults to Lead; developer mode and restart preserve as
   const person = people.add(["Alice"], context)[0];
   store.db
     .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(
-      store.source(),
-      42,
-      "Ticket",
-      "Active",
-      "Azure person",
-      "Bug",
-      "url",
-      "",
-      "",
-    );
+    .run(store.source(), 42, "Ticket", "Active", "Azure person", "Bug", "url", "", "");
   people.assign(42, [person.id], context);
   setDeveloperVacation(store, person.id, {
     start: "2099-11-01",
@@ -71,14 +58,8 @@ test("populated upgrade defaults to Lead; developer mode and restart preserve as
     false,
   );
   assert.deepEqual(calendar.developers(), []);
-  assert.deepEqual(
-    calendar.list().find((i) => i.id === reminder.id)!.developerIds,
-    [],
-  );
-  calendar.save(
-    { title: "Edited without losing people", start: null, end: null },
-    reminder.id,
-  );
+  assert.deepEqual(calendar.list().find((i) => i.id === reminder.id)!.developerIds, []);
+  calendar.save({ title: "Edited without losing people", start: null, end: null }, reminder.id);
   assert.throws(() => calendar.complete(vacation.id), /недоступны/);
   assert.throws(
     () =>
@@ -95,13 +76,8 @@ test("populated upgrade defaults to Lead; developer mode and restart preserve as
     assert.equal(reopened.settings().workMode, "developer");
     change(reopened, "lead");
     const restored = new Calendar(reopened).list();
-    assert.deepEqual(restored.find((i) => i.id === reminder.id)!.developerIds, [
-      person.id,
-    ]);
-    assert.equal(
-      restored.find((i) => i.id === reminder.id)!.title,
-      "Edited without losing people",
-    );
+    assert.deepEqual(restored.find((i) => i.id === reminder.id)!.developerIds, [person.id]);
+    assert.equal(restored.find((i) => i.id === reminder.id)!.title, "Edited without losing people");
     assert.equal(restored.find((i) => i.id === vacation.id)!.completed, true);
     assert.equal(new LocalDevelopers(reopened).assigned(42)[0].id, person.id);
   } finally {
@@ -111,18 +87,10 @@ test("populated upgrade defaults to Lead; developer mode and restart preserve as
 test("Developer tool catalog prunes schemas, rejects stale arguments and keeps ordinary tools usable", async (t) => {
   const store = fixture(t);
   change(store, "developer");
-  const config = sessionConfig(
-    store,
-    context,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    [
-      ...localDeveloperTools(store, context, "", () => {}),
-      ...calendarTools(store, () => {}),
-    ],
-  );
+  const config = sessionConfig(store, context, undefined, undefined, undefined, undefined, [
+    ...localDeveloperTools(store, context, "", () => {}),
+    ...calendarTools(store, () => {}),
+  ]);
   const tools = config.tools!;
   for (const name of [
     "list_local_developers",
@@ -139,10 +107,7 @@ test("Developer tool catalog prunes schemas, rejects stale arguments and keeps o
     async () => list.handler!({ fields: ["localDevelopers"] }, {} as any),
     /недоступно/,
   );
-  const result: any = await list.handler!(
-    { fields: ["assigned", "state"] },
-    {} as any,
-  );
+  const result: any = await list.handler!({ fields: ["assigned", "state"] }, {} as any);
   assert.ok(Array.isArray(result.tickets));
   const batch = tools.find((t) => t.name === "batch_update_tickets")!;
   assert.ok(!JSON.stringify(batch.parameters).includes('"const":"developers"'));
@@ -161,15 +126,10 @@ test("Developer tool catalog prunes schemas, rejects stale arguments and keeps o
     /недоступно/,
   );
   change(store, "lead");
-  await assert.rejects(
-    async () => list.handler!({}, {} as any),
-    /Режим работы изменился/,
-  );
+  await assert.rejects(async () => list.handler!({}, {} as any), /Режим работы изменился/);
   const lead = sessionConfig(store, context);
   assert.match(
-    JSON.stringify(
-      lead.tools!.find((t) => t.name === "list_tickets")!.parameters,
-    ),
+    JSON.stringify(lead.tools!.find((t) => t.name === "list_tickets")!.parameters),
     /localDevelopers/,
   );
 });

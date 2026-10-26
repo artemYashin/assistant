@@ -9,4 +9,4 @@
 
 Не удалось создать архив. Попробуйте скачать ещё раз.
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:39.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:70.

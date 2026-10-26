@@ -4,16 +4,13 @@ import { mkdtempSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { Store } from "../server/store.js";
+import { Store } from "../services/backend/src/store.js";
 import {
   saveTicketNote,
   listTicketNotes,
   collectTicketNoteImages,
-} from "../server/ticket-note-images.js";
-import {
-  saveTicketMetadata,
-  ticketMetadata,
-} from "../server/ticket-metadata.js";
+} from "../services/backend/src/ticket-note-images.js";
+import { saveTicketMetadata, ticketMetadata } from "../services/backend/src/ticket-metadata.js";
 const png = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5X8AAAAASUVORK5CYII=",
   "base64",
@@ -27,9 +24,7 @@ function fixture(t: any) {
     rmSync(dir, { recursive: true, force: true });
   });
   store.db
-    .prepare(
-      "INSERT INTO tickets VALUES (?,42,'Title','Active','','Bug','','','')",
-    )
+    .prepare("INSERT INTO tickets VALUES (?,42,'Title','Active','','Bug','','','')")
     .run(store.source());
   return store;
 }
@@ -62,12 +57,7 @@ test("Markdown images preserve metadata, survive trash, clean on text update and
   assert.equal(listTicketNotes(store)[0].localStatus, "added");
   store.db
     .prepare("INSERT INTO ticket_trash VALUES (?,?,?,?)")
-    .run(
-      source,
-      42,
-      JSON.stringify({ title: "Trash title", state: "Done" }),
-      Date.now(),
-    );
+    .run(source, 42, JSON.stringify({ title: "Trash title", state: "Done" }), Date.now());
   store.db.prepare("DELETE FROM tickets WHERE id=42").run();
   const row = listTicketNotes(store)[0];
   assert.equal(row.localStatus, "deleted");
@@ -107,13 +97,7 @@ test("stale save, invalid image reference and failed upload leave original note 
     [png],
   );
   assert.throws(
-    () =>
-      saveTicketNote(
-        store,
-        42,
-        { source, notes: "wrong", expectedNotes: "" },
-        [],
-      ),
+    () => saveTicketNote(store, 42, { source, notes: "wrong", expectedNotes: "" }, []),
     /другом окне/,
   );
   const fresh = randomUUID();
@@ -161,9 +145,7 @@ test("populated upgrade and repeated restart preserve old plain notes and collec
     )
     .run();
   store.db
-    .prepare(
-      "INSERT INTO ticket_metadata VALUES ('collection-b',42,'Other note',3,'[]')",
-    )
+    .prepare("INSERT INTO ticket_metadata VALUES ('collection-b',42,'Other note',3,'[]')")
     .run();
   store.close();
   for (let i = 0; i < 2; i++) {
@@ -171,10 +153,7 @@ test("populated upgrade and repeated restart preserve old plain notes and collec
     collectTicketNoteImages(store);
     const rows = listTicketNotes(store);
     assert.equal(rows.length, 2);
-    assert.equal(
-      ticketMetadata(store, 42, "collection-a").notes,
-      "old **literal** text",
-    );
+    assert.equal(ticketMetadata(store, 42, "collection-a").notes, "old **literal** text");
     assert.equal(ticketMetadata(store, 42, "collection-a").priority, 8);
     assert.deepEqual(ticketMetadata(store, 42, "collection-a").tags, ["tag"]);
     store.close();
@@ -183,7 +162,7 @@ test("populated upgrade and repeated restart preserve old plain notes and collec
 
 test("ticket note HTTP upload requires auth and CSRF, returns private images and keeps draft conflicts explicit", async (t) => {
   const { default: request } = await import("supertest");
-  const { createApp } = await import("../server/app.js");
+  const { createApp } = await import("../services/backend/src/app.js");
   const store = fixture(t),
     { app } = createApp(store),
     source = store.source(),
@@ -236,10 +215,7 @@ test("ticket note HTTP upload requires auth and CSRF, returns private images and
     .field("notes", "stale")
     .field("expectedNotes", "")
     .expect(409);
-  const list = await request(app)
-    .get("/api/ticket-notes")
-    .set(auth)
-    .expect(200);
+  const list = await request(app).get("/api/ticket-notes").set(auth).expect(200);
   assert.equal(list.body[0].notes, saved.body.notes);
   await request(app)
     .put("/api/ticket-notes/42")

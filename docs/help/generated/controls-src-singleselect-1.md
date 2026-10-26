@@ -9,10 +9,10 @@
 
 /
 
-Источник: src/shared/ui/single-select/SingleSelect.tsx:90.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:85.
 
 ### Элемент
 
 Поиск: {…} · Найти…
 
-Источник: src/shared/ui/single-select/SingleSelect.tsx:122.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:120.

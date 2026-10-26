@@ -9,94 +9,94 @@
 
 Некорректный список картинок заметки.
 
-Источник: server/notes.ts:29.
+Источник: services/backend/src/notes.ts:23.
 
 ### Сообщение
 
 Заметка не найдена.
 
-Источник: server/notes.ts:65.
+Источник: services/backend/src/notes.ts:58.
 
 ### Сообщение
 
 Картинка должна быть до 10 МБ, новые картинки вместе — до 30 МБ.
 
-Источник: server/notes.ts:89.
+Источник: services/backend/src/notes.ts:79.
 
 ### Сообщение
 
 https://orbit.invalid/note-image/{…}
 
-Источник: server/notes.ts:105.
+Источник: services/backend/src/notes.ts:92.
 
 ### Сообщение
 
 Заметка уже создана. Откройте сохранённую версию перед изменением.
 
-Источник: server/notes.ts:114.
+Источник: services/backend/src/notes.ts:101.
 
 ### Сообщение
 
 Заметка изменена в другом окне. Скопируйте свой текст, затем откройте сохранённую версию.
 
-Источник: server/notes.ts:127.
+Источник: services/backend/src/notes.ts:112.
 
 ### Сообщение
 
 Картинка отсутствует в тексте заметки.
 
-Источник: server/notes.ts:137.
+Источник: services/backend/src/notes.ts:122.
 
 ### Сообщение
 
 Картинка уже сохранена. Откройте актуальную заметку.
 
-Источник: server/notes.ts:143.
+Источник: services/backend/src/notes.ts:124.
 
 ### Сообщение
 
 https://orbit.invalid/note-image/
 
-Источник: server/notes.ts:161.
+Источник: services/backend/src/notes.ts:134.
 
 ### Сообщение
 
 Не все картинки доступны. Вставьте отсутствующее изображение заново.
 
-Источник: server/notes.ts:162.
+Источник: services/backend/src/notes.ts:135.
 
 ### Сообщение
 
 Картинка не принадлежит этой заметке или уже удалена. Вставьте её заново.
 
-Источник: server/notes.ts:177.
+Источник: services/backend/src/notes.ts:146.
 
 ### Сообщение
 
 В заметке может быть до 10 картинок.
 
-Источник: server/notes.ts:184.
+Источник: services/backend/src/notes.ts:152.
 
 ### Сообщение
 
 Заметка изменена в другом окне. Откройте актуальную версию перед удалением.
 
-Источник: server/notes.ts:209.
+Источник: services/backend/src/notes.ts:175.
 
 ### Сообщение
 
 Картинка заметки не найдена.
 
-Источник: server/notes.ts:224.
+Источник: services/backend/src/notes.ts:190.
 
 ### Сообщение
 
 Файл картинки заметки недоступен.
 
-Источник: server/notes.ts:228.
+Источник: services/backend/src/notes.ts:194.
 
 ### Сообщение
 
 Не удалось принять картинки. До 10 файлов по 10 МБ.
 
-Источник: server/notes.ts:279.
+Источник: services/backend/src/notes.ts:238.

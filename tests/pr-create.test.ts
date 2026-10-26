@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { PullRequests } from "../server/pull-requests.js";
-import { PrCreate } from "../server/pr-create.js";
+import { Store } from "../services/backend/src/store.js";
+import { PullRequests } from "../services/backend/src/pull-requests.js";
+import { PrCreate } from "../services/backend/src/pr-create.js";
 test("PR creation validates branches, scopes repository, sends only PR fields and detects duplicates", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-create-"));
   const store = new Store(dir);
@@ -37,11 +37,7 @@ test("PR creation validates branches, scopes repository, sends only PR fields an
     existing = false;
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
     const url = new URL(String(raw));
-    assert(
-      url.pathname.startsWith(
-        "/collection/Project/_apis/git/repositories/repo/",
-      ),
-    );
+    assert(url.pathname.startsWith("/collection/Project/_apis/git/repositories/repo/"));
     let data: any;
     if (init.method === "POST") {
       writes++;
@@ -61,19 +57,14 @@ test("PR creation validates branches, scopes repository, sends only PR fields an
         assert.equal(url.searchParams.get("$top"), "100");
       }
       data = {
-        value:
-          f === "heads/"
-            ? [{ name: "refs/heads/feature" }]
-            : [{ name: "refs/" + f }],
+        value: f === "heads/" ? [{ name: "refs/heads/feature" }] : [{ name: "refs/" + f }],
       };
     } else data = { value: existing ? [{ pullRequestId: 42 }] : [] };
     return new Response(JSON.stringify(data), {
       headers: { "Content-Type": "application/json" },
     });
   });
-  assert.deepEqual((await service.branches(monitor, "feature")).branches, [
-    "refs/heads/feature",
-  ]);
+  assert.deepEqual((await service.branches(monitor, "feature")).branches, ["refs/heads/feature"]);
   await service.branches(monitor, "feature");
   assert.equal(branchReads, 2, "repeated search reads Azure again");
   const input = {

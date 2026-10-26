@@ -9,10 +9,10 @@
 
 Не удалось импортировать тикет. Проверьте доступ к нему в Azure.
 
-Источник: src/widgets/ticket/ui/TicketCard.tsx:463.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:506.
 
 ### Сообщение
 
 Не удалось скопировать. Проверьте доступ к буферу обмена.
 
-Источник: src/widgets/ticket/ui/TicketCard.tsx:807.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:833.

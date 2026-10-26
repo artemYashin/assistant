@@ -9,4 +9,4 @@
 
 + / − / R / M / · /
 
-Источник: src/entities/repository/ui/DiffFileTree.tsx:48.
+Источник: services/frontend/src/entities/repository/ui/DiffFileTree.tsx:92.

@@ -9,16 +9,16 @@
 
 Закрыть
 
-Источник: src/shared/ui/confirm-button/ConfirmButton.tsx:19.
+Источник: services/frontend/src/shared/ui/confirm-button/ConfirmButton.tsx:67.
 
 ### Элемент
 
 Отмена
 
-Источник: src/shared/ui/confirm-button/ConfirmButton.tsx:22.
+Источник: services/frontend/src/shared/ui/confirm-button/ConfirmButton.tsx:84.
 
 ### Элемент
 
 Выполняю… /
 
-Источник: src/shared/ui/confirm-button/ConfirmButton.tsx:23.
+Источник: services/frontend/src/shared/ui/confirm-button/ConfirmButton.tsx:93.

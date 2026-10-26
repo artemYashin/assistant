@@ -3,14 +3,11 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Calendar } from "../server/calendar.js";
-import { calendarInput, type CalendarItem } from "../server/calendar-model.js";
-import {
-  dailyOccurrence,
-  recurringOverlaps,
-} from "../server/calendar-repeat.js";
-import { calendarSegments } from "../src/entities/calendar/index.js";
+import { Store } from "../services/backend/src/store.js";
+import { Calendar } from "../services/backend/src/calendar.js";
+import { calendarInput, type CalendarItem } from "../services/backend/src/calendar-model.js";
+import { dailyOccurrence, recurringOverlaps } from "../services/backend/src/calendar-repeat.js";
+import { calendarSegments } from "../services/frontend/src/entities/calendar/index.js";
 const input = {
   title: "Daily",
   start: "2026-10-24T03:00:00.000Z",
@@ -56,11 +53,7 @@ test("daily series repeats at configured interval until today is completed; seri
   assert.equal(cal.notifications(new Date("2026-10-26T04:00:00Z")).length, 0);
   cal.reopen(id);
   assert.equal(cal.notifications(new Date("2026-10-26T04:00:00Z")).length, 1);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) AS n FROM calendar_events").get() as any)
-      .n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM calendar_events").get() as any).n, 1);
 });
 test("overlapping daily and ordinary events use independent lanes and retain one ID per series", (t) => {
   const cal = new Calendar(fixture(t));
@@ -73,10 +66,7 @@ test("overlapping daily and ordinary events use independent lanes and retain one
   const next = calendarSegments(cal.list(), "2026-10-25", "Asia/Bishkek");
   assert.equal(next.length, 2);
   assert.ok(next.every((i) => i.top === 540));
-  assert.equal(
-    calendarSegments(cal.list(), "2026-10-23", "Asia/Bishkek").length,
-    0,
-  );
+  assert.equal(calendarSegments(cal.list(), "2026-10-23", "Asia/Bishkek").length, 0);
   assert.equal(
     recurringOverlaps(
       cal.list().find((i) => i.title === "Daily")!,
@@ -102,34 +92,36 @@ test("daily time follows series timezone through DST and rejects missing start o
     completed: false,
     repeatZone: "Europe/Berlin",
   };
-  assert.equal(
-    dailyOccurrence(item, "2026-03-29")?.start,
-    "2026-03-29T07:00:00.000Z",
-  );
-  assert.equal(
-    dailyOccurrence({ ...item, start: "2026-03-28T01:30:00Z" }, "2026-03-29"),
-    null,
-  );
+  assert.equal(dailyOccurrence(item, "2026-03-29")?.start, "2026-03-29T07:00:00.000Z");
+  assert.equal(dailyOccurrence({ ...item, start: "2026-03-28T01:30:00Z" }, "2026-03-29"), null);
   assert.throws(() => calendarInput.parse({ ...input, start: null }));
-  assert.throws(() =>
-    calendarInput.parse({ ...input, end: "2026-10-26T03:00:00Z" }),
-  );
+  assert.throws(() => calendarInput.parse({ ...input, end: "2026-10-26T03:00:00Z" }));
 });
 
-test("selected weekdays apply in series timezone to occurrences, ranges and advance notifications", t => {
-  const store = fixture(t), cal = new Calendar(store);
-  const id = cal.save({...input,start:"2026-10-23T19:00:00Z",repeatWeekdays:[1],leadMinutes:120}).id;
+test("selected weekdays apply in series timezone to occurrences, ranges and advance notifications", (t) => {
+  const store = fixture(t),
+    cal = new Calendar(store);
+  const id = cal.save({
+    ...input,
+    start: "2026-10-23T19:00:00Z",
+    repeatWeekdays: [1],
+    leadMinutes: 120,
+  }).id;
   const series = cal.list()[0];
-  assert.equal(dailyOccurrence(series,"2026-10-24"),null);
-  assert.ok(dailyOccurrence(series,"2026-10-26"));
-  assert.equal(recurringOverlaps(series,"2026-10-23T18:00:00Z","2026-10-25T17:59:59Z"),false);
-  assert.equal(recurringOverlaps(series,"2026-10-25T18:00:00Z","2026-10-26T17:59:59Z"),true);
-  assert.equal(cal.notifications(new Date("2026-10-24T17:00:00Z")).length,0);
-  const batch=cal.notifications(new Date("2026-10-25T17:00:00Z"));
-  assert.equal(batch[0].occurrenceDay,"2026-10-26");
-  assert.throws(()=>cal.completeToday(id,true,new Date("2026-10-24T12:00:00Z")),/итерации/);
-  assert.throws(()=>calendarInput.parse({...input,repeatWeekdays:[] }));
-  assert.throws(()=>calendarInput.parse({...input,repeatWeekdays:[0] }));
-  const reopened=new Store(store.dir);
-  try { assert.deepEqual(new Calendar(reopened).list()[0].repeatWeekdays,[1]); } finally {reopened.close();}
+  assert.equal(dailyOccurrence(series, "2026-10-24"), null);
+  assert.ok(dailyOccurrence(series, "2026-10-26"));
+  assert.equal(recurringOverlaps(series, "2026-10-23T18:00:00Z", "2026-10-25T17:59:59Z"), false);
+  assert.equal(recurringOverlaps(series, "2026-10-25T18:00:00Z", "2026-10-26T17:59:59Z"), true);
+  assert.equal(cal.notifications(new Date("2026-10-24T17:00:00Z")).length, 0);
+  const batch = cal.notifications(new Date("2026-10-25T17:00:00Z"));
+  assert.equal(batch[0].occurrenceDay, "2026-10-26");
+  assert.throws(() => cal.completeToday(id, true, new Date("2026-10-24T12:00:00Z")), /итерации/);
+  assert.throws(() => calendarInput.parse({ ...input, repeatWeekdays: [] }));
+  assert.throws(() => calendarInput.parse({ ...input, repeatWeekdays: [0] }));
+  const reopened = new Store(store.dir);
+  try {
+    assert.deepEqual(new Calendar(reopened).list()[0].repeatWeekdays, [1]);
+  } finally {
+    reopened.close();
+  }
 });

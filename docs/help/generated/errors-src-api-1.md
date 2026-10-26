@@ -9,34 +9,34 @@
 
 Сервер вернул некорректный ответ
 
-Источник: src/shared/api/http/api.ts:27.
+Источник: services/frontend/src/shared/api/http/api.ts:23.
 
 ### Сообщение
 
 Ошибка запроса
 
-Источник: src/shared/api/http/api.ts:44.
+Источник: services/frontend/src/shared/api/http/api.ts:58.
 
 ### Сообщение
 
 Пустой ответ сервера
 
-Источник: src/shared/api/http/api.ts:48.
+Источник: services/frontend/src/shared/api/http/api.ts:62.
 
 ### Сообщение
 
 Ответ сервера слишком большой
 
-Источник: src/shared/api/http/api.ts:56.
+Источник: services/frontend/src/shared/api/http/api.ts:73.
 
 ### Сообщение
 
 Некорректное завершение ответа
 
-Источник: src/shared/api/http/api.ts:63.
+Источник: services/frontend/src/shared/api/http/api.ts:81.
 
 ### Сообщение
 
 Соединение прервано. Проверьте состояние операции повторно.
 
-Источник: src/shared/api/http/api.ts:69.
+Источник: services/frontend/src/shared/api/http/api.ts:91.

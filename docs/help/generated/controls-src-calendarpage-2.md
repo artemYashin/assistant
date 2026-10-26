@@ -9,118 +9,118 @@
 
 Сбросить
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:434.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:450.
 
 ### Элемент
 
 Предыдущий период
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:461.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:478.
 
 ### Элемент
 
 Перейти к дате
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:477.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:492.
 
 ### Элемент
 
 Следующий период
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:491.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:506.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:500.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:515.
 
 ### Элемент
 
 Перейти к текущему времени · Сейчас
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:509.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:524.
 
 ### Элемент
 
 Создать напоминание на {…} · Создать напоминание
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:596.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:620.
 
 ### Элемент
 
 · · Отпуск / ·
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:606.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:630.
 
 ### Элемент
 
 Ещё
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:617.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:647.
 
 ### Элемент
 
 {…} · {…} — {…} · · —
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:635.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:667.
 
 ### Элемент
 
 Открыть тикет
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:710.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:747.
 
 ### Элемент
 
 Открыть напоминание / Изменить
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:717.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:751.
 
 ### Элемент
 
 Завершить напоминание? · «{…}». {…}Напоминание останется в истории, уведомления прекратятся. · Завершить · Завершить всю серию / Завершить
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:723.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:759.
 
 ### Элемент
 
 Вернуть в незавершённые? · «{…}» снова станет активным. Уведомления возобновятся с учётом времени начала и расписания. · Вернуть в незавершённые
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:736.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:770.
 
 ### Элемент
 
 Удалить напоминание? · «{…}» будет удалено без возможности восстановления. · Удалить
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:749.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:781.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:783.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:813.
 
 ### Элемент
 
 Общий
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:822.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:863.
 
 ### Элемент
 
 Заказчик
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:823.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:864.
 
 ### Элемент
 
 Проект
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:824.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:865.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:855.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:893.

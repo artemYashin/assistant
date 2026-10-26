@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
 const image = "11111111-1111-1111-1111-111111111111";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-details-"));
@@ -28,7 +28,10 @@ test("automatic import filters by selected assignees, exact type and state with 
   const { store, connectors } = fixture(t);
   store.set(store.ticketImportKey(store.settings()), {
     azureAutoImport: true,
-    azureImportAssignees:[{id:"a",name:"A",email:"a@example.test"},{id:"b",name:"B",email:"b'test@example.test"}],
+    azureImportAssignees: [
+      { id: "a", name: "A", email: "a@example.test" },
+      { id: "b", name: "B", email: "b'test@example.test" },
+    ],
     azureTypes: ["Bug", "Change Request"],
     azureStates: ["Ready ' QA"],
   });
@@ -57,10 +60,7 @@ test("automatic import filters by selected assignees, exact type and state with 
   assert.ok(!query.includes("@Me"));
   assert.match(query, /IN \('Bug','Change Request'\)/);
   assert.match(query, /'Ready '' QA'/);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 1);
 });
 test("ticket details include all comment pages and only allow own Azure attachment URLs", async (t) => {
   const { store, connectors } = fixture(t);
@@ -81,9 +81,7 @@ test("ticket details include all comment pages and only allow own Azure attachme
       return Response.json(
         comments === 1
           ? {
-              comments: [
-                { id: 1, text: "first", createdBy: { displayName: "User" } },
-              ],
+              comments: [{ id: 1, text: "first", createdBy: { displayName: "User" } }],
               continuationToken: "next",
             }
           : { comments: [{ id: 2, text: "second" }] },
@@ -110,26 +108,17 @@ test("ticket details include all comment pages and only allow own Azure attachme
   assert.equal(details.attachments.length, 1);
   assert.equal(details.attachments[0].image, true);
   assert.equal(details.warnings.length, 0);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 0);
   const file = await connectors.attachment(details.cardId, image);
   assert.equal(file.type, "image/png");
   assert.equal(attachmentCalls, 1);
-  await assert.rejects(
-    connectors.attachment(details.cardId, "not-listed"),
-    /не найдено/,
-  );
+  await assert.rejects(connectors.attachment(details.cardId, "not-listed"), /не найдено/);
   assert.equal(attachmentCalls, 1);
   store.set("settings", {
     ...store.settings(),
     azureUrl: "https://another.test",
   });
-  await assert.rejects(
-    connectors.attachment(details.cardId, image),
-    /изменилось/,
-  );
+  await assert.rejects(connectors.attachment(details.cardId, image), /изменилось/);
   assert.equal(attachmentCalls, 1);
 });
 test("unavailable comments are shown as incomplete and wrong-project ticket is rejected", async (t) => {
@@ -154,10 +143,7 @@ test("work item types and states are loaded from the configured project", async 
       url.pathname.endsWith("/states")
         ? { value: [{ name: "New" }, { name: "Active" }] }
         : {
-            value: [
-              { name: "Bug" },
-              { name: "Change Request", states: [{ name: "Proposed" }] },
-            ],
+            value: [{ name: "Bug" }, { name: "Change Request", states: [{ name: "Proposed" }] }],
           },
     );
   });
@@ -191,60 +177,126 @@ test("comment images accept HTML attribute spacing and unquoted sources, dedupli
     });
   });
   const card = await connectors.ticketDetails(42);
-  assert.deepEqual(card.attachments, [
-    { id, name: "Изображение в тексте", image: true },
-  ]);
+  assert.deepEqual(card.attachments, [{ id, name: "Изображение в тексте", image: true }]);
   assert.match(card.comments[0].richText, /Screenshot/);
 });
 
-test("sync refreshes assigned tickets first then other locally tracked tickets with content", async t => {
+test("sync refreshes assigned tickets first then other locally tracked tickets with content", async (t) => {
   const { store, connectors } = fixture(t);
   const source = store.source();
-  store.set(store.ticketImportKey(store.settings()),{azureAutoImport:false,azureImportAssignees:[{id:"a",name:"A",email:"a@example.test"},{id:"b",name:"B",email:"b@example.test"}],azureTypes:["Bug"],azureStates:["Active"]});
-  for (const id of [42, 43]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, id, "Old", "Old", "Other", "Bug", "url", null, "old");
+  store.set(store.ticketImportKey(store.settings()), {
+    azureAutoImport: false,
+    azureImportAssignees: [
+      { id: "a", name: "A", email: "a@example.test" },
+      { id: "b", name: "B", email: "b@example.test" },
+    ],
+    azureTypes: ["Bug"],
+    azureStates: ["Active"],
+  });
+  for (const id of [42, 43])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(source, id, "Old", "Old", "Other", "Bug", "url", null, "old");
   const batches: number[][] = [];
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
     if (String(url).includes("/wiql")) {
-      const query=JSON.parse(init.body).query;
+      const query = JSON.parse(init.body).query;
       assert.ok(query.includes("[System.AssignedTo] IN ('a@example.test','b@example.test')"));
       assert.ok(query.includes("[System.WorkItemType] IN ('Bug')"));
       assert.ok(query.includes("[System.State] IN ('Active')"));
       assert.ok(!query.includes("@Me"));
       return Response.json({ workItems: [{ id: 43 }, { id: 44 }] });
     }
-    const ids = JSON.parse(init.body).ids; batches.push(ids);
-    return Response.json({ value: ids.map((id: number) => ({ id, fields: {
-      "System.TeamProject": "P", "System.Title": `Fresh ${id}`, "System.State": "Active",
-      "System.AssignedTo": { displayName: id === 42 ? "Someone else" : "Me" }, "System.Description": `<p>Body ${id}</p>`,
-    } })) });
+    const ids = JSON.parse(init.body).ids;
+    batches.push(ids);
+    return Response.json({
+      value: ids.map((id: number) => ({
+        id,
+        fields: {
+          "System.TeamProject": "P",
+          "System.Title": `Fresh ${id}`,
+          "System.State": "Active",
+          "System.AssignedTo": { displayName: id === 42 ? "Someone else" : "Me" },
+          "System.Description": `<p>Body ${id}</p>`,
+        },
+      })),
+    });
   });
   assert.deepEqual(await connectors.syncTickets(true), { count: 3 });
   assert.deepEqual(batches, [[43, 44], [42]]);
-  const other = store.db.prepare("SELECT * FROM tickets WHERE source=? AND id=42").get(source) as any;
-  assert.equal(other.title, "Fresh 42"); assert.equal(other.assigned, "Someone else");
-  assert.equal((store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='description'").get(source) as any).body, "Body 42");
+  const other = store.db
+    .prepare("SELECT * FROM tickets WHERE source=? AND id=42")
+    .get(source) as any;
+  assert.equal(other.title, "Fresh 42");
+  assert.equal(other.assigned, "Someone else");
+  assert.equal(
+    (
+      store.db
+        .prepare(
+          "SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='description'",
+        )
+        .get(source) as any
+    ).body,
+    "Body 42",
+  );
 });
 
-test("opening tracked detail refreshes local Azure fields and clears removed cached sections", async t => {
+test("opening tracked detail refreshes local Azure fields and clears removed cached sections", async (t) => {
   const { store, connectors } = fixture(t);
   const source = store.source();
-  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source, 42, "Old", "Old", "Old", "Bug", "url", null, "old");
-  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run(source, 42, "criteria", "outdated", "outdated", "old");
-  t.mock.method(globalThis, "fetch", async (url: any) => String(url).includes("/comments") ? Response.json({ comments: [] }) : Response.json({ id: 42, fields: {
-    "System.TeamProject": "P", "System.Title": "Fresh", "System.State": "Closed", "System.AssignedTo": { displayName: "Other" }, "System.Tags": "AzureTag", "System.Description": "<p>Fresh body</p>",
-  } }));
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(source, 42, "Old", "Old", "Old", "Bug", "url", null, "old");
+  store.db
+    .prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)")
+    .run(source, 42, "criteria", "outdated", "outdated", "old");
+  t.mock.method(globalThis, "fetch", async (url: any) =>
+    String(url).includes("/comments")
+      ? Response.json({ comments: [] })
+      : Response.json({
+          id: 42,
+          fields: {
+            "System.TeamProject": "P",
+            "System.Title": "Fresh",
+            "System.State": "Closed",
+            "System.AssignedTo": { displayName: "Other" },
+            "System.Tags": "AzureTag",
+            "System.Description": "<p>Fresh body</p>",
+          },
+        }),
+  );
   await connectors.ticketDetails(42);
   const row = store.db.prepare("SELECT * FROM tickets WHERE source=? AND id=42").get(source) as any;
-  assert.equal(row.title, "Fresh"); assert.equal(row.state, "Closed"); assert.equal(row.assigned, "Other");
-  assert.equal((store.db.prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='criteria'").get(source) as any).body, "");
+  assert.equal(row.title, "Fresh");
+  assert.equal(row.state, "Closed");
+  assert.equal(row.assigned, "Other");
+  assert.equal(
+    (
+      store.db
+        .prepare(
+          "SELECT body FROM ticket_content_cache WHERE source=? AND id=42 AND section='criteria'",
+        )
+        .get(source) as any
+    ).body,
+    "",
+  );
 });
 
-test("UI detail fallback preserves the last snapshot without changing strict callers", async t => {
+test("UI detail fallback preserves the last snapshot without changing strict callers", async (t) => {
   const { store, connectors } = fixture(t);
   let offline = false;
   t.mock.method(globalThis, "fetch", async (url: any) => {
     if (offline) return new Response("Unavailable", { status: 503 });
-    return String(url).includes("/comments") ? Response.json({ comments: [{ id: 1, text: "Saved comment" }] }) : Response.json({ id: 42, fields: { "System.TeamProject": "P", "System.Title": "Saved ticket", "System.Description": "<p>Saved body</p>" } });
+    return String(url).includes("/comments")
+      ? Response.json({ comments: [{ id: 1, text: "Saved comment" }] })
+      : Response.json({
+          id: 42,
+          fields: {
+            "System.TeamProject": "P",
+            "System.Title": "Saved ticket",
+            "System.Description": "<p>Saved body</p>",
+          },
+        });
   });
   const fresh = await connectors.ticketDetails(42, true);
   assert.equal("cacheFallback" in fresh, false);
@@ -256,7 +308,16 @@ test("UI detail fallback preserves the last snapshot without changing strict cal
   assert.equal((cached as any).cacheFallback.savedAt, fresh.loadedAt);
   assert.equal(connectors.ticketCard(cached.cardId).cacheFallback.savedAt, fresh.loadedAt);
   assert.equal(connectors.ticketCard(fresh.cardId).cacheFallback, undefined);
-  store.db.prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)").run(store.source(), 42, "description", "Newer synced content", "newer synced content", "2099-01-01T00:00:00.000Z");
+  store.db
+    .prepare("INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?)")
+    .run(
+      store.source(),
+      42,
+      "description",
+      "Newer synced content",
+      "newer synced content",
+      "2099-01-01T00:00:00.000Z",
+    );
   const newer = await connectors.ticketDetails(42, true);
   assert.equal(newer.fields["System.Description"], "Newer synced content");
   assert.equal(newer.comments[0].text, "Saved comment");
@@ -267,12 +328,20 @@ test("UI detail fallback preserves the last snapshot without changing strict cal
   await assert.rejects(connectors.ticketDetails(42, true));
 });
 
-test("UI fallback uses synced content for retained trash and is removed on expiry", async t => {
+test("UI fallback uses synced content for retained trash and is removed on expiry", async (t) => {
   const { store, connectors } = fixture(t);
-  t.mock.method(globalThis, "fetch", async () => Response.json({ id: 42, fields: {
-    "System.TeamProject": "P", "System.Title": "Synced", "System.State": "Active", "System.Description": `<p>Cached requirement</p><img src="https://ado.test/Collection/_apis/wit/attachments/${image}">`,
-    "Microsoft.VSTS.Common.AcceptanceCriteria": "<p>Acceptance</p>",
-  } }));
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({
+      id: 42,
+      fields: {
+        "System.TeamProject": "P",
+        "System.Title": "Synced",
+        "System.State": "Active",
+        "System.Description": `<p>Cached requirement</p><img src="https://ado.test/Collection/_apis/wit/attachments/${image}">`,
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<p>Acceptance</p>",
+      },
+    }),
+  );
   await connectors.trackTicket(42);
   store.removeLocalTicket(42);
   t.mock.method(globalThis, "fetch", async () => new Response("Offline", { status: 503 }));
@@ -283,15 +352,21 @@ test("UI fallback uses synced content for retained trash and is removed on expir
   assert.ok((cached as any).markdownFields.includes("System.Description"));
   assert.ok(cached.attachments.some((attachment: any) => attachment.id === image));
   assert.equal(cached.comments.length, 0);
-  assert.ok(cached.warnings.some(warning => warning.includes("не сохранены")));
-  store.db.prepare("UPDATE ticket_trash SET removed_at=? WHERE id=42").run(Date.now() - 31 * 86400000);
+  assert.ok(cached.warnings.some((warning) => warning.includes("не сохранены")));
+  store.db
+    .prepare("UPDATE ticket_trash SET removed_at=? WHERE id=42")
+    .run(Date.now() - 31 * 86400000);
   await assert.rejects(connectors.ticketDetails(42, true));
 });
 
-test("UI fallback does not hide source changes or invalid live ticket identity", async t => {
+test("UI fallback does not hide source changes or invalid live ticket identity", async (t) => {
   const { store, connectors } = fixture(t);
-  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(store.source(), 42, "Cached", "Active", "", "Bug", "url", null, new Date().toISOString());
-  t.mock.method(globalThis, "fetch", async () => Response.json({ id: 43, fields: { "System.TeamProject": "P" } }));
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Cached", "Active", "", "Bug", "url", null, new Date().toISOString());
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({ id: 43, fields: { "System.TeamProject": "P" } }),
+  );
   await assert.rejects(connectors.ticketDetails(42, true), /другому проекту/);
   t.mock.method(globalThis, "fetch", async () => {
     store.set("settings", { ...store.settings(), azureProject: "Other" });
@@ -300,30 +375,55 @@ test("UI fallback does not hide source changes or invalid live ticket identity",
   await assert.rejects(connectors.ticketDetails(42, true), /Подключение Azure изменилось/);
 });
 
-test("automatic import without selected assignees never falls back to current user or all tickets",async t=>{
- const {store,connectors}=fixture(t);
- store.set(store.ticketImportKey(store.settings()),{azureAutoImport:true,azureTypes:["Bug"],azureStates:["Active"]});
- t.mock.method(globalThis,"fetch",async()=>{throw new Error("Unexpected Azure request");});
- await connectors.syncTickets(false,true);
- await connectors.syncTickets(true);
- assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,0);
+test("automatic import without selected assignees never falls back to current user or all tickets", async (t) => {
+  const { store, connectors } = fixture(t);
+  store.set(store.ticketImportKey(store.settings()), {
+    azureAutoImport: true,
+    azureTypes: ["Bug"],
+    azureStates: ["Active"],
+  });
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("Unexpected Azure request");
+  });
+  await connectors.syncTickets(false, true);
+  await connectors.syncTickets(true);
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 0);
 });
-test("scheduled projects sharing Azure reuse fetched tickets but apply each project's import selection",async t=>{
- const {store,connectors}=fixture(t);
- const a={client:"C",project:"A"},b={client:"C",project:"B"};
- store.addContext(a);store.addContext(b);
- for(const [context,id] of [[a,"a"],[b,"b"]] as const)store.set(store.ticketImportKey(context),{
-  azureAutoImport:true,azureImportAssignees:[{id,name:id,email:id+"@example.test"}],azureTypes:["Bug"],azureStates:["New"]
- });
- let queries=0;const batches:number[][]=[];
- t.mock.method(globalThis,"fetch",async(url:any,init:any)=>{
-  if(String(url).includes("/wiql")){queries++;return Response.json({workItems:queries===1?[{id:42}]:[{id:42},{id:43}]});}
-  const ids=JSON.parse(init.body).ids;batches.push(ids);
-  return Response.json({value:ids.map((id:number)=>({id,fields:{"System.Title":"T","System.TeamProject":"P","System.State":"New"}}))});
- });
- const fetched=new Map<string,Set<number>>();
- await connectors.syncTickets(false,true,a,fetched);
- await connectors.syncTickets(false,true,b,fetched);
- assert.equal(queries,2);
- assert.deepEqual(batches,[[42],[43]]);
+test("scheduled projects sharing Azure reuse fetched tickets but apply each project's import selection", async (t) => {
+  const { store, connectors } = fixture(t);
+  const a = { client: "C", project: "A" },
+    b = { client: "C", project: "B" };
+  store.addContext(a);
+  store.addContext(b);
+  for (const [context, id] of [
+    [a, "a"],
+    [b, "b"],
+  ] as const)
+    store.set(store.ticketImportKey(context), {
+      azureAutoImport: true,
+      azureImportAssignees: [{ id, name: id, email: id + "@example.test" }],
+      azureTypes: ["Bug"],
+      azureStates: ["New"],
+    });
+  let queries = 0;
+  const batches: number[][] = [];
+  t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
+    if (String(url).includes("/wiql")) {
+      queries++;
+      return Response.json({ workItems: queries === 1 ? [{ id: 42 }] : [{ id: 42 }, { id: 43 }] });
+    }
+    const ids = JSON.parse(init.body).ids;
+    batches.push(ids);
+    return Response.json({
+      value: ids.map((id: number) => ({
+        id,
+        fields: { "System.Title": "T", "System.TeamProject": "P", "System.State": "New" },
+      })),
+    });
+  });
+  const fetched = new Map<string, Set<number>>();
+  await connectors.syncTickets(false, true, a, fetched);
+  await connectors.syncTickets(false, true, b, fetched);
+  assert.equal(queries, 2);
+  assert.deepEqual(batches, [[42], [43]]);
 });

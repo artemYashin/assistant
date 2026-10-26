@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-server/
+data/
+docker-data/
+coverage/
+package-lock.json
+docs/help/generated/
+docs/help/coverage.json

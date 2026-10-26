@@ -9,4 +9,4 @@
 
 Голосовой ввод · Продиктовать текст в поле сообщения без отправки
 
-Источник: src/features/voice-input/ui/FieldDictation.tsx:76.
+Источник: services/frontend/src/features/voice-input/ui/FieldDictation.tsx:124.

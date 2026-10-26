@@ -9,10 +9,10 @@
 
 Скопировать ссылку на изображение · Внешняя ссылка недоступна: изображение локальное или источник не загружен / Ссылка скопирована / Скопировать исходную ссылку на изображение · /
 
-Источник: src/entities/rich-content/ui/ImageActions.tsx:33.
+Источник: services/frontend/src/entities/rich-content/ui/ImageActions.tsx:41.
 
 ### Элемент
 
 Прикрепить изображение к чату · Прикрепить изображение к текущему чату
 
-Источник: src/entities/rich-content/ui/ImageActions.tsx:38.
+Источник: services/frontend/src/entities/rich-content/ui/ImageActions.tsx:64.

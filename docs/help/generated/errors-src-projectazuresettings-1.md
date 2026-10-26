@@ -9,4 +9,4 @@
 
 Подключение Azure сохранено. Если оно изменилось, проверьте и сохраните настройки в разделе «Репозиторий».
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:55.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:59.

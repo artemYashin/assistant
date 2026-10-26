@@ -9,16 +9,16 @@
 
 Некорректный номер тикета
 
-Источник: server/azure-browser.ts:64.
+Источник: services/backend/src/azure-browser.ts:70.
 
 ### Сообщение
 
 Локальный фильтр охватывает более 2000 задач. Сузьте условия.
 
-Источник: server/azure-browser.ts:113.
+Источник: services/backend/src/azure-browser.ts:116.
 
 ### Сообщение
 
 Слишком много условий поиска. Сократите набор фильтров.
 
-Источник: server/azure-browser.ts:126.
+Источник: services/backend/src/azure-browser.ts:126.

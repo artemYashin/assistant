@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { LocalDevelopers } from "../server/local-developers.js";
-import { workspaceContext } from "../server/workspace-context.js";
+import { Store } from "../services/backend/src/store.js";
+import { LocalDevelopers } from "../services/backend/src/local-developers.js";
+import { workspaceContext } from "../services/backend/src/workspace-context.js";
 test("workspace context exposes scoped developers, registry and repository settings without secrets", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-context-")),
     store = new Store(dir);
@@ -31,7 +31,11 @@ test("workspace context exposes scoped developers, registry and repository setti
     )
     .run();
   const data = workspaceContext(store, context);
-  assert.deepEqual(data.developers.map((d) => d.name).sort(), ["Client Dev", "General", "Project Dev"]);
+  assert.deepEqual(data.developers.map((d) => d.name).sort(), [
+    "Client Dev",
+    "General",
+    "Project Dev",
+  ]);
   assert.equal((data.repositories[0] as any).repository, "Repo");
   assert.ok(data.contexts.some((c) => c.project === "Project"));
   assert.ok(!JSON.stringify(data).includes("TOP-SECRET"));

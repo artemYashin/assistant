@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
+import { Store } from "../services/backend/src/store.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-trash-"));
   const store = new Store(dir);
@@ -27,9 +27,7 @@ function fixture(t: any) {
       "INSERT INTO local_developers(id,name,client,project,active) VALUES ('dev','Local Dev','','',1)",
     )
     .run();
-  store.db
-    .prepare("INSERT INTO ticket_developers VALUES (?,42,'dev')")
-    .run(source);
+  store.db.prepare("INSERT INTO ticket_developers VALUES (?,42,'dev')").run(source);
   return { store, source };
 }
 test("trash preserves snapshot and assignments, restores locally, and repeated removal does not extend retention", (t) => {
@@ -49,21 +47,12 @@ test("trash preserves snapshot and assignments, restores locally, and repeated r
   store.restoreLocalTicket(42, source);
   assert.equal(store.ticketTrash().length, 0);
   assert.equal(
-    (store.db.prepare("SELECT title FROM tickets WHERE id=42").get() as any)
-      .title,
+    (store.db.prepare("SELECT title FROM tickets WHERE id=42").get() as any).title,
     "Bug title",
   );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM ticket_developers").get() as any).n, 1);
   assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM ticket_developers").get() as any)
-      .n,
-    1,
-  );
-  assert.equal(
-    (
-      store.db
-        .prepare("SELECT removed FROM ticket_local WHERE id=42")
-        .get() as any
-    ).removed,
+    (store.db.prepare("SELECT removed FROM ticket_local WHERE id=42").get() as any).removed,
     0,
   );
 });
@@ -74,14 +63,8 @@ test("trash expires at 30 days and retains only the auto-import exclusion marker
   assert.equal(store.purgeTicketTrash(removed + 30 * 86400000 - 1), 0);
   assert.equal(store.purgeTicketTrash(removed + 30 * 86400000), 1);
   assert.equal(store.ticketTrash().length, 0);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM ticket_developers").get() as any)
-      .n,
-    0,
-  );
-  const local = store.db
-    .prepare("SELECT * FROM ticket_local WHERE id=42")
-    .get() as any;
+  assert.equal((store.db.prepare("SELECT count(*) n FROM ticket_developers").get() as any).n, 0);
+  const local = store.db.prepare("SELECT * FROM ticket_local WHERE id=42").get() as any;
   assert.equal(local.removed, 1);
   assert.equal(local.developer_name, "");
   assert.throws(() => store.restoreLocalTicket(42));
@@ -89,8 +72,8 @@ test("trash expires at 30 days and retains only the auto-import exclusion marker
 
 test("trash edits preserve removal date, stay local and survive restoration", async (t) => {
   const { store, source } = fixture(t);
-  const { saveTicketMetadata } = await import("../server/ticket-metadata.js");
-  const { LocalDevelopers } = await import("../server/local-developers.js");
+  const { saveTicketMetadata } = await import("../services/backend/src/ticket-metadata.js");
+  const { LocalDevelopers } = await import("../services/backend/src/local-developers.js");
   store.removeLocalTicket(42);
   const removedAt = store.ticketTrash()[0].removedAt;
   saveTicketMetadata(
@@ -100,12 +83,7 @@ test("trash edits preserve removal date, stay local and survive restoration", as
     { client: "", project: "" },
     { priority: 3, tags: ["follow-up"], notes: "Updated in trash" },
   );
-  new LocalDevelopers(store).assign(
-    42,
-    [],
-    { client: "", project: "" },
-    source,
-  );
+  new LocalDevelopers(store).assign(42, [], { client: "", project: "" }, source);
   store.updateTrashFromAzure(
     {
       id: 42,
@@ -126,25 +104,14 @@ test("trash edits preserve removal date, stay local and survive restoration", as
   assert.equal(ticket.notes, "Updated in trash");
   assert.deepEqual(ticket.developers, []);
   assert.equal(ticket.developer_name, "");
-  assert.equal(
-    (store.db.prepare("SELECT COUNT(*) n FROM tickets").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT COUNT(*) n FROM tickets").get() as any).n, 0);
   assert.throws(
-    () =>
-      saveTicketMetadata(
-        store,
-        999,
-        source,
-        { client: "", project: "" },
-        { notes: "unknown" },
-      ),
+    () => saveTicketMetadata(store, 999, source, { client: "", project: "" }, { notes: "unknown" }),
     /отсутствует/,
   );
   store.restoreLocalTicket(42, source);
   assert.equal(
-    (store.db.prepare("SELECT state FROM tickets WHERE id=42").get() as any)
-      .state,
+    (store.db.prepare("SELECT state FROM tickets WHERE id=42").get() as any).state,
     "Resolved",
   );
 });

@@ -9,118 +9,118 @@
 
 Закрыть
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:62.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:84.
 
 ### Элемент
 
 Частота вопросов
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:106.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:128.
 
 ### Элемент
 
 Не задавать
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:112.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:134.
 
 ### Элемент
 
 Средняя
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:113.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:135.
 
 ### Элемент
 
 Высокая
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:114.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:136.
 
 ### Элемент
 
 Максимум токенов на ревью
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:119.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:141.
 
 ### Элемент
 
 Максимум инструментов на ревью
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:122.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:153.
 
 ### Элемент
 
 Разрешить поиск и чтение кода репозитория · /
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:139.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:186.
 
 ### Элемент
 
 Глубина изучения кода
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:146.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:216.
 
 ### Элемент
 
 Низкая
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:147.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:223.
 
 ### Элемент
 
 Ниже среднего
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:148.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:224.
 
 ### Элемент
 
 Прочитать связанные тикеты, комментарии и локальные заметки
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:160.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:241.
 
 ### Элемент
 
 Снять все / Выбрать все
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:172.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:265.
 
 ### Элемент
 
 #
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:173.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:282.
 
 ### Элемент
 
 Общая
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:189.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:327.
 
 ### Элемент
 
 Заказчика
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:190.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:328.
 
 ### Элемент
 
 Проекта
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:191.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:329.
 
 ### Элемент
 
 Ревью проекта
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:192.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:330.
 
 ### Элемент
 
 Комментарий ревьюеру
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:200.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:358.
 
 ### Элемент
 
 Продиктовать комментарий
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:201.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:361.

@@ -9,10 +9,10 @@
 
 Подключение изменилось. Повторите запрос синхронизации.
 
-Источник: server/sync-tools.ts:12.
+Источник: services/backend/src/sync-tools.ts:20.
 
 ### Сообщение
 
 В текущем контексте нет включённых репозиториев для синхронизации PR.
 
-Источник: server/sync-tools.ts:27.
+Источник: services/backend/src/sync-tools.ts:60.

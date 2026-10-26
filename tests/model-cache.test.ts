@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Agent } from "../server/agent.js";
+import { Store } from "../services/backend/src/store.js";
+import { Agent } from "../services/backend/src/agent.js";
 
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-model-cache-"));
@@ -42,11 +42,7 @@ test("model list shares concurrent requests and expires after one day", async (t
   const f = fixture(t);
   let now = 1000;
   t.mock.method(Date, "now", () => now);
-  const results = await Promise.all([
-    f.agent.models(),
-    f.agent.models(),
-    f.agent.models(),
-  ]);
+  const results = await Promise.all([f.agent.models(), f.agent.models(), f.agent.models()]);
   assert.equal(f.calls(), 1);
   assert.deepEqual(results[0], results[2]);
   now += 86400000 - 1;

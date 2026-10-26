@@ -9,34 +9,34 @@
 
 Не удалось запустить GitHub CLI. Пересоберите Docker-образ или установите gh.
 
-Источник: server/github-login.ts:44.
+Источник: services/backend/src/github-login.ts:37.
 
 ### Сообщение
 
 Не удалось запустить GitHub CLI. Пересоберите Docker-образ или установите gh для локального запуска.
 
-Источник: server/github-login.ts:86.
+Источник: services/backend/src/github-login.ts:71.
 
 ### Сообщение
 
 Время входа истекло. Начните вход снова.
 
-Источник: server/github-login.ts:94.
+Источник: services/backend/src/github-login.ts:78.
 
 ### Сообщение
 
 Вход GitHub не завершён. Повторите вход и проверьте доступ вашей организации.
 
-Источник: server/github-login.ts:98.
+Источник: services/backend/src/github-login.ts:82.
 
 ### Сообщение
 
 Не удалось получить токен GitHub CLI. Повторите вход.
 
-Источник: server/github-login.ts:112.
+Источник: services/backend/src/github-login.ts:96.
 
 ### Сообщение
 
 GitHub CLI не вернул токен.
 
-Источник: server/github-login.ts:115.
+Источник: services/backend/src/github-login.ts:99.

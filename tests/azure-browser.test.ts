@@ -3,10 +3,14 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
-import { azureBrowseSchema, browseQuery, orderBrowseIds } from "../server/azure-browser.js";
-import { ticketsCsv } from "../src/features/export-tickets/index.js";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
+import {
+  azureBrowseSchema,
+  browseQuery,
+  orderBrowseIds,
+} from "../services/backend/src/azure-browser.js";
+import { ticketsCsv } from "../services/frontend/src/features/export-tickets/index.js";
 
 test("Azure browsing escapes filters, uses ID cursors and intersects local filters", () => {
   const input = azureBrowseSchema.parse({
@@ -27,10 +31,7 @@ test("Azure browsing escapes filters, uses ID cursors and intersects local filte
     ])!,
     /IN \(12\)/,
   );
-  assert.match(
-    browseQuery({ ...input, query: "#42" }, [])!,
-    /\[System.Id\] = 42/,
-  );
+  assert.match(browseQuery({ ...input, query: "#42" }, [])!, /\[System.Id\] = 42/);
 });
 
 test("Azure sorting validates fields and preserves global ordering before pagination", () => {
@@ -43,9 +44,15 @@ test("Azure sorting validates fields and preserves global ordering before pagina
     const query = browseQuery(azureBrowseSchema.parse({ source: "s", sort }), [])!;
     assert.ok(query.endsWith(`ORDER BY [${field}] ${direction}, [System.Id] DESC`));
   }
-  assert.equal(azureBrowseSchema.safeParse({ source: "s", sort: "title-asc; DROP" }).success, false);
+  assert.equal(
+    azureBrowseSchema.safeParse({ source: "s", sort: "title-asc; DROP" }).success,
+    false,
+  );
   assert.deepEqual(orderBrowseIds([3, 9, 1], "title-asc", []), [3, 9, 1]);
-  const local = [{ id: 1, priority: 1 }, { id: 3, priority: 3 }];
+  const local = [
+    { id: 1, priority: 1 },
+    { id: 3, priority: 3 },
+  ];
   assert.deepEqual(orderBrowseIds([9, 3, 1], "priority-asc", local), [1, 3, 9]);
   assert.deepEqual(orderBrowseIds([9, 3, 1], "priority-desc", local), [3, 1, 9]);
 });
@@ -82,7 +89,11 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
     batches++;
     const body = JSON.parse(init.body);
     assert.ok(body.ids.length <= 50);
-    assert.equal(body.fields.includes("System.Description"),body.ids.includes(100), "selected import reads content; browsing reads summary only");
+    assert.equal(
+      body.fields.includes("System.Description"),
+      body.ids.includes(100),
+      "selected import reads content; browsing reads summary only",
+    );
     assert.ok(body.fields.includes("Microsoft.VSTS.Common.Priority"));
     return Response.json({
       value: [...body.ids].reverse().map((id: number) => ({
@@ -106,16 +117,13 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
   );
   assert.equal(result.tickets.length, 50);
   assert.equal(result.tickets[0].id, 40000);
-  assert.equal(result.tickets[0].azurePriority,2);
+  assert.equal(result.tickets[0].azurePriority, 2);
   assert.equal(result.tickets[0].created_at, "2025-01-02T03:04:05Z");
   assert.equal(result.tickets[0].changed_at, "2026-02-03T04:05:06Z");
   assert.equal(result.total, 51);
   assert.equal(result.totalPages, 2);
   assert.equal(result.page, 1);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n, 0);
   assert.equal(queries, 1);
   assert.equal(batches, 1);
   const second = await connectors.browseAzureTickets(
@@ -153,29 +161,27 @@ test("Azure pages are bounded and read-only; selected imports use one read batch
   );
   await assert.rejects(
     connectors.browseAzureTickets(
-      azureBrowseSchema.parse({ source: store.source(), snapshot: result.snapshot, sort: "title-asc" }),
+      azureBrowseSchema.parse({
+        source: store.source(),
+        snapshot: result.snapshot,
+        sort: "title-asc",
+      }),
       [],
     ),
     /устарели/,
   );
-  const imported = await connectors.importAzureSelection(
+  const imported = await connectors.importAzureSelection([100, 99], store.source());
+  assert.deepEqual(
+    [...imported.added].sort((a, b) => b - a),
     [100, 99],
-    store.source(),
   );
-  assert.deepEqual([...imported.added].sort((a, b) => b - a), [100, 99]);
   assert.equal(store.ticketCreatedAt(100), "2025-01-02T03:04:05.000Z");
   assert.equal(batches, 3);
-  assert.equal(store.azurePriority(100),2);
+  assert.equal(store.azurePriority(100), 2);
   await connectors.importAzureSelection([100, 99], store.source());
   assert.equal(batches, 3);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n,
-    2,
-  );
-  await assert.rejects(
-    connectors.importAzureSelection([98], "wrong"),
-    /изменилось/,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM tickets").get() as any).n, 2);
+  await assert.rejects(connectors.importAzureSelection([98], "wrong"), /изменилось/);
   assert.equal(batches, 3);
   const empty = await connectors.browseAzureTickets(
     azureBrowseSchema.parse({
@@ -220,14 +226,27 @@ test("exports mark local fields of unimported Azure tickets as unavailable", () 
   assert.match(csv, /"N\/A";"N\/A";"N\/A";"N\/A";"N\/A"/);
 });
 
- test("Azure priority filters combine choices with OR without requiring local imports", () => {
-  const query=browseQuery(azureBrowseSchema.parse({source:"s",azurePriorityFilter:["1","3"],stateFilter:["Active"]}),[])!;
-  assert.match(query,/\[Microsoft.VSTS.Common.Priority\] = 1 OR \[Microsoft.VSTS.Common.Priority\] = 3/);
-  assert.match(query,/AND.*\[System.State\] = 'Active'/);
-  assert.equal(azureBrowseSchema.safeParse({source:"s",azurePriorityFilter:["1 OR 1=1"]}).success,false);
- });
+test("Azure priority filters combine choices with OR without requiring local imports", () => {
+  const query = browseQuery(
+    azureBrowseSchema.parse({
+      source: "s",
+      azurePriorityFilter: ["1", "3"],
+      stateFilter: ["Active"],
+    }),
+    [],
+  )!;
+  assert.match(
+    query,
+    /\[Microsoft.VSTS.Common.Priority\] = 1 OR \[Microsoft.VSTS.Common.Priority\] = 3/,
+  );
+  assert.match(query, /AND.*\[System.State\] = 'Active'/);
+  assert.equal(
+    azureBrowseSchema.safeParse({ source: "s", azurePriorityFilter: ["1 OR 1=1"] }).success,
+    false,
+  );
+});
 
-test("Azure overdue filter constrains IDs before paging and combines with local filters", t => {
+test("Azure overdue filter constrains IDs before paging and combines with local filters", (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-24T12:00:00Z") });
   const input = azureBrowseSchema.parse({ source: "s", overdueDeadline: true });
   const local = [
@@ -240,5 +259,8 @@ test("Azure overdue filter constrains IDs before paging and combines with local 
   assert.match(browseQuery(input, local)!, /\[System.Id\] IN \(1,5\)/);
   assert.match(browseQuery({ ...input, tagFilter: ["fix"] }, local)!, /\[System.Id\] IN \(1\)/);
   assert.equal(browseQuery(input, local.slice(1, 4)), null);
-  assert.doesNotMatch(browseQuery({ ...input, overdueDeadline: false }, local)!, /\[System.Id\] IN/);
+  assert.doesNotMatch(
+    browseQuery({ ...input, overdueDeadline: false }, local)!,
+    /\[System.Id\] IN/,
+  );
 });

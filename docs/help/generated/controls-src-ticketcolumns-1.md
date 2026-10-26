@@ -9,46 +9,46 @@
 
 Отображение
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:132.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:123.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:158.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:149.
 
 ### Элемент
 
 Select All
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:168.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:154.
 
 ### Элемент
 
 Deselect All
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:175.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:161.
 
 ### Элемент
 
 Переместить столбец: {…} · Перетащите для изменения порядка. С клавиатуры: Alt + ↑ / ↓.
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:234.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:221.
 
 ### Элемент
 
 Ширины будут сброшены при сохранении / Сбросить ширины
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:286.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:262.
 
 ### Элемент
 
 Cancel
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:297.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:271.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/features/ticket-columns/ui/TicketColumns.tsx:300.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:274.

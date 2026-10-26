@@ -9,64 +9,64 @@
 
 / /
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:578.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:807.
 
 ### Элемент
 
 Подключить GitHub Copilot
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:592.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:821.
 
 ### Элемент
 
 предлож. ждут подтверждения
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:631.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:881.
 
 ### Элемент
 
 Не прикреплять тикет к сообщению · Убрать прикреплённый тикет. Переписка сохранится.
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:652.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:902.
 
 ### Элемент
 
 Убрать прикреплённое предложение
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:707.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:960.
 
 ### Элемент
 
 Сообщение ассистенту · Голосовой ввод… / Спросите или попросите запомнить…
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:711.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:977.
 
 ### Элемент
 
 Очистить текст сообщения
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:730.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:993.
 
 ### Элемент
 
 Очистить историю чата · Очистить историю текущего чата · Очистить чат
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:738.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1020.
 
 ### Элемент
 
 Остановить ответ · Стоп
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:757.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1043.
 
 ### Элемент
 
 Отправить ассистенту
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:763.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1063.
 
 ### Элемент
 
 Очищаю… / Очистить чат
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:793.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1128.

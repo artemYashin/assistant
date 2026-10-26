@@ -4,16 +4,16 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
-import { Store } from "../server/store.js";
-import { Calendar } from "../server/calendar.js";
+import { Store } from "../services/backend/src/store.js";
+import { Calendar } from "../services/backend/src/calendar.js";
 import {
   calendarInput,
   calendarOverlaps,
   calendarStatus,
   calendarNotificationsSchema,
-} from "../server/calendar-model.js";
-import { fromWall, wallTime } from "../src/entities/calendar/index.js";
-import { createApp } from "../server/app.js";
+} from "../services/backend/src/calendar-model.js";
+import { fromWall, wallTime } from "../services/frontend/src/entities/calendar/index.js";
+import { createApp } from "../services/backend/src/app.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-calendar-"));
   const store = new Store(dir);
@@ -32,130 +32,60 @@ const event = {
   developerIds: [],
 };
 test("calendar range includes partial overlap, containment, touching endpoints, and timed reminders", () => {
-  assert.equal(
-    calendarOverlaps(event, "2026-10-21T09:00:00Z", "2026-10-21T11:00:00Z"),
-    true,
-  );
-  assert.equal(
-    calendarOverlaps(event, "2026-10-21T08:30:00Z", "2026-10-21T09:00:00Z"),
-    true,
-  );
+  assert.equal(calendarOverlaps(event, "2026-10-21T09:00:00Z", "2026-10-21T11:00:00Z"), true);
+  assert.equal(calendarOverlaps(event, "2026-10-21T08:30:00Z", "2026-10-21T09:00:00Z"), true);
   assert.equal(calendarOverlaps(event, "2026-10-21T10:00:00Z"), true);
-  assert.equal(
-    calendarOverlaps(event, undefined, "2026-10-21T08:00:00Z"),
-    true,
-  );
+  assert.equal(calendarOverlaps(event, undefined, "2026-10-21T08:00:00Z"), true);
   assert.equal(calendarOverlaps(event, "2026-10-21T10:00:01Z"), false);
+  assert.equal(calendarOverlaps({ ...event, end: null }, "2027-01-01T00:00:00Z"), false);
   assert.equal(
-    calendarOverlaps({ ...event, end: null }, "2027-01-01T00:00:00Z"),
+    calendarOverlaps({ ...event, kind: "reminder", end: null }, "2026-10-21T09:00:00Z"),
     false,
   );
-  assert.equal(
-    calendarOverlaps(
-      { ...event, kind: "reminder", end: null },
-      "2026-10-21T09:00:00Z",
-    ),
-    false,
-  );
-  assert.equal(
-    calendarOverlaps({ ...event, kind: "general", start: null, end: null }),
-    true,
-  );
-  assert.equal(
-    calendarOverlaps({ ...event, start: null, end: null }, event.start),
-    false,
-  );
+  assert.equal(calendarOverlaps({ ...event, kind: "general", start: null, end: null }), true);
+  assert.equal(calendarOverlaps({ ...event, start: null, end: null }, event.start), false);
 });
 test("status distinguishes future, ongoing, overdue, general and completed without automatically completing", () => {
   const item = { ...event, completed: false };
   assert.equal(calendarStatus(item, "2026-10-21T07:00:00Z"), "upcoming");
   assert.equal(calendarStatus(item, "2026-10-21T08:00:00Z"), "ongoing");
   assert.equal(calendarStatus(item, event.end), "overdue");
-  assert.equal(
-    calendarStatus({ ...item, end: null }, "2027-01-01T00:00:00Z"),
-    "overdue",
-  );
-  assert.equal(
-    calendarStatus({ ...item, kind: "general", start: null, end: null }),
-    "open",
-  );
+  assert.equal(calendarStatus({ ...item, end: null }, "2027-01-01T00:00:00Z"), "overdue");
+  assert.equal(calendarStatus({ ...item, kind: "general", start: null, end: null }), "open");
   assert.equal(calendarStatus({ ...item, completed: true }), "completed");
-  assert.equal(
-    calendarStatus({ ...item, kind: "reminder", end: null }, event.start),
-    "overdue",
-  );
+  assert.equal(calendarStatus({ ...item, kind: "reminder", end: null }, event.start), "overdue");
 });
 test("calendar dates use configured zone, reject DST gaps and handle repeated times deterministically", () => {
-  assert.equal(
-    fromWall("2026-10-21T08:00", "Asia/Bishkek"),
-    "2026-10-21T02:00:00.000Z",
-  );
-  assert.equal(
-    wallTime("2026-10-21T02:00:00.000Z", "Asia/Bishkek"),
-    "2026-10-21T08:00",
-  );
-  assert.throws(
-    () => fromWall("2026-03-29T02:30", "Europe/Berlin"),
-    /времени нет/,
-  );
-  assert.equal(
-    fromWall("2026-10-25T02:30", "Europe/Berlin"),
-    "2026-10-25T00:30:00.000Z",
-  );
+  assert.equal(fromWall("2026-10-21T08:00", "Asia/Bishkek"), "2026-10-21T02:00:00.000Z");
+  assert.equal(wallTime("2026-10-21T02:00:00.000Z", "Asia/Bishkek"), "2026-10-21T08:00");
+  assert.throws(() => fromWall("2026-03-29T02:30", "Europe/Berlin"), /времени нет/);
+  assert.equal(fromWall("2026-10-25T02:30", "Europe/Berlin"), "2026-10-25T00:30:00.000Z");
   assert.throws(() => fromWall("2026-02-30T09:00", "UTC"));
 });
 test("invalid reminder shapes and schedules are rejected", () => {
-  assert.throws(() =>
-    calendarInput.parse({ ...event, end: "2026-10-21T07:00:00Z" }),
-  );
-  assert.equal(
-    calendarInput.parse({ ...event, kind: "general" }).kind,
-    "event",
-  );
-  assert.equal(
-    calendarInput.parse({ ...event, start: null, end: null }).kind,
-    "general",
-  );
+  assert.throws(() => calendarInput.parse({ ...event, end: "2026-10-21T07:00:00Z" }));
+  assert.equal(calendarInput.parse({ ...event, kind: "general" }).kind, "event");
+  assert.equal(calendarInput.parse({ ...event, start: null, end: null }).kind, "general");
   assert.equal(calendarInput.parse({ ...event, end: null }).kind, "reminder");
   assert.throws(() => calendarInput.parse({ ...event, start: null }));
-  assert.throws(() =>
-    calendarNotificationsSchema.parse({ intervalMinutes: 0 }),
-  );
+  assert.throws(() => calendarNotificationsSchema.parse({ intervalMinutes: 0 }));
 });
 test("reminders persist, validate local developers, and completion/deletion stop repeated notifications", (t) => {
   const store = fixture(t),
     calendar = new Calendar(store);
-  store.db
-    .prepare("INSERT INTO local_developers VALUES ('d','Developer','','',1)")
-    .run();
-  assert.throws(
-    () => calendar.save({ ...event, developerIds: ["missing"] }),
-    /недоступен/,
-  );
+  store.db.prepare("INSERT INTO local_developers VALUES ('d','Developer','','',1)").run();
+  assert.throws(() => calendar.save({ ...event, developerIds: ["missing"] }), /недоступен/);
   const { id } = calendar.save({ ...event, developerIds: ["d", "d"] });
   const again = new Calendar(store);
   assert.deepEqual(again.list()[0].developerIds, ["d"]);
   assert.equal(again.list()[0].title, event.title);
   const now = new Date("2026-10-21T11:00:00Z");
   assert.equal(calendar.notifications(now).length, 1);
-  assert.equal(
-    again.notifications(now).length,
-    0,
-    "another tab cannot claim the same interval",
-  );
-  assert.equal(
-    calendar.notifications(new Date(now.getTime() + 59 * 60000)).length,
-    0,
-  );
-  assert.equal(
-    calendar.notifications(new Date(now.getTime() + 60 * 60000)).length,
-    1,
-  );
+  assert.equal(again.notifications(now).length, 0, "another tab cannot claim the same interval");
+  assert.equal(calendar.notifications(new Date(now.getTime() + 59 * 60000)).length, 0);
+  assert.equal(calendar.notifications(new Date(now.getTime() + 60 * 60000)).length, 1);
   calendar.complete(id);
-  assert.equal(
-    calendar.notifications(new Date(now.getTime() + 120 * 60000)).length,
-    0,
-  );
+  assert.equal(calendar.notifications(new Date(now.getTime() + 120 * 60000)).length, 0);
   assert.equal(calendar.list()[0].completed, true);
   calendar.remove(id);
   assert.equal(calendar.list().length, 0);
@@ -181,18 +111,9 @@ test("notification schedule uses the shared timezone and never removes future it
   });
   calendar.save({ kind: "general", title: "Open", start: null, end: null });
   calendar.save({ ...event, start: "2027-01-01T00:00:00Z", end: null });
-  assert.equal(
-    calendar.notifications(new Date("2026-10-21T02:59:00Z")).length,
-    0,
-  );
-  assert.equal(
-    calendar.notifications(new Date("2026-10-21T03:00:00Z")).length,
-    1,
-  );
-  assert.equal(
-    calendar.notifications(new Date("2026-10-21T12:00:00Z")).length,
-    0,
-  );
+  assert.equal(calendar.notifications(new Date("2026-10-21T02:59:00Z")).length, 0);
+  assert.equal(calendar.notifications(new Date("2026-10-21T03:00:00Z")).length, 1);
+  assert.equal(calendar.notifications(new Date("2026-10-21T12:00:00Z")).length, 0);
   assert.equal(calendar.list().length, 2);
 });
 test("API authenticates mutations, preserves existing timezone, and handles reminder lifecycle", async (t) => {
@@ -220,24 +141,16 @@ test("API authenticates mutations, preserves existing timezone, and handles remi
     syncSchedule: { ...settings.syncSchedule, timeZone: "Asia/Bishkek" },
   });
   assert.equal(
-    (await request(app).get("/api/settings").set(auth)).body.syncSchedule
-      .timeZone,
+    (await request(app).get("/api/settings").set(auth)).body.syncSchedule.timeZone,
     "Asia/Bishkek",
   );
-  const created = await request(app)
-    .post("/api/calendar")
-    .set(auth)
-    .send(event)
-    .expect(200);
+  const created = await request(app).post("/api/calendar").set(auth).send(event).expect(200);
   await request(app)
     .put("/api/calendar/" + created.body.id)
     .set(auth)
     .send({ ...event, title: "Changed" })
     .expect(200);
-  assert.equal(
-    (await request(app).get("/api/calendar").set(auth)).body.items[0].title,
-    "Changed",
-  );
+  assert.equal((await request(app).get("/api/calendar").set(auth)).body.items[0].title, "Changed");
   await request(app)
     .post("/api/calendar/" + created.body.id + "/complete")
     .set(auth)
@@ -247,10 +160,7 @@ test("API authenticates mutations, preserves existing timezone, and handles remi
     .delete("/api/calendar/" + created.body.id)
     .set(auth)
     .expect(200);
-  assert.deepEqual(
-    (await request(app).get("/api/calendar").set(auth)).body.items,
-    [],
-  );
+  assert.deepEqual((await request(app).get("/api/calendar").set(auth)).body.items, []);
 });
 
 test("calendar survives a real store restart without changing the existing sync timezone", () => {
@@ -320,7 +230,7 @@ test("reopening restores notifications globally and respects future start and sc
 test("scoped reminders validate ownership, follow renames and are removed with their owner", async (t) => {
   const store = fixture(t),
     calendar = new Calendar(store);
-  const { deleteContext } = await import("../server/context-delete.js");
+  const { deleteContext } = await import("../services/backend/src/context-delete.js");
   store.addContext({ client: "A", project: "One" });
   store.addContext({ client: "B", project: "Two" });
   const global = calendar.save({ ...event }).id;
@@ -336,16 +246,11 @@ test("scoped reminders validate ownership, follow renames and are removed with t
       }),
     /не найден/,
   );
-  assert.throws(() =>
-    calendar.save({ ...event, scope: "general", client: "A" }),
-  );
+  assert.throws(() => calendar.save({ ...event, scope: "general", client: "A" }));
   store.renameContext({ client: "A", project: "One" }, "Renamed");
   assert.ok(calendar.list().some((i) => i.project === "Renamed"));
   store.renameContext({ client: "A", project: "" }, "Customer");
-  assert.equal(
-    calendar.list().filter((i) => i.client === "Customer").length,
-    2,
-  );
+  assert.equal(calendar.list().filter((i) => i.client === "Customer").length, 2);
   deleteContext(store, { client: "Customer", project: "Renamed" }, "удалить");
   assert.equal(calendar.list().length, 2);
   deleteContext(store, { client: "Customer", project: "" }, "удалить");
@@ -376,13 +281,8 @@ test("calendar scope migration preserves legacy reminders, completion and notifi
     assert.equal(item.title, "Keep");
     assert.equal(item.completed, true);
     assert.equal(
-      (
-        store.db
-          .prepare(
-            "SELECT last_notified FROM calendar_events WHERE id='legacy'",
-          )
-          .get() as any
-      ).last_notified,
+      (store.db.prepare("SELECT last_notified FROM calendar_events WHERE id='legacy'").get() as any)
+        .last_notified,
       123,
     );
   } finally {
@@ -393,7 +293,7 @@ test("calendar scope migration preserves legacy reminders, completion and notifi
 
 test("time grid clips multi-day events, assigns overlap lanes and uses a Monday week", async () => {
   const { calendarSegments, calendarWeekDays } =
-    await import("../src/entities/calendar/index.js");
+    await import("../services/frontend/src/entities/calendar/index.js");
   assert.deepEqual(calendarWeekDays("2026-10-21", "week"), [
     "2026-10-19",
     "2026-10-20",
@@ -424,11 +324,7 @@ test("time grid clips multi-day events, assigns overlap lanes and uses a Monday 
     "UTC",
   );
   assert.equal(segments.length, 3);
-  assert.ok(
-    segments.some(
-      (segment) => segment.item.id === "done" && segment.item.completed,
-    ),
-  );
+  assert.ok(segments.some((segment) => segment.item.id === "done" && segment.item.completed));
   assert.equal(segments[0].top, 480);
   assert.equal(segments[0].bottom, 600);
   assert.equal(segments[0].lanes, 3);
@@ -439,22 +335,15 @@ test("time grid clips multi-day events, assigns overlap lanes and uses a Monday 
     end: "2026-10-21T02:00:00Z",
   };
   assert.equal(calendarSegments([spanning], "2026-10-21", "UTC")[0].top, 0);
+  assert.equal(calendarSegments([spanning], "2026-10-21", "UTC")[0].bottom, 120);
   assert.equal(
-    calendarSegments([spanning], "2026-10-21", "UTC")[0].bottom,
-    120,
-  );
-  assert.equal(
-    calendarSegments(
-      [{ ...spanning, end: "2026-10-21T00:00:00Z" }],
-      "2026-10-21",
-      "UTC",
-    ).length,
+    calendarSegments([{ ...spanning, end: "2026-10-21T00:00:00Z" }], "2026-10-21", "UTC").length,
     0,
   );
 });
 
 test("calendar gestures preserve duration and metadata, resize and respect timezone transitions", async () => {
-  const { shiftCalendarItem } = await import("../src/entities/calendar/index.js");
+  const { shiftCalendarItem } = await import("../services/frontend/src/entities/calendar/index.js");
   const item = {
     ...calendarInput.parse({
       title: "Gesture",
@@ -469,25 +358,14 @@ test("calendar gestures preserve duration and metadata, resize and respect timez
   assert.equal(moved.start, "2026-10-25T03:30:00.000Z");
   assert.equal(moved.end, "2026-10-25T04:30:00.000Z");
   assert.equal(moved.title, item.title);
-  assert.equal(
-    shiftCalendarItem(item, -200, true, "Asia/Bishkek").end,
-    "2026-10-24T03:15:00.000Z",
-  );
-  assert.equal(
-    shiftCalendarItem({ ...item, end: null }, 30, false, "Asia/Bishkek").end,
-    null,
-  );
+  assert.equal(shiftCalendarItem(item, -200, true, "Asia/Bishkek").end, "2026-10-24T03:15:00.000Z");
+  assert.equal(shiftCalendarItem({ ...item, end: null }, 30, false, "Asia/Bishkek").end, null);
   assert.equal(
     shiftCalendarItem({ ...item, end: null }, 30, true, "Asia/Bishkek").end,
     "2026-10-24T04:00:00.000Z",
   );
   assert.throws(() =>
-    shiftCalendarItem(
-      { ...item, start: "2026-03-29T00:30:00Z" },
-      60,
-      false,
-      "Europe/Berlin",
-    ),
+    shiftCalendarItem({ ...item, start: "2026-03-29T00:30:00Z" }, 60, false, "Europe/Berlin"),
   );
   const dst = shiftCalendarItem(
     { ...item, start: "2026-03-28T08:00:00Z", end: "2026-03-28T10:00:00Z" },
@@ -499,15 +377,22 @@ test("calendar gestures preserve duration and metadata, resize and respect timez
   assert.equal(Date.parse(dst.end!) - Date.parse(dst.start!), 7200000);
 });
 
-test("one persistent notification clock batches all reminders, including newly due and reopened items", t => {
+test("one persistent notification clock batches all reminders, including newly due and reopened items", (t) => {
   const store = fixture(t);
   const cal = new Calendar(store);
   const at = (time: string) => new Date("2026-10-21T" + time + ":00Z");
-  const ids = Array.from({ length: 25 }, (_, i) =>
-    cal.save({ ...event, title: "Batch " + i, start: "2026-10-21T09:00:00Z", end: null }).id,
+  const ids = Array.from(
+    { length: 25 },
+    (_, i) =>
+      cal.save({ ...event, title: "Batch " + i, start: "2026-10-21T09:00:00Z", end: null }).id,
   );
   const later = cal.save({ ...event, title: "Later", start: "2026-10-21T10:20:00Z", end: null }).id;
-  const future = cal.save({ ...event, title: "Future", start: "2026-10-22T10:00:00Z", end: null }).id;
+  const future = cal.save({
+    ...event,
+    title: "Future",
+    start: "2026-10-22T10:00:00Z",
+    end: null,
+  }).id;
   assert.equal(cal.notifications(at("10:00")).length, 25, "do not split the batch at 20");
   assert.equal(cal.notifications(at("10:20")).length, 0, "newly due event waits for global cycle");
   cal.complete(ids[0]);
@@ -521,28 +406,41 @@ test("one persistent notification clock batches all reminders, including newly d
   try {
     const second = new Calendar(secondStore);
     assert.equal(second.notifications(at("10:59")).length, 0, "persisted across connections");
-    const batch = second.notifications(at("11:00")).map(i => i.id);
+    const batch = second.notifications(at("11:00")).map((i) => i.id);
     assert.equal(batch.length, 26);
     assert.ok(batch.includes(later));
     assert.ok(batch.includes(general));
     assert.ok(batch.includes(ids[0]));
     assert.ok(!batch.includes(ids[1]));
     assert.ok(!batch.includes(future));
-    assert.equal(cal.notifications(at("11:00")).length, 0, "another caller cannot claim the same batch");
+    assert.equal(
+      cal.notifications(at("11:00")).length,
+      0,
+      "another caller cannot claim the same batch",
+    );
   } finally {
     secondStore.close();
   }
 });
 
-test("shared cycles omit completed daily occurrences and respect schedule without replaying missed batches", t => {
+test("shared cycles omit completed daily occurrences and respect schedule without replaying missed batches", (t) => {
   const store = fixture(t);
   const cal = new Calendar(store);
   const ordinary = cal.save({ ...event, start: "2026-10-21T09:00:00Z", end: null }).id;
-  const daily = cal.save({ ...event, title: "Daily", start: "2026-10-21T09:00:00Z", end: null, repeatDaily: true }).id;
+  const daily = cal.save({
+    ...event,
+    title: "Daily",
+    start: "2026-10-21T09:00:00Z",
+    end: null,
+    repeatDaily: true,
+  }).id;
   const at = (hour: number) => new Date(`2026-10-21T${String(hour).padStart(2, "0")}:00:00Z`);
   assert.equal(cal.notifications(at(10)).length, 2);
   cal.completeToday(daily, true, at(10));
-  assert.deepEqual(cal.notifications(at(11)).map(i => i.id), [ordinary]);
+  assert.deepEqual(
+    cal.notifications(at(11)).map((i) => i.id),
+    [ordinary],
+  );
   cal.completeToday(daily, false, at(11));
   assert.equal(cal.notifications(at(11)).length, 0);
   store.set("settings", {
@@ -560,27 +458,47 @@ test("shared cycles omit completed daily occurrences and respect schedule withou
   assert.equal(cal.notifications(at(15)).length, 0);
 });
 
-test("advance warnings include upcoming reminders and today's daily iteration without changing dates", t => {
-  const store = fixture(t), cal = new Calendar(store);
+test("advance warnings include upcoming reminders and today's daily iteration without changing dates", (t) => {
+  const store = fixture(t),
+    cal = new Calendar(store);
   assert.equal(store.settings().calendarNotifications.reminderLeadMinutes, 0);
-  store.set("settings", { ...store.settings(), calendarNotifications: {
-    ...store.settings().calendarNotifications, reminderLeadMinutes: 90,
-  }});
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: {
+      ...store.settings().calendarNotifications,
+      reminderLeadMinutes: 90,
+    },
+  });
   const reminder = cal.save({ ...event, start: "2026-10-21T10:00:00Z", end: null }).id;
-  const daily = cal.save({ ...event, start: "2026-10-21T10:00:00Z", end: null, repeatDaily: true }).id;
+  const daily = cal.save({
+    ...event,
+    start: "2026-10-21T10:00:00Z",
+    end: null,
+    repeatDaily: true,
+  }).id;
   const future = cal.save({ ...event, start: "2026-10-21T10:01:00Z", end: null }).id;
   assert.equal(cal.notifications(new Date("2026-10-21T08:29:59Z")).length, 0);
   const batch = cal.notifications(new Date("2026-10-21T08:30:00Z"));
-  assert.deepEqual(new Set(batch.map(i => i.id)), new Set([reminder, daily]));
-  assert.ok(batch.every(i => i.start === "2026-10-21T10:00:00.000Z"));
+  assert.deepEqual(new Set(batch.map((i) => i.id)), new Set([reminder, daily]));
+  assert.ok(batch.every((i) => i.start === "2026-10-21T10:00:00.000Z"));
   cal.complete(reminder);
   cal.completeToday(daily, true, new Date("2026-10-21T08:30:00Z"));
-  assert.deepEqual(cal.notifications(new Date("2026-10-21T09:30:00Z")).map(i => i.id), [future]);
+  assert.deepEqual(
+    cal.notifications(new Date("2026-10-21T09:30:00Z")).map((i) => i.id),
+    [future],
+  );
 });
 
-test("individual advance crosses midnight and completes only the notified occurrence", t => {
-  const store = fixture(t), cal = new Calendar(store);
-  const id = cal.save({ ...event, start: "2026-10-22T01:00:00Z", end: null, repeatDaily: true, leadMinutes: 120 }).id;
+test("individual advance crosses midnight and completes only the notified occurrence", (t) => {
+  const store = fixture(t),
+    cal = new Calendar(store);
+  const id = cal.save({
+    ...event,
+    start: "2026-10-22T01:00:00Z",
+    end: null,
+    repeatDaily: true,
+    leadMinutes: 120,
+  }).id;
   assert.equal(cal.notifications(new Date("2026-10-21T22:59:59Z")).length, 0);
   const batch = cal.notifications(new Date("2026-10-21T23:00:00Z"));
   assert.equal(batch.length, 1);
@@ -592,35 +510,69 @@ test("individual advance crosses midnight and completes only the notified occurr
   assert.throws(() => cal.completeToday(id, true, new Date(), "2026-02-30"), /дата/);
 });
 
-test("per-reminder warning overrides defaults and null restores inheritance after restart", t => {
-  const store = fixture(t), cal = new Calendar(store);
-  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, reminderLeadMinutes: 120 } });
+test("per-reminder warning overrides defaults and null restores inheritance after restart", (t) => {
+  const store = fixture(t),
+    cal = new Calendar(store);
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: { ...store.settings().calendarNotifications, reminderLeadMinutes: 120 },
+  });
   const id = cal.save({ ...event, start: "2026-10-22T01:00:00Z", end: null, leadMinutes: 10 }).id;
   assert.equal(cal.notifications(new Date("2026-10-21T23:00:00Z")).length, 0);
   const reopened = new Store(store.dir);
-  try { assert.equal(new Calendar(reopened).list()[0].leadMinutes, 10); } finally { reopened.close(); }
+  try {
+    assert.equal(new Calendar(reopened).list()[0].leadMinutes, 10);
+  } finally {
+    reopened.close();
+  }
   cal.setLead(id, null);
   assert.equal(cal.notifications(new Date("2026-10-21T23:00:00Z"))[0].id, id);
   assert.throws(() => cal.setLead(id, -1));
 });
 
 test("short daily events retain actual duration and do not overlap adjacent events", async () => {
-  const { calendarSegments } = await import("../src/entities/calendar/index.js");
-  const daily = {...calendarInput.parse({title:"Quarter hour",start:"2026-10-23T14:00:00Z",end:"2026-10-23T14:15:00Z",repeatDaily:true}),id:"short",completed:false,createdAt:"2026-10-23T00:00:00Z",repeatZone:"UTC"};
-  const next = {...daily,id:"next",start:"2026-10-23T14:15:00Z",end:"2026-10-23T14:30:00Z"};
-  const rows = calendarSegments([daily,next],"2026-10-24","UTC");
-  assert.deepEqual(rows.map(r => [r.top,r.bottom,r.lanes]),[[840,855,1],[855,870,1]]);
-  const five = calendarSegments([{...daily,repeatDaily:false,end:"2026-10-23T14:05:00Z"}],"2026-10-23","UTC")[0];
-  assert.equal(five.bottom-five.top,5);
-  const point = calendarSegments([{...daily,end:null}],"2026-10-24","UTC")[0];
-  assert.equal(point.bottom-point.top,30);
+  const { calendarSegments } = await import("../services/frontend/src/entities/calendar/index.js");
+  const daily = {
+    ...calendarInput.parse({
+      title: "Quarter hour",
+      start: "2026-10-23T14:00:00Z",
+      end: "2026-10-23T14:15:00Z",
+      repeatDaily: true,
+    }),
+    id: "short",
+    completed: false,
+    createdAt: "2026-10-23T00:00:00Z",
+    repeatZone: "UTC",
+  };
+  const next = { ...daily, id: "next", start: "2026-10-23T14:15:00Z", end: "2026-10-23T14:30:00Z" };
+  const rows = calendarSegments([daily, next], "2026-10-24", "UTC");
+  assert.deepEqual(
+    rows.map((r) => [r.top, r.bottom, r.lanes]),
+    [
+      [840, 855, 1],
+      [855, 870, 1],
+    ],
+  );
+  const five = calendarSegments(
+    [{ ...daily, repeatDaily: false, end: "2026-10-23T14:05:00Z" }],
+    "2026-10-23",
+    "UTC",
+  )[0];
+  assert.equal(five.bottom - five.top, 5);
+  const point = calendarSegments([{ ...daily, end: null }], "2026-10-24", "UTC")[0];
+  assert.equal(point.bottom - point.top, 30);
 });
 
 test("visibility is independent, persists and legacy edits preserve it", (t) => {
-  const store = fixture(t), calendar = new Calendar(store);
+  const store = fixture(t),
+    calendar = new Calendar(store);
   const { id } = calendar.save(event);
   assert.equal(calendar.list()[0].notificationsHidden, false);
-  calendar.setPreferences(id!, { leadMinutes: 30, notificationsHidden: true, calendarHidden: true });
+  calendar.setPreferences(id!, {
+    leadMinutes: 30,
+    notificationsHidden: true,
+    calendarHidden: true,
+  });
   calendar.save({ ...event, title: "Changed" }, id);
   let item = calendar.list()[0];
   assert.equal(item.notificationsHidden, true);
@@ -644,14 +596,14 @@ test("populated legacy calendar upgrades repeatedly without dropping content", (
     store.db.exec("ALTER TABLE calendar_events DROP COLUMN calendar_hidden");
     store.close();
     store = new Store(dir);
-    let item = new Calendar(store).list().find(i => i.id === id)!;
+    let item = new Calendar(store).list().find((i) => i.id === id)!;
     assert.equal(item.description, event.description);
     assert.equal(item.notificationsHidden, false);
     assert.equal(item.calendarHidden, false);
     new Calendar(store).setVisibility(id!, { calendarHidden: true, notificationsHidden: true });
     store.close();
     store = new Store(dir);
-    item = new Calendar(store).list().find(i => i.id === id)!;
+    item = new Calendar(store).list().find((i) => i.id === id)!;
     assert.equal(item.calendarHidden, true);
     assert.equal(item.notificationsHidden, true);
     assert.equal(item.end, event.end);

@@ -9,4 +9,4 @@
 
 Сохраняю… / Сохранить
 
-Источник: src/shared/ui/save-button/ContextSaveButton.tsx:5.
+Источник: services/frontend/src/shared/ui/save-button/ContextSaveButton.tsx:11.

@@ -5,47 +5,80 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Store } from "../server/store.js";
-import { MemoryProposals, memoryProposalTool } from "../server/memory-proposals.js";
-import { MemoryMarkdown } from "../src/features/render-content/index.js";
+import { Store } from "../services/backend/src/store.js";
+import { MemoryProposals, memoryProposalTool } from "../services/backend/src/memory-proposals.js";
+import { MemoryMarkdown } from "../services/frontend/src/features/render-content/index.js";
 
-test("pending memory edits are approved verbatim, processed proposals cannot change", t => {
+test("pending memory edits are approved verbatim, processed proposals cannot change", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-edit-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   assert.equal(store.settings().memoryLanguage, "English");
   store.set("settings", { ...store.settings(), memoryLanguage: "Russian" });
-  assert.match(memoryProposalTool(store, { client: "C", project: "P" }, () => {}).description!, /Russian/);
+  assert.match(
+    memoryProposalTool(store, { client: "C", project: "P" }, () => {}).description!,
+    /Russian/,
+  );
   const service = new MemoryProposals(store);
-  const { id } = service.propose({ scope: "project", body: "Original", reason: "Useful" }, { client: "C", project: "P" });
+  const { id } = service.propose(
+    { scope: "project", body: "Original", reason: "Useful" },
+    { client: "C", project: "P" },
+  );
   assert.ok(id);
   assert.throws(() => service.edit(id!, { body: " " }));
   service.edit(id!, { body: "**Edited**\n\n`function`" });
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM memories").get() as any).n, 0);
   service.decide(id!, true);
-  assert.equal((store.db.prepare("SELECT body FROM memories").get() as any).body, "**Edited**\n\n`function`");
+  assert.equal(
+    (store.db.prepare("SELECT body FROM memories").get() as any).body,
+    "**Edited**\n\n`function`",
+  );
   assert.throws(() => service.edit(id!, { body: "Too late" }), /обработано/);
   assert.throws(() => service.edit("missing", { body: "New" }), /не найдено/);
 });
 test("memory renders formatting and code without executing HTML", () => {
-  const html = renderToStaticMarkup(createElement(MemoryMarkdown, { body: "**Fact**\n\n- item\n\n```ts\nfn();\n```\n\n<script>alert(1)</script>" }));
+  const html = renderToStaticMarkup(
+    createElement(MemoryMarkdown, {
+      body: "**Fact**\n\n- item\n\n```ts\nfn();\n```\n\n<script>alert(1)</script>",
+    }),
+  );
   assert.match(html, /<strong>Fact<\/strong>/);
   assert.match(html, /<ul>/);
   assert.match(html, /<pre><code/);
   assert.doesNotMatch(html, /<script/);
 });
 
-test("AI refinement edits the same draft with scope and stale-body protection", async t => {
-  const { memoryRefinementTools } = await import("../server/memory-proposals.js");
+test("AI refinement edits the same draft with scope and stale-body protection", async (t) => {
+  const { memoryRefinementTools } = await import("../services/backend/src/memory-proposals.js");
   const dir = mkdtempSync(join(tmpdir(), "memory-refine-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const context = { client: "C", project: "P" };
   const service = new MemoryProposals(store);
-  const { id } = service.propose({ scope: "project", body: "Long draft", reason: "Useful" }, context);
+  const { id } = service.propose(
+    { scope: "project", body: "Long draft", reason: "Useful" },
+    context,
+  );
   let changes = 0;
-  const tools = memoryRefinementTools(store, context, () => {}, () => { changes++; });
-  const edit = (body: string, expectedBody: string) => tools.find(tool => tool.name === "edit_memory_proposal")!.handler!({ id, body, expectedBody } as any, {} as any) as Promise<any>;
+  const tools = memoryRefinementTools(
+    store,
+    context,
+    () => {},
+    () => {
+      changes++;
+    },
+  );
+  const edit = (body: string, expectedBody: string) =>
+    tools.find((tool) => tool.name === "edit_memory_proposal")!.handler!(
+      { id, body, expectedBody } as any,
+      {} as any,
+    ) as Promise<any>;
   await edit("Short draft", "Long draft");
   assert.equal(service.forContext(id!, context).body, "Short draft");
   assert.equal(service.list().length, 1);
@@ -57,12 +90,20 @@ test("AI refinement edits the same draft with scope and stale-body protection", 
   await assert.rejects(edit("Too late", "Short draft"), /обработано/);
 });
 
-test("memory catalog omits details, reads are scoped, revisions track body changes", t => {
+test("memory catalog omits details, reads are scoped, revisions track body changes", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-catalog-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const context = { client: "C", project: "P" };
-  const saved = store.addMemory("project", "Detailed implementation and code", context, "Gradient helpers and usage.");
+  const saved = store.addMemory(
+    "project",
+    "Detailed implementation and code",
+    context,
+    "Gradient helpers and usage.",
+  );
   store.addMemory("general", "General detail", context, "Common preferences.");
   store.addMemory("client", "Customer detail", context, "Customer conventions.");
   store.addMemory("project", "Hidden", { client: "C", project: "Other" }, "Other project.");
@@ -70,67 +111,119 @@ test("memory catalog omits details, reads are scoped, revisions track body chang
   assert.equal(catalog.length, 3);
   assert.equal(JSON.stringify(catalog).includes("Detailed implementation"), false);
   assert.equal(store.memoryDetail(saved.id, context).body, "Detailed implementation and code");
-  assert.throws(() => store.memoryDetail(saved.id, { client: "C", project: "Other" }), /недоступна/);
-  const revision = catalog.find(row => row.id === saved.id)!.revision;
+  assert.throws(
+    () => store.memoryDetail(saved.id, { client: "C", project: "Other" }),
+    /недоступна/,
+  );
+  const revision = catalog.find((row) => row.id === saved.id)!.revision;
   store.db.prepare("UPDATE memories SET body=? WHERE id=?").run("Updated detail", saved.id);
-  assert.notEqual(store.memoryCatalog(context).find(row => row.id === saved.id)!.revision, revision);
+  assert.notEqual(
+    store.memoryCatalog(context).find((row) => row.id === saved.id)!.revision,
+    revision,
+  );
   assert.throws(() => store.addMemory("general", "Body", context, "First. Second. Third."));
 });
-test("proposal approval preserves summary and full Markdown separately", t => {
+test("proposal approval preserves summary and full Markdown separately", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-summary-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
-  const service = new MemoryProposals(store), context = { client: "C", project: "P" };
-  const proposal = service.propose({ scope: "project", summary: "Gradient functions.", body: "Details\n```ts\ngradient();\n```", reason: "Useful" }, context);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const service = new MemoryProposals(store),
+    context = { client: "C", project: "P" };
+  const proposal = service.propose(
+    {
+      scope: "project",
+      summary: "Gradient functions.",
+      body: "Details\n```ts\ngradient();\n```",
+      reason: "Useful",
+    },
+    context,
+  );
   service.edit(proposal.id!, { summary: "Gradient usage.", body: "Short details" });
   service.decide(proposal.id!, true);
   const catalog = store.memoryCatalog(context);
   assert.equal(catalog[0].summary, "Gradient usage.");
   assert.equal(store.memoryDetail(catalog[0].id, context).body, "Short details");
 });
-test("legacy memory migration preserves bodies and creates short summaries", t => {
+test("legacy memory migration preserves bodies and creates short summaries", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-migration-"));
   let store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
-  const saved = store.addMemory("general", "Original fact. More detail. Third sentence.", { client: "", project: "" });
-  store.db.exec("ALTER TABLE memories DROP COLUMN summary; ALTER TABLE memory_proposals DROP COLUMN summary");
-  store.close(); store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const saved = store.addMemory("general", "Original fact. More detail. Third sentence.", {
+    client: "",
+    project: "",
+  });
+  store.db.exec(
+    "ALTER TABLE memories DROP COLUMN summary; ALTER TABLE memory_proposals DROP COLUMN summary",
+  );
+  store.close();
+  store = new Store(dir);
   const detail = store.memoryDetail(saved.id, { client: "", project: "" });
   assert.equal(detail.body, "Original fact. More detail. Third sentence.");
   assert.equal(detail.summary, "Original fact. More detail.");
 });
 
-test("project review memory is isolated from automatic chat context and scoped to its project", t => {
+test("project review memory is isolated from automatic chat context and scoped to its project", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-review-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const context = { client: "C", project: "P" };
-  for (const scope of ["general", "client", "project", "project_review"]) store.addMemory(scope, `Full ${scope}`, context, `Summary ${scope}`);
+  for (const scope of ["general", "client", "project", "project_review"])
+    store.addMemory(scope, `Full ${scope}`, context, `Summary ${scope}`);
   store.addMemory("project_review", "Other project", { ...context, project: "Other" });
   store.addMemory("project_review", "Other customer", { client: "Other", project: "P" });
   assert.equal(store.memories(context, true).length, 4);
-  assert.deepEqual(store.memoryCatalog(context).map(row => row.scope).sort(), ["client", "general", "project"]);
+  assert.deepEqual(
+    store
+      .memoryCatalog(context)
+      .map((row) => row.scope)
+      .sort(),
+    ["client", "general", "project"],
+  );
   const review = store.reviewMemory(context);
   assert.equal(review.length, 4);
-  assert.ok(review.every(row => !("body" in row)));
-  assert.ok(review.some(row => row.scope === "project_review" && row.summary === "Summary project_review"));
+  assert.ok(review.every((row) => !("body" in row)));
+  assert.ok(
+    review.some(
+      (row) => row.scope === "project_review" && row.summary === "Summary project_review",
+    ),
+  );
   assert.equal(store.reviewMemory(context, ["project_review"]).length, 1);
   assert.deepEqual(store.reviewMemory(context, []), []);
-  const id = review.find(row => row.scope === "project_review")!.id;
+  const id = review.find((row) => row.scope === "project_review")!.id;
   assert.throws(() => store.memoryDetail(id, { ...context, project: "Other" }));
   assert.throws(() => store.addMemory("project_review", "Invalid", { client: "C", project: "" }));
   const proposals = new MemoryProposals(store);
-  const proposal = proposals.propose({ scope: "project_review", summary: "Review rule", body: "Check compatibility", reason: "Review guidance" }, context);
+  const proposal = proposals.propose(
+    {
+      scope: "project_review",
+      summary: "Review rule",
+      body: "Check compatibility",
+      reason: "Review guidance",
+    },
+    context,
+  );
   assert.throws(() => proposals.forContext(proposal.id!, { ...context, project: "Other" }));
   proposals.decide(proposal.id!, true);
   assert.equal(store.reviewMemory(context, ["project_review"]).length, 2);
   assert.equal(store.memoryCatalog(context).length, 3);
 });
 
-test("saved memory refinement requires approval and preserves identity with conflict protection", t => {
+test("saved memory refinement requires approval and preserves identity with conflict protection", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "memory-refine-saved-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const context = { client: "C", project: "P" };
   store.addMemory("project_review", "Original body", context, "Original summary");
   const memory = store.reviewMemory(context)[0];
@@ -139,7 +232,12 @@ test("saved memory refinement requires approval and preserves identity with conf
   const draft = service.proposeEdit(memory.id, context);
   assert.equal(draft.target_memory_id, memory.id);
   assert.equal(service.proposeEdit(memory.id, context).id, draft.id);
-  service.edit(draft.id, { summary: "New summary", body: "New **body**" }, draft.body, draft.summary);
+  service.edit(
+    draft.id,
+    { summary: "New summary", body: "New **body**" },
+    draft.body,
+    draft.summary,
+  );
   assert.equal(store.memoryDetail(memory.id, context).body, "Original body");
   assert.equal(service.forContext(draft.id, context).original_body, "Original body");
   service.decide(draft.id, true);
@@ -162,12 +260,27 @@ test("saved memory refinement requires approval and preserves identity with conf
 });
 
 test("memory update approvals render old and proposed versions separately", async () => {
-  const { MemoryProposalList } = await import("../src/widgets/memory/index.js");
-  const html = renderToStaticMarkup(createElement(MemoryProposalList, {
-    context: { client: "C", project: "P" }, onChange() {},
-    items: [{ id: "draft", scope: "project", client: "C", project: "P", status: "pending", target_memory_id: "memory",
-      original_summary: "Old title", original_body: "Old body", summary: "New title", body: "New body" }],
-  }));
+  const { MemoryProposalList } = await import("../services/frontend/src/widgets/memory/index.js");
+  const html = renderToStaticMarkup(
+    createElement(MemoryProposalList, {
+      context: { client: "C", project: "P" },
+      onChange() {},
+      items: [
+        {
+          id: "draft",
+          scope: "project",
+          client: "C",
+          project: "P",
+          status: "pending",
+          target_memory_id: "memory",
+          original_summary: "Old title",
+          original_body: "Old body",
+          summary: "New title",
+          body: "New body",
+        },
+      ],
+    }),
+  );
   assert.match(html, /Редактирование памяти/);
   assert.match(html, /Было/);
   assert.match(html, /Предлагаемое изменение/);

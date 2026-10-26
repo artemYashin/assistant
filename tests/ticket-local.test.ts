@@ -4,9 +4,9 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { LocalDevelopers } from "../server/local-developers.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { LocalDevelopers } from "../services/backend/src/local-developers.js";
+import { createApp } from "../services/backend/src/app.js";
 test("local assignment and removal never write Azure and survive import", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-local-")),
     store = new Store(dir);
@@ -59,18 +59,12 @@ test("local assignment and removal never write Azure and survive import", async 
         ],
       });
     }
-    if (url.pathname.endsWith("/wiql"))
-      return Response.json({ workItems: [{ id: 42 }] });
-    if (url.pathname.endsWith("workitemsbatch"))
-      return Response.json({ value: [item] });
+    if (url.pathname.endsWith("/wiql")) return Response.json({ workItems: [{ id: 42 }] });
+    if (url.pathname.endsWith("workitemsbatch")) return Response.json({ value: [item] });
     return Response.json(item);
   });
   await connectors.trackTicket(42);
-  await request(app)
-    .post("/api/developers/search")
-    .set(auth)
-    .send({ query: "Dev" })
-    .expect(200);
+  await request(app).post("/api/developers/search").set(auth).send({ query: "Dev" }).expect(200);
   const before = calls.length;
   await request(app)
     .put("/api/tickets/42/developer")
@@ -83,8 +77,7 @@ test("local assignment and removal never write Azure and survive import", async 
   people.assign(42, [developer.id], context);
   assert.equal(calls.length, before);
   await connectors.syncTickets();
-  let rows = (await request(app).get("/api/tickets").set(auth).expect(200))
-    .body;
+  let rows = (await request(app).get("/api/tickets").set(auth).expect(200)).body;
   assert.equal(rows[0].developer_name, "Dev");
   assert.equal(rows[0].assigned, "ADO owner");
   await request(app).delete("/api/tickets/42").set(headers).expect(401);
@@ -95,9 +88,7 @@ test("local assignment and removal never write Azure and survive import", async 
   await connectors.trackTicket(42);
   rows = (await request(app).get("/api/tickets").set(auth)).body;
   assert.equal(rows[0].developer_name, "Dev");
-  assert.ok(
-    calls.every((c) => !c.startsWith("PATCH") && !c.startsWith("DELETE")),
-  );
+  assert.ok(calls.every((c) => !c.startsWith("PATCH") && !c.startsWith("DELETE")));
   const settings = store.settings();
   await request(app)
     .put("/api/settings")
@@ -120,8 +111,7 @@ test("local assignment and removal never write Azure and survive import", async 
     .set(auth)
     .send({ ...store.settings(), typeColors: { Bug: "#ab1234" } })
     .expect(200);
-  const saved = (await request(app).get("/api/settings").set(auth).expect(200))
-    .body;
+  const saved = (await request(app).get("/api/settings").set(auth).expect(200)).body;
   assert.deepEqual(saved.typeColors, { Bug: "#ab1234" });
   assert.deepEqual(saved.statusColors, { Active: "#123456" });
 });

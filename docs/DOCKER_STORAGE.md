@@ -1,11 +1,11 @@
 # Docker: данные в папках проекта
 
-| Папка | Что внутри | Путь в контейнере |
-| --- | --- | --- |
-| `docker-data/orbit` | SQLite, ключ `master.key`, настройки, чаты и вложения Orbit | `/data` |
-| `docker-data/repositories` | Локальные копии Git-репозиториев | `/cache` |
-| `docker-data/repo-control` | Внутренний ключ Orbit ↔ code-browser | `/repo-control`, `/control` (только чтение) |
-| `docker-data/whisper` | Кэш моделей Whisper/Hugging Face | `/models` |
+| Папка                      | Что внутри                                                  | Путь в контейнере                           |
+| -------------------------- | ----------------------------------------------------------- | ------------------------------------------- |
+| `docker-data/orbit`        | SQLite, ключ `master.key`, настройки, чаты и вложения Orbit | `/data`                                     |
+| `docker-data/repositories` | Локальные копии Git-репозиториев                            | `/cache`                                    |
+| `docker-data/repo-control` | Внутренний ключ Orbit ↔ code-browser                        | `/repo-control`, `/control` (только чтение) |
+| `docker-data/whisper`      | Кэш моделей Whisper/Hugging Face                            | `/models`                                   |
 
 Все пути находятся рядом с compose.yaml. Папки исключены из Git и Docker build context. BuildKit-кэш сборки остаётся под управлением Docker: это не данные приложения.
 

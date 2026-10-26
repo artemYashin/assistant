@@ -4,9 +4,9 @@ import {
   changeTicketState,
   resolveState,
   mayChangeState,
-} from "../server/ticket-status.js";
-import { Store, AppError } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
+} from "../services/backend/src/ticket-status.js";
+import { Store, AppError } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -20,18 +20,10 @@ const item = (state = "Active", rev = 7) => ({
   },
 });
 test("resolves exact states before aliases and rejects unknown states", () => {
-  assert.equal(
-    resolveState("RFT", ["Active", "Ready for Testing"]),
-    "Ready for Testing",
-  );
+  assert.equal(resolveState("RFT", ["Active", "Ready for Testing"]), "Ready for Testing");
   assert.equal(resolveState("rft", ["RFT", "Ready for Testing"]), "RFT");
-  assert.throws(
-    () => resolveState("Done", ["Active", "Closed"]),
-    /Доступные статусы/,
-  );
-  assert.ok(
-    mayChangeState("Переведи тикет 123456 в RFT", 123456, "Ready for Testing"),
-  );
+  assert.throws(() => resolveState("Done", ["Active", "Closed"]), /Доступные статусы/);
+  assert.ok(mayChangeState("Переведи тикет 123456 в RFT", 123456, "Ready for Testing"));
   assert.ok(!mayChangeState("Покажи тикет 123456 в RFT", 123456, "RFT"));
   assert.ok(!mayChangeState("Не переводи тикет 123456 в RFT", 123456, "RFT"));
   assert.ok(!mayChangeState("Переведи тикет 1234567 в RFT", 123456, "RFT"));
@@ -113,14 +105,8 @@ test("invalid project, unknown state and cancelled request never PATCH", async (
       patches++;
     },
   };
-  await assert.rejects(
-    changeTicketState(123456, "RFT", "Other", access),
-    /проект/,
-  );
-  await assert.rejects(
-    changeTicketState(123456, "Closed", "Project", access),
-    /не найден/,
-  );
+  await assert.rejects(changeTicketState(123456, "RFT", "Other", access), /проект/);
+  await assert.rejects(changeTicketState(123456, "Closed", "Project", access), /не найден/);
   await assert.rejects(
     changeTicketState(123456, "RFT", "Project", {
       ...access,
@@ -164,8 +150,7 @@ test("connector PATCH uses revision guard, updates tracked state and preserves c
     const url = new URL(String(raw));
     assert.ok(url.pathname.startsWith("/tfs/Collection/Project/_apis/wit/"));
     methods.push(init.method || "GET");
-    if (url.pathname.endsWith("/states"))
-      return Response.json({ value: [{ name: "RFT" }] });
+    if (url.pathname.endsWith("/states")) return Response.json({ value: [{ name: "RFT" }] });
     if (init.method === "PATCH") {
       assert.equal(init.headers["Content-Type"], "application/json-patch+json");
       assert.deepEqual(JSON.parse(init.body), [
@@ -174,33 +159,17 @@ test("connector PATCH uses revision guard, updates tracked state and preserves c
       ]);
       return Response.json(item("RFT", 8));
     }
-    return Response.json(
-      item(++reads === 1 ? "Active" : "RFT", reads === 1 ? 7 : 8),
-    );
+    return Response.json(item(++reads === 1 ? "Active" : "RFT", reads === 1 ? 7 : 8));
   });
-  const result = await new Connectors(
-    store,
-  ).changeTicketStatus(123456, "RFT");
+  const result = await new Connectors(store).changeTicketStatus(123456, "RFT");
   assert.equal(result.success, true);
   assert.deepEqual(methods, ["GET", "GET", "PATCH", "GET"]);
-  assert.equal(
-    (store.db.prepare("SELECT state FROM tickets").get() as any).state,
-    "RFT",
-  );
+  assert.equal((store.db.prepare("SELECT state FROM tickets").get() as any).state, "RFT");
 });
 
 test("context tickets allow explicit bulk commands but not unknown IDs or read requests", () => {
-  assert.ok(
-    mayChangeState(
-      "Переведи все найденные тикеты в RFT",
-      42,
-      "Ready for Testing",
-      true,
-    ),
-  );
-  assert.ok(
-    mayChangeState("Давай поменять им статус на Active", 42, "Active", true),
-  );
+  assert.ok(mayChangeState("Переведи все найденные тикеты в RFT", 42, "Ready for Testing", true));
+  assert.ok(mayChangeState("Давай поменять им статус на Active", 42, "Active", true));
   assert.ok(!mayChangeState("Переведи найденные в RFT", 42, "RFT"));
   assert.ok(!mayChangeState("Покажи все тикеты в RFT", 42, "RFT", true));
   assert.ok(!mayChangeState("Не переводи их в RFT", 42, "RFT", true));
@@ -246,8 +215,7 @@ test("connector bulk update preserves collection URL and verifies with one bulk 
         })),
       });
     }
-    if (url.pathname.endsWith("/states"))
-      return Response.json({ value: [{ name: "RFT" }] });
+    if (url.pathname.endsWith("/states")) return Response.json({ value: [{ name: "RFT" }] });
     assert.equal(url.pathname, "/tfs/Collection/_apis/wit/$batch");
     assert.equal(init.method, "POST");
     const requests = JSON.parse(init.body);
@@ -265,9 +233,7 @@ test("connector bulk update preserves collection URL and verifies with one bulk 
     });
     return Response.json({ value: [{ code: 200 }, { code: 200 }] });
   });
-  const results = await new Connectors(
-    store,
-  ).changeTicketStatuses([
+  const results = await new Connectors(store).changeTicketStatuses([
     { id: 1, state: "RFT" },
     { id: 2, state: "RFT" },
   ]);
@@ -277,10 +243,17 @@ test("connector bulk update preserves collection URL and verifies with one bulk 
 });
 
 test("conversational status verbs work and diagnostics distinguish rejection reasons", async () => {
-  const {stateChangeRejection} = await import("../server/ticket-status.js");
-  for (const prompt of ["Давай поменяем статус на RFT", "Давай переведём их в RFT", "Давай изменим статус на RFT"])
+  const { stateChangeRejection } = await import("../services/backend/src/ticket-status.js");
+  for (const prompt of [
+    "Давай поменяем статус на RFT",
+    "Давай переведём их в RFT",
+    "Давай изменим статус на RFT",
+  ])
     assert.equal(stateChangeRejection(prompt, 42, "Ready for Testing", true), null);
   assert.equal(stateChangeRejection("Да, давай", 42, "RFT", true), "intent_missing");
   assert.equal(stateChangeRejection("Переведи их в RFT", 42, "RFT"), "ticket_unresolved");
-  assert.equal(stateChangeRejection("Переведи их в Active", 42, "RFT", true), "target_not_requested");
+  assert.equal(
+    stateChangeRejection("Переведи их в Active", 42, "RFT", true),
+    "target_not_requested",
+  );
 });

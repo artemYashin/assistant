@@ -9,40 +9,40 @@
 
 Вложение должно быть непустым и не больше 10 МБ.
 
-Источник: server/chat-files.ts:21.
+Источник: services/backend/src/chat-files.ts:18.
 
 ### Сообщение
 
 Сохраните текстовый файл в кодировке UTF-8.
 
-Источник: server/chat-files.ts:30.
+Источник: services/backend/src/chat-files.ts:27.
 
 ### Сообщение
 
 Текстовое вложение должно быть UTF-8, без нулевых байтов и не больше 200 000 символов.
 
-Источник: server/chat-files.ts:33.
+Источник: services/backend/src/chat-files.ts:30.
 
 ### Сообщение
 
 Поддерживаются PNG, JPEG, GIF, WebP, TXT, Markdown, JSON и CSV (UTF-8). Формат файла не распознан.
 
-Источник: server/chat-files.ts:42.
+Источник: services/backend/src/chat-files.ts:39.
 
 ### Сообщение
 
 Прикрепите до 6 разных файлов.
 
-Источник: server/chat-files.ts:75.
+Источник: services/backend/src/chat-files.ts:65.
 
 ### Сообщение
 
 Вложение не найдено в этом чате. Добавьте файл заново.
 
-Источник: server/chat-files.ts:82.
+Источник: services/backend/src/chat-files.ts:71.
 
 ### Сообщение
 
 Общий размер вложений — не больше 30 МБ.
 
-Источник: server/chat-files.ts:88.
+Источник: services/backend/src/chat-files.ts:74.

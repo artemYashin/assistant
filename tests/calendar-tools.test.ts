@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Calendar } from "../server/calendar.js";
-import { searchCalendar } from "../server/calendar-search.js";
-import { calendarTools } from "../server/calendar-tools.js";
+import { Store } from "../services/backend/src/store.js";
+import { Calendar } from "../services/backend/src/calendar.js";
+import { searchCalendar } from "../services/backend/src/calendar-search.js";
+import { calendarTools } from "../services/backend/src/calendar-tools.js";
 
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-calendar-tools-"));
@@ -60,10 +60,7 @@ test("calendar search includes completed history, safe regex, AND filters, overl
     }).reminders[0].id,
     old,
   );
-  assert.equal(
-    searchCalendar(store, { completed: "open", clients: ["Client"] }).total,
-    0,
-  );
+  assert.equal(searchCalendar(store, { completed: "open", clients: ["Client"] }).total, 0);
   assert.equal(
     searchCalendar(store, {
       from: "2020-01-01T10:00:00Z",
@@ -71,10 +68,7 @@ test("calendar search includes completed history, safe regex, AND filters, overl
     }).total,
     1,
   );
-  assert.equal(
-    searchCalendar(store, { statuses: ["completed"] }).reminders[0].id,
-    old,
-  );
+  assert.equal(searchCalendar(store, { statuses: ["completed"] }).reminders[0].id, old);
   const first = searchCalendar(store, {
     sortBy: "start",
     sortDirection: "asc",
@@ -91,14 +85,10 @@ test("calendar search includes completed history, safe regex, AND filters, overl
     future,
   );
   assert.equal(
-    searchCalendar(store, { ids: [future] }).reminders[0].descriptionSnippet
-      .length,
+    searchCalendar(store, { ids: [future] }).reminders[0].descriptionSnippet.length,
     240,
   );
-  assert.throws(
-    () => searchCalendar(store, { query: "(", searchMode: "regex" }),
-    /регулярное/,
-  );
+  assert.throws(() => searchCalendar(store, { query: "(", searchMode: "regex" }), /регулярное/);
   assert.throws(() =>
     searchCalendar(store, {
       from: "2026-02-01T00:00:00Z",
@@ -110,9 +100,7 @@ test("calendar search includes completed history, safe regex, AND filters, overl
 test("calendar search matches assignees and recurring occurrences across scope without expanding daily rows", (t) => {
   const store = fixture(t),
     calendar = new Calendar(store);
-  store.db
-    .prepare("INSERT INTO local_developers VALUES ('dev','Developer','','',1)")
-    .run();
+  store.db.prepare("INSERT INTO local_developers VALUES ('dev','Developer','','',1)").run();
   const id = calendar.save({
     title: "Daily",
     start: "2020-01-01T08:00:00Z",
@@ -138,8 +126,7 @@ test("assistant batch status executes directly without dialogs and rolls back in
     events: any[] = [];
   const ids = Array.from(
     { length: 65 },
-    (_, i) =>
-      calendar.save({ title: `Reminder ${i}`, start: null, end: null }).id,
+    (_, i) => calendar.save({ title: `Reminder ${i}`, start: null, end: null }).id,
   );
   const daily = calendar.save({
     title: "Daily",
@@ -152,10 +139,7 @@ test("assistant batch status executes directly without dialogs and rolls back in
     () => {},
     (e) => events.push(e),
   ).find((t) => t.name === "change_calendar_reminders");
-  const items = [
-    ...ids.map((id) => ({ id, target: "reminder" })),
-    { id: daily, target: "series" },
-  ];
+  const items = [...ids.map((id) => ({ id, target: "reminder" })), { id: daily, target: "series" }];
   const result = await tool.handler({
     action: "complete",
     items: [...items, items[0]],
@@ -189,10 +173,7 @@ test("assistant batch status executes directly without dialogs and rolls back in
     () =>
       tool.handler({
         action: "delete",
-        items: [
-          items[0],
-          { id: daily, target: "occurrence", day: "2026-10-25" },
-        ],
+        items: [items[0], { id: daily, target: "occurrence", day: "2026-10-25" }],
       }),
     /повтор/,
   );
@@ -249,71 +230,130 @@ test("assistant warnings and edits save immediately; full read preserves content
   assert.ok(events.every((e) => e.stage === "calendar_changed"));
 });
 
-test("assistant saves selected weekdays and undated reminders directly", async t => {
+test("assistant saves selected weekdays and undated reminders directly", async (t) => {
   const store = fixture(t);
-  const tool:any=calendarTools(store,()=>{}).find(t=>t.name==="save_calendar_reminder");
-  const recurring=await tool.handler({reminder:{title:"Weekdays",start:"2026-10-26T09:00:00Z",end:null,repeatDaily:true,repeatWeekdays:[1,2,3,4,5]}});
-  const general=await tool.handler({reminder:{title:"Always",start:null,end:null,repeatDaily:false}});
-  const items=new Calendar(store).list();
-  assert.deepEqual(items.find(i=>i.id===recurring.id)!.repeatWeekdays,[1,2,3,4,5]);
-  assert.equal(items.find(i=>i.id===general.id)!.kind,"general");
-  assert.ok(new Calendar(store).notifications(new Date("2026-10-24T12:00:00Z")).some(i=>i.id===general.id));
+  const tool: any = calendarTools(store, () => {}).find((t) => t.name === "save_calendar_reminder");
+  const recurring = await tool.handler({
+    reminder: {
+      title: "Weekdays",
+      start: "2026-10-26T09:00:00Z",
+      end: null,
+      repeatDaily: true,
+      repeatWeekdays: [1, 2, 3, 4, 5],
+    },
+  });
+  const general = await tool.handler({
+    reminder: { title: "Always", start: null, end: null, repeatDaily: false },
+  });
+  const items = new Calendar(store).list();
+  assert.deepEqual(items.find((i) => i.id === recurring.id)!.repeatWeekdays, [1, 2, 3, 4, 5]);
+  assert.equal(items.find((i) => i.id === general.id)!.kind, "general");
+  assert.ok(
+    new Calendar(store)
+      .notifications(new Date("2026-10-24T12:00:00Z"))
+      .some((i) => i.id === general.id),
+  );
 });
 
-test("assistant reminder in five minutes inherits one-hour warning and is eligible immediately", async t => {
+test("assistant reminder in five minutes inherits one-hour warning and is eligible immediately", async (t) => {
   const store = fixture(t);
   const settings = store.rawSettings();
-  store.set("settings", {...settings, calendarNotifications: {...settings.calendarNotifications, reminderLeadMinutes: 60}});
+  store.set("settings", {
+    ...settings,
+    calendarNotifications: { ...settings.calendarNotifications, reminderLeadMinutes: 60 },
+  });
   const now = new Date();
-  const tool: any = calendarTools(store, () => {}).find(t => t.name === "save_calendar_reminder");
-  const result = await tool.handler({reminder:{title:"Five minutes",start:new Date(now.getTime()+300000).toISOString(),end:null}});
-  assert.equal(result.leadMinutes,null);
-  assert.equal(result.effectiveLeadMinutes,60);
+  const tool: any = calendarTools(store, () => {}).find((t) => t.name === "save_calendar_reminder");
+  const result = await tool.handler({
+    reminder: {
+      title: "Five minutes",
+      start: new Date(now.getTime() + 300000).toISOString(),
+      end: null,
+    },
+  });
+  assert.equal(result.leadMinutes, null);
+  assert.equal(result.effectiveLeadMinutes, 60);
   assert.ok(Date.parse(result.warningStart) <= now.getTime());
-  const {notificationItems}=await import("../server/calendar-notifications.js");
-  assert.equal(notificationItems(new Calendar(store).list(),60,now).length,1);
-  const custom = await tool.handler({reminder:{title:"Only at start",start:new Date(now.getTime()+300000).toISOString(),end:null,leadMinutes:0}});
-  assert.equal(custom.effectiveLeadMinutes,0);
-  assert.equal(notificationItems(new Calendar(store).list(),60,now).length,1);
+  const { notificationItems } = await import("../services/backend/src/calendar-notifications.js");
+  assert.equal(notificationItems(new Calendar(store).list(), 60, now).length, 1);
+  const custom = await tool.handler({
+    reminder: {
+      title: "Only at start",
+      start: new Date(now.getTime() + 300000).toISOString(),
+      end: null,
+      leadMinutes: 0,
+    },
+  });
+  assert.equal(custom.effectiveLeadMinutes, 0);
+  assert.equal(notificationItems(new Calendar(store).list(), 60, now).length, 1);
 });
 
-test("daily completions keep one stored reminder and recurrence search still finds it", t => {
- const store=fixture(t), calendar=new Calendar(store);
- const id=calendar.save({title:"One series",description:"",scope:"general",client:"",project:"",start:"2026-10-24T08:00:00Z",end:null,developerIds:[],repeatDaily:true}).id;
- calendar.completeToday(id,true,new Date("2026-10-24T10:00:00Z"),"2026-10-24");
- calendar.completeToday(id,true,new Date("2026-10-25T10:00:00Z"),"2026-10-25");
- assert.equal(calendar.list().length,1);
- assert.equal(calendar.list()[0].id,id);
- assert.deepEqual(calendar.list()[0].completedDays,["2026-10-24","2026-10-25"]);
- assert.equal(searchCalendar(store,{statuses:["recurring"]}).reminders.length,1);
+test("daily completions keep one stored reminder and recurrence search still finds it", (t) => {
+  const store = fixture(t),
+    calendar = new Calendar(store);
+  const id = calendar.save({
+    title: "One series",
+    description: "",
+    scope: "general",
+    client: "",
+    project: "",
+    start: "2026-10-24T08:00:00Z",
+    end: null,
+    developerIds: [],
+    repeatDaily: true,
+  }).id;
+  calendar.completeToday(id, true, new Date("2026-10-24T10:00:00Z"), "2026-10-24");
+  calendar.completeToday(id, true, new Date("2026-10-25T10:00:00Z"), "2026-10-25");
+  assert.equal(calendar.list().length, 1);
+  assert.equal(calendar.list()[0].id, id);
+  assert.deepEqual(calendar.list()[0].completedDays, ["2026-10-24", "2026-10-25"]);
+  assert.equal(searchCalendar(store, { statuses: ["recurring"] }).reminders.length, 1);
 });
 
-test("broad reminder types include every ordinary kind and combine with active status", t => {
-  const store = fixture(t), calendar = new Calendar(store);
-  calendar.save({title:"Undated",start:null,end:null});
-  calendar.save({title:"Dated",start:"2099-01-01T08:00:00Z",end:null});
-  calendar.save({title:"Event",start:"2099-01-01T08:00:00Z",end:"2099-01-01T09:00:00Z"});
-  calendar.save({title:"Daily",start:"2099-01-01T08:00:00Z",end:null,repeatDaily:true});
+test("broad reminder types include every ordinary kind and combine with active status", (t) => {
+  const store = fixture(t),
+    calendar = new Calendar(store);
+  calendar.save({ title: "Undated", start: null, end: null });
+  calendar.save({ title: "Dated", start: "2099-01-01T08:00:00Z", end: null });
+  calendar.save({ title: "Event", start: "2099-01-01T08:00:00Z", end: "2099-01-01T09:00:00Z" });
+  calendar.save({ title: "Daily", start: "2099-01-01T08:00:00Z", end: null, repeatDaily: true });
   const rows = calendar.list();
-  rows.push({...rows[0],id:"ticket-open",title:"Deadline",ticket:{id:42,source:"test",deadline:"2099-01-01T08:00:00Z"}});
-  rows.push({...rows[4],id:"ticket-completed",completed:true});
-  t.mock.method(Calendar.prototype,"list",()=>rows);
-  assert.equal(searchCalendar(store,{types:["reminder"]}).total,4);
-  assert.equal(searchCalendar(store,{types:["ticket"]}).total,2);
-  assert.equal(searchCalendar(store,{types:["reminder","ticket"]}).total,6);
-  assert.equal(searchCalendar(store,{types:[]}).total,6);
-  const active = searchCalendar(store,{types:["ticket"],statuses:["active"]});
-  assert.equal(active.total,1);
-  assert.equal(active.reminders[0].type,"ticket");
-  assert.equal(searchCalendar(store,{types:["reminder"],kinds:["daily"]}).total,1);
-  assert.equal(searchCalendar(store,{types:["ticket"],statuses:["completed"]}).total,1);
+  rows.push({
+    ...rows[0],
+    id: "ticket-open",
+    title: "Deadline",
+    ticket: { id: 42, source: "test", deadline: "2099-01-01T08:00:00Z" },
+  });
+  rows.push({ ...rows[4], id: "ticket-completed", completed: true });
+  t.mock.method(Calendar.prototype, "list", () => rows);
+  assert.equal(searchCalendar(store, { types: ["reminder"] }).total, 4);
+  assert.equal(searchCalendar(store, { types: ["ticket"] }).total, 2);
+  assert.equal(searchCalendar(store, { types: ["reminder", "ticket"] }).total, 6);
+  assert.equal(searchCalendar(store, { types: [] }).total, 6);
+  const active = searchCalendar(store, { types: ["ticket"], statuses: ["active"] });
+  assert.equal(active.total, 1);
+  assert.equal(active.reminders[0].type, "ticket");
+  assert.equal(searchCalendar(store, { types: ["reminder"], kinds: ["daily"] }).total, 1);
+  assert.equal(searchCalendar(store, { types: ["ticket"], statuses: ["completed"] }).total, 1);
 });
 
 test("assistant toggles visibility without completing or losing reminder fields", async (t) => {
-  const store = fixture(t), calendar = new Calendar(store);
-  const { id } = calendar.save({ title: "Keep", description: "Keep details", start: null, end: null });
+  const store = fixture(t),
+    calendar = new Calendar(store);
+  const { id } = calendar.save({
+    title: "Keep",
+    description: "Keep details",
+    start: null,
+    end: null,
+  });
   let changes = 0;
-  const tool: any = calendarTools(store, () => {}, () => { changes++; }).find(t => t.name === "update_calendar_visibility")!;
+  const tool: any = calendarTools(
+    store,
+    () => {},
+    () => {
+      changes++;
+    },
+  ).find((t) => t.name === "update_calendar_visibility")!;
   await tool.handler!({ id, notificationsHidden: true, calendarHidden: true }, {} as any);
   await tool.handler!({ id, calendarHidden: false }, {} as any);
   const item = calendar.list()[0];

@@ -9,118 +9,118 @@
 
 PR не найден
 
-Источник: server/pull-requests.ts:1209.
+Источник: services/backend/src/pull-requests.ts:1390.
 
 ### Сообщение
 
 Azure вернул другой PR
 
-Источник: server/pull-requests.ts:1215.
+Источник: services/backend/src/pull-requests.ts:1396.
 
 ### Сообщение
 
 PR уже закрыт
 
-Источник: server/pull-requests.ts:1216.
+Источник: services/backend/src/pull-requests.ts:1397.
 
 ### Сообщение
 
 Изменения PR обновились. Откройте diff заново перед комментированием.
 
-Источник: server/pull-requests.ts:1219.
+Источник: services/backend/src/pull-requests.ts:1402.
 
 ### Сообщение
 
 Не удалось сопоставить версию diff с Azure. Обновите diff.
 
-Источник: server/pull-requests.ts:1228.
+Источник: services/backend/src/pull-requests.ts:1417.
 
 ### Сообщение
 
 Azure не вернул изменения файлов
 
-Источник: server/pull-requests.ts:1234.
+Источник: services/backend/src/pull-requests.ts:1426.
 
 ### Сообщение
 
 Файл не найден в правой части изменений PR
 
-Источник: server/pull-requests.ts:1239.
+Источник: services/backend/src/pull-requests.ts:1431.
 
 ### Сообщение
 
 Строка не найдена в файле выбранной версии
 
-Источник: server/pull-requests.ts:1243.
+Источник: services/backend/src/pull-requests.ts:1438.
 
 ### Сообщение
 
 Azure не подтвердил комментарий. Проверьте PR перед повторной отправкой.
 
-Источник: server/pull-requests.ts:1273.
+Источник: services/backend/src/pull-requests.ts:1475.
 
 ### Сообщение
 
 Не удалось сопоставить комментарии с версией diff. Откройте diff заново.
 
-Источник: server/pull-requests.ts:1290.
+Источник: services/backend/src/pull-requests.ts:1499.
 
 ### Сообщение
 
 Azure не вернул комментарии PR
 
-Источник: server/pull-requests.ts:1293.
+Источник: services/backend/src/pull-requests.ts:1508.
 
 ### Сообщение
 
 Azure не вернул базу или список изменений
 
-Источник: server/pull-requests.ts:1326.
+Источник: services/backend/src/pull-requests.ts:1561.
 
 ### Сообщение
 
 Azure изменил базу сравнения при загрузке списка файлов
 
-Источник: server/pull-requests.ts:1345.
+Источник: services/backend/src/pull-requests.ts:1577.
 
 ### Сообщение
 
 Достигнут лимит 100 файлов для загрузки содержимого.
 
-Источник: server/pull-requests.ts:1377.
+Источник: services/backend/src/pull-requests.ts:1601.
 
 ### Сообщение
 
 Список изменений загружен не полностью: достигнут лимит загрузки списка файлов.
 
-Источник: server/pull-requests.ts:1406.
+Источник: services/backend/src/pull-requests.ts:1628.
 
 ### Сообщение
 
 Список файлов неполный: лимит 100 файлов после исключений
 
-Источник: server/pull-requests.ts:1409.
+Источник: services/backend/src/pull-requests.ts:1630.
 
 ### Сообщение
 
 Бинарный файл: текстовый diff недоступен.
 
-Источник: server/pull-requests.ts:1423.
+Источник: services/backend/src/pull-requests.ts:1645.
 
 ### Сообщение
 
 Подготовка diff остановлена по времени или завершению приложения.
 
-Источник: server/pull-requests.ts:1432.
+Источник: services/backend/src/pull-requests.ts:1662.
 
 ### Сообщение
 
 Подготовка diff остановлена по времени или завершению приложения
 
-Источник: server/pull-requests.ts:1434.
+Источник: services/backend/src/pull-requests.ts:1663.
 
 ### Сообщение
 
 Достигнут общий лимит размера diff.
 
-Источник: server/pull-requests.ts:1441.
+Источник: services/backend/src/pull-requests.ts:1670.

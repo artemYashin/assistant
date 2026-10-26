@@ -9,4 +9,4 @@
 
 Недоступны: {…}.
 
-Источник: src/features/import-tickets/ui/ImportAzureTickets.tsx:110.
+Источник: services/frontend/src/features/import-tickets/ui/ImportAzureTickets.tsx:109.

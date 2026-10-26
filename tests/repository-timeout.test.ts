@@ -3,15 +3,32 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { PullRequests } from "../server/pull-requests.js";
+import { Store } from "../services/backend/src/store.js";
+import { PullRequests } from "../services/backend/src/pull-requests.js";
 
-test("repository timeout defaults to five minutes, persists and survives rename", t => {
-  const dir = mkdtempSync(join(tmpdir(), "orbit-timeout-")), store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
-  store.set("settings", { ...store.rawSettings(), azureUrl: "https://ado.test/org", azureProject: "Azure" });
-  const prs = new PullRequests(store, { active: () => null, chat: async () => ({ body: "", requestId: "" }) });
-  const input = { client: "A", project: "B", repository: "repo", mode: "all" as const, enabled: true };
+test("repository timeout defaults to five minutes, persists and survives rename", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-timeout-")),
+    store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.rawSettings(),
+    azureUrl: "https://ado.test/org",
+    azureProject: "Azure",
+  });
+  const prs = new PullRequests(store, {
+    active: () => null,
+    chat: async () => ({ body: "", requestId: "" }),
+  });
+  const input = {
+    client: "A",
+    project: "B",
+    repository: "repo",
+    mode: "all" as const,
+    enabled: true,
+  };
   prs.save(input);
   assert.equal(prs.monitors()[0].fetch_timeout_seconds, 300);
   assert.equal(prs.monitors()[0].code_sync_minutes, 30);

@@ -9,58 +9,58 @@
 
 Pull request не найден
 
-Источник: server/pr-ci.ts:9.
+Источник: services/backend/src/pr-ci.ts:13.
 
 ### Сообщение
 
 Проверьте подключение Azure и PAT
 
-Источник: server/pr-ci.ts:11.
+Источник: services/backend/src/pr-ci.ts:17.
 
 ### Сообщение
 
 Azure вернул неверный PR или проект
 
-Источник: server/pr-ci.ts:20.
+Источник: services/backend/src/pr-ci.ts:43.
 
 ### Сообщение
 
 Слишком много проверок CI: список неполный
 
-Источник: server/pr-ci.ts:24.
+Источник: services/backend/src/pr-ci.ts:49.
 
 ### Сообщение
 
 Azure не вернул проверки CI
 
-Источник: server/pr-ci.ts:26.
+Источник: services/backend/src/pr-ci.ts:54.
 
 ### Сообщение
 
 Этот запуск CI не относится к PR
 
-Источник: server/pr-ci.ts:42.
+Источник: services/backend/src/pr-ci.ts:86.
 
 ### Сообщение
 
 Azure не вернул шаги CI
 
-Источник: server/pr-ci.ts:46.
+Источник: services/backend/src/pr-ci.ts:90.
 
 ### Сообщение
 
 Лог не относится к выбранному запуску CI
 
-Источник: server/pr-ci.ts:51.
+Источник: services/backend/src/pr-ci.ts:121.
 
 ### Сообщение
 
 Не удалось прочитать лог CI (HTTP {…}). Проверьте PAT Build: Read и доступ к пайплайну.
 
-Источник: server/pr-ci.ts:54.
+Источник: services/backend/src/pr-ci.ts:128.
 
 ### Сообщение
 
 Azure вернул пустой ответ лога
 
-Источник: server/pr-ci.ts:55.
+Источник: services/backend/src/pr-ci.ts:132.

@@ -9,16 +9,16 @@
 
 Внешняя ссылка недоступна: изображение локальное или источник не загружен
 
-Источник: src/entities/rich-content/ui/ImageActions.tsx:33.
+Источник: services/frontend/src/entities/rich-content/ui/ImageActions.tsx:47.
 
 ### Сообщение
 
 Не удалось скопировать ссылку.
 
-Источник: src/entities/rich-content/ui/ImageActions.tsx:36.
+Источник: services/frontend/src/entities/rich-content/ui/ImageActions.tsx:58.
 
 ### Сообщение
 
 image-action-error
 
-Источник: src/entities/rich-content/ui/ImageActions.tsx:43.
+Источник: services/frontend/src/entities/rich-content/ui/ImageActions.tsx:76.

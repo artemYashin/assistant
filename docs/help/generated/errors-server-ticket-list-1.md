@@ -9,4 +9,4 @@
 
 Полное чтение доступно только по явной просьбе пользователя через чат
 
-Источник: server/ticket-list.ts:44.
+Источник: services/backend/src/ticket-list.ts:87.

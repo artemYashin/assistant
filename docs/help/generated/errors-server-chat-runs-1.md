@@ -9,16 +9,16 @@
 
 Ассистент ещё отвечает на предыдущий запрос
 
-Источник: server/chat-runs.ts:15.
+Источник: services/backend/src/chat-runs.ts:34.
 
 ### Сообщение
 
 Не удалось завершить ответ ассистента
 
-Источник: server/chat-runs.ts:21.
+Источник: services/backend/src/chat-runs.ts:50.
 
 ### Сообщение
 
 Запрос больше не выполняется на сервере. Обновите историю чата.
 
-Источник: server/chat-runs.ts:32.
+Источник: services/backend/src/chat-runs.ts:62.

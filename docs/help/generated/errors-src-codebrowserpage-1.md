@@ -9,10 +9,10 @@
 
 repository-error
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:190.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:512.
 
 ### Сообщение
 
 Закрыть ошибку
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:192.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:518.

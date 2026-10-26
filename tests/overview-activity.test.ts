@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { overviewAudit } from "../server/overview-activity.js";
+import { Store } from "../services/backend/src/store.js";
+import { overviewAudit } from "../services/backend/src/overview-activity.js";
 
 test("activity resolves legacy PR actions and retains new PR titles after cleanup", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-activity-"));
@@ -26,9 +26,7 @@ test("activity resolves legacy PR actions and retains new PR titles after cleanu
   assert.equal(merged.pull_request.title, "Useful title");
   assert.equal(merged.detail, "Merged");
   store.audit("sync.completed", "Updated");
-  assert.ok(
-    overviewAudit(store).some((row) => row.action === "sync.completed"),
-  );
+  assert.ok(overviewAudit(store).some((row) => row.action === "sync.completed"));
   assert.equal(overviewAudit(store, 1).length, 1);
 });
 

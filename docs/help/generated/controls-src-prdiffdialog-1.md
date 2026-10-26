@@ -9,88 +9,88 @@
 
 Покрытие diff и причины пропусков
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:199.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:300.
 
 ### Элемент
 
 Закрыть diff
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:207.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:321.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:223.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:337.
 
 ### Элемент
 
 Подсветка кода
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:263.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:401.
 
 ### Элемент
 
 Авто · {…}
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:265.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:407.
 
 ### Элемент
 
 Без подсветки
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:266.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:409.
 
 ### Элемент
 
 Открыть полный файл до удаления в коде репозитория / Открыть полный файл в коде репозитория
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:276.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:427.
 
 ### Элемент
 
 Обновить
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:363.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:569.
 
 ### Элемент
 
 /
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:388.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:618.
 
 ### Элемент
 
 Комментарий к строке {…} · Добавить комментарий в Azure
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:425.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:674.
 
 ### Элемент
 
 Комментарий к строке
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:465.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:730.
 
 ### Элемент
 
 / · Отправляю… / Отправить в Azure
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:472.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:747.
 
 ### Элемент
 
 Отмена
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:479.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:760.
 
 ### Элемент
 
 Строка {…} /
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:502.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:809.
 
 ### Элемент
 
 Показать строку · После / До
 
-Источник: src/features/view-diff/ui/PrDiffDialog.tsx:514.
+Источник: services/frontend/src/features/view-diff/ui/PrDiffDialog.tsx:829.

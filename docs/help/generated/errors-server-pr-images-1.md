@@ -9,16 +9,16 @@
 
 Изображение недоступно в Azure
 
-Источник: server/pr-images.ts:85.
+Источник: services/backend/src/pr-images.ts:77.
 
 ### Сообщение
 
 Изображение больше 20 МБ
 
-Источник: server/pr-images.ts:96.
+Источник: services/backend/src/pr-images.ts:88.
 
 ### Сообщение
 
 Поддерживаются PNG, JPEG, GIF и WebP
 
-Источник: server/pr-images.ts:116.
+Источник: services/backend/src/pr-images.ts:105.

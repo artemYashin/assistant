@@ -9,46 +9,46 @@
 
 Свободные заметки
 
-Источник: src/pages/notes/ui/NotesPage.tsx:37.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:37.
 
 ### Элемент
 
 Заметки тикетов
 
-Источник: src/pages/notes/ui/NotesPage.tsx:45.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:45.
 
 ### Элемент
 
 Новая заметка
 
-Источник: src/pages/notes/ui/NotesPage.tsx:209.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:205.
 
 ### Элемент
 
 · Черновик /
 
-Источник: src/pages/notes/ui/NotesPage.tsx:232.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:222.
 
 ### Элемент
 
 Название
 
-Источник: src/pages/notes/ui/NotesPage.tsx:249.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:239.
 
 ### Элемент
 
 Сохранение… / Сохранить
 
-Источник: src/pages/notes/ui/NotesPage.tsx:274.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:264.
 
 ### Элемент
 
 Удалить заметку? · Заметка и её локальные картинки будут удалены без возможности восстановления. · Удалить
 
-Источник: src/pages/notes/ui/NotesPage.tsx:286.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:276.
 
 ### Элемент
 
 Отменить изменения? · Несохранённый текст и новые картинки будут потеряны. Откроется последняя сохранённая версия. · Открыть сохранённую · Открыть сохранённую версию
 
-Источник: src/pages/notes/ui/NotesPage.tsx:315.
+Источник: services/frontend/src/pages/notes/ui/NotesPage.tsx:305.

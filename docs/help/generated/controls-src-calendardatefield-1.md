@@ -9,58 +9,58 @@
 
 Выбрать дату: {…} · / Выбрать дату / Выбрать дату и время
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:83.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:69.
 
 ### Элемент
 
 Очистить дату: {…} · Сбросить
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:109.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:93.
 
 ### Элемент
 
 Закрыть выбор даты
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:143.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:127.
 
 ### Элемент
 
 Предыдущий месяц
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:153.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:137.
 
 ### Элемент
 
 Следующий месяц
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:164.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:148.
 
 ### Элемент
 
 Часы
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:229.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:211.
 
 ### Элемент
 
 Минуты
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:239.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:219.
 
 ### Элемент
 
 Сегодня
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:254.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:230.
 
 ### Элемент
 
 Отмена
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:272.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:248.
 
 ### Элемент
 
 Выбрать
 
-Источник: src/entities/calendar/ui/CalendarDateField.tsx:279.
+Источник: services/frontend/src/entities/calendar/ui/CalendarDateField.tsx:251.

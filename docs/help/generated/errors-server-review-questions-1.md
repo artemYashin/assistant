@@ -9,28 +9,28 @@
 
 Вопросы не найдены
 
-Источник: server/review-questions.ts:131.
+Источник: services/backend/src/review-questions.ts:123.
 
 ### Сообщение
 
 Ответы уже отправлены
 
-Источник: server/review-questions.ts:133.
+Источник: services/backend/src/review-questions.ts:124.
 
 ### Сообщение
 
 Ответьте на все вопросы перед отправкой
 
-Источник: server/review-questions.ts:135.
+Источник: services/backend/src/review-questions.ts:126.
 
 ### Сообщение
 
 PR изменён или недоступен. Синхронизируйте и запустите ревью актуальной версии.
 
-Источник: server/review-questions.ts:151.
+Источник: services/backend/src/review-questions.ts:142.
 
 ### Сообщение
 
 Вопросы уже обработаны
 
-Источник: server/review-questions.ts:176.
+Источник: services/backend/src/review-questions.ts:165.

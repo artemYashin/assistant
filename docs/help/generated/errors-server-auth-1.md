@@ -9,4 +9,4 @@
 
 Ошибка входа GitHub
 
-Источник: server/auth.ts:31.
+Источник: services/backend/src/auth.ts:33.

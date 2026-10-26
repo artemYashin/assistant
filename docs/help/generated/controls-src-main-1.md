@@ -9,118 +9,118 @@
 
 Обзор
 
-Источник: src/app/config/navigation.ts:6.
+Источник: services/frontend/src/app/config/navigation.ts:16.
 
 ### Элемент
 
 Календарь
 
-Источник: src/app/config/navigation.ts:7.
+Источник: services/frontend/src/app/config/navigation.ts:17.
 
 ### Элемент
 
 Входящие
 
-Источник: src/app/config/navigation.ts:8.
+Источник: services/frontend/src/app/config/navigation.ts:18.
 
 ### Элемент
 
 Тикеты
 
-Источник: src/app/config/navigation.ts:9.
+Источник: services/frontend/src/app/config/navigation.ts:19.
 
 ### Элемент
 
 Разработчики
 
-Источник: src/app/config/navigation.ts:10.
+Источник: services/frontend/src/app/config/navigation.ts:20.
 
 ### Элемент
 
 Pull requests
 
-Источник: src/app/config/navigation.ts:11.
+Источник: services/frontend/src/app/config/navigation.ts:21.
 
 ### Элемент
 
 Код репозитория
 
-Источник: src/app/config/navigation.ts:12.
+Источник: services/frontend/src/app/config/navigation.ts:22.
 
 ### Элемент
 
 Подтверждения
 
-Источник: src/app/config/navigation.ts:13.
+Источник: services/frontend/src/app/config/navigation.ts:23.
 
 ### Элемент
 
 Память
 
-Источник: src/app/config/navigation.ts:14.
+Источник: services/frontend/src/app/config/navigation.ts:24.
 
 ### Элемент
 
 Заметки
 
-Источник: src/app/config/navigation.ts:15.
+Источник: services/frontend/src/app/config/navigation.ts:25.
 
 ### Элемент
 
 Использование LLM
 
-Источник: src/app/config/navigation.ts:16.
+Источник: services/frontend/src/app/config/navigation.ts:26.
 
 ### Элемент
 
 Повторить
 
-Источник: src/app/ui/App.tsx:26.
+Источник: services/frontend/src/app/ui/App.tsx:26.
 
 ### Элемент
 
 Развернуть сайдбар / Свернуть сайдбар · / · Свернуть меню
 
-Источник: src/app/ui/WorkspaceSidebar.tsx:30.
+Источник: services/frontend/src/app/ui/WorkspaceSidebar.tsx:32.
 
 ### Элемент
 
 Настройки
 
-Источник: src/app/ui/WorkspaceSidebar.tsx:84.
+Источник: services/frontend/src/app/ui/WorkspaceSidebar.tsx:77.
 
 ### Элемент
 
 Что нового
 
-Источник: src/app/ui/WorkspaceSidebar.tsx:97.
+Источник: services/frontend/src/app/ui/WorkspaceSidebar.tsx:87.
 
 ### Элемент
 
 Свернуть чат / Развернуть чат · /
 
-Источник: src/app/ui/WorkspaceHeader.tsx:43.
+Источник: services/frontend/src/app/ui/WorkspaceHeader.tsx:50.
 
 ### Элемент
 
 Перейти к обзору
 
-Источник: src/app/ui/WorkspacePages.tsx:70.
+Источник: services/frontend/src/app/ui/WorkspacePages.tsx:75.
 
 ### Элемент
 
 Закрыть ошибку
 
-Источник: src/app/ui/WorkspacePages.tsx:76.
+Источник: services/frontend/src/app/ui/WorkspacePages.tsx:81.
 
 ### Элемент
 
 {…}: {…} · {…}: {…}. Открыть настройки · · /
 
-Источник: src/app/ui/OverviewBlock.tsx:51.
+Источник: services/frontend/src/app/ui/OverviewBlock.tsx:55.
 
 ### Элемент
 
 Обновить
 
-Источник: src/app/ui/OverviewBlock.tsx:68.
+Источник: services/frontend/src/app/ui/OverviewBlock.tsx:68.

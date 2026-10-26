@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { listLocalTickets } from "../server/ticket-list.js";
+import { Store } from "../services/backend/src/store.js";
+import { listLocalTickets } from "../services/backend/src/ticket-list.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-added-at-"));
   let store = new Store(dir);
@@ -36,9 +36,7 @@ test("first local addition is captured once and survives sync, trash and restora
   const before = Date.now();
   insert(store, 42);
   const first = store.ticketAddedAt(42);
-  assert.ok(
-    first && Date.parse(first) >= before && Date.parse(first) <= Date.now(),
-  );
+  assert.ok(first && Date.parse(first) >= before && Date.parse(first) <= Date.now());
   insert(store, 42);
   assert.equal(store.ticketAddedAt(42), first);
   assert.equal(
@@ -56,9 +54,7 @@ test("first local addition is captured once and survives sync, trash and restora
 test("pre-migration ticket dates remain unknown, including restored legacy trash", (t) => {
   const f = fixture(t);
   // Simulate a database from before timestamp tracking existed.
-  f.store.db.exec(
-    "DROP TRIGGER ticket_first_added; DROP TABLE ticket_tracking_dates;",
-  );
+  f.store.db.exec("DROP TRIGGER ticket_first_added; DROP TABLE ticket_tracking_dates;");
   insert(f.store, 1);
   const legacy = {
     source: f.store.source(),

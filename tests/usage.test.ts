@@ -1,13 +1,13 @@
-import { DEEP_READ_WARNING } from "../server/ticket-display.js";
+import { DEEP_READ_WARNING } from "../services/backend/src/ticket-display.js";
 import { withToolDiscovery } from "./sdk-discovery-helper.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { UsageLedger } from "../server/usage.js";
-import { Agent } from "../server/agent.js";
+import { Store } from "../services/backend/src/store.js";
+import { UsageLedger } from "../services/backend/src/usage.js";
+import { Agent } from "../services/backend/src/agent.js";
 const context = { client: "Customer", project: "Project" };
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-usage-"));
@@ -35,10 +35,7 @@ test("usage deduplicates receipts, separates cache and preserves missing values"
   const reviewId = ledger.begin("other", context, "pr_review");
   const report = ledger.report() as any;
   assert.equal(report.requests.find((r: any) => r.id === id).origin, "chat");
-  assert.equal(
-    report.requests.find((r: any) => r.id === reviewId).origin,
-    "pr_review",
-  );
+  assert.equal(report.requests.find((r: any) => r.id === reviewId).origin, "pr_review");
   assert.equal(ledger.tokens(id), 170);
   assert.equal(report.summary.model_calls, 2);
   assert.equal(report.summary.cache_read_tokens, 60);
@@ -112,11 +109,7 @@ function fakeAgent(
       stops++;
     },
   };
-  const agent = new Agent(
-    store,
-    () => client as any,
-    connectors,
-  );
+  const agent = new Agent(store, () => client as any, connectors);
   return { agent, counts: () => ({ aborts, stops }) };
 }
 test("one request records multiple model calls and completes cleanly", async (t) => {
@@ -140,7 +133,10 @@ test("token threshold aborts multi-step work and saves usage", async (t) => {
     s.emit({ inputTokens: 1000, outputTokens: 20 });
     return new Promise(() => {});
   });
-  await assert.rejects(agent.chat("hello", context), /порог токенов чата:.*AI Assistant.*Порог входных \+ выходных токенов чата на запрос/);
+  await assert.rejects(
+    agent.chat("hello", context),
+    /порог токенов чата:.*AI Assistant.*Порог входных \+ выходных токенов чата на запрос/,
+  );
   assert.ok(counts().aborts);
   const report = new UsageLedger(store).report() as any;
   assert.equal(report.requests[0].status, "limited");
@@ -151,13 +147,11 @@ test("tool limit denies the next tool and aborts the model loop", async (t) => {
   store.set("settings", { llmMaxToolCalls: 1 });
   const { agent } = fakeAgent(store, async (_s, c) => {
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "list_tickets" }))
-        .permissionDecision,
+      (await c.hooks.onPreToolUse({ toolName: "list_tickets" })).permissionDecision,
       "allow",
     );
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "list_tickets" }))
-        .permissionDecision,
+      (await c.hooks.onPreToolUse({ toolName: "list_tickets" })).permissionDecision,
       "deny",
     );
     return new Promise(() => {});
@@ -183,10 +177,7 @@ test("user stop cancels active work and concurrent requests are rejected", async
   assert.equal(agent.stop().stopping, true);
   await assert.rejects(pending, /Остановлено пользователем/);
   assert.ok(counts().aborts);
-  assert.equal(
-    (new UsageLedger(store).report() as any).requests[0].status,
-    "stopped",
-  );
+  assert.equal((new UsageLedger(store).report() as any).requests[0].status, "stopped");
 });
 test("watchdog stops a model that never returns usage or a response", async (t) => {
   const store = fixture(t);
@@ -194,10 +185,7 @@ test("watchdog stops a model that never returns usage or a response", async (t) 
   const { agent, counts } = fakeAgent(store, async () => new Promise(() => {}));
   await assert.rejects(agent.chat("hello", context), /лимит времени/);
   assert.ok(counts().aborts);
-  assert.equal(
-    (new UsageLedger(store).report() as any).requests[0].status,
-    "limited",
-  );
+  assert.equal((new UsageLedger(store).report() as any).requests[0].status, "limited");
 });
 
 test("manual PR review has only memory reads, no chat history and still accounts usage", async (t) => {
@@ -216,49 +204,84 @@ test("manual PR review has only memory reads, no chat history and still accounts
     assert.match(s.prompt, /Client knowledge/);
     assert.match(s.prompt, /Project knowledge/);
     assert.doesNotMatch(s.prompt, /Other project secret|private chat history/);
-    assert.deepEqual(c.tools.map((tool: any) => tool.name), ["read_memory"]);
+    assert.deepEqual(
+      c.tools.map((tool: any) => tool.name),
+      ["read_memory"],
+    );
     assert.deepEqual(c.excludedTools, ["builtin:*", "mcp:*"]);
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "nonexistent_tool" }))
-        .permissionDecision,
+      (await c.hooks.onPreToolUse({ toolName: "nonexistent_tool" })).permissionDecision,
       "deny",
     );
     assert.equal(c.streaming, true);
     await c.tools[0].handler({ id: store.memoryCatalog(context)[0].id }, {});
-    s.emitEvent("assistant.message_delta", {messageId: "answer", deltaContent: "Review"});
-    s.emitEvent("assistant.message_delta", {messageId: "child", deltaContent: "Hidden", parentToolCallId: "tool"});
-    s.emitEvent("assistant.message", {messageId: "answer", content: "Review"});
+    s.emitEvent("assistant.message_delta", { messageId: "answer", deltaContent: "Review" });
+    s.emitEvent("assistant.message_delta", {
+      messageId: "child",
+      deltaContent: "Hidden",
+      parentToolCallId: "tool",
+    });
+    s.emitEvent("assistant.message", { messageId: "answer", content: "Review" });
     s.emit({ inputTokens: 500, outputTokens: 100 });
     return { data: { content: "Review" } };
   });
-  await agent.chat("Review this diff", context, true, undefined, undefined, undefined, event => progress.push(event));
-  assert.deepEqual(progress.filter(event => event.stage === "tool").map(event => [event.name, event.status]), [["read_memory", "running"], ["read_memory", "completed"]]);
-  assert.deepEqual(progress.filter(event => event.stage === "text").map(event => event.text), ["Review", "Review"]);
-  assert.equal(store.history(context).length, 1);
-  assert.equal(
-    (new UsageLedger(store).report() as any).summary.input_tokens,
-    500,
+  await agent.chat("Review this diff", context, true, undefined, undefined, undefined, (event) =>
+    progress.push(event),
   );
+  assert.deepEqual(
+    progress.filter((event) => event.stage === "tool").map((event) => [event.name, event.status]),
+    [
+      ["read_memory", "running"],
+      ["read_memory", "completed"],
+    ],
+  );
+  assert.deepEqual(
+    progress.filter((event) => event.stage === "text").map((event) => event.text),
+    ["Review", "Review"],
+  );
+  assert.equal(store.history(context).length, 1);
+  assert.equal((new UsageLedger(store).report() as any).summary.input_tokens, 500);
 });
 
-test("showing a ticket opens UI without fetching bodies into model context", async t => {
-  const store = fixture(t), events: any[] = [];
-  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+test("showing a ticket opens UI without fetching bodies into model context", async (t) => {
+  const store = fixture(t),
+    events: any[] = [];
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
     .run(store.source(), 123456, "Summary title", "Resolved", "Owner", "Bug", "", "", "now");
   let reads = 0;
-  const { agent } = fakeAgent(store, async (session, config) => {
-    const show = config.tools.find((tool: any) => tool.name === "show_ticket_details");
-    const result = await show.handler({ ids: [123456] }, {});
-    assert.equal(result.requested, true);
-    assert.equal(result.tickets[0].title, "Summary title");
-    assert.equal(result.tickets[0].fields, undefined);
-    assert.doesNotMatch(session.prompt, /Latest comment/);
-    return { data: { content: "Открываю тикет." } };
-  }, { ticketDetails: async () => { reads++; throw new Error("UI loads details separately"); } });
-  const result = await agent.chat("Покажи тикет 123456", context, false, undefined, undefined, undefined, event => events.push(event));
+  const { agent } = fakeAgent(
+    store,
+    async (session, config) => {
+      const show = config.tools.find((tool: any) => tool.name === "show_ticket_details");
+      const result = await show.handler({ ids: [123456] }, {});
+      assert.equal(result.requested, true);
+      assert.equal(result.tickets[0].title, "Summary title");
+      assert.equal(result.tickets[0].fields, undefined);
+      assert.doesNotMatch(session.prompt, /Latest comment/);
+      return { data: { content: "Открываю тикет." } };
+    },
+    {
+      ticketDetails: async () => {
+        reads++;
+        throw new Error("UI loads details separately");
+      },
+    },
+  );
+  const result = await agent.chat(
+    "Покажи тикет 123456",
+    context,
+    false,
+    undefined,
+    undefined,
+    undefined,
+    (event) => events.push(event),
+  );
   assert.equal(reads, 0);
   assert.deepEqual(result.cards, []);
-  assert.ok(events.some(event => event.stage === "show_tickets" && event.tickets[0].id === 123456));
+  assert.ok(
+    events.some((event) => event.stage === "show_tickets" && event.tickets[0].id === 123456),
+  );
   assert.match(result.body, /123456.*Summary title/);
   assert.equal((store.history(context).at(-1) as any).body, result.body);
 });
@@ -272,21 +295,13 @@ test("status tool requires current user instruction and deduplicates repeated wr
     on: () => {},
     abort: async () => {},
     sendAndWait: async () => {
-      const tool = config.tools.find(
-        (x: any) => x.name === "change_ticket_status",
-      );
+      const tool = config.tools.find((x: any) => x.name === "change_ticket_status");
       if (allow) {
         const first = await tool.handler({ id: 123456, state: "RFT" }, {});
-        const again = await tool.handler(
-          { id: 123456, state: "Ready for Testing" },
-          {},
-        );
+        const again = await tool.handler({ id: 123456, state: "Ready for Testing" }, {});
         assert.equal(first.state, again.state);
       } else
-        assert.match(
-          (await tool.handler({ id: 123456, state: "RFT" }, {})).error,
-          /явная команда/,
-        );
+        assert.match((await tool.handler({ id: 123456, state: "RFT" }, {})).error, /явная команда/);
       return { data: { content: "Result" } };
     },
   };
@@ -306,11 +321,7 @@ test("status tool requires current user instruction and deduplicates repeated wr
       return { success: true, state: "RFT", outcome: "changed" };
     },
   };
-  const agent = new Agent(
-    store,
-    () => client as any,
-    connectors as any,
-  );
+  const agent = new Agent(store, () => client as any, connectors as any);
   await agent.chat("Переведи тикет 123456 в RFT", context);
   assert.equal(writes, 1);
   store.say("user", "Переведи тикет 123456 в RFT", context);
@@ -336,25 +347,25 @@ test("review feedback tools are limited to memory reads, questions and proposals
       "read_memory",
     ]);
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "save_memory" }))
-        .permissionDecision,
+      (await c.hooks.onPreToolUse({ toolName: "save_memory" })).permissionDecision,
       "deny",
     );
     assert.equal(
-      (await c.hooks.onPreToolUse({ toolName: "ask_review_questions" }))
-        .permissionDecision,
+      (await c.hooks.onPreToolUse({ toolName: "ask_review_questions" })).permissionDecision,
       "allow",
     );
     await c.tools
       .find((tool: any) => tool.name === "ask_review_questions")
-      .handler(
-        { questions: [{ question: "Contract?", reason: "Unknown input" }] },
-        {},
-      );
+      .handler({ questions: [{ question: "Contract?", reason: "Unknown input" }] }, {});
     await c.tools
       .find((tool: any) => tool.name === "propose_memory")
       .handler(
-        { scope: "project", body: "A durable fact", reason: "Useful later" },
+        {
+          scope: "project",
+          summary: "A durable fact",
+          body: "A durable fact",
+          reason: "Useful later",
+        },
         {},
       );
     return { data: { content: "Needs clarification" } };
@@ -366,28 +377,14 @@ test("review feedback tools are limited to memory reads, questions and proposals
   });
   assert.equal(questions.length, 1);
   assert.equal(store.memories(context).length, 0);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM memory_proposals").get() as any)
-      .n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM memory_proposals").get() as any).n, 1);
 });
 
 test("failed status change invalidates cached ticket without retrying the write", async (t) => {
   const store = fixture(t);
   store.db
     .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(
-      store.source(),
-      123456,
-      "Local title",
-      "Active",
-      "",
-      "Bug",
-      "",
-      "",
-      "now",
-    );
+    .run(store.source(), 123456, "Local title", "Active", "", "Bug", "", "", "now");
   let config: any,
     writes = 0;
   const session = {
@@ -395,19 +392,11 @@ test("failed status change invalidates cached ticket without retrying the write"
     abort: async () => {},
     sendAndWait: async () => {
       const get = config.tools.find((x: any) => x.name === "get_ticket");
-      const change = config.tools.find(
-        (x: any) => x.name === "change_ticket_status",
-      );
+      const change = config.tools.find((x: any) => x.name === "change_ticket_status");
       assert.equal((await get.handler({ id: 123456 }, {})).state, "Active");
-      assert.equal(
-        (await change.handler({ id: 123456, state: "RFT" }, {})).success,
-        false,
-      );
+      assert.equal((await change.handler({ id: 123456, state: "RFT" }, {})).success, false);
       assert.equal((await get.handler({ id: 123456 }, {})).state, "Resolved");
-      assert.equal(
-        (await change.handler({ id: 123456, state: "RFT" }, {})).success,
-        false,
-      );
+      assert.equal((await change.handler({ id: 123456, state: "RFT" }, {})).success, false);
       assert.equal(writes, 1);
       return { data: { content: "Not confirmed" } };
     },
@@ -427,17 +416,11 @@ test("failed status change invalidates cached ticket without retrying the write"
     },
     changeTicketStatus: async () => {
       writes++;
-      store.db
-        .prepare("UPDATE tickets SET state='Resolved' WHERE id=123456")
-        .run();
+      store.db.prepare("UPDATE tickets SET state='Resolved' WHERE id=123456").run();
       throw new Error("unconfirmed");
     },
   };
-  const agent = new Agent(
-    store,
-    () => client as any,
-    connectors as any,
-  );
+  const agent = new Agent(store, () => client as any, connectors as any);
   await agent.chat("Переведи тикет 123456 в RFT", context);
 });
 
@@ -462,22 +445,12 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
     on: () => {},
     abort: async () => {},
     sendAndWait: async () => {
-      const change = config.tools.find(
-        (tool: any) => tool.name === "change_ticket_status",
-      );
-      assert.match(
-        (await change.handler({ id: 42, state: "RFT" }, {})).error,
-        /явная команда/,
-      );
-      const list = config.tools.find(
-        (tool: any) => tool.name === "list_tickets",
-      );
+      const change = config.tools.find((tool: any) => tool.name === "change_ticket_status");
+      assert.match((await change.handler({ id: 42, state: "RFT" }, {})).error, /явная команда/);
+      const list = config.tools.find((tool: any) => tool.name === "list_tickets");
       await list.handler({ state: "Resolved" }, {});
       await change.handler({ id: 42, state: "RFT" }, {});
-      assert.match(
-        (await change.handler({ id: 99, state: "RFT" }, {})).error,
-        /явная команда/,
-      );
+      assert.match((await change.handler({ id: 99, state: "RFT" }, {})).error, /явная команда/);
       return { data: { content: "Done" } };
     },
   };
@@ -501,11 +474,7 @@ test("chat status changes accept IDs returned by a filtered ticket search", asyn
       return { success: true, state: "RFT" };
     },
   };
-  const agent = new Agent(
-    store,
-    () => client as any,
-    connectors as any,
-  );
+  const agent = new Agent(store, () => client as any, connectors as any);
   await agent.chat("Найди тикеты в Resolved и переведи их в RFT", context);
   assert.deepEqual(writes, [42]);
 });
@@ -575,23 +544,9 @@ test("metadata clarification uses prior user intent, resolves targets and honors
   for (const id of [42, 43])
     store.db
       .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-      .run(
-        store.source(),
-        id,
-        "Internal Sites",
-        "Active",
-        "",
-        "Bug",
-        "",
-        "",
-        "now",
-      );
+      .run(store.source(), id, "Internal Sites", "Active", "", "Bug", "", "", "now");
   store.say("user", "Добавь тег UI тикетам Internal Sites", context);
-  store.say(
-    "assistant",
-    "Добавить ко всем 23 тикетам Internal Sites или только к #42?",
-    context,
-  );
+  store.say("assistant", "Добавить ко всем 23 тикетам Internal Sites или только к #42?", context);
   const { agent } = fakeAgent(store, async (_session, config) => {
     const call = (name: string, args: any) =>
       config.tools.find((tool: any) => tool.name === name).handler(args, {});
@@ -605,14 +560,8 @@ test("metadata clarification uses prior user intent, resolves targets and honors
     assert.equal(result.results[0].success, false);
     assert.match(result.results[0].error, /исключён/);
     assert.equal(result.results[1].success, true);
-    assert.deepEqual(
-      (await call("get_local_ticket_metadata", { id: 42 })).tags,
-      [],
-    );
-    assert.deepEqual(
-      (await call("get_local_ticket_metadata", { id: 43 })).tags,
-      ["UI"],
-    );
+    assert.deepEqual((await call("get_local_ticket_metadata", { id: 42 })).tags, []);
+    assert.deepEqual((await call("get_local_ticket_metadata", { id: 43 })).tags, ["UI"]);
     return { data: { content: "Готово, кроме #42" } };
   });
   await agent.chat("Ко всем 23, кроме #42", context);
@@ -625,9 +574,7 @@ test("chat bulk status uses the connector batch, rejects unrequested IDs and ded
   const { agent } = fakeAgent(
     store,
     async (_session, config) => {
-      const tool = config.tools.find(
-        (tool: any) => tool.name === "batch_update_tickets",
-      );
+      const tool = config.tools.find((tool: any) => tool.name === "batch_update_tickets");
       const input = {
         operations: [42, 43, 99].map((id) => ({
           action: "status",
@@ -679,29 +626,14 @@ test("23 confirmed local tag edits use two model calls and trace child operation
   for (const id of ids)
     store.db
       .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-      .run(
-        store.source(),
-        id,
-        `Feature ${id}`,
-        "Active",
-        "",
-        "Bug",
-        "",
-        "",
-        "now",
-      );
+      .run(store.source(), id, `Feature ${id}`, "Active", "", "Bug", "", "", "now");
   store.say("user", "Добавь тег UI всем тикетам Feature", context);
   store.say("assistant", "Нашёл 23 тикета. Выполнить эти изменения?", context);
   const { agent } = fakeAgent(store, async (_session, config) => {
     const call = async (name: string, args: any) => {
-      const permission = await config.hooks.onPreToolUse(
-        { toolName: name },
-        {},
-      );
+      const permission = await config.hooks.onPreToolUse({ toolName: name }, {});
       assert.equal(permission.permissionDecision, "allow");
-      return config.tools
-        .find((tool: any) => tool.name === name)
-        .handler(args, {});
+      return config.tools.find((tool: any) => tool.name === name).handler(args, {});
     };
     const list = await call("list_tickets", { ids });
     assert.equal(list.tickets.length, 23);
@@ -718,19 +650,14 @@ test("23 confirmed local tag edits use two model calls and trace child operation
   const report = new UsageLedger(store).chatTools(context);
   assert.equal(report.requests[0].tool_calls, 2);
   assert.equal(
-    report.requests[0].tools.filter((tool: any) => !tool.internal && tool.name !== "load_tools").length,
+    report.requests[0].tools.filter((tool: any) => !tool.internal && tool.name !== "load_tools")
+      .length,
     2,
   );
+  assert.equal(report.requests[0].tools.filter((tool: any) => tool.internal).length, 23);
+  assert.ok(report.requests[0].tools.every((tool: any) => tool.status === "completed"));
   assert.equal(
-    report.requests[0].tools.filter((tool: any) => tool.internal).length,
-    23,
-  );
-  assert.ok(
-    report.requests[0].tools.every((tool: any) => tool.status === "completed"),
-  );
-  assert.equal(
-    new UsageLedger(store).chatTools({ client: "other", project: "other" })
-      .requests.length,
+    new UsageLedger(store).chatTools({ client: "other", project: "other" }).requests.length,
     0,
   );
 });
@@ -756,25 +683,37 @@ test("tool trace records failures without storing note or message bodies", (t) =
   assert.match(result.result, /Validation failed/);
 });
 
-test("list summaries stay local and extra full Azure reads require fresh consent", async t => {
+test("list summaries stay local and extra full Azure reads require fresh consent", async (t) => {
   const store = fixture(t);
-  for (const id of [42, 43]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(store.source(), id, "Title", "Active", "", "Bug", "", "", "now");
-  let reads = 0, confirmed = false;
-  const { agent } = fakeAgent(store, async (_session, config) => {
-    const list = config.tools.find((tool: any) => tool.name === "list_tickets");
-    const summary = await list.handler({ ids: [42, 43] }, {});
-    assert.ok(summary.tickets.every((ticket: any) => ticket.content === undefined));
-    const full = await list.handler({ ids: [42], detail: "full" }, {});
-    assert.match(full.tickets[0].content, /Description/);
-    const extra = await list.handler({ ids: [43], detail: "full" }, {});
-    if (confirmed) assert.match(extra.tickets[0].content, /Description/);
-    else {
-      assert.equal(extra.success, false);
-      assert.match(extra.error, /продолжить ли чтение/);
-    }
-    return { data: { content: "Ответ" } };
-  }, { ticketDetails: async () => { reads++; return { fields: { "System.Description": "Description" }, comments: [] }; } });
+  for (const id of [42, 43])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, "Title", "Active", "", "Bug", "", "", "now");
+  let reads = 0,
+    confirmed = false;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const list = config.tools.find((tool: any) => tool.name === "list_tickets");
+      const summary = await list.handler({ ids: [42, 43] }, {});
+      assert.ok(summary.tickets.every((ticket: any) => ticket.content === undefined));
+      const full = await list.handler({ ids: [42], detail: "full" }, {});
+      assert.match(full.tickets[0].content, /Description/);
+      const extra = await list.handler({ ids: [43], detail: "full" }, {});
+      if (confirmed) assert.match(extra.tickets[0].content, /Description/);
+      else {
+        assert.equal(extra.success, false);
+        assert.match(extra.error, /продолжить ли чтение/);
+      }
+      return { data: { content: "Ответ" } };
+    },
+    {
+      ticketDetails: async () => {
+        reads++;
+        return { fields: { "System.Description": "Description" }, comments: [] };
+      },
+    },
+  );
   await agent.chat("Прочитай описание тикета #42", context);
   assert.equal(reads, 1);
   store.say("user", "Проведи глубокий анализ тикетов #42 и #43", context);
@@ -792,17 +731,7 @@ test("ordinary ticket lists, known IDs and missing IDs never read Azure", async 
   t.mock.method(console, "error", () => {});
   store.db
     .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(
-      store.source(),
-      42,
-      "Saved title",
-      "Resolved",
-      "Owner",
-      "Bug",
-      "",
-      "",
-      "yesterday",
-    );
+    .run(store.source(), 42, "Saved title", "Resolved", "Owner", "Bug", "", "", "yesterday");
   let remoteReads = 0;
   const forbidden = async () => {
     remoteReads++;
@@ -851,10 +780,7 @@ test("Azure lookup requires an explicit mode choice and cannot expand the confir
           assert.equal(result.tickets[0].state, "Live state");
           assert.deepEqual(result.added, []);
         }
-        assert.equal(
-          (await call("add_local_ticket", { id: 42 })).success,
-          false,
-        );
+        assert.equal((await call("add_local_ticket", { id: 42 })).success, false);
       }
       return { data: { content: "Ответ" } };
     },
@@ -924,10 +850,7 @@ test("single local analysis reads one body; missing analysis asks and bulk get s
   assert.match(missing.body, /Запросить сведения в Azure/);
   assert.equal(reads, 1);
   assert.equal(modelCalls, 1);
-  const multiple = await agent.chat(
-    "Что думаешь о тикетах #42 и #43?",
-    context,
-  );
+  const multiple = await agent.chat("Что думаешь о тикетах #42 и #43?", context);
   assert.match(multiple.body, /Краткие локальные данные/);
   assert.equal(reads, 1);
   assert.equal(modelCalls, 2);
@@ -935,16 +858,29 @@ test("single local analysis reads one body; missing analysis asks and bulk get s
 
 test("short confirmation applies historical local metadata selection without rereading", async (t) => {
   const store = fixture(t);
-  t.mock.method(globalThis, "fetch", async () => { throw new Error("No Azure calls"); });
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("No Azure calls");
+  });
   for (const id of [42, 43])
-    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
       .run(store.source(), id, "Inside", "Active", "", "Bug", "", "", "now");
   store.say("user", "Добавь тег Inside 2 тикетам из списка", context);
-  store.say("assistant", "Добавлю локальный тег Inside 2: #42 — Inside; #43 — Inside. Выполнить?", context);
+  store.say(
+    "assistant",
+    "Добавлю локальный тег Inside 2: #42 — Inside; #43 — Inside. Выполнить?",
+    context,
+  );
   const { agent } = fakeAgent(store, async (_session, config) => {
-    const result = await config.tools.find((tool: any) => tool.name === "batch_update_tickets").handler({
-      ids: [42, 43], metadata: { tags: { mode: "add", values: ["Inside 2"] } },
-    }, {});
+    const result = await config.tools
+      .find((tool: any) => tool.name === "batch_update_tickets")
+      .handler(
+        {
+          ids: [42, 43],
+          metadata: { tags: { mode: "add", values: ["Inside 2"] } },
+        },
+        {},
+      );
     assert.equal(result.succeeded, 2);
     assert.equal(result.failed, 0);
     return { data: { content: "Тег добавлен двум тикетам." } };
@@ -955,35 +891,59 @@ test("short confirmation applies historical local metadata selection without rer
 test("Azure search proposal preserves the broader local search answer", async (t) => {
   const store = fixture(t);
   for (let id = 1; id <= 23; id++)
-    store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-      .run(store.source(), id, id === 1 ? "IBR Insight Reports" : `IBR task ${id}`, "Active", "", "Bug", "", "", "now");
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(
+        store.source(),
+        id,
+        id === 1 ? "IBR Insight Reports" : `IBR task ${id}`,
+        "Active",
+        "",
+        "Bug",
+        "",
+        "",
+        "now",
+      );
   const { agent } = fakeAgent(store, async (_session, config) => {
-    const call = (name: string, args: any) => config.tools.find((tool: any) => tool.name === name).handler(args, {});
-    assert.equal((await call("list_tickets", {search: "Insight Reports"})).total, 1);
-    assert.equal((await call("list_tickets", {search: "IBR"})).total, 23);
-    await call("request_azure_ticket_lookup", {search: "Insight Reports"});
-    return {data: {content: "По связанному коду IBR найдено 23 локальных тикета."}};
+    const call = (name: string, args: any) =>
+      config.tools.find((tool: any) => tool.name === name).handler(args, {});
+    assert.equal((await call("list_tickets", { search: "Insight Reports" })).total, 1);
+    assert.equal((await call("list_tickets", { search: "IBR" })).total, 23);
+    await call("request_azure_ticket_lookup", { search: "Insight Reports" });
+    return { data: { content: "По связанному коду IBR найдено 23 локальных тикета." } };
   });
   const result = await agent.chat("Найди тикеты Insight Reports", context);
   assert.match(result.body, /По связанному коду IBR найдено 23/);
   assert.match(result.body, /запроса Azure: 1/);
   assert.match(result.body, /Запросить сведения в Azure DevOps/);
-  const {azureLookupConsent} = await import("../server/azure-ticket-consent.js");
-  assert.deepEqual(azureLookupConsent("Только показать", [{role: "assistant", body: result.body}], store.source()), {plan: {search: "Insight Reports"}, add: false});
+  const { azureLookupConsent } = await import("../services/backend/src/azure-ticket-consent.js");
+  assert.deepEqual(
+    azureLookupConsent(
+      "Только показать",
+      [{ role: "assistant", body: result.body }],
+      store.source(),
+    ),
+    { plan: { search: "Insight Reports" }, add: false },
+  );
 });
 
 test("full tool results are exact, loaded separately and scoped to the chat", (t) => {
-  const store = fixture(t), ledger = new UsageLedger(store);
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
   const request = ledger.begin("model", context, "chat");
   const trace = ledger.toolTrace(request, "list_tickets", {}, false);
-  const result = {tickets: [{id: 42, title: "Full ticket title", notes: "Saved local note", tags: ["UI"]}], total: 1, hasMore: false};
+  const result = {
+    tickets: [{ id: 42, title: "Full ticket title", notes: "Saved local note", tags: ["UI"] }],
+    total: 1,
+    hasMore: false,
+  };
   ledger.finishToolTrace(trace, "completed", result);
   const summary = ledger.chatTools(context).requests[0].tools[0];
   assert.equal(summary.hasFullResult, 1);
   assert.equal(summary.full_result, undefined);
   assert.doesNotMatch(summary.result, /Full ticket title|Saved local note/);
-  assert.deepEqual(ledger.toolResult(trace, context), {result});
-  assert.throws(() => ledger.toolResult(trace, {client: "other", project: "other"}), /не найден/);
+  assert.deepEqual(ledger.toolResult(trace, context), { result });
+  assert.throws(() => ledger.toolResult(trace, { client: "other", project: "other" }), /не найден/);
   store.db.prepare("UPDATE llm_tool_traces SET full_result=NULL WHERE id=?").run(trace);
   assert.equal(ledger.chatTools(context).requests[0].tools[0].hasFullResult, 0);
   assert.throws(() => ledger.toolResult(trace, context), /не сохранён/);
@@ -991,38 +951,67 @@ test("full tool results are exact, loaded separately and scoped to the chat", (t
 
 test("chat resolves Azure RFT before a natural-language confirmation and batches 22 tickets", async (t) => {
   const store = fixture(t);
-  const ids = Array.from({length: 22}, (_, i) => i + 100);
-  for (const id of ids) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-    .run(store.source(), id, `Ticket ${id}`, "Resolved", "", "Bug", "", "", "now");
-  let reads = 0, writes = 0, turn = 0;
-  const {agent} = fakeAgent(store, async (_session, config) => {
-    const call = (name: string, args: any) => config.tools.find((tool: any) => tool.name === name).handler(args, {});
-    if (turn++ === 0) {
-      for (let i = 0; i < 2; i++) {
-        const result = await call("get_ticket_states", {ids, requestedState: "RFT"});
-        assert.equal(result.results.length, 22);
-        assert.equal(result.results[0].resolvedState, "Ready for Testing");
+  const ids = Array.from({ length: 22 }, (_, i) => i + 100);
+  for (const id of ids)
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(store.source(), id, `Ticket ${id}`, "Resolved", "", "Bug", "", "", "now");
+  let reads = 0,
+    writes = 0,
+    turn = 0;
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const call = (name: string, args: any) =>
+        config.tools.find((tool: any) => tool.name === name).handler(args, {});
+      if (turn++ === 0) {
+        for (let i = 0; i < 2; i++) {
+          const result = await call("get_ticket_states", { ids, requestedState: "RFT" });
+          assert.equal(result.results.length, 22);
+          assert.equal(result.results[0].resolvedState, "Ready for Testing");
+        }
+        const invalid = await call("get_ticket_states", { ids, requestedState: "Imaginary" });
+        assert.match(invalid.results[0].resolutionError, /не найден однозначно/);
+        assert.equal(writes, 0);
+        return {
+          data: {
+            content:
+              ids.map((id) => `#${id} — Ticket ${id}`).join("\n") +
+              "\nПереведу в Ready for Testing. Выполнить изменение?",
+          },
+        };
       }
-      const invalid = await call("get_ticket_states", {ids, requestedState: "Imaginary"});
-      assert.match(invalid.results[0].resolutionError, /не найден однозначно/);
-      assert.equal(writes, 0);
-      return {data: {content: ids.map(id => `#${id} — Ticket ${id}`).join("\n") + "\nПереведу в Ready for Testing. Выполнить изменение?"}};
-    }
-    const result = await call("batch_update_tickets", {operations: ids.map(id => ({action: "status", id, state: "Ready for Testing"}))});
-    assert.equal(result.succeeded, 22);
-    assert.equal(result.failed, 0);
-    return {data: {content: "Статусы подтверждены."}};
-  }, {
-    ticketStatesBatch: async (requested: number[]) => {
-      reads++; assert.deepEqual(requested, ids);
-      return {source: store.source(), results: ids.map(id => ({id, state: "Resolved", states: ["Resolved", "Ready for Testing"]}))};
+      const result = await call("batch_update_tickets", {
+        operations: ids.map((id) => ({ action: "status", id, state: "Ready for Testing" })),
+      });
+      assert.equal(result.succeeded, 22);
+      assert.equal(result.failed, 0);
+      return { data: { content: "Статусы подтверждены." } };
     },
-    changeTicketStatuses: async (changes: any[], guard: () => void) => {
-      guard(); writes++;
-      assert.deepEqual(changes, ids.map(id => ({id, state: "Ready for Testing"})));
-      return changes.map(item => ({...item, success: true, outcome: "changed"}));
+    {
+      ticketStatesBatch: async (requested: number[]) => {
+        reads++;
+        assert.deepEqual(requested, ids);
+        return {
+          source: store.source(),
+          results: ids.map((id) => ({
+            id,
+            state: "Resolved",
+            states: ["Resolved", "Ready for Testing"],
+          })),
+        };
+      },
+      changeTicketStatuses: async (changes: any[], guard: () => void) => {
+        guard();
+        writes++;
+        assert.deepEqual(
+          changes,
+          ids.map((id) => ({ id, state: "Ready for Testing" })),
+        );
+        return changes.map((item) => ({ ...item, success: true, outcome: "changed" }));
+      },
     },
-  });
+  );
   await agent.chat("Переведи тикеты с этим тегом в RFT", context);
   await agent.chat("Да, давай", context);
   assert.equal(reads, 1);
@@ -1034,24 +1023,48 @@ test("Azure status batch accepts clarified intent and confirmed link IDs without
   store.say("user", "Давай поменяем статус тикетов с тегом Inside 2", context);
   store.say("assistant", "Какой статус выставить?", context);
   store.say("user", "RFT", context);
-  store.say("assistant", "42 — First [Перейти](/tickets?id=42&source=x)\n43 — Second [Перейти](/tickets?id=43&source=x)\nПереведу в Ready for Testing. **Выполнить изменения для этих тикетов?**", context);
+  store.say(
+    "assistant",
+    "42 — First [Перейти](/tickets?id=42&source=x)\n43 — Second [Перейти](/tickets?id=43&source=x)\nПереведу в Ready for Testing. **Выполнить изменения для этих тикетов?**",
+    context,
+  );
   let writes = 0;
-  const {agent} = fakeAgent(store, async (_session, config) => {
-    const result = await config.tools.find((tool: any) => tool.name === "batch_update_tickets").handler({operations: [42, 43].map(id => ({action: "status", id, state: "Ready for Testing"}))}, {});
-    assert.equal(result.succeeded, 2);
-    assert.equal(result.failed, 0);
-    return {data: {content: "Готово"}};
-  }, {changeTicketStatuses: async (changes: any[], guard: () => void) => {
-    guard(); writes++;
-    return changes.map(item => ({...item, success: true, outcome: "changed"}));
-  }});
+  const { agent } = fakeAgent(
+    store,
+    async (_session, config) => {
+      const result = await config.tools
+        .find((tool: any) => tool.name === "batch_update_tickets")
+        .handler(
+          {
+            operations: [42, 43].map((id) => ({
+              action: "status",
+              id,
+              state: "Ready for Testing",
+            })),
+          },
+          {},
+        );
+      assert.equal(result.succeeded, 2);
+      assert.equal(result.failed, 0);
+      return { data: { content: "Готово" } };
+    },
+    {
+      changeTicketStatuses: async (changes: any[], guard: () => void) => {
+        guard();
+        writes++;
+        return changes.map((item) => ({ ...item, success: true, outcome: "changed" }));
+      },
+    },
+  );
   await agent.chat("Давай, погнали", context);
   assert.equal(writes, 1);
 });
 
 test("tool viewer scopes sessions, reports request usage and lazily returns exact arguments", (t) => {
-  const store = fixture(t), ledger = new UsageLedger(store);
-  const first = store.createChat(context), second = store.createChat(context);
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
+  const first = store.createChat(context),
+    second = store.createChat(context);
   const request = ledger.begin("model", context, "chat", undefined, first.id);
   ledger.begin("model", context, "chat", undefined, second.id);
   const args = { ids: [42], metadata: { tags: ["UI"], notes: "Exact note" } };
@@ -1068,15 +1081,23 @@ test("tool viewer scopes sessions, reports request usage and lazily returns exac
   assert.throws(() => ledger.chatTools({ ...context, client: "Other" }, first.id), /не найден/);
   store.db.prepare("UPDATE llm_tool_traces SET full_arguments=NULL WHERE id=?").run(trace);
   assert.equal(ledger.toolArguments(trace, context).full, false);
-  assert.deepEqual(ledger.toolArguments(trace, context).arguments, JSON.parse(history[0].tools[0].arguments));
+  assert.deepEqual(
+    ledger.toolArguments(trace, context).arguments,
+    JSON.parse(history[0].tools[0].arguments),
+  );
 });
 
-test("review token totals span attempts and remain separate from chat and other reviews", t => {
-  const store = fixture(t), ledger = new UsageLedger(store);
+test("review token totals span attempts and remain separate from chat and other reviews", (t) => {
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
   assert.equal(store.settings().reviewMaxTokens, 1_000_000);
   store.set("settings", { ...store.settings(), reviewMaxTokens: 1_500_000, llmMaxTokens: 1000 });
   assert.equal(store.settings().reviewMaxTokens, 1_500_000);
-  for (const [review, input, output] of [["r1", 1200, 300], ["r1", 500, 100], ["r2", 9999, 9999]] as const) {
+  for (const [review, input, output] of [
+    ["r1", 1200, 300],
+    ["r1", 500, 100],
+    ["r2", 9999, 9999],
+  ] as const) {
     const id = ledger.begin("model", context, "pr_review");
     ledger.registerReviewRequest(review, id);
     ledger.registerReviewRequest(review, id);
@@ -1087,7 +1108,7 @@ test("review token totals span attempts and remain separate from chat and other 
   assert.equal(ledger.reviewTokens("new"), 0);
 });
 
-test("review uses its independent default budget rather than the chat token threshold", async t => {
+test("review uses its independent default budget rather than the chat token threshold", async (t) => {
   const store = fixture(t);
   store.set("settings", { ...store.settings(), llmMaxTokens: 1000, reviewMaxTokens: 1500000 });
   const { agent } = fakeAgent(store, async (session) => {
@@ -1098,83 +1119,137 @@ test("review uses its independent default budget rather than the chat token thre
   assert.match(result.body, /completed above chat limit/);
 });
 
-test("review budget stops cumulative follow-ups even when each attempt is below the limit", async t => {
+test("review budget stops cumulative follow-ups even when each attempt is below the limit", async (t) => {
   const store = fixture(t);
-  const { agent } = fakeAgent(store, async session => {
+  const { agent } = fakeAgent(store, async (session) => {
     session.emit({ inputTokens: 1500, outputTokens: 200 });
     return { data: { content: "Review" } };
   });
   await agent.chat("First", context, true, { reviewId: "budget-review", maxTokens: 3000 });
-  await assert.rejects(() => agent.chat("Second", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью:.*Code Review.*Лимит токенов ревью по умолчанию/);
+  await assert.rejects(
+    () => agent.chat("Second", context, true, { reviewId: "budget-review", maxTokens: 3000 }),
+    /лимит токенов ревью:.*Code Review.*Лимит токенов ревью по умолчанию/,
+  );
   assert.equal(new UsageLedger(store).reviewTokens("budget-review"), 3400);
-  await assert.rejects(() => agent.chat("Third", context, true, { reviewId: "budget-review", maxTokens: 3000 }), /лимит токенов ревью/);
+  await assert.rejects(
+    () => agent.chat("Third", context, true, { reviewId: "budget-review", maxTokens: 3000 }),
+    /лимит токенов ревью/,
+  );
 });
 
-test("review tool limit is independent from chat and cumulative across continuations", async t => {
+test("review tool limit is independent from chat and cumulative across continuations", async (t) => {
   const store = fixture(t);
   assert.equal(store.settings().reviewMaxToolCalls, 30);
   store.set("settings", { ...store.settings(), llmMaxToolCalls: 1, reviewMaxToolCalls: 2 });
   let turn = 0;
   const { agent } = fakeAgent(store, async (_session, config) => {
     if (++turn === 1) {
-      for (let i = 0; i < 2; i++) assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "allow");
+      for (let i = 0; i < 2; i++)
+        assert.equal(
+          (await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision,
+          "allow",
+        );
       return { data: { content: "First review step" } };
     }
-    assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "deny");
+    assert.equal(
+      (await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision,
+      "deny",
+    );
     return new Promise(() => {});
   });
   await agent.chat("Review", context, true, { reviewId: "tool-limit-review" });
   assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
-  await assert.rejects(agent.chat("Continue", context, true, { reviewId: "tool-limit-review" }), /лимит вызовов инструментов на ревью/);
+  await assert.rejects(
+    agent.chat("Continue", context, true, { reviewId: "tool-limit-review" }),
+    /лимит вызовов инструментов на ревью/,
+  );
   assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
   assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
 });
 
-test("per-run review tool override is cumulative and does not change global limits", async t => {
+test("per-run review tool override is cumulative and does not change global limits", async (t) => {
   const store = fixture(t);
   assert.equal(store.settings().reviewMaxToolCalls, 30);
   store.set("settings", { ...store.settings(), llmMaxToolCalls: 1, reviewMaxToolCalls: 50 });
   let turn = 0;
   const { agent } = fakeAgent(store, async (_session, config) => {
     if (++turn === 1) {
-      for (let i = 0; i < 2; i++) assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "allow");
+      for (let i = 0; i < 2; i++)
+        assert.equal(
+          (await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision,
+          "allow",
+        );
       return { data: { content: "First review step" } };
     }
-    assert.equal((await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision, "deny");
+    assert.equal(
+      (await config.hooks.onPreToolUse({ toolName: "read_memory" })).permissionDecision,
+      "deny",
+    );
     return new Promise(() => {});
   });
   await agent.chat("Review", context, true, { reviewId: "tool-limit-review", maxToolCalls: 2 });
   assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
-  await assert.rejects(agent.chat("Continue", context, true, { reviewId: "tool-limit-review", maxToolCalls: 2 }), /лимит вызовов инструментов на ревью/);
+  await assert.rejects(
+    agent.chat("Continue", context, true, { reviewId: "tool-limit-review", maxToolCalls: 2 }),
+    /лимит вызовов инструментов на ревью/,
+  );
   assert.equal(new UsageLedger(store).reviewToolCalls("tool-limit-review"), 2);
   assert.equal(new UsageLedger(store).reviewToolCalls("another-review"), 0);
   assert.equal(store.settings().reviewMaxToolCalls, 50);
 });
 
-test("review debug retains only latest PR traces, preserves continuations and isolates chat and projects", t => {
-  const store = fixture(t), ledger = new UsageLedger(store);
-  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)").run(context.client, context.project);
+test("review debug retains only latest PR traces, preserves continuations and isolates chat and projects", (t) => {
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
+  store.db
+    .prepare(
+      "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)",
+    )
+    .run(context.client, context.project);
   const pr = { monitor: "monitor", repo: "repo", number: 1, title: "PR" };
-  const addReview = (id: string, number = 1) => store.db.prepare("INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES (?,'monitor','repo',?,?,'target','running',?)").run(id, number, id, id === "old" ? "2026-01-01" : "2026-01-02");
-  const trace = (request: string) => { const id = ledger.toolTrace(request, "code_read_file", { path: "src/a.ts", startLine: 1 }, false); ledger.finishToolTrace(id, "completed", { text: "Source code" }); return id; };
+  const addReview = (id: string, number = 1) =>
+    store.db
+      .prepare(
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at) VALUES (?,'monitor','repo',?,?,'target','running',?)",
+      )
+      .run(id, number, id, id === "old" ? "2026-01-01" : "2026-01-02");
+  const trace = (request: string) => {
+    const id = ledger.toolTrace(
+      request,
+      "code_read_file",
+      { path: "src/a.ts", startLine: 1 },
+      false,
+    );
+    ledger.finishToolTrace(id, "completed", { text: "Source code" });
+    return id;
+  };
   assert.equal(ledger.hasReviewLog(context, "monitor", "repo", 1), false);
   addReview("old");
-  const old = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("old", old); const oldTrace = trace(old);
-  const chat = ledger.begin("model", context, "chat"), chatTrace = trace(chat);
+  const old = ledger.begin("model", context, "pr_review", pr);
+  ledger.registerReviewRequest("old", old);
+  const oldTrace = trace(old);
+  const chat = ledger.begin("model", context, "chat"),
+    chatTrace = trace(chat);
   addReview("other", 2);
-  const other = ledger.begin("model", context, "pr_review", { ...pr, number: 2 }); ledger.registerReviewRequest("other", other); const otherTrace = trace(other);
+  const other = ledger.begin("model", context, "pr_review", { ...pr, number: 2 });
+  ledger.registerReviewRequest("other", other);
+  const otherTrace = trace(other);
   addReview("new");
   assert.equal(ledger.hasReviewLog(context, "monitor", "repo", 1), false);
-  const first = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("new", first); const firstTrace = trace(first);
+  const first = ledger.begin("model", context, "pr_review", pr);
+  ledger.registerReviewRequest("new", first);
+  const firstTrace = trace(first);
   ledger.record(first, "usage", { inputTokens: 100, outputTokens: 20 });
-  const second = ledger.begin("model", context, "pr_review", pr); ledger.registerReviewRequest("new", second); trace(second);
+  const second = ledger.begin("model", context, "pr_review", pr);
+  ledger.registerReviewRequest("new", second);
+  trace(second);
   assert.equal(ledger.hasReviewLog(context, "monitor", "repo", 1), true);
   assert.equal(ledger.hasReviewLog(context, "monitor", "repo", 2), false);
   assert.equal(ledger.hasReviewLog({ ...context, project: "Other" }, "monitor", "repo", 1), false);
   const debug = ledger.reviewTools(context, "monitor", "repo", 1);
   assert.equal(debug.requests.length, 2);
-  assert.equal(debug.requests.flatMap(r => r.tools).length, 2);
-  assert.equal(debug.requests.find(r => r.id === first)?.inputTokens, 100);
+  assert.equal(debug.requests.flatMap((r) => r.tools).length, 2);
+  assert.equal(debug.requests.find((r) => r.id === first)?.inputTokens, 100);
   assert.equal(ledger.toolResult(firstTrace, context, "pr_review").result.text, "Source code");
   assert.equal(ledger.toolArguments(firstTrace, context, "pr_review").arguments.path, "src/a.ts");
   assert.throws(() => ledger.toolResult(firstTrace, { ...context, project: "Other" }, "pr_review"));
@@ -1185,17 +1260,22 @@ test("review debug retains only latest PR traces, preserves continuations and is
   assert.equal(ledger.reviewTools(context, "monitor", "repo", 2).requests.length, 0);
   const lateTrace = trace(other);
   assert.throws(() => ledger.toolResult(lateTrace, context, "pr_review"));
-  assert.equal(ledger.reviewTools({ ...context, project: "Other" }, "monitor", "repo", 1).requests.length, 0);
+  assert.equal(
+    ledger.reviewTools({ ...context, project: "Other" }, "monitor", "repo", 1).requests.length,
+    0,
+  );
   assert.ok(store.db.prepare("SELECT 1 FROM llm_requests WHERE id=?").get(old));
   assert.ok(store.db.prepare("SELECT 1 FROM pr_reviews WHERE id='old'").get());
 });
 
-
-test("review exposes citations only with code permission and supplies source branch links", async t => {
+test("review exposes citations only with code permission and supplies source branch links", async (t) => {
   const store = fixture(t);
   for (const readCode of [true, false]) {
     const { agent } = fakeAgent(store, async (_session, config) => {
-      assert.equal(config.tools.some((tool: any) => tool.name === "cite_code"), readCode);
+      assert.equal(
+        config.tools.some((tool: any) => tool.name === "cite_code"),
+        readCode,
+      );
       assert.match(config.systemMessage.content, /branch=feature%2Freview/);
       assert.match(config.systemMessage.content, /batch references/);
       return { data: { content: "Review complete" } };
@@ -1204,8 +1284,9 @@ test("review exposes citations only with code permission and supplies source bra
   }
 });
 
-test("review result usage sums continuations, survives trace cleanup and handles missing reports", t => {
-  const store = fixture(t), ledger = new UsageLedger(store);
+test("review result usage sums continuations, survives trace cleanup and handles missing reports", (t) => {
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
   const first = ledger.begin("model", context, "pr_review");
   const second = ledger.begin("model", context, "pr_review");
   ledger.registerReviewRequest("review-total", first);
@@ -1213,9 +1294,24 @@ test("review result usage sums continuations, survives trace cleanup and handles
   ledger.record(first, "one", { inputTokens: 100, outputTokens: 20 });
   ledger.record(second, "two", { inputTokens: 200, outputTokens: 30 });
   ledger.clearReviewTraces();
-  assert.deepEqual(ledger.reviewUsage("review-total", second), { inputTokens: 300, outputTokens: 50, totalTokens: 350, partial: false });
-  assert.deepEqual(ledger.reviewUsage("legacy", first), { inputTokens: 100, outputTokens: 20, totalTokens: 120, partial: false });
-  assert.deepEqual(ledger.reviewUsage("missing"), { inputTokens: null, outputTokens: null, totalTokens: null, partial: true });
+  assert.deepEqual(ledger.reviewUsage("review-total", second), {
+    inputTokens: 300,
+    outputTokens: 50,
+    totalTokens: 350,
+    partial: false,
+  });
+  assert.deepEqual(ledger.reviewUsage("legacy", first), {
+    inputTokens: 100,
+    outputTokens: 20,
+    totalTokens: 120,
+    partial: false,
+  });
+  assert.deepEqual(ledger.reviewUsage("missing"), {
+    inputTokens: null,
+    outputTokens: null,
+    totalTokens: null,
+    partial: true,
+  });
   const unreported = ledger.begin("model", context, "pr_review");
   ledger.registerReviewRequest("review-total", unreported);
   assert.equal(ledger.reviewUsage("review-total").partial, true);
@@ -1225,91 +1321,177 @@ test("review result usage sums continuations, survives trace cleanup and handles
   assert.equal(ledger.reviewUsage("missing", chat).totalTokens, null);
 });
 
-test("opening ticket details preserves reopen links in the assistant response and history", async t => {
-  const store = fixture(t), events: any[] = [];
-  store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(store.source(), 42, "Example", "Active", "Dev", "Bug", "url", null, "now");
+test("opening ticket details preserves reopen links in the assistant response and history", async (t) => {
+  const store = fixture(t),
+    events: any[] = [];
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+    .run(store.source(), 42, "Example", "Active", "Dev", "Bug", "url", null, "now");
   const { agent } = fakeAgent(store, async (_session, config) => {
     const tool = config.tools.find((tool: any) => tool.name === "show_ticket_details");
     const result = await tool.handler({ ids: [42, 43] }, {});
     assert.equal(result.tickets.length, 2);
     return { data: { content: "Готово." } };
   });
-  const result = await agent.chat("Открой деталки 42 и 43", context, false, undefined, undefined, undefined, event => events.push(event));
+  const result = await agent.chat(
+    "Открой деталки 42 и 43",
+    context,
+    false,
+    undefined,
+    undefined,
+    undefined,
+    (event) => events.push(event),
+  );
   assert.match(result.body, /\[#42 — Example\]\(\/tickets\?id=42&source=/);
   assert.match(result.body, /\[#43/);
-  assert.ok(events.some(event => event.stage === "show_tickets"));
-  const saved = store.db.prepare("SELECT body FROM conversations WHERE role='assistant' ORDER BY rowid DESC LIMIT 1").get() as any;
+  assert.ok(events.some((event) => event.stage === "show_tickets"));
+  const saved = store.db
+    .prepare("SELECT body FROM conversations WHERE role='assistant' ORDER BY rowid DESC LIMIT 1")
+    .get() as any;
   assert.equal(saved.body, result.body);
 });
 
-test("review ticket citations are available with ticket evidence even without code access", async t => {
+test("review ticket citations are available with ticket evidence even without code access", async (t) => {
   const store = fixture(t);
   for (const enabled of [true, false]) {
     const { agent } = fakeAgent(store, async (_session, config) => {
       const citation = config.tools.find((tool: any) => tool.name === "cite_ticket_content");
       assert.equal(!!citation, enabled);
-      assert.equal(config.tools.some((tool: any) => tool.name === "cite_code"), false);
+      assert.equal(
+        config.tools.some((tool: any) => tool.name === "cite_code"),
+        false,
+      );
       if (enabled) {
-        const result = await citation.handler({ id: 42, section: "criteria", quote: "Show an error" }, {});
+        const result = await citation.handler(
+          { id: 42, section: "criteria", quote: "Show an error" },
+          {},
+        );
         assert.match(result.originalUrl, /id=42/);
       }
       return { data: { content: "Review" } };
     });
-    await agent.chat("Review", context, true, { readCode: false, ticketEvidence: enabled ? { source: store.source(), tickets: [{ id: 42, description: "", criteria: "Show an error", repro: "" }] } : undefined });
+    await agent.chat("Review", context, true, {
+      readCode: false,
+      ticketEvidence: enabled
+        ? {
+            source: store.source(),
+            tickets: [{ id: 42, description: "", criteria: "Show an error", repro: "" }],
+          }
+        : undefined,
+    });
   }
 });
 
-test("chat saves Analyze badge only on initial send and preserves viewed ticket reference", async t => {
+test("chat saves Analyze badge only on initial send and preserves viewed ticket reference", async (t) => {
   const store = fixture(t);
   const source = store.source();
-  const session = store.createChat(context, { id: 42, source, title: "Attached ticket", description: "Description", acceptanceCriteria: "", reproSteps: "", comments: [], attachments: [], warnings: [] } as any);
+  const session = store.createChat(context, {
+    id: 42,
+    source,
+    title: "Attached ticket",
+    description: "Description",
+    acceptanceCriteria: "",
+    reproSteps: "",
+    comments: [],
+    attachments: [],
+    warnings: [],
+  } as any);
   const { agent } = fakeAgent(store, async () => ({ data: { content: "Answer" } }));
-  await agent.chat("Explain the requirement", context, false, undefined, session.id, undefined, undefined, { id: 42, source });
-  await agent.chat("Continue", context, false, undefined, session.id, undefined, undefined, { id: 43, source });
-  const messages = store.conversationPage(context, session.id).messages.filter((message: any) => message.role === "user");
-  assert.deepEqual(messages[0].message_context.map((badge: any) => badge.kind), ["analyze_ticket"]);
+  await agent.chat(
+    "Explain the requirement",
+    context,
+    false,
+    undefined,
+    session.id,
+    undefined,
+    undefined,
+    { id: 42, source },
+  );
+  await agent.chat("Continue", context, false, undefined, session.id, undefined, undefined, {
+    id: 43,
+    source,
+  });
+  const messages = store
+    .conversationPage(context, session.id)
+    .messages.filter((message: any) => message.role === "user");
+  assert.deepEqual(
+    messages[0].message_context.map((badge: any) => badge.kind),
+    ["analyze_ticket"],
+  );
   assert.deepEqual(messages[1].message_context, [{ kind: "viewed_ticket", id: 43, source }]);
 });
 
-test("chat stores Refine badge as a snapshot even if the proposal is edited later", async t => {
+test("chat stores Refine badge as a snapshot even if the proposal is edited later", async (t) => {
   const store = fixture(t);
-  const { MemoryProposals } = await import("../server/memory-proposals.js");
+  const { MemoryProposals } = await import("../services/backend/src/memory-proposals.js");
   const proposals = new MemoryProposals(store);
-  const proposal = proposals.propose({ scope: "project", summary: "Original requirement", body: "Original body", reason: "User request" }, context);
+  const proposal = proposals.propose(
+    {
+      scope: "project",
+      summary: "Original requirement",
+      body: "Original body",
+      reason: "User request",
+    },
+    context,
+  );
   const session = store.activeChat(context);
   const { agent } = fakeAgent(store, async () => ({ data: { content: "Answer" } }));
-  await agent.chat("Make it shorter", context, false, undefined, session.id, undefined, undefined, undefined, undefined, proposal.id);
+  await agent.chat(
+    "Make it shorter",
+    context,
+    false,
+    undefined,
+    session.id,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    proposal.id,
+  );
   proposals.edit(proposal.id!, { summary: "Updated requirement", body: "Updated body" });
-  const user = store.conversationPage(context, session.id).messages.find((message: any) => message.role === "user");
-  assert.deepEqual(user.message_context, [{ kind: "refine_memory", id: proposal.id, title: "Original requirement", savedMemory: false }]);
+  const user = store
+    .conversationPage(context, session.id)
+    .messages.find((message: any) => message.role === "user");
+  assert.deepEqual(user.message_context, [
+    { kind: "refine_memory", id: proposal.id, title: "Original requirement", savedMemory: false },
+  ]);
 });
 
-test("review timeout is independent of chat timeout in SDK and watchdog", async t => {
+test("review timeout is independent of chat timeout in SDK and watchdog", async (t) => {
   const store = fixture(t);
   assert.equal(store.settings().reviewTimeoutSeconds, 600);
   store.set("settings", { ...store.settings(), llmTimeoutSeconds: 0.02, reviewTimeoutSeconds: 1 });
-  const { agent } = fakeAgent(store, async session => {
+  const { agent } = fakeAgent(store, async (session) => {
     assert.equal(session.timeout, 1000);
-    await new Promise(resolve => setTimeout(resolve, 60));
+    await new Promise((resolve) => setTimeout(resolve, 60));
     return { data: { content: "Done" } };
   });
   await agent.chat("Review", context, true);
   store.set("settings", { ...store.settings(), llmTimeoutSeconds: 1, reviewTimeoutSeconds: 0.02 });
-  const stalled = fakeAgent(store, async session => {
+  const stalled = fakeAgent(store, async (session) => {
     assert.equal(session.timeout, 20);
     return new Promise(() => {});
   });
-  await assert.rejects(stalled.agent.chat("Review", context, true), /Code Review.*Лимит времени ответа ревью/);
+  await assert.rejects(
+    stalled.agent.chat("Review", context, true),
+    /Code Review.*Лимит времени ответа ревью/,
+  );
   assert.ok(stalled.counts().aborts);
 });
 
-test("independent chat and review agents overlap and cancellation stays isolated", async t => {
+test("independent chat and review agents overlap and cancellation stays isolated", async (t) => {
   const store = fixture(t);
   let chatReady!: () => void, reviewReady!: () => void, finishChat!: (value: any) => void;
-  const enteredChat = new Promise<void>(resolve => chatReady = resolve);
-  const enteredReview = new Promise<void>(resolve => reviewReady = resolve);
-  const chat = fakeAgent(store, async () => { chatReady(); return new Promise(resolve => finishChat = resolve); });
-  const review = fakeAgent(store, async () => { reviewReady(); return new Promise(() => {}); });
+  const enteredChat = new Promise<void>((resolve) => (chatReady = resolve));
+  const enteredReview = new Promise<void>((resolve) => (reviewReady = resolve));
+  const chat = fakeAgent(store, async () => {
+    chatReady();
+    return new Promise((resolve) => (finishChat = resolve));
+  });
+  const review = fakeAgent(store, async () => {
+    reviewReady();
+    return new Promise(() => {});
+  });
   const chatWork = chat.agent.chat("hello", context);
   await enteredChat;
   const reviewWork = review.agent.chat("review", context, true);
@@ -1330,26 +1512,44 @@ test("independent chat and review agents overlap and cancellation stays isolated
   assert.notEqual(rows.find((r: any) => r.origin === "pr_review").status, "completed");
 });
 
-test("review metadata preserves individual budgets/comments and counts continuations independently of traces", t => {
-  const store = fixture(t), ledger = new UsageLedger(store);
-  store.db.prepare("INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)").run(context.client, context.project);
-  const add = (id: string, options: string) => store.db.prepare("INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,'monitor','repo',1,'head','target','completed','2026-01-01',?)").run(id, options);
-  add("one", JSON.stringify({maxToolCalls:12,reviewerComment:"Private\nComment"}));
+test("review metadata preserves individual budgets/comments and counts continuations independently of traces", (t) => {
+  const store = fixture(t),
+    ledger = new UsageLedger(store);
+  store.db
+    .prepare(
+      "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled) VALUES ('monitor',?,?,'source','azure','all',1)",
+    )
+    .run(context.client, context.project);
+  const add = (id: string, options: string) =>
+    store.db
+      .prepare(
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,created_at,options) VALUES (?,'monitor','repo',1,'head','target','completed','2026-01-01',?)",
+      )
+      .run(id, options);
+  add("one", JSON.stringify({ maxToolCalls: 12, reviewerComment: "Private\nComment" }));
   add("old", "{}");
-  const first = ledger.begin("model",context,"pr_review");
-  const second = ledger.begin("model",context,"pr_review");
-  ledger.registerReviewRequest("one",first);
-  ledger.registerReviewRequest("one",second);
-  ledger.tool(first); ledger.tool(first); ledger.tool(second);
-  const other = ledger.begin("model",context,"pr_review"); ledger.tool(other);
-  ledger.registerReviewRequest("old",other);
+  const first = ledger.begin("model", context, "pr_review");
+  const second = ledger.begin("model", context, "pr_review");
+  ledger.registerReviewRequest("one", first);
+  ledger.registerReviewRequest("one", second);
+  ledger.tool(first);
+  ledger.tool(first);
+  ledger.tool(second);
+  const other = ledger.begin("model", context, "pr_review");
+  ledger.tool(other);
+  ledger.registerReviewRequest("old", other);
   ledger.clearReviewTraces();
-  store.set("settings",{...store.settings(),reviewMaxToolCalls:99});
-  assert.deepEqual(ledger.reviewMetadata("one",second),{toolCalls:3,toolLimit:12,partial:false,reviewerComment:"Private\nComment"});
-  assert.equal(ledger.reviewMetadata("old").toolLimit,null);
-  assert.equal(ledger.reviewMetadata("old").toolCalls,1);
-  assert.equal(ledger.reviewMetadata("unknown").toolCalls,null);
-  ledger.registerReviewRequest("one","missing");
-  assert.equal(ledger.reviewMetadata("one").partial,true);
-  assert.equal(ledger.reviewMetadata("one").toolCalls,3);
+  store.set("settings", { ...store.settings(), reviewMaxToolCalls: 99 });
+  assert.deepEqual(ledger.reviewMetadata("one", second), {
+    toolCalls: 3,
+    toolLimit: 12,
+    partial: false,
+    reviewerComment: "Private\nComment",
+  });
+  assert.equal(ledger.reviewMetadata("old").toolLimit, null);
+  assert.equal(ledger.reviewMetadata("old").toolCalls, 1);
+  assert.equal(ledger.reviewMetadata("unknown").toolCalls, null);
+  ledger.registerReviewRequest("one", "missing");
+  assert.equal(ledger.reviewMetadata("one").partial, true);
+  assert.equal(ledger.reviewMetadata("one").toolCalls, 3);
 });

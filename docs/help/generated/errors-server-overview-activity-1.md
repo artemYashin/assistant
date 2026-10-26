@@ -9,4 +9,4 @@
 
 Название недоступно
 
-Источник: server/overview-activity.ts:55.
+Источник: services/backend/src/overview-activity.ts:49.

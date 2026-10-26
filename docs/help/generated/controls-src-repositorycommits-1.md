@@ -9,22 +9,22 @@
 
 Закрыть коммиты
 
-Источник: src/pages/code-repository/ui/RepositoryCommits.tsx:36.
+Источник: services/frontend/src/pages/code-repository/ui/RepositoryCommits.tsx:80.
 
 ### Элемент
 
 Обновить
 
-Источник: src/pages/code-repository/ui/RepositoryCommits.tsx:37.
+Источник: services/frontend/src/pages/code-repository/ui/RepositoryCommits.tsx:97.
 
 ### Элемент
 
 Повторить
 
-Источник: src/pages/code-repository/ui/RepositoryCommits.tsx:41.
+Источник: services/frontend/src/pages/code-repository/ui/RepositoryCommits.tsx:127.
 
 ### Элемент
 
 Ещё 50 коммитов
 
-Источник: src/pages/code-repository/ui/RepositoryCommits.tsx:43.
+Источник: services/frontend/src/pages/code-repository/ui/RepositoryCommits.tsx:134.

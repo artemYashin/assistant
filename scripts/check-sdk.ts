@@ -4,8 +4,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { CopilotClient } from "@github/copilot-sdk";
-import { Store } from "../server/store.js";
-import { sessionConfig } from "../server/agent.js";
+import { Store } from "../services/backend/src/store.js";
+import { sessionConfig } from "../services/backend/src/agent.js";
 const dir = mkdtempSync(join(tmpdir(), "orbit-sdk-check-"));
 const store = new Store(dir);
 const client = new CopilotClient({
@@ -21,12 +21,7 @@ const timeout = setTimeout(() => {
 }, 30000);
 try {
   await client.start();
-  const session = await client.createSession(
-    sessionConfig(
-      store,
-      { client: "", project: "" },
-    ),
-  );
+  const session = await client.createSession(sessionConfig(store, { client: "", project: "" }));
   const read = await session.rpc.tools.execute({
     name: "list_memories",
     arguments: {},

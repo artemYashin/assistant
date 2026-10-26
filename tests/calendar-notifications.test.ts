@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
   notificationDue,
   notificationItems,
-} from "../server/calendar-notifications.js";
-import { calendarInput, type CalendarItem } from "../server/calendar-model.js";
+} from "../services/backend/src/calendar-notifications.js";
+import { calendarInput, type CalendarItem } from "../services/backend/src/calendar-model.js";
 const ticket: CalendarItem = {
   ...calendarInput.parse({
     title: "Deadline",
@@ -25,17 +25,10 @@ test("header and delivery exclude deadlines before warning and keep overdue unti
     ["2026-10-26T15:00:00+06:00", 1],
     ["2026-10-28T15:00:00+06:00", 1],
   ] as const) {
-    assert.equal(
-      notificationItems([ticket], 1440, new Date(time)).length,
-      count,
-    );
+    assert.equal(notificationItems([ticket], 1440, new Date(time)).length, count);
   }
   assert.equal(
-    notificationItems(
-      [{ ...ticket, completed: true }],
-      1440,
-      new Date("2026-10-28"),
-    ).length,
+    notificationItems([{ ...ticket, completed: true }], 1440, new Date("2026-10-28")).length,
     0,
   );
 });
@@ -53,18 +46,9 @@ test("visible alert becomes ineligible when warning is moved into the future", (
 });
 test("ordinary reminders use individual lead, undated reminders remain eligible", () => {
   const regular = { ...ticket, ticket: undefined, warningStart: undefined };
-  assert.equal(
-    notificationDue(regular, 1440, new Date("2026-10-26T11:59:59+06:00")),
-    false,
-  );
-  assert.equal(
-    notificationDue(regular, 1440, new Date("2026-10-26T12:00:00+06:00")),
-    true,
-  );
-  assert.equal(
-    notificationDue({ ...regular, start: null }, 0, new Date("2026-10-24")),
-    true,
-  );
+  assert.equal(notificationDue(regular, 1440, new Date("2026-10-26T11:59:59+06:00")), false);
+  assert.equal(notificationDue(regular, 1440, new Date("2026-10-26T12:00:00+06:00")), true);
+  assert.equal(notificationDue({ ...regular, start: null }, 0, new Date("2026-10-24")), true);
 });
 
 test("hidden notifications exclude every kind and recurring series, not calendar-only hiding", () => {
@@ -73,7 +57,18 @@ test("hidden notifications exclude every kind and recurring series, not calendar
     ticket,
     { ...ticket, ticket: undefined, repeatDaily: true, repeatZone: "UTC" },
     { ...ticket, ticket: undefined, start: null, end: null },
-    { ...ticket, ticket: undefined, vacation: { developerId: "dev", start: "2026-10-26", end: "2026-10-29", zone: "UTC", returnDate: "2026-10-30" }, end: "2026-10-29T23:59:59Z" },
+    {
+      ...ticket,
+      ticket: undefined,
+      vacation: {
+        developerId: "dev",
+        start: "2026-10-26",
+        end: "2026-10-29",
+        zone: "UTC",
+        returnDate: "2026-10-30",
+      },
+      end: "2026-10-29T23:59:59Z",
+    },
   ]) {
     assert.equal(notificationItems([{ ...item, notificationsHidden: true }], 0, now).length, 0);
     assert.equal(notificationDue({ ...item, notificationsHidden: true }, 0, now), false);

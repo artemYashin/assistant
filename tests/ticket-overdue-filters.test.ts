@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseTicketFilters } from "../src/features/filter-tickets/index.js";
+import { parseTicketFilters } from "../services/frontend/src/features/filter-tickets/index.js";
 
 test("overdue filter persists in presets, defaults off and rejects truthy strings", () => {
   assert.equal(parseTicketFilters({}).overdueDeadline, false);

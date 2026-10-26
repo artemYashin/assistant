@@ -9,28 +9,28 @@
 
 Загрузка была прервана. Повторите подготовку ветки.
 
-Источник: server/pr-source.ts:17.
+Источник: services/backend/src/pr-source.ts:42.
 
 ### Сообщение
 
 Неизвестна source-ветка PR. Обновите список pull request.
 
-Источник: server/pr-source.ts:32.
+Источник: services/backend/src/pr-source.ts:67.
 
 ### Сообщение
 
 Source-ветка уже отличается от коммита PR. Синхронизируйте pull request и повторите ревью.
 
-Источник: server/pr-source.ts:40.
+Источник: services/backend/src/pr-source.ts:91.
 
 ### Сообщение
 
 Не удалось закрепить проверяемый коммит PR.
 
-Источник: server/pr-source.ts:42.
+Источник: services/backend/src/pr-source.ts:102.
 
 ### Сообщение
 
 Не удалось подготовить source-ветку. Повторите загрузку.
 
-Источник: server/pr-source.ts:45.
+Источник: services/backend/src/pr-source.ts:109.

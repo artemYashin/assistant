@@ -9,34 +9,34 @@
 
 Редактировать тег
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:83.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:148.
 
 ### Элемент
 
 Удалить тег {…}
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:84.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:156.
 
 ### Элемент
 
 Новый или существующий тег · Введите или выберите тег…
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:89.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:174.
 
 ### Элемент
 
 Показать существующие теги
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:111.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:229.
 
 ### Элемент
 
 Отменить ввод тега
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:115.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:241.
 
 ### Элемент
 
 Добавить тег
 
-Источник: src/features/edit-ticket/ui/LocalTagsEditor.tsx:117.
+Источник: services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx:254.

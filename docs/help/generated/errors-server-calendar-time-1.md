@@ -9,16 +9,16 @@
 
 Укажите дату и время.
 
-Источник: server/calendar-time.ts:18.
+Источник: services/backend/src/calendar-time.ts:17.
 
 ### Сообщение
 
 Некорректная дата.
 
-Источник: server/calendar-time.ts:20.
+Источник: services/backend/src/calendar-time.ts:19.
 
 ### Сообщение
 
 Такого местного времени нет в выбранном часовом поясе (переход часов). Выберите другое время.
 
-Источник: server/calendar-time.ts:32.
+Источник: services/backend/src/calendar-time.ts:30.

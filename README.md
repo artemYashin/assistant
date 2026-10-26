@@ -106,13 +106,13 @@ docker compose run --rm -p 127.0.0.1:8000:8000 voice
 
 ## Структура
 
-- `src/` — React UI, голосовой ввод, экран подтверждений и подключения.
-- `server/agent.ts` — системная политика и разрешённые инструменты Copilot.
-- `server/auth.ts` — GitHub device flow.
-- `server/connectors.ts` — Azure DevOps и извлечение тикетов.
-- `server/store.ts` — SQLite, шифрование секретов, память.
-- `server/app.ts` — аутентифицированный HTTP API.
-- `voice/` — локальная транскрипция.
+- `services/frontend/src/` — React UI, голосовой ввод, экран подтверждений и подключения.
+- `services/backend/src/agent.ts` — системная политика и разрешённые инструменты Copilot.
+- `services/backend/src/auth.ts` — GitHub device flow.
+- `services/backend/src/connectors.ts` — Azure DevOps и извлечение тикетов.
+- `services/backend/src/store.ts` — SQLite, шифрование секретов, память.
+- `services/backend/src/app.ts` — аутентифицированный HTTP API.
+- `services/voice/` — локальная транскрипция.
 - `tests/` — проверки критических сценариев.
 
 Подробный отчёт о выполненных проверках и их границах: [docs/VALIDATION.md](docs/VALIDATION.md).
@@ -182,7 +182,7 @@ Comments API некоторых Azure DevOps Server может быть недо
 
 ## Смена статуса тикета через чат
 
-Команда: **«Переведи тикет 123456 в RFT»**. Агент использует отдельный инструмент `change_ticket_status`; детерминированная процедура находится в `server/ticket-status.ts`, а Azure-адаптер — в `server/connectors.ts`. Устанавливать отдельный skill или запускать shell-скрипт не нужно.
+Команда: **«Переведи тикет 123456 в RFT»**. Агент использует отдельный инструмент `change_ticket_status`; детерминированная процедура находится в `services/backend/src/ticket-status.ts`, а Azure-адаптер — в `services/backend/src/connectors.ts`. Устанавливать отдельный skill или запускать shell-скрипт не нужно.
 
 1. Читается актуальный тикет, проверяются номер и настроенный Azure-проект.
 2. Загружаются статусы именно этого типа задачи. Используется точное имя без учёта регистра; `RFT` сопоставляется с `Ready for Testing`, если собственного статуса `RFT` нет. Неизвестные или неоднозначные названия отклоняются со списком допустимых.
@@ -333,3 +333,41 @@ Markdown-картинки в описании PR показываются вну
 ## Архитектура и разработка
 
 [ARCHITECTURE.md](ARCHITECTURE.md) описывает слои FSD, публичные интерфейсы, временные legacy-зависимости и правила сохранения пользовательских данных. Проверка границ: `npm run architecture:check` (также входит в `npm run check`).
+
+### Структура сервисов и проверки
+
+- `services/frontend/` — Vite entrypoint и React/FSD в `src/`.
+- `services/backend/src/` — HTTP API, агенты, интеграции и SQLite.
+- `services/code-browser/` — изолированный сервис чтения Git.
+- `services/voice/` — Python-сервис распознавания речи.
+- `tests/`, `scripts/`, `docs/` — общие тесты, инструменты и документация.
+
+Зависимости JavaScript и lockfile общие, команды выполняются **из корня**:
+
+```bash
+npm ci
+npm run dev
+npm run format
+npm run docs:generate
+npm run check
+npm run build
+npm test
+```
+
+`npm run lint:fix` применяет безопасные автоматические исправления ESLint.
+Prettier форматирует JS/TS/TSX, CSS, JSON, YAML, HTML и Markdown; Python и Dockerfile
+не поддерживаются этим форматтером. Generated help, базы, вложения и результаты
+сборки исключены. `npm run check` проверяет ESLint, форматирование, FSD, версии,
+актуальность справки и TypeScript. После форматирования исходников обновляйте
+справку, поскольку её fingerprints зависят от содержимого файлов.
+
+Для VS Code добавлены рекомендуемые расширения и format-on-save. GitHub Actions
+выполняет проверки, сборку и тесты. ESLint не допускает предупреждений; правила
+React Hooks и exhaustive-deps включены как ошибки. Изменяя зависимости эффектов,
+проверяйте отмену устаревших запросов, стабильность подписок и отсутствие повторных
+загрузок, а не просто дополняйте массив зависимостей.
+
+Перенос сервисов не меняет `docker-data/`, `data/`, имена Compose-сервисов,
+контейнерные пути томов, порты или команды запуска из Getting Started. Миграция
+пользовательских баз и файлов не требуется. `dist/` и `dist-server/` остаются
+выходными каталогами в корне; `npm start` запускается оттуда же.

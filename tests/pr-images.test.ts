@@ -4,18 +4,11 @@ import {
   azureImageUrl,
   descriptionImages,
   readAzureImage,
-} from "../server/pr-images.js";
+} from "../services/backend/src/pr-images.js";
 const base = "https://dev.azure.com/org";
 const attachment = `${base}/Project/_apis/wit/attachments/12345678-1234-1234-1234-123456789abc`;
 const resolve = (url: string) =>
-  azureImageUrl(
-    url,
-    base,
-    `${base}/Project/_git/repo/pullrequest/1`,
-    "repo",
-    1,
-    "7.1",
-  );
+  azureImageUrl(url, base, `${base}/Project/_git/repo/pullrequest/1`, "repo", 1, "7.1");
 test("extracts only Markdown images including references", () => {
   assert.deepEqual(
     descriptionImages(
@@ -25,18 +18,11 @@ test("extracts only Markdown images including references", () => {
   );
 });
 test("only Azure attachment endpoints from this collection are eligible for credentials", () => {
-  assert.equal(
-    resolve(attachment + "?download=true"),
-    attachment + "?api-version=7.1",
-  );
+  assert.equal(resolve(attachment + "?download=true"), attachment + "?api-version=7.1");
   assert.ok(
-    resolve(
-      "/org/Project/_apis/git/repositories/repo/pullRequests/1/attachments/test.png",
-    ),
+    resolve("/org/Project/_apis/git/repositories/repo/pullRequests/1/attachments/test.png"),
   );
-  assert.ok(
-    resolve("/org/_apis/wit/attachments/12345678-1234-1234-1234-123456789abc"),
-  );
+  assert.ok(resolve("/org/_apis/wit/attachments/12345678-1234-1234-1234-123456789abc"));
   for (const url of [
     attachment.replace("org/", "other/"),
     attachment.replace("dev.azure.com", "evil.test"),
@@ -56,10 +42,7 @@ test("image download uses GET without redirects and identifies binary content", 
   t.mock.method(globalThis, "fetch", async (_url: any, init: any) => {
     assert.equal(init.method, "GET");
     assert.equal(init.redirect, "error");
-    assert.equal(
-      init.headers.Authorization,
-      `Basic ${Buffer.from(":secret").toString("base64")}`,
-    );
+    assert.equal(init.headers.Authorization, `Basic ${Buffer.from(":secret").toString("base64")}`);
     return new Response(png, {
       headers: { "Content-Type": "application/octet-stream" },
     });

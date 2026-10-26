@@ -31,6 +31,7 @@ change. Before implementing any change, assess compatibility with saved data.
 
 When adding, changing, or removing user-visible behavior, settings, permissions,
 buttons, workflows, limits, or errors:
+
 1. Read the relevant Markdown articles in docs/help/articles and update them in the
    same change. Write Russian user instructions with exact current UI labels.
 2. Keep articles focused with short titles/summaries and useful Russian/English
@@ -50,7 +51,7 @@ buttons, workflows, limits, or errors:
 Read docs/help/README.md for the article format and coverage limitations.
 
 When adding or changing tools available to PR review, update the review tool groups
-in server/review-progress.ts. All tools share the analysis status; do not add
+in services/backend/src/review-progress.ts. All tools share the analysis status; do not add
 per-tool UI labels. Answer text switches to result preparation; further tool calls
 switch back to analysis. Track concurrent tools and clear progress on
 completion/error/stop. Keep it independent of debug-log retention and do not expose
@@ -64,7 +65,8 @@ chat and review have independent Agent instances, cancellation and session state
 # Release notes and versioning
 
 Before every push containing changes to application logic or capabilities:
-1. Update `src/releases.json` in Russian with concise user-facing release notes.
+
+1. Update `services/frontend/src/releases.json` in Russian with concise user-facing release notes.
    Explain changed behaviour, not implementation details. Include features,
    behavioural fixes, tools, defaults, limits, persistence and notification logic.
    Exclude cosmetic-only tweaks, formatting and internal refactors without a
@@ -84,6 +86,7 @@ Before every push containing changes to application logic or capabilities:
    bundled release history; it is not an updater or a database migration.
 
 # Work modes
+
 Lead always includes the full product. New features remain available in both Lead
 and Developer by default. Exclude a feature from Developer only on the user's
 explicit instruction. The currently agreed exclusions are local developers,
@@ -101,3 +104,20 @@ Keep storage keys, API routes, browser event names and data semantics unchanged
 in move-only refactors. Run npm run architecture:check (included in check).
 Preserve generated help article IDs through scripts/fsd-moves.json when moving
 indexed source files; do not turn module relocation into a user data migration.
+
+# Formatting and repository checks
+
+After every code change, run Prettier on changed supported files (or npm run
+format), then regenerate help fingerprints with npm run docs:generate if sources
+changed. Run npm run check before finishing: ESLint, Prettier check, FSD, releases,
+help and TypeScript. Never run formatting against data/, docker-data/, build
+output or generated help. Do not silence new lint errors to make checks pass.
+React Hooks and exhaustive-deps are errors; lint accepts zero warnings. Review
+effect lifecycles and cancellation rather than mechanically adding dependencies.
+Use stable callbacks for subscriptions; keep actual reactive inputs explicit.
+Never suppress Hook rules to make checks pass.
+
+Services live in services/frontend/src (FSD), services/backend/src,
+services/code-browser and services/voice. Root package/lockfile and Compose remain
+shared. Run npm and Compose from the repository root. Keep runtime data locations
+and bind mounts stable when reorganizing source files.

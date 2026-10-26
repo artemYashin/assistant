@@ -9,28 +9,28 @@
 
 raise RecognitionFailure("model_load", error) from error
 
-Источник: voice/app.py:56.
+Источник: services/voice/app.py:56.
 
 ### Сообщение
 
 raise RecognitionFailure("transcribe", error) from error
 
-Источник: voice/app.py:73.
+Источник: services/voice/app.py:73.
 
 ### Сообщение
 
 raise HTTPException(413, 'Audio must be between 1 byte and 20 MB')
 
-Источник: voice/app.py:80.
+Источник: services/voice/app.py:80.
 
 ### Сообщение
 
 raise HTTPException(422, {'code': 'audio_too_long'})
 
-Источник: voice/app.py:84.
+Источник: services/voice/app.py:84.
 
 ### Сообщение
 
 raise HTTPException(503, {'code': stage, 'reference': reference}) from None
 
-Источник: voice/app.py:95.
+Источник: services/voice/app.py:95.

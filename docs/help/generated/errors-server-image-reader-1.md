@@ -9,46 +9,46 @@
 
 Нужна прямая HTTPS-ссылка на изображение.
 
-Источник: server/image-reader.ts:24.
+Источник: services/backend/src/image-reader.ts:33.
 
 ### Сообщение
 
 Ссылки на локальные и служебные адреса не поддерживаются.
 
-Источник: server/image-reader.ts:27.
+Источник: services/backend/src/image-reader.ts:36.
 
 ### Сообщение
 
 Не удалось загрузить изображение. Нужна прямая ссылка без перенаправления и страницы авторизации.
 
-Источник: server/image-reader.ts:38.
+Источник: services/backend/src/image-reader.ts:52.
 
 ### Сообщение
 
 Изображение больше 10 МБ.
 
-Источник: server/image-reader.ts:44.
+Источник: services/backend/src/image-reader.ts:63.
 
 ### Сообщение
 
 https://orbit.invalid
 
-Источник: server/image-reader.ts:57.
+Источник: services/backend/src/image-reader.ts:84.
 
 ### Сообщение
 
 Эта ссылка Orbit не является доступным изображением.
 
-Источник: server/image-reader.ts:65.
+Источник: services/backend/src/image-reader.ts:101.
 
 ### Сообщение
 
 Подключите Azure DevOps для чтения изображения.
 
-Источник: server/image-reader.ts:73.
+Источник: services/backend/src/image-reader.ts:118.
 
 ### Сообщение
 
 Изображение пустое или больше 10 МБ.
 
-Источник: server/image-reader.ts:77.
+Источник: services/backend/src/image-reader.ts:123.

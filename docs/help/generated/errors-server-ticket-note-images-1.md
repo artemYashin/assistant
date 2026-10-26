@@ -9,76 +9,76 @@
 
 Некорректный список картинок заметки.
 
-Источник: server/ticket-note-images.ts:67.
+Источник: services/backend/src/ticket-note-images.ts:54.
 
 ### Сообщение
 
 Картинки: до 10 МБ каждая, до 30 МБ за сохранение.
 
-Источник: server/ticket-note-images.ts:75.
+Источник: services/backend/src/ticket-note-images.ts:62.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке.
 
-Источник: server/ticket-note-images.ts:89.
+Источник: services/backend/src/ticket-note-images.ts:73.
 
 ### Сообщение
 
 Заметки изменены в другом окне. Скопируйте черновик и откройте заметки заново.
 
-Источник: server/ticket-note-images.ts:91.
+Источник: services/backend/src/ticket-note-images.ts:75.
 
 ### Сообщение
 
 https://orbit.invalid/ticket-note-image/{…}
 
-Источник: server/ticket-note-images.ts:101.
+Источник: services/backend/src/ticket-note-images.ts:83.
 
 ### Сообщение
 
 Картинка отсутствует в заметке.
 
-Источник: server/ticket-note-images.ts:103.
+Источник: services/backend/src/ticket-note-images.ts:84.
 
 ### Сообщение
 
 https://orbit.invalid/ticket-note-image/
 
-Источник: server/ticket-note-images.ts:115.
+Источник: services/backend/src/ticket-note-images.ts:96.
 
 ### Сообщение
 
 Вставьте отсутствующие картинки заново.
 
-Источник: server/ticket-note-images.ts:116.
+Источник: services/backend/src/ticket-note-images.ts:97.
 
 ### Сообщение
 
 Картинка не принадлежит заметкам этого тикета.
 
-Источник: server/ticket-note-images.ts:128.
+Источник: services/backend/src/ticket-note-images.ts:107.
 
 ### Сообщение
 
 В заметках тикета может быть до 10 картинок.
 
-Источник: server/ticket-note-images.ts:135.
+Источник: services/backend/src/ticket-note-images.ts:110.
 
 ### Сообщение
 
 До 10 картинок по 10 МБ.
 
-Источник: server/ticket-note-images.ts:201.
+Источник: services/backend/src/ticket-note-images.ts:172.
 
 ### Сообщение
 
 Картинка заметки не найдена.
 
-Источник: server/ticket-note-images.ts:218.
+Источник: services/backend/src/ticket-note-images.ts:187.
 
 ### Сообщение
 
 Файл картинки заметки недоступен.
 
-Источник: server/ticket-note-images.ts:223.
+Источник: services/backend/src/ticket-note-images.ts:192.

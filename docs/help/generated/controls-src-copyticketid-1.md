@@ -9,4 +9,4 @@
 
 Не удалось скопировать. Повторите попытку / Скопировано / Скопировать номер тикета · Скопировать номер тикета {…} · /
 
-Источник: src/entities/ticket/ui/CopyTicketId.tsx:5.
+Источник: services/frontend/src/entities/ticket/ui/CopyTicketId.tsx:7.

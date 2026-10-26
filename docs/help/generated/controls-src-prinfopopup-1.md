@@ -9,4 +9,4 @@
 
 Закрыть
 
-Источник: src/shared/ui/info-popup/PrInfoPopup.tsx:75.
+Источник: services/frontend/src/shared/ui/info-popup/PrInfoPopup.tsx:75.

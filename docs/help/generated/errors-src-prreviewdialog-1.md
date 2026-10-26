@@ -9,16 +9,16 @@
 
 Не удалось подготовить локальную source-ветку. При запуске ревью с доступом к коду повторим подготовку; ревью начнётся только после её завершения.
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:30.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:41.
 
 ### Сообщение
 
 Более широкий контекст, косвенные зависимости и вспомогательные примеры. Может потребовать много токенов; общий лимит сохраняется.
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:157.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:237.
 
 ### Сообщение
 
 Например: удели внимание обработке ошибок и обратной совместимости
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:210.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:380.

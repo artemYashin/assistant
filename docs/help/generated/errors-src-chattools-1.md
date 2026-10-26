@@ -9,16 +9,16 @@
 
 Остановлен
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:6.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:12.
 
 ### Сообщение
 
 tool-viewer-error
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:45.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:162.
 
 ### Сообщение
 
 Результат недоступен
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:88.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:325.

@@ -9,22 +9,22 @@
 
 Закрыть историю коммитов
 
-Источник: src/widgets/pull-request/ui/PrCommitsDialog.tsx:83.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCommitsDialog.tsx:75.
 
 ### Элемент
 
 Обновить
 
-Источник: src/widgets/pull-request/ui/PrCommitsDialog.tsx:97.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCommitsDialog.tsx:102.
 
 ### Элемент
 
 Повторить загрузку
 
-Источник: src/widgets/pull-request/ui/PrCommitsDialog.tsx:108.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCommitsDialog.tsx:126.
 
 ### Элемент
 
 Загрузить ещё
 
-Источник: src/widgets/pull-request/ui/PrCommitsDialog.tsx:118.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCommitsDialog.tsx:133.

@@ -9,118 +9,118 @@
 
 Поиск разработчика · Найти разработчика…
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:158.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:168.
 
 ### Элемент
 
 Все ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:169.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:179.
 
 ### Элемент
 
 С активными задачами ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:176.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:182.
 
 ### Элемент
 
 Без активных задач · ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:183.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:189.
 
 ### Элемент
 
 В отпуске ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:191.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:197.
 
 ### Элемент
 
 Скоро в отпуск ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:198.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:204.
 
 ### Элемент
 
 Проект · {…} / {…} / Заказчик · {…} / Общий список локальных поручений
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:346.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:338.
 
 ### Элемент
 
 Настройки разработчика · {…} · Один период отпуска, обе даты включительно. Часовой пояс: . Действует во всех проектах, где доступен разработчик. Сохранить отпуск Заметки Сохраняются только в текущем проекте. Сохранить заметки
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:380.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:367.
 
 ### Элемент
 
 Сохранить отпуск
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:401.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:403.
 
 ### Элемент
 
 Отменить отпуск
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:415.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:412.
 
 ### Элемент
 
 Заметки · Сохраняются только в текущем проекте.
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:425.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:422.
 
 ### Элемент
 
 Заметки о разработчике для текущего проекта
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:427.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:424.
 
 ### Элемент
 
 Сохранить заметки
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:433.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:438.
 
 ### Элемент
 
 Активные ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:451.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:458.
 
 ### Элемент
 
 На проверке ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:462.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:469.
 
 ### Элемент
 
 Завершённые ·
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:472.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:479.
 
 ### Элемент
 
 Скопировать ссылку на тикет #{…} в Azure DevOps
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:491.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:495.
 
 ### Элемент
 
-# ·
+#
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:496.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:500.
 
 ### Элемент
 
 Предыдущие тикеты: {…}
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:551.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:544.
 
 ### Элемент
 
 Следующие тикеты: {…}
 
-Источник: src/pages/developers/ui/DevelopersPage.tsx:563.
+Источник: services/frontend/src/pages/developers/ui/DevelopersPage.tsx:556.

@@ -9,22 +9,22 @@
 
 Убрать вложение {…}
 
-Источник: src/features/chat-attachments/ui/ChatFiles.tsx:139.
+Источник: services/frontend/src/features/chat-attachments/ui/ChatFiles.tsx:135.
 
 ### Элемент
 
 Добавить вложения: картинки и текстовые файлы · Добавить вложения
 
-Источник: src/features/chat-attachments/ui/ChatFiles.tsx:165.
+Источник: services/frontend/src/features/chat-attachments/ui/ChatFiles.tsx:161.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/features/chat-attachments/ui/ChatFiles.tsx:270.
+Источник: services/frontend/src/features/chat-attachments/ui/ChatFiles.tsx:306.
 
 ### Элемент
 
 Понятно
 
-Источник: src/features/chat-attachments/ui/ChatFiles.tsx:274.
+Источник: services/frontend/src/features/chat-attachments/ui/ChatFiles.tsx:317.

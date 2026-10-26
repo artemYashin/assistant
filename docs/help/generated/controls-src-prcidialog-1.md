@@ -9,16 +9,16 @@
 
 Обновить
 
-Источник: src/widgets/pull-request/ui/PrCiDialog.tsx:54.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCiDialog.tsx:188.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/widgets/pull-request/ui/PrCiDialog.tsx:54.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCiDialog.tsx:196.
 
 ### Элемент
 
 · запуск ещё не создан / · #{…}
 
-Источник: src/widgets/pull-request/ui/PrCiDialog.tsx:60.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCiDialog.tsx:220.

@@ -9,4 +9,4 @@
 
 AbortError
 
-Источник: src/entities/chat/api/run.ts:22.
+Источник: services/frontend/src/entities/chat/api/run.ts:32.

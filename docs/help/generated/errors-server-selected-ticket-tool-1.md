@@ -9,4 +9,4 @@
 
 Подключение Azure изменилось
 
-Источник: server/selected-ticket-tool.ts:14.
+Источник: services/backend/src/selected-ticket-tool.ts:27.

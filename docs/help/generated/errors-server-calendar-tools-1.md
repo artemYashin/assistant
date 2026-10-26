@@ -9,28 +9,28 @@
 
 Напоминание не найдено.
 
-Источник: server/calendar-tools.ts:54.
+Источник: services/backend/src/calendar-tools.ts:53.
 
 ### Сообщение
 
 Напоминание не найдено:
 
-Источник: server/calendar-tools.ts:94.
+Источник: services/backend/src/calendar-tools.ts:90.
 
 ### Сообщение
 
 Для ежедневной серии выберите итерацию или всю серию; для обычного напоминания — reminder.
 
-Источник: server/calendar-tools.ts:96.
+Источник: services/backend/src/calendar-tools.ts:92.
 
 ### Сообщение
 
 Отдельный повтор можно завершить, но удалить можно только всю серию.
 
-Источник: server/calendar-tools.ts:101.
+Источник: services/backend/src/calendar-tools.ts:97.
 
 ### Сообщение
 
 Дата итерации применяется только к отдельному повтору.
 
-Источник: server/calendar-tools.ts:106.
+Источник: services/backend/src/calendar-tools.ts:102.

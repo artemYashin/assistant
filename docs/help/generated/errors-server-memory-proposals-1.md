@@ -9,58 +9,58 @@
 
 Выберите заказчика для этой области памяти
 
-Источник: server/memory-proposals.ts:26.
+Источник: services/backend/src/memory-proposals.ts:24.
 
 ### Сообщение
 
 Выберите проект для проектной памяти
 
-Источник: server/memory-proposals.ts:28.
+Источник: services/backend/src/memory-proposals.ts:26.
 
 ### Сообщение
 
 Предложение недоступно в выбранном заказчике и проекте
 
-Источник: server/memory-proposals.ts:82.
+Источник: services/backend/src/memory-proposals.ts:99.
 
 ### Сообщение
 
 Предложение уже обработано
 
-Источник: server/memory-proposals.ts:83.
+Источник: services/backend/src/memory-proposals.ts:100.
 
 ### Сообщение
 
 Предложение не найдено
 
-Источник: server/memory-proposals.ts:90.
+Источник: services/backend/src/memory-proposals.ts:109.
 
 ### Сообщение
 
 Предложение уже обработано. Сохранённую запись можно изменить на странице памяти.
 
-Источник: server/memory-proposals.ts:91.
+Источник: services/backend/src/memory-proposals.ts:111.
 
 ### Сообщение
 
 Предложение изменилось. Прочитайте актуальный текст перед редактированием.
 
-Источник: server/memory-proposals.ts:92.
+Источник: services/backend/src/memory-proposals.ts:116.
 
 ### Сообщение
 
 Краткое описание изменилось. Прочитайте предложение заново.
 
-Источник: server/memory-proposals.ts:93.
+Источник: services/backend/src/memory-proposals.ts:121.
 
 ### Сообщение
 
 Исходная память изменена или удалена. Создайте новое предложение на основе актуальной записи.
 
-Источник: server/memory-proposals.ts:110.
+Источник: services/backend/src/memory-proposals.ts:150.
 
 ### Сообщение
 
 Не более пяти предложений памяти за запрос
 
-Источник: server/memory-proposals.ts:144.
+Источник: services/backend/src/memory-proposals.ts:190.

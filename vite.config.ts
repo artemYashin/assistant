@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 export default defineConfig({
+  root: "services/frontend",
+  build: { outDir: "../../dist", emptyOutDir: true },
   plugins: [react()],
   resolve: {
     alias: [

@@ -9,46 +9,46 @@
 
 Экспорт памяти
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:43.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:77.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:45.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:91.
 
 ### Элемент
 
 записей
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:51.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:124.
 
 ### Элемент
 
 Один MD-файл со всеми выбранными разделами
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:54.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:146.
 
 ### Элемент
 
 Отдельный MD-файл для каждого раздела
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:55.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:155.
 
 ### Элемент
 
 Добавить названия заказчика и проекта в заголовки разделов
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:56.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:164.
 
 ### Элемент
 
 Названия в оглавлении, описания в отдельных файлах (ZIP)
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:57.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:172.
 
 ### Элемент
 
 Создаю архив… / Скачать orbit-memory.zip
 
-Источник: src/features/export-memory/ui/ExportMemory.tsx:61.
+Источник: services/frontend/src/features/export-memory/ui/ExportMemory.tsx:189.

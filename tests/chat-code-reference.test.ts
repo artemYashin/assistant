@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
-import { ChatMarkdown } from "../src/features/render-content/index.js";
-import { chatCodeBranch } from "../src/shared/config/routes/index.js";
+import { ChatMarkdown } from "../services/frontend/src/features/render-content/index.js";
+import { chatCodeBranch } from "../services/frontend/src/shared/config/routes/index.js";
 const base = "/code?client=C&project=P&branch=feature%2Ftest";
 test("code links preserve file and range and reject unsafe paths", () => {
   const link = chatCodeBranch(base + "&path=src%2Fa.ts&line=501&endLine=505")!;
@@ -15,7 +15,15 @@ test("code links preserve file and range and reject unsafe paths", () => {
   assert.equal(chatCodeBranch(base + "&path=a.ts&line=5&endLine=2"), null);
 });
 test("branch cards have copy control and code cards keep line navigation", () => {
-  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[branch](${base})\n\n[file](${base}&path=a.ts&line=2&endLine=3)` })));
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, {
+        text: `[branch](${base})\n\n[file](${base}&path=a.ts&line=2&endLine=3)`,
+      }),
+    ),
+  );
   assert.match(html, /chat-code-reference/);
   assert.match(html, /Скопировать имя ветки/);
   assert.match(html, /chat-code-link/);
@@ -25,7 +33,10 @@ test("branch cards have copy control and code cards keep line navigation", () =>
 
 test("code buttons show filename or symbol while retaining full navigation path", () => {
   const url = base + "&path=src%2Fdeep%2Fservice.ts&line=4&endLine=8";
-  const render = (href: string) => renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[ref](${href})` })));
+  const render = (href: string) =>
+    renderToStaticMarkup(
+      createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[ref](${href})` })),
+    );
   assert.match(render(url), /<span>service.ts:4/);
   const symbol = render(url + "&label=loadUser");
   assert.match(symbol, /<span>loadUser:4/);
@@ -39,14 +50,22 @@ test("file-only references retain branch and omit an artificial line label", () 
   assert.equal(link.startLine, undefined);
   assert.equal(link.branch, "feature/test");
   assert.equal(new URL(link.href, "https://orbit.local").searchParams.has("line"), false);
-  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `See [file](${url}) here.` })));
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, { text: `See [file](${url}) here.` }),
+    ),
+  );
   assert.match(html, /<span>service.ts<\/span>/);
   assert.doesNotMatch(html, /service.ts:1/);
 });
 
 test("code links retain exact commit and reject malformed revisions", () => {
   const revision = "a".repeat(40);
-  const link = chatCodeBranch("/code?client=C&project=P&branch=dev&path=a.ts&line=3&revision=" + revision);
+  const link = chatCodeBranch(
+    "/code?client=C&project=P&branch=dev&path=a.ts&line=3&revision=" + revision,
+  );
   assert.equal(link?.revision, revision);
   assert.equal(new URL(link!.href, "http://local").searchParams.get("revision"), revision);
   assert.equal(chatCodeBranch("/code?client=C&project=P&branch=dev&revision=HEAD"), null);
@@ -54,8 +73,17 @@ test("code links retain exact commit and reject malformed revisions", () => {
 
 test("historical review renderer pins legacy links and enhances optional labels", () => {
   const revision = "b".repeat(40);
-  const text = "**Критичность: высокая**\n\n**Проблема:** [file](" + base + "&path=a.ts&line=2)\n\n**Предлагаемое решение:** исправить.";
-  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text, review: true, reviewRevision: revision })));
+  const text =
+    "**Критичность: высокая**\n\n**Проблема:** [file](" +
+    base +
+    "&path=a.ts&line=2)\n\n**Предлагаемое решение:** исправить.";
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, { text, review: true, reviewRevision: revision }),
+    ),
+  );
   assert.match(html, /revision=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/);
   assert.match(html, /review-severity is-high/);
   assert.match(html, /review-label-icon/);

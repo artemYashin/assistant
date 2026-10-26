@@ -9,4 +9,4 @@
 
 Не удалось скопировать ссылку
 
-Источник: src/features/render-content/ui/ChatMarkdown.tsx:34.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:80.

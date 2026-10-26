@@ -9,28 +9,28 @@
 
 Показывать тикеты из корзины В завершённых поручениях и счётчиках разработчиков.
 
-Источник: src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:94.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:91.
 
 ### Элемент
 
 Загрузить все статусы из Azure
 
-Источник: src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:109.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:106.
 
 ### Элемент
 
 Поиск статуса · Найти статус…
 
-Источник: src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:123.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:115.
 
 ### Элемент
 
 {…}: {…}
 
-Источник: src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:151.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:143.
 
 ### Элемент
 
 Повторить
 
-Источник: src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:225.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx:220.

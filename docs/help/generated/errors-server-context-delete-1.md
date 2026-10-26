@@ -9,22 +9,22 @@
 
 Для подтверждения введите слово «удалить».
 
-Источник: server/context-delete.ts:5.
+Источник: services/backend/src/context-delete.ts:6.
 
 ### Сообщение
 
 Общий контекст нельзя удалить.
 
-Источник: server/context-delete.ts:6.
+Источник: services/backend/src/context-delete.ts:7.
 
 ### Сообщение
 
 Заказчик или проект не найден.
 
-Источник: server/context-delete.ts:8.
+Источник: services/backend/src/context-delete.ts:15.
 
 ### Сообщение
 
 Дождитесь завершения или остановите активное ревью перед удалением.
 
-Источник: server/context-delete.ts:16.
+Источник: services/backend/src/context-delete.ts:39.

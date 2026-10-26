@@ -9,118 +9,118 @@
 
 В памяти
 
-Источник: src/app/ui/OverviewBlock.tsx:104.
+Источник: services/frontend/src/app/ui/OverviewBlock.tsx:101.
 
 ### Элемент
 
 Активные
 
-Источник: src/app/ui/PullRequestsBlock.tsx:32.
+Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:28.
 
 ### Элемент
 
 Завершённые
 
-Источник: src/app/ui/PullRequestsBlock.tsx:38.
+Источник: services/frontend/src/app/ui/PullRequestsBlock.tsx:31.
 
 ### Элемент
 
 Azure тикеты
 
-Источник: src/app/ui/TicketsBlock.tsx:47.
+Источник: services/frontend/src/app/ui/TicketsBlock.tsx:47.
 
 ### Элемент
 
 Корзина
 
-Источник: src/app/ui/TicketsBlock.tsx:58.
+Источник: services/frontend/src/app/ui/TicketsBlock.tsx:56.
 
 ### Элемент
 
 Удалить все подтверждения? · Будет очищен весь список предложений памяти, включая обработанные записи всех заказчиков и проектов. Сохранённая память останется без изменений. Это действие нельзя отменить. · Удалить всё
 
-Источник: src/app/ui/ApprovalsBlock.tsx:29.
+Источник: services/frontend/src/app/ui/ApprovalsBlock.tsx:19.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: src/pages/tickets/ui/Tickets.tsx:205.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:189.
 
 ### Элемент
 
 Показать все тикеты
 
-Источник: src/pages/tickets/ui/Tickets.tsx:277.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:253.
 
 ### Элемент
 
 Поиск тикетов · Номер, название или Azure тег… / Номер, название, исполнитель…
 
-Источник: src/pages/tickets/ui/Tickets.tsx:290.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:266.
 
 ### Элемент
 
 Поиск… / Найти
 
-Источник: src/pages/tickets/ui/Tickets.tsx:304.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:278.
 
 ### Элемент
 
 Номер тикета для добавления · Номер тикета
 
-Источник: src/pages/tickets/ui/Tickets.tsx:327.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:293.
 
 ### Элемент
 
 Добавить по номеру
 
-Источник: src/pages/tickets/ui/Tickets.tsx:335.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:301.
 
 ### Элемент
 
 Синхронизировать тикеты
 
-Источник: src/pages/tickets/ui/Tickets.tsx:340.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:306.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: src/pages/tickets/ui/Tickets.tsx:370.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:336.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: src/pages/tickets/ui/Tickets.tsx:389.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:355.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: src/pages/tickets/ui/Tickets.tsx:392.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:361.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: src/pages/tickets/ui/Tickets.tsx:393.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:363.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: src/pages/tickets/ui/Tickets.tsx:395.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:369.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: src/pages/tickets/ui/Tickets.tsx:396.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:373.
 
 ### Элемент
 
 Теги · Все теги
 
-Источник: src/pages/tickets/ui/Tickets.tsx:407.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:384.

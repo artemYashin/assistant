@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff, diffFileSize } from "../src/entities/repository/index.js";
+import { splitDiff, diffFileSize } from "../services/frontend/src/entities/repository/index.js";
 
 test("side-by-side aligns replacements and preserves independent line numbers", () => {
   const patch = createTwoFilesPatch(
@@ -56,16 +56,20 @@ test("file sizes format bytes through gigabytes and preserve unknown sizes", () 
 });
 
 test("skipped files retain paths and never pretend to contain empty text changes", async () => {
-  const { displayDiffFiles } = await import("../src/entities/repository/index.js");
-  const files = displayDiffFiles([], [
-    {before:"/dev/null",after:"/large.ts",reason:"Too large"},
-    {before:"/gone.bin",after:"/dev/null",reason:"Binary"},
-    {before:"/old.ts",after:"/new.ts",reason:"Excluded"},
-  ]);
+  const { displayDiffFiles } =
+    await import("../services/frontend/src/entities/repository/index.js");
+  const files = displayDiffFiles(
+    [],
+    [
+      { before: "/dev/null", after: "/large.ts", reason: "Too large" },
+      { before: "/gone.bin", after: "/dev/null", reason: "Binary" },
+      { before: "/old.ts", after: "/new.ts", reason: "Excluded" },
+    ],
+  );
   assert.equal(files.length, 3);
   assert.equal(files[0].skipReason, "Too large");
   assert.equal(files[1].before, "/gone.bin");
   assert.equal(files[2].after, "/new.ts");
-  assert.ok(files.every(file => file.hunks.length === 0 && file.skipReason));
+  assert.ok(files.every((file) => file.hunks.length === 0 && file.skipReason));
   assert.equal(displayDiffFiles([createTwoFilesPatch("/a", "/a", "old", "new")]).length, 1);
 });

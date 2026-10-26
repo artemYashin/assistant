@@ -1,19 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  mkdtempSync,
-  rmSync,
-  existsSync,
-  writeFileSync,
-  readdirSync,
-} from "node:fs";
+import { mkdtempSync, rmSync, existsSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
-import { Store } from "../server/store.js";
-import { Notes } from "../server/notes.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { Notes } from "../services/backend/src/notes.js";
+import { createApp } from "../services/backend/src/app.js";
 const png = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5X8AAAAASUVORK5CYII=",
   "base64",
@@ -187,14 +181,8 @@ test("note routes require auth and CSRF; multipart save and private image access
     .field("uploadIds", JSON.stringify([image]))
     .attach("images", png, "image.png")
     .expect(200);
-  await request(app)
-    .get(`/api/notes/${id}/images/${image}`)
-    .set(headers)
-    .expect(401);
-  const result = await request(app)
-    .get(`/api/notes/${id}/images/${image}`)
-    .set(auth)
-    .expect(200);
+  await request(app).get(`/api/notes/${id}/images/${image}`).set(headers).expect(401);
+  const result = await request(app).get(`/api/notes/${id}/images/${image}`).set(auth).expect(200);
   assert.equal(result.headers["cache-control"], "private, no-store");
   await request(app)
     .delete("/api/notes/" + id)
@@ -206,10 +194,7 @@ test("note routes require auth and CSRF; multipart save and private image access
     .set(auth)
     .send({ revision: 2 })
     .expect(200);
-  await request(app)
-    .get(`/api/notes/${id}/images/${image}`)
-    .set(auth)
-    .expect(404);
+  await request(app).get(`/api/notes/${id}/images/${image}`).set(auth).expect(404);
 });
 
 test("first save is atomic and retry after lost response creates no duplicates", (t) => {
@@ -226,10 +211,7 @@ test("first save is atomic and retry after lost response creates no duplicates",
   assert.equal(saved.revision, 1);
   assert.deepEqual(notes.save(id, input, [png]), saved);
   assert.equal(notes.list().length, 1);
-  assert.throws(
-    () => notes.save(id, { ...input, title: "Different" }, [png]),
-    /уже создана/,
-  );
+  assert.throws(() => notes.save(id, { ...input, title: "Different" }, [png]), /уже создана/);
   const failed = randomUUID(),
     bad = randomUUID();
   assert.throws(() =>
@@ -244,10 +226,7 @@ test("first save is atomic and retry after lost response creates no duplicates",
       [png],
     ),
   );
-  assert.equal(
-    store.db.prepare("SELECT 1 FROM personal_notes WHERE id=?").get(failed),
-    undefined,
-  );
+  assert.equal(store.db.prepare("SELECT 1 FROM personal_notes WHERE id=?").get(failed), undefined);
   assert.equal(existsSync(join(notes.directory, bad)), false);
   assert.equal(notes.read(id).body, saved.body);
 });

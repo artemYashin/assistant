@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
-import { ticketBatchTool } from "../server/ticket-batch.js";
-import { AppError } from "../server/store.js";
+import { ticketBatchTool } from "../services/backend/src/ticket-batch.js";
+import { AppError } from "../services/backend/src/store.js";
 
 test("batch returns per-ticket results and never retries failed status writes", async (t) => {
   t.mock.method(console, "error", () => {});
@@ -106,21 +106,13 @@ test("batch permits 50 local operations and 25 Azure changes; rejects oversized 
       id: index + 1,
       state: "Resolved",
     }));
-  for (const operations of [
-    local(50),
-    azure(25),
-    [...local(25), ...azure(25)],
-  ]) {
+  for (const operations of [local(50), azure(25), [...local(25), ...azure(25)]]) {
     const result: any = await tool.handler!({ operations }, {} as any);
     assert.equal(result.success, true);
     assert.equal(result.succeeded, operations.length);
   }
   const before = writes;
-  for (const operations of [
-    local(51),
-    azure(26),
-    [...local(24), ...azure(26)],
-  ]) {
+  for (const operations of [local(51), azure(26), [...local(24), ...azure(26)]]) {
     await assert.rejects(async () => tool.handler!({ operations }, {} as any));
     assert.equal(writes, before);
   }
@@ -159,25 +151,36 @@ test("chat batch sends consecutive status operations together and preserves resu
 
 test("shared metadata batch sends one patch, deduplicates IDs and returns partial outcomes", async () => {
   const calls: any[] = [];
-  const tool = ticketBatchTool([defineTool("update_local_ticket_metadata", {
-    description: "test",
-    parameters: z.object({ id: z.number() }),
-    handler: async (args, invocation) => {
-      calls.push(args);
-      assert.equal((invocation as any).orbitBatchChild, true);
-      return args.id === 43 ? { success: false, error: "Missing ticket" } : { success: true, changedFields: ["tags"], azureChanged: false };
-    },
-  })]);
-  const result: any = await tool.handler!({ ids: [42, 43, 42], metadata: { tags: { mode: "add", values: ["Inside 2"] } } }, {} as any);
-  assert.deepEqual(calls, [42, 43].map(id => ({ id, tags: { mode: "add", values: ["Inside 2"] } })));
+  const tool = ticketBatchTool([
+    defineTool("update_local_ticket_metadata", {
+      description: "test",
+      parameters: z.object({ id: z.number() }),
+      handler: async (args, invocation) => {
+        calls.push(args);
+        assert.equal((invocation as any).orbitBatchChild, true);
+        return args.id === 43
+          ? { success: false, error: "Missing ticket" }
+          : { success: true, changedFields: ["tags"], azureChanged: false };
+      },
+    }),
+  ]);
+  const result: any = await tool.handler!(
+    { ids: [42, 43, 42], metadata: { tags: { mode: "add", values: ["Inside 2"] } } },
+    {} as any,
+  );
+  assert.deepEqual(
+    calls,
+    [42, 43].map((id) => ({ id, tags: { mode: "add", values: ["Inside 2"] } })),
+  );
   assert.equal(result.total, 2);
   assert.equal(result.succeeded, 1);
   assert.equal(result.failed, 1);
   assert.equal(result.results[1].error, "Missing ticket");
   const invalid: any[] = [
-    { ids: [42] }, { metadata: { priority: 1 } },
+    { ids: [42] },
+    { metadata: { priority: 1 } },
     { ids: [], metadata: { priority: 1 } },
-    { ids: Array.from({length: 51}, (_, i) => i + 1), metadata: { priority: 1 } },
+    { ids: Array.from({ length: 51 }, (_, i) => i + 1), metadata: { priority: 1 } },
     { ids: [42], metadata: {} },
     { ids: [42], metadata: { id: 43, priority: 1 } },
     { ids: [42], metadata: { priority: 1 }, operations: [{ action: "remove", id: 42 }] },
@@ -189,14 +192,20 @@ test("shared metadata batch sends one patch, deduplicates IDs and returns partia
 test("batch imports explicit IDs and reports partial failures without ticket bodies", async () => {
   const calls: number[] = [];
   const add = defineTool("add_local_ticket", {
-    description: "import", parameters: z.object({ id: z.number() }),
+    description: "import",
+    parameters: z.object({ id: z.number() }),
     handler: async ({ id }) => {
       calls.push(id);
-      return id === 43 ? { success: false, error: "Ticket belongs to another project" } : { success: true, id, azureChanged: false, body: "Must not enter batch output" };
+      return id === 43
+        ? { success: false, error: "Ticket belongs to another project" }
+        : { success: true, id, azureChanged: false, body: "Must not enter batch output" };
     },
   });
   const batch = ticketBatchTool([add]);
-  const result: any = await batch.handler!({ operations: [42, 43, 44].map(id => ({ action: "add", id })) }, {} as any);
+  const result: any = await batch.handler!(
+    { operations: [42, 43, 44].map((id) => ({ action: "add", id })) },
+    {} as any,
+  );
   assert.deepEqual(calls, [42, 43, 44]);
   assert.equal(result.succeeded, 2);
   assert.equal(result.failed, 1);

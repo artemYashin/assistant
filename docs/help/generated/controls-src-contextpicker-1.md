@@ -9,118 +9,118 @@
 
 Текущий заказчик
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:149.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:170.
 
 ### Элемент
 
 Общий контекст
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:154.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:175.
 
 ### Элемент
 
 Текущий проект
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:160.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:181.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:165.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:186.
 
 ### Элемент
 
 Настройки заказчиков и проектов · Заказчики и проекты
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:175.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:196.
 
 ### Элемент
 
 Закрыть управление контекстом
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:204.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:229.
 
 ### Элемент
 
 Заказчик в настройках
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:219.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:244.
 
 ### Элемент
 
 Проект в настройках
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:223.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:259.
 
 ### Элемент
 
 Заказчики и проекты
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:231.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:274.
 
 ### Элемент
 
 Подключение Azure
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:234.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:282.
 
 ### Элемент
 
 Репозиторий
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:237.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:290.
 
 ### Элемент
 
 Автоматический импорт
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:245.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:298.
 
 ### Элемент
 
 Разработчики
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:248.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:307.
 
 ### Элемент
 
 Заказчик
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:278.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:353.
 
 ### Элемент
 
 Проект
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:289.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:403.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:300.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:453.
 
 ### Элемент
 
 Заказчик проекта
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:303.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:475.
 
 ### Элемент
 
 Выберите заказчика
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:304.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:481.
 
 ### Элемент
 
 Название заказчика / Название проекта
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:305.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:486.
 
 ### Элемент
 
 Добавить и выбрать
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:309.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:500.

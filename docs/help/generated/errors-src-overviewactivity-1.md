@@ -9,22 +9,22 @@
 
 sync.error
 
-Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:29.
+Источник: services/frontend/src/widgets/overview-activity/ui/OverviewActivity.tsx:22.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:29.
+Источник: services/frontend/src/widgets/overview-activity/ui/OverviewActivity.tsx:22.
 
 ### Сообщение
 
 Остановлено
 
-Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:46.
+Источник: services/frontend/src/widgets/overview-activity/ui/OverviewActivity.tsx:39.
 
 ### Сообщение
 
 Название недоступно
 
-Источник: src/widgets/overview-activity/ui/OverviewActivity.tsx:109.
+Источник: services/frontend/src/widgets/overview-activity/ui/OverviewActivity.tsx:98.

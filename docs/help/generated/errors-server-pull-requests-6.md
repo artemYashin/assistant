@@ -9,28 +9,28 @@
 
 Тикет #{…}: {…}. Повторите позже или отключите чтение тикетов.
 
-Источник: server/pull-requests.ts:1742.
+Источник: services/backend/src/pull-requests.ts:1999.
 
 ### Сообщение
 
 Требования, комментарии и локальные заметки превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.
 
-Источник: server/pull-requests.ts:1764.
+Источник: services/backend/src/pull-requests.ts:2027.
 
 ### Сообщение
 
 Соберите все вопросы в один вызов
 
-Источник: server/pull-requests.ts:1836.
+Источник: services/backend/src/pull-requests.ts:2119.
 
 ### Сообщение
 
 Слишком много вопросов для выбранного режима
 
-Источник: server/pull-requests.ts:1844.
+Источник: services/backend/src/pull-requests.ts:2121.
 
 ### Сообщение
 
 Ошибка подготовки или выполнения ревью. Автоповтор отключён.
 
-Источник: server/pull-requests.ts:1882.
+Источник: services/backend/src/pull-requests.ts:2164.

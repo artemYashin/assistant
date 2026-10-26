@@ -9,118 +9,118 @@
 
 Personal Access Token · Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер.
 
-Источник: src/pages/settings/ui/Settings.tsx:225.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:293.
 
 ### Элемент
 
 Ключ сохранён · введите новый для замены / Вставьте PAT
 
-Источник: src/pages/settings/ui/Settings.tsx:229.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:297.
 
 ### Элемент
 
 Инструкции ассистенту · Предпочтения дополняют системные правила. Сохранение памяти требует подтверждения в разделе «Подтверждения».
 
-Источник: src/pages/settings/ui/Settings.tsx:251.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:337.
 
 ### Элемент
 
 Лимит времени ответа, секунд · От 15 до 600 секунд. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: src/pages/settings/ui/Settings.tsx:263.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:349.
 
 ### Элемент
 
 Максимум вызовов инструментов на запрос · Прерывает повторяющиеся циклы чтения данных или создания черновиков.
 
-Источник: src/pages/settings/ui/Settings.tsx:276.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:360.
 
 ### Элемент
 
 Порог входных + выходных токенов чата на запрос · От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: src/pages/settings/ui/Settings.tsx:288.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:372.
 
 ### Элемент
 
 Разрешить ассистенту читать и искать код репозитория
 
-Источник: src/pages/settings/ui/Settings.tsx:303.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:386.
 
 ### Элемент
 
 Ожидание подготовки Git, секунд · До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: src/pages/settings/ui/Settings.tsx:305.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:398.
 
 ### Элемент
 
 Режим нажатия
 
-Источник: src/pages/settings/ui/Settings.tsx:318.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:443.
 
 ### Элемент
 
 Одинарное нажатие
 
-Источник: src/pages/settings/ui/Settings.tsx:318.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:449.
 
 ### Элемент
 
 Двойное нажатие
 
-Источник: src/pages/settings/ui/Settings.tsx:318.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:450.
 
 ### Элемент
 
 Лимит времени ответа ревью, секунд · От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: src/pages/settings/ui/Settings.tsx:363.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:594.
 
 ### Элемент
 
 Лимит токенов ревью по умолчанию · Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.
 
-Источник: src/pages/settings/ui/Settings.tsx:366.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:606.
 
 ### Элемент
 
 Максимум вызовов инструментов на ревью · От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: src/pages/settings/ui/Settings.tsx:369.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:618.
 
 ### Элемент
 
 Предпочтительный язык памяти · Ассистент будет использовать этот язык для новых предложений. Существующие записи не переводятся; язык ответов в чате не меняется.
 
-Источник: src/pages/settings/ui/Settings.tsx:378.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:647.
 
 ### Элемент
 
 English
 
-Источник: src/pages/settings/ui/Settings.tsx:379.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:651.
 
 ### Элемент
 
 Сохранить настройки
 
-Источник: src/pages/settings/ui/Settings.tsx:388.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:666.
 
 ### Элемент
 
 Открыть авторизацию
 
-Источник: src/pages/settings/ui/LoginCode.tsx:12.
+Источник: services/frontend/src/pages/settings/ui/LoginCode.tsx:12.
 
 ### Элемент
 
 Свернуть панель чата · Свернуть чат
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:524.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:708.
 
 ### Элемент
 
 Загрузка… / Показать более ранние сообщения
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:550.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:781.

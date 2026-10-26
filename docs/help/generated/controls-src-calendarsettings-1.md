@@ -9,28 +9,28 @@
 
 Часовой пояс
 
-Источник: src/features/configure-calendar/ui/CalendarSettings.tsx:34.
+Источник: services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx:35.
 
 ### Элемент
 
 {…}: {…}
 
-Источник: src/features/configure-calendar/ui/CalendarSettings.tsx:70.
+Источник: services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx:75.
 
 ### Элемент
 
 Присылать уведомления из браузера
 
-Источник: src/features/configure-calendar/ui/CalendarSettings.tsx:107.
+Источник: services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx:106.
 
 ### Элемент
 
 Разрешение получено / Разрешить уведомления
 
-Источник: src/features/configure-calendar/ui/CalendarSettings.tsx:115.
+Источник: services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx:114.
 
 ### Элемент
 
 Общий интервал, минуты
 
-Источник: src/features/configure-calendar/ui/CalendarSettings.tsx:153.
+Источник: services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx:144.

@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import { build } from "vite";
 import { createTwoFilesPatch } from "diff";
-import { splitDiff } from "../src/entities/repository/index.js";
-import type { CodeToken } from "../src/entities/repository/highlight/index.js";
+import { splitDiff } from "../services/frontend/src/entities/repository/index.js";
+import type { CodeToken } from "../services/frontend/src/entities/repository/highlight/index.js";
 
 test("production highlight workers initialize without DOM and highlight TS/TSX", async () => {
   const result = await build({
@@ -14,16 +14,12 @@ test("production highlight workers initialize without DOM and highlight TS/TSX",
     build: {
       write: false,
       rollupOptions: {
-        input: fileURLToPath(
-          new URL("./fixtures/highlight-workers.ts", import.meta.url),
-        ),
+        input: fileURLToPath(new URL("./fixtures/highlight-workers.ts", import.meta.url)),
       },
     },
   });
   assert.ok(!("on" in result));
-  const outputs = (Array.isArray(result) ? result : [result]).flatMap(
-    (entry) => entry.output,
-  );
+  const outputs = (Array.isArray(result) ? result : [result]).flatMap((entry) => entry.output);
   const assets = outputs.filter((entry) => entry.fileName.includes(".worker-"));
   assert.equal(assets.length, 3);
   for (const asset of assets) {
@@ -46,28 +42,17 @@ test("production highlight workers initialize without DOM and highlight TS/TSX",
           : "const count: number = 2;";
       let lines: CodeToken[][];
       if (asset.fileName.startsWith("assets/diff-highlight.")) {
-        const [file] = splitDiff([
-          createTwoFilesPatch("/a", "/a", "", code + "\n"),
-        ]);
+        const [file] = splitDiff([createTwoFilesPatch("/a", "/a", "", code + "\n")]);
         scope.onmessage({ data: { file, language } });
-        lines = Object.values(
-          (response as { right: Record<number, CodeToken[]> }).right,
-        );
-      } else if (
-        asset.fileName.startsWith("assets/repository-search-highlight.")
-      ) {
+        lines = Object.values((response as { right: Record<number, CodeToken[]> }).right);
+      } else if (asset.fileName.startsWith("assets/repository-search-highlight.")) {
         scope.onmessage({ data: [{ code, language }] });
         lines = (response as CodeToken[][][])[0];
       } else {
         scope.onmessage({ data: { code, language } });
         lines = response as CodeToken[][];
       }
-      assert.equal(
-        lines
-          .map((line) => line.map((token) => token.text).join(""))
-          .join("\n"),
-        code,
-      );
+      assert.equal(lines.map((line) => line.map((token) => token.text).join("")).join("\n"), code);
       assert.ok(
         lines.flat().some((token) => token.className.includes("hljs-keyword")),
         asset.fileName,

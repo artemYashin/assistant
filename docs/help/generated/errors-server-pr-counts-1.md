@@ -9,22 +9,22 @@
 
 Azure не вернул список коммитов
 
-Источник: server/pr-counts.ts:7.
+Источник: services/backend/src/pr-counts.ts:14.
 
 ### Сообщение
 
 Azure повторил страницу коммитов
 
-Источник: server/pr-counts.ts:10.
+Источник: services/backend/src/pr-counts.ts:17.
 
 ### Сообщение
 
 Azure не вернул стабильный список изменений
 
-Источник: server/pr-counts.ts:20.
+Источник: services/backend/src/pr-counts.ts:35.
 
 ### Сообщение
 
 Azure не вернул следующую страницу изменений
 
-Источник: server/pr-counts.ts:25.
+Источник: services/backend/src/pr-counts.ts:42.

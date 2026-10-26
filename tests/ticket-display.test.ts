@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { wantsTicketDetails } from "../server/ticket-display.js";
+import { wantsTicketDetails } from "../services/backend/src/ticket-display.js";
 
 test("full ticket display requires an explicit request, not a list or status command", () => {
   for (const prompt of [
@@ -23,10 +23,7 @@ test("full ticket display requires an explicit request, not a list or status com
     assert.ok(!wantsTicketDetails(prompt), prompt);
 });
 
-import {
-  deepReadConsent,
-  DEEP_READ_WARNING,
-} from "../server/ticket-display.js";
+import { deepReadConsent, DEEP_READ_WARNING } from "../services/backend/src/ticket-display.js";
 
 test("deep read consent requires a separate yes after the actual token warning", () => {
   const request = "Проведи глубокий анализ тикетов #42 и #43";
@@ -36,16 +33,20 @@ test("deep read consent requires a separate yes after the actual token warning",
     { role: "user", body: request },
     { role: "assistant", body: DEEP_READ_WARNING },
   ];
-  for (const reply of ["Да", "да, давай", "Продолжай", "yes", "Давай, погнали", "Да похуй", "пофиг, читай", "окей"]) {
+  for (const reply of [
+    "Да",
+    "да, давай",
+    "Продолжай",
+    "yes",
+    "Давай, погнали",
+    "Да похуй",
+    "пофиг, читай",
+    "окей",
+  ]) {
     assert.equal(deepReadConsent(reply, history).confirmed, true);
     assert.equal(deepReadConsent(reply, history).request, request);
   }
-  for (const reply of [
-    "Нет",
-    "Не надо",
-    "Да, но другие тикеты",
-    "Добавь тег UI",
-  ])
+  for (const reply of ["Нет", "Не надо", "Да, но другие тикеты", "Добавь тег UI"])
     assert.equal(deepReadConsent(reply, history).confirmed, false);
   assert.equal(
     deepReadConsent("Да", [
@@ -71,24 +72,19 @@ test("deep read consent requires a separate yes after the actual token warning",
   );
   // Current checkbox selection cannot silently expand the original request.
   assert.equal(
-    deepReadConsent(
-      "Да\n\nВыбранные пользователем тикеты в таблице: #99",
-      history,
-    ).request,
+    deepReadConsent("Да\n\nВыбранные пользователем тикеты в таблице: #99", history).request,
     request,
   );
 });
 
-import { singleTicketTarget } from "../server/ticket-display.js";
+import { singleTicketTarget } from "../services/backend/src/ticket-display.js";
 test("single-ticket exception excludes counts and multi-ticket selections", () => {
   assert.equal(singleTicketTarget("Что думаешь о тикете #42?"), 42);
   assert.equal(singleTicketTarget("Покажи описание тикета 42"), 42);
   assert.equal(singleTicketTarget("Покажи описание #42 и 43"), undefined);
   assert.equal(singleTicketTarget("Проанализируй все 23 тикета"), undefined);
   assert.equal(
-    singleTicketTarget(
-      "Проанализируй все тикеты\n\nВыбранные пользователем тикеты в таблице: #42",
-    ),
+    singleTicketTarget("Проанализируй все тикеты\n\nВыбранные пользователем тикеты в таблице: #42"),
     undefined,
   );
   assert.equal(
@@ -106,20 +102,26 @@ test("single-ticket exception excludes counts and multi-ticket selections", () =
   );
 });
 
-
 test("token warning may be phrased conversationally", () => {
   const history = [
     { role: "user", body: "Проведи глубокий анализ тикетов #42 и #43" },
     { role: "assistant", body: "Чтение описаний может потратить много токенов. Продолжить?" },
   ];
   assert.equal(deepReadConsent("Да похуй", history).confirmed, true);
-  for (const reply of ["Нет, не читай", "Да, но другие тикеты", "А сколько токенов?", "Не продолжай"])
+  for (const reply of [
+    "Нет, не читай",
+    "Да, но другие тикеты",
+    "А сколько токенов?",
+    "Не продолжай",
+  ])
     assert.equal(deepReadConsent(reply, history).confirmed, false);
 });
 
-
 test("cached description search does not require full-read consent", async () => {
-  const { asksCachedContentSearch } = await import("../server/ticket-display.js");
+  const { asksCachedContentSearch } = await import("../services/backend/src/ticket-display.js");
   assert.equal(asksCachedContentSearch("Найди в описаниях слово протокол"), true);
-  assert.equal(asksCachedContentSearch("Проведи глубокий анализ и найди в описаниях ошибки"), false);
+  assert.equal(
+    asksCachedContentSearch("Проведи глубокий анализ и найди в описаниях ошибки"),
+    false,
+  );
 });

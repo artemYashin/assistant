@@ -13,5 +13,5 @@
     "types": ["node", "react", "react-dom"],
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["server", "src", "tests"]
+  "include": ["services/backend/src", "services/frontend/src", "tests"]
 }

@@ -9,16 +9,16 @@
 
 Например: удели внимание обработке ошибок и обратной совместимости
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:202.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:372.
 
 ### Элемент
 
 Отмена
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:223.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:390.
 
 ### Элемент
 
 Запускаю… / Запустить ревью
 
-Источник: src/widgets/pull-request/ui/PrReviewDialog.tsx:231.
+Источник: services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx:393.

@@ -9,22 +9,22 @@
 
 Экспорт закрыт. Сначала откройте окно экспорта.
 
-Источник: server/ticket-export-tool.ts:42.
+Источник: services/backend/src/ticket-export-tool.ts:55.
 
 ### Сообщение
 
 Для открытия используйте ids, для редактирования — addIds и removeIds.
 
-Источник: server/ticket-export-tool.ts:44.
+Источник: services/backend/src/ticket-export-tool.ts:57.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/ticket-export-tool.ts:48.
+Источник: services/backend/src/ticket-export-tool.ts:63.
 
 ### Сообщение
 
 Открытие экспорта требует подключённого интерфейса чата
 
-Источник: server/ticket-export-tool.ts:50.
+Источник: services/backend/src/ticket-export-tool.ts:64.

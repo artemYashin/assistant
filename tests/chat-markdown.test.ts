@@ -2,14 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChatMarkdown } from "../src/features/render-content/index.js";
+import { ChatMarkdown } from "../services/frontend/src/features/render-content/index.js";
 
-const render = (text: string) =>
-  renderToStaticMarkup(createElement(ChatMarkdown, { text }));
+const render = (text: string) => renderToStaticMarkup(createElement(ChatMarkdown, { text }));
 
 test("chat renders emphasis, lists, code, quotes and GFM tables", () => {
   const html = render(
-    "**Bold** and *italic* and ***both***\n\n- First\n- Second\n\n> Quote\n\n\`\`\`js\nconst x = 1;\n\`\`\`\n\n| A | B |\n| - | - |\n| 1 | 2 |",
+    "**Bold** and *italic* and ***both***\n\n- First\n- Second\n\n> Quote\n\n```js\nconst x = 1;\n```\n\n| A | B |\n| - | - |\n| 1 | 2 |",
   );
   assert.match(html, /<strong>Bold<\/strong>/);
   assert.match(html, /<em>italic<\/em>/);
@@ -58,10 +57,12 @@ test("ticket navigation is an internal router link and retains its Azure source"
 });
 
 test("Azure references open locally only for the current source and include copy actions", () => {
-  const html = renderToStaticMarkup(createElement(ChatMarkdown, {
-    azureSource: "https://dev.azure.com/org|Project",
-    text: "[Ticket](https://dev.azure.com/org/Project/_workitems/edit/42) [Other](https://dev.azure.com/other/Project/_workitems/edit/42)",
-  }));
+  const html = renderToStaticMarkup(
+    createElement(ChatMarkdown, {
+      azureSource: "https://dev.azure.com/org|Project",
+      text: "[Ticket](https://dev.azure.com/org/Project/_workitems/edit/42) [Other](https://dev.azure.com/other/Project/_workitems/edit/42)",
+    }),
+  );
   assert.match(html, /href="\/tickets\?id=42&amp;source=/);
   assert.match(html, /href="https:\/\/dev.azure.com\/other\/Project\/_workitems\/edit\/42"/);
   assert.equal((html.match(/class="chat-link-copy"/g) || []).length, 2);
@@ -69,8 +70,22 @@ test("Azure references open locally only for the current source and include copy
 
 test("PR cards render compact metadata and source-qualified navigation", async () => {
   const { MemoryRouter } = await import("react-router-dom");
-  const params = new URLSearchParams({ card: "pr", monitor: "team", repo: "repo", number: "42", title: "Fix layout", author: "Alex", createdAt: "2026-10-22T10:00:00Z" });
-  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[PR](/pull-requests?${params})` })));
+  const params = new URLSearchParams({
+    card: "pr",
+    monitor: "team",
+    repo: "repo",
+    number: "42",
+    title: "Fix layout",
+    author: "Alex",
+    createdAt: "2026-10-22T10:00:00Z",
+  });
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, { text: `[PR](/pull-requests?${params})` }),
+    ),
+  );
   assert.match(html, /class="chat-pr-card"/);
   assert.match(html, /Fix layout/);
   assert.match(html, /Alex/);
@@ -81,8 +96,18 @@ test("PR cards render compact metadata and source-qualified navigation", async (
 
 test("branch links render navigation with copy-name action", async () => {
   const { MemoryRouter } = await import("react-router-dom");
-  const params = new URLSearchParams({ client: "Client", project: "Project", branch: "feature/a&b" });
-  const html = renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(ChatMarkdown, { text: `[branch](/code?${params})` })));
+  const params = new URLSearchParams({
+    client: "Client",
+    project: "Project",
+    branch: "feature/a&b",
+  });
+  const html = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(ChatMarkdown, { text: `[branch](/code?${params})` }),
+    ),
+  );
   assert.match(html, /chat-branch-link/);
   assert.match(html, /feature\/a&amp;b/);
   assert.match(html, /Скопировать имя ветки/);
@@ -98,12 +123,12 @@ test("code snippets render copy control, language and line numbers", () => {
   assert.match(html, /value\+\+;/);
 });
 
- test("citation cards show a compact ticket badge beside the quote icon", () => {
-  const url="/tickets?id=42&source=azure%7Cproject&section=description&quote=Requirement";
-  const html=render(`> Requirement\n\n[Source](${url})`);
-  assert.match(html,/class="chat-quote-heading"/);
-  assert.match(html,/class="chat-quote-ticket"[^>]*>#[0-9]+<\/button>/);
-  assert.match(html,/Открыть тикет #42/);
-  assert.match(html,/Показать в тикете/);
-  assert.doesNotMatch(render("> Ordinary quote"),/class="chat-quote-ticket"/);
- });
+test("citation cards show a compact ticket badge beside the quote icon", () => {
+  const url = "/tickets?id=42&source=azure%7Cproject&section=description&quote=Requirement";
+  const html = render(`> Requirement\n\n[Source](${url})`);
+  assert.match(html, /class="chat-quote-heading"/);
+  assert.match(html, /class="chat-quote-ticket"[^>]*>#[0-9]+<\/button>/);
+  assert.match(html, /Открыть тикет #42/);
+  assert.match(html, /Показать в тикете/);
+  assert.doesNotMatch(render("> Ordinary quote"), /class="chat-quote-ticket"/);
+});

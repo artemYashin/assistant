@@ -9,88 +9,88 @@
 
 Git
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:134.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:128.
 
 ### Элемент
 
 Pull request
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:135.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:132.
 
 ### Элемент
 
 AI review
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:136.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:136.
 
 ### Элемент
 
 Git-репозиторий
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:139.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:143.
 
 ### Элемент
 
 Точное имя или ID репозитория
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:141.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:145.
 
 ### Элемент
 
 Основная ветка для ассистента
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:158.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:165.
 
 ### Элемент
 
 По умолчанию — основная ветка репозитория
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:160.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:170.
 
 ### Элемент
 
 Глубина истории Git, коммитов
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:163.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:180.
 
 ### Элемент
 
 Частота синхронизации Git, минуты
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:168.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:201.
 
 ### Элемент
 
 Тайм-аут Git, минуты
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:174.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:220.
 
 ### Элемент
 
 Исключить из ревью и View Diff (один путь или шаблон на строку)
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:181.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:238.
 
 ### Элемент
 
 src/api/generated/ src/api/client.ts **/*.generated.ts
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:183.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:240.
 
 ### Элемент
 
 Общий лимит diff для ревью и просмотра (символы)
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:200.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:257.
 
 ### Элемент
 
 Синхронизировать PR Обновлять активные pull request этого репозитория при синхронизации.
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:218.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:277.
 
 ### Элемент
 
 Все активные PR Импортировать независимо от ревьюеров и автора. Снимите галочку, чтобы выбрать людей ниже.
 
-Источник: src/widgets/context-settings/ui/ProjectRepository.tsx:222.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:288.

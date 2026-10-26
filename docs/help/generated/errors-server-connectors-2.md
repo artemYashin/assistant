@@ -9,118 +9,118 @@
 
 Тикет относится к другому проекту Azure
 
-Источник: server/connectors.ts:681.
+Источник: services/backend/src/connectors.ts:738.
 
 ### Сообщение
 
 Azure не вернул ревизию тикета
 
-Источник: server/connectors.ts:686.
+Источник: services/backend/src/connectors.ts:743.
 
 ### Сообщение
 
 Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.
 
-Источник: server/connectors.ts:714.
+Источник: services/backend/src/connectors.ts:771.
 
 ### Сообщение
 
 Изменение исполнителя не подтверждено. {…}
 
-Источник: server/connectors.ts:728.
+Источник: services/backend/src/connectors.ts:784.
 
 ### Сообщение
 
 Azure вернул другого исполнителя; проверьте права и правила проекта.
 
-Источник: server/connectors.ts:730.
+Источник: services/backend/src/connectors.ts:786.
 
 ### Сообщение
 
 Azure не вернул типы задач
 
-Источник: server/connectors.ts:751.
+Источник: services/backend/src/connectors.ts:812.
 
 ### Сообщение
 
 Номер или проект тикета не соответствует запросу
 
-Источник: server/connectors.ts:785.
+Источник: services/backend/src/connectors.ts:848.
 
 ### Сообщение
 
 Тикет относится к другому проекту Azure DevOps
 
-Источник: server/connectors.ts:863.
+Источник: services/backend/src/connectors.ts:976.
 
 ### Сообщение
 
 Некорректный ответ Comments API
 
-Источник: server/connectors.ts:882.
+Источник: services/backend/src/connectors.ts:993.
 
 ### Сообщение
 
 Комментарии загружены не полностью: достигнут защитный лимит
 
-Источник: server/connectors.ts:890.
+Источник: services/backend/src/connectors.ts:997.
 
 ### Сообщение
 
 Комментарии недоступны: проверьте разрешения и поддержку Comments API на вашем Azure Server
 
-Источник: server/connectors.ts:898.
+Источник: services/backend/src/connectors.ts:1004.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: server/connectors.ts:980.
+Источник: services/backend/src/connectors.ts:1083.
 
 ### Сообщение
 
 Изображение изменилось. Добавьте его заново.
 
-Источник: server/connectors.ts:986.
+Источник: services/backend/src/connectors.ts:1090.
 
 ### Сообщение
 
 Azure не вернул ссылку на изображение. Повторите загрузку.
 
-Источник: server/connectors.ts:995.
+Источник: services/backend/src/connectors.ts:1110.
 
 ### Сообщение
 
 Комментарий должен содержать от 1 до 10000 символов
 
-Источник: server/connectors.ts:1013.
+Источник: services/backend/src/connectors.ts:1129.
 
 ### Сообщение
 
 Черновик изменился. Повторите отправку с новым идентификатором.
 
-Источник: server/connectors.ts:1021.
+Источник: services/backend/src/connectors.ts:1141.
 
 ### Сообщение
 
 Не найдена загруженная картинка. Добавьте её заново.
 
-Источник: server/connectors.ts:1026.
+Источник: services/backend/src/connectors.ts:1149.
 
 ### Сообщение
 
 Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.
 
-Источник: server/connectors.ts:1056.
+Источник: services/backend/src/connectors.ts:1174.
 
 ### Сообщение
 
 Карточка не найдена
 
-Источник: server/connectors.ts:1094.
+Источник: services/backend/src/connectors.ts:1216.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: server/connectors.ts:1100.
+Источник: services/backend/src/connectors.ts:1222.

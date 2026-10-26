@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ticketsCsv } from "../src/features/export-tickets/index.js";
+import { ticketsCsv } from "../services/frontend/src/features/export-tickets/index.js";
 test("CSV preserves selected order and escapes quotes, delimiters, lines and formulas", () => {
   const csv = ticketsCsv([
     {
@@ -20,11 +20,7 @@ test("CSV preserves selected order and escapes quotes, delimiters, lines and for
       '"42";"Ошибка; ""текст""\nследующая строка";"Bug";"Active";"2";"UI; API";"Customer; Backend"\r\n',
     ),
   );
-  assert.ok(
-    csv.includes(
-      '"7";"\'=HYPERLINK(""url"")";"";"Ready for Development";"1";"";""\r\n',
-    ),
-  );
+  assert.ok(csv.includes('"7";"\'=HYPERLINK(""url"")";"";"Ready for Development";"1";"";""\r\n'));
   assert.ok(csv.indexOf('"42"') < csv.indexOf('"7"'));
 });
 
@@ -40,10 +36,7 @@ test("CSV exports only chosen columns with English headers and all local owners"
     ],
     ["developers", "id"],
   );
-  assert.equal(
-    csv,
-    '\uFEFF"Development Owners";"ID"\r\n"Ann; Smith; Bob";"5"\r\n',
-  );
+  assert.equal(csv, '\uFEFF"Development Owners";"ID"\r\n"Ann; Smith; Bob";"5"\r\n');
   assert.ok(!csv.includes("Private"));
   assert.throws(() => ticketsCsv([], []));
 });

@@ -9,22 +9,22 @@
 
 Загрузка… / Реимпортировать статусы
 
-Источник: src/widgets/context-settings/ui/TicketImportSettings.tsx:55.
+Источник: services/frontend/src/widgets/context-settings/ui/TicketImportSettings.tsx:65.
 
 ### Элемент
 
 Цвет {…} {…}
 
-Источник: src/widgets/context-settings/ui/TicketImportSettings.tsx:118.
+Источник: services/frontend/src/widgets/context-settings/ui/TicketImportSettings.tsx:139.
 
 ### Элемент
 
 Вернуть стандартный цвет · Сбросить цвет {…} · ↺
 
-Источник: src/widgets/context-settings/ui/TicketImportSettings.tsx:130.
+Источник: services/frontend/src/widgets/context-settings/ui/TicketImportSettings.tsx:151.
 
 ### Элемент
 
 · Включить автоматический импорт
 
-Источник: src/widgets/context-settings/ui/TicketImportSettings.tsx:153.
+Источник: services/frontend/src/widgets/context-settings/ui/TicketImportSettings.tsx:175.

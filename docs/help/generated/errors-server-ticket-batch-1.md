@@ -9,10 +9,10 @@
 
 Пакет остановлен; операция не выполнялась
 
-Источник: server/ticket-batch.ts:85.
+Источник: services/backend/src/ticket-batch.ts:92.
 
 ### Сообщение
 
 Операция недоступна в текущем запросе
 
-Источник: server/ticket-batch.ts:145.
+Источник: services/backend/src/ticket-batch.ts:146.

@@ -9,22 +9,22 @@
 
 Код истёк. Запустите вход заново.
 
-Источник: src/pages/settings/ui/LoginCode.tsx:33.
+Источник: services/frontend/src/pages/settings/ui/LoginCode.tsx:29.
 
 ### Сообщение
 
 Дождитесь завершения текущего ответа или записи голоса, затем начните анализ.
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:188.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:310.
 
 ### Сообщение
 
 Контекст проекта изменился. Чат сохранён в истории исходного проекта.
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:211.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:331.
 
 ### Сообщение
 
 Последний отчёт SDK · {…} · {…}. Заполненность контекста, включая сообщения, инструкции и инструменты; не лимит подписки. После смены модели обновится по новому отчёту.
 
-Источник: src/widgets/assistant/ui/Assistant.tsx:538.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:734.

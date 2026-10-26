@@ -9,22 +9,22 @@
 
 Отменить запись и отправку · Отменить · Esc
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:219.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:394.
 
 ### Элемент
 
 Отменить короткую запись / Вставить / Отправить
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:228.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:447.
 
 ### Элемент
 
 Понятно
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:229.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:454.
 
 ### Элемент
 
 Попробовать снова
 
-Источник: src/features/voice-input/ui/VoiceShortcut.tsx:230.
+Источник: services/frontend/src/features/voice-input/ui/VoiceShortcut.tsx:459.

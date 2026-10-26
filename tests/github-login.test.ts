@@ -1,17 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-  existsSync,
-  readFileSync,
-} from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { IntegrationsAuth } from "../server/auth.js";
-import { deviceCode, githubLogin } from "../server/github-login.js";
+import { Store } from "../services/backend/src/store.js";
+import { IntegrationsAuth } from "../services/backend/src/auth.js";
+import { deviceCode, githubLogin } from "../services/backend/src/github-login.js";
 test("CLI device login returns code and stores token without exposing it in status", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-gh-auth-"));
   const store = new Store(dir);

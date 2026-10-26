@@ -9,58 +9,58 @@
 
 Проект должен принадлежать заказчику
 
-Источник: server/local-developers.ts:32.
+Источник: services/backend/src/local-developers.ts:36.
 
 ### Сообщение
 
 Разработчик не найден
 
-Источник: server/local-developers.ts:57.
+Источник: services/backend/src/local-developers.ts:59.
 
 ### Сообщение
 
 Имя уже есть в этом списке
 
-Источник: server/local-developers.ts:65.
+Источник: services/backend/src/local-developers.ts:68.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите список тикетов.
 
-Источник: server/local-developers.ts:93.
+Источник: services/backend/src/local-developers.ts:87.
 
 ### Сообщение
 
 Сначала добавьте тикет в локальный трекер
 
-Источник: server/local-developers.ts:98.
+Источник: services/backend/src/local-developers.ts:89.
 
 ### Сообщение
 
 Разработчик недоступен в этом контексте. Обновите список.
 
-Источник: server/local-developers.ts:103.
+Источник: services/backend/src/local-developers.ts:92.
 
 ### Сообщение
 
 Нужна явная команда с именами разработчиков и тикетом из сообщения или инструментов текущего запроса
 
-Источник: server/local-developers.ts:191.
+Источник: services/backend/src/local-developers.ts:193.
 
 ### Сообщение
 
 Назовите точные имена изменяемых исполнителей из локального списка
 
-Источник: server/local-developers.ts:219.
+Источник: services/backend/src/local-developers.ts:216.
 
 ### Сообщение
 
 Одно изменение поручения на тикет за сообщение
 
-Источник: server/local-developers.ts:225.
+Источник: services/backend/src/local-developers.ts:222.
 
 ### Сообщение
 
 Разработчик недоступен в текущем проекте.
 
-Источник: server/local-developers.ts:248.
+Источник: services/backend/src/local-developers.ts:243.

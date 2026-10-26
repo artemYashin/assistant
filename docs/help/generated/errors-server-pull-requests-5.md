@@ -9,118 +9,118 @@
 
 Достигнут лимит diff {…} символов; оставшиеся файлы не проверены.
 
-Источник: server/pull-requests.ts:1443.
+Источник: services/backend/src/pull-requests.ts:1671.
 
 ### Сообщение
 
 Размер diff превышает лимит одного файла: {…} из {…} символов.
 
-Источник: server/pull-requests.ts:1474.
+Источник: services/backend/src/pull-requests.ts:1701.
 
 ### Сообщение
 
 {…}: diff {…} символов превышает лимит одного файла {…}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.
 
-Источник: server/pull-requests.ts:1476.
+Источник: services/backend/src/pull-requests.ts:1704.
 
 ### Сообщение
 
 Недостаточно общего бюджета diff: требуется {…}, осталось {…} символов.
 
-Источник: server/pull-requests.ts:1481.
+Источник: services/backend/src/pull-requests.ts:1711.
 
 ### Сообщение
 
 {…}: требуется {…} символов, осталось {…} из {…}. Файл не проверен; настройте исключения или лимит diff.
 
-Источник: server/pull-requests.ts:1483.
+Источник: services/backend/src/pull-requests.ts:1714.
 
 ### Сообщение
 
 Не удалось загрузить содержимое из Azure. Повторите открытие diff.
 
-Источник: server/pull-requests.ts:1492.
+Источник: services/backend/src/pull-requests.ts:1734.
 
 ### Сообщение
 
 {…}: содержимое недоступно, бинарное или слишком большое
 
-Источник: server/pull-requests.ts:1495.
+Источник: services/backend/src/pull-requests.ts:1737.
 
 ### Сообщение
 
 Pull request недоступен для подготовки ветки.
 
-Источник: server/pull-requests.ts:1529.
+Источник: services/backend/src/pull-requests.ts:1771.
 
 ### Сообщение
 
 Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся
 
-Источник: server/pull-requests.ts:1556.
+Источник: services/backend/src/pull-requests.ts:1793.
 
 ### Сообщение
 
 Подключите GitHub Copilot
 
-Источник: server/pull-requests.ts:1562.
+Источник: services/backend/src/pull-requests.ts:1798.
 
 ### Сообщение
 
 Этот запрос ревью уже завершён.
 
-Источник: server/pull-requests.ts:1598.
+Источник: services/backend/src/pull-requests.ts:1836.
 
 ### Сообщение
 
 Ревью остановлено пользователем
 
-Источник: server/pull-requests.ts:1624.
+Источник: services/backend/src/pull-requests.ts:1864.
 
 ### Сообщение
 
 Приложение завершает работу
 
-Источник: server/pull-requests.ts:1663.
+Источник: services/backend/src/pull-requests.ts:1915.
 
 ### Сообщение
 
 Нет доступного текстового diff для ревью
 
-Источник: server/pull-requests.ts:1681.
+Источник: services/backend/src/pull-requests.ts:1939.
 
 ### Сообщение
 
 Мониторинг изменён во время подготовки ревью
 
-Источник: server/pull-requests.ts:1691.
+Источник: services/backend/src/pull-requests.ts:1949.
 
 ### Сообщение
 
 Не удалось прочитать связи тикетов PR
 
-Источник: server/pull-requests.ts:1710.
+Источник: services/backend/src/pull-requests.ts:1966.
 
 ### Сообщение
 
 Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.
 
-Источник: server/pull-requests.ts:1723.
+Источник: services/backend/src/pull-requests.ts:1979.
 
 ### Сообщение
 
 Выберите не более 20 связанных тикетов для одного ревью или отключите чтение тикетов.
 
-Источник: server/pull-requests.ts:1725.
+Источник: services/backend/src/pull-requests.ts:1984.
 
 ### Сообщение
 
 Некорректная связь тикета
 
-Источник: server/pull-requests.ts:1734.
+Источник: services/backend/src/pull-requests.ts:1991.
 
 ### Сообщение
 
 Источник Azure изменился
 
-Источник: server/pull-requests.ts:1739.
+Источник: services/backend/src/pull-requests.ts:1996.

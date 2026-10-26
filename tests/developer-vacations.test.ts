@@ -3,17 +3,17 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { LocalDevelopers } from "../server/local-developers.js";
-import { Calendar } from "../server/calendar.js";
+import { Store } from "../services/backend/src/store.js";
+import { LocalDevelopers } from "../services/backend/src/local-developers.js";
+import { Calendar } from "../services/backend/src/calendar.js";
 import {
   setDeveloperVacation,
   vacationBounds,
-} from "../server/developer-vacations.js";
-import { developerOnVacation } from "../src/entities/developer/index.js";
-import { notificationDue } from "../server/calendar-notifications.js";
-import { searchCalendar } from "../server/calendar-search.js";
-import { parseCalendarFilters } from "../src/features/filter-calendar/index.js";
+} from "../services/backend/src/developer-vacations.js";
+import { developerOnVacation } from "../services/frontend/src/entities/developer/index.js";
+import { notificationDue } from "../services/backend/src/calendar-notifications.js";
+import { searchCalendar } from "../services/backend/src/calendar-search.js";
+import { parseCalendarFilters } from "../services/frontend/src/features/filter-calendar/index.js";
 
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-vacation-"));
@@ -41,7 +41,11 @@ test("one inclusive vacation per developer, scope updates, filtering, overrides 
   assert.deepEqual(item.developerIds, [person.id]);
   assert.equal(people.list(context)[0].vacationStart, "2099-11-01");
   calendar.complete(item.id);
-  calendar.setPreferences(item.id, { leadMinutes: 45, calendarHidden: true, notificationsHidden: true });
+  calendar.setPreferences(item.id, {
+    leadMinutes: 45,
+    calendarHidden: true,
+    notificationsHidden: true,
+  });
   setDeveloperVacation(store, person.id, {
     start: "2099-11-01",
     end: "2099-11-10",
@@ -61,13 +65,8 @@ test("one inclusive vacation per developer, scope updates, filtering, overrides 
   assert.equal(calendar.list()[0].scope, "general");
   assert.match(calendar.list()[0].title, /Alice renamed/);
   assert.equal(searchCalendar(store, { types: ["vacation"] }).total, 1);
-  assert.equal(
-    searchCalendar(store, { types: ["reminder", "ticket"] }).total,
-    0,
-  );
-  assert.deepEqual(parseCalendarFilters({ types: ["vacation"] }).types, [
-    "vacation",
-  ]);
+  assert.equal(searchCalendar(store, { types: ["reminder", "ticket"] }).total, 0);
+  assert.deepEqual(parseCalendarFilters({ types: ["vacation"] }).types, ["vacation"]);
   assert.throws(
     () => calendar.save({ title: "wrong", start: null, end: null }, item.id),
     /настройках разработчика/,
@@ -87,10 +86,7 @@ test("one inclusive vacation per developer, scope updates, filtering, overrides 
   assert.equal(calendar.list().length, 1);
   calendar.remove(item.id);
   assert.equal(calendar.list()[0].completed, true);
-  assert.equal(
-    people.list({ client: "", project: "" })[0].vacationStart,
-    "2099-11-02",
-  );
+  assert.equal(people.list({ client: "", project: "" })[0].vacationStart, "2099-11-02");
   setDeveloperVacation(store, person.id, null);
   assert.equal(calendar.list().length, 0);
   assert.equal(people.list(context)[0].vacationStart, null);
@@ -117,24 +113,15 @@ test("vacation boundaries include final day, timezone and DST; notifications sta
   assert.equal(developerOnVacation(profile, bounds.start), true);
   assert.equal(developerOnVacation(profile, bounds.end), true);
   assert.equal(
-    developerOnVacation(
-      profile,
-      new Date(Date.parse(bounds.end) + 1).toISOString(),
-    ),
+    developerOnVacation(profile, new Date(Date.parse(bounds.end) + 1).toISOString()),
     false,
   );
   const warning = Date.parse(item.warningStart!);
   assert.equal(notificationDue(item, 0, new Date(warning - 1)), false);
   assert.equal(notificationDue(item, 0, new Date(warning)), true);
-  assert.equal(
-    notificationDue(item, 0, new Date(Date.parse(bounds.end) + 1)),
-    false,
-  );
+  assert.equal(notificationDue(item, 0, new Date(Date.parse(bounds.end) + 1)), false);
   calendar.setLead(item.id, 120);
-  assert.equal(
-    Date.parse(calendar.list()[0].warningStart!),
-    Date.parse(item.start!) - 120 * 60000,
-  );
+  assert.equal(Date.parse(calendar.list()[0].warningStart!), Date.parse(item.start!) - 120 * 60000);
 });
 test("upgrade and repeated reopen preserve developers, notes, assignments, existing events and vacation IDs", () => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-vacation-upgrade-"));
@@ -149,20 +136,14 @@ test("upgrade and repeated reopen preserve developers, notes, assignments, exist
       start: null,
       end: null,
     }).id;
-    store.db
-      .prepare("INSERT INTO ticket_developers VALUES (?,?,?)")
-      .run("source", 42, person.id);
+    store.db.prepare("INSERT INTO ticket_developers VALUES (?,?,?)").run("source", 42, person.id);
     store.db.exec("DROP TABLE developer_vacations");
     store.close();
     store = new Store(dir);
     assert.equal(new LocalDevelopers(store).list(ctx)[0].id, person.id);
     assert.equal(store.get("existing-project-note", ""), "Keep this note");
     assert.equal(
-      (
-        store.db
-          .prepare("SELECT COUNT(*) AS n FROM ticket_developers")
-          .get() as any
-      ).n,
+      (store.db.prepare("SELECT COUNT(*) AS n FROM ticket_developers").get() as any).n,
       1,
     );
     assert.equal(new Calendar(store).list()[0].id, event);
@@ -176,10 +157,7 @@ test("upgrade and repeated reopen preserve developers, notes, assignments, exist
       store.close();
       store = new Store(dir);
       assert.equal(new Calendar(store).list().find((i) => i.vacation)!.id, id);
-      assert.equal(
-        new Calendar(store).list().find((i) => i.vacation)!.completed,
-        true,
-      );
+      assert.equal(new Calendar(store).list().find((i) => i.vacation)!.completed, true);
     }
   } finally {
     store.close();
@@ -189,7 +167,7 @@ test("upgrade and repeated reopen preserve developers, notes, assignments, exist
 
 test("vacation API enforces authentication/context and board exposes dates without changing saved notes", async (t) => {
   const { default: request } = await import("supertest");
-  const { createApp } = await import("../server/app.js");
+  const { createApp } = await import("../services/backend/src/app.js");
   const store = fixture(t),
     people = new LocalDevelopers(store);
   const context = { client: "Customer", project: "Project" };
@@ -212,11 +190,7 @@ test("vacation API enforces authentication/context and board exposes dates witho
   };
   const path = `/api/developer-board/${person.id}/vacation`;
   const vacation = { start: "2099-11-01", end: "2099-11-10" };
-  await request(app)
-    .put(path)
-    .set(headers)
-    .send({ context, vacation })
-    .expect(401);
+  await request(app).put(path).set(headers).send({ context, vacation }).expect(401);
   await request(app)
     .put(path)
     .set(auth)
@@ -227,11 +201,7 @@ test("vacation API enforces authentication/context and board exposes dates witho
     .set(auth)
     .send({ context, notes: "Preserve original notes" })
     .expect(200);
-  await request(app)
-    .put(path)
-    .set(auth)
-    .send({ context, vacation })
-    .expect(200);
+  await request(app).put(path).set(auth).send({ context, vacation }).expect(200);
   const result = await request(app)
     .get("/api/developer-board")
     .query(context)
@@ -240,17 +210,23 @@ test("vacation API enforces authentication/context and board exposes dates witho
   assert.equal(result.body.developers[0].notes, "Preserve original notes");
   assert.equal(result.body.developers[0].vacationEnd, vacation.end);
   for (const lead of [10080, 0, 90]) {
-    store.set("settings", { ...store.rawSettings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: lead } });
-    const response = await request(app).get("/api/local-developers").query(context).set(auth).expect(200);
+    store.set("settings", {
+      ...store.rawSettings(),
+      calendarNotifications: {
+        ...store.settings().calendarNotifications,
+        vacationLeadMinutes: lead,
+      },
+    });
+    const response = await request(app)
+      .get("/api/local-developers")
+      .query(context)
+      .set(auth)
+      .expect(200);
     const row = response.body.find((p: any) => p.id === person.id);
     const start = vacationBounds(vacation.start, vacation.end, row.vacationZone).start;
     assert.equal(Date.parse(row.vacationWarningStart), Date.parse(start) - lead * 60000);
   }
-  await request(app)
-    .put(path)
-    .set(auth)
-    .send({ context, vacation: null })
-    .expect(200);
+  await request(app).put(path).set(auth).send({ context, vacation: null }).expect(200);
   assert.equal(new Calendar(store).list().length, 0);
 });
 
@@ -265,24 +241,15 @@ test("ended vacation completes its reminder automatically and cannot be reopened
   });
   const item = calendar.list()[0];
   assert.equal(item.completed, true);
-  assert.equal(
-    searchCalendar(store, { types: ["vacation"], statuses: ["active"] }).total,
-    0,
-  );
+  assert.equal(searchCalendar(store, { types: ["vacation"], statuses: ["active"] }).total, 0);
   assert.throws(() => calendar.reopen(item.id), /Отпуск уже закончился/);
-  assert.equal(
-    people.list({ client: "", project: "" })[0].vacationEnd,
-    "2020-01-02",
-  );
+  assert.equal(people.list({ client: "", project: "" })[0].vacationEnd, "2020-01-02");
   const bounds = vacationBounds("2026-10-25", "2026-10-25", "Europe/Berlin");
-  assert.equal(
-    Date.parse(bounds.end) - Date.parse(bounds.start) + 1,
-    25 * 3600000,
-  );
+  assert.equal(Date.parse(bounds.end) - Date.parse(bounds.start) + 1, 25 * 3600000);
 });
 
 test("chat vacation tool creates, changes and cancels one period and refreshes UI; rejects unavailable people and cancelled runs", async (t) => {
-  const { localDeveloperTools } = await import("../server/local-developers.js");
+  const { localDeveloperTools } = await import("../services/backend/src/local-developers.js");
   const store = fixture(t),
     people = new LocalDevelopers(store),
     context = { client: "Customer", project: "Project" };
@@ -317,10 +284,7 @@ test("chat vacation tool creates, changes and cancels one period and refreshes U
   });
   assert.equal(new Calendar(store).list()[0].id, id);
   assert.equal(new Calendar(store).list().length, 1);
-  await assert.rejects(
-    () => invoke({ developerId: other.id, vacation: null }),
-    /недоступен/,
-  );
+  await assert.rejects(() => invoke({ developerId: other.id, vacation: null }), /недоступен/);
   await assert.rejects(() =>
     invoke({
       developerId: person.id,
@@ -329,10 +293,7 @@ test("chat vacation tool creates, changes and cancels one period and refreshes U
   );
   assert.equal(updates, 2);
   stopped = true;
-  await assert.rejects(
-    () => invoke({ developerId: person.id, vacation: null }),
-    /Cancelled/,
-  );
+  await assert.rejects(() => invoke({ developerId: person.id, vacation: null }), /Cancelled/);
   assert.equal(new Calendar(store).list().length, 1);
   stopped = false;
   const cancelled = await invoke({ developerId: person.id, vacation: null });
@@ -344,30 +305,18 @@ test("chat vacation tool creates, changes and cancels one period and refreshes U
 
 test("upcoming vacation boundaries use the vacation timezone and include arbitrarily distant dates", async () => {
   const { developerVacationStatus } =
-    await import("../server/developer-vacation-status.js");
+    await import("../services/backend/src/developer-vacation-status.js");
   const person = {
     vacationStart: "2026-10-26",
     vacationEnd: "2026-10-27",
     vacationZone: "Asia/Bishkek",
   };
-  assert.equal(
-    developerVacationStatus(person, "2026-10-25T17:59:59Z"),
-    "upcoming",
-  );
-  assert.equal(
-    developerVacationStatus(person, "2026-10-25T18:00:00Z"),
-    "current",
-  );
-  assert.equal(
-    developerVacationStatus(person, "2026-10-27T17:59:59Z"),
-    "current",
-  );
+  assert.equal(developerVacationStatus(person, "2026-10-25T17:59:59Z"), "upcoming");
+  assert.equal(developerVacationStatus(person, "2026-10-25T18:00:00Z"), "current");
+  assert.equal(developerVacationStatus(person, "2026-10-27T17:59:59Z"), "current");
   assert.equal(developerVacationStatus(person, "2026-10-27T18:00:00Z"), "past");
   assert.equal(
-    developerVacationStatus(
-      { ...person, vacationStart: null },
-      "2026-10-25T00:00:00Z",
-    ),
+    developerVacationStatus({ ...person, vacationStart: null }, "2026-10-25T00:00:00Z"),
     "none",
   );
   assert.equal(
@@ -380,7 +329,7 @@ test("upcoming vacation boundaries use the vacation timezone and include arbitra
 });
 
 test("chat developer search filters vacation status and preserves old unfiltered calls", async (t) => {
-  const { localDeveloperTools } = await import("../server/local-developers.js");
+  const { localDeveloperTools } = await import("../services/backend/src/local-developers.js");
   const store = fixture(t),
     people = new LocalDevelopers(store),
     context = { client: "Customer", project: "Project" };
@@ -410,12 +359,9 @@ test("chat developer search filters vacation status and preserves old unfiltered
     start: "2020-01-01",
     end: "2020-01-05",
   });
-  const tool = localDeveloperTools(
-    store,
-    context,
-    "Кто скоро в отпуск?",
-    () => {},
-  ).find((t) => t.name === "list_local_developers")!;
+  const tool = localDeveloperTools(store, context, "Кто скоро в отпуск?", () => {}).find(
+    (t) => t.name === "list_local_developers",
+  )!;
   const read = (args: any) => (tool.handler as any)(args);
   assert.equal((await read({})).developers.length, 4);
   for (const [status, id] of [
@@ -433,26 +379,37 @@ test("chat developer search filters vacation status and preserves old unfiltered
     (await read({ vacationStatus: "upcoming" })).developers[0].returnDate,
     new Date(Date.parse(tomorrow + "T12:00:00Z") + 86400000).toISOString().slice(0, 10),
   );
-  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 0 } });
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 0 },
+  });
   assert.equal((await read({ vacationStatus: "upcoming" })).developers.length, 0);
   assert.equal((await read({})).developers.length, 4);
-  store.set("settings", { ...store.settings(), calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 1440 } });
+  store.set("settings", {
+    ...store.settings(),
+    calendarNotifications: { ...store.settings().calendarNotifications, vacationLeadMinutes: 1440 },
+  });
   setDeveloperVacation(store, future.id, { start: "2099-01-01", end: "2099-01-05" });
   assert.equal((await read({ vacationStatus: "upcoming" })).developers.length, 0);
   assert.equal((await read({})).developers.length, 4);
   setDeveloperVacation(store, future.id, null);
-  assert.equal(
-    (await read({ vacationStatus: "upcoming" })).developers.length,
-    0,
-  );
+  assert.equal((await read({ vacationStatus: "upcoming" })).developers.length, 0);
 });
 
 test("assignment warning starts at global lead before local midnight, including zero and DST", async () => {
-  const { developerVacationWarningStart } = await import("../server/developer-vacation-status.js");
-  const person = { vacationStart: "2026-11-02", vacationEnd: "2026-11-05", vacationZone: "Asia/Bishkek" };
+  const { developerVacationWarningStart } =
+    await import("../services/backend/src/developer-vacation-status.js");
+  const person = {
+    vacationStart: "2026-11-02",
+    vacationEnd: "2026-11-05",
+    vacationZone: "Asia/Bishkek",
+  };
   assert.equal(developerVacationWarningStart(person, 7 * 1440), "2026-10-25T18:00:00.000Z");
   assert.equal(developerVacationWarningStart(person, 0), "2026-11-01T18:00:00.000Z");
   assert.equal(developerVacationWarningStart(person, 30), "2026-11-01T17:30:00.000Z");
   assert.equal(developerVacationWarningStart({}, 1440), null);
-  assert.equal(developerVacationWarningStart({ ...person, vacationZone: "America/New_York" }, 1440), "2026-11-01T05:00:00.000Z");
+  assert.equal(
+    developerVacationWarningStart({ ...person, vacationZone: "America/New_York" }, 1440),
+    "2026-11-01T05:00:00.000Z",
+  );
 });

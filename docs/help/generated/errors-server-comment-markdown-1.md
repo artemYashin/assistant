@@ -9,10 +9,10 @@
 
 Изображение должно быть не больше 10 МБ.
 
-Источник: server/comment-markdown.ts:22.
+Источник: services/backend/src/comment-markdown.ts:22.
 
 ### Сообщение
 
 Поддерживаются изображения PNG, JPEG, GIF и WebP.
 
-Источник: server/comment-markdown.ts:36.
+Источник: services/backend/src/comment-markdown.ts:29.

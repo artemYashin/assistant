@@ -9,4 +9,4 @@
 
 Скопировать код · /
 
-Источник: src/entities/repository/ui/ChatCodeSnippet.tsx:9.
+Источник: services/frontend/src/entities/repository/ui/ChatCodeSnippet.tsx:15.

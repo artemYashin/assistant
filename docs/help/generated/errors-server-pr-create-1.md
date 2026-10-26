@@ -9,58 +9,58 @@
 
 Репозиторий не настроен
 
-Источник: server/pr-create.ts:23.
+Источник: services/backend/src/pr-create.ts:22.
 
 ### Сообщение
 
 Подключение Azure изменилось: сохраните репозиторий заново
 
-Источник: server/pr-create.ts:30.
+Источник: services/backend/src/pr-create.ts:26.
 
 ### Сообщение
 
 Укажите PAT Azure: Code Read & Write
 
-Источник: server/pr-create.ts:34.
+Источник: services/backend/src/pr-create.ts:27.
 
 ### Сообщение
 
 Azure не вернул список веток
 
-Источник: server/pr-create.ts:57.
+Источник: services/backend/src/pr-create.ts:49.
 
 ### Сообщение
 
 Выберите разные source и target ветки
 
-Источник: server/pr-create.ts:71.
+Источник: services/backend/src/pr-create.ts:60.
 
 ### Сообщение
 
 Создание этого PR уже выполняется
 
-Источник: server/pr-create.ts:74.
+Источник: services/backend/src/pr-create.ts:62.
 
 ### Сообщение
 
 Ветка {…} больше не существует
 
-Источник: server/pr-create.ts:93.
+Источник: services/backend/src/pr-create.ts:79.
 
 ### Сообщение
 
 Не удалось проверить существующие PR
 
-Источник: server/pr-create.ts:99.
+Источник: services/backend/src/pr-create.ts:85.
 
 ### Сообщение
 
 Настройки изменились. Откройте диалог заново
 
-Источник: server/pr-create.ts:104.
+Источник: services/backend/src/pr-create.ts:89.
 
 ### Сообщение
 
 Azure не подтвердил номер PR. Проверьте список PR перед повтором
 
-Источник: server/pr-create.ts:123.
+Источник: services/backend/src/pr-create.ts:108.

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { changeTicketStates } from "../server/ticket-status-batch.js";
-import { AppError } from "../server/store.js";
+import { changeTicketStates } from "../services/backend/src/ticket-status-batch.js";
+import { AppError } from "../services/backend/src/store.js";
 const item = (id: number, state = "Active", project = "Project") => ({
   id,
   rev: 7,

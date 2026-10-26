@@ -9,4 +9,4 @@
 
 Обновлять тикеты и PR каждые, минут
 
-Источник: src/widgets/context-settings/ui/ProjectTicketImport.tsx:86.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectTicketImport.tsx:85.

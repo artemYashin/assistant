@@ -9,28 +9,28 @@
 
 Диагностика последнего ревью / Инструменты текущего чата
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:38.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:90.
 
 ### Элемент
 
 Обновить
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:43.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:141.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:44.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:151.
 
 ### Элемент
 
 · / … · пакет / · / /
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:49.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:170.
 
 ### Элемент
 
 Полный
 
-Источник: src/widgets/assistant/ui/ChatTools.tsx:86.
+Источник: services/frontend/src/widgets/assistant/ui/ChatTools.tsx:310.

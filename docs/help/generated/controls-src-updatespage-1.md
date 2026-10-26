@@ -9,16 +9,16 @@
 
 Новое
 
-Источник: src/pages/updates/ui/UpdatesPage.tsx:6.
+Источник: services/frontend/src/pages/updates/ui/UpdatesPage.tsx:6.
 
 ### Элемент
 
 Улучшение
 
-Источник: src/pages/updates/ui/UpdatesPage.tsx:7.
+Источник: services/frontend/src/pages/updates/ui/UpdatesPage.tsx:7.
 
 ### Элемент
 
 Исправление
 
-Источник: src/pages/updates/ui/UpdatesPage.tsx:8.
+Источник: services/frontend/src/pages/updates/ui/UpdatesPage.tsx:8.

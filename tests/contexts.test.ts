@@ -4,8 +4,8 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
 test("context registry migrates existing history, isolates projects and persists selection", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-contexts-"));
   const store = new Store(dir);
@@ -32,9 +32,7 @@ test("context registry migrates existing history, isolates projects and persists
     "X-CSRF-Token": setup.body.csrf,
   };
   const initial = await request(app).get("/api/contexts").set(auth).expect(200);
-  assert.ok(
-    initial.body.some((c: any) => c.client === "Legacy" && c.project === "Old"),
-  );
+  assert.ok(initial.body.some((c: any) => c.client === "Legacy" && c.project === "Old"));
   await request(app)
     .post("/api/contexts")
     .set(auth)
@@ -45,11 +43,7 @@ test("context registry migrates existing history, isolates projects and persists
     .set(auth)
     .send({ client: "A", project: "One" })
     .expect(200);
-  await request(app)
-    .post("/api/contexts")
-    .set(auth)
-    .send({ client: "B", project: "" })
-    .expect(200);
+  await request(app).post("/api/contexts").set(auth).send({ client: "B", project: "" }).expect(200);
   await request(app)
     .put("/api/context")
     .set(auth)
@@ -64,9 +58,7 @@ test("context registry migrates existing history, isolates projects and persists
   const reopened = new Store(dir);
   try {
     assert.equal(reopened.settings().project, "One");
-    assert.ok(
-      reopened.contexts().some((c) => c.client === "A" && c.project === "One"),
-    );
+    assert.ok(reopened.contexts().some((c) => c.client === "A" && c.project === "One"));
   } finally {
     reopened.close();
   }
@@ -88,11 +80,7 @@ test("context registry migrates existing history, isolates projects and persists
     .set({ ...headers, Cookie: auth.Cookie })
     .send({ client: "", project: "" })
     .expect(403);
-  await request(app)
-    .put("/api/context")
-    .set(auth)
-    .send({ client: "", project: "" })
-    .expect(200);
+  await request(app).put("/api/context").set(auth).send({ client: "", project: "" }).expect(200);
   assert.equal(store.settings().client, "");
   assert.equal(store.contexts().filter((c) => c.client === "A").length, 2);
 });

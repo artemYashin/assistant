@@ -4,7 +4,7 @@ import {
   fitColumnWidths,
   parseColumnWidths,
   resizeColumnPair,
-} from "../src/features/ticket-columns/index.js";
+} from "../services/frontend/src/features/ticket-columns/index.js";
 
 test("column width preferences reject invalid values and preserve valid dimensions", () => {
   assert.deepEqual(
@@ -21,11 +21,7 @@ test("column width preferences reject invalid values and preserve valid dimensio
 
 test("manual column sizing fits the viewport and preserves preferences after hiding columns", () => {
   const saved = { id: 100, title: 300, tags: 100 };
-  const wide = fitColumnWidths(
-    ["selection", "id", "title", "tags"],
-    saved,
-    1044,
-  );
+  const wide = fitColumnWidths(["selection", "id", "title", "tags"], saved, 1044);
   assert.equal(
     Object.values(wide).reduce((a, b) => a + b, 0),
     1044,
@@ -69,12 +65,6 @@ test("identity keeps its minimum when the workspace narrows or a divider moves",
     Object.values(fitted).reduce((sum, width) => sum + width, 0),
     444,
   );
-  assert.equal(
-    resizeColumnPair({ id: 140, title: 200 }, "id", "title", -200).id,
-    93,
-  );
-  assert.equal(
-    resizeColumnPair({ tags: 120, id: 140 }, "tags", "id", 200).id,
-    93,
-  );
+  assert.equal(resizeColumnPair({ id: 140, title: 200 }, "id", "title", -200).id, 93);
+  assert.equal(resizeColumnPair({ tags: 120, id: 140 }, "tags", "id", 200).id, 93);
 });

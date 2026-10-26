@@ -3,14 +3,11 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
-import { listLocalTickets } from "../server/ticket-list.js";
-import {
-  saveTicketMetadata,
-  ticketMetadata,
-} from "../server/ticket-metadata.js";
-import { editMetadataSchema } from "../server/ticket-metadata-tools.js";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
+import { listLocalTickets } from "../services/backend/src/ticket-list.js";
+import { saveTicketMetadata, ticketMetadata } from "../services/backend/src/ticket-metadata.js";
+import { editMetadataSchema } from "../services/backend/src/ticket-metadata-tools.js";
 
 test("Azure tags import, sync, search and trash lifecycle stay separate from local editable tags", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-azure-tags-"));
@@ -53,16 +50,17 @@ test("Azure tags import, sync, search and trash lifecycle stay separate from loc
   assert.deepEqual(store.azureTags(42), ["API", "Customer"]);
   const context = { client: "C", project: "P" };
   saveTicketMetadata(store, 42, store.source(), context, { tags: ["Local"] });
-  const page = listLocalTickets(store, { search: "customer", azureTag: "api", fields: ["azureTags", "tags"] });
+  const page = listLocalTickets(store, {
+    search: "customer",
+    azureTag: "api",
+    fields: ["azureTags", "tags"],
+  });
   assert.equal(page.total, 1);
   assert.deepEqual(page.tickets[0].azureTags, ["API", "Customer"]);
   assert.deepEqual(page.tickets[0].tags, ["Local"]);
   assert.equal(listLocalTickets(store, { tag: "API" }).total, 0);
   assert.deepEqual(store.azureTags(42, "other-source"), []);
-  assert.equal(
-    editMetadataSchema.safeParse({ id: 42, azureTags: ["Changed"] }).success,
-    false,
-  );
+  assert.equal(editMetadataSchema.safeParse({ id: 42, azureTags: ["Changed"] }).success, false);
   assert.throws(() =>
     saveTicketMetadata(store, 42, store.source(), context, {
       azureTags: ["Changed"],

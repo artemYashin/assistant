@@ -9,118 +9,118 @@
 
 Подключение изменилось. Откройте редактор заново.
 
-Источник: server/app.ts:942.
+Источник: services/backend/src/app.ts:1125.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: server/app.ts:1017.
+Источник: services/backend/src/app.ts:1197.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
-Источник: server/app.ts:1035.
+Источник: services/backend/src/app.ts:1216.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите карточку перед удалением.
 
-Источник: server/app.ts:1061.
+Источник: services/backend/src/app.ts:1237.
 
 ### Сообщение
 
 Назначение из Azure больше не поддерживается. Выберите разработчиков из локального списка проекта.
 
-Источник: server/app.ts:1068.
+Источник: services/backend/src/app.ts:1241.
 
 ### Сообщение
 
 Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: server/app.ts:1117.
+Источник: services/backend/src/app.ts:1301.
 
 ### Сообщение
 
 Выберите изображение.
 
-Источник: server/app.ts:1120.
+Источник: services/backend/src/app.ts:1311.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: server/app.ts:1134.
+Источник: services/backend/src/app.ts:1342.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: server/app.ts:1137.
+Источник: services/backend/src/app.ts:1347.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: server/app.ts:1194.
+Источник: services/backend/src/app.ts:1416.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: server/app.ts:1219.
+Источник: services/backend/src/app.ts:1442.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: server/app.ts:1253.
+Источник: services/backend/src/app.ts:1475.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: server/app.ts:1512.
+Источник: services/backend/src/app.ts:1783.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: server/app.ts:1525.
+Источник: services/backend/src/app.ts:1798.
 
 ### Сообщение
 
 sync.error
 
-Источник: server/app.ts:1546.
+Источник: services/backend/src/app.ts:1826.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: server/app.ts:1549.
+Источник: services/backend/src/app.ts:1831.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: server/app.ts:1580.
+Источник: services/backend/src/app.ts:1864.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: server/app.ts:1582.
+Источник: services/backend/src/app.ts:1866.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: server/app.ts:1598.
+Источник: services/backend/src/app.ts:1883.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: server/app.ts:1607.
+Источник: services/backend/src/app.ts:1892.

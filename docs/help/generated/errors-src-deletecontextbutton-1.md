@@ -9,4 +9,4 @@
 
 Не удалось удалить
 
-Источник: src/widgets/context-settings/ui/DeleteContextButton.tsx:28.
+Источник: services/frontend/src/widgets/context-settings/ui/DeleteContextButton.tsx:91.

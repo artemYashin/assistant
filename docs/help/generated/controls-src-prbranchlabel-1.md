@@ -9,10 +9,10 @@
 
 Открыть ветку {…}
 
-Источник: src/entities/repository/ui/PrBranchLabel.tsx:30.
+Источник: services/frontend/src/entities/repository/ui/PrBranchLabel.tsx:34.
 
 ### Элемент
 
 Скопировать {…} ветку {…} · Скопировано / Скопировать название ветки · /
 
-Источник: src/entities/repository/ui/PrBranchLabel.tsx:31.
+Источник: services/frontend/src/entities/repository/ui/PrBranchLabel.tsx:49.

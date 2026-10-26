@@ -9,52 +9,52 @@
 
 Название набора фильтров · Название набора
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:164.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:160.
 
 ### Элемент
 
 Сохранить текущие фильтры, поиск и сортировку · Сохранить набор
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:172.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:168.
 
 ### Элемент
 
 Сбросить выбранный набор, фильтры и поиск
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:187.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:183.
 
 ### Элемент
 
 Перетащить набор · Изменить порядок набора {…}
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:247.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:239.
 
 ### Элемент
 
 {…}{…}
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:270.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:258.
 
 ### Элемент
 
 Удалить набор {…} · Удалить сохранённый набор
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:284.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:272.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:328.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:316.
 
 ### Элемент
 
 Отмена
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:357.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:342.
 
 ### Элемент
 
 Удалить набор / Перезаписать
 
-Источник: src/features/filter-tickets/ui/TicketFilterPresets.tsx:365.
+Источник: services/frontend/src/features/filter-tickets/ui/TicketFilterPresets.tsx:350.

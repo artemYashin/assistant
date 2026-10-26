@@ -1,15 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { customerPresetKey, migrateCustomerPresets } from "../src/features/filter-tickets/index.js";
+import {
+  customerPresetKey,
+  migrateCustomerPresets,
+} from "../services/frontend/src/features/filter-tickets/index.js";
 
 function storage() {
   const values = new Map<string, string>();
   return {
-    get length() { return values.size; },
+    get length() {
+      return values.size;
+    },
     key: (i: number) => [...values.keys()][i] ?? null,
     getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => { values.set(key, value); },
-    removeItem: (key: string) => { values.delete(key); },
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
     clear: () => values.clear(),
   };
 }
@@ -24,8 +33,14 @@ test("migration merges old presets, preserves originals and does not resurrect d
   const data = storage();
   const first = key("A", "P") + ".presets";
   data.setItem(first, JSON.stringify([{ id: "id", name: "Bugs", filters: { query: "bug" } }]));
-  data.setItem(key("A", "Q") + ".presets", JSON.stringify([{ id: "id", name: "Bugs", filters: { query: "other" } }]));
-  data.setItem(key("B", "P") + ".presets", JSON.stringify([{ id: "foreign", name: "Other customer", filters: {} }]));
+  data.setItem(
+    key("A", "Q") + ".presets",
+    JSON.stringify([{ id: "id", name: "Bugs", filters: { query: "other" } }]),
+  );
+  data.setItem(
+    key("B", "P") + ".presets",
+    JSON.stringify([{ id: "foreign", name: "Other customer", filters: {} }]),
+  );
   const target = migrateCustomerPresets(data, key("A", "P"));
   const result = JSON.parse(data.getItem(target)!);
   assert.equal(result.length, 2);

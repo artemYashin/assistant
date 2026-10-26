@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AppError } from "../server/store.js";
+import { Store, AppError } from "../services/backend/src/store.js";
 const context = { client: "Customer", project: "Project" };
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-sessions-"));
@@ -61,10 +61,7 @@ test("chats isolate history, clear only the selected chat, and pin replies despi
     () => store.selectChat({ ...context, project: "Other" }, first.id),
     () => store.clearHistory({ ...context, project: "Other" }, first.id),
   ]) {
-    assert.throws(
-      action,
-      (error: any) => error instanceof AppError && error.status === 404,
-    );
+    assert.throws(action, (error: any) => error instanceof AppError && error.status === 404);
   }
 });
 test("UI pages retain older messages while model context stays limited", (t) => {
@@ -76,29 +73,19 @@ test("UI pages retain older messages while model context stays limited", (t) => 
   assert.equal(latest.messages.length, 100);
   assert.equal(latest.messages[0].body, "105");
   assert.equal(latest.hasMore, true);
-  const older = store.conversationPage(
-    context,
-    session.id,
-    latest.messages[0].sequence,
-  );
-  const oldest = store.conversationPage(
-    context,
-    session.id,
-    older.messages[0].sequence,
-  );
+  const older = store.conversationPage(context, session.id, latest.messages[0].sequence);
+  const oldest = store.conversationPage(context, session.id, older.messages[0].sequence);
   assert.equal(older.messages.length, 100);
   assert.equal(oldest.messages.length, 5);
   assert.equal(oldest.hasMore, false);
   assert.deepEqual(
-    [...oldest.messages, ...older.messages, ...latest.messages].map(
-      (r) => r.body,
-    ),
+    [...oldest.messages, ...older.messages, ...latest.messages].map((r) => r.body),
     Array.from({ length: 205 }, (_, i) => String(i)),
   );
   assert.equal(store.history(context, session.id).length, 40);
 });
 
-test("consumed ticket attachment hides its badge but keeps chat context", t => {
+test("consumed ticket attachment hides its badge but keeps chat context", (t) => {
   const store = fixture(t);
   const attachment = { id: 123, title: "Ticket", description: "Retained content" } as any;
   const session = store.createChat(context, attachment);
@@ -109,7 +96,7 @@ test("consumed ticket attachment hides its badge but keeps chat context", t => {
   store.detachChatTicket(context, session.id);
   assert.equal(store.chatAttachment(context, session.id), null);
 });
-test("removing a pending ticket attachment leaves no content to send", t => {
+test("removing a pending ticket attachment leaves no content to send", (t) => {
   const store = fixture(t);
   const session = store.createChat(context, { id: 124, title: "Accidental attachment" } as any);
   store.detachChatTicket(context, session.id);

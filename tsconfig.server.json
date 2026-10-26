@@ -3,8 +3,8 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "dist-server",
-    "rootDir": "server"
+    "rootDir": "services/backend/src"
   },
-  "include": ["server"],
-  "exclude": ["src", "tests"]
+  "include": ["services/backend/src"],
+  "exclude": ["services/frontend", "tests"]
 }

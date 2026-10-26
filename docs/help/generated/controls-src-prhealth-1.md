@@ -9,10 +9,10 @@
 
 Конфликты слияния · Статус возможности слияния веток, полученный из Azure при последней синхронизации.
 
-Источник: src/widgets/pull-request/ui/PrHealth.tsx:49.
+Источник: services/frontend/src/widgets/pull-request/ui/PrHealth.tsx:49.
 
 ### Элемент
 
 Подробности CI · / CI: нет данных
 
-Источник: src/widgets/pull-request/ui/PrHealth.tsx:81.
+Источник: services/frontend/src/widgets/pull-request/ui/PrHealth.tsx:82.

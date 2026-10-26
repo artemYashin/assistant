@@ -1,12 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { syncAllowed, syncScheduleSchema } from "../server/sync-schedule.js";
+import { syncAllowed, syncScheduleSchema } from "../services/backend/src/sync-schedule.js";
 
 test("schedule defaults allow automatic updates at any time", () => {
-  assert.equal(
-    syncAllowed(syncScheduleSchema.parse({}), new Date("2026-10-18T03:00Z")),
-    true,
-  );
+  assert.equal(syncAllowed(syncScheduleSchema.parse({}), new Date("2026-10-18T03:00Z")), true);
 });
 test("working hours use configured timezone and exclude the end boundary", () => {
   const schedule = syncScheduleSchema.parse({
@@ -41,10 +38,7 @@ test("equal times mean whole selected day and no days means paused", () => {
     days: [1],
   });
   assert.equal(syncAllowed(schedule, new Date("2026-10-19T01:00Z")), true);
-  assert.equal(
-    syncAllowed({ ...schedule, days: [] }, new Date("2026-10-19T01:00Z")),
-    false,
-  );
+  assert.equal(syncAllowed({ ...schedule, days: [] }, new Date("2026-10-19T01:00Z")), false);
 });
 test("invalid schedules are rejected", () => {
   for (const value of [

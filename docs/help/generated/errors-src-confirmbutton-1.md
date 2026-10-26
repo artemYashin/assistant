@@ -9,4 +9,4 @@
 
 Не удалось выполнить действие
 
-Источник: src/shared/ui/confirm-button/ConfirmButton.tsx:27.
+Источник: services/frontend/src/shared/ui/confirm-button/ConfirmButton.tsx:105.

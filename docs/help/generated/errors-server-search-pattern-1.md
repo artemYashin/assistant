@@ -9,10 +9,10 @@
 
 too large
 
-Источник: server/search-pattern.ts:14.
+Источник: services/backend/src/search-pattern.ts:20.
 
 ### Сообщение
 
 Некорректное или слишком сложное регулярное выражение. Используйте RE2 без обратных ссылок и lookaround, без обрамления /…/.
 
-Источник: server/search-pattern.ts:20.
+Источник: services/backend/src/search-pattern.ts:26.

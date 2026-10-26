@@ -9,16 +9,16 @@
 
 invalid_arguments
 
-Источник: server/tool-errors.ts:11.
+Источник: services/backend/src/tool-errors.ts:11.
 
 ### Сообщение
 
 Некорректные параметры инструмента:
 
-Источник: server/tool-errors.ts:17.
+Источник: services/backend/src/tool-errors.ts:17.
 
 ### Сообщение
 
 Внутренняя ошибка инструмента. Проверьте текущее состояние перед повторной попыткой; подробности доступны в логах по коду ошибки.
 
-Источник: server/tool-errors.ts:23.
+Источник: services/backend/src/tool-errors.ts:21.

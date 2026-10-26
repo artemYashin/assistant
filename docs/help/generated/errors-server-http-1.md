@@ -9,46 +9,46 @@
 
 {…}: {…} Код диагностики: {…}
 
-Источник: server/http.ts:139.
+Источник: services/backend/src/http.ts:119.
 
 ### Сообщение
 
 Нет соединения или сервер требует перенаправление. Проверьте API-адрес, VPN, сертификаты и корпоративный прокси.
 
-Источник: server/http.ts:154.
+Источник: services/backend/src/http.ts:134.
 
 ### Сообщение
 
 HTTP {…}. Проверьте URL организации/коллекции, имя проекта, права PAT и версию API.
 
-Источник: server/http.ts:170.
+Источник: services/backend/src/http.ts:149.
 
 ### Сообщение
 
 Вместо JSON API вернул HTML (возможно, страницу входа или корпоративного прокси). Проверьте API-адрес и способ доступа.
 
-Источник: server/http.ts:177.
+Источник: services/backend/src/http.ts:156.
 
 ### Сообщение
 
 invalid_json
 
-Источник: server/http.ts:185.
+Источник: services/backend/src/http.ts:164.
 
 ### Сообщение
 
 Сервер вернул некорректный JSON. Проверьте API-адрес и корпоративный прокси.
 
-Источник: server/http.ts:186.
+Источник: services/backend/src/http.ts:165.
 
 ### Сообщение
 
 Укажите корректный URL Azure DevOps
 
-Источник: server/http.ts:196.
+Источник: services/backend/src/http.ts:175.
 
 ### Сообщение
 
 Azure DevOps: нужен HTTPS URL организации или коллекции без пароля, query и fragment
 
-Источник: server/http.ts:205.
+Источник: services/backend/src/http.ts:178.

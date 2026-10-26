@@ -9,28 +9,28 @@
 
 Локальные разработчики, поручения и отпуска недоступны в режиме разработчика.
 
-Источник: server/work-mode-tools.ts:55.
+Источник: services/backend/src/work-mode-tools.ts:46.
 
 ### Сообщение
 
 Это поле недоступно в режиме разработчика.
 
-Источник: server/work-mode-tools.ts:72.
+Источник: services/backend/src/work-mode-tools.ts:54.
 
 ### Сообщение
 
 In Developer mode local developers, local assignments and vacations are unavailable. Never request those fields, filters or operations; Azure assignees remain available.
 
-Источник: server/work-mode-tools.ts:95.
+Источник: services/backend/src/work-mode-tools.ts:79.
 
 ### Сообщение
 
 Режим работы изменился. Повторите запрос в новой конфигурации.
 
-Источник: server/work-mode-tools.ts:100.
+Источник: services/backend/src/work-mode-tools.ts:84.
 
 ### Сообщение
 
 Отпуска недоступны в режиме разработчика.
 
-Источник: server/work-mode-tools.ts:120.
+Источник: services/backend/src/work-mode-tools.ts:97.

@@ -81,7 +81,6 @@ percentages; no total download size or ETA is inferred from them. The UI hides
 rates after 15 seconds without progress and shows an inactivity hint, which does
 not diagnose host sleep, network failure or a stopped container.
 
-
 ### Cache capacity and download volume
 
 Compose passes CODE_BROWSER_MAX_CACHE_BYTES (default 21474836480 = 20 GiB)
@@ -93,7 +92,6 @@ Lowering history depth reduces newly requested history, but does not automatical
 remove objects from an existing cache. All files at the selected commit are still
 downloaded, so a large current tree may remain large. Partial/blobless clone is
 not used, preserving local-only file browsing and content search.
-
 
 ### Background check scheduling
 
@@ -107,4 +105,5 @@ the new repository before background checks start. Only one background pass runs
 at a time, and service jobs retain their existing queue/deduplication rules.
 
 ## Full-history mode
+
 `fetchDepth=0` (also `CODE_BROWSER_FETCH_DEPTH=0`) fetches all branch heads and tags into the existing bare cache, using `--unshallow` only while it is shallow. Positive depths 1–1000 keep the selected-branch shallow fetch behavior. Full mode does not fetch LFS payloads or submodule repositories. Saving the setting alone does not start a download; use Pull. Every full-mode network refresh updates all branch refs, but only the selected snapshot is adopted by Pull. Cache quota, cancellation and timeout behavior remain unchanged. Job coalescing includes effective depth so a full request cannot join a shallow fetch.

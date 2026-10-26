@@ -9,34 +9,34 @@
 
 Выберите тикеты одного подключения.
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:54.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:52.
 
 ### Сообщение
 
 Подключение изменилось. Обновите список тикетов.
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:60.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:58.
 
 ### Сообщение
 
 Azure не вернул тикет #{…}
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:65.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:61.
 
 ### Сообщение
 
 Новый статус не подтверждён. Проверьте результат перед повтором.
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:116.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:110.
 
 ### Сообщение
 
 Пакет не отправлен из-за ошибки предыдущего запроса
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:127.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:121.
 
 ### Сообщение
 
 Ошибки указаны в списке. Повторите операцию только для нужных тикетов после проверки.
 
-Источник: src/features/edit-ticket/ui/BulkTicketStatus.tsx:213.
+Источник: services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx:205.

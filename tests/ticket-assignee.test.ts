@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
 
 for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
   test(`Azure assignee ${mode}: revision guard and read-back verification`, async (t) => {
@@ -36,7 +36,11 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
     insert.run("details", JSON.stringify(fullCard));
     insert.run("other", JSON.stringify(otherCard));
     const recentKey = "azure.assignees.recent:" + source;
-    const previousRecent = Array.from({ length: 8 }, (_, i) => ({ id: `old-${i}`, name: `Old ${i}`, email: `old${i}@example.test` }));
+    const previousRecent = Array.from({ length: 8 }, (_, i) => ({
+      id: `old-${i}`,
+      name: `Old ${i}`,
+      email: `old${i}@example.test`,
+    }));
     store.set(recentKey, previousRecent);
     store.set("azure.assignees.recent:other-source", [{ id: "other" }]);
     const connectors = new Connectors(store);
@@ -53,8 +57,7 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
             value: mode === "clear" ? "" : person.email,
           },
         ]);
-        if (mode === "patch-error")
-          return new Response("denied", { status: 403 });
+        if (mode === "patch-error") return new Response("denied", { status: 403 });
         return Response.json({ id: 42 });
       }
       reads++;
@@ -72,19 +75,22 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
         },
       });
     });
-    const result = connectors.assignTicket(
-      42,
-      source,
-      mode === "clear" ? null : person.id,
-    );
+    const result = connectors.assignTicket(42, source, mode === "clear" ? null : person.id);
     if (mode === "mismatch" || mode === "patch-error")
       await assert.rejects(result, /не подтверждено/);
     else {
       assert.equal((await result).verified, true);
-      const readCard = (id: string) => JSON.parse((store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(id) as { data: string }).data);
+      const readCard = (id: string) =>
+        JSON.parse(
+          (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(id) as { data: string })
+            .data,
+        );
       assert.deepEqual(readCard("attachments"), attachmentCard);
       assert.deepEqual(readCard("other"), otherCard);
-      assert.deepEqual(readCard("details").fields["System.AssignedTo"], mode === "clear" ? "" : { id: person.id, displayName: person.name });
+      assert.deepEqual(
+        readCard("details").fields["System.AssignedTo"],
+        mode === "clear" ? "" : { id: person.id, displayName: person.name },
+      );
     }
     const recent = store.get<any[]>(recentKey, []);
     if (mode === "assign") {
@@ -95,10 +101,7 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
     assert.deepEqual(store.get("azure.assignees.recent:other-source", []), [{ id: "other" }]);
     assert.equal(reads, 2);
     assert.equal(writes, 1);
-    await assert.rejects(
-      connectors.assignTicket(42, "other-source", person.id),
-      /Подключение/,
-    );
+    await assert.rejects(connectors.assignTicket(42, "other-source", person.id), /Подключение/);
     await assert.rejects(
       connectors.assignTicket(42, source, "unknown-user"),
       /Найдите пользователя/,
@@ -108,7 +111,7 @@ for (const mode of ["assign", "clear", "mismatch", "patch-error"] as const) {
       // Recent users remain assignable after the ordinary search cache expires.
       store.set("developers:" + source, []);
       assert.equal((await connectors.assignTicket(42, source, person.id)).verified, true);
-      assert.equal(store.get<any[]>(recentKey, []).filter(p => p.id === person.id).length, 1);
+      assert.equal(store.get<any[]>(recentKey, []).filter((p) => p.id === person.id).length, 1);
     }
   });
 }

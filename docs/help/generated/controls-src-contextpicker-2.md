@@ -9,22 +9,22 @@
 
 Переименовать: {…} · Переименовать
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:344.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:566.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:350.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:593.
 
 ### Элемент
 
 : новое название
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:358.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:616.
 
 ### Элемент
 
 Отмена
 
-Источник: src/widgets/context-settings/ui/ContextPicker.tsx:360.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:633.

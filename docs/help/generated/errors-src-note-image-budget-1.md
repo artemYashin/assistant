@@ -9,4 +9,4 @@
 
 https://orbit.invalid/{…}/{…}
 
-Источник: src/entities/note/lib/note-image-budget.ts:9.
+Источник: services/frontend/src/entities/note/lib/note-image-budget.ts:8.

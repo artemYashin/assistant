@@ -7,18 +7,18 @@
 
 ### Элемент
 
-Записать клавишу · Нажмите клавишу… /
+Записать клавишу · /
 
-Источник: src/features/voice-input/ui/VoiceBinding.tsx:19.
+Источник: services/frontend/src/features/voice-input/ui/VoiceBinding.tsx:53.
 
 ### Элемент
 
 Отменить выбор · Esc · Отмена · Esc
 
-Источник: src/features/voice-input/ui/VoiceBinding.tsx:33.
+Источник: services/frontend/src/features/voice-input/ui/VoiceBinding.tsx:99.
 
 ### Элемент
 
 Отключить горячую клавишу
 
-Источник: src/features/voice-input/ui/VoiceBinding.tsx:34.
+Источник: services/frontend/src/features/voice-input/ui/VoiceBinding.tsx:110.

@@ -9,28 +9,28 @@
 
 История чатов · Чаты
 
-Источник: src/features/manage-chat-history/ui/ChatHistory.tsx:25.
+Источник: services/frontend/src/features/manage-chat-history/ui/ChatHistory.tsx:25.
 
 ### Элемент
 
 Закрыть историю чатов
 
-Источник: src/features/manage-chat-history/ui/ChatHistory.tsx:110.
+Источник: services/frontend/src/features/manage-chat-history/ui/ChatHistory.tsx:113.
 
 ### Элемент
 
 Новый чат
 
-Источник: src/features/manage-chat-history/ui/ChatHistory.tsx:124.
+Источник: services/frontend/src/features/manage-chat-history/ui/ChatHistory.tsx:126.
 
 ### Элемент
 
 · {…} / · Сообщений: · Текущий /
 
-Источник: src/features/manage-chat-history/ui/ChatHistory.tsx:143.
+Источник: services/frontend/src/features/manage-chat-history/ui/ChatHistory.tsx:149.
 
 ### Элемент
 
 Удалить чат? · Чат «{…}», его сообщения и история вызовов инструментов будут удалены без возможности восстановления. Сохранённая память и общий учёт токенов останутся. · Удалить чат · Удалить чат « »
 
-Источник: src/features/manage-chat-history/ui/ChatHistory.tsx:160.
+Источник: services/frontend/src/features/manage-chat-history/ui/ChatHistory.tsx:172.

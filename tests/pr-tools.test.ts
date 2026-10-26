@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { PullRequests } from "../server/pull-requests.js";
-import { prTools } from "../server/pr-tools.js";
+import { Store } from "../services/backend/src/store.js";
+import { PullRequests } from "../services/backend/src/pull-requests.js";
+import { prTools } from "../services/backend/src/pr-tools.js";
 
 test("PR chat tools paginate, isolate context and enqueue only explicit review requests", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-pr-tools-"));
@@ -46,26 +46,35 @@ test("PR chat tools paginate, isolate context and enqueue only explicit review r
       "today",
       "a".repeat(3000),
     );
-  const call = (
-    name: string,
-    args: any,
-    prompt = "Запусти ревью PR #1",
-    ctx = context,
-  ) =>
-    prTools(store, service, ctx, prompt, () => {}).find((t) => t.name === name)!
-      .handler!(args, {} as any) as Promise<any>;
+  const call = (name: string, args: any, prompt = "Запусти ревью PR #1", ctx = context) =>
+    prTools(store, service, ctx, prompt, () => {}).find((t) => t.name === name)!.handler!(
+      args,
+      {} as any,
+    ) as Promise<any>;
   const first = await call("list_pull_requests", {});
   assert.equal(first.total, 25);
   assert.deepEqual(Object.keys(first.items[0]).sort(), ["monitor", "number", "repo", "title"]);
-  assert.deepEqual(await call("list_pull_requests", { countOnly: true }), { scope: "local", total: 25 });
-  store.db.prepare("UPDATE pull_requests SET health=? WHERE number=1").run(JSON.stringify({ merge: "conflicts" }));
-  const conflicts = await call("list_pull_requests", { conflicts: "yes", fields: ["conflicts", "reviewStatus", "sourceBranch"] });
+  assert.deepEqual(await call("list_pull_requests", { countOnly: true }), {
+    scope: "local",
+    total: 25,
+  });
+  store.db
+    .prepare("UPDATE pull_requests SET health=? WHERE number=1")
+    .run(JSON.stringify({ merge: "conflicts" }));
+  const conflicts = await call("list_pull_requests", {
+    conflicts: "yes",
+    fields: ["conflicts", "reviewStatus", "sourceBranch"],
+  });
   assert.equal(conflicts.total, 1);
   assert.equal(conflicts.items[0].conflicts, "yes");
   assert.equal(conflicts.items[0].reviewStatus, "not_started");
   assert.equal(conflicts.items[0].description, undefined);
   assert.equal((await call("list_pull_requests", { conflicts: "no", countOnly: true })).total, 0);
-  assert.equal((await call("list_pull_requests", { countOnly: true }, "", { client: "other", project: "P" })).total, 0);
+  assert.equal(
+    (await call("list_pull_requests", { countOnly: true }, "", { client: "other", project: "P" }))
+      .total,
+    0,
+  );
   assert.equal(first.items.length, 20);
   const last = await call("list_pull_requests", { offset: first.nextOffset });
   assert.equal(last.items.length, 5);
@@ -91,20 +100,10 @@ test("PR chat tools paginate, isolate context and enqueue only explicit review r
   assert.equal(queued.azureChanged, false);
   assert.match(queued.note, /независимо от чата/);
   assert.doesNotMatch(queued.note, /после завершения чата|при наличии дневного лимита/);
-  assert.equal(
-    (await call("request_pull_request_review", key)).job.id,
-    queued.job.id,
-  );
+  assert.equal((await call("request_pull_request_review", key)).job.id, queued.job.id);
   store.db.prepare("UPDATE pull_requests SET draft=1 WHERE number=2").run();
-  await assert.rejects(
-    call("request_pull_request_review", { ...key, number: 2 }),
-    /черновики/,
-  );
-  store.db
-    .prepare(
-      "UPDATE pull_requests SET description='#123456' WHERE number IN (1,2,3)",
-    )
-    .run();
+  await assert.rejects(call("request_pull_request_review", { ...key, number: 2 }), /черновики/);
+  store.db.prepare("UPDATE pull_requests SET description='#123456' WHERE number IN (1,2,3)").run();
   store.db.prepare("UPDATE pull_requests SET in_scope=0 WHERE number=3").run();
   assert.deepEqual(
     service

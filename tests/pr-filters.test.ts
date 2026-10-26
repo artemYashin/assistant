@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filterPullRequests } from "../src/features/filter-pull-requests/index.js";
+import { filterPullRequests } from "../services/frontend/src/features/filter-pull-requests/index.js";
 const items = [
   {
     number: 1,
@@ -29,9 +29,7 @@ test("creation order uses actual date rather than PR number; missing dates sort 
     [1, 3, 9, 10],
   );
   assert.deepEqual(
-    filterPullRequests(items, { ...filters, sort: "created:asc" }).map(
-      (p) => p.number,
-    ),
+    filterPullRequests(items, { ...filters, sort: "created:asc" }).map((p) => p.number),
     [9, 3, 1, 10],
   );
   assert.deepEqual(
@@ -48,10 +46,7 @@ test("draft and current review readiness filters combine", () => {
     }).map((p) => p.number),
     [1],
   );
-  assert.deepEqual(
-    filterPullRequests(items, { ...filters, draft: "draft", review: "ready" }),
-    [],
-  );
+  assert.deepEqual(filterPullRequests(items, { ...filters, draft: "draft", review: "ready" }), []);
   assert.deepEqual(
     filterPullRequests(items, {
       ...filters,

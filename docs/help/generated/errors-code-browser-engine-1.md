@@ -9,118 +9,118 @@
 
 Операция превысила время ожидания. Повторите позже.
 
-Источник: code-browser/engine.mjs:34.
+Источник: services/code-browser/engine.mjs:83.
 
 ### Сообщение
 
 Git/ripgrep недоступен в сервисе просмотра кода.
 
-Источник: code-browser/engine.mjs:42.
+Источник: services/code-browser/engine.mjs:99.
 
 ### Сообщение
 
 /
 
-Источник: code-browser/engine.mjs:50.
+Источник: services/code-browser/engine.mjs:110.
 
 ### Сообщение
 
 CODE_BROWSER_FETCH_DEPTH must be an integer from 0 to 1000 (0 means full history)
 
-Источник: code-browser/engine.mjs:69.
+Источник: services/code-browser/engine.mjs:143.
 
 ### Сообщение
 
 CODE_BROWSER_MAX_CACHE_BYTES must be a positive safe integer
 
-Источник: code-browser/engine.mjs:70.
+Источник: services/code-browser/engine.mjs:147.
 
 ### Сообщение
 
 Операция Git отменена.
 
-Источник: code-browser/engine.mjs:86.
+Источник: services/code-browser/engine.mjs:177.
 
 ### Сообщение
 
 Ожидание подготовки кода должно быть от 0 до 120 секунд
 
-Источник: code-browser/engine.mjs:97.
+Источник: services/code-browser/engine.mjs:197.
 
 ### Сообщение
 
 Git ещё подготавливает код. Время ожидания ассистента ({…} с) истекло; загрузка продолжается. Повторите запрос после её завершения.
 
-Источник: code-browser/engine.mjs:117.
+Источник: services/code-browser/engine.mjs:239.
 
 ### Сообщение
 
 Глубина Git должна быть от 0 до 1000 коммитов; 0 — полная история
 
-Источник: code-browser/engine.mjs:143.
+Источник: services/code-browser/engine.mjs:279.
 
 ### Сообщение
 
 Тайм-аут Git должен быть от 60 до 7200 секунд
 
-Источник: code-browser/engine.mjs:145.
+Источник: services/code-browser/engine.mjs:286.
 
 ### Сообщение
 
 Git не успел загрузить данные за {…} мин. Увеличьте тайм-аут в «Заказчики и проекты → Репозиторий» и повторите запрос. Локальная версия не обновлена.
 
-Источник: code-browser/engine.mjs:146.
+Источник: services/code-browser/engine.mjs:289.
 
 ### Сообщение
 
 Разрешено только чтение локального снимка
 
-Источник: code-browser/engine.mjs:148.
+Источник: services/code-browser/engine.mjs:306.
 
 ### Сообщение
 
 Неизвестная операция
 
-Источник: code-browser/engine.mjs:149.
+Источник: services/code-browser/engine.mjs:308.
 
 ### Сообщение
 
 Некорректный запрос
 
-Источник: code-browser/engine.mjs:151.
+Источник: services/code-browser/engine.mjs:317.
 
 ### Сообщение
 
 Некорректный URL
 
-Источник: code-browser/engine.mjs:152.
+Источник: services/code-browser/engine.mjs:322.
 
 ### Сообщение
 
 Разрешён только HTTPS URL репозитория без credentials
 
-Источник: code-browser/engine.mjs:153.
+Источник: services/code-browser/engine.mjs:331.
 
 ### Сообщение
 
 Некорректный токен
 
-Источник: code-browser/engine.mjs:154.
+Источник: services/code-browser/engine.mjs:333.
 
 ### Сообщение
 
 Некорректный поиск
 
-Источник: code-browser/engine.mjs:155.
+Источник: services/code-browser/engine.mjs:342.
 
 ### Сообщение
 
 Неизвестный режим сопоставления
 
-Источник: code-browser/engine.mjs:156.
+Источник: services/code-browser/engine.mjs:344.
 
 ### Сообщение
 
 Некорректное регулярное выражение поиска кода. Используйте синтаксис ripgrep без обратных ссылок, lookaround и обрамления /…/.
 
-Источник: code-browser/engine.mjs:161.
+Источник: services/code-browser/engine.mjs:354.

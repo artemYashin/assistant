@@ -4,26 +4,40 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AppError } from "../server/store.js";
-import { createApp } from "../server/app.js";
-import { ChatRuns } from "../server/chat-runs.js";
-import type { ChatProgress } from "../server/chat-stream.js";
+import { Store, AppError } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
+import { ChatRuns } from "../services/backend/src/chat-runs.js";
+import type { ChatProgress } from "../services/backend/src/chat-stream.js";
 
-test("run survives observer disconnect and reconnects by cursor without executing twice", async t => {
+test("run survives observer disconnect and reconnects by cursor without executing twice", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-runs-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const { app, agent } = createApp(store);
-  const headers = { Host: "localhost:43871", Origin: "http://localhost:43871", "X-Orbit-Request": "1" };
+  const headers = {
+    Host: "localhost:43871",
+    Origin: "http://localhost:43871",
+    "X-Orbit-Request": "1",
+  };
   const setup = await request(app).post("/api/auth/setup").set(headers).send({}).expect(200);
-  const auth = { ...headers, Cookie: setup.headers["set-cookie"][0].split(";")[0], "X-CSRF-Token": setup.body.csrf };
+  const auth = {
+    ...headers,
+    Cookie: setup.headers["set-cookie"][0].split(";")[0],
+    "X-CSRF-Token": setup.body.csrf,
+  };
   const context = { client: "", project: "" };
   const sessionId = store.activeChat(context).id;
   store.say("user", "Existing history", context, [], sessionId);
   store.addContext({ client: "Other", project: "Project" });
   let release!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  let emit!: (event: ChatProgress) => void, calls = 0;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let emit!: (event: ChatProgress) => void,
+    calls = 0;
   agent.chat = async (_prompt, _context, _review, _actions, _session, _model, progress) => {
     calls++;
     emit = progress!;
@@ -34,34 +48,73 @@ test("run survives observer disconnect and reconnects by cursor without executin
     store.say("assistant", "Ответ", context, [], sessionId);
     return { body: "Ответ" } as any;
   };
-  const started = await request(app).post("/api/conversation/runs").set(auth).send({ context, sessionId, prompt: "Hello" }).expect(200);
+  const started = await request(app)
+    .post("/api/conversation/runs")
+    .set(auth)
+    .send({ context, sessionId, prompt: "Hello" })
+    .expect(200);
   const runId = started.body.runId;
   const snapshot = await request(app).get(`/api/conversation/runs/${runId}`).set(auth).expect(200);
   assert.equal(snapshot.body.events.length, 3);
   assert.equal(snapshot.body.done, false);
-  await request(app).put("/api/context").set(auth).send({ client: "Other", project: "Project" }).expect(409);
-  await request(app).post("/api/conversation/runs").set(auth).send({ context, sessionId, prompt: "Duplicate" }).expect(409);
+  await request(app)
+    .put("/api/context")
+    .set(auth)
+    .send({ client: "Other", project: "Project" })
+    .expect(409);
+  await request(app)
+    .post("/api/conversation/runs")
+    .set(auth)
+    .send({ context, sessionId, prompt: "Duplicate" })
+    .expect(409);
   emit({ stage: "text", messageId: "m", text: " продолжение" });
-  const restored = await request(app).get("/api/conversation/runs").query({ ...context, sessionId }).set(auth).expect(200);
+  const restored = await request(app)
+    .get("/api/conversation/runs")
+    .query({ ...context, sessionId })
+    .set(auth)
+    .expect(200);
   assert.equal(restored.body.runId, runId);
-  const other = await request(app).get("/api/conversation/runs").query({ client: "Other", project: "Project", sessionId }).set(auth).expect(200);
+  const other = await request(app)
+    .get("/api/conversation/runs")
+    .query({ client: "Other", project: "Project", sessionId })
+    .set(auth)
+    .expect(200);
   assert.equal(other.body.runId, null);
-  const continuation = await request(app).get(`/api/conversation/runs/${runId}?after=${snapshot.body.cursor}`).set(auth).expect(200);
-  assert.deepEqual(continuation.body.events, [{ stage: "text", messageId: "m", text: " продолжение" }]);
+  const continuation = await request(app)
+    .get(`/api/conversation/runs/${runId}?after=${snapshot.body.cursor}`)
+    .set(auth)
+    .expect(200);
+  assert.deepEqual(continuation.body.events, [
+    { stage: "text", messageId: "m", text: " продолжение" },
+  ]);
   release();
-  const finished = await request(app).get(`/api/conversation/runs/${runId}?after=${continuation.body.cursor}`).set(auth).expect(200);
+  const finished = await request(app)
+    .get(`/api/conversation/runs/${runId}?after=${continuation.body.cursor}`)
+    .set(auth)
+    .expect(200);
   assert.equal(finished.body.done, true);
   assert.equal(finished.body.data.body, "Ответ");
   assert.equal(calls, 1);
-  assert.deepEqual((store.history(context, sessionId) as { body: string }[]).map(row => row.body), ["Existing history", "Ответ"]);
-  await request(app).put("/api/context").set(auth).send({ client: "Other", project: "Project" }).expect(200);
-  await request(app).post("/api/conversation/runs").set(auth).send({ context, sessionId, prompt: "Stale upload" }).expect(409);
+  assert.deepEqual(
+    (store.history(context, sessionId) as { body: string }[]).map((row) => row.body),
+    ["Existing history", "Ответ"],
+  );
+  await request(app)
+    .put("/api/context")
+    .set(auth)
+    .send({ client: "Other", project: "Project" })
+    .expect(200);
+  await request(app)
+    .post("/api/conversation/runs")
+    .set(auth)
+    .send({ context, sessionId, prompt: "Stale upload" })
+    .expect(409);
 });
 
 test("terminal errors and pagination remain recoverable; completion releases the lock", async () => {
   const runs = new ChatRuns();
   const context = { client: "a", project: "b" };
-  const id = runs.start(context, "s", async emit => {
+  const id = runs.start(context, "s", async (emit) => {
     for (let i = 0; i < 501; i++) emit({ stage: "text", messageId: "m", text: String(i) });
     throw new AppError(409, "Остановлено пользователем");
   });

@@ -3,13 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import {
-  extractTicketIds,
-  Connectors,
-  plainText,
-} from "../server/connectors.js";
-import { Store } from "../server/store.js";
-import { azureBase } from "../server/http.js";
+import { extractTicketIds, Connectors, plainText } from "../services/backend/src/connectors.js";
+import { Store } from "../services/backend/src/store.js";
+import { azureBase } from "../services/backend/src/http.js";
 
 test("ticket recognition handles Azure links, Russian, AB# and deduplication", () => {
   assert.deepEqual(
@@ -80,9 +76,7 @@ test("Azure adapter uses custom collection, PAT header, project, fixed API versi
     calls[0].init.headers.Authorization,
     `Basic ${Buffer.from(":test-pat").toString("base64")}`,
   );
-  const ticket = store.db
-    .prepare("SELECT * FROM tickets WHERE id=321")
-    .get() as any;
+  const ticket = store.db.prepare("SELECT * FROM tickets WHERE id=321").get() as any;
   assert.equal(ticket.title, "Fix login");
   assert.equal(ticket.assigned, "Tester");
   assert.equal(ticket.state, "Active");
@@ -122,18 +116,13 @@ test("changing Azure settings during a request does not relabel the response as 
       }),
     );
   });
-  await assert.rejects(
-    new Connectors(store).trackTicket(1),
-    /Подключение Azure изменилось/,
-  );
+  await assert.rejects(new Connectors(store).trackTicket(1), /Подключение Azure изменилось/);
   assert.equal(store.db.prepare("SELECT * FROM tickets").get(), undefined);
 });
 
 test("bare IDs of any length and numbers anywhere in URLs are candidates", () => {
   assert.deepEqual(
-    extractTicketIds(
-      "Проверь 123456 и 1234567, ещё 42, 00042, 0, 9007199254740992",
-    ),
+    extractTicketIds("Проверь 123456 и 1234567, ещё 42, 00042, 0, 9007199254740992"),
     [123456, 1234567, 42],
   );
   assert.deepEqual(
@@ -149,9 +138,7 @@ test("bare IDs of any length and numbers anywhere in URLs are candidates", () =>
     [123456],
   );
   assert.deepEqual(
-    extractTicketIds(
-      '&#123; &#x7b; <span style="font-size:123456px">текст</span>',
-    ),
+    extractTicketIds('&#123; &#x7b; <span style="font-size:123456px">текст</span>'),
     [],
   );
   assert.deepEqual(extractTicketIds("https://ado/123456/%broken"), [123456]);
@@ -189,14 +176,8 @@ test("bare candidates are not tracked until Azure validates existence and projec
   await assert.rejects(connectors.trackTicket(123456), /404/);
   mode = "wrong";
   await assert.rejects(connectors.trackTicket(123456), /другому проекту/);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 0);
   mode = "valid";
   await connectors.trackTicket(123456);
-  assert.equal(
-    (store.db.prepare("SELECT id FROM tickets").get() as any).id,
-    123456,
-  );
+  assert.equal((store.db.prepare("SELECT id FROM tickets").get() as any).id, 123456);
 });

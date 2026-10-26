@@ -9,46 +9,46 @@
 
 Редактировать локальное поручение #{…} · Редактировать локальное поручение
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:73.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:79.
 
 ### Элемент
 
 Закрыть выбор разработчиков
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:94.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:100.
 
 ### Элемент
 
 Поиск локального разработчика · Поиск по имени
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:108.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:114.
 
 ### Элемент
 
 Загрузка… / Сохранить поручение
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:163.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:164.
 
 ### Элемент
 
 Изменить статус тикета #{…} · Изменить статус в Azure DevOps
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:255.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:255.
 
 ### Элемент
 
 Закрыть выбор статуса
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:275.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:275.
 
 ### Элемент
 
 Новый статус
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:289.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:288.
 
 ### Элемент
 
 Загрузка… / Изменить статус
 
-Источник: src/features/edit-ticket/ui/TicketControls.tsx:301.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketControls.tsx:300.

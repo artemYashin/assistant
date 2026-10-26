@@ -9,40 +9,40 @@
 
 Статус «{…}» не найден однозначно. Доступные статусы: {…}
 
-Источник: server/ticket-status.ts:15.
+Источник: services/backend/src/ticket-status.ts:11.
 
 ### Сообщение
 
 request_denied
 
-Источник: server/ticket-status.ts:32.
+Источник: services/backend/src/ticket-status.ts:28.
 
 ### Сообщение
 
 Номер или проект тикета не соответствует запросу
 
-Источник: server/ticket-status.ts:77.
+Источник: services/backend/src/ticket-status.ts:66.
 
 ### Сообщение
 
 Azure не вернул ревизию тикета; изменение отменено
 
-Источник: server/ticket-status.ts:97.
+Источник: services/backend/src/ticket-status.ts:83.
 
 ### Сообщение
 
 Результат смены статуса #{…} не подтверждён: повторное чтение не удалось. Изменение могло выполниться. Не повторяйте запись автоматически.
 
-Источник: server/ticket-status.ts:113.
+Источник: services/backend/src/ticket-status.ts:96.
 
 ### Сообщение
 
 Статус #{…} не подтверждён: ожидался «{…}», получен «{…}». {…} Повторная запись не выполнялась.
 
-Источник: server/ticket-status.ts:120.
+Источник: services/backend/src/ticket-status.ts:103.
 
 ### Сообщение
 
 confirmed_after_error
 
-Источник: server/ticket-status.ts:127.
+Источник: services/backend/src/ticket-status.ts:109.

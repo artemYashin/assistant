@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
-import { ticketsXlsx } from "../src/features/export-tickets/xlsx/index.js";
+import { ticketsXlsx } from "../services/frontend/src/features/export-tickets/xlsx/index.js";
 
 test("Excel export round-trips ordered tickets as values with formatting", async () => {
   const bytes = await ticketsXlsx(
@@ -20,9 +20,7 @@ test("Excel export round-trips ordered tickets as values with formatting", async
     true,
   );
   const book = new ExcelJS.Workbook();
-  await book.xlsx.load(
-    bytes as unknown as Parameters<typeof book.xlsx.load>[0],
-  );
+  await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
   const sheet = book.getWorksheet("Trash")!;
   assert.equal(sheet.rowCount, 3);
   assert.equal(sheet.getCell("A2").value, 42);
@@ -57,9 +55,7 @@ test("Excel selected columns retain styling by field and omit unselected data", 
     ["priority", "developers"],
   );
   const book = new ExcelJS.Workbook();
-  await book.xlsx.load(
-    bytes as unknown as Parameters<typeof book.xlsx.load>[0],
-  );
+  await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
   const sheet = book.getWorksheet("Tickets")!;
   assert.equal(sheet.columnCount, 2);
   assert.equal(sheet.getCell("A1").value, "Local Priority");
@@ -72,7 +68,7 @@ test("Excel selected columns retain styling by field and omit unselected data", 
 });
 
 test("creation and change dates can be exported without local import", async () => {
-  const { ticketsCsv } = await import("../src/features/export-tickets/index.js");
+  const { ticketsCsv } = await import("../services/frontend/src/features/export-tickets/index.js");
   const tickets = [
     {
       id: 42,
@@ -89,22 +85,30 @@ test("creation and change dates can be exported without local import", async () 
   assert.doesNotMatch(csv, /N\/A/);
   const bytes = await ticketsXlsx(tickets, false, [...keys]);
   const book = new ExcelJS.Workbook();
-  await book.xlsx.load(
-    bytes as unknown as Parameters<typeof book.xlsx.load>[0],
-  );
+  await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
   const sheet = book.getWorksheet("Tickets")!;
   assert.equal(sheet.columnCount, 2);
   assert.equal(sheet.getCell("A2").value, tickets[0].created_at);
   assert.equal(sheet.getCell("B2").value, tickets[0].changed_at);
 });
 
-
 test("Excel preserves custom column order and removes duplicate selections", async () => {
-  const bytes = await ticketsXlsx([{ id: 42, title: "Example", state: "Active" }], false, ["state", "title", "id", "state"]);
+  const bytes = await ticketsXlsx([{ id: 42, title: "Example", state: "Active" }], false, [
+    "state",
+    "title",
+    "id",
+    "state",
+  ]);
   const book = new ExcelJS.Workbook();
   await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
   const sheet = book.getWorksheet("Tickets")!;
   assert.equal(sheet.columnCount, 3);
-  assert.deepEqual(["A1", "B1", "C1"].map(cell => sheet.getCell(cell).value), ["Azure DevOps Status", "Title", "ID"]);
-  assert.deepEqual(["A2", "B2", "C2"].map(cell => sheet.getCell(cell).value), ["Active", "Example", 42]);
+  assert.deepEqual(
+    ["A1", "B1", "C1"].map((cell) => sheet.getCell(cell).value),
+    ["Azure DevOps Status", "Title", "ID"],
+  );
+  assert.deepEqual(
+    ["A2", "B2", "C2"].map((cell) => sheet.getCell(cell).value),
+    ["Active", "Example", 42],
+  );
 });

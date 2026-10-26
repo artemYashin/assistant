@@ -9,46 +9,46 @@
 
 Доступ ассистента к коду отключён в настройках.
 
-Источник: server/code-tools.ts:23.
+Источник: services/backend/src/code-tools.ts:46.
 
 ### Сообщение
 
 Выберите заказчика и проект.
 
-Источник: server/code-tools.ts:24.
+Источник: services/backend/src/code-tools.ts:48.
 
 ### Сообщение
 
 Выберите ветку репозитория.
 
-Источник: server/code-tools.ts:28.
+Источник: services/backend/src/code-tools.ts:62.
 
 ### Сообщение
 
 Ревью читает только source-ветку проверяемого PR.
 
-Источник: server/code-tools.ts:29.
+Источник: services/backend/src/code-tools.ts:64.
 
 ### Сообщение
 
 Код не соответствует проверяемому коммиту PR.
 
-Источник: server/code-tools.ts:34.
+Источник: services/backend/src/code-tools.ts:83.
 
 ### Сообщение
 
 Файл недоступен для цитирования
 
-Источник: server/code-tools.ts:55.
+Источник: services/backend/src/code-tools.ts:133.
 
 ### Сообщение
 
 Диапазон строк вне файла
 
-Источник: server/code-tools.ts:58.
+Источник: services/backend/src/code-tools.ts:137.
 
 ### Сообщение
 
 endLine должен быть не меньше startLine
 
-Источник: server/code-tools.ts:101.
+Источник: services/backend/src/code-tools.ts:234.

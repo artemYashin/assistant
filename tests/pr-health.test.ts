@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { policyChecks } from "../server/pr-health.js";
-import { PrHealth } from "../src/widgets/pull-request/index.js";
+import { policyChecks } from "../services/backend/src/pr-health.js";
+import { PrHealth } from "../services/frontend/src/widgets/pull-request/index.js";
 test("health follows evaluation status, not internal build context flags", () => {
   const checks = policyChecks([
     {
@@ -64,23 +64,15 @@ test("cached stale flags do not override approved; only queued/running are pendi
     );
   const approved = { build: true, state: "approved", stale: true };
   assert.ok(
-    render([approved, { build: true, state: "notApplicable" }]).includes(
-      "CI: проверки пройдены",
-    ),
+    render([approved, { build: true, state: "notApplicable" }]).includes("CI: проверки пройдены"),
   );
   assert.ok(
-    render([approved, { build: true, state: "queued" }]).includes(
-      "CI: ожидает / выполняется",
-    ),
+    render([approved, { build: true, state: "queued" }]).includes("CI: ожидает / выполняется"),
   );
   assert.ok(
-    render([{ build: true, state: "unknown", stale: true }]).includes(
-      "CI: состояние неизвестно",
-    ),
+    render([{ build: true, state: "unknown", stale: true }]).includes("CI: состояние неизвестно"),
   );
   assert.ok(
-    render([{ build: true, state: "rejected", stale: true }]).includes(
-      "CI: проверка не прошла",
-    ),
+    render([{ build: true, state: "rejected", stale: true }]).includes("CI: проверка не прошла"),
   );
 });

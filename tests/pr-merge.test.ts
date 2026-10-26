@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AppError } from "../server/store.js";
-import { PrMerge } from "../server/pr-merge.js";
-import type { Connectors } from "../server/connectors.js";
+import { Store, AppError } from "../services/backend/src/store.js";
+import { PrMerge } from "../services/backend/src/pr-merge.js";
+import type { Connectors } from "../services/backend/src/connectors.js";
 
 function fixture(t: any, bypass = false) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-merge-"));
@@ -43,11 +43,7 @@ function fixture(t: any, bypass = false) {
       state: "Active",
       states: id === 42 ? ["Active", "Resolved"] : ["Active", "Done"],
     }),
-    changeTicketStatus: async (
-      id: number,
-      state: string,
-      guard: () => void,
-    ) => {
+    changeTicketStatus: async (id: number, state: string, guard: () => void) => {
       guard();
       assert.ok(merged, "Must verify merge before ticket writes");
       writes.push({ id, state });
@@ -99,7 +95,9 @@ function fixture(t: any, bypass = false) {
     store,
     writes,
     key: { monitor: "monitor", repo: "repo", number: 1 },
-    setTitle: (value: string) => { title = value; },
+    setTitle: (value: string) => {
+      title = value;
+    },
     setFailMerge: (status = 403) => {
       failMerge = true;
       denialStatus = status;
@@ -182,10 +180,7 @@ test("merge-only skips work item access and rejects ticket changes in confirmati
   });
   const originalFetch = globalThis.fetch;
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
-    assert.ok(
-      !String(raw).includes("/workitems"),
-      "Merge-only must not load work item links",
-    );
+    assert.ok(!String(raw).includes("/workitems"), "Merge-only must not load work item links");
     return originalFetch(raw, init);
   });
   const p = await f.service.prepare(f.key, false);
@@ -216,10 +211,7 @@ test("new confirmation can retry permission rejection, including persisted legac
   f.allowMerge();
   const next = await f.service.prepare(f.key);
   assert.notEqual(next.id, p.id);
-  assert.equal(
-    (await f.service.execute(next.id, selection, "squash")).status,
-    "completed",
-  );
+  assert.equal((await f.service.execute(next.id, selection, "squash")).status, "completed");
   assert.equal(f.writes.length, 4);
 });
 test("ambiguous merge stays blocked and new dialogs resolve the original result", async (t) => {
@@ -242,11 +234,7 @@ test("merge ticket discovery combines links read-only without preparing or mergi
   const result = await f.service.linkedTickets(f.key);
   assert.deepEqual(result.ids, [42, 43]);
   assert.equal(f.writes.length, 0);
-  assert.equal(
-    (f.store.db.prepare("SELECT count(*) n FROM pr_merge_plans").get() as any)
-      .n,
-    0,
-  );
+  assert.equal((f.store.db.prepare("SELECT count(*) n FROM pr_merge_plans").get() as any).n, 0);
 });
 
 test("merge explicitly skips unselected ticket statuses", async (t) => {
@@ -280,10 +268,7 @@ test("policy bypass is explicit, requires a reason and preserves merge verificat
     enabled: true,
     reason: "Approved exception",
   });
-  assert.equal(
-    f.writes[0].completionOptions.bypassReason,
-    "Approved exception",
-  );
+  assert.equal(f.writes[0].completionOptions.bypassReason, "Approved exception");
   assert.equal(f.writes[0].completionOptions.transitionWorkItems, false);
   assert.equal(f.writes.length, 1);
   assert.deepEqual(
@@ -296,21 +281,26 @@ test("policy bypass is explicit, requires a reason and preserves merge verificat
   assert.equal(f.writes.length, 1);
 });
 
-
 test("merge commit uses the current PR title after the dialog was opened", async (t) => {
   const f = fixture(t);
   const plan = await f.service.prepare(f.key, false);
   f.setTitle("Исправление авторизации — updated title");
   await f.service.execute(plan.id, [], "noFastForward");
-  assert.equal(f.writes[0].completionOptions.mergeCommitMessage, "Merged PR 1: Исправление авторизации — updated title");
+  assert.equal(
+    f.writes[0].completionOptions.mergeCommitMessage,
+    "Merged PR 1: Исправление авторизации — updated title",
+  );
 });
 
-test("merge allows running CI and preserves explicit policy bypass", async t => {
+test("merge allows running CI and preserves explicit policy bypass", async (t) => {
   const f = fixture(t, true);
   const plan = await f.service.prepare(f.key, false);
   const original = globalThis.fetch;
   t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
-    if (new URL(String(raw)).pathname.endsWith("/policy/evaluations")) return Response.json({ value: [{ status: "running", configuration: { settings: { buildDefinitionId: 1 } } }] });
+    if (new URL(String(raw)).pathname.endsWith("/policy/evaluations"))
+      return Response.json({
+        value: [{ status: "running", configuration: { settings: { buildDefinitionId: 1 } } }],
+      });
     return original(raw, init);
   });
   await f.service.execute(plan.id, [], "squash", { enabled: true, reason: "Test" });
@@ -318,17 +308,24 @@ test("merge allows running CI and preserves explicit policy bypass", async t => 
   assert.equal(f.writes[0].completionOptions.bypassPolicy, true);
 });
 
-test("merge omits locally disabled Azure and textual links", async t => {
+test("merge omits locally disabled Azure and textual links", async (t) => {
   const { store, service, key } = fixture(t);
-  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(key.monitor, key.repo, key.number, 43);
+  store.db
+    .prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)")
+    .run(key.monitor, key.repo, key.number, 43);
   assert.deepEqual((await service.linkedTickets(key)).ids, [42]);
   const plan = await service.prepare(key);
-  assert.deepEqual(plan.tickets.map(t => t.id), [42]);
-  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(key.monitor, key.repo, key.number, 42);
+  assert.deepEqual(
+    plan.tickets.map((t) => t.id),
+    [42],
+  );
+  store.db
+    .prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)")
+    .run(key.monitor, key.repo, key.number, 42);
   assert.deepEqual((await service.linkedTickets(key)).ids, []);
 });
 
-test("merge preparation exposes current source and target branch names", async t => {
+test("merge preparation exposes current source and target branch names", async (t) => {
   const { service, key } = fixture(t);
   const plan = await service.prepare(key, false);
   assert.equal(plan.sourceBranch, "refs/heads/feature/test");

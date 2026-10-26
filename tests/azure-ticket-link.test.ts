@@ -1,10 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { azureTicketPath, shareTicketUrl } from "../src/entities/ticket/index.js";
+import { azureTicketPath, shareTicketUrl } from "../services/frontend/src/entities/ticket/index.js";
 
 test("work item links are scoped to organization and project", () => {
   const source = "https://dev.azure.com/org|My Project";
-  const local = azureTicketPath("https://dev.azure.com/org/My%20Project/_workitems/edit/42", source)!;
+  const local = azureTicketPath(
+    "https://dev.azure.com/org/My%20Project/_workitems/edit/42",
+    source,
+  )!;
   assert.ok(local.startsWith("/tickets?id=42&source="));
   assert.equal(shareTicketUrl(local), "https://dev.azure.com/org/My%20Project/_workitems/edit/42");
   for (const url of [
@@ -12,6 +15,7 @@ test("work item links are scoped to organization and project", () => {
     "https://dev.azure.com/org/Other/_workitems/edit/42",
     "https://dev.azure.com/org/My%20Project/_git/repo/pullrequest/42",
     "https://dev.azure.com/org/My%20Project/_workitems/edit/42extra",
-  ]) assert.equal(azureTicketPath(url, source), null);
+  ])
+    assert.equal(azureTicketPath(url, source), null);
   assert.equal(shareTicketUrl("https://figma.com/file/abc"), "https://figma.com/file/abc");
 });

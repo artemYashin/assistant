@@ -9,22 +9,22 @@
 
 Не найдены локально: {…}. Эти тикеты не добавлены в экспорт.
 
-Источник: src/features/export-tickets/ui/ExportTickets.tsx:295.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:288.
 
 ### Сообщение
 
 Не удалось загрузить список тикетов: {…}
 
-Источник: src/features/export-tickets/ui/ExportTickets.tsx:300.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:293.
 
 ### Сообщение
 
 Не удалось скопировать таблицу. Разрешите доступ к буферу обмена в браузере и повторите попытку либо скачайте файл.
 
-Источник: src/features/export-tickets/ui/ExportTickets.tsx:390.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:384.
 
 ### Сообщение
 
 Не удалось создать файл. Попробуйте экспортировать ещё раз.
 
-Источник: src/features/export-tickets/ui/ExportTickets.tsx:432.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:423.

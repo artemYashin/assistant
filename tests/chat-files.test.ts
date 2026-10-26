@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
+import { Store } from "../services/backend/src/store.js";
 import {
   ChatFiles,
   inspectChatFile,
   prepareChatFiles,
-} from "../server/chat-files.js";
-import { Agent } from "../server/agent.js";
+} from "../services/backend/src/chat-files.js";
+import { Agent } from "../services/backend/src/agent.js";
 const context = { client: "C", project: "P" };
 const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1]);
 function fixture(t: any) {
@@ -27,39 +27,15 @@ test("files validate formats and encoding, preserve order and isolate chats", (t
     chat = store.createChat(context),
     other = store.createChat(context);
   const first = files.add(context, chat.id, "one.png", png),
-    csv = files.add(
-      context,
-      chat.id,
-      "two.csv",
-      Buffer.from('id,name\n1,"hello, world"'),
-    );
+    csv = files.add(context, chat.id, "two.csv", Buffer.from('id,name\n1,"hello, world"'));
   assert.throws(() => files.read(context, other.id, [first.id]), /не найдено/);
-  assert.throws(() =>
-    files.read({ client: "Other", project: "P" }, chat.id, [first.id]),
-  );
-  assert.throws(
-    () => files.read(context, chat.id, [first.id, first.id]),
-    /разных/,
-  );
-  assert.throws(
-    () => inspectChatFile("fake.pdf", Buffer.from("not pdf")),
-    /не распознан/,
-  );
-  assert.throws(
-    () => inspectChatFile("file.xlsx", Buffer.from("file")),
-    /не распознан/,
-  );
-  assert.throws(
-    () => inspectChatFile("file.csv", Buffer.from([255, 254])),
-    /UTF-8/,
-  );
-  assert.throws(
-    () => inspectChatFile("file.csv", Buffer.from("a".repeat(200001))),
-    /200 000/,
-  );
-  const prepared = prepareChatFiles(
-    files.read(context, chat.id, [csv.id, first.id]),
-  );
+  assert.throws(() => files.read({ client: "Other", project: "P" }, chat.id, [first.id]));
+  assert.throws(() => files.read(context, chat.id, [first.id, first.id]), /разных/);
+  assert.throws(() => inspectChatFile("fake.pdf", Buffer.from("not pdf")), /не распознан/);
+  assert.throws(() => inspectChatFile("file.xlsx", Buffer.from("file")), /не распознан/);
+  assert.throws(() => inspectChatFile("file.csv", Buffer.from([255, 254])), /UTF-8/);
+  assert.throws(() => inspectChatFile("file.csv", Buffer.from("a".repeat(200001))), /200 000/);
+  const prepared = prepareChatFiles(files.read(context, chat.id, [csv.id, first.id]));
   assert.equal(prepared.attachments[0].displayName, "Вложение 2: one.png");
   assert.equal(prepared.attachments[0].data, png.toString("base64"));
   assert.ok(prepared.prompt.includes("hello, world"));
@@ -74,12 +50,7 @@ test("agent sends images natively and text files in full on the initial request"
   store.set("settings", { ...store.settings(), model: "vision-model" });
   const ids = [
     files.add(context, chat.id, "one.png", png),
-    files.add(
-      context,
-      chat.id,
-      "two.csv",
-      Buffer.from("a,b\n1,UNIQUE_CSV_VALUE"),
-    ),
+    files.add(context, chat.id, "two.csv", Buffer.from("a,b\n1,UNIQUE_CSV_VALUE")),
     files.add(context, chat.id, "three.txt", Buffer.from("FULL_TEXT_FILE")),
   ].map((f) => f.id);
   let sent: any;
@@ -97,15 +68,10 @@ test("agent sends images natively and text files in full on the initial request"
   const client = {
     start: async () => {},
     stop: async () => {},
-    listModels: async () => [
-      { id: "vision-model", capabilities: { supports: { vision: true } } },
-    ],
+    listModels: async () => [{ id: "vision-model", capabilities: { supports: { vision: true } } }],
     createSession: async () => session,
   };
-  const agent = new Agent(
-    store,
-    () => client as any,
-  );
+  const agent = new Agent(store, () => client as any);
   await agent.chat(
     "Сравни вложения",
     context,
@@ -128,9 +94,7 @@ test("agent sends images natively and text files in full on the initial request"
   assert.ok(sent.prompt.includes("FULL_TEXT_FILE"));
   assert.ok(sent.prompt.includes("three.txt"));
   assert.ok(sent.prompt.includes("UNIQUE_CSV_VALUE"));
-  const user = store
-    .history(context, chat.id)
-    .find((m: any) => m.role === "user") as any;
+  const user = store.history(context, chat.id).find((m: any) => m.role === "user") as any;
   assert.deepEqual(
     JSON.parse(user.message_context)
       .filter((b: any) => b.kind === "file")
@@ -138,16 +102,14 @@ test("agent sends images natively and text files in full on the initial request"
     [1, 2, 3],
   );
   store.deleteChat(context, chat.id);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) AS n FROM chat_files").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM chat_files").get() as any).n, 0);
 });
 test("upload API validates files and binds downloads and conversation requests to the chat", async (t) => {
   const { default: request } = await import("supertest");
-  const { createApp } = await import("../server/app.js");
-  const store = fixture(t),
-    { app, agent } = createApp(store),
+  const { createApp } = await import("../services/backend/src/app.js");
+  const store = fixture(t);
+  store.set("settings", { ...store.settings(), ...context });
+  const { app, agent } = createApp(store),
     chat = store.createChat(context);
   const headers = {
     Host: "localhost:43871",
@@ -174,14 +136,24 @@ test("upload API validates files and binds downloads and conversation requests t
     .attach("file", Buffer.from("key,value\n1,complete"), "data.csv")
     .expect(200);
   assert.equal(upload.body.name, "данные.csv");
-  const image = new ChatFiles(store).add(context,chat.id,"screen.png",png);
-  const attached = await request(app).post("/api/conversation/image").set(auth)
-    .send({...context,sessionId:chat.id,url:"/api/conversation/files/"+image.id}).expect(200);
-  assert.notEqual(attached.body.id,image.id);
-  assert.equal(attached.body.mime,"image/png");
-  assert.deepEqual(new ChatFiles(store).read(context,chat.id,[attached.body.id])[0].bytes,png);
-  await request(app).post("/api/conversation/image").set(auth)
-    .send({...context,sessionId:store.createChat(context).id,url:"/api/conversation/files/"+image.id}).expect(404);
+  const image = new ChatFiles(store).add(context, chat.id, "screen.png", png);
+  const attached = await request(app)
+    .post("/api/conversation/image")
+    .set(auth)
+    .send({ ...context, sessionId: chat.id, url: "/api/conversation/files/" + image.id })
+    .expect(200);
+  assert.notEqual(attached.body.id, image.id);
+  assert.equal(attached.body.mime, "image/png");
+  assert.deepEqual(new ChatFiles(store).read(context, chat.id, [attached.body.id])[0].bytes, png);
+  await request(app)
+    .post("/api/conversation/image")
+    .set(auth)
+    .send({
+      ...context,
+      sessionId: store.createChat(context).id,
+      url: "/api/conversation/files/" + image.id,
+    })
+    .expect(404);
 
   await request(app)
     .post("/api/conversation/files")

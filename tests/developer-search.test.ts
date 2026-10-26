@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { Connectors } from "../server/connectors.js";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
 test("identity search is filtered, bounded, excludes groups and merges cached search selections", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-search-")),
     store = new Store(dir);
@@ -42,19 +42,13 @@ test("identity search is filtered, bounded, excludes groups and merges cached se
   await assert.rejects(connectors.developers(""));
   await assert.rejects(connectors.developers("**"));
   assert.equal(calls, 0);
-  store.set("developers:" + store.source(), [
-    { id: "previous", name: "Previous" },
-  ]);
+  store.set("developers:" + store.source(), [{ id: "previous", name: "Previous" }]);
   const result = await connectors.developers("Ann & dev");
   assert.equal(calls, 1);
   assert.equal(result.users.length, 20);
   assert.equal(result.truncated, true);
   assert.equal(result.users[0].email, "ann0@test");
-  assert.ok(
-    store
-      .get<any[]>("developers:" + store.source(), [])
-      .some((u) => u.id === "previous"),
-  );
+  assert.ok(store.get<any[]>("developers:" + store.source(), []).some((u) => u.id === "previous"));
   t.mock.method(globalThis, "fetch", async () => {
     store.set("settings", { ...store.settings(), azureProject: "Other" });
     return Response.json({ value: [] });
@@ -101,12 +95,7 @@ test("empty general search falls back to explicit display name or mail, without 
     (await connectors.developers("artem@example.test")).users[0].email,
     "artem@example.test",
   );
-  assert.deepEqual(filters, [
-    "General",
-    "DisplayName",
-    "General",
-    "MailAddress",
-  ]);
+  assert.deepEqual(filters, ["General", "DisplayName", "General", "MailAddress"]);
 });
 
 test("partial-name Graph search resolves descriptors in one batch and excludes groups", async (t) => {
@@ -183,16 +172,12 @@ test("unavailable Graph keeps cached partial-name results and reports a warning"
     name: "Artem Example",
     email: "artem@example.test",
   };
-  store.set("developers:" + store.source(), [
-    person,
-    { id: "other", name: "Other User" },
-  ]);
+  store.set("developers:" + store.source(), [person, { id: "other", name: "Other User" }]);
   const connectors = new Connectors(store);
   let calls = 0;
   t.mock.method(globalThis, "fetch", async (raw: any) => {
     calls++;
-    if (String(raw).includes("subjectquery"))
-      return new Response("Not supported", { status: 404 });
+    if (String(raw).includes("subjectquery")) return new Response("Not supported", { status: 404 });
     return Response.json({ value: [] });
   });
   const result = await connectors.developers("EXA art");

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { metadataContextRequest } from "../server/metadata-context.js";
+import { metadataContextRequest } from "../services/backend/src/metadata-context.js";
 const history = [
   { role: "user", body: "Добавь тег UI тикетам Internal Sites" },
   { role: "assistant", body: "Добавить ко всем 23 тикетам или только к #42?" },
@@ -24,7 +24,7 @@ test("scope clarification retains the user's metadata request, never the assista
   assert.equal(metadataContextRequest("Да", []).contextual, false);
 });
 
-import { confirmedChatRequest } from "../server/metadata-context.js";
+import { confirmedChatRequest } from "../services/backend/src/metadata-context.js";
 
 test("text approval continues the immediately preceding request only", () => {
   const history = [
@@ -40,8 +40,7 @@ test("text approval continues the immediately preceding request only", () => {
   for (const reply of ["Нет", "Да, но только #42", "Добавь тег X"])
     assert.equal(confirmedChatRequest(reply, history).contextual, false);
   assert.equal(
-    confirmedChatRequest("Да", [{ role: "assistant", body: "Помочь ещё?" }])
-      .contextual,
+    confirmedChatRequest("Да", [{ role: "assistant", body: "Помочь ещё?" }]).contextual,
     false,
   );
 });
@@ -71,27 +70,38 @@ test("metadata confirmation retains exclusions across several clarification turn
 });
 
 test("status confirmation accepts natural question variants and carries displayed IDs", () => {
-  for (const question of ["Выполнить изменение?", "Выполнить изменения?", "Выполнить действие?", "Применить изменения?"]) {
+  for (const question of [
+    "Выполнить изменение?",
+    "Выполнить изменения?",
+    "Выполнить действие?",
+    "Применить изменения?",
+  ]) {
     const result = confirmedChatRequest("Да, давай", [
-      {role: "user", body: "Переведи эти тикеты в RFT"},
-      {role: "assistant", body: `#42 — First; #43 — Second. Ready for Testing. ${question}`},
+      { role: "user", body: "Переведи эти тикеты в RFT" },
+      { role: "assistant", body: `#42 — First; #43 — Second. Ready for Testing. ${question}` },
     ]);
     assert.equal(result.contextual, true);
     assert.match(result.prompt, /Переведи эти тикеты в RFT/);
     assert.match(result.prompt, /#42, #43/);
   }
-  assert.equal(confirmedChatRequest("Да, давай", [
-    {role: "user", body: "Переведи эти тикеты в RFT"},
-    {role: "assistant", body: "Хочешь посмотреть другие тикеты?"},
-  ]).contextual, false);
+  assert.equal(
+    confirmedChatRequest("Да, давай", [
+      { role: "user", body: "Переведи эти тикеты в RFT" },
+      { role: "assistant", body: "Хочешь посмотреть другие тикеты?" },
+    ]).contextual,
+    false,
+  );
 });
 
 test("status approval survives clarification, Markdown and local links without hash IDs", () => {
   const result = confirmedChatRequest("Да, давай", [
-    {role: "user", body: "Давай поменяем статус тикетов с тегом Inside 2"},
-    {role: "assistant", body: "В какой статус перевести?"},
-    {role: "user", body: "RFT"},
-    {role: "assistant", body: "42 — First [Перейти](/tickets?id=42&source=example)\n43 — Second [Перейти](/tickets?source=example&id=43)\nГотов перевести в Ready for Testing. **Выполнить изменения для этих тикетов?**"},
+    { role: "user", body: "Давай поменяем статус тикетов с тегом Inside 2" },
+    { role: "assistant", body: "В какой статус перевести?" },
+    { role: "user", body: "RFT" },
+    {
+      role: "assistant",
+      body: "42 — First [Перейти](/tickets?id=42&source=example)\n43 — Second [Перейти](/tickets?source=example&id=43)\nГотов перевести в Ready for Testing. **Выполнить изменения для этих тикетов?**",
+    },
   ]);
   assert.equal(result.contextual, true);
   assert.match(result.prompt, /Давай поменяем статус/);
@@ -101,16 +111,36 @@ test("status approval survives clarification, Markdown and local links without h
 
 test("natural short approvals preserve the plan, but changed scope and refusals do not", () => {
   const history = [
-    {role: "user", body: "Переведи #42 и #43 в RFT"},
-    {role: "assistant", body: "#42 — First; #43 — Second. Выполнить изменения?"},
+    { role: "user", body: "Переведи #42 и #43 в RFT" },
+    { role: "assistant", body: "#42 — First; #43 — Second. Выполнить изменения?" },
   ];
-  for (const reply of ["Давай, погнали", "Поехали!", "Ок, делай", "Да, конечно, выполняй", "Ага, давай", "Хорошо, сделай, пожалуйста", "Подтверждаю", "Okay, go ahead", "Yes, do it please"]) {
+  for (const reply of [
+    "Давай, погнали",
+    "Поехали!",
+    "Ок, делай",
+    "Да, конечно, выполняй",
+    "Ага, давай",
+    "Хорошо, сделай, пожалуйста",
+    "Подтверждаю",
+    "Okay, go ahead",
+    "Yes, do it please",
+  ]) {
     const result = confirmedChatRequest(reply, history);
     assert.equal(result.contextual, true, reply);
     assert.match(result.prompt, /Переведи #42 и #43 в RFT/);
     assert.equal(confirmedChatRequest(reply, []).contextual, false);
   }
-  for (const reply of ["Давай, но только #42", "Да, кроме #43", "Да, но в Active", "Не надо", "Нет, погнали дальше", "Давай погнали?", "Погнали посмотреть список", "Пожалуйста", "Да, стоп"]) {
+  for (const reply of [
+    "Давай, но только #42",
+    "Да, кроме #43",
+    "Да, но в Active",
+    "Не надо",
+    "Нет, погнали дальше",
+    "Давай погнали?",
+    "Погнали посмотреть список",
+    "Пожалуйста",
+    "Да, стоп",
+  ]) {
     assert.equal(confirmedChatRequest(reply, history).contextual, false, reply);
   }
 });

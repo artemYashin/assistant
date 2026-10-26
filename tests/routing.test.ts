@@ -5,7 +5,7 @@ import {
   pageForPath,
   ticketPath,
   pullRequestPath,
-} from "../src/shared/config/routes/index.js";
+} from "../services/frontend/src/shared/config/routes/index.js";
 test("every section has a stable route, with trailing slash and unknown path handling", () => {
   for (const [page, path] of Object.entries(pagePaths)) {
     assert.equal(pageForPath(path), page);
@@ -20,10 +20,7 @@ test("ticket deep links preserve collection source and exact numeric ID", () => 
   );
   assert.equal(url.pathname, "/tickets");
   assert.equal(url.searchParams.get("id"), "123456");
-  assert.equal(
-    url.searchParams.get("source"),
-    "https://ado.test/My Collection|Project & Team",
-  );
+  assert.equal(url.searchParams.get("source"), "https://ado.test/My Collection|Project & Team");
 });
 
 test("PR deep links preserve full monitor and repository identity", () => {
@@ -38,11 +35,8 @@ test("PR deep links preserve full monitor and repository identity", () => {
 });
 
 test("chat ticket links accept only source-scoped positive safe ticket IDs", async () => {
-  const { chatTicketPath } = await import("../src/shared/config/routes/index.js");
-  assert.equal(
-    chatTicketPath("/tickets?id=42&source=org%7CP"),
-    "/tickets?id=42&source=org%7CP",
-  );
+  const { chatTicketPath } = await import("../services/frontend/src/shared/config/routes/index.js");
+  assert.equal(chatTicketPath("/tickets?id=42&source=org%7CP"), "/tickets?id=42&source=org%7CP");
   for (const value of [
     "//evil.test/tickets?id=42&source=x",
     "/settings",

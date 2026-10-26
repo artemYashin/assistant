@@ -9,40 +9,40 @@
 
 Azure отклонил доступ. Проверьте PAT Code Read и право Read на репозиторий.
 
-Источник: code-browser/diagnostics.mjs:16.
+Источник: services/code-browser/diagnostics.mjs:31.
 
 ### Сообщение
 
 Git не смог проверить TLS-сертификат сервера. Проверьте корпоративный сертификат в контейнере.
 
-Источник: code-browser/diagnostics.mjs:17.
+Источник: services/code-browser/diagnostics.mjs:34.
 
 ### Сообщение
 
 Контейнер не смог подключиться к Azure. Проверьте сеть, VPN и DNS.
 
-Источник: code-browser/diagnostics.mjs:18.
+Источник: services/code-browser/diagnostics.mjs:36.
 
 ### Сообщение
 
 Сервер перенаправляет Git-запрос. Проверьте конечный URL организации/коллекции.
 
-Источник: code-browser/diagnostics.mjs:19.
+Источник: services/code-browser/diagnostics.mjs:38.
 
 ### Сообщение
 
 Процесс Git был остановлен; возможна нехватка памяти контейнера.
 
-Источник: code-browser/diagnostics.mjs:21.
+Источник: services/code-browser/diagnostics.mjs:45.
 
 ### Сообщение
 
 Ветка или её коммит недоступны на сервере. Обновите список веток.
 
-Источник: code-browser/diagnostics.mjs:23.
+Источник: services/code-browser/diagnostics.mjs:49.
 
 ### Сообщение
 
 Передача Git-данных оборвалась. Проверьте соединение/VPN и ответ сервера ниже.
 
-Источник: code-browser/diagnostics.mjs:24.
+Источник: services/code-browser/diagnostics.mjs:51.

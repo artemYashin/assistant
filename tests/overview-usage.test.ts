@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { UsageLedger } from "../server/usage.js";
-import { overviewUsage } from "../server/overview-usage.js";
+import { Store } from "../services/backend/src/store.js";
+import { UsageLedger } from "../services/backend/src/usage.js";
+import { overviewUsage } from "../services/backend/src/overview-usage.js";
 
 test("overview tokens use scoped rolling windows, zero-fill days and retain PR origin", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-overview-"));
@@ -17,11 +17,7 @@ test("overview tokens use scoped rolling windows, zero-fill days and retain PR o
   const ledger = new UsageLedger(store);
   const context = { client: "C", project: "P" };
   const now = Date.parse("2026-10-20T12:00:00Z");
-  const create = (
-    days: number,
-    ctx = context,
-    origin: "chat" | "pr_review" = "chat",
-  ) => {
+  const create = (days: number, ctx = context, origin: "chat" | "pr_review" = "chat") => {
     const id = ledger.begin(
       "model",
       ctx,
@@ -76,9 +72,6 @@ test("overview tokens use scoped rolling windows, zero-fill days and retain PR o
     400,
   );
   assert.ok(result.daily.some((row) => row.input === 0 && row.output === 0));
-  assert.equal(
-    result.recent.find((row) => row.id === older)?.pull_request.number,
-    42,
-  );
+  assert.equal(result.recent.find((row) => row.id === older)?.pull_request.number, 42);
   assert.equal(result.recent.length, 4);
 });

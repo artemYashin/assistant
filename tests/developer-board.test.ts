@@ -4,9 +4,9 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { createApp } from "../server/app.js";
-import { LocalDevelopers } from "../server/local-developers.js";
+import { Store } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
+import { LocalDevelopers } from "../services/backend/src/local-developers.js";
 
 test("developer notes stay scoped and completed tickets come from trash", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-board-"));
@@ -51,14 +51,9 @@ test("developer notes stay scoped and completed tickets come from trash", async 
     .run(store.source(), 42, "Ticket", "Active", "", "Bug", "url", null, "now");
   people.assign(42, [developer.id], context);
   store.removeLocalTicket(42);
-  const read = await request(app)
-    .get("/api/developer-board")
-    .query(context)
-    .set(auth)
-    .expect(200);
+  const read = await request(app).get("/api/developer-board").query(context).set(auth).expect(200);
   assert.equal(
-    read.body.developers.find((person: any) => person.id === developer.id)
-      .notes,
+    read.body.developers.find((person: any) => person.id === developer.id).notes,
     "Private project note",
   );
   assert.equal(read.body.completedStates, undefined);
@@ -73,11 +68,7 @@ test("developer notes stay scoped and completed tickets come from trash", async 
     .query(context)
     .set(auth)
     .expect(200);
-  assert.deepEqual(catalog.body.availableStates, [
-    "Real Active",
-    "Real Done",
-    "Real Testing",
-  ]);
+  assert.deepEqual(catalog.body.availableStates, ["Real Active", "Real Done", "Real Testing"]);
   assert.deepEqual(catalog.body.statusGroups, {});
   const groups = { Prod: "done", UAT: "review", Closed: "active" };
   await request(app)
@@ -120,11 +111,7 @@ test("developer notes stay scoped and completed tickets come from trash", async 
 
   assert.equal(read.body.completedTickets[0].id, 42);
   assert.equal(read.body.completedTickets[0].developers[0].id, developer.id);
-  const second = await request(app)
-    .get("/api/developer-board")
-    .query(other)
-    .set(auth)
-    .expect(200);
+  const second = await request(app).get("/api/developer-board").query(other).set(auth).expect(200);
   assert.deepEqual(second.body.developers, []);
   assert.equal(second.body.statusGroups.Closed, undefined);
   assert.equal(second.body.showDeleted, true);

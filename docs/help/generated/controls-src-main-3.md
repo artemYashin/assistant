@@ -9,118 +9,118 @@
 
 Без тегов
 
-Источник: src/pages/tickets/ui/Tickets.tsx:414.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:391.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: src/pages/tickets/ui/Tickets.tsx:424.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:397.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: src/pages/tickets/ui/Tickets.tsx:432.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:405.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: src/pages/tickets/ui/Tickets.tsx:443.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:412.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: src/pages/tickets/ui/Tickets.tsx:454.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:423.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: src/pages/tickets/ui/Tickets.tsx:471.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:441.
 
 ### Элемент
 
 Нет поручения
 
-Источник: src/pages/tickets/ui/Tickets.tsx:478.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:448.
 
 ### Элемент
 
 Снять выбор
 
-Источник: src/pages/tickets/ui/Tickets.tsx:511.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:482.
 
 ### Элемент
 
 Назад
 
-Источник: src/pages/tickets/ui/Tickets.tsx:546.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:506.
 
 ### Элемент
 
 Страница {…}
 
-Источник: src/pages/tickets/ui/Tickets.tsx:556.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:516.
 
 ### Элемент
 
 Далее
 
-Источник: src/pages/tickets/ui/Tickets.tsx:573.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:533.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/pages/memory/ui/Memory.tsx:59.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:89.
 
 ### Элемент
 
 Отмена
 
-Источник: src/pages/memory/ui/Memory.tsx:64.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:102.
 
 ### Элемент
 
 Удаление… / Удалить
 
-Источник: src/pages/memory/ui/Memory.tsx:65.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:111.
 
 ### Элемент
 
 Добавить память
 
-Источник: src/pages/memory/ui/Memory.tsx:80.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:142.
 
 ### Элемент
 
 Название · 1–2 предложения
 
-Источник: src/pages/memory/ui/Memory.tsx:149.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:254.
 
 ### Элемент
 
 Для чего нужна эта запись
 
-Источник: src/pages/memory/ui/Memory.tsx:149.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:255.
 
 ### Элемент
 
 Описание · Markdown
 
-Источник: src/pages/memory/ui/Memory.tsx:150.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:265.
 
 ### Элемент
 
 Например: по этому проекту договорились отправлять статус каждую пятницу…
 
-Источник: src/pages/memory/ui/Memory.tsx:151.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:266.
 
 ### Элемент
 
 Сохранить
 
-Источник: src/pages/memory/ui/Memory.tsx:164.
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:290.

@@ -9,16 +9,16 @@
 
 Help metadata missing:
 
-Источник: server/help.ts:40.
+Источник: services/backend/src/help.ts:48.
 
 ### Сообщение
 
 Duplicate help ID:
 
-Источник: server/help.ts:42.
+Источник: services/backend/src/help.ts:50.
 
 ### Сообщение
 
 Статья справки не найдена. Найдите её через search_app_help.
 
-Источник: server/help.ts:77.
+Источник: services/backend/src/help.ts:100.

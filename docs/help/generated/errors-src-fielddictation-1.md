@@ -9,10 +9,10 @@
 
 Поле изменилось во время записи. Повторите диктовку.
 
-Источник: src/features/voice-input/ui/FieldDictation.tsx:16.
+Источник: services/frontend/src/features/voice-input/ui/FieldDictation.tsx:24.
 
 ### Сообщение
 
 Текст превышает лимит поля ({…} символов). Запишите короче.
 
-Источник: src/features/voice-input/ui/FieldDictation.tsx:19.
+Источник: services/frontend/src/features/voice-input/ui/FieldDictation.tsx:28.

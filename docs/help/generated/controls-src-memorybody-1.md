@@ -9,34 +9,34 @@
 
 Описание
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:16.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:32.
 
 ### Элемент
 
 Редактировать
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:63.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:92.
 
 ### Элемент
 
 Название · 1–2 предложения
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:100.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:133.
 
 ### Элемент
 
 Описание · Markdown
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:101.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:143.
 
 ### Элемент
 
 Сохраняю… / Сохранить
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:119.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:161.
 
 ### Элемент
 
 Отмена
 
-Источник: src/widgets/memory/ui/MemoryBody.tsx:125.
+Источник: services/frontend/src/widgets/memory/ui/MemoryBody.tsx:164.

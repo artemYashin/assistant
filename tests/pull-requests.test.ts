@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { PullRequests, requiredReviewer } from "../server/pull-requests.js";
+import { Store } from "../services/backend/src/store.js";
+import { PullRequests, requiredReviewer } from "../services/backend/src/pull-requests.js";
 const context = { client: "Client", project: "Portal" };
 const pr = (id = 1, head = "head") => ({
   pullRequestId: id,
@@ -41,7 +41,10 @@ function fixture(t: any) {
       };
     },
   };
-  const preparation = { status: () => ({ status: "ready" }), prepare: async (_monitor: any, _pr: any) => {} };
+  const preparation = {
+    status: () => ({ status: "ready" }),
+    prepare: async (_monitor: any, _pr: any) => {},
+  };
   const service = new PullRequests(store, agent, preparation);
   service.save({
     ...context,
@@ -63,15 +66,11 @@ function mock(t: any, items: any[], extra?: (url: URL, init: any) => any) {
     let data: any = extra?.(url, init);
     if (data instanceof Response) return data;
     if (data === undefined) {
-      if (url.pathname.endsWith("connectionData"))
-        data = { authenticatedUser: { id: "me" } };
-      else if (/\/pullrequests\/\d+\/workitems$/i.test(url.pathname))
-        data = { value: [] };
+      if (url.pathname.endsWith("connectionData")) data = { authenticatedUser: { id: "me" } };
+      else if (/\/pullrequests\/\d+\/workitems$/i.test(url.pathname)) data = { value: [] };
       else if (url.pathname.endsWith("/pullrequests")) data = { value: items };
       else if (/\/pullrequests\/\d+$/.test(url.pathname))
-        data = items.find(
-          (p) => p.pullRequestId === Number(url.pathname.split("/").pop()),
-        );
+        data = items.find((p) => p.pullRequestId === Number(url.pathname.split("/").pop()));
       else if (url.pathname.endsWith("/diffs/commits")) {
         assert.equal(url.searchParams.get("diffCommonCommit"), "true");
         data = {
@@ -96,12 +95,7 @@ function mock(t: any, items: any[], extra?: (url: URL, init: any) => any) {
 }
 test("required reviewer filter excludes optional reviewers and groups", () => {
   assert.ok(requiredReviewer(pr(), "ME"));
-  assert.ok(
-    !requiredReviewer(
-      { ...pr(), reviewers: [{ id: "me", isRequired: false }] },
-      "me",
-    ),
-  );
+  assert.ok(!requiredReviewer({ ...pr(), reviewers: [{ id: "me", isRequired: false }] }, "me"));
   assert.ok(
     !requiredReviewer(
       {
@@ -122,19 +116,13 @@ test("PR sync scopes by project, deduplicates versions, waits for drafts, and bu
   mock(t, items);
   await service.sync();
   await service.sync();
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n, 0);
   await service.reviewNext();
   assert.equal(calls.length, 0);
   service.requestReview(service.monitors()[0].id, "repo", 1);
   assert.equal(service.list(context).length, 2);
   assert.equal(service.list({ client: "Other", project: "" }).length, 0);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n, 1);
   await service.reviewNext();
   assert.equal(calls.length, 1);
   assert.equal(calls[0][2], true);
@@ -150,10 +138,7 @@ test("PR sync scopes by project, deduplicates versions, waits for drafts, and bu
   service.requestReview(service.monitors()[0].id, "repo", 1);
   await service.reviewNext();
   assert.equal(calls.length, 2);
-  assert.equal(
-    (service.list(context) as any[]).find((p) => p.number === 1).head,
-    "new-head",
-  );
+  assert.equal((service.list(context) as any[]).find((p) => p.number === 1).head, "new-head");
 });
 test("all mode includes optional and unassigned PRs; failed scans preserve prior membership", async (t) => {
   const { store, service } = fixture(t);
@@ -166,9 +151,7 @@ test("all mode includes optional and unassigned PRs; failed scans preserve prior
   const items = [{ ...pr(), reviewers: [] }];
   let fail = false;
   mock(t, items, (url) =>
-    fail && url.pathname.endsWith("/pullrequests")
-      ? new Response("", { status: 403 })
-      : undefined,
+    fail && url.pathname.endsWith("/pullrequests") ? new Response("", { status: 403 }) : undefined,
   );
   await service.sync();
   assert.equal(service.list(context).length, 1);
@@ -206,21 +189,13 @@ test("review agent busy defers reviews; retired daily cap is ignored and errors 
   assert.equal(tries, 2);
   await service.reviewNext();
   assert.equal(tries, 2, "failed reviews are not retried automatically");
-  const failed = store.db
-    .prepare("SELECT * FROM pr_reviews WHERE status='error'")
-    .get() as any;
+  const failed = store.db.prepare("SELECT * FROM pr_reviews WHERE status='error'").get() as any;
   service.requestReview(failed.monitor, failed.repo, failed.number);
   await service.reviewNext();
   assert.equal(tries, 3, "explicit retry is allowed despite old daily cap");
-  store.db
-    .prepare("UPDATE pr_reviews SET status='error' WHERE id=?")
-    .run(failed.id);
+  store.db.prepare("UPDATE pr_reviews SET status='error' WHERE id=?").run(failed.id);
   assert.equal(
-    (
-      store.db
-        .prepare("SELECT count(*) n FROM pr_reviews WHERE status='error'")
-        .get() as any
-    ).n,
+    (store.db.prepare("SELECT count(*) n FROM pr_reviews WHERE status='error'").get() as any).n,
     3,
   );
 });
@@ -240,12 +215,7 @@ test("binary and truncated diffs are explicitly marked incomplete", async (t) =>
         ? { contentMetadata: { isBinary: true } }
         : undefined,
   );
-  const result = await service.changes(
-    service.monitors()[0],
-    "repo",
-    "head",
-    "target",
-  );
+  const result = await service.changes(service.monitors()[0], "repo", "head", "target");
   assert.equal(result.patches.length, 0);
   assert.equal(result.notes.length, 3);
 });
@@ -288,11 +258,7 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
   const reopened = new Store(dir);
   reopened.close();
   assert.equal(
-    (
-      store.db
-        .prepare("SELECT status FROM pr_reviews WHERE id=?")
-        .get(id) as any
-    ).status,
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status,
     "cancelled",
   );
   const retryId = service.requestReview(service.monitors()[0].id, "repo", 1);
@@ -300,11 +266,7 @@ test("legacy automatic queue is cancelled once and manual requests deduplicate",
   const again = new Store(dir);
   again.close();
   assert.equal(
-    (
-      store.db
-        .prepare("SELECT status FROM pr_reviews WHERE id=?")
-        .get(retryId) as any
-    ).status,
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(retryId) as any).status,
     "preparing_git",
   );
 });
@@ -341,16 +303,14 @@ test("PR project comes from shared settings and old connection cannot keep using
 test("PR descriptions are complete, references deduplicated and valid tickets imported locally", async (t) => {
   const { store, service } = fixture(t);
   const description =
-    "Text ".repeat(90) +
-    " #123456 #123456 #765432 #999999 #888888 &#123; ##456 #0";
+    "Text ".repeat(90) + " #123456 #123456 #765432 #999999 #888888 &#123; ##456 #0";
   let batches = 0;
   const item = pr();
   store.db
     .prepare("INSERT INTO ticket_local(source,id,removed) VALUES (?,?,1)")
     .run(store.source(), 888888);
   mock(t, [{ ...item, description: description.slice(0, 400) }], (url) => {
-    if (/\/pullrequests\/1$/.test(url.pathname))
-      return { ...item, description };
+    if (/\/pullrequests\/1$/.test(url.pathname)) return { ...item, description };
     if (url.pathname.endsWith("/workitemsbatch")) {
       batches++;
       return {
@@ -387,10 +347,7 @@ test("PR descriptions are complete, references deduplicated and valid tickets im
   assert.equal(saved.tickets[0].state, "Closed");
   assert.equal(saved.tickets[1].unavailable, true);
   assert.equal(saved.tickets[3].removed, true);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 1);
   assert.equal(batches, 1);
   assert.equal(saved.ticket_error, "");
   // Removing references updates the saved association without deleting tracked work.
@@ -398,10 +355,7 @@ test("PR descriptions are complete, references deduplicated and valid tickets im
   await service.sync();
   saved = service.list(context)[0];
   assert.deepEqual(saved.tickets, []);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n,
-    1,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM tickets").get() as any).n, 1);
 });
 
 test("ticket import failure preserves PR and exposes an independent error", async (t) => {
@@ -459,11 +413,7 @@ test("PR ticket import only reads Azure and writes the local tracker", async (t)
     .prepare("SELECT title,state FROM tickets WHERE source=? AND id=42")
     .get(store.source());
   assert.deepEqual(ticket, { title: "Existing Azure ticket", state: "Active" });
-  assert.equal(
-    calls.length,
-    0,
-    "Import must not invoke the agent or its mutation tools",
-  );
+  assert.equal(calls.length, 0, "Import must not invoke the agent or its mutation tools");
 });
 
 test("image proxy requires a saved description reference and current connection", async (t) => {
@@ -484,19 +434,13 @@ test("image proxy requires a saved description reference and current connection"
     /не найдено/,
   );
   assert.equal(reads, 0);
-  assert.equal(
-    (await service.image(row.monitor, row.repo, row.number, url)).type,
-    "image/png",
-  );
+  assert.equal((await service.image(row.monitor, row.repo, row.number, url)).type, "image/png");
   assert.equal(reads, 1);
   store.set("settings", {
     ...store.settings(),
     azureUrl: "https://different.test/org",
   });
-  await assert.rejects(
-    service.image(row.monitor, row.repo, row.number, url),
-    /URL Azure изменён/,
-  );
+  await assert.rejects(service.image(row.monitor, row.repo, row.number, url), /URL Azure изменён/);
   assert.equal(reads, 1);
 });
 
@@ -517,10 +461,7 @@ test("sync persists creation date and list defaults to newest creation, not ID o
   await service.sync();
   rows = service.list(context);
   assert.equal(rows[0].created_at, "2026-10-19T10:00:00.000Z");
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
-    0,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n, 0);
 });
 
 test("sync stores and refreshes source and target branch names", async (t) => {
@@ -549,7 +490,7 @@ test("sync stores and refreshes source and target branch names", async (t) => {
 });
 
 test("review clarification pauses work until all answers arrive and passes them to the next review", async (t) => {
-  const { ReviewQuestions } = await import("../server/review-questions.js");
+  const { ReviewQuestions } = await import("../services/backend/src/review-questions.js");
   const { store, service, agent } = fixture(t);
   mock(t, [pr()]);
   await service.sync();
@@ -577,11 +518,7 @@ test("review clarification pauses work until all answers arrive and passes them 
   });
   await service.reviewNext();
   assert.equal(
-    (
-      store.db
-        .prepare("SELECT status FROM pr_reviews WHERE id=?")
-        .get(review) as any
-    ).status,
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(review) as any).status,
     "awaiting_answers",
   );
   await service.reviewNext();
@@ -595,11 +532,7 @@ test("review clarification pauses work until all answers arrive and passes them 
   await service.reviewNext();
   assert.equal(runs, 2);
   assert.equal(
-    (
-      store.db
-        .prepare("SELECT status FROM pr_reviews WHERE id=?")
-        .get(review) as any
-    ).status,
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(review) as any).status,
     "completed",
   );
 });
@@ -634,8 +567,7 @@ test("default PR list hides records removed from the active scan while retaining
     [2],
   );
   assert.equal(
-    service.list(context, { monitor: old.monitor, repo: old.repo, number: 1 })
-      .length,
+    service.list(context, { monitor: old.monitor, repo: old.repo, number: 1 }).length,
     1,
   );
 });
@@ -666,9 +598,7 @@ test("manual ticket links survive sync, appear in reverse lookup and unlink with
   assert.equal(service.linkedToTicket(42, store.source()).length, 1);
   await service.sync();
   assert.equal((service.list(context)[0] as any).tickets[0].manual, true);
-  await assert.rejects(() =>
-    service.linkTicket({ ...key, source: "different" }),
-  );
+  await assert.rejects(() => service.linkTicket({ ...key, source: "different" }));
   await service.linkTicket({ ...key, action: "unlink" });
   assert.equal((service.list(context)[0] as any).tickets.length, 0);
   assert.equal(service.linkedToTicket(42, store.source()).length, 0);
@@ -678,8 +608,7 @@ test("manual ticket links survive sync, appear in reverse lookup and unlink with
 test("review options persist and disable questions without fetching tickets", async (t) => {
   const { store, service, calls } = fixture(t);
   mock(t, [pr()], (url) => {
-    if (url.pathname.endsWith("/workitems"))
-      throw new Error("Must not load ticket context");
+    if (url.pathname.endsWith("/workitems")) throw new Error("Must not load ticket context");
   });
   await service.sync();
   const monitor = service.monitors()[0].id;
@@ -687,9 +616,7 @@ test("review options persist and disable questions without fetching tickets", as
     questionFrequency: "none",
     readTickets: false,
   });
-  const row = store.db
-    .prepare("SELECT options FROM pr_reviews WHERE id=?")
-    .get(id) as any;
+  const row = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any;
   assert.deepEqual(JSON.parse(row.options), {
     model: store.settings().reviewModel || store.settings().model,
     reviewerComment: "",
@@ -711,11 +638,14 @@ test("review options persist and disable questions without fetching tickets", as
 
 test("review receives requirements, comments and source-scoped local notes before calling model", async (t) => {
   const { store, service, calls } = fixture(t);
-  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run(store.source(), 42, "Preserve local retry policy");
-  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)").run("other-source", 42, "Foreign notes must not leak");
+  store.db
+    .prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)")
+    .run(store.source(), 42, "Preserve local retry policy");
+  store.db
+    .prepare("INSERT INTO ticket_metadata(source,id,notes) VALUES (?,?,?)")
+    .run("other-source", 42, "Foreign notes must not leak");
   mock(t, [pr()], (url) => {
-    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname))
-      return { value: [{ id: "42" }] };
+    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) return { value: [{ id: "42" }] };
     if (/\/workitems\/42$/.test(url.pathname))
       return {
         id: 42,
@@ -745,16 +675,13 @@ test("review receives requirements, comments and source-scoped local notes befor
   assert.match(calls[0][0], /"localNotes":"Preserve local retry policy"/);
   assert.doesNotMatch(calls[0][0], /Foreign notes must not leak/);
   assert.equal(calls[0][3].questionFrequency, "medium");
-  assert.throws(() =>
-    calls[0][3].askQuestions(Array(4).fill({ question: "?", reason: "risk" })),
-  );
+  assert.throws(() => calls[0][3].askQuestions(Array(4).fill({ question: "?", reason: "risk" })));
 });
 
 test("missing ticket comments stop review before spending model tokens", async (t) => {
   const { store, service, calls } = fixture(t);
   mock(t, [pr()], (url) => {
-    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname))
-      return { value: [{ id: "42" }] };
+    if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) return { value: [{ id: "42" }] };
     if (/\/workitems\/42$/.test(url.pathname))
       return { id: 42, fields: { "System.TeamProject": "Project One" } };
     if (url.pathname.endsWith("/workitems/42/comments"))
@@ -764,15 +691,13 @@ test("missing ticket comments stop review before spending model tokens", async (
   const id = service.requestReview(service.monitors()[0].id, "repo", 1);
   await service.reviewNext();
   assert.equal(calls.length, 0);
-  const row = store.db
-    .prepare("SELECT status,error FROM pr_reviews WHERE id=?")
-    .get(id) as any;
+  const row = store.db.prepare("SELECT status,error FROM pr_reviews WHERE id=?").get(id) as any;
   assert.equal(row.status, "error");
   assert.match(row.error, /Комментарии/);
 });
 
 test("ignoring questions completes review and explicit rerun preserves history", async (t) => {
-  const { ReviewQuestions } = await import("../server/review-questions.js");
+  const { ReviewQuestions } = await import("../services/backend/src/review-questions.js");
   const { store, service, calls } = fixture(t);
   mock(t, [pr()]);
   await service.sync();
@@ -781,19 +706,13 @@ test("ignoring questions completes review and explicit rerun preserves history",
     readTickets: false,
   });
   store.db
-    .prepare(
-      "UPDATE pr_reviews SET status='awaiting_answers',summary='Original report' WHERE id=?",
-    )
+    .prepare("UPDATE pr_reviews SET status='awaiting_answers',summary='Original report' WHERE id=?")
     .run(first);
   const questions = new ReviewQuestions(store);
-  questions.create(first, [
-    { question: "Expected behaviour?", reason: "Risk" },
-  ]);
+  questions.create(first, [{ question: "Expected behaviour?", reason: "Risk" }]);
   const batch = questions.list()[0];
   questions.dismiss(batch.id);
-  const saved = store.db
-    .prepare("SELECT * FROM pr_reviews WHERE id=?")
-    .get(first) as any;
+  const saved = store.db.prepare("SELECT * FROM pr_reviews WHERE id=?").get(first) as any;
   assert.equal(saved.status, "completed");
   assert.match(saved.summary, /Original report/);
   assert.match(saved.summary, /без ответов/);
@@ -809,10 +728,7 @@ test("ignoring questions completes review and explicit rerun preserves history",
   );
   assert.notEqual(second, first);
   assert.equal(service.requestReview(monitor, "repo", 1, {}, true), second);
-  assert.equal(
-    (store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n,
-    2,
-  );
+  assert.equal((store.db.prepare("SELECT count(*) n FROM pr_reviews").get() as any).n, 2);
   assert.equal(service.list(context)[0].review_id, second);
   await service.reviewNext();
   assert.equal(calls.length, 1);
@@ -825,10 +741,7 @@ test("PR commit history paginates read-only and rejects unknown PRs", async (t) 
   const cursors: string[] = [];
   mock(t, [pr()], (url, init) => {
     assert.ok(!init.method || init.method === "GET");
-    if (
-      url.pathname.endsWith("/commits") &&
-      url.pathname.includes("/pullRequests/")
-    ) {
+    if (url.pathname.endsWith("/commits") && url.pathname.includes("/pullRequests/")) {
       cursors.push(url.searchParams.get("continuationToken") || "");
       assert.equal(url.searchParams.get("$top"), "50");
       return new Response(
@@ -845,9 +758,7 @@ More detail`,
         {
           headers: {
             "Content-Type": "application/json",
-            ...(cursors.length === 1
-              ? { "x-ms-continuationtoken": "next/page+" }
-              : {}),
+            ...(cursors.length === 1 ? { "x-ms-continuationtoken": "next/page+" } : {}),
           },
         },
       );
@@ -858,12 +769,7 @@ More detail`,
   const first = await service.commits(monitor, "repo", 1);
   assert.equal(first.commits[0].author, "Developer");
   assert.equal(first.continuationToken, "next/page+");
-  const next = await service.commits(
-    monitor,
-    "repo",
-    1,
-    first.continuationToken,
-  );
+  const next = await service.commits(monitor, "repo", 1, first.continuationToken);
   assert.equal(next.continuationToken, "");
   assert.deepEqual(cursors, ["", "next/page+"]);
   await assert.rejects(service.commits(monitor, "repo", 999), /PR не найден/);
@@ -900,10 +806,7 @@ test("commit diff uses first parent, checks PR membership and never invokes mode
   const diff = await service.commitDiff(monitor, "repo", 1, head);
   assert.equal(diff.base, parent);
   assert.match(diff.notes.join(" "), /первым родителем/);
-  await assert.rejects(
-    service.commitDiff(monitor, "repo", 1, "d".repeat(40)),
-    /не найден/,
-  );
+  await assert.rejects(service.commitDiff(monitor, "repo", 1, "d".repeat(40)), /не найден/);
   await assert.rejects(service.commitDiff(monitor, "repo", 1, "../bad"), /SHA/);
   assert.equal(calls.length, 0);
 });
@@ -960,9 +863,7 @@ test("project exclusions precede file reads and file cap in review and View Diff
     viewed.diagnostics.includedFiles.map((f) => f.path),
     ["/src/app.ts"],
   );
-  assert.ok(
-    viewed.diagnostics.excludedPaths.includes("/src/api/generatedApi.ts"),
-  );
+  assert.ok(viewed.diagnostics.excludedPaths.includes("/src/api/generatedApi.ts"));
   assert.deepEqual(viewed.diagnostics.unmatchedRules, []);
 });
 test("a large patch cannot consume the review budget reserved for other files", async (t) => {
@@ -979,10 +880,7 @@ test("a large patch cannot consume the review budget reserved for other files", 
       };
     if (url.pathname.endsWith("/items"))
       return {
-        content:
-          url.searchParams.get("path") === "/big.ts"
-            ? "x".repeat(12000)
-            : "small",
+        content: url.searchParams.get("path") === "/big.ts" ? "x".repeat(12000) : "small",
       };
   });
   service.save({
@@ -992,12 +890,7 @@ test("a large patch cannot consume the review budget reserved for other files", 
     enabled: true,
     reviewFiles: { ignoredPaths: [], diffBudget: 40000 },
   });
-  const result = await service.changes(
-    service.monitors()[0],
-    "repo",
-    "head",
-    "target",
-  );
+  const result = await service.changes(service.monitors()[0], "repo", "head", "target");
   assert.equal(result.patches.length, 1);
   assert.match(result.patches[0], /small.ts/);
   assert.match(result.notes.join(" "), /лимит одного файла 10000/);
@@ -1006,16 +899,12 @@ test("a large patch cannot consume the review budget reserved for other files", 
 test("PR cards retain Azure links after removing local links and include title references", async (t) => {
   const { service, store } = fixture(t);
   mock(t, [{ ...pr(), title: "Fix #42", description: "Details #43" }], (url) =>
-    /\/pullrequests\/1\/workitems$/i.test(url.pathname)
-      ? { value: [{ id: "44" }] }
-      : undefined,
+    /\/pullrequests\/1\/workitems$/i.test(url.pathname) ? { value: [{ id: "44" }] } : undefined,
   );
   await service.sync();
   const monitor = service.monitors()[0].id;
   store.db
-    .prepare(
-      "INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?, 'repo',1,44)",
-    )
+    .prepare("INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?, 'repo',1,44)")
     .run(monitor);
   store.db.prepare("DELETE FROM pr_ticket_links WHERE monitor=?").run(monitor);
   const row = service.list(context)[0];
@@ -1031,7 +920,12 @@ test("completed PR pages are bounded, refreshed and coalesce concurrent requests
   mock(t, [], (url) => {
     if (url.pathname.endsWith("/workitems")) return { value: [] };
     const detail = url.pathname.match(/\/pullrequests\/(\d+)$/);
-    if (detail) return { ...pr(Number(detail[1])), status: "completed", description: "Full archived description" };
+    if (detail)
+      return {
+        ...pr(Number(detail[1])),
+        status: "completed",
+        description: "Full archived description",
+      };
     if (url.searchParams.get("searchCriteria.status") !== "completed")
       throw new Error("Unexpected request");
     requests++;
@@ -1063,12 +957,8 @@ test("completed PR pages are bounded, refreshed and coalesce concurrent requests
   assert.equal(first.items[0].description, "Full archived description");
   assert.equal(first.items[0].in_scope, 0);
   service.purgeCompleted(Date.now() + 31 * 86400000);
-  assert.equal(
-    service.list(context, { monitor, repo: "repo", number: 1 }).length,
-    0,
-  );
+  assert.equal(service.list(context, { monitor, repo: "repo", number: 1 }).length, 0);
 });
-
 
 test("review model override survives settings changes and is recorded in results", async (t) => {
   const { store, service, calls } = fixture(t);
@@ -1083,7 +973,10 @@ test("review model override survives settings changes and is recorded in results
   store.set("settings", { ...store.settings(), reviewModel: "changed-default" });
   await service.reviewNext();
   assert.equal(calls[0][5], "review-override");
-  assert.equal((store.db.prepare("SELECT model FROM pr_reviews WHERE id=?").get(id) as any).model, "review-override");
+  assert.equal(
+    (store.db.prepare("SELECT model FROM pr_reviews WHERE id=?").get(id) as any).model,
+    "review-override",
+  );
   assert.equal((service.list(context)[0] as any).model, "review-override");
 });
 
@@ -1092,42 +985,61 @@ test("review resolves its default model when queued", async (t) => {
   store.set("settings", { ...store.settings(), reviewModel: "initial-default" });
   mock(t, [pr()]);
   await service.sync();
-  service.requestReview(service.monitors()[0].id, "repo", 1, { readTickets: false, questionFrequency: "none" });
+  service.requestReview(service.monitors()[0].id, "repo", 1, {
+    readTickets: false,
+    questionFrequency: "none",
+  });
   store.set("settings", { ...store.settings(), reviewModel: "changed-default" });
   await service.reviewNext();
   assert.equal(calls[0][5], "initial-default");
 });
 
-test("review waits for source preparation and never invokes the model after Git failure", async t => {
+test("review waits for source preparation and never invokes the model after Git failure", async (t) => {
   const { store, service, calls, preparation } = fixture(t);
   mock(t, [pr()]);
   await service.sync();
   let finish!: () => void;
-  const ready = new Promise<void>(resolve => { finish = resolve; });
-  preparation.prepare = async () => { await ready; };
+  const ready = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  preparation.prepare = async () => {
+    await ready;
+  };
   const id = service.requestReview(service.monitors()[0].id, "repo", 1);
-  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "preparing_git");
+  assert.equal(
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status,
+    "preparing_git",
+  );
   const running = service.reviewNext();
   assert.equal(calls.length, 0);
-  finish(); await running;
+  finish();
+  await running;
   assert.equal(calls.length, 1);
-  preparation.prepare = async () => { throw new Error("Git unavailable"); };
+  preparation.prepare = async () => {
+    throw new Error("Git unavailable");
+  };
   service.requestReview(service.monitors()[0].id, "repo", 1, {}, true);
   await service.reviewNext();
   assert.equal(calls.length, 1);
   assert.equal((service.list(context)[0] as any).review_status, "error");
 });
 
-test("review without code access skips Git preparation and waits only for the model", async t => {
+test("review without code access skips Git preparation and waits only for the model", async (t) => {
   const { store, service, calls, preparation, agent } = fixture(t);
   mock(t, [pr()]);
   await service.sync();
   let preparations = 0;
-  preparation.prepare = async () => { preparations++; throw new Error("Git unavailable"); };
+  preparation.prepare = async () => {
+    preparations++;
+    throw new Error("Git unavailable");
+  };
   const id = service.requestReview(service.monitors()[0].id, "repo", 1, {
-    readCode: false, readTickets: false, questionFrequency: "none",
+    readCode: false,
+    readTickets: false,
+    questionFrequency: "none",
   });
-  const status = () => (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status;
+  const status = () =>
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status;
   assert.equal(status(), "queued");
   const busy = t.mock.method(agent, "active", () => "busy" as any);
   await service.reviewNext();
@@ -1141,63 +1053,118 @@ test("review without code access skips Git preparation and waits only for the mo
   assert.equal(status(), "completed");
 });
 
-test("diff reports full file byte size rather than patch length", async t => {
+test("diff reports full file byte size rather than patch length", async (t) => {
   const { service } = fixture(t);
-  mock(t, [pr()], url => url.pathname.endsWith("/items") ? {
-    content: url.searchParams.get("versionDescriptor.version") === "base" ? "old" : "Привет", contentMetadata: { isBinary: false },
-  } : undefined);
+  mock(t, [pr()], (url) =>
+    url.pathname.endsWith("/items")
+      ? {
+          content: url.searchParams.get("versionDescriptor.version") === "base" ? "old" : "Привет",
+          contentMetadata: { isBinary: false },
+        }
+      : undefined,
+  );
   const diff = await service.changes(service.monitors()[0], "repo", "head", "target");
   assert.equal(diff.diagnostics.includedFiles[0].sizeBytes, Buffer.byteLength("Привет", "utf8"));
 });
 
-test("stop review removes queued work without cancelling an unrelated chat", async t => {
+test("stop review removes queued work without cancelling an unrelated chat", async (t) => {
   const { store, service, agent, calls } = fixture(t);
-  mock(t, [pr()]); await service.sync();
-  let stops = 0; Object.assign(agent, { stop: () => { stops++; } });
+  mock(t, [pr()]);
+  await service.sync();
+  let stops = 0;
+  Object.assign(agent, {
+    stop: () => {
+      stops++;
+    },
+  });
   const id = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false });
   assert.deepEqual(service.stopReview(id), { stopped: true });
   await service.reviewNext();
-  assert.equal(calls.length, 0); assert.equal(stops, 0);
-  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "interrupted");
+  assert.equal(calls.length, 0);
+  assert.equal(stops, 0);
+  assert.equal(
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status,
+    "interrupted",
+  );
 });
 
-test("stop review during source preparation cannot start the model afterwards", async t => {
+test("stop review during source preparation cannot start the model afterwards", async (t) => {
   const { store, service, calls, preparation } = fixture(t);
-  mock(t, [pr()]); await service.sync();
+  mock(t, [pr()]);
+  await service.sync();
   let entered!: () => void, finish!: () => void;
-  const started = new Promise<void>(r => { entered = r; });
-  const ready = new Promise<void>(r => { finish = r; });
-  preparation.prepare = async () => { entered(); await ready; };
+  const started = new Promise<void>((r) => {
+    entered = r;
+  });
+  const ready = new Promise<void>((r) => {
+    finish = r;
+  });
+  preparation.prepare = async () => {
+    entered();
+    await ready;
+  };
   const id = service.requestReview(service.monitors()[0].id, "repo", 1);
-  const running = service.reviewNext(); await started;
-  service.stopReview(id); finish(); await running;
+  const running = service.reviewNext();
+  await started;
+  service.stopReview(id);
+  finish();
+  await running;
   assert.equal(calls.length, 0);
-  assert.equal((store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status, "interrupted");
+  assert.equal(
+    (store.db.prepare("SELECT status FROM pr_reviews WHERE id=?").get(id) as any).status,
+    "interrupted",
+  );
   assert.notEqual(service.requestReview(service.monitors()[0].id, "repo", 1), id);
 });
 
-test("stop review cancels its model and does not save a late completion", async t => {
+test("stop review cancels its model and does not save a late completion", async (t) => {
   const { store, service, agent } = fixture(t);
-  mock(t, [pr()]); await service.sync();
-  let entered!: () => void, finish!: () => void, stops = 0;
-  const started = new Promise<void>(r => { entered = r; });
-  const ready = new Promise<void>(r => { finish = r; });
-  agent.chat = async () => { entered(); await ready; return { body: "late", requestId: "00000000-0000-0000-0000-000000000000" }; };
-  Object.assign(agent, { stop: () => { stops++; finish(); } });
-  const id = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false, readTickets: false });
-  const running = service.reviewNext(); await started;
-  service.stopReview(id); await running;
+  mock(t, [pr()]);
+  await service.sync();
+  let entered!: () => void,
+    finish!: () => void,
+    stops = 0;
+  const started = new Promise<void>((r) => {
+    entered = r;
+  });
+  const ready = new Promise<void>((r) => {
+    finish = r;
+  });
+  agent.chat = async () => {
+    entered();
+    await ready;
+    return { body: "late", requestId: "00000000-0000-0000-0000-000000000000" };
+  };
+  Object.assign(agent, {
+    stop: () => {
+      stops++;
+      finish();
+    },
+  });
+  const id = service.requestReview(service.monitors()[0].id, "repo", 1, {
+    readCode: false,
+    readTickets: false,
+  });
+  const running = service.reviewNext();
+  await started;
+  service.stopReview(id);
+  await running;
   assert.equal(stops, 1);
   const row = store.db.prepare("SELECT status,summary FROM pr_reviews WHERE id=?").get(id) as any;
-  assert.equal(row.status, "interrupted"); assert.equal(row.summary, null);
+  assert.equal(row.status, "interrupted");
+  assert.equal(row.summary, null);
   assert.deepEqual(service.stopReview(id), { stopped: false });
 });
 
 for (const codeDepth of ["low", "below_medium", "medium", "high"] as const) {
-  test(`review preserves and passes ${codeDepth} exploration depth`, async t => {
+  test(`review preserves and passes ${codeDepth} exploration depth`, async (t) => {
     const { store, service, calls } = fixture(t);
-    mock(t, [pr()]); await service.sync();
-    const id = service.requestReview(service.monitors()[0].id, "repo", 1, { codeDepth, readTickets: false });
+    mock(t, [pr()]);
+    await service.sync();
+    const id = service.requestReview(service.monitors()[0].id, "repo", 1, {
+      codeDepth,
+      readTickets: false,
+    });
     const row = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any;
     assert.equal(JSON.parse(row.options).codeDepth, codeDepth);
     await service.reviewNext();
@@ -1206,16 +1173,23 @@ for (const codeDepth of ["low", "below_medium", "medium", "high"] as const) {
 }
 
 for (const action of ["abandon", "draft", "publish"] as const) {
-  test(`PR ${action} writes only its state and resynchronizes afterwards`, async t => {
+  test(`PR ${action} writes only its state and resynchronizes afterwards`, async (t) => {
     const { store, service } = fixture(t);
     const item = { ...pr(), isDraft: action === "publish" };
-    const items = [item]; let writes = 0, readsAfterWrite = 0;
+    const items = [item];
+    let writes = 0,
+      readsAfterWrite = 0;
     mock(t, items, (url, init) => {
       if (init.method === "PATCH") {
         writes++;
-        assert.deepEqual(JSON.parse(init.body), action === "abandon" ? { status: "abandoned" } : { isDraft: action === "draft" });
-        if (action === "abandon") { item.status = "abandoned"; items.splice(0); }
-        else item.isDraft = action === "draft";
+        assert.deepEqual(
+          JSON.parse(init.body),
+          action === "abandon" ? { status: "abandoned" } : { isDraft: action === "draft" },
+        );
+        if (action === "abandon") {
+          item.status = "abandoned";
+          items.splice(0);
+        } else item.isDraft = action === "draft";
         return item;
       }
       if (writes && url.pathname.endsWith("/pullrequests")) readsAfterWrite++;
@@ -1223,35 +1197,49 @@ for (const action of ["abandon", "draft", "publish"] as const) {
     await service.sync();
     const monitor = service.monitors()[0].id;
     const result = await service.changeState(monitor, "repo", 1, action);
-    assert.equal(result.updated, true); assert.equal(writes, 1); assert.ok(readsAfterWrite);
-    const saved = store.db.prepare("SELECT draft,in_scope FROM pull_requests WHERE monitor=? AND repo='repo' AND number=1").get(monitor) as any;
+    assert.equal(result.updated, true);
+    assert.equal(writes, 1);
+    assert.ok(readsAfterWrite);
+    const saved = store.db
+      .prepare(
+        "SELECT draft,in_scope FROM pull_requests WHERE monitor=? AND repo='repo' AND number=1",
+      )
+      .get(monitor) as any;
     if (action === "abandon") assert.equal(saved.in_scope, 0);
     else assert.equal(saved.draft, Number(action === "draft"));
   });
 }
 
-test("PR state changes reject closed PRs without writes and preserve state on denied PATCH", async t => {
+test("PR state changes reject closed PRs without writes and preserve state on denied PATCH", async (t) => {
   const { store, service } = fixture(t);
-  const item = pr(); let writes = 0;
+  const item = pr();
+  let writes = 0;
   mock(t, [item], (_url, init) => {
-    if (init.method === "PATCH") { writes++; return Response.json({ message: "Denied" }, { status: 403 }); }
+    if (init.method === "PATCH") {
+      writes++;
+      return Response.json({ message: "Denied" }, { status: 403 });
+    }
   });
-  await service.sync(); const monitor = service.monitors()[0].id;
+  await service.sync();
+  const monitor = service.monitors()[0].id;
   item.status = "completed";
   await assert.rejects(service.changeState(monitor, "repo", 1, "draft"), /уже закрыт/);
   assert.equal(writes, 0);
   item.status = "active";
   await assert.rejects(service.changeState(monitor, "repo", 1, "draft"), /403/);
   assert.equal(writes, 1);
-  assert.equal((store.db.prepare("SELECT draft FROM pull_requests WHERE monitor=?").get(monitor) as any).draft, 0);
+  assert.equal(
+    (store.db.prepare("SELECT draft FROM pull_requests WHERE monitor=?").get(monitor) as any).draft,
+    0,
+  );
 });
 
 for (const selected of [[42], [], [99]]) {
-  test(`review reads only explicitly selected linked tickets: ${JSON.stringify(selected)}`, async t => {
+  test(`review reads only explicitly selected linked tickets: ${JSON.stringify(selected)}`, async (t) => {
     const { store, service, calls } = fixture(t);
     const reads: number[] = [];
     let linkReads = 0;
-    mock(t, [pr()], url => {
+    mock(t, [pr()], (url) => {
       if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) {
         linkReads++;
         return { value: [{ id: "42" }, { id: "43" }] };
@@ -1261,13 +1249,24 @@ for (const selected of [[42], [], [99]]) {
         const id = Number(ticket[1]);
         reads.push(id);
         assert.equal(id, 42, "Unselected tickets must never be fetched");
-        return { id, fields: { "System.TeamProject": "Project One", "System.Title": "Selected requirement", "System.Description": "Only selected content" } };
+        return {
+          id,
+          fields: {
+            "System.TeamProject": "Project One",
+            "System.Title": "Selected requirement",
+            "System.Description": "Only selected content",
+          },
+        };
       }
       if (url.pathname.endsWith("/workitems/42/comments")) return { comments: [] };
     });
     await service.sync();
     linkReads = 0;
-    const review = service.requestReview(service.monitors()[0].id, "repo", 1, { readCode: false, readTickets: true, ticketIds: selected });
+    const review = service.requestReview(service.monitors()[0].id, "repo", 1, {
+      readCode: false,
+      readTickets: true,
+      ticketIds: selected,
+    });
     const saved = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(review) as any;
     assert.deepEqual(JSON.parse(saved.options).ticketIds, selected);
     await service.reviewNext();
@@ -1279,23 +1278,33 @@ for (const selected of [[42], [], [99]]) {
     } else {
       assert.equal(calls.length, 1);
       assert.deepEqual(reads, selected);
-      assert.deepEqual(calls[0][3].ticketEvidence?.tickets.map((ticket: any) => ticket.id) || [], selected);
+      assert.deepEqual(
+        calls[0][3].ticketEvidence?.tickets.map((ticket: any) => ticket.id) || [],
+        selected,
+      );
       if (!selected.length) assert.equal(linkReads, 0);
       else assert.match(calls[0][0], /Only selected content/);
     }
   });
 }
 
-test("PR sync encodes collection, project and repository spaces exactly once", async t => {
+test("PR sync encodes collection, project and repository spaces exactly once", async (t) => {
   const { store, service } = fixture(t);
   for (const collection of ["My Collection", "My%20Collection"]) {
-    store.set("settings", { ...store.rawSettings(), azureUrl: `https://ado.test/tfs/${collection}`, azureProject: "Project One" });
+    store.set("settings", {
+      ...store.rawSettings(),
+      azureUrl: `https://ado.test/tfs/${collection}`,
+      azureProject: "Project One",
+    });
     service.save({ ...context, repository: " Repo Name ", mode: "all", enabled: true });
     const urls: string[] = [];
     t.mock.method(globalThis, "fetch", async (raw: any) => {
       urls.push(String(raw));
       const url = new URL(String(raw));
-      assert.equal(url.pathname, "/tfs/My%20Collection/Project%20One/_apis/git/repositories/Repo%20Name/pullrequests");
+      assert.equal(
+        url.pathname,
+        "/tfs/My%20Collection/Project%20One/_apis/git/repositories/Repo%20Name/pullrequests",
+      );
       assert.equal(url.searchParams.get("searchCriteria.status"), "active");
       assert.equal(url.searchParams.get("$top"), "100");
       assert.equal(url.searchParams.get("$skip"), "0");
@@ -1305,22 +1314,25 @@ test("PR sync encodes collection, project and repository spaces exactly once", a
     });
     await service.sync();
     assert.equal(urls.length, 1);
-    assert.equal(service.monitors().find(m => m.enabled)?.error, null);
+    assert.equal(service.monitors().find((m) => m.enabled)?.error, null);
     t.mock.restoreAll();
   }
 });
 
-test("missing PR repository is rejected before Azure requests", async t => {
+test("missing PR repository is rejected before Azure requests", async (t) => {
   const { store, service } = fixture(t);
   store.db.prepare("UPDATE pr_projects SET repository='   '").run();
   let requests = 0;
-  t.mock.method(globalThis, "fetch", async () => { requests++; return Response.json({}); });
+  t.mock.method(globalThis, "fetch", async () => {
+    requests++;
+    return Response.json({});
+  });
   await service.sync();
   assert.equal(requests, 0);
   assert.match(service.monitors()[0].error || "", /Заказчики и проекты.*Репозиторий/);
 });
 
-test("explicit-reviewer sync skips connectionData and uses stable Git API", async t => {
+test("explicit-reviewer sync skips connectionData and uses stable Git API", async (t) => {
   const { service } = fixture(t);
   const paths: string[] = [];
   t.mock.method(globalThis, "fetch", async (raw: any) => {
@@ -1335,9 +1347,11 @@ test("explicit-reviewer sync skips connectionData and uses stable Git API", asyn
   assert.equal(service.monitors()[0].error, null);
 });
 
-test("PR sync errors identify endpoint and sanitized Azure reason", async t => {
+test("PR sync errors identify endpoint and sanitized Azure reason", async (t) => {
   const { service } = fixture(t);
-  t.mock.method(globalThis, "fetch", async () => Response.json({ message: "Use a preview API version. test-pat" }, { status: 400 }));
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({ message: "Use a preview API version. test-pat" }, { status: 400 }),
+  );
   await service.sync();
   const error = service.monitors()[0].error || "";
   assert.match(error, /git\/repositories\/repo\/pullrequests/);
@@ -1346,11 +1360,16 @@ test("PR sync errors identify endpoint and sanitized Azure reason", async t => {
   assert.ok(!error.includes("test-pat"));
 });
 
-test("explicit reviewer filters OR across required/optional, persist and replace membership", async t => {
+test("explicit reviewer filters OR across required/optional, persist and replace membership", async (t) => {
   const { store, service } = fixture(t);
   const person = (id: string) => ({ id, name: id, email: "" });
-  const input = { ...context, repository: "repo", mode: "required" as const, enabled: true,
-    reviewerFilter: { required: [person("alice"), person("bob")], optional: [person("carol")] } };
+  const input = {
+    ...context,
+    repository: "repo",
+    mode: "required" as const,
+    enabled: true,
+    reviewerFilter: { required: [person("alice"), person("bob")], optional: [person("carol")] },
+  };
   service.save(input);
   const items = [
     { ...pr(1), reviewers: [{ id: "ALICE", isRequired: true }] },
@@ -1361,10 +1380,19 @@ test("explicit reviewer filters OR across required/optional, persist and replace
     { ...pr(6), reviewers: [{ id: "alice", isRequired: true, isContainer: true }] },
     pr(7),
   ];
-  mock(t, items, url => { if (url.pathname.endsWith("connectionData")) throw new Error("Explicit IDs must not request PAT identity"); });
+  mock(t, items, (url) => {
+    if (url.pathname.endsWith("connectionData"))
+      throw new Error("Explicit IDs must not request PAT identity");
+  });
   await service.sync();
   assert.equal(service.monitors()[0].error, null);
-  assert.deepEqual(service.list(context).map(p => p.number).sort(), [1, 2, 3]);
+  assert.deepEqual(
+    service
+      .list(context)
+      .map((p) => p.number)
+      .sort(),
+    [1, 2, 3],
+  );
   assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!), input.reviewerFilter);
   service.save({ ...input, reviewerFilter: { required: [], optional: [] } });
   await service.sync();
@@ -1375,19 +1403,22 @@ test("explicit reviewer filters OR across required/optional, persist and replace
   assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n, 7);
 });
 
-test("a short list description cut inside six-digit ID is resolved against full PR", async t => {
+test("a short list description cut inside six-digit ID is resolved against full PR", async (t) => {
   const { service } = fixture(t);
   const full = { ...pr(), title: "Fix", description: "See #123456" };
-  mock(t, [{ ...full, description: "See #12345" }], url => {
+  mock(t, [{ ...full, description: "See #12345" }], (url) => {
     if (/\/pullrequests\/1$/.test(url.pathname)) return full;
     if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
   });
   await service.sync();
   assert.equal(service.monitors()[0].error, null);
-  assert.deepEqual((service.list(context)[0] as any).tickets.map((t: any) => t.id), [123456]);
+  assert.deepEqual(
+    (service.list(context)[0] as any).tickets.map((t: any) => t.id),
+    [123456],
+  );
 });
 
-test("local exclusion overrides Azure/title/description, survives sync and can be restored", async t => {
+test("local exclusion overrides Azure/title/description, survives sync and can be restored", async (t) => {
   const { service, store } = fixture(t);
   mock(t, [{ ...pr(), title: "Fix #123456", description: "Requirement #123456" }], (url, init) => {
     assert.notEqual(init.method, "PATCH");
@@ -1396,7 +1427,13 @@ test("local exclusion overrides Azure/title/description, survives sync and can b
   });
   await service.sync();
   const row: any = service.list(context)[0];
-  const key = { monitor: row.monitor, repo: row.repo, number: row.number, ticketId: 123456, source: store.source() };
+  const key = {
+    monitor: row.monitor,
+    repo: row.repo,
+    number: row.number,
+    ticketId: 123456,
+    source: store.source(),
+  };
   await service.linkTicket({ ...key, action: "disable" });
   await service.sync();
   const ticket = (service.list(context)[0] as any).tickets[0];
@@ -1410,85 +1447,125 @@ test("local exclusion overrides Azure/title/description, survives sync and can b
   assert.equal(service.linkedToTicket(123456, store.source()).length, 1);
 });
 
-test("review skips disabled ticket even when selected before disabling", async t => {
+test("review skips disabled ticket even when selected before disabling", async (t) => {
   const { store, service, calls } = fixture(t);
-  mock(t, [pr()], url => {
+  mock(t, [pr()], (url) => {
     if (/\/pullrequests\/1\/workitems$/i.test(url.pathname)) return { value: [{ id: "42" }] };
     if (/\/workitems\/42/.test(url.pathname)) throw Error("Disabled ticket must not be read");
     if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
   });
   await service.sync();
   const monitor = service.monitors()[0].id;
-  service.requestReview(monitor, "repo", 1, { readCode: false, readTickets: true, ticketIds: [42] });
-  await service.linkTicket({ monitor, repo: "repo", number: 1, ticketId: 42, source: store.source(), action: "disable" });
+  service.requestReview(monitor, "repo", 1, {
+    readCode: false,
+    readTickets: true,
+    ticketIds: [42],
+  });
+  await service.linkTicket({
+    monitor,
+    repo: "repo",
+    number: 1,
+    ticketId: 42,
+    source: store.source(),
+    action: "disable",
+  });
   await service.reviewNext();
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0][3].ticketEvidence?.tickets || [], []);
 });
 
-
-test("completed PR history caches descriptions and links for a week", async t => {
+test("completed PR history caches descriptions and links for a week", async (t) => {
   const { service, store } = fixture(t);
   let revision = 0;
   const bodies = ["Short description #123456", "Updated #987654"];
-  mock(t, [], url => {
-    if (url.pathname.endsWith("/workitems")) return { value: [{ id: revision ? "555555" : "444444" }] };
-    const item = { ...pr(), status: "completed", closedDate: new Date().toISOString(), title: "Revision " + revision, description: bodies[revision] };
-    if (/\/pullrequests\/1$/.test(url.pathname)) assert.fail("Completed history must not fetch PR details");
-    if (url.searchParams.get("searchCriteria.status") === "completed") return { value: [{ ...item, description: bodies[revision].slice(0, 400) }] };
+  mock(t, [], (url) => {
+    if (url.pathname.endsWith("/workitems"))
+      return { value: [{ id: revision ? "555555" : "444444" }] };
+    const item = {
+      ...pr(),
+      status: "completed",
+      closedDate: new Date().toISOString(),
+      title: "Revision " + revision,
+      description: bodies[revision],
+    };
+    if (/\/pullrequests\/1$/.test(url.pathname))
+      assert.fail("Completed history must not fetch PR details");
+    if (url.searchParams.get("searchCriteria.status") === "completed")
+      return { value: [{ ...item, description: bodies[revision].slice(0, 400) }] };
   });
   const monitor = service.monitors()[0].id;
   const first = await service.completed(monitor, 0);
   assert.equal(first.items[0].description, bodies[0]);
-  assert.deepEqual(first.items[0].tickets.map((t: { id: number }) => t.id).sort(), [123456, 444444]);
-  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor, "repo", 1, 555555);
+  assert.deepEqual(
+    first.items[0].tickets.map((t: { id: number }) => t.id).sort(),
+    [123456, 444444],
+  );
+  store.db
+    .prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)")
+    .run(monitor, "repo", 1, 555555);
   revision = 1;
   const next = await service.completed(monitor, 0);
   assert.equal(next.items[0].title, "Revision 0");
   assert.equal(next.items[0].description, bodies[0]);
-  assert.deepEqual(next.items[0].tickets.map((t: { id: number }) => t.id).sort(), [123456, 444444, 555555]);
+  assert.deepEqual(
+    next.items[0].tickets.map((t: { id: number }) => t.id).sort(),
+    [123456, 444444, 555555],
+  );
   assert.equal(next.items[0].tickets.find((t: { id: number }) => t.id === 555555)?.disabled, true);
 });
 
-
-test("active import always reads full PR before parsing even a short innocent-looking list description", async t => {
+test("active import always reads full PR before parsing even a short innocent-looking list description", async (t) => {
   const { service } = fixture(t);
   let details = 0;
   const description = "Context ".repeat(100) + "#123456 and #765432";
-  mock(t, [{ ...pr(), title: "Short title", description: "Short summary without a trailing reference." }], url => {
-    if (/\/pullrequests\/1$/.test(url.pathname)) {
-      details++;
-      return { ...pr(), title: "Full title #987654", description };
-    }
-    if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
-  });
+  mock(
+    t,
+    [{ ...pr(), title: "Short title", description: "Short summary without a trailing reference." }],
+    (url) => {
+      if (/\/pullrequests\/1$/.test(url.pathname)) {
+        details++;
+        return { ...pr(), title: "Full title #987654", description };
+      }
+      if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
+    },
+  );
   await service.sync();
   assert.equal(details, 1);
   const row = service.list(context)[0];
   assert.equal(row.description, description);
   assert.equal(row.title, "Full title #987654");
-  assert.deepEqual(row.tickets.map((ticket: { id: number }) => ticket.id).sort(), [123456, 765432, 987654]);
+  assert.deepEqual(
+    row.tickets.map((ticket: { id: number }) => ticket.id).sort(),
+    [123456, 765432, 987654],
+  );
 });
 
-
-test("completed cache preserves imported full description and local links until seven days after closure", async t => {
+test("completed cache preserves imported full description and local links until seven days after closure", async (t) => {
   const { service, store, agent, preparation } = fixture(t);
   const full = "Full context ".repeat(100) + " #123456";
-  let completed = false, linkReads = 0;
+  let completed = false,
+    linkReads = 0;
   const closed = new Date().toISOString();
-  mock(t, [{ ...pr(), description: "Short" }], url => {
+  mock(t, [{ ...pr(), description: "Short" }], (url) => {
     if (url.searchParams.get("searchCriteria.status") === "completed")
-      return { value: [{ ...pr(), status: "completed", closedDate: closed, description: "Short" }] };
+      return {
+        value: [{ ...pr(), status: "completed", closedDate: closed, description: "Short" }],
+      };
     if (/\/pullrequests\/1$/.test(url.pathname)) {
       assert.equal(completed, false, "Completed history must not request full details");
       return { ...pr(), description: full };
     }
-    if (url.pathname.endsWith("/workitems")) { linkReads++; return { value: [] }; }
+    if (url.pathname.endsWith("/workitems")) {
+      linkReads++;
+      return { value: [] };
+    }
     if (url.pathname.endsWith("/workitemsbatch")) return { value: [] };
   });
   await service.sync();
   const monitor = service.monitors()[0].id;
-  store.db.prepare("INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?,?,?,?)").run(monitor, "repo", 1, 654321);
+  store.db
+    .prepare("INSERT INTO pr_ticket_links(monitor,repo,number,ticket_id) VALUES (?,?,?,?)")
+    .run(monitor, "repo", 1, 654321);
   completed = true;
   const first = await service.completed(monitor, 0);
   assert.equal(first.items[0].description, full);
@@ -1501,26 +1578,44 @@ test("completed cache preserves imported full description and local links until 
   assert.equal(restarted.list(context, { monitor, repo: "repo", number: 1 }).length, 1);
   restarted.purgeCompleted(Date.parse(closed) + 7 * 86400000 + 1);
   assert.equal(restarted.list(context, { monitor, repo: "repo", number: 1 }).length, 0);
-  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pr_ticket_links WHERE monitor=?").get(monitor) as { n: number }).n, 0);
+  assert.equal(
+    (
+      store.db
+        .prepare("SELECT count(*) AS n FROM pr_ticket_links WHERE monitor=?")
+        .get(monitor) as { n: number }
+    ).n,
+    0,
+  );
 });
 
-test("completed reimport replaces full content and resets local links only after successful loading", async t => {
+test("completed reimport replaces full content and resets local links only after successful loading", async (t) => {
   const { service, store } = fixture(t);
   const closed = new Date().toISOString();
-  let reimport = false, failLinks = false;
+  let reimport = false,
+    failLinks = false;
   const full = "Complete server description ".repeat(50) + "#222222";
-  mock(t, [], url => {
+  mock(t, [], (url) => {
     if (url.searchParams.get("searchCriteria.status") === "completed")
-      return { value: [{ ...pr(), status: "completed", closedDate: closed, description: "Old #111111" }] };
+      return {
+        value: [{ ...pr(), status: "completed", closedDate: closed, description: "Old #111111" }],
+      };
     if (/\/pullrequests\/1$/.test(url.pathname))
-      return { ...pr(), status: "completed", closedDate: closed, title: "Fresh title", description: full };
+      return {
+        ...pr(),
+        status: "completed",
+        closedDate: closed,
+        title: "Fresh title",
+        description: full,
+      };
     if (url.pathname.endsWith("/workitems"))
       return failLinks ? {} : { value: [{ id: reimport ? "333333" : "444444" }] };
   });
   const monitor = service.monitors()[0].id;
   await service.completed(monitor, 0);
   store.db.prepare("INSERT INTO pr_ticket_links VALUES (?,?,?,?)").run(monitor, "repo", 1, 555555);
-  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor, "repo", 1, 333333);
+  store.db
+    .prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)")
+    .run(monitor, "repo", 1, 333333);
   reimport = true;
   failLinks = true;
   await assert.rejects(service.reimportCompleted(monitor, "repo", 1), /Локальный кэш сохранён/);
@@ -1539,14 +1634,24 @@ test("completed reimport replaces full content and resets local links only after
   await assert.rejects(service.reimportCompleted(monitor, "repo", 2), /отсутствует в кэше/);
 });
 
-test("completed reimport replaces an ID cut at the list boundary and keeps description references first", async t => {
+test("completed reimport replaces an ID cut at the list boundary and keeps description references first", async (t) => {
   const { service } = fixture(t);
   const closedDate = new Date().toISOString();
   const description = "x".repeat(393) + " #123456 and #765432";
   let detailReads = 0;
-  mock(t, [], url => {
+  mock(t, [], (url) => {
     if (url.searchParams.get("searchCriteria.status") === "completed")
-      return { value: [{ ...pr(), status: "completed", closedDate, title: "Title #987654", description: description.slice(0, 400) }] };
+      return {
+        value: [
+          {
+            ...pr(),
+            status: "completed",
+            closedDate,
+            title: "Title #987654",
+            description: description.slice(0, 400),
+          },
+        ],
+      };
     if (/\/pullrequests\/1$/.test(url.pathname)) {
       detailReads++;
       return { ...pr(), status: "completed", closedDate, title: "Title #987654", description };
@@ -1560,131 +1665,205 @@ test("completed reimport replaces an ID cut at the list boundary and keeps descr
   const updated = await service.reimportCompleted(monitor, "repo", 1);
   assert.equal(detailReads, 1);
   assert.equal(updated.description, description);
-  assert.deepEqual(updated.tickets.map((ticket: any) => ticket.id), [123456, 765432, 987654]);
+  assert.deepEqual(
+    updated.tickets.map((ticket: any) => ticket.id),
+    [123456, 765432, 987654],
+  );
   const reopened = await service.completed(monitor, 0);
   assert.equal(detailReads, 1);
-  assert.deepEqual(reopened.items[0].tickets.map((ticket: any) => ticket.id), [123456, 765432, 987654]);
+  assert.deepEqual(
+    reopened.items[0].tickets.map((ticket: any) => ticket.id),
+    [123456, 765432, 987654],
+  );
 });
 
-test("repository history uses selected branch, bounded pages and pinned head without requiring a PR", async t => {
+test("repository history uses selected branch, bounded pages and pinned head without requiring a PR", async (t) => {
   const { service } = fixture(t);
   const head = "a".repeat(40);
   const queries: URL[] = [];
-  mock(t, [], url => {
-    if (url.pathname.endsWith('/commits')) {
+  mock(t, [], (url) => {
+    if (url.pathname.endsWith("/commits")) {
       queries.push(url);
-      return { value: Array.from({ length: queries.length === 1 ? 51 : 1 }, (_, i) => ({ commitId: i === 0 ? head : i.toString(16).padStart(40, '0'), comment: 'Commit', author: { name: 'Dev', date: '2026-01-01' } })) };
+      return {
+        value: Array.from({ length: queries.length === 1 ? 51 : 1 }, (_, i) => ({
+          commitId: i === 0 ? head : i.toString(16).padStart(40, "0"),
+          comment: "Commit",
+          author: { name: "Dev", date: "2026-01-01" },
+        })),
+      };
     }
   });
-  const first = await service.repositoryCommits(context, 'feature/ветка с пробелом');
+  const first = await service.repositoryCommits(context, "feature/ветка с пробелом");
   assert.equal(first.commits.length, 50);
   assert.equal(first.nextOffset, 50);
   assert.equal(first.head, head);
-  assert.equal(queries[0].searchParams.get('searchCriteria.itemVersion.version'), 'feature/ветка с пробелом');
-  assert.equal(queries[0].searchParams.get('searchCriteria.itemVersion.versionType'), 'branch');
-  const second = await service.repositoryCommits(context, 'feature/ветка с пробелом', 50, first.head);
+  assert.equal(
+    queries[0].searchParams.get("searchCriteria.itemVersion.version"),
+    "feature/ветка с пробелом",
+  );
+  assert.equal(queries[0].searchParams.get("searchCriteria.itemVersion.versionType"), "branch");
+  const second = await service.repositoryCommits(
+    context,
+    "feature/ветка с пробелом",
+    50,
+    first.head,
+  );
   assert.equal(second.nextOffset, null);
-  assert.equal(queries[1].searchParams.get('searchCriteria.itemVersion.versionType'), 'commit');
-  assert.equal(queries[1].searchParams.get('searchCriteria.itemVersion.version'), head);
-  assert.equal(queries[1].searchParams.get('searchCriteria.$skip'), '50');
-  await assert.rejects(service.repositoryCommits({ client: 'Missing', project: 'Missing' }, 'dev'), /Настройте/);
+  assert.equal(queries[1].searchParams.get("searchCriteria.itemVersion.versionType"), "commit");
+  assert.equal(queries[1].searchParams.get("searchCriteria.itemVersion.version"), head);
+  assert.equal(queries[1].searchParams.get("searchCriteria.$skip"), "50");
+  await assert.rejects(
+    service.repositoryCommits({ client: "Missing", project: "Missing" }, "dev"),
+    /Настройте/,
+  );
 });
 
-test("repository initial commit compares against empty tree and never reads comments or LLM", async t => {
+test("repository initial commit compares against empty tree and never reads comments or LLM", async (t) => {
   const { service, calls } = fixture(t);
-  const head = 'b'.repeat(40);
-  mock(t, [], url => {
-    if (url.pathname.endsWith('/commits/' + head)) return { commitId: head, parents: [], comment: 'Initial' };
-    if (url.pathname.endsWith('/changes')) return { changes: [{ changeType: 'add', item: { path: '/src/start.ts' } }] };
-    if (url.pathname.endsWith('/items')) {
-      assert.equal(url.searchParams.get('versionDescriptor.version'), head);
-      return { content: 'export const start = true;\n', size: 27 };
+  const head = "b".repeat(40);
+  mock(t, [], (url) => {
+    if (url.pathname.endsWith("/commits/" + head))
+      return { commitId: head, parents: [], comment: "Initial" };
+    if (url.pathname.endsWith("/changes"))
+      return { changes: [{ changeType: "add", item: { path: "/src/start.ts" } }] };
+    if (url.pathname.endsWith("/items")) {
+      assert.equal(url.searchParams.get("versionDescriptor.version"), head);
+      return { content: "export const start = true;\n", size: 27 };
     }
-    throw new Error('Unexpected endpoint: ' + url.pathname);
+    throw new Error("Unexpected endpoint: " + url.pathname);
   });
   const diff = await service.repositoryCommitDiff(context, head);
-  assert.equal(diff.base, '');
-  assert.equal(diff.title, 'Initial');
+  assert.equal(diff.base, "");
+  assert.equal(diff.title, "Initial");
   assert.equal(diff.patches.length, 1);
   assert.match(diff.patches[0], /--- \/dev\/null/);
   assert.match(diff.patches[0], /\+export const start/);
   assert.equal(calls.length, 0);
 });
 
-
-test("repository settings persist zero depth and reject invalid depth", t => {
+test("repository settings persist zero depth and reject invalid depth", (t) => {
   const { service } = fixture(t);
-  const settings = { ...context, repository: "repo", mode: "all" as const, enabled: true, fetchDepth: 0 };
+  const settings = {
+    ...context,
+    repository: "repo",
+    mode: "all" as const,
+    enabled: true,
+    fetchDepth: 0,
+  };
   service.save(settings);
   assert.equal(service.monitors()[0].fetch_depth, 0);
   assert.throws(() => service.save({ ...settings, fetchDepth: -1 }));
   assert.throws(() => service.save({ ...settings, fetchDepth: 1001 }));
 });
 
-test("active reimport refreshes only one PR and preserves local links and exclusions", async t => {
-  const {service,store}=fixture(t);
-  let refresh=false, fail=false, status="active";
-  const requested:string[]=[];
-  mock(t,[pr(1),pr(2)],url=>{
+test("active reimport refreshes only one PR and preserves local links and exclusions", async (t) => {
+  const { service, store } = fixture(t);
+  let refresh = false,
+    fail = false,
+    status = "active";
+  const requested: string[] = [];
+  mock(t, [pr(1), pr(2)], (url) => {
     requested.push(url.pathname);
-    if(refresh && /\/pullrequests\/1$/.test(url.pathname)) return {...pr(1,"new-head"),status,title:"Fresh active",description:"Full description #222222",mergeStatus:"succeeded"};
-    if(refresh && url.pathname.endsWith("/workitems")) return fail ? {} : {value:[{id:"333333"}]};
+    if (refresh && /\/pullrequests\/1$/.test(url.pathname))
+      return {
+        ...pr(1, "new-head"),
+        status,
+        title: "Fresh active",
+        description: "Full description #222222",
+        mergeStatus: "succeeded",
+      };
+    if (refresh && url.pathname.endsWith("/workitems"))
+      return fail ? {} : { value: [{ id: "333333" }] };
   });
   await service.sync();
-  const monitor=service.monitors()[0].id;
-  store.db.prepare("INSERT INTO pr_ticket_links VALUES (?,?,?,?)").run(monitor,"repo",1,444444);
-  store.db.prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)").run(monitor,"repo",1,333333);
-  refresh=true;fail=true;requested.length=0;
-  await assert.rejects(service.reimportActive(monitor,"repo",1),/Локальный кэш сохранён/);
-  assert.ok(service.list(context).find(p=>p.number===1).tickets.some((t:any)=>t.id===444444));
-  fail=false;
-  const result=await service.reimportActive(monitor,"repo",1);
-  assert.equal(result.title,"Fresh active");assert.equal(result.head,"new-head");assert.equal(result.in_scope,1);
-  assert.deepEqual(result.tickets.map((t:any)=>t.id),[222222,333333,444444]);
-  assert.ok(result.tickets.find((t:any)=>t.id===444444).manual);
-  assert.ok(result.tickets.find((t:any)=>t.id===333333).disabled);
-  assert.equal(service.list(context).find(p=>p.number===2).title,"Change");
-  assert.ok(requested.every(path=>!path.endsWith('/pullrequests') && !path.endsWith('/pullrequests/2')));
-  status="completed";
-  await assert.rejects(service.reimportActive(monitor,"repo",1),/больше не активен/);
-  assert.equal(service.list(context).find(p=>p.number===1).title,"Fresh active");
+  const monitor = service.monitors()[0].id;
+  store.db.prepare("INSERT INTO pr_ticket_links VALUES (?,?,?,?)").run(monitor, "repo", 1, 444444);
+  store.db
+    .prepare("INSERT INTO pr_ticket_exclusions VALUES (?,?,?,?)")
+    .run(monitor, "repo", 1, 333333);
+  refresh = true;
+  fail = true;
+  requested.length = 0;
+  await assert.rejects(service.reimportActive(monitor, "repo", 1), /Локальный кэш сохранён/);
+  assert.ok(
+    service
+      .list(context)
+      .find((p) => p.number === 1)
+      .tickets.some((t: any) => t.id === 444444),
+  );
+  fail = false;
+  const result = await service.reimportActive(monitor, "repo", 1);
+  assert.equal(result.title, "Fresh active");
+  assert.equal(result.head, "new-head");
+  assert.equal(result.in_scope, 1);
+  assert.deepEqual(
+    result.tickets.map((t: any) => t.id),
+    [222222, 333333, 444444],
+  );
+  assert.ok(result.tickets.find((t: any) => t.id === 444444).manual);
+  assert.ok(result.tickets.find((t: any) => t.id === 333333).disabled);
+  assert.equal(service.list(context).find((p) => p.number === 2).title, "Change");
+  assert.ok(
+    requested.every((path) => !path.endsWith("/pullrequests") && !path.endsWith("/pullrequests/2")),
+  );
+  status = "completed";
+  await assert.rejects(service.reimportActive(monitor, "repo", 1), /больше не активен/);
+  assert.equal(service.list(context).find((p) => p.number === 1).title, "Fresh active");
 });
 
-test("PR counters cache metadata by revision and never read file content",async t=>{
- const {service,store}=fixture(t);
- let counting=false;const paths:string[]=[];
- mock(t,[pr()],url=>{
-   if(!counting)return;
-   paths.push(url.pathname);
-   if(url.pathname.endsWith('/diffs/commits'))return {commonCommit:'base',allChangesIncluded:true,changes:[{item:{path:'/a.ts'}},{item:{path:'/b.ts'}}]};
-   if(url.pathname.endsWith('/commits'))return {value:[{commitId:'one'},{commitId:'two'}]};
-   throw new Error('Unexpected request '+url.pathname);
- });
- await service.sync();counting=true;
- const monitor=service.monitors()[0].id;
- const first=await service.counts(monitor,'repo',1);
- assert.deepEqual(first,{files:{value:2,complete:true},commits:{value:2,complete:true}});
- assert.deepEqual(await service.counts(monitor,'repo',1),first);assert.equal(paths.length,2);
- const realNow=Date.now();
- const clock=t.mock.method(Date,"now",()=>realNow+24*60*60*1000);
- assert.deepEqual(await service.counts(monitor,'repo',1),first);assert.equal(paths.length,2);
- clock.mock.restore();
- store.db.prepare("UPDATE pull_requests SET synced_at='manual-refresh' WHERE number=1").run();
- await service.counts(monitor,'repo',1);assert.equal(paths.length,4);
- store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
- await service.counts(monitor,'repo',1);assert.equal(paths.length,6);
- assert.ok(paths.every(path=>!path.endsWith('/items')));
+test("PR counters cache metadata by revision and never read file content", async (t) => {
+  const { service, store } = fixture(t);
+  let counting = false;
+  const paths: string[] = [];
+  mock(t, [pr()], (url) => {
+    if (!counting) return;
+    paths.push(url.pathname);
+    if (url.pathname.endsWith("/diffs/commits"))
+      return {
+        commonCommit: "base",
+        allChangesIncluded: true,
+        changes: [{ item: { path: "/a.ts" } }, { item: { path: "/b.ts" } }],
+      };
+    if (url.pathname.endsWith("/commits"))
+      return { value: [{ commitId: "one" }, { commitId: "two" }] };
+    throw new Error("Unexpected request " + url.pathname);
+  });
+  await service.sync();
+  counting = true;
+  const monitor = service.monitors()[0].id;
+  const first = await service.counts(monitor, "repo", 1);
+  assert.deepEqual(first, {
+    files: { value: 2, complete: true },
+    commits: { value: 2, complete: true },
+  });
+  assert.deepEqual(await service.counts(monitor, "repo", 1), first);
+  assert.equal(paths.length, 2);
+  const realNow = Date.now();
+  const clock = t.mock.method(Date, "now", () => realNow + 24 * 60 * 60 * 1000);
+  assert.deepEqual(await service.counts(monitor, "repo", 1), first);
+  assert.equal(paths.length, 2);
+  clock.mock.restore();
+  store.db.prepare("UPDATE pull_requests SET synced_at='manual-refresh' WHERE number=1").run();
+  await service.counts(monitor, "repo", 1);
+  assert.equal(paths.length, 4);
+  store.db.prepare("UPDATE pull_requests SET head='updated' WHERE number=1").run();
+  await service.counts(monitor, "repo", 1);
+  assert.equal(paths.length, 6);
+  assert.ok(paths.every((path) => !path.endsWith("/items")));
 });
 
 test("PR diff persists by source/target revision, survives restart and ignores unchanged sync", async (t) => {
   const f = fixture(t);
   let reads = 0;
-  mock(t, [pr()], () => { reads++; });
+  mock(t, [pr()], () => {
+    reads++;
+  });
   await f.service.sync();
   const m = f.service.monitors()[0];
   reads = 0;
   const [first, concurrent] = await Promise.all([
-    f.service.viewDiff(m.id, "repo", 1), f.service.viewDiff(m.id, "repo", 1),
+    f.service.viewDiff(m.id, "repo", 1),
+    f.service.viewDiff(m.id, "repo", 1),
   ]);
   assert.deepEqual(first, concurrent);
   assert.equal(reads, 3, "one diff list plus old/new file; concurrent requests share the work");
@@ -1701,76 +1880,97 @@ test("PR diff persists by source/target revision, survives restart and ignores u
     const restarted = new PullRequests(reopened, f.agent, f.preparation);
     assert.deepEqual(await restarted.viewDiff(m.id, "repo", 1), first);
     assert.equal(reads, 0, "SQLite cache survives a new Store and service");
-  } finally { reopened.close(); }
+  } finally {
+    reopened.close();
+  }
 
-  for (const [column, value] of [["head","new-head"],["target","new-target"],["title","New title"]] as const) {
-    f.store.db.prepare(`UPDATE pull_requests SET ${column}=? WHERE monitor=?`).run(value,m.id);
+  for (const [column, value] of [
+    ["head", "new-head"],
+    ["target", "new-target"],
+    ["title", "New title"],
+  ] as const) {
+    f.store.db.prepare(`UPDATE pull_requests SET ${column}=? WHERE monitor=?`).run(value, m.id);
     reads = 0;
-    const result = await f.service.viewDiff(m.id,"repo",1);
+    const result = await f.service.viewDiff(m.id, "repo", 1);
     assert.equal(result[column], value);
     assert.equal(reads, column === "title" ? 0 : 3);
   }
-  f.store.db.prepare("UPDATE pr_projects SET review_files=? WHERE id=?").run(JSON.stringify({diffBudget:80000,ignoredPaths:[]}),m.id);
-  reads=0;
-  const changedSettings = await f.service.viewDiff(m.id,"repo",1);
-  assert.equal(changedSettings.limits.totalCharacters,80000);
-  assert.equal(reads,3);
-  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,1);
+  f.store.db
+    .prepare("UPDATE pr_projects SET review_files=? WHERE id=?")
+    .run(JSON.stringify({ diffBudget: 80000, ignoredPaths: [] }), m.id);
+  reads = 0;
+  const changedSettings = await f.service.viewDiff(m.id, "repo", 1);
+  assert.equal(changedSettings.limits.totalCharacters, 80000);
+  assert.equal(reads, 3);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n, 1);
   f.store.db.prepare("DELETE FROM pull_requests WHERE monitor=?").run(m.id);
-  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n, 0);
 });
 
 test("partial diff failures are retried and a changing PR cannot populate stale cache", async (t) => {
   const f = fixture(t);
   let fail = true;
-  mock(t,[pr()], url => url.pathname.endsWith("/items") && fail ? new Response("unavailable",{status:500}) : undefined);
+  mock(t, [pr()], (url) =>
+    url.pathname.endsWith("/items") && fail
+      ? new Response("unavailable", { status: 500 })
+      : undefined,
+  );
   await f.service.sync();
-  const m=f.service.monitors()[0];
-  const partial=await f.service.viewDiff(m.id,"repo",1);
-  assert.equal(partial.patches.length,0);
-  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
-  fail=false;
-  assert.ok((await f.service.viewDiff(m.id,"repo",1)).patches.length);
+  const m = f.service.monitors()[0];
+  const partial = await f.service.viewDiff(m.id, "repo", 1);
+  assert.equal(partial.patches.length, 0);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n, 0);
+  fail = false;
+  assert.ok((await f.service.viewDiff(m.id, "repo", 1)).patches.length);
   f.store.db.prepare("DELETE FROM pr_diff_cache").run();
-  const changes=f.service.changes.bind(f.service);
-  t.mock.method(f.service,"changes",async (...args: Parameters<typeof changes>) => {
-    const result=await changes(...args);
+  const changes = f.service.changes.bind(f.service);
+  t.mock.method(f.service, "changes", async (...args: Parameters<typeof changes>) => {
+    const result = await changes(...args);
     f.store.db.prepare("UPDATE pull_requests SET head='later-head' WHERE monitor=?").run(m.id);
     return result;
   });
-  await assert.rejects(()=>f.service.viewDiff(m.id,"repo",1),/Версия PR изменилась/);
-  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n,0);
+  await assert.rejects(() => f.service.viewDiff(m.id, "repo", 1), /Версия PR изменилась/);
+  assert.equal((f.store.db.prepare("SELECT COUNT(*) n FROM pr_diff_cache").get() as any).n, 0);
 });
 
 test("permanent binary-file exclusions do not defeat the diff cache", async (t) => {
-  const f=fixture(t);
-  let reads=0;
-  mock(t,[pr()],url=>{
+  const f = fixture(t);
+  let reads = 0;
+  mock(t, [pr()], (url) => {
     reads++;
-    if(url.pathname.endsWith("/items")) return {contentMetadata:{isBinary:true}};
+    if (url.pathname.endsWith("/items")) return { contentMetadata: { isBinary: true } };
   });
   await f.service.sync();
-  const m=f.service.monitors()[0];
-  const first=await f.service.viewDiff(m.id,"repo",1);
-  assert.equal(first.patches.length,0);
+  const m = f.service.monitors()[0];
+  const first = await f.service.viewDiff(m.id, "repo", 1);
+  assert.equal(first.patches.length, 0);
   assert.ok(first.notes.length);
-  reads=0;
-  assert.deepEqual(await f.service.viewDiff(m.id,"repo",1),first);
-  assert.equal(reads,0);
+  reads = 0;
+  assert.deepEqual(await f.service.viewDiff(m.id, "repo", 1), first);
+  assert.equal(reads, 0);
 });
 
 for (const legacy of [false, true]) {
-  test(`review tool budget ${legacy ? "reads legacy saved options" : "preserves per-run override after settings change"}`, async t => {
+  test(`review tool budget ${legacy ? "reads legacy saved options" : "preserves per-run override after settings change"}`, async (t) => {
     const { store, service, calls } = fixture(t);
     mock(t, [pr()]);
     await service.sync();
     const monitor = service.monitors()[0].id;
-    const id = service.requestReview(monitor, "repo", 1, { readTickets: false, questionFrequency: "none", maxToolCalls: 7, reviewerComment: "Focus on retries" });
-    const options = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options);
+    const id = service.requestReview(monitor, "repo", 1, {
+      readTickets: false,
+      questionFrequency: "none",
+      maxToolCalls: 7,
+      reviewerComment: "Focus on retries",
+    });
+    const options = JSON.parse(
+      (store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options,
+    );
     assert.equal(options.maxToolCalls, 7);
     if (legacy) {
       delete options.maxToolCalls;
-      store.db.prepare("UPDATE pr_reviews SET options=? WHERE id=?").run(JSON.stringify(options), id);
+      store.db
+        .prepare("UPDATE pr_reviews SET options=? WHERE id=?")
+        .run(JSON.stringify(options), id);
     }
     store.set("settings", { ...store.settings(), reviewMaxToolCalls: 43 });
     await service.reviewNext();
@@ -1780,82 +1980,127 @@ for (const legacy of [false, true]) {
     assert.equal(displayed.review_metadata.toolLimit, legacy ? 43 : 7);
     assert.equal(displayed.review_metadata.reviewerComment, "Focus on retries");
     assert.equal(displayed.last_saved_review.review_metadata.toolLimit, legacy ? 43 : 7);
-    const saved = JSON.parse((store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options);
+    const saved = JSON.parse(
+      (store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any).options,
+    );
     assert.equal(saved.maxToolCalls, legacy ? 43 : 7);
     assert.equal(saved.reviewerComment, "Focus on retries");
   });
 }
 
-test("author-only import persists across restart, older saves preserve it, explicit clear removes it", async t => {
-  const {store,service}=fixture(t);
-  const input={...context,repository:"repo",mode:"required" as const,enabled:true};
-  const author={id:"author",name:"Author",email:"author@example.invalid"};
+test("author-only import persists across restart, older saves preserve it, explicit clear removes it", async (t) => {
+  const { store, service } = fixture(t);
+  const input = { ...context, repository: "repo", mode: "required" as const, enabled: true };
+  const author = { id: "author", name: "Author", email: "author@example.invalid" };
   // Existing populated settings retain the previous reviewer selections.
-  const legacy=service.monitors()[0].reviewer_filter;
-  service.save({...input,reviewerFilter:{required:[],optional:[],createdBy:[author]}});
-  const reopened=new Store(store.dir);
+  const legacy = service.monitors()[0].reviewer_filter;
+  service.save({ ...input, reviewerFilter: { required: [], optional: [], createdBy: [author] } });
+  const reopened = new Store(store.dir);
   try {
-    assert.deepEqual(JSON.parse((reopened.db.prepare("SELECT reviewer_filter FROM pr_projects").get() as any).reviewer_filter).createdBy,[author]);
-  } finally {reopened.close();}
-  const items=[
-    {...pr(1),createdBy:{id:"AUTHOR",displayName:"Author"},reviewers:[]},
-    {...pr(2),createdBy:{id:"someone-else"},reviewers:[{id:"author",isRequired:true}]},
+    assert.deepEqual(
+      JSON.parse(
+        (reopened.db.prepare("SELECT reviewer_filter FROM pr_projects").get() as any)
+          .reviewer_filter,
+      ).createdBy,
+      [author],
+    );
+  } finally {
+    reopened.close();
+  }
+  const items = [
+    { ...pr(1), createdBy: { id: "AUTHOR", displayName: "Author" }, reviewers: [] },
+    {
+      ...pr(2),
+      createdBy: { id: "someone-else" },
+      reviewers: [{ id: "author", isRequired: true }],
+    },
   ];
-  mock(t,items);
+  mock(t, items);
   await service.sync();
-  assert.deepEqual(service.list(context).map(p=>p.number),[1]);
-  service.save({...input,reviewerFilter:{required:[],optional:[]}});
-  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).createdBy,[author]);
+  assert.deepEqual(
+    service.list(context).map((p) => p.number),
+    [1],
+  );
+  service.save({ ...input, reviewerFilter: { required: [], optional: [] } });
+  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).createdBy, [author]);
   await service.sync();
-  assert.deepEqual(service.list(context).map(p=>p.number),[1]);
-  service.save({...input,reviewerFilter:{required:[],optional:[],createdBy:[]}});
+  assert.deepEqual(
+    service.list(context).map((p) => p.number),
+    [1],
+  );
+  service.save({ ...input, reviewerFilter: { required: [], optional: [], createdBy: [] } });
   await service.sync();
-  assert.equal(service.list(context).length,0);
-  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n,1);
-  service.save({...input,reviewerFilter:JSON.parse(legacy!)});
-  assert.deepEqual(JSON.parse(service.monitors()[0].reviewer_filter!).required,JSON.parse(legacy!).required);
+  assert.equal(service.list(context).length, 0);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM pull_requests").get() as any).n, 1);
+  service.save({ ...input, reviewerFilter: JSON.parse(legacy!) });
+  assert.deepEqual(
+    JSON.parse(service.monitors()[0].reviewer_filter!).required,
+    JSON.parse(legacy!).required,
+  );
 });
 
-test("skipped diff metadata includes large, deleted binary, renamed excluded and capped files", async t => {
-  const {service}=fixture(t);
-  mock(t,[pr()],url=>{
-    if(url.pathname.endsWith("/diffs/commits")) return {commonCommit:"base",allChangesIncluded:true,changes:[
-      {changeType:"rename",originalPath:"/old",item:{path:"/excluded/new"}},
-      {changeType:"add",item:{path:"/large"}},
-      {changeType:"delete",item:{path:"/binary"}},
-      ...Array.from({length:100},(_,i)=>({changeType:"edit",item:{path:`/file${i}`}})),
-    ]};
-    if(url.pathname.endsWith("/items")){
-      const path=url.searchParams.get("path");
-      if(path==="/large")return {content:"x".repeat(50001)};
-      if(path==="/binary")return {contentMetadata:{isBinary:true}};
-      return {content:"same"};
+test("skipped diff metadata includes large, deleted binary, renamed excluded and capped files", async (t) => {
+  const { service } = fixture(t);
+  mock(t, [pr()], (url) => {
+    if (url.pathname.endsWith("/diffs/commits"))
+      return {
+        commonCommit: "base",
+        allChangesIncluded: true,
+        changes: [
+          { changeType: "rename", originalPath: "/old", item: { path: "/excluded/new" } },
+          { changeType: "add", item: { path: "/large" } },
+          { changeType: "delete", item: { path: "/binary" } },
+          ...Array.from({ length: 100 }, (_, i) => ({
+            changeType: "edit",
+            item: { path: `/file${i}` },
+          })),
+        ],
+      };
+    if (url.pathname.endsWith("/items")) {
+      const path = url.searchParams.get("path");
+      if (path === "/large") return { content: "x".repeat(50001) };
+      if (path === "/binary") return { contentMetadata: { isBinary: true } };
+      return { content: "same" };
     }
   });
-  service.save({...context,repository:"repo",mode:"required",enabled:true,reviewFiles:{ignoredPaths:["excluded/"],diffBudget:160000}});
-  const result=await service.changes(service.monitors()[0],"repo","head","target");
-  assert.equal(result.skippedFiles.length,5);
-  assert.deepEqual(result.skippedFiles[0],{before:"/old",after:"/excluded/new",reason:"Исключён настройками путей проекта. Содержимое не загружалось."});
-  assert.match(result.skippedFiles[1].reason,/50 000/);
-  assert.equal(result.skippedFiles[1].before,"/dev/null");
-  assert.match(result.skippedFiles[2].reason,/Бинарный/);
-  assert.equal(result.skippedFiles[2].after,"/dev/null");
-  assert.match(result.skippedFiles[4].reason,/100 файлов/);
+  service.save({
+    ...context,
+    repository: "repo",
+    mode: "required",
+    enabled: true,
+    reviewFiles: { ignoredPaths: ["excluded/"], diffBudget: 160000 },
+  });
+  const result = await service.changes(service.monitors()[0], "repo", "head", "target");
+  assert.equal(result.skippedFiles.length, 5);
+  assert.deepEqual(result.skippedFiles[0], {
+    before: "/old",
+    after: "/excluded/new",
+    reason: "Исключён настройками путей проекта. Содержимое не загружалось.",
+  });
+  assert.match(result.skippedFiles[1].reason, /50 000/);
+  assert.equal(result.skippedFiles[1].before, "/dev/null");
+  assert.match(result.skippedFiles[2].reason, /Бинарный/);
+  assert.equal(result.skippedFiles[2].after, "/dev/null");
+  assert.match(result.skippedFiles[4].reason, /100 файлов/);
 });
 
-test("legacy diff cache upgrades on demand and preserves PR data", async t => {
-  const {service,store}=fixture(t);
-  mock(t,[pr()]);
+test("legacy diff cache upgrades on demand and preserves PR data", async (t) => {
+  const { service, store } = fixture(t);
+  mock(t, [pr()]);
   await service.sync();
-  const monitor=service.monitors()[0].id;
-  await service.viewDiff(monitor,"repo",1);
-  const cached=store.db.prepare("SELECT revision,payload FROM pr_diff_cache").get() as any;
-  const revision=JSON.parse(cached.revision);revision[0]=1;
-  const payload=JSON.parse(cached.payload);delete payload.skippedFiles;
-  store.db.prepare("UPDATE pr_diff_cache SET revision=?,payload=?").run(JSON.stringify(revision),JSON.stringify(payload));
-  const before=store.db.prepare("SELECT * FROM pull_requests").all();
-  const upgraded=await service.viewDiff(monitor,"repo",1);
+  const monitor = service.monitors()[0].id;
+  await service.viewDiff(monitor, "repo", 1);
+  const cached = store.db.prepare("SELECT revision,payload FROM pr_diff_cache").get() as any;
+  const revision = JSON.parse(cached.revision);
+  revision[0] = 1;
+  const payload = JSON.parse(cached.payload);
+  delete payload.skippedFiles;
+  store.db
+    .prepare("UPDATE pr_diff_cache SET revision=?,payload=?")
+    .run(JSON.stringify(revision), JSON.stringify(payload));
+  const before = store.db.prepare("SELECT * FROM pull_requests").all();
+  const upgraded = await service.viewDiff(monitor, "repo", 1);
   assert.ok(Array.isArray(upgraded.skippedFiles));
-  assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(),before);
-  assert.deepEqual(await service.viewDiff(monitor,"repo",1),upgraded);
+  assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
+  assert.deepEqual(await service.viewDiff(monitor, "repo", 1), upgraded);
 });

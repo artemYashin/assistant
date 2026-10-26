@@ -9,34 +9,34 @@
 
 Использовать глобальные настройки Azure
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:65.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:70.
 
 ### Элемент
 
 URL организации / коллекции
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:77.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:89.
 
 ### Элемент
 
 Проект в Azure DevOps
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:88.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:100.
 
 ### Элемент
 
 Например, RACID
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:90.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:102.
 
 ### Элемент
 
 Глобальные настройки
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:120.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:153.
 
 ### Элемент
 
 / · Выбранный проект / Выбранный заказчик
 
-Источник: src/widgets/context-settings/ui/ProjectAzureSettings.tsx:121.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx:162.

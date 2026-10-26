@@ -9,70 +9,70 @@
 
 Общий · все проекты
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:19.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:18.
 
 ### Элемент
 
 Заказчик ·
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:20.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:19.
 
 ### Элемент
 
 Проект ·
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:21.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:20.
 
 ### Элемент
 
 Уровень нового разработчика
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:76.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:82.
 
 ### Элемент
 
 Добавить разработчиков
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:77.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:89.
 
 ### Элемент
 
 Анна Иванова Иван Петров
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:79.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:91.
 
 ### Элемент
 
 Добавить
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:88.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:100.
 
 ### Элемент
 
-Группировка поручений · ·
+Группировка поручений ·
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:121.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:155.
 
 ### Элемент
 
 Имя разработчика {…}
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:149.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:179.
 
 ### Элемент
 
 Уровень разработчика {…}
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:156.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:186.
 
 ### Элемент
 
 Убрать из справочника · Убрать {…} из справочника
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:159.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:194.
 
 ### Элемент
 
 Сохранить имя и уровень · Сохранить имя {…}
 
-Источник: src/widgets/context-settings/ui/DeveloperDirectory.tsx:170.
+Источник: services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx:203.

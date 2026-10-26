@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { listTicketAnalysis } from "../server/ticket-analysis.js";
-import { listLocalTickets } from "../server/ticket-list.js";
-import { allowsFullTicketRead } from "../server/ticket-display.js";
+import { Store } from "../services/backend/src/store.js";
+import { listTicketAnalysis } from "../services/backend/src/ticket-analysis.js";
+import { listLocalTickets } from "../services/backend/src/ticket-list.js";
+import { allowsFullTicketRead } from "../services/backend/src/ticket-display.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-analysis-"));
   const store = new Store(dir);
@@ -17,17 +17,7 @@ function fixture(t: any) {
   for (const id of [1, 2, 3, 4])
     store.db
       .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
-      .run(
-        store.source(),
-        id,
-        `Title ${id}`,
-        "Active",
-        "",
-        "Bug",
-        "",
-        "",
-        "now",
-      );
+      .run(store.source(), id, `Title ${id}`, "Active", "", "Bug", "", "", "now");
   return store;
 }
 test("deep reads require explicit current user intent; summaries are the default", async (t) => {
@@ -56,10 +46,7 @@ test("deep reads require explicit current user intent; summaries are the default
     listTicketAnalysis(store, { ids: [1], detail: "full" }, false, read),
     /явной просьбы/,
   );
-  await assert.rejects(
-    listTicketAnalysis(store, { detail: "full" }, true, read),
-    /точные ID/,
-  );
+  await assert.rejects(listTicketAnalysis(store, { detail: "full" }, true, read), /точные ID/);
   assert.equal(reads, 0);
   const summary = listLocalTickets(store, { ids: [1, 2] });
   assert.equal(summary.tickets.length, 2);

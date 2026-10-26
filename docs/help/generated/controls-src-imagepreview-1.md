@@ -9,34 +9,34 @@
 
 Открыть изображение · масштабирование
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:34.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:34.
 
 ### Элемент
 
 Уменьшить · Уменьшить изображение
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:214.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:211.
 
 ### Элемент
 
 Увеличить · Увеличить изображение
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:227.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:222.
 
 ### Элемент
 
 Вписать в окно · Вписать изображение в окно
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:237.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:232.
 
 ### Элемент
 
 Исходный размер · 1:1
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:247.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:242.
 
 ### Элемент
 
 Закрыть просмотр изображения · Закрыть · Esc
 
-Источник: src/entities/rich-content/ui/ImagePreview.tsx:259.
+Источник: services/frontend/src/entities/rich-content/ui/ImagePreview.tsx:254.

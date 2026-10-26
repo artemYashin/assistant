@@ -9,10 +9,10 @@
 
 Подключение Azure изменилось. Загрузите карточку тикета заново.
 
-Источник: server/chat-ticket-attachment.ts:6.
+Источник: services/backend/src/chat-ticket-attachment.ts:6.
 
 ### Сообщение
 
 Полный текст тикета превышает 200 000 символов. Для анализа такого объёма разделите задачу на части; содержимое не было отправлено модели.
 
-Источник: server/chat-ticket-attachment.ts:39.
+Источник: services/backend/src/chat-ticket-attachment.ts:32.

@@ -9,4 +9,4 @@
 
 Справочник прав Azure DevOps ↗
 
-Источник: src/entities/azure/ui/AzurePatPermissions.tsx:20.
+Источник: services/frontend/src/entities/azure/ui/AzurePatPermissions.tsx:59.

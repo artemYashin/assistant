@@ -1,45 +1,99 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {mkdtempSync,rmSync} from "node:fs";
-import {tmpdir} from "node:os";
-import {join} from "node:path";
-import {Store} from "../server/store.js";
-import {Connectors} from "../server/connectors.js";
-import {listLocalTickets} from "../server/ticket-list.js";
-import {searchTicketContent} from "../server/ticket-content-search.js";
-import {azureSummary,browseFields} from "../server/azure-browser.js";
-import {ticketsCsv} from "../src/features/export-tickets/index.js";
-import {ticketsXlsx} from "../src/features/export-tickets/xlsx/index.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
+import { listLocalTickets } from "../services/backend/src/ticket-list.js";
+import { searchTicketContent } from "../services/backend/src/ticket-content-search.js";
+import { azureSummary, browseFields } from "../services/backend/src/azure-browser.js";
+import { ticketsCsv } from "../services/frontend/src/features/export-tickets/index.js";
+import { ticketsXlsx } from "../services/frontend/src/features/export-tickets/xlsx/index.js";
 import ExcelJS from "exceljs";
-import {AZURE_PRIORITY_FIELD} from "../server/azure-priority.js";
-test("Azure priority survives sync/restart/trash, filters independently, and exports as a number",async t=>{
- const dir=mkdtempSync(join(tmpdir(),"orbit-azure-priority-"));let store=new Store(dir);
- t.after(()=>{store.close();rmSync(dir,{recursive:true,force:true});});
- store.set("settings",{...store.rawSettings(),azureUrl:"https://ado.test",azureProject:"P"});
- store.setSecret("azure.pat","pat");
- const source=store.source();
- for(const id of [1,2,3]) store.db.prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)").run(source,id,"Ticket "+id,"Active","Dev","Bug","url",null,"old");
- store.db.prepare("INSERT INTO ticket_metadata VALUES (?,?,?,?,?)").run(source,1,"needle",5,"[]");
- t.mock.method(globalThis,"fetch",async(_url:any,init:any)=>{
-  assert.ok(JSON.parse(init.body).fields.includes(AZURE_PRIORITY_FIELD));
-  return Response.json({value:JSON.parse(init.body).ids.map((id:number)=>({id,fields:{"System.Title":"Ticket "+id,"System.TeamProject":"P","System.State":"Active",...(id===3?{}:{[AZURE_PRIORITY_FIELD]:id===1?2:10})}}))});
- });
- await new Connectors(store).syncTickets();
- assert.ok(browseFields.includes(AZURE_PRIORITY_FIELD));
- assert.equal(azureSummary({id:1,fields:{[AZURE_PRIORITY_FIELD]:2}},source,"https://ado.test","P").azurePriority,2);
- const rows=listLocalTickets(store,{fields:["priority","azurePriority"],sortBy:"azurePriority",sortDirection:"desc"}).tickets;
- assert.deepEqual(rows.map(r=>r.id),[2,1,3]);assert.equal(rows[1].priority,5);assert.equal(rows[2].azurePriority,null);
- assert.deepEqual(listLocalTickets(store,{azurePriority:[2,10],priority:[5]}).tickets.map(r=>r.id),[1]);
- assert.equal(searchTicketContent(store,{search:"needle",azurePriority:[2]}).tickets.length,1);
- assert.equal(searchTicketContent(store,{search:"needle",azurePriority:[10]}).tickets.length,0);
- assert.match(ticketsCsv(rows as any,["id","priority","azurePriority"]),/"Local Priority";"Azure Priority"/);
- const bytes=await ticketsXlsx(rows as any,false,["id","azurePriority"]);
- const book=new ExcelJS.Workbook();await book.xlsx.load(bytes as any);
- assert.equal(book.worksheets[0].getCell("B2").value,10);
- store.removeLocalTicket(1);assert.equal(store.ticketTrash()[0].azurePriority,2);
- store.close();store=new Store(dir);assert.equal(store.azurePriority(1),2);
- store.saveAzurePriority(1,"another",4);assert.equal(store.azurePriority(1),2);
- store.updateTrashFromAzure({id:1,fields:{[AZURE_PRIORITY_FIELD]:3}},source);
- assert.equal(store.ticketTrash()[0].azurePriority,3);
- store.saveAzurePriority(2,source,undefined);assert.equal(store.azurePriority(2),null);
+import { AZURE_PRIORITY_FIELD } from "../services/backend/src/azure-priority.js";
+test("Azure priority survives sync/restart/trash, filters independently, and exports as a number", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-azure-priority-"));
+  let store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  store.set("settings", {
+    ...store.rawSettings(),
+    azureUrl: "https://ado.test",
+    azureProject: "P",
+  });
+  store.setSecret("azure.pat", "pat");
+  const source = store.source();
+  for (const id of [1, 2, 3])
+    store.db
+      .prepare("INSERT INTO tickets VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(source, id, "Ticket " + id, "Active", "Dev", "Bug", "url", null, "old");
+  store.db
+    .prepare("INSERT INTO ticket_metadata VALUES (?,?,?,?,?)")
+    .run(source, 1, "needle", 5, "[]");
+  t.mock.method(globalThis, "fetch", async (_url: any, init: any) => {
+    assert.ok(JSON.parse(init.body).fields.includes(AZURE_PRIORITY_FIELD));
+    return Response.json({
+      value: JSON.parse(init.body).ids.map((id: number) => ({
+        id,
+        fields: {
+          "System.Title": "Ticket " + id,
+          "System.TeamProject": "P",
+          "System.State": "Active",
+          ...(id === 3 ? {} : { [AZURE_PRIORITY_FIELD]: id === 1 ? 2 : 10 }),
+        },
+      })),
+    });
+  });
+  await new Connectors(store).syncTickets();
+  assert.ok(browseFields.includes(AZURE_PRIORITY_FIELD));
+  assert.equal(
+    azureSummary({ id: 1, fields: { [AZURE_PRIORITY_FIELD]: 2 } }, source, "https://ado.test", "P")
+      .azurePriority,
+    2,
+  );
+  const rows = listLocalTickets(store, {
+    fields: ["priority", "azurePriority"],
+    sortBy: "azurePriority",
+    sortDirection: "desc",
+  }).tickets;
+  assert.deepEqual(
+    rows.map((r) => r.id),
+    [2, 1, 3],
+  );
+  assert.equal(rows[1].priority, 5);
+  assert.equal(rows[2].azurePriority, null);
+  assert.deepEqual(
+    listLocalTickets(store, { azurePriority: [2, 10], priority: [5] }).tickets.map((r) => r.id),
+    [1],
+  );
+  assert.equal(
+    searchTicketContent(store, { search: "needle", azurePriority: [2] }).tickets.length,
+    1,
+  );
+  assert.equal(
+    searchTicketContent(store, { search: "needle", azurePriority: [10] }).tickets.length,
+    0,
+  );
+  assert.match(
+    ticketsCsv(rows as any, ["id", "priority", "azurePriority"]),
+    /"Local Priority";"Azure Priority"/,
+  );
+  const bytes = await ticketsXlsx(rows as any, false, ["id", "azurePriority"]);
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(bytes as any);
+  assert.equal(book.worksheets[0].getCell("B2").value, 10);
+  store.removeLocalTicket(1);
+  assert.equal(store.ticketTrash()[0].azurePriority, 2);
+  store.close();
+  store = new Store(dir);
+  assert.equal(store.azurePriority(1), 2);
+  store.saveAzurePriority(1, "another", 4);
+  assert.equal(store.azurePriority(1), 2);
+  store.updateTrashFromAzure({ id: 1, fields: { [AZURE_PRIORITY_FIELD]: 3 } }, source);
+  assert.equal(store.ticketTrash()[0].azurePriority, 3);
+  store.saveAzurePriority(2, source, undefined);
+  assert.equal(store.azurePriority(2), null);
 });

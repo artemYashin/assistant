@@ -9,22 +9,22 @@
 
 Запрос слишком большой
 
-Источник: code-browser/service.mjs:23.
+Источник: services/code-browser/service.mjs:35.
 
 ### Сообщение
 
 Некорректный JSON
 
-Источник: code-browser/service.mjs:25.
+Источник: services/code-browser/service.mjs:41.
 
 ### Сообщение
 
 Некорректный запрос
 
-Источник: code-browser/service.mjs:26.
+Источник: services/code-browser/service.mjs:44.
 
 ### Сообщение
 
 Сервис просмотра кода недоступен. Проверьте его конфигурацию.
 
-Источник: code-browser/service.mjs:51.
+Источник: services/code-browser/service.mjs:90.

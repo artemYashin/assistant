@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AppError } from "../server/store.js";
-import { sessionConfig } from "../server/agent.js";
+import { Store, AppError } from "../services/backend/src/store.js";
+import { sessionConfig } from "../services/backend/src/agent.js";
 
 test("tool wrapper preserves large structured and binary results and handles failures", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-tool-result-"));
@@ -23,9 +23,7 @@ test("tool wrapper preserves large structured and binary results and handles fai
   const binary = {
     resultType: "success",
     textResultForLlm: "Image",
-    binaryResultsForLlm: [
-      { type: "image", mimeType: "image/png", data: "a".repeat(50000) },
-    ],
+    binaryResultsForLlm: [{ type: "image", mimeType: "image/png", data: "a".repeat(50000) }],
   };
   const results = [structured, binary, "x".repeat(50000)];
   const tools = sessionConfig(
@@ -52,11 +50,12 @@ test("tool wrapper preserves large structured and binary results and handles fai
   ).tools!;
   for (const [i, result] of results.entries()) {
     assert.ok(JSON.stringify(result).length > 24000);
-    const actual = await tools.find((tool) => tool.name === `result_${i}`)!
-      .handler!({}, {} as any);
+    const actual = await tools.find((tool) => tool.name === `result_${i}`)!.handler!({}, {} as any);
     assert.strictEqual(actual, result);
   }
-  const failure = (await tools.find((tool) => tool.name === "failure")!
-    .handler!({}, {} as any)) as any;
+  const failure = (await tools.find((tool) => tool.name === "failure")!.handler!(
+    {},
+    {} as any,
+  )) as any;
   assert.equal(failure.success, false);
 });

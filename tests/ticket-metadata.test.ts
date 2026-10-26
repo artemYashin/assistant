@@ -3,12 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import {
-  ticketMetadata,
-  saveTicketMetadata,
-} from "../server/ticket-metadata.js";
-import { listLocalTickets } from "../server/ticket-list.js";
+import { Store } from "../services/backend/src/store.js";
+import { ticketMetadata, saveTicketMetadata } from "../services/backend/src/ticket-metadata.js";
+import { listLocalTickets } from "../services/backend/src/ticket-list.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-metadata-"));
   const store = new Store(dir);
@@ -17,9 +14,7 @@ function fixture(t: any) {
     rmSync(dir, { recursive: true, force: true });
   });
   store.db
-    .prepare(
-      "INSERT INTO tickets VALUES (?,42,'Bug','Active','','Bug','','','')",
-    )
+    .prepare("INSERT INTO tickets VALUES (?,42,'Bug','Active','','Bug','','','')")
     .run(store.source());
   return store;
 }
@@ -37,20 +32,15 @@ test("local metadata is independent, validates priorities, merges fields, and fi
   saveTicketMetadata(store, 42, store.source(), context, {
     notes: "Not ready",
   });
-  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
+  assert.deepEqual(ticketMetadata(store, 42), {
+    localDeadline: null,
     notes: "Not ready",
     tags: ["UI", "Bug"],
     priority: 4,
   });
-  assert.throws(() =>
-    saveTicketMetadata(store, 42, store.source(), context, { priority: 0 }),
-  );
-  assert.throws(() =>
-    saveTicketMetadata(store, 42, "other", context, { notes: "No" }),
-  );
-  assert.throws(() =>
-    saveTicketMetadata(store, 99, store.source(), context, { notes: "No" }),
-  );
+  assert.throws(() => saveTicketMetadata(store, 42, store.source(), context, { priority: 0 }));
+  assert.throws(() => saveTicketMetadata(store, 42, "other", context, { notes: "No" }));
+  assert.throws(() => saveTicketMetadata(store, 99, store.source(), context, { notes: "No" }));
   assert.equal(listLocalTickets(store, { priority: 4, tag: "ui" }).total, 1);
   assert.equal(listLocalTickets(store, { priority: 2 }).total, 0);
   assert.equal(
@@ -74,7 +64,8 @@ test("trash retains metadata until expiry and restores it", (t) => {
   assert.equal(ticketMetadata(store, 42).priority, 1);
   store.removeLocalTicket(42);
   store.purgeTicketTrash(Date.now() + 31 * 86400000);
-  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
+  assert.deepEqual(ticketMetadata(store, 42), {
+    localDeadline: null,
     notes: "",
     priority: 1,
     tags: [],
@@ -82,8 +73,7 @@ test("trash retains metadata until expiry and restores it", (t) => {
 });
 
 test("chat metadata edits are local, preserve other fields and deduplicate append", async (t) => {
-  const { ticketMetadataTools } =
-    await import("../server/ticket-metadata-tools.js");
+  const { ticketMetadataTools } = await import("../services/backend/src/ticket-metadata-tools.js");
   const store = fixture(t);
   saveTicketMetadata(store, 42, store.source(), context, {
     notes: "Before",
@@ -109,31 +99,31 @@ test("chat metadata edits are local, preserve other fields and deduplicate appen
   await tool.handler!(args, {} as any);
   assert.equal(first.success, true);
   assert.equal(first.azureChanged, false);
-  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
+  assert.deepEqual(ticketMetadata(store, 42), {
+    localDeadline: null,
     notes: "Before\n\nReady",
     tags: ["API", "UI"],
     priority: 1,
   });
   await assert.rejects(async () =>
-    tool.handler!(
-      { ...args, notes: { mode: "append", text: "Different" } },
-      {} as any,
-    ),
+    tool.handler!({ ...args, notes: { mode: "append", text: "Different" } }, {} as any),
   );
 });
 test("chat metadata accepts unrestricted priority numbers and validates input and source without parsing the confirmation", async (t) => {
-  const { ticketMetadataTools } = await import("../server/ticket-metadata-tools.js");
+  const { ticketMetadataTools } = await import("../services/backend/src/ticket-metadata-tools.js");
   const store = fixture(t);
   const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
   await assert.rejects(async () => tool.handler!({ id: 42, priority: 0 }, {} as any));
   await tool.handler!({ id: 42, priority: 1000 }, {} as any);
   assert.equal(ticketMetadata(store, 42).priority, 1000);
   store.set("settings", { ...store.settings(), azureProject: "Changed" });
-  await assert.rejects(async () => tool.handler!({ id: 42, priority: 1 }, {} as any), /Подключение/);
+  await assert.rejects(
+    async () => tool.handler!({ id: 42, priority: 1 }, {} as any),
+    /Подключение/,
+  );
 });
 test("chat tag removal and explicit notes clearing preserve unrelated metadata", async (t) => {
-  const { ticketMetadataTools } =
-    await import("../server/ticket-metadata-tools.js");
+  const { ticketMetadataTools } = await import("../services/backend/src/ticket-metadata-tools.js");
   const store = fixture(t);
   saveTicketMetadata(store, 42, store.source(), context, {
     notes: "Old",
@@ -154,7 +144,8 @@ test("chat tag removal and explicit notes clearing preserve unrelated metadata",
     },
     {} as any,
   );
-  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null,
+  assert.deepEqual(ticketMetadata(store, 42), {
+    localDeadline: null,
     notes: "",
     tags: ["API"],
     priority: 1,
@@ -169,18 +160,12 @@ test("priority migration preserves old implicit P2 and explicit values while new
     rmSync(dir, { recursive: true, force: true });
   });
   const source = store.source();
+  store.db.prepare("DELETE FROM kv WHERE key='migration.ticketPriorityOne'").run();
   store.db
-    .prepare("DELETE FROM kv WHERE key='migration.ticketPriorityOne'")
-    .run();
-  store.db
-    .prepare(
-      "INSERT INTO tickets VALUES (?,42,'Existing','Active','','Bug','','','')",
-    )
+    .prepare("INSERT INTO tickets VALUES (?,42,'Existing','Active','','Bug','','','')")
     .run(source);
   store.db
-    .prepare(
-      "INSERT INTO tickets VALUES (?,43,'Explicit','Active','','Bug','','','')",
-    )
+    .prepare("INSERT INTO tickets VALUES (?,43,'Explicit','Active','','Bug','','','')")
     .run(source);
   saveTicketMetadata(store, 43, source, context, {
     priority: 3,
@@ -192,29 +177,44 @@ test("priority migration preserves old implicit P2 and explicit values while new
   assert.equal(ticketMetadata(store, 43).priority, 3);
   assert.equal(ticketMetadata(store, 43).notes, "Keep");
   store.db
-    .prepare(
-      "INSERT INTO tickets VALUES (?,44,'New','Active','','Bug','','','')",
-    )
+    .prepare("INSERT INTO tickets VALUES (?,44,'New','Active','','Bug','','','')")
     .run(source);
   assert.equal(ticketMetadata(store, 44).priority, 1);
   assert.equal(listLocalTickets(store, { priority: 1 }).total, 1);
 });
 
 test("chat metadata accepts historical IDs and values without rereading and stays local", async (t) => {
-  const { ticketMetadataTools } = await import("../server/ticket-metadata-tools.js");
+  const { ticketMetadataTools } = await import("../services/backend/src/ticket-metadata-tools.js");
   const store = fixture(t);
-  t.mock.method(globalThis, "fetch", async () => { throw new Error("Must stay local"); });
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("Must stay local");
+  });
   const tool = ticketMetadataTools(store, context, "Да, давай", () => {})[0];
-  const result: any = await tool.handler!({ id: 42, tags: { mode: "add", values: ["Inside 2"] }, notes: { mode: "append", text: "Ready" }, priority: 2 }, {} as any);
+  const result: any = await tool.handler!(
+    {
+      id: 42,
+      tags: { mode: "add", values: ["Inside 2"] },
+      notes: { mode: "append", text: "Ready" },
+      priority: 2,
+    },
+    {} as any,
+  );
   assert.equal(result.success, true);
-  assert.deepEqual(ticketMetadata(store, 42), { localDeadline: null, tags: ["Inside 2"], notes: "Ready", priority: 2 });
-  await assert.rejects(async () => tool.handler!({ id: 999, tags: { mode: "add", values: ["Inside 2"] } }, {} as any), /отсутствует/);
+  assert.deepEqual(ticketMetadata(store, 42), {
+    localDeadline: null,
+    tags: ["Inside 2"],
+    notes: "Ready",
+    priority: 2,
+  });
+  await assert.rejects(
+    async () => tool.handler!({ id: 999, tags: { mode: "add", values: ["Inside 2"] } }, {} as any),
+    /отсутствует/,
+  );
 });
 
 test("chat metadata tool reports actionable validation errors instead of generic SDK failure", async (t) => {
-  const { ticketMetadataTools } =
-    await import("../server/ticket-metadata-tools.js");
-  const { sessionConfig } = await import("../server/agent.js");
+  const { ticketMetadataTools } = await import("../services/backend/src/ticket-metadata-tools.js");
+  const { sessionConfig } = await import("../services/backend/src/agent.js");
   const store = fixture(t);
   const logs: unknown[][] = [];
   t.mock.method(console, "error", (...args: unknown[]) => {
@@ -229,9 +229,7 @@ test("chat metadata tool reports actionable validation errors instead of generic
     undefined,
     ticketMetadataTools(store, context, "Добавь тег UI тикету 999", () => {}),
   );
-  const tool = config.tools!.find(
-    (t) => t.name === "update_local_ticket_metadata",
-  )!;
+  const tool = config.tools!.find((t) => t.name === "update_local_ticket_metadata")!;
   const result: any = await tool.handler!(
     { id: 999, tags: { mode: "add", values: ["UI"] } },
     {} as any,
@@ -240,37 +238,45 @@ test("chat metadata tool reports actionable validation errors instead of generic
   assert.match(result.error, /отсутствует в локальном списке/);
   assert.ok(result.reference);
   assert.equal(result.azureChanged, false);
-  const invalid: any = await tool.handler!(
-    { id: 999, tags: ["UI"] },
-    {} as any,
-  );
+  const invalid: any = await tool.handler!({ id: 999, tags: ["UI"] }, {} as any);
   assert.equal(invalid.success, false);
   assert.match(invalid.error, /Некорректные параметры/);
   assert.equal(logs.length, 2);
 });
 
-test("local tag catalog includes retained trash but excludes expired and other connections", async t => {
+test("local tag catalog includes retained trash but excludes expired and other connections", async (t) => {
   const store = fixture(t);
-  const { localTicketTags } = await import("../server/ticket-metadata.js");
-  const { makeTools } = await import("../server/agent.js");
+  const { localTicketTags } = await import("../services/backend/src/ticket-metadata.js");
+  const { makeTools } = await import("../services/backend/src/agent.js");
   saveTicketMetadata(store, 42, store.source(), context, { tags: ["Inside 2", "UI"] });
   store.removeLocalTicket(42);
   assert.deepEqual(localTicketTags(store), ["Inside 2", "UI"]);
-  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,43,'',1,?)").run(store.source(), JSON.stringify(["orphan"]));
-  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES ('other',44,'',1,?)").run(JSON.stringify(["private"]));
-  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(tool => tool.name === "list_local_tags")!;
+  store.db
+    .prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,43,'',1,?)")
+    .run(store.source(), JSON.stringify(["orphan"]));
+  store.db
+    .prepare(
+      "INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES ('other',44,'',1,?)",
+    )
+    .run(JSON.stringify(["private"]));
+  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(
+    (tool) => tool.name === "list_local_tags",
+  )!;
   const result = await tool.handler!({ search: "inside", offset: 0 }, {} as any);
   assert.deepEqual(result, { tags: ["Inside 2"], total: 1, nextOffset: null });
   store.db.prepare("UPDATE ticket_trash SET removed_at=?").run(Date.now() - 31 * 86400000);
   assert.deepEqual(localTicketTags(store), []);
 });
 
-test("local tag catalog can be read completely through pagination", async t => {
+test("local tag catalog can be read completely through pagination", async (t) => {
   const store = fixture(t);
-  const { makeTools } = await import("../server/agent.js");
-  store.db.prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,42,'',1,?)")
+  const { makeTools } = await import("../services/backend/src/agent.js");
+  store.db
+    .prepare("INSERT INTO ticket_metadata(source,id,notes,priority,tags) VALUES (?,42,'',1,?)")
     .run(store.source(), JSON.stringify(Array.from({ length: 205 }, (_, i) => "tag-" + i)));
-  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(tool => tool.name === "list_local_tags")!;
+  const tool: import("@github/copilot-sdk").Tool<any> = makeTools(store, context).find(
+    (tool) => tool.name === "list_local_tags",
+  )!;
   const first: any = await tool.handler!({ offset: 0 }, {} as any);
   const next: any = await tool.handler!({ offset: first.nextOffset }, {} as any);
   assert.equal(first.total, 205);
@@ -280,12 +286,15 @@ test("local tag catalog can be read completely through pagination", async t => {
   assert.equal(new Set([...first.tags, ...next.tags]).size, 205);
 });
 
- test("local priority accepts arbitrary positive integers despite legacy level settings", t => {
-  const store=fixture(t);
-  store.set('ticket-priorities:["Client","Project"]',3);
-  saveTicketMetadata(store,42,store.source(),context,{priority:12345});
-  assert.equal(ticketMetadata(store,42).priority,12345);
-  assert.equal(listLocalTickets(store,{priority:[12345],fields:["priority"]}).tickets[0].priority,12345);
-  for(const priority of [0,-1,1.5,Infinity,Number.MAX_SAFE_INTEGER+1])
-    assert.throws(()=>saveTicketMetadata(store,42,store.source(),context,{priority}));
- });
+test("local priority accepts arbitrary positive integers despite legacy level settings", (t) => {
+  const store = fixture(t);
+  store.set('ticket-priorities:["Client","Project"]', 3);
+  saveTicketMetadata(store, 42, store.source(), context, { priority: 12345 });
+  assert.equal(ticketMetadata(store, 42).priority, 12345);
+  assert.equal(
+    listLocalTickets(store, { priority: [12345], fields: ["priority"] }).tickets[0].priority,
+    12345,
+  );
+  for (const priority of [0, -1, 1.5, Infinity, Number.MAX_SAFE_INTEGER + 1])
+    assert.throws(() => saveTicketMetadata(store, 42, store.source(), context, { priority }));
+});

@@ -4,8 +4,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
-import { Store } from "../server/store.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
 
 test("Azure project bindings follow context and preserve legacy defaults", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-project-azure-"));
@@ -80,11 +80,24 @@ test("Azure project bindings follow context and preserve legacy defaults", async
   assert.equal(inherited.body.inherit, true);
   assert.equal(inherited.body.parent.azureProject, "Legacy");
   const staleSettings = store.settings();
-  await request(app).put("/api/context/azure").set(auth).send({ client: "", project: "", azureUrl: "https://ado.test/tfs/My Collection", azureProject: "Global Project" }).expect(200);
+  await request(app)
+    .put("/api/context/azure")
+    .set(auth)
+    .send({
+      client: "",
+      project: "",
+      azureUrl: "https://ado.test/tfs/My Collection",
+      azureProject: "Global Project",
+    })
+    .expect(200);
   assert.equal(store.settings(a).azureUrl, "https://ado.test/tfs/My%20Collection");
   assert.equal(store.settings(a).azureProject, "Global Project");
   assert.equal(store.settings(b).azureProject, "ClientProject"); // Existing customer binding is preserved.
   await request(app).put("/api/settings").set(auth).send(staleSettings).expect(200);
   assert.equal(store.rawSettings().azureProject, "Global Project");
-  await request(app).put("/api/context/azure").set(auth).send({ client: "", project: "", inherit: true }).expect(400);
+  await request(app)
+    .put("/api/context/azure")
+    .set(auth)
+    .send({ client: "", project: "", inherit: true })
+    .expect(400);
 });

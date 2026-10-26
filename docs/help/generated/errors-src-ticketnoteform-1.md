@@ -9,4 +9,4 @@
 
 https://orbit.invalid/ticket-note-image/{…}
 
-Источник: src/features/edit-ticket/ui/TicketNoteForm.tsx:6.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketNoteForm.tsx:6.

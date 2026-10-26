@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AZURE_API_VERSION } from "../server/store.js";
-import { ProjectSyncScheduler } from "../server/project-sync-scheduler.js";
+import { Store, AZURE_API_VERSION } from "../services/backend/src/store.js";
+import { ProjectSyncScheduler } from "../services/backend/src/project-sync-scheduler.js";
 const a = { client: "C", project: "A" },
   b = { client: "C", project: "B" };
 test("populated migration copies global schedule, preserves explicit project choices and fixes API version without losing data", () => {
@@ -21,24 +21,20 @@ test("populated migration copies global schedule, preserves explicit project cho
       timeZone: "Asia/Bishkek",
     };
     // Write a representative old settings row, bypassing the new writer.
-    store.db
-      .prepare("UPDATE kv SET value=? WHERE key='settings'")
-      .run(
-        JSON.stringify({
-          ...store.rawSettings(),
-          azureVersion: "7.0",
-          syncSeconds: 420,
-          syncSchedule: schedule,
-          reviewMaxToolCalls: 19,
-        }),
-      );
+    store.db.prepare("UPDATE kv SET value=? WHERE key='settings'").run(
+      JSON.stringify({
+        ...store.rawSettings(),
+        azureVersion: "7.0",
+        syncSeconds: 420,
+        syncSchedule: schedule,
+        reviewMaxToolCalls: 19,
+      }),
+    );
     store.set(store.ticketImportKey(a), {
       azureAutoImport: true,
       azureTypes: ["Bug"],
       azureStates: ["New"],
-      azureImportAssignees: [
-        { id: "a", name: "A", email: "a@example.invalid" },
-      ],
+      azureImportAssignees: [{ id: "a", name: "A", email: "a@example.invalid" }],
     });
     store.set(store.ticketImportKey(b), {
       syncSeconds: 120,
@@ -127,7 +123,7 @@ test("independent project intervals and windows apply regardless of active heade
 });
 test("project settings save schedule locally and old clients do not reset it", async () => {
   const { default: request } = await import("supertest");
-  const { createApp } = await import("../server/app.js");
+  const { createApp } = await import("../services/backend/src/app.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-project-sync-api-"));
   const store = new Store(dir);
   try {
@@ -170,11 +166,7 @@ test("project settings save schedule locally and old clients do not reset it", a
       .set(auth)
       .send({ ...input, syncSeconds: 180, syncSchedule: schedule })
       .expect(200);
-    await request(app)
-      .put("/api/context/ticket-import")
-      .set(auth)
-      .send(input)
-      .expect(200);
+    await request(app).put("/api/context/ticket-import").set(auth).send(input).expect(200);
     assert.equal(store.settings(a).syncSeconds, 180);
     assert.equal(store.settings(b).syncSeconds, 600);
     assert.deepEqual(store.settings(a).syncSchedule, schedule);
@@ -198,17 +190,33 @@ test("project settings save schedule locally and old clients do not reset it", a
 });
 
 test("background pass synchronizes only due project PRs and forwards project ticket context", async () => {
-  const {createApp}=await import("../server/app.js");
-  const dir=mkdtempSync(join(tmpdir(),"orbit-due-pass-"));
-  const store=new Store(dir);
+  const { createApp } = await import("../services/backend/src/app.js");
+  const dir = mkdtempSync(join(tmpdir(), "orbit-due-pass-"));
+  const store = new Store(dir);
   try {
-    store.addContext(a);store.addContext(b);store.setSecret("azure.pat","test-pat");
-    const {sync,connectors,pullRequests}=createApp(store);
-    const tickets:any[]=[];const prs:any[]=[];
-    connectors.syncTickets=async (_import,_automatic,context)=>{tickets.push(context);return {count:0};};
-    pullRequests.monitors=()=>[{id:"a",...a,enabled:1},{id:"b",...b,enabled:1}] as any;
-    pullRequests.sync=async id=>{prs.push(id);};
+    store.addContext(a);
+    store.addContext(b);
+    store.setSecret("azure.pat", "test-pat");
+    const { sync, connectors, pullRequests } = createApp(store);
+    const tickets: any[] = [];
+    const prs: any[] = [];
+    connectors.syncTickets = async (_import, _automatic, context) => {
+      tickets.push(context);
+      return { count: 0 };
+    };
+    pullRequests.monitors = () =>
+      [
+        { id: "a", ...a, enabled: 1 },
+        { id: "b", ...b, enabled: 1 },
+      ] as any;
+    pullRequests.sync = async (id) => {
+      prs.push(id);
+    };
     await sync([a]);
-    assert.deepEqual(tickets,[a]);assert.deepEqual(prs,["a"]);
-  } finally {store.close();rmSync(dir,{recursive:true,force:true});}
+    assert.deepEqual(tickets, [a]);
+    assert.deepEqual(prs, ["a"]);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

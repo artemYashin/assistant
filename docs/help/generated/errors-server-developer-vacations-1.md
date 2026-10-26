@@ -9,10 +9,10 @@
 
 Некорректная дата отпуска.
 
-Источник: server/developer-vacations.ts:14.
+Источник: services/backend/src/developer-vacations.ts:14.
 
 ### Сообщение
 
 Разработчик не найден.
 
-Источник: server/developer-vacations.ts:33.
+Источник: services/backend/src/developer-vacations.ts:31.

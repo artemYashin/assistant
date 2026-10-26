@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store, AppError } from "../server/store.js";
+import { Store, AppError } from "../services/backend/src/store.js";
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-test-"));
   const store = new Store(dir);
@@ -21,19 +21,12 @@ test("memory isolates project and client context but includes general memory", (
   store.addMemory("project", "project A1", { client: "A", project: "One" });
   store.addMemory("project", "project B1", { client: "B", project: "One" });
   assert.deepEqual(
-    new Set(
-      (store.memories({ client: "A", project: "One" }) as any[]).map(
-        (m) => m.body,
-      ),
-    ),
+    new Set((store.memories({ client: "A", project: "One" }) as any[]).map((m) => m.body)),
     new Set(["general", "client A", "project A1"]),
   );
   assert.deepEqual(
     (store.memories({ client: "", project: "" }) as any[]).map((m) => m.body),
     ["general"],
   );
-  assert.throws(
-    () => store.addMemory("project", "bad", { client: "A", project: "" }),
-    AppError,
-  );
+  assert.throws(() => store.addMemory("project", "bad", { client: "A", project: "" }), AppError);
 });

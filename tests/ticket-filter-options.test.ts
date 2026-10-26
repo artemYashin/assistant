@@ -4,8 +4,8 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
 
 test("filter options use the full imported Azure catalog without configured priority levels without Azure calls", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-filter-options-"));

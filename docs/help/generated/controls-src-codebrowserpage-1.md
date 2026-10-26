@@ -9,82 +9,82 @@
 
 Ветка
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:176.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:434.
 
 ### Элемент
 
 Проверить обновления репозитория · Проверить
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:177.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:442.
 
 ### Элемент
 
 Обновить только локальную копию для просмотра · Pull
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:178.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:451.
 
 ### Элемент
 
 Коммиты
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:179.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:460.
 
 ### Элемент
 
 Отменяю… / Отменить
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:180.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:469.
 
 ### Элемент
 
 Работа Git
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:182.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:480.
 
 ### Элемент
 
 Закрыть ошибку
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:192.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:518.
 
 ### Элемент
 
 Закрыть
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:210.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:602.
 
 ### Элемент
 
 Закрыть файл
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:212.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:615.
 
 ### Элемент
 
 — /
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:239.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:709.
 
 ### Элемент
 
 Повторить
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:250.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:750.
 
 ### Элемент
 
 Ещё файлы
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:251.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:755.
 
 ### Элемент
 
 ←
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:271.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:805.
 
 ### Элемент
 
 →
 
-Источник: src/pages/code-repository/ui/CodeBrowserPage.tsx:273.
+Источник: services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx:815.

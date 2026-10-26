@@ -9,118 +9,118 @@
 
 Создать
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:305.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:329.
 
 ### Элемент
 
 Календарь
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:311.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:335.
 
 ### Элемент
 
-Напоминания ·
+Напоминания
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:318.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:338.
 
 ### Элемент
 
 Сортировка
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:339.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:365.
 
 ### Элемент
 
 По ближайшей дате
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:345.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:371.
 
 ### Элемент
 
 По дате: сначала ранние
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:346.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:372.
 
 ### Элемент
 
 По дате: сначала поздние
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:347.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:373.
 
 ### Элемент
 
 По названию
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:348.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:374.
 
 ### Элемент
 
 Все типы · Тип
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:351.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:378.
 
 ### Элемент
 
 Напоминание
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:357.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:384.
 
 ### Элемент
 
 Дедлайн тикета
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:358.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:385.
 
 ### Элемент
 
 Отпуск
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:359.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:386.
 
 ### Элемент
 
 Все состояния · Состояние
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:362.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:389.
 
 ### Элемент
 
 Все заказчики · Заказчик
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:372.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:399.
 
 ### Элемент
 
 Без заказчика
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:381.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:408.
 
 ### Элемент
 
 Все проекты · Проект
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:387.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:414.
 
 ### Элемент
 
 Без проекта
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:393.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:420.
 
 ### Элемент
 
 ·
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:407.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:433.
 
 ### Элемент
 
 Поиск
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:414.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:440.
 
 ### Элемент
 
 Название напоминания
 
-Источник: src/pages/calendar/ui/CalendarPage.tsx:416.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:442.

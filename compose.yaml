@@ -39,7 +39,7 @@ services:
       start_period: 15s
       retries: 3
   code-browser:
-    build: ./code-browser
+    build: ./services/code-browser
     environment:
       CODE_BROWSER_MAX_CACHE_BYTES: "${CODE_BROWSER_MAX_CACHE_BYTES:-21474836480}"
       CODE_BROWSER_FETCH_DEPTH: "${CODE_BROWSER_FETCH_DEPTH:-1}"
@@ -67,12 +67,18 @@ services:
     mem_limit: 768m
     pids_limit: 64
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
   voice:
-    build: ./voice
+    build: ./services/voice
     environment:
       WHISPER_MODEL: "medium"
       # Optional spelling hints; set WHISPER_HOTWORDS="" to disable.

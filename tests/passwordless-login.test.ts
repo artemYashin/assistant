@@ -4,29 +4,46 @@ import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { Store } from "../server/store.js";
-import { createApp } from "../server/app.js";
+import { Store } from "../services/backend/src/store.js";
+import { createApp } from "../services/backend/src/app.js";
 
-const headers = { Host: "localhost:43871", Origin: "http://localhost:43871", "X-Orbit-Request": "1" };
+const headers = {
+  Host: "localhost:43871",
+  Origin: "http://localhost:43871",
+  "X-Orbit-Request": "1",
+};
 
 test("new installation opens without a password but retains session and request protection", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-local-login-"));
   const store = new Store(dir);
-  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
   const { app } = createApp(store);
   const session = await request(app).get("/api/auth/session").set(headers).expect(200);
   assert.equal(session.body.passwordless, true);
   assert.equal(session.body.setupRequired, false);
   await request(app).get("/api/settings").set(headers).expect(401);
-  await request(app).post("/api/auth/local").set({ ...headers, Origin: "https://other.invalid" }).expect(403);
+  await request(app)
+    .post("/api/auth/local")
+    .set({ ...headers, Origin: "https://other.invalid" })
+    .expect(403);
   await request(app).post("/api/auth/local").set({ Host: headers.Host }).expect(403);
-  await request(app).post("/api/auth/local").set({ ...headers, Host: "other.invalid" }).expect(403);
+  await request(app)
+    .post("/api/auth/local")
+    .set({ ...headers, Host: "other.invalid" })
+    .expect(403);
   const login = await request(app).post("/api/auth/local").set(headers).send({}).expect(200);
   const cookie = login.headers["set-cookie"][0].split(";")[0];
   const authenticated = { ...headers, Cookie: cookie, "X-CSRF-Token": login.body.csrf };
   assert.equal(store.secret("password"), undefined);
   await request(app).get("/api/settings").set(authenticated).expect(200);
-  await request(app).post("/api/auth/logout").set({ ...headers, Cookie: cookie }).send({}).expect(403);
+  await request(app)
+    .post("/api/auth/logout")
+    .set({ ...headers, Cookie: cookie })
+    .send({})
+    .expect(403);
   const again = await request(app).post("/api/auth/local").set(authenticated).send({}).expect(200);
   assert.equal(again.body.csrf, login.body.csrf);
   await request(app).post("/api/auth/logout").set(authenticated).send({}).expect(200);
@@ -44,7 +61,9 @@ test("populated installations discard only the retired password and revoke sessi
     // Reproduce a populated installation from before the migration.
     store.db.prepare("DELETE FROM kv WHERE key=?").run("migration.passwordlessAccess");
     store.setSecret("password", "old-salt:old-hash");
-    store.db.prepare("INSERT INTO sessions VALUES (?,?,?)").run("old-token", "old-csrf", Date.now() + 86400000);
+    store.db
+      .prepare("INSERT INTO sessions VALUES (?,?,?)")
+      .run("old-token", "old-csrf", Date.now() + 86400000);
     const contexts = store.contexts();
     for (let i = 0; i < 2; i++) {
       store.close();
@@ -55,16 +74,30 @@ test("populated installations discard only the retired password and revoke sessi
       assert.equal(store.secret("azure.pat"), "test-pat-preserved");
       assert.equal(store.secret("github.token"), "test-github-preserved");
       assert.deepEqual(store.contexts(), contexts);
-      assert.equal(store.db.prepare("SELECT * FROM sessions WHERE token='old-token'").get(), undefined);
-      if (i === 1) assert.ok(store.db.prepare("SELECT * FROM sessions WHERE token='new-token'").get());
+      assert.equal(
+        store.db.prepare("SELECT * FROM sessions WHERE token='old-token'").get(),
+        undefined,
+      );
+      if (i === 1)
+        assert.ok(store.db.prepare("SELECT * FROM sessions WHERE token='new-token'").get());
       const session = await request(app).get("/api/auth/session").set(headers).expect(200);
       assert.equal(session.body.passwordless, true);
       await request(app).post("/api/auth/local").set(headers).send({}).expect(200);
-      await request(app).post("/api/auth/setup").set(headers).send({ password: "ignored-password" }).expect(200);
+      await request(app)
+        .post("/api/auth/setup")
+        .set(headers)
+        .send({ password: "ignored-password" })
+        .expect(200);
       assert.equal(store.secret("password"), undefined);
-      if (i === 0) store.db.prepare("INSERT INTO sessions VALUES (?,?,?)").run("new-token", "new-csrf", Date.now() + 86400000);
+      if (i === 0)
+        store.db
+          .prepare("INSERT INTO sessions VALUES (?,?,?)")
+          .run("new-token", "new-csrf", Date.now() + 86400000);
     }
-  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("password removal rolls back if recording migration completion fails", () => {
@@ -75,9 +108,12 @@ test("password removal rolls back if recording migration completion fails", () =
   try {
     store.db.prepare("DELETE FROM kv WHERE key=?").run("migration.passwordlessAccess");
     store.setSecret("password", "legacy-password-hash");
-    store.db.prepare("INSERT INTO sessions VALUES (?,?,?)").run("legacy", "csrf", Date.now() + 86400000);
+    store.db
+      .prepare("INSERT INTO sessions VALUES (?,?,?)")
+      .run("legacy", "csrf", Date.now() + 86400000);
     Store.prototype.set = function (key, value) {
       if (key === "migration.passwordlessAccess") {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias -- Capture the partially migrated store for the failure-path assertion.
         failedStore = this;
         throw new Error("simulated migration failure");
       }

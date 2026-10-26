@@ -9,94 +9,94 @@
 
 Некорректный путь
 
-Источник: code-browser/engine.mjs:164.
+Источник: services/code-browser/engine.mjs:359.
 
 ### Сообщение
 
 Локальный репозиторий ещё не загружен. Откройте страницу кода.
 
-Источник: code-browser/engine.mjs:176.
+Источник: services/code-browser/engine.mjs:387.
 
 ### Сообщение
 
 Нет локального списка веток. Откройте страницу кода.
 
-Источник: code-browser/engine.mjs:189.
+Источник: services/code-browser/engine.mjs:411.
 
 ### Сообщение
 
 Выберите ветку
 
-Источник: code-browser/engine.mjs:202.
+Источник: services/code-browser/engine.mjs:444.
 
 ### Сообщение
 
 Ветка ещё не загружена локально. Откройте её на странице кода.
 
-Источник: code-browser/engine.mjs:206.
+Источник: services/code-browser/engine.mjs:453.
 
 ### Сообщение
 
 Для закреплённого коммита доступны только чтение и поиск.
 
-Источник: code-browser/engine.mjs:208.
+Источник: services/code-browser/engine.mjs:456.
 
 ### Сообщение
 
 Проверенный коммит отсутствует локально. Откройте ссылку на код для загрузки точной версии.
 
-Источник: code-browser/engine.mjs:212.
+Источник: services/code-browser/engine.mjs:462.
 
 ### Сообщение
 
 Недостаточно места в кэше для загрузки коммита.
 
-Источник: code-browser/engine.mjs:213.
+Источник: services/code-browser/engine.mjs:467.
 
 ### Сообщение
 
 Превышен лимит кэша кода.
 
-Источник: code-browser/engine.mjs:217.
+Источник: services/code-browser/engine.mjs:483.
 
 ### Сообщение
 
 Кеш кода занимает {…} GiB при лимите {…} GiB. Скачанные данные сохранены. Увеличьте CODE_BROWSER_MAX_CACHE_BYTES в .env и пересоздайте сервис code-browser, затем повторите загрузку.
 
-Источник: code-browser/engine.mjs:225.
+Источник: services/code-browser/engine.mjs:501.
 
 ### Сообщение
 
 Не удалось прочитать дерево Git
 
-Источник: code-browser/engine.mjs:265.
+Источник: services/code-browser/engine.mjs:570.
 
 ### Сообщение
 
 Файл не найден в выбранном снимке
 
-Источник: code-browser/engine.mjs:282.
+Источник: services/code-browser/engine.mjs:615.
 
 ### Сообщение
 
 Введите поисковый запрос
 
-Источник: code-browser/engine.mjs:291.
+Источник: services/code-browser/engine.mjs:651.
 
 ### Сообщение
 
 Неизвестный режим поиска
 
-Источник: code-browser/engine.mjs:302.
+Источник: services/code-browser/engine.mjs:674.
 
 ### Сообщение
 
 Недостаточно места в лимите кеша для поискового снимка.
 
-Источник: code-browser/engine.mjs:316.
+Источник: services/code-browser/engine.mjs:703.
 
 ### Сообщение
 
 Неполный снимок Git
 
-Источник: code-browser/engine.mjs:324.
+Источник: services/code-browser/engine.mjs:728.
