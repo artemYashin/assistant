@@ -72,9 +72,9 @@ export function TicketLookupDialog({
         typeof detail.source !== "string"
       )
         return;
-      const tickets = detail.tickets
-        .filter((t: any) => Number.isSafeInteger(t.id) && t.id > 0 && typeof t.title === "string")
-        .slice(0, 50);
+      const tickets = detail.tickets.filter(
+        (t: any) => Number.isSafeInteger(t.id) && t.id > 0 && typeof t.title === "string",
+      );
       if (!tickets.length) return;
       source.current = detail.source;
       setCitation(detail.citation);

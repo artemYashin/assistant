@@ -49,27 +49,33 @@ Azure теги · Все Azure теги
 
 ### Элемент
 
+Просмотреть
+
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:463.
+
+### Элемент
+
 Снять выбор
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:482.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:504.
 
 ### Элемент
 
 Назад
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:506.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:528.
 
 ### Элемент
 
 Страница {…}
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:516.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:538.
 
 ### Элемент
 
 Далее
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:533.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:555.
 
 ### Элемент
 
@@ -118,9 +124,3 @@ Azure теги · Все Azure теги
 Например: по этому проекту договорились отправлять статус каждую пятницу…
 
 Источник: services/frontend/src/pages/memory/ui/Memory.tsx:266.
-
-### Элемент
-
-Сохранить
-
-Источник: services/frontend/src/pages/memory/ui/Memory.tsx:290.

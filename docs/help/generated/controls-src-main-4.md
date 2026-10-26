@@ -7,6 +7,12 @@
 
 ### Элемент
 
+Сохранить
+
+Источник: services/frontend/src/pages/memory/ui/Memory.tsx:290.
+
+### Элемент
+
 Разделы памяти · Выберите разделы
 
 Источник: services/frontend/src/pages/memory/ui/Memory.tsx:310.
@@ -118,9 +124,3 @@ Lead — все возможности
 По умолчанию в Copilot / Та же, что для чата
 
 Источник: services/frontend/src/pages/settings/ui/Settings.tsx:241.
-
-### Элемент
-
-— сохранена, доступность не подтверждена
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:245.

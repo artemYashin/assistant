@@ -7,6 +7,12 @@
 
 ### Элемент
 
+Загрузка… / Показать более ранние сообщения
+
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:781.
+
+### Элемент
+
 / /
 
 Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:807.

@@ -5,7 +5,7 @@ import { TicketDataRow } from "../../../widgets/ticket/index.js";
 import { useTicketFilterOptions } from "../../../features/filter-tickets/index.js";
 import { parseTicketFilters, useTicketFilters } from "../../../features/filter-tickets/index.js";
 import { TicketFilterPanel } from "../../../features/filter-tickets/index.js";
-import { RotateCcw } from "lucide-react";
+import { Eye, RotateCcw } from "lucide-react";
 import { OrderedTicketCells, useTicketColumns } from "../../../features/ticket-columns/index.js";
 import { useSearchParams } from "react-router-dom";
 import { SelectAllTickets, useTicketSelection } from "../../../entities/ticket/index.js";
@@ -372,6 +372,28 @@ export function TicketTrash({
         <div className="ticket-export-bar ticket-actions-panel">
           <div className="ticket-display-summary">
             {display.control}
+            {selection.selected.length >= 2 && (
+              <button
+                type="button"
+                className="secondary"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("orbit-show-ticket-details", {
+                      detail: {
+                        source: currentSource,
+                        tickets: selection.selected.map((ticket) => ({
+                          id: ticket.id,
+                          title: ticket.title || `#${ticket.id}`,
+                        })),
+                      },
+                    }),
+                  )
+                }
+              >
+                <Eye size={16} />
+                Просмотреть
+              </button>
+            )}
             <p className="muted" role="status">
               Показано {filtered.length} из {items.length}
             </p>

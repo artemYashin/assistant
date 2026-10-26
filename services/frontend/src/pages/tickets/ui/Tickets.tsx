@@ -8,7 +8,7 @@ import { ImportAzureTickets } from "../../../features/import-tickets/index.js";
 import { useTicketFilterOptions } from "../../../features/filter-tickets/index.js";
 import { TicketFilterPanel } from "../../../features/filter-tickets/index.js";
 import { useTicketFilters } from "../../../features/filter-tickets/index.js";
-import { RotateCcw } from "lucide-react";
+import { Eye, RotateCcw } from "lucide-react";
 import { OrderedTicketCells, useTicketColumns } from "../../../features/ticket-columns/index.js";
 import { BulkTicketStatus } from "../../../features/edit-ticket/index.js";
 import { SelectAllTickets, useTicketSelection } from "../../../entities/ticket/index.js";
@@ -459,6 +459,28 @@ export function Tickets({
       <div className="ticket-export-bar ticket-actions-panel">
         <div className="ticket-display-summary">
           {columns.control}
+          {selection.selected.length >= 2 && (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("orbit-show-ticket-details", {
+                    detail: {
+                      source: currentSource,
+                      tickets: selection.selected.map((ticket) => ({
+                        id: ticket.id,
+                        title: ticket.title || `#${ticket.id}`,
+                      })),
+                    },
+                  }),
+                )
+              }
+            >
+              <Eye size={16} />
+              Просмотреть
+            </button>
+          )}
           {azureMode && (
             <ImportAzureTickets
               tickets={selection.selected}

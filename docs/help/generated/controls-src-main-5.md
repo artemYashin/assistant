@@ -7,6 +7,12 @@
 
 ### Элемент
 
+— сохранена, доступность не подтверждена
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:245.
+
+### Элемент
+
 Personal Access Token · Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер.
 
 Источник: services/frontend/src/pages/settings/ui/Settings.tsx:293.
@@ -118,9 +124,3 @@ English
 Свернуть панель чата · Свернуть чат
 
 Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:708.
-
-### Элемент
-
-Загрузка… / Показать более ранние сообщения
-
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:781.
