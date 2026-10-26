@@ -106,11 +106,7 @@ export function TicketCard({
         : "Изображение не найдено в описании или комментариях. Оно доступно только как вложение.",
     );
     if (!image) return;
-    changeTab(
-      image.closest("[data-link-source]")?.getAttribute("data-link-source")?.startsWith("comment:")
-        ? "comments"
-        : "content",
-    );
+    changeTab("content");
     setImageSelection({ image });
   }
   const [linkSelection, setLinkSelection] = useState<{ link: ContentLink } | null>(null);
@@ -737,7 +733,7 @@ export function TicketCard({
             </nav>
           </header>
           <div
-            className="settings-tab-list ticket-detail-tabs"
+            className="ticket-detail-tabs"
             role="tablist"
             aria-label="Разделы тикета"
             onKeyDown={(event) => {
@@ -766,12 +762,6 @@ export function TicketCard({
                 icon: GitPullRequest,
                 count: card.linkedPullRequests?.length || 0,
               },
-              {
-                id: "comments",
-                label: "Комментарии",
-                icon: MessageSquare,
-                count: card.comments.length,
-              },
               { id: "links", label: "Ссылки", icon: Link2, count: linkCount },
               {
                 id: "attachments",
@@ -783,7 +773,7 @@ export function TicketCard({
               <button
                 key={id}
                 type="button"
-                className="settings-tab"
+                className={`ticket-detail-tab ticket-detail-tab-${id}`}
                 role="tab"
                 id={tabId + "-" + id}
                 aria-controls={tabId + "-panel-" + id}
@@ -791,7 +781,7 @@ export function TicketCard({
                 tabIndex={activeTab === id ? 0 : -1}
                 onClick={() => changeTab(id)}
               >
-                <Icon size={17} />
+                <Icon size={15} />
                 {label}
                 {count !== undefined && <span className="ticket-count">{count}</span>}
               </button>
@@ -867,6 +857,43 @@ export function TicketCard({
                     </TicketSectionScroll>
                   </details>
                 ))}
+              <details className="ticket-section ticket-section-neutral ticket-comments-section">
+                <summary>
+                  <MessageSquare size={17} aria-hidden="true" />
+                  Комментарии <span className="ticket-count">{card.comments.length}</span>
+                </summary>
+                {card.comments.length ? (
+                  <div className="ticket-comments">
+                    {card.comments.map((c: any) => (
+                      <article
+                        className="ticket-comment"
+                        key={c.id}
+                        data-link-source={`comment:${c.id}`}
+                      >
+                        <header>
+                          <span className="ticket-comment-author">
+                            <InitialsAvatar name={c.author || ""} />
+                            <strong>{c.author || "Автор не указан"}</strong>
+                          </span>
+                          <time dateTime={c.date || undefined}>{timestamp(c.date)}</time>
+                        </header>
+                        <TicketRichText
+                          value={c.richText || c.text}
+                          card={card}
+                          reference={reference}
+                        />
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="ticket-empty">Комментарии отсутствуют в загруженных данных.</p>
+                )}
+                <TicketCommentForm
+                  key={reference}
+                  reference={reference}
+                  draftKey={JSON.stringify([card.source, card.id])}
+                />
+              </details>
             </div>
             <section
               className="ticket-tab-panel ticket-section-neutral"
@@ -908,45 +935,7 @@ export function TicketCard({
                 синхронизации с учётом настроенного фильтра ревьюеров.
               </p>
             </section>
-            <section
-              className="ticket-tab-panel ticket-section-neutral"
-              role="tabpanel"
-              id={tabId + "-panel-comments"}
-              aria-labelledby={tabId + "-comments"}
-              hidden={activeTab !== "comments"}
-            >
-              {card.comments.length ? (
-                <div className="ticket-comments">
-                  {card.comments.map((c: any) => (
-                    <article
-                      className="ticket-comment"
-                      key={c.id}
-                      data-link-source={`comment:${c.id}`}
-                    >
-                      <header>
-                        <span className="ticket-comment-author">
-                          <InitialsAvatar name={c.author || ""} />
-                          <strong>{c.author || "Автор не указан"}</strong>
-                        </span>
-                        <time dateTime={c.date || undefined}>{timestamp(c.date)}</time>
-                      </header>
-                      <TicketRichText
-                        value={c.richText || c.text}
-                        card={card}
-                        reference={reference}
-                      />
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <p className="ticket-empty">Комментарии отсутствуют в загруженных данных.</p>
-              )}
-              <TicketCommentForm
-                key={reference}
-                reference={reference}
-                draftKey={JSON.stringify([card.source, card.id])}
-              />
-            </section>
+
             {
               <section
                 className="ticket-tab-panel ticket-section-neutral"
@@ -981,9 +970,7 @@ export function TicketCard({
                               title="Показать в тикете"
                               aria-label="Показать в тикете"
                               onClick={() => {
-                                changeTab(
-                                  link.source?.startsWith("comment:") ? "comments" : "content",
-                                );
+                                changeTab("content");
                                 setLinkSelection({ link });
                               }}
                             >

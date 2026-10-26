@@ -9,118 +9,118 @@
 
 Скопировать номер тикета
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:378.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:374.
 
 ### Элемент
 
 Локальные заметки · #{…} · Для редактирования добавьте тикет в локальный список.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:547.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:543.
 
 ### Элемент
 
 Все поля тикета #{…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:560.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:556.
 
 ### Элемент
 
 / / · Восстановить / Импортировать
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:600.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:596.
 
 ### Элемент
 
 Скопировать ссылку на тикет в Azure DevOps
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:665.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:661.
 
 ### Элемент
 
 Перейти к тикету
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:674.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:670.
 
 ### Элемент
 
 Открыть в Azure DevOps
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:678.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:674.
 
 ### Элемент
 
 Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Удаляю… / Удалить
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:683.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:679.
 
 ### Элемент
 
 / · Analyze with AI
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:715.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:711.
 
 ### Элемент
 
 Содержание
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:762.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:758.
 
 ### Элемент
 
 Связанные PR
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:765.
-
-### Элемент
-
-Комментарии
-
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:771.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:761.
 
 ### Элемент
 
 Ссылки
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:775.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:765.
 
 ### Элемент
 
 Вложения
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:778.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:768.
 
 ### Элемент
 
 / /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:850.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:840.
+
+### Элемент
+
+Комментарии
+
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:861.
 
 ### Элемент
 
 # · ·
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:884.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:911.
 
 ### Элемент
 
 Показать в тикете
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:978.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:967.
 
 ### Элемент
 
 Показать изображение в тикете · Показать изображение в тикете: {…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1018.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1005.
 
 ### Элемент
 
 ↗
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1037.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1024.
 
 ### Элемент
 
 {…} тикет #{…} · Сначала импортируйте тикет / Скрыть тикет / Посмотреть тикет · /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1206.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1193.

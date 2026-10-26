@@ -358,7 +358,7 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "7166c8462dff54872f70691b4c4f186066cf6ca1ef4a12b54591565aa4846dbc",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "58fedb6a70a4ae008a13b50725f3e90c9a8a6ef21f4582cc59ffa2ed14eae9ad",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "5e402ad3efc0d1bc5c8ec9e91f9483831a1686a4a4a05774c5bf63b9d7639349",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "8676cc0aa004052ea65320cbe4419572b3be053d43f60db805603d376eac11cf",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }

@@ -17702,8 +17702,76 @@ a.pr-branch-link:focus-visible {
   width: 94dvw;
 }
 .ticket-detail-tabs {
+  display: flex;
   flex: 0 0 auto;
-  margin: 10px 0;
+  gap: 5px;
+  padding: 4px;
+  margin: 8px 0;
+  border: 1px solid #d5e3da;
+  border-radius: 8px;
+  background: #edf4ef;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.ticket-detail-tab {
+  --tab-accent: #327448;
+  --tab-tint: #dceee1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #52685b;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.ticket-detail-tab-prs {
+  --tab-accent: #7650a4;
+  --tab-tint: #eee3fa;
+}
+.ticket-detail-tab-links {
+  --tab-accent: #246ca1;
+  --tab-tint: #dceefa;
+}
+.ticket-detail-tab-attachments {
+  --tab-accent: #a3651e;
+  --tab-tint: #fff0d9;
+}
+.ticket-detail-tab > svg {
+  flex-shrink: 0;
+  color: var(--tab-accent);
+}
+.ticket-detail-tab:hover {
+  background: var(--tab-tint);
+}
+.ticket-detail-tab[aria-selected="true"] {
+  background: #fff;
+  border-color: var(--tab-accent);
+  color: var(--tab-accent);
+  box-shadow: 0 1px 3px #163e2010;
+}
+.ticket-detail-tab:focus-visible {
+  outline: 2px solid var(--tab-accent);
+  outline-offset: 1px;
+}
+.ticket-detail-tab .ticket-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--tab-accent) 40%, transparent);
+  border-radius: 9px;
+  background: var(--tab-tint);
+  color: var(--tab-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
 }
 .ticket-card-body > [role="tabpanel"][hidden] {
   display: none;
