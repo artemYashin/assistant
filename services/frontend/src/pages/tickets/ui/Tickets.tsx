@@ -459,7 +459,7 @@ export function Tickets({
       <div className="ticket-export-bar ticket-actions-panel">
         <div className="ticket-display-summary">
           {columns.control}
-          {selection.selected.length >= 2 && (
+          {selection.selected.length >= 1 && (
             <button
               type="button"
               className="secondary"
@@ -479,6 +479,7 @@ export function Tickets({
             >
               <Eye size={16} />
               Просмотреть
+              <span className="ticket-view-count">{selection.selected.length}</span>
             </button>
           )}
           {azureMode && (

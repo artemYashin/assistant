@@ -17648,7 +17648,9 @@ a.pr-branch-link:focus-visible {
   list-style: none;
 }
 .ticket-content-link {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: fit-content;
   align-items: center;
   gap: 3px;
   min-width: 0;
@@ -17656,7 +17658,7 @@ a.pr-branch-link:focus-visible {
 }
 .ticket-content-link > .chat-copyable-link {
   min-width: 0;
-  max-width: calc(100% - 29px);
+  max-width: 100%;
 }
 .ticket-content-links a.chat-external-link {
   margin: 0;
@@ -17665,4 +17667,18 @@ a.pr-branch-link:focus-visible {
   min-width: 0;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.ticket-view-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: #e5edf3;
+  color: #456078;
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
 }
