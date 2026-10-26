@@ -23,7 +23,7 @@ cd assistant
 
 1. Скачайте Rancher Desktop с [официального сайта](https://rancherdesktop.io/) и установите версию для своей ОС и архитектуры процессора. [Инструкция установки](https://docs.rancherdesktop.io/getting-started/installation/).
 2. Запустите Rancher Desktop. В настройках контейнерного движка выберите **dockerd (moby)**: для команд ниже нужен Docker CLI, а не containerd/nerdctl.
-3. Kubernetes для Orbit не нужен — его можно отключить.
+3. При установке и первоначальной настройке снимите галочку **Enable Kubernetes**: Kubernetes для Orbit не нужен.
 4. Дождитесь готовности движка. На Windows включите интеграцию с используемым дистрибутивом WSL. При необходимости переоткройте терминал, чтобы обновился PATH.
 5. Проверьте доступность движка и Compose:
 
