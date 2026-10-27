@@ -1,3 +1,4 @@
+import { useKanbanScroll } from "./useKanbanScroll.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { useEffect, useRef, useState } from "react";
@@ -32,7 +33,7 @@ export function TicketKanban({
   onChange: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const scroll = useRef<HTMLDivElement>(null);
+  const { viewport, track, scrollbar: scroll, spacer } = useKanbanScroll();
   const dragging = useRef<KanbanTicket | null>(null);
   const lock = useRef(false);
   const live = useRef(true);
@@ -49,14 +50,14 @@ export function TicketKanban({
     const timer = window.setInterval(() => {
       if (dragging.current && scroll.current) {
         scroll.current.scrollLeft += velocity.current;
-        scroll.current.scrollTop += verticalVelocity.current;
+        window.scrollBy(0, verticalVelocity.current);
       }
     }, 16);
     return () => {
       live.current = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [scroll]);
   function stopDrag() {
     dragging.current = null;
     velocity.current = 0;
@@ -155,9 +156,8 @@ export function TicketKanban({
         </p>
       )}
       <div
-        ref={scroll}
+        ref={viewport}
         className="ticket-kanban-scroll"
-        tabIndex={0}
         aria-label="Столбцы статусов Azure"
         onDragOver={(event) => {
           if (!dragging.current) return;
@@ -165,7 +165,7 @@ export function TicketKanban({
           velocity.current =
             event.clientX < rect.left + 60 ? -12 : event.clientX > rect.right - 60 ? 12 : 0;
           verticalVelocity.current =
-            event.clientY < rect.top + 80 ? -12 : event.clientY > rect.bottom - 60 ? 12 : 0;
+            event.clientY < 130 ? -12 : event.clientY > window.innerHeight - 60 ? 12 : 0;
         }}
         onDragLeave={(event) => {
           if (
@@ -177,148 +177,161 @@ export function TicketKanban({
           }
         }}
       >
-        <div className="ticket-kanban-headers">
-          {columns.map((column) => (
-            <header
-              key={column.state}
-              className="ticket-kanban-heading"
-              onDragOver={(event) => {
-                if (
-                  dragging.current &&
-                  column.state &&
-                  !busy &&
-                  !disabled &&
-                  dragging.current.state !== column.state
-                ) {
+        <div ref={track} className="ticket-kanban-track">
+          <div className="ticket-kanban-headers">
+            {columns.map((column) => (
+              <header
+                key={column.state}
+                className="ticket-kanban-heading"
+                onDragOver={(event) => {
+                  if (
+                    dragging.current &&
+                    column.state &&
+                    !busy &&
+                    !disabled &&
+                    dragging.current.state !== column.state
+                  ) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    setOver(column.state);
+                  }
+                }}
+                onDragLeave={() => setOver(null)}
+                onDrop={(event) => {
                   event.preventDefault();
-                  event.dataTransfer.dropEffect = "move";
-                  setOver(column.state);
-                }
-              }}
-              onDragLeave={() => setOver(null)}
-              onDrop={(event) => {
-                event.preventDefault();
-                const ticket = dragging.current;
-                stopDrag();
-                if (ticket) void prepare(ticket, column.state);
-              }}
-            >
-              <StatusBadge state={column.state || "Не указан"} colors={settings?.statusColors} />
-              <span className="ticket-view-count">{column.tickets.length}</span>
-            </header>
-          ))}
-        </div>
-        <div className="ticket-kanban-columns">
-          {columns.map((column) => (
-            <section
-              key={column.state}
-              className={`ticket-kanban-column${over === column.state ? " is-drop-target" : ""}`}
-              aria-label={`Статус: ${column.state || "Не указан"}`}
-              onDragOver={(event) => {
-                if (
-                  dragging.current &&
-                  column.state &&
-                  !busy &&
-                  !disabled &&
-                  dragging.current.state !== column.state
-                ) {
+                  const ticket = dragging.current;
+                  stopDrag();
+                  if (ticket) void prepare(ticket, column.state);
+                }}
+              >
+                <StatusBadge state={column.state || "Не указан"} colors={settings?.statusColors} />
+                <span className="ticket-view-count">{column.tickets.length}</span>
+              </header>
+            ))}
+          </div>
+          <div className="ticket-kanban-columns">
+            {columns.map((column) => (
+              <section
+                key={column.state}
+                className={`ticket-kanban-column${over === column.state ? " is-drop-target" : ""}`}
+                aria-label={`Статус: ${column.state || "Не указан"}`}
+                onDragOver={(event) => {
+                  if (
+                    dragging.current &&
+                    column.state &&
+                    !busy &&
+                    !disabled &&
+                    dragging.current.state !== column.state
+                  ) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    setOver(column.state);
+                  }
+                }}
+                onDragLeave={(event) => {
+                  if (
+                    !(event.relatedTarget instanceof Node) ||
+                    !event.currentTarget.contains(event.relatedTarget)
+                  )
+                    setOver(null);
+                }}
+                onDrop={(event) => {
                   event.preventDefault();
-                  event.dataTransfer.dropEffect = "move";
-                  setOver(column.state);
-                }
-              }}
-              onDragLeave={(event) => {
-                if (
-                  !(event.relatedTarget instanceof Node) ||
-                  !event.currentTarget.contains(event.relatedTarget)
-                )
-                  setOver(null);
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const ticket = dragging.current;
-                stopDrag();
-                if (ticket) void prepare(ticket, column.state);
-              }}
-            >
-              <div className="ticket-kanban-cards">
-                {column.tickets.map((ticket) => (
-                  <article
-                    key={`${ticket.source}:${ticket.id}`}
-                    className="ticket-kanban-card"
-                    draggable={!busy && !disabled && ticket.source === source}
-                    onDragStart={(event) => {
-                      dragging.current = ticket;
-                      event.dataTransfer.effectAllowed = "move";
-                      event.dataTransfer.setData("text/plain", String(ticket.id));
-                    }}
-                    onDragEnd={stopDrag}
-                  >
-                    <div className="ticket-kanban-card-heading">
-                      <Ticket size={15} />
-                      <strong>#{ticket.id}</strong>
-                      <GripVertical size={15} className="muted" />
-                    </div>
-                    <button
-                      type="button"
-                      className="ticket-kanban-title"
-                      onClick={() =>
-                        window.dispatchEvent(
-                          new CustomEvent("orbit-show-ticket-details", {
-                            detail: { source: ticket.source, tickets: [ticket] },
-                          }),
-                        )
-                      }
+                  const ticket = dragging.current;
+                  stopDrag();
+                  if (ticket) void prepare(ticket, column.state);
+                }}
+              >
+                <div className="ticket-kanban-cards">
+                  {column.tickets.map((ticket) => (
+                    <article
+                      key={`${ticket.source}:${ticket.id}`}
+                      className="ticket-kanban-card"
+                      draggable={!busy && !disabled && ticket.source === source}
+                      onDragStart={(event) => {
+                        dragging.current = ticket;
+                        event.dataTransfer.effectAllowed = "move";
+                        event.dataTransfer.setData("text/plain", String(ticket.id));
+                      }}
+                      onDragEnd={stopDrag}
                     >
-                      {ticket.title || `Тикет #${ticket.id}`}
-                    </button>
-                    <StatusBadge
-                      kind="type"
-                      state={ticket.type || "Тип не указан"}
-                      colors={settings?.typeColors}
-                    />
-                    {ticket.assigned && (
-                      <div className="ticket-kanban-assignee">
-                        <InitialsAvatar name={ticket.assigned} />
-                        <span>{ticket.assigned}</span>
+                      <div className="ticket-kanban-card-heading">
+                        <Ticket size={15} />
+                        <strong>#{ticket.id}</strong>
+                        <GripVertical size={15} className="muted" />
                       </div>
-                    )}
-                    {ticket.localDeadline && (
-                      <div
-                        className={
-                          Date.parse(ticket.localDeadline) < Date.now()
-                            ? "ticket-kanban-overdue"
-                            : "muted"
+                      <button
+                        type="button"
+                        className="ticket-kanban-title"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent("orbit-show-ticket-details", {
+                              detail: { source: ticket.source, tickets: [ticket] },
+                            }),
+                          )
                         }
                       >
-                        Дедлайн: <TicketDate value={ticket.localDeadline} />
-                      </div>
-                    )}
-                    <div
-                      className="ticket-kanban-state"
-                      onDragStart={(event) => event.stopPropagation()}
-                    >
-                      <SingleSelect
-                        label="Статус в Azure"
-                        value={ticket.state || ""}
-                        disabled={busy || disabled || ticket.source !== source}
-                        onChange={(state) => void prepare(ticket, state)}
-                        options={columns
-                          .filter(({ state }) => !!state)
-                          .map(({ state }) => ({ value: state, label: state }))}
-                        floating
-                        renderOption={(option) => (
-                          <StatusBadge state={option.label} colors={settings?.statusColors} />
-                        )}
+                        {ticket.title || `Тикет #${ticket.id}`}
+                      </button>
+                      <StatusBadge
+                        kind="type"
+                        state={ticket.type || "Тип не указан"}
+                        colors={settings?.typeColors}
                       />
-                    </div>
-                  </article>
-                ))}
-                {!column.tickets.length && <p className="muted ticket-kanban-empty">Нет тикетов</p>}
-              </div>
-            </section>
-          ))}
+                      {ticket.assigned && (
+                        <div className="ticket-kanban-assignee">
+                          <InitialsAvatar name={ticket.assigned} />
+                          <span>{ticket.assigned}</span>
+                        </div>
+                      )}
+                      {ticket.localDeadline && (
+                        <div
+                          className={
+                            Date.parse(ticket.localDeadline) < Date.now()
+                              ? "ticket-kanban-overdue"
+                              : "muted"
+                          }
+                        >
+                          Дедлайн: <TicketDate value={ticket.localDeadline} />
+                        </div>
+                      )}
+                      <div
+                        className="ticket-kanban-state"
+                        onDragStart={(event) => event.stopPropagation()}
+                      >
+                        <SingleSelect
+                          label="Статус в Azure"
+                          value={ticket.state || ""}
+                          disabled={busy || disabled || ticket.source !== source}
+                          onChange={(state) => void prepare(ticket, state)}
+                          options={columns
+                            .filter(({ state }) => !!state)
+                            .map(({ state }) => ({ value: state, label: state }))}
+                          floating
+                          renderOption={(option) => (
+                            <StatusBadge state={option.label} colors={settings?.statusColors} />
+                          )}
+                        />
+                      </div>
+                    </article>
+                  ))}
+                  {!column.tickets.length && (
+                    <p className="muted ticket-kanban-empty">Нет тикетов</p>
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
+      </div>
+      <div
+        ref={scroll}
+        className="ticket-kanban-scrollbar"
+        tabIndex={0}
+        role="region"
+        aria-label="Горизонтальная прокрутка канбана"
+      >
+        <div ref={spacer} />
       </div>
       <dialog
         ref={dialog}
