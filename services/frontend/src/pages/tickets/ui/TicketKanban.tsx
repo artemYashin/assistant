@@ -1,6 +1,6 @@
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, GripVertical, LoaderCircle, Ticket, X } from "lucide-react";
 import { StatusBadge, TicketDate } from "../../../entities/ticket/index.js";
 import { api } from "../../../shared/api/http/index.js";
@@ -32,7 +32,6 @@ export function TicketKanban({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
-  const headers = useRef<HTMLDivElement>(null);
   const dragging = useRef<KanbanTicket | null>(null);
   const lock = useRef(false);
   const live = useRef(true);
@@ -43,45 +42,24 @@ export function TicketKanban({
   const [notice, setNotice] = useState("");
   const [over, setOver] = useState<string | null>(null);
   const velocity = useRef(0);
+  const verticalVelocity = useRef(0);
   useEffect(() => {
     live.current = true;
     const timer = window.setInterval(() => {
-      if (dragging.current && scroll.current) scroll.current.scrollLeft += velocity.current;
+      if (dragging.current && scroll.current) {
+        scroll.current.scrollLeft += velocity.current;
+        scroll.current.scrollTop += verticalVelocity.current;
+      }
     }, 16);
     return () => {
       live.current = false;
       clearInterval(timer);
     };
   }, []);
-  useLayoutEffect(() => {
-    const board = scroll.current;
-    const row = headers.current;
-    if (!board || !row) return;
-    const topbar = document.querySelector<HTMLElement>(".topbar");
-    // Only vertical positioning is adjusted. Horizontal movement stays native
-    // because headings and cards share the same scroll container.
-    const update = () => {
-      const top = topbar?.getBoundingClientRect().bottom ?? 70;
-      const bounds = board.getBoundingClientRect();
-      const offset = Math.max(0, Math.min(top - bounds.top, board.clientHeight - row.offsetHeight));
-      row.style.transform = `translateY(${offset}px)`;
-    };
-    const observer = new ResizeObserver(update);
-    observer.observe(board);
-    observer.observe(row);
-    if (topbar) observer.observe(topbar);
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    update();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, []);
   function stopDrag() {
     dragging.current = null;
     velocity.current = 0;
+    verticalVelocity.current = 0;
     setOver(null);
   }
   function close() {
@@ -187,16 +165,20 @@ export function TicketKanban({
           const rect = event.currentTarget.getBoundingClientRect();
           velocity.current =
             event.clientX < rect.left + 60 ? -12 : event.clientX > rect.right - 60 ? 12 : 0;
+          verticalVelocity.current =
+            event.clientY < rect.top + 80 ? -12 : event.clientY > rect.bottom - 60 ? 12 : 0;
         }}
         onDragLeave={(event) => {
           if (
             !(event.relatedTarget instanceof Node) ||
             !event.currentTarget.contains(event.relatedTarget)
-          )
+          ) {
             velocity.current = 0;
+            verticalVelocity.current = 0;
+          }
         }}
       >
-        <div ref={headers} className="ticket-kanban-headers">
+        <div className="ticket-kanban-headers">
           {columns.map((column) => (
             <header
               key={column.state}

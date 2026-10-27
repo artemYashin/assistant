@@ -38,7 +38,8 @@
   max-width: 100%;
 }
 .ticket-kanban-scroll {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: calc(100dvh - var(--topbar-height, 70px));
   padding: 0 2px 18px;
 }
 .ticket-kanban-columns {
@@ -179,14 +180,14 @@
 }
 
 .ticket-kanban-headers {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
   display: flex;
   gap: 14px;
   width: max-content;
   min-width: 100%;
   background: #f8f9f6;
-  will-change: transform;
 }
 .ticket-kanban-heading {
   box-shadow: 0 3px 5px #243c5010;
