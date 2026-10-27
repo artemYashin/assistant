@@ -1,3 +1,4 @@
+import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
 import type { TicketView } from "../model/kanban.js";
@@ -366,6 +367,13 @@ export function TicketTrash({
             )}
           </div>
         </TicketFilterPanel>
+        {view === "kanban" && (
+          <TicketKanbanSort
+            value={filters.sort}
+            onChange={(value) => setFilter("sort", value)}
+            trash
+          />
+        )}
       </TicketSearchControls>
       {error && (
         <p role="alert" className="error">

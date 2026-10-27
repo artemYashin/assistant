@@ -1,0 +1,30 @@
+.ticket-kanban-sort-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  background: #f7f8fa;
+}
+.ticket-kanban-sort-title,
+.ticket-kanban-sort-direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ticket-kanban-sort-title {
+  color: #52667c;
+  font-size: 12px;
+}
+.ticket-kanban-sort-panel > .single-select {
+  flex: 0 1 240px;
+  min-width: 180px;
+}
+@media (max-width: 600px) {
+  .ticket-kanban-sort-panel > .single-select {
+    flex: 1 1 100%;
+  }
+}

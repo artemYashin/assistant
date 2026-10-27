@@ -1,3 +1,4 @@
+import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
 import { BulkTicketTrash } from "./BulkTicketTrash.js";
@@ -464,6 +465,7 @@ export function Tickets({
             )}
           </div>
         </TicketFilterPanel>
+        {view === "kanban" && <TicketKanbanSort value={sort} onChange={setSort} />}
       </TicketSearchControls>
       <div
         className="ticket-export-bar ticket-actions-panel"
