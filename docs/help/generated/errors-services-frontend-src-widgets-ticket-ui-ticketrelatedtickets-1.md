@@ -7,6 +7,12 @@
 
 ### Сообщение
 
+Тип недоступен
+
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:114.
+
+### Сообщение
+
 Тикет недоступен в Azure
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:84.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:131.

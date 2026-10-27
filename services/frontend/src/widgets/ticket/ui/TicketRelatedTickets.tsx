@@ -3,6 +3,10 @@ import { RefreshCw, Ticket } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { StatusBadge } from "../../../entities/ticket/index.js";
 
+import "./ticket-related-tickets.css";
+
+const filterKey = "orbit.related-tickets.type";
+
 type Related = {
   id: number;
   title: string;
@@ -24,6 +28,22 @@ export function TicketRelatedTickets({
   statusColors: Record<string, string>;
   onCount: (count: number) => void;
 }) {
+  const [selectedType, setSelectedType] = useState<string | null>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterKey) || "null");
+      return typeof saved === "string" ? saved : null;
+    } catch {
+      return null;
+    }
+  });
+  function selectType(type: string | null) {
+    setSelectedType(type);
+    try {
+      localStorage.setItem(filterKey, JSON.stringify(type));
+    } catch {
+      /* Storage is optional. */
+    }
+  }
   const [data, setData] = useState<{ source: string; items: Related[] } | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
@@ -51,6 +71,10 @@ export function TicketRelatedTickets({
       live = false;
     };
   }, [reference, version, onCount]);
+  const types = [...new Set((data?.items || []).map((ticket) => ticket.type))];
+  const visible = (data?.items || []).filter(
+    (ticket) => selectedType === null || ticket.type === selectedType,
+  );
   return (
     <div>
       <button
@@ -68,21 +92,44 @@ export function TicketRelatedTickets({
         </p>
       )}
       {data && (
-        <ul className="ticket-linked-prs">
-          {data.items.map((ticket) => (
-            <li key={ticket.id + ":" + ticket.relation}>
-              <div className="ticket-linked-pr-heading">
-                <span className="ticket-type-badge">{ticket.relation}</span>
+        <>
+          <div className="related-ticket-filters" role="group" aria-label="Типы связанных тикетов">
+            <button
+              type="button"
+              aria-pressed={selectedType === null}
+              onClick={() => selectType(null)}
+            >
+              Все <span>{data.items.length}</span>
+            </button>
+            {types.map((type) => (
+              <button
+                type="button"
+                key={type}
+                aria-pressed={selectedType === type}
+                onClick={() => selectType(type)}
+              >
+                {type ? (
+                  <StatusBadge kind="type" state={type} colors={typeColors} />
+                ) : (
+                  "Тип недоступен"
+                )}
+                <span>{data.items.filter((ticket) => ticket.type === type).length}</span>
+              </button>
+            ))}
+          </div>
+          <ul className="related-ticket-list">
+            {visible.map((ticket) => (
+              <li key={ticket.id + ":" + ticket.relation}>
                 <button
                   type="button"
-                  className="secondary"
+                  className="related-ticket-card"
                   disabled={!ticket.canOpen}
                   title={
                     ticket.canOpen
                       ? "Открыть тикет"
                       : ticket.unavailable
                         ? "Тикет недоступен в Azure"
-                        : "Для открытия выберите соответствующий проект Azure"
+                        : "Для открытия выберите проект Azure: " + ticket.project
                   }
                   onClick={() =>
                     window.dispatchEvent(
@@ -95,18 +142,32 @@ export function TicketRelatedTickets({
                     )
                   }
                 >
-                  <Ticket size={15} /> #{ticket.id} {ticket.title}
+                  <span className="related-ticket-title">
+                    <Ticket size={16} />
+                    <span>
+                      <strong>#{ticket.id}</strong> {ticket.title}
+                    </span>
+                  </span>
+                  <span className="related-ticket-badges">
+                    {ticket.type && (
+                      <StatusBadge kind="type" state={ticket.type} colors={typeColors} />
+                    )}
+                    {ticket.state && <StatusBadge state={ticket.state} colors={statusColors} />}
+                    {ticket.unavailable && (
+                      <span>Тикет удалён или недоступен с текущими правами Azure.</span>
+                    )}
+                  </span>
                 </button>
-                {ticket.type && <StatusBadge kind="type" state={ticket.type} colors={typeColors} />}
-                {ticket.state && <StatusBadge state={ticket.state} colors={statusColors} />}
-              </div>
-              {ticket.project && <small>{ticket.project}</small>}
-              {ticket.unavailable && (
-                <p className="muted">Тикет удалён или недоступен с текущими правами Azure.</p>
-              )}
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+          {!!data.items.length && !visible.length && (
+            <p className="ticket-empty">
+              Нет связанных тикетов типа «{selectedType || "Тип недоступен"}». Выберите другой тип
+              или «Все».
+            </p>
+          )}
+        </>
       )}
       {data && !data.items.length && <p className="ticket-empty">Связанные тикеты не найдены.</p>}
     </div>
