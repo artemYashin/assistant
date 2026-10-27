@@ -7,72 +7,66 @@
 
 ### Сообщение
 
-Azure не вернул статусы тикета #{…}
-
-Источник: services/backend/src/agent.ts:1117.
-
-### Сообщение
-
 Не удалось определить статус
 
-Источник: services/backend/src/agent.ts:1131.
+Источник: services/backend/src/agent.ts:1120.
 
 ### Сообщение
 
 Сначала покажите план через request_azure_ticket_lookup и дождитесь выбора: только сведения или запросить и добавить
 
-Источник: services/backend/src/agent.ts:1154.
+Источник: services/backend/src/agent.ts:1143.
 
 ### Сообщение
 
 Чтение описаний более 30 разных локальных тикетов за один запрос может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.
 
-Источник: services/backend/src/agent.ts:1260.
+Источник: services/backend/src/agent.ts:1249.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке
 
-Источник: services/backend/src/agent.ts:1326.
+Источник: services/backend/src/agent.ts:1315.
 
 ### Сообщение
 
 Запись не входит в выбранные разделы памяти ревью.
 
-Источник: services/backend/src/agent.ts:1342.
+Источник: services/backend/src/agent.ts:1331.
 
 ### Сообщение
 
 Session is not ready
 
-Источник: services/backend/src/agent.ts:1378.
+Источник: services/backend/src/agent.ts:1367.
 
 ### Сообщение
 
 Не удалось сохранить отчёт расхода; запрос остановлен.
 
-Источник: services/backend/src/agent.ts:1521.
+Источник: services/backend/src/agent.ts:1510.
 
 ### Сообщение
 
 Не удалось получить данные
 
-Источник: services/backend/src/agent.ts:1570.
+Источник: services/backend/src/agent.ts:1559.
 
 ### Сообщение
 
 Запрос обработан. Проверьте память и ожидающие подтверждения.
 
-Источник: services/backend/src/agent.ts:1609.
+Источник: services/backend/src/agent.ts:1598.
 
 ### Сообщение
 
 Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.
 
-Источник: services/backend/src/agent.ts:1647.
+Источник: services/backend/src/agent.ts:1636.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/agent.ts:1679.
+Источник: services/backend/src/agent.ts:1668.

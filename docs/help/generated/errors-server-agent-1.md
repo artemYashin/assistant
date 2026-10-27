@@ -9,118 +9,118 @@
 
 Изменение локального трекера недоступно в этом запросе
 
-Источник: services/backend/src/agent.ts:152.
+Источник: services/backend/src/agent.ts:153.
 
 ### Сообщение
 
 Смена статуса недоступна в этом запросе
 
-Источник: services/backend/src/agent.ts:165.
+Источник: services/backend/src/agent.ts:166.
 
 ### Сообщение
 
 Чтение тикетов недоступно
 
-Источник: services/backend/src/agent.ts:174.
+Источник: services/backend/src/agent.ts:175.
 
 ### Сообщение
 
 Запрос остановлен
 
-Источник: services/backend/src/agent.ts:287.
+Источник: services/backend/src/agent.ts:288.
 
 ### Сообщение
 
 Developer mode: local developers, local assignments and developer vacations are unavailable. Do not offer these actions or filters. Azure assignees remain available.
 
-Источник: services/backend/src/agent.ts:305.
+Источник: services/backend/src/agent.ts:306.
 
 ### Сообщение
 
 Подключите GitHub Copilot в настройках
 
-Источник: services/backend/src/agent.ts:338.
+Источник: services/backend/src/agent.ts:339.
 
 ### Сообщение
 
 Остановлено пользователем. Уже выполненные действия могли сохраниться.
 
-Источник: services/backend/src/agent.ts:352.
+Источник: services/backend/src/agent.ts:353.
 
 ### Сообщение
 
 Подключение GitHub изменилось. Откройте список моделей заново.
 
-Источник: services/backend/src/agent.ts:381.
+Источник: services/backend/src/agent.ts:382.
 
 ### Сообщение
 
 Copilot недоступен. Проверьте подписку, вход и корпоративную политику Copilot CLI/SDK.
 
-Источник: services/backend/src/agent.ts:399.
+Источник: services/backend/src/agent.ts:400.
 
 ### Сообщение
 
 Ассистент ещё отвечает на предыдущий запрос
 
-Источник: services/backend/src/agent.ts:428.
+Источник: services/backend/src/agent.ts:429.
 
 ### Сообщение
 
 Достигнут лимит времени ревью. Изменить его можно в Настройки → Code Review → Лимиты ревью → «Лимит времени ответа ревью, секунд».
 
-Источник: services/backend/src/agent.ts:471.
+Источник: services/backend/src/agent.ts:472.
 
 ### Сообщение
 
 Достигнут лимит времени запроса. Изменить его можно в Настройки → AI Assistant → Общие настройки → «Лимит времени ответа, секунд».
 
-Источник: services/backend/src/agent.ts:472.
+Источник: services/backend/src/agent.ts:473.
 
 ### Сообщение
 
 Достигнут лимит токенов ревью: {…} входных + выходных токенов за всё ревью. Для нового запуска увеличьте «Максимум токенов на ревью» в окне запуска ревью. Значение по умолчанию: Настройки → Code Review → Лимиты ревью → «Лимит токенов ревью по умолчанию».
 
-Источник: services/backend/src/agent.ts:482.
+Источник: services/backend/src/agent.ts:483.
 
 ### Сообщение
 
 Достигнут порог токенов чата: {…} входных + выходных токенов на запрос. Изменить его можно в Настройки → AI Assistant → Общие настройки → «Порог входных + выходных токенов чата на запрос». После изменения повторите запрос.
 
-Источник: services/backend/src/agent.ts:483.
+Источник: services/backend/src/agent.ts:484.
 
 ### Сообщение
 
 Чтение ещё одного тикета может увеличить расход токенов. Предупредите пользователя и спросите, продолжить ли чтение остальных тикетов; обычного согласия достаточно.
 
-Источник: services/backend/src/agent.ts:588.
+Источник: services/backend/src/agent.ts:589.
 
 ### Сообщение
 
 Тикета нет локально. Сначала предложите пользователю запросить его в Azure или импортировать.
 
-Источник: services/backend/src/agent.ts:593.
+Источник: services/backend/src/agent.ts:594.
 
 ### Сообщение
 
 Без подтверждения можно глубоко читать только один указанный локальный тикет
 
-Источник: services/backend/src/agent.ts:603.
+Источник: services/backend/src/agent.ts:604.
 
 ### Сообщение
 
 Чтение Azure недоступно
 
-Источник: services/backend/src/agent.ts:607.
+Источник: services/backend/src/agent.ts:608.
 
 ### Сообщение
 
 Подключение Azure изменилось во время запроса
 
-Источник: services/backend/src/agent.ts:609.
+Источник: services/backend/src/agent.ts:610.
 
 ### Сообщение
 
 Тикет #{…} отсутствует в локальной базе. Azure не запрашивался. Спросите пользователя: только запросить сведения или запросить и добавить в локальный список.
 
-Источник: services/backend/src/agent.ts:640.
+Источник: services/backend/src/agent.ts:641.

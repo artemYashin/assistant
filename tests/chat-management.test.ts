@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Store } from "../services/backend/src/store.js";
 import { createApp } from "../services/backend/src/app.js";
-import { Agent, mayManageLocalTicket } from "../services/backend/src/agent.js";
+import { Agent, isLocalTicketCommand } from "../services/backend/src/agent.js";
 const context = { client: "A", project: "One" };
 function fixture(t: any) {
   const dir = mkdtempSync(join(tmpdir(), "orbit-chat-"));
@@ -69,10 +69,11 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
     requests.push(`${init.method || "GET"} ${url}`);
     assert.equal(init.method || "GET", "GET");
-    assert.match(String(url), /\/workitems\/42\?/);
+    assert.match(String(url), /\/workitems\/(42|43)\?/);
+    const id = Number(String(url).match(/workitems\/(\d+)/)![1]);
     return new Response(
       JSON.stringify({
-        id: 42,
+        id,
         fields: {
           "System.TeamProject": "P",
           "System.Title": "Ticket",
@@ -94,9 +95,9 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
       assert.equal(first.azureChanged, false);
       assert.equal(first.success, true);
       assert.deepEqual(await tool.handler({ id: 42 }, {}), first);
-      const denied = await tool.handler({ id: 43 }, {});
-      assert.equal(denied.success, false);
-      assert.match(denied.error, /явная команда/);
+      const batch = config.tools.find((tool: any) => tool.name === "batch_update_tickets");
+      const result = await batch.handler({ operations: [{ action, id: 43 }] }, {});
+      assert.equal(result.results[0].success, true);
       return { data: { content: "Done locally" } };
     },
   };
@@ -109,33 +110,33 @@ test("local tools add/remove/restore without Azure writes and deduplicate calls"
     },
   };
   const agent = new Agent(store, () => client as any, connectors);
-  await agent.chat("Добавь 42 в локальный трекер", context);
-  assert.equal(requests.length, 1);
+  await agent.chat("Забери выбранные в мой список", context);
+  assert.equal(requests.length, 2);
   assert.equal(
     (store.db.prepare("SELECT state FROM tickets WHERE id=42").get() as any).state,
     "Active",
   );
   action = "remove";
-  await agent.chat("Убери 42 из локального списка", context);
-  assert.equal(requests.length, 1);
+  await agent.chat("Перенеси все выбранные в корзину", context);
+  assert.equal(requests.length, 2);
   assert.equal(store.db.prepare("SELECT 1 FROM tickets WHERE id=42").get(), undefined);
   assert.equal(
     (store.db.prepare("SELECT removed FROM ticket_local WHERE id=42").get() as any).removed,
     1,
   );
   action = "add";
-  await agent.chat("Добавь 42 в трекер", context);
-  assert.equal(requests.length, 2);
+  await agent.chat("Верни их обратно", context);
+  assert.equal(requests.length, 4);
   assert.equal(
     (store.db.prepare("SELECT removed FROM ticket_local WHERE id=42").get() as any).removed,
     0,
   );
 });
-test("local mutation intent rejects negative requests and missing ID/action", () => {
-  assert.equal(mayManageLocalTicket("Не удаляй 42", 42, "remove"), false);
-  assert.equal(mayManageLocalTicket("Покажи 42", 42, "add"), false);
-  assert.equal(mayManageLocalTicket("Добавь 142", 42, "add"), false);
-  assert.equal(mayManageLocalTicket("Удалить тикет 42 из списка", 42, "remove"), true);
+test("preload heuristic recognizes local commands without authorizing mutations", () => {
+  assert.equal(isLocalTicketCommand("Не удаляй 42", 42, "remove"), false);
+  assert.equal(isLocalTicketCommand("Покажи 42", 42, "add"), false);
+  assert.equal(isLocalTicketCommand("Добавь 142", 42, "add"), false);
+  assert.equal(isLocalTicketCommand("Удалить тикет 42 из списка", 42, "remove"), true);
 });
 
 test("chat receives selected ticket IDs and rejects stale Azure selection", async (t) => {
@@ -252,7 +253,7 @@ test("delete session API requires auth, CSRF and idle assistant", async (t) => {
   await request(app).delete(url).set(csrf).send(context).expect(404);
 });
 
-test("explicit import and restore commands authorize only requested ticket IDs", () => {
+test("preload heuristic recognizes explicit import and restore IDs", () => {
   for (const prompt of [
     "Импортируй тикеты #42, #43",
     "Импортировать 42 и 43",
@@ -260,9 +261,9 @@ test("explicit import and restore commands authorize only requested ticket IDs",
     "Восстанови тикеты 42, 43",
     "Импортируйте https://dev.azure.com/org/project/_workitems/edit/42 и #43",
   ]) {
-    assert.equal(mayManageLocalTicket(prompt, 42, "add"), true, prompt);
-    assert.equal(mayManageLocalTicket(prompt, 43, "add"), true, prompt);
-    assert.equal(mayManageLocalTicket(prompt, 99, "add"), false, prompt);
+    assert.equal(isLocalTicketCommand(prompt, 42, "add"), true, prompt);
+    assert.equal(isLocalTicketCommand(prompt, 43, "add"), true, prompt);
+    assert.equal(isLocalTicketCommand(prompt, 99, "add"), false, prompt);
   }
   for (const prompt of [
     "Не импортируй 42",
@@ -270,6 +271,6 @@ test("explicit import and restore commands authorize only requested ticket IDs",
     "Do not import 42",
     "Покажи тикет 42",
   ]) {
-    assert.equal(mayManageLocalTicket(prompt, 42, "add"), false, prompt);
+    assert.equal(isLocalTicketCommand(prompt, 42, "add"), false, prompt);
   }
 });

@@ -77,7 +77,8 @@ import type { PullRequests } from "./pull-requests.js";
 import { UsageLedger } from "./usage.js";
 import { listLocalTickets, ticketListSchema } from "./ticket-list.js";
 
-export function mayManageLocalTicket(
+// Preload heuristic only: never use wording recognition to authorize local tool calls.
+export function isLocalTicketCommand(
   prompt: string,
   ticketId: number,
   action: "add" | "remove",
@@ -144,8 +145,8 @@ export function makeTools(
       defineTool(`${action}_local_ticket`, {
         description:
           action === "add"
-            ? "Add or restore a ticket in the LOCAL tracker on explicit user request. Reads Azure to validate its ID/project, writes only local SQLite. Never changes Azure fields or links. For multiple explicit IDs use batch_update_tickets operations with action add; no extra confirmation."
-            : "Remove a ticket from the LOCAL tracker on explicit user request. No Azure request or deletion; automatic imports will not restore it. Explicit add can restore it.",
+            ? "Add or restore a ticket in the LOCAL tracker on explicit user request. Reads Azure to validate its ID/project, writes only local SQLite. Never changes Azure fields or links. Resolve IDs from the request, selected tickets, conversation or search. No additional confirmation or current-message ID requirement, including batches. For multiple IDs use batch_update_tickets operations with action add."
+            : "Remove a ticket from the LOCAL tracker on explicit user request. No Azure request or deletion; automatic imports will not restore it. Explicit add can restore it. Resolve IDs from the request, selected tickets, conversation or search. No additional confirmation or current-message ID requirement, including batches.",
         parameters: z.object({ id: z.number().int().positive() }),
         handler: async ({ id }) => {
           if (!localTicket)
@@ -823,19 +824,7 @@ export class Agent {
     const localCalls = new Map<number, { action: "add" | "remove"; result: Promise<any> }>();
     const localTicket = async (ticketId: number, action: "add" | "remove") => {
       assertActive();
-      if (azureConsent && action === "add")
-        throw new AppError(
-          403,
-          "Для подтверждённого поиска используйте lookup_azure_tickets: он сохраняет только результаты утверждённого плана и только в выбранном режиме",
-        );
-      if (
-        review ||
-        !mayManageLocalTicket(mutationPrompt, ticketId, action, knownTickets.has(ticketId))
-      )
-        throw new AppError(
-          403,
-          "Нужна явная команда добавить или удалить тикет из локального трекера. Номер должен быть в сообщении или получен инструментами в этом запросе.",
-        );
+      if (review) throw new AppError(403, "Во время ревью изменение локального трекера недоступно");
       if (this.store.source(settings) !== this.store.source())
         throw new AppError(409, "Подключение Azure изменилось");
       const existing = localCalls.get(ticketId);
@@ -1551,8 +1540,8 @@ The user has selected ${selectedTicketIds.length} tickets in the table. Read the
         ) {
           for (const ticketId of extractTicketIds(readPrompt).slice(0, 3)) {
             if (
-              mayManageLocalTicket(readPrompt, ticketId, "add") ||
-              mayManageLocalTicket(readPrompt, ticketId, "remove")
+              isLocalTicketCommand(readPrompt, ticketId, "add") ||
+              isLocalTicketCommand(readPrompt, ticketId, "remove")
             )
               continue;
             // Numbers such as "all 23 tickets" are not remote lookup requests.
