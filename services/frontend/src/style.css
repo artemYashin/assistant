@@ -7400,8 +7400,6 @@ summary > svg {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-left: 1px solid #dce1de;
-  padding-left: 16px;
 }
 .ticket-lookup-dialog.is-detail .ticket-detail-main > .ticket-card-header {
   flex: 0 0 auto;
@@ -7421,10 +7419,6 @@ summary > svg {
   }
   .ticket-lookup-dialog.is-detail .ticket-detail-main {
     margin-top: 16px;
-    border-left: 0;
-    padding-left: 0;
-    border-top: 1px solid #dce1de;
-    padding-top: 16px;
   }
   .ticket-lookup-dialog.is-detail .ticket-card-body {
     flex: none;
