@@ -65,6 +65,8 @@ const settingsSchema = z
     assistantCodeWaitSeconds: z.number().int().min(0).max(120).default(20),
     voiceInputKey: z.string().max(80).regex(voiceBindingPattern).default("Ctrl+KeyI"),
     voiceInputPress: z.enum(["single", "double"]).default("single"),
+    ticketCreateKey: z.string().max(80).regex(voiceBindingPattern).default("KeyY"),
+    ticketCreatePress: z.enum(["single", "double"]).default("single"),
     ticketOpenKey: z.string().max(80).regex(voiceBindingPattern).default("KeyT"),
     ticketOpenPress: z.enum(["single", "double"]).default("single"),
     chatToggleKey: z.string().max(80).regex(voiceBindingPattern).default("KeyC"),
@@ -124,6 +126,7 @@ const settingsSchema = z
         value.chatToggleKey,
         value.voiceInputKey,
         value.ticketOpenKey,
+        value.ticketCreateKey,
       ].filter(Boolean);
       return new Set(keys).size === keys.length;
     },

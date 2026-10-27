@@ -1,5 +1,6 @@
+import { useChatToggleShortcut as useAppShortcut } from "../../../features/voice-input/index.js";
 import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, X, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../../../shared/api/http/index.js";
@@ -21,16 +22,23 @@ export function CreateTicket({ settings }: { settings: any }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const source = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
+  const openCreate = useCallback(() => {
+    if (!settings?.azureUrl || !settings?.azureProject) return;
+    setOpen(true);
+    dialog.current?.showModal();
+  }, [settings?.azureUrl, settings?.azureProject]);
+  useAppShortcut(
+    settings?.ticketCreateKey ?? "KeyY",
+    settings?.ticketCreatePress ?? "single",
+    openCreate,
+  );
   return (
     <>
       <button
         type="button"
         className="primary create-ticket-trigger"
         disabled={!settings?.azureUrl || !settings?.azureProject}
-        onClick={() => {
-          setOpen(true);
-          dialog.current?.showModal();
-        }}
+        onClick={openCreate}
       >
         <Plus size={17} />
         Создать тикет
@@ -39,7 +47,9 @@ export function CreateTicket({ settings }: { settings: any }) {
         ref={dialog}
         className="create-ticket-dialog"
         aria-label="Создать тикет в Azure"
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!dialog.current?.open) setOpen(false);
+        }}
       >
         {open && (
           <CreateTicketForm
@@ -122,7 +132,15 @@ function CreateTicketForm({
       .then((v) => {
         if (live) {
           if (type) setFields(v.fields);
-          else setTypes(v.types);
+          else {
+            setTypes(v.types);
+            try {
+              const previous = localStorage.getItem("orbit.ticket-create.type:" + source);
+              if (previous && v.types.includes(previous)) setType(previous);
+            } catch {
+              /* Storage may be unavailable. */
+            }
+          }
         }
       })
       .catch((e) => {
@@ -289,7 +307,14 @@ function CreateTicketForm({
                   { value: "", label: "Выберите тип задачи" },
                   ...types.map((t) => ({ value: t, label: t })),
                 ]}
-                onChange={setType}
+                onChange={(next) => {
+                  setType(next);
+                  try {
+                    localStorage.setItem("orbit.ticket-create.type:" + source, next);
+                  } catch {
+                    /* Keep the form usable without browser storage. */
+                  }
+                }}
                 disabled={busy}
                 loading={loading}
                 renderOption={(o) =>

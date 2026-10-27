@@ -99,28 +99,28 @@ llmTimeoutSeconds
 
 Лимит времени ответа ревью, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:608.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:640.
 
 ### Сообщение
 
 От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:609.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:641.
 
 ### Сообщение
 
 reviewTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:616.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:648.
 
 ### Сообщение
 
 Лимит токенов ревью по умолчанию
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:620.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:652.
 
 ### Сообщение
 
 От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:633.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:665.

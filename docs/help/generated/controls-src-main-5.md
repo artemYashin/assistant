@@ -93,34 +93,34 @@ Personal Access Token · Пустое поле сохраняет текущий
 
 Режим нажатия
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:456.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:457.
 
 ### Элемент
 
 Одинарное нажатие
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:462.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:463.
 
 ### Элемент
 
 Двойное нажатие
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:463.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:464.
 
 ### Элемент
 
 Лимит времени ответа ревью, секунд · От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:607.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:639.
 
 ### Элемент
 
 Лимит токенов ревью по умолчанию · Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:619.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:651.
 
 ### Элемент
 
 Максимум вызовов инструментов на ревью · От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:631.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:663.

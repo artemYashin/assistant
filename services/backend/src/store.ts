@@ -31,6 +31,8 @@ export const defaults = {
   assistantCodeWaitSeconds: 20,
   voiceInputKey: "Ctrl+KeyI",
   voiceInputPress: "single",
+  ticketCreateKey: "KeyY",
+  ticketCreatePress: "single",
   ticketOpenKey: "KeyT",
   ticketOpenPress: "single",
   chatToggleKey: "KeyC",
@@ -555,6 +557,17 @@ export class Store {
       ].includes(settings.ticketOpenKey)
     )
       settings.ticketOpenKey = "";
+    if (
+      saved.ticketCreateKey === undefined &&
+      [
+        settings.chatToggleKey,
+        settings.voiceInputKey,
+        settings.voiceCurrentKey,
+        settings.voiceNewKey,
+        settings.ticketOpenKey,
+      ].includes(settings.ticketCreateKey)
+    )
+      settings.ticketCreateKey = "";
     return settings;
   }
   projectAzureKey(context: Context, azureUrl = this.rawSettings().azureUrl) {

@@ -449,6 +449,7 @@ export function Settings({ settings, context, run, busy }: any) {
                     form.voiceNewKey ?? "KeyN",
                     form.voiceInputKey ?? "Ctrl+KeyI",
                     form.ticketOpenKey ?? "KeyT",
+                    form.ticketCreateKey ?? "KeyY",
                   ]}
                   onChange={(value) => set("chatToggleKey", value)}
                 />
@@ -476,6 +477,7 @@ export function Settings({ settings, context, run, busy }: any) {
                     form.voiceCurrentKey ?? "KeyM",
                     form.voiceNewKey ?? "KeyN",
                     form.voiceInputKey ?? "Ctrl+KeyI",
+                    form.ticketCreateKey ?? "KeyY",
                   ]}
                   onChange={(value) => set("ticketOpenKey", value)}
                 />
@@ -494,6 +496,34 @@ export function Settings({ settings, context, run, busy }: any) {
               </div>
             </div>
             <div className="voice-settings-row">
+              <strong>Создать тикет</strong>
+              <div className="voice-settings-controls">
+                <VoiceBinding
+                  value={form.ticketCreateKey ?? "KeyY"}
+                  otherKey={form.chatToggleKey ?? "KeyC"}
+                  otherKeys={[
+                    form.voiceCurrentKey ?? "KeyM",
+                    form.voiceNewKey ?? "KeyN",
+                    form.voiceInputKey ?? "Ctrl+KeyI",
+                    form.ticketOpenKey ?? "KeyT",
+                  ]}
+                  onChange={(value) => set("ticketCreateKey", value)}
+                />
+                <div className="voice-press-select" data-voice-binding>
+                  <SingleSelect
+                    searchable={false}
+                    label="Режим нажатия"
+                    value={form.ticketCreatePress ?? "single"}
+                    onChange={(value) => set("ticketCreatePress", value)}
+                    options={[
+                      { value: "single", label: "Одинарное нажатие" },
+                      { value: "double", label: "Двойное нажатие" },
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="voice-settings-row">
               <strong>Начать голосовой ввод в активное поле</strong>
               <div className="voice-settings-controls">
                 <VoiceBinding
@@ -503,6 +533,7 @@ export function Settings({ settings, context, run, busy }: any) {
                     form.voiceCurrentKey ?? "KeyM",
                     form.voiceNewKey ?? "KeyN",
                     form.ticketOpenKey ?? "KeyT",
+                    form.ticketCreateKey ?? "KeyY",
                   ]}
                   onChange={(value) => set("voiceInputKey", value)}
                 />
@@ -557,6 +588,7 @@ export function Settings({ settings, context, run, busy }: any) {
                       form.chatToggleKey ?? "KeyC",
                       form.voiceInputKey ?? "Ctrl+KeyI",
                       form.ticketOpenKey ?? "KeyT",
+                      form.ticketCreateKey ?? "KeyY",
                     ]}
                     onChange={(value) => set(`voice${kind}Key`, value)}
                   />
