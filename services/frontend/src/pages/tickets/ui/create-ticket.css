@@ -10,7 +10,9 @@
 }
 .create-ticket-dialog {
   width: min(1180px, calc(100vw - 32px));
+  min-height: min(540px, 80dvh);
   max-height: 90dvh;
+  box-sizing: border-box;
   padding: 24px;
   border: 1px solid #d7e2dc;
   border-radius: 16px;
