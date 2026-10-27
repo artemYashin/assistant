@@ -8,6 +8,7 @@ import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 type Plan = {
   id: string;
   localTicketIds?: number[];
+  localTickets?: { id: number; title: string; state?: string; type?: string }[];
   title: string;
   sourceBranch?: string;
   targetBranch?: string;
@@ -26,6 +27,7 @@ export function PrMergeDialog({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [linkLocalTickets, setLinkLocalTickets] = useState(false);
+  const [selectedLinkIds, setSelectedLinkIds] = useState<number[] | null>(null);
   const [moveTickets, setMoveTickets] = useState(false);
   const [bypassPolicy, setBypassPolicy] = useState(false);
   const [bypassReason, setBypassReason] = useState("");
@@ -89,6 +91,9 @@ export function PrMergeDialog({
       live = false;
     };
   }, [pr.monitor, pr.repo, pr.number, moveTickets, linkLocalTickets, retry]);
+  const selectedLinks = (plan?.localTicketIds || []).filter(
+    (id) => selectedLinkIds === null || selectedLinkIds.includes(id),
+  );
   async function submit() {
     if (!strategy || !plan || submitted || busy || (bypassPolicy && !bypassReason.trim())) return;
     setBusy(true);
@@ -98,6 +103,7 @@ export function PrMergeDialog({
       setResult(
         await api(`/pr/merge/${plan.id}`, "POST", {
           strategy,
+          linkTicketIds: linkLocalTickets ? selectedLinks : [],
           bypassPolicy,
           bypassReason: bypassPolicy ? bypassReason.trim() : "",
           tickets: plan.tickets.map((t) => ({
@@ -229,12 +235,55 @@ export function PrMergeDialog({
               </span>
             </label>
             {linkLocalTickets && plan && (
-              <p className="muted">
-                {plan.localTicketIds?.length
-                  ? `Тикеты для привязки: ${plan.localTicketIds.map((id) => `#${id}`).join(", ")}`
-                  : "Локальных связей для сохранения нет."}{" "}
-                При ошибке привязки merge не отправляется. Уже сохранённые связи остаются в Azure.
-              </p>
+              <section className="pr-merge-tickets">
+                <h3>
+                  <Ticket size={18} /> Тикеты для привязки · {selectedLinks.length} из{" "}
+                  {plan.localTicketIds?.length || 0}
+                </h3>
+                <ul className="pr-merge-ticket-list">
+                  {(plan.localTicketIds || []).map((id) => {
+                    const ticket = plan.localTickets?.find((t) => t.id === id);
+                    return (
+                      <li key={id} className="pr-merge-ticket">
+                        <label className="pr-merge-link-choice">
+                          <input
+                            type="checkbox"
+                            aria-label={`Привязать тикет #${id} в Azure`}
+                            checked={selectedLinks.includes(id)}
+                            disabled={busy}
+                            onChange={(event) =>
+                              setSelectedLinkIds(
+                                event.target.checked
+                                  ? [...selectedLinks, id]
+                                  : selectedLinks.filter((value) => value !== id),
+                              )
+                            }
+                          />
+                          <span>
+                            <span className="pr-merge-ticket-heading">
+                              <span className="pr-merge-ticket-id">
+                                <Ticket size={14} />#{id}
+                              </span>
+                              <strong>{ticket?.title || "Тикет"}</strong>
+                            </span>
+                            {ticket?.state && (
+                              <StatusBadge state={ticket.state} colors={statusColors} />
+                            )}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="muted">
+                  {!plan.localTicketIds?.length
+                    ? "Локальных связей для сохранения нет. "
+                    : !selectedLinks.length
+                      ? "Ничего не выбрано — связи в Azure не изменятся. "
+                      : "В Azure будут сохранены только выбранные связи. "}
+                  При ошибке привязки merge не отправляется. Уже сохранённые связи остаются в Azure.
+                </p>
+              </section>
             )}
           </section>
           <section className="pr-merge-option-block">

@@ -1599,14 +1599,21 @@ export function createApp(
         strategy: z.enum(["noFastForward", "squash", "rebase", "rebaseMerge"]),
         bypassPolicy: z.boolean().default(false),
         bypassReason: z.string().trim().max(2000).default(""),
+        linkTicketIds: z.array(z.number().int().positive().safe()).max(100).optional(),
       })
       .strict()
       .parse(req.body);
     res.json(
-      await prMerge.execute(String(req.params.id), input.tickets, input.strategy, {
-        enabled: input.bypassPolicy,
-        reason: input.bypassReason,
-      }),
+      await prMerge.execute(
+        String(req.params.id),
+        input.tickets,
+        input.strategy,
+        {
+          enabled: input.bypassPolicy,
+          reason: input.bypassReason,
+        },
+        input.linkTicketIds,
+      ),
     );
   });
   app.get("/api/pr/merge/:id", (req, res) => res.json(prMerge.result(String(req.params.id))));

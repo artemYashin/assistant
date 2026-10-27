@@ -9,112 +9,118 @@
 
 Закрыть
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:144.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:150.
 
 ### Элемент
 
 Способ слияния
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:192.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:198.
 
 ### Элемент
 
 Merge commit
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:199.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:205.
 
 ### Элемент
 
 Squash
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:200.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:206.
 
 ### Элемент
 
 Rebase и fast-forward
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:201.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:207.
 
 ### Элемент
 
 Rebase с merge commit
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:202.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:208.
 
 ### Элемент
 
 Сохранить локальные связи с тикетами в Azure Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp; Write.
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:209.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:215.
+
+### Элемент
+
+#
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:248.
+
+### Элемент
+
+Привязать тикет #{…} в Azure
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:249.
 
 ### Элемент
 
 Обойти проверки и политики Azure Требуется право Bypass policies when completing pull requests. Ожидание CI не блокирует отправку merge. Конфликты кода нужно разрешить; завершившийся с ошибкой CI блокируется в Orbit.
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:241.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:290.
 
 ### Элемент
 
 Причина обхода политик
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:261.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:310.
 
 ### Элемент
 
 Причина обхода политик · Почему PR нужно завершить без прохождения проверок
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:263.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:312.
 
 ### Элемент
 
 Привяжите сначала тикет / Не удалось проверить связанные тикеты / Проверяем связанные тикеты… / · Сменить статусы связанных тикетов Связано тикетов: {…} / Привяжите сначала тикет / Проверка связей с Azure…
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:277.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:326.
 
 ### Элемент
 
 Повторить проверку связей
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:316.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:365.
 
 ### Элемент
 
 Применить статус ко всем
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:331.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:380.
 
 ### Элемент
 
 Не менять статус
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:339.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:388.
 
 ### Элемент
 
 Новый статус #{…}
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:366.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:415.
 
 ### Элемент
 
 Повторить подготовку
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:389.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:438.
 
 ### Элемент
 
 · Подтвердить merge с обходом политик / Подтвердить merge · и смену выбранных статусов /
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:395.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:444.
 
 ### Элемент
 
 Закрыть диалог
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:439.
-
-### Элемент
-
-Проверить результат операции
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:449.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:488.

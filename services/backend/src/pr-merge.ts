@@ -19,6 +19,7 @@ type Plan = Key & {
   moveTickets: boolean;
   linkLocalTickets?: boolean;
   localTicketIds?: number[];
+  localTickets?: { id: number; title: string; state?: string; type?: string }[];
   tickets: { id: number; title?: string; state: string; states: string[] }[];
 };
 // UI-only write workflow. No merge capability is exposed to the agent.
@@ -237,6 +238,7 @@ export class PrMerge {
       });
     }
     if (this.store.source() !== source) throw new AppError(409, "Подключение изменилось");
+    const localTicketIds = this.localTicketIds(key);
     const plan: Plan = {
       ...key,
       id: randomUUID(),
@@ -249,7 +251,18 @@ export class PrMerge {
       created: Date.now(),
       moveTickets,
       linkLocalTickets,
-      localTicketIds: this.localTicketIds(key),
+      localTicketIds,
+      localTickets: localTicketIds.map((ticketId) => {
+        const cached = this.store.db
+          .prepare("SELECT title,state,type FROM tickets WHERE source=? AND id=?")
+          .get(source, ticketId) as { title: string; state: string; type: string } | undefined;
+        return {
+          id: ticketId,
+          title: cached?.title || "Тикет",
+          state: cached?.state,
+          type: cached?.type,
+        };
+      }),
       tickets,
     };
     this.store.db
@@ -281,6 +294,7 @@ export class PrMerge {
       enabled: false,
       reason: "",
     },
+    linkTicketIds?: number[],
   ) {
     const bypassReason = bypass.reason.trim();
     if (bypass.enabled && (!bypassReason || bypassReason.length > 2000))
@@ -289,6 +303,19 @@ export class PrMerge {
     if (!row) throw new AppError(404, "Подтверждение не найдено");
     if (row.result) return this.result(id);
     const plan: Plan = JSON.parse(row.body);
+    // Older clients omit the selection and retain the prepared opt-in behavior.
+    const selectedLinks = linkTicketIds ?? (plan.linkLocalTickets ? plan.localTicketIds || [] : []);
+    if (
+      selectedLinks.length > 100 ||
+      new Set(selectedLinks).size !== selectedLinks.length ||
+      selectedLinks.some(
+        (ticketId) =>
+          !Number.isSafeInteger(ticketId) ||
+          !plan.linkLocalTickets ||
+          !(plan.localTicketIds || []).includes(ticketId),
+      )
+    )
+      throw new AppError(400, "Выберите тикеты только из подготовленного списка локальных связей");
     if (Date.now() - plan.created > 15 * 60_000)
       throw new AppError(409, "Диалог устарел. Откройте его заново.");
     const pat = this.store.secret("azure.pat");
@@ -365,12 +392,12 @@ export class PrMerge {
       }),
       plan,
     );
-    if (plan.linkLocalTickets) {
+    if (plan.linkLocalTickets && selectedLinks.length) {
       try {
         const projectId = pr.repository?.project?.id;
         if (!projectId) throw new AppError(502, "Azure не вернул проект PR для привязки тикетов");
         const artifact = `vstfs:///Git/PullRequestId/${projectId}%2F${plan.repo}%2F${plan.number}`;
-        for (const ticketId of plan.localTicketIds || []) {
+        for (const ticketId of selectedLinks) {
           await this.linkTicket(m, ticketId, artifact, guard);
           linkedTickets.push(ticketId);
           save({

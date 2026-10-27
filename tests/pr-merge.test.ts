@@ -460,3 +460,35 @@ test("links survive a denied merge and a new merge plan does not duplicate them"
   assert.equal((await f.service.execute(retry.id, [], "squash")).merged, true);
   assert.deepEqual(f.linkWrites, [51]);
 });
+
+test("merge publishes only checked local links and accepts an explicitly empty selection", async (t) => {
+  const f = fixture(t);
+  addLocal(f, 51);
+  addLocal(f, 52);
+  const plan = await f.service.prepare(f.key, false, true);
+  const bypass = { enabled: false, reason: "" };
+  for (const invalid of [[51, 51], [999], [51.5]]) {
+    await assert.rejects(
+      f.service.execute(plan.id, [], "squash", bypass, invalid),
+      /подготовленного списка/,
+    );
+    assert.equal(f.linkWrites.length, 0);
+    assert.equal(f.writes.length, 0);
+  }
+  const result = await f.service.execute(plan.id, [], "squash", bypass, [52]);
+  assert.equal(result.merged, true);
+  assert.deepEqual(result.linkedTickets, [52]);
+  assert.deepEqual(f.linkWrites, [52]);
+});
+test("empty link selection and disabled prepared option cannot publish links", async (t) => {
+  const f = fixture(t);
+  addLocal(f, 51);
+  const disabled = await f.service.prepare(f.key, false, false);
+  await assert.rejects(
+    f.service.execute(disabled.id, [], "squash", undefined, [51]),
+    /подготовленного списка/,
+  );
+  const selected = await f.service.prepare(f.key, false, true);
+  assert.equal((await f.service.execute(selected.id, [], "squash", undefined, [])).merged, true);
+  assert.deepEqual(f.linkWrites, []);
+});

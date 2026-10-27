@@ -7,24 +7,30 @@
 
 ### Сообщение
 
+Azure не вернул проект PR для привязки тикетов
+
+Источник: services/backend/src/pr-merge.ts:398.
+
+### Сообщение
+
 Коммиты PR изменились. Откройте диалог заново.
 
-Источник: services/backend/src/pr-merge.ts:387.
+Источник: services/backend/src/pr-merge.ts:414.
 
 ### Сообщение
 
 Merge не отправлен: не удалось сохранить все связи или повторно проверить PR. Уже сохранённые связи остаются в Azure. Исправьте причину и откройте диалог заново: {…}
 
-Источник: services/backend/src/pr-merge.ts:396.
+Источник: services/backend/src/pr-merge.ts:423.
 
 ### Сообщение
 
 Merge не подтверждён. Статусы тикетов не менялись. Проверьте PR в Azure; повторного запроса не будет.{…}
 
-Источник: services/backend/src/pr-merge.ts:481.
+Источник: services/backend/src/pr-merge.ts:508.
 
 ### Сообщение
 
 Не удалось подтвердить статус
 
-Источник: services/backend/src/pr-merge.ts:499.
+Источник: services/backend/src/pr-merge.ts:526.
