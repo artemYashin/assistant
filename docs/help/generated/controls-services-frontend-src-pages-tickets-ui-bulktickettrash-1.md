@@ -9,22 +9,22 @@
 
 Выберите тикеты, добавленные в локальный список / · В корзину
 
-Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:63.
+Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:75.
 
 ### Элемент
 
 Закрыть
 
-Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:97.
+Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:109.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:129.
+Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:151.
 
 ### Элемент
 
 Переношу… / Перенести в корзину
 
-Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:138.
+Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:160.

@@ -9,4 +9,4 @@
 
 Не удалось перенести в корзину
 
-Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:49.
+Источник: services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx:61.

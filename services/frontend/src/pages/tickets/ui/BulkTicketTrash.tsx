@@ -1,19 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Trash2, X } from "lucide-react";
+import { Ticket as TicketIcon, Trash2, X } from "lucide-react";
+import { StatusBadge } from "../../../entities/ticket/index.js";
 import { api } from "../../../shared/api/http/index.js";
 
-type Ticket = { id: number; title?: string; imported?: boolean; inTrash?: boolean };
+type Ticket = {
+  id: number;
+  title?: string;
+  type?: string;
+  state?: string;
+  imported?: boolean;
+  inTrash?: boolean;
+};
 
 export function BulkTicketTrash({
   tickets,
   source,
   disabled,
+  typeColors,
+  statusColors,
   onRemoved,
 }: {
   tickets: Ticket[];
   source: string;
   disabled?: boolean;
+  typeColors?: Record<string, string>;
+  statusColors?: Record<string, string>;
   onRemoved: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -85,7 +97,7 @@ export function BulkTicketTrash({
         createPortal(
           <dialog
             ref={dialog}
-            className="developer-dialog action-confirm-dialog"
+            className="developer-dialog action-confirm-dialog bulk-ticket-trash-dialog"
             aria-label="Перенести выбранные тикеты в корзину?"
             onCancel={(event) => {
               event.stopPropagation();
@@ -116,7 +128,17 @@ export function BulkTicketTrash({
             <ul className="bulk-ticket-trash-list">
               {snapshot.map((ticket) => (
                 <li key={ticket.id}>
-                  <strong>#{ticket.id}</strong> {ticket.title}
+                  <TicketIcon size={14} aria-hidden="true" />
+                  <strong>#{ticket.id}</strong>
+                  <span className="bulk-ticket-trash-title" title={ticket.title}>
+                    {ticket.title || "Название не загружено"}
+                  </span>
+                  <span className="bulk-ticket-trash-badges">
+                    {ticket.type && (
+                      <StatusBadge kind="type" state={ticket.type} colors={typeColors} />
+                    )}
+                    {ticket.state && <StatusBadge state={ticket.state} colors={statusColors} />}
+                  </span>
                 </li>
               ))}
             </ul>

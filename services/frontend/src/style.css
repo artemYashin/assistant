@@ -18012,14 +18012,51 @@ a.pr-branch-link:focus-visible {
   justify-items: start;
 }
 
+.bulk-ticket-trash-dialog {
+  width: min(900px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+}
 .bulk-ticket-trash-list {
-  max-height: 35dvh;
+  max-height: 45dvh;
   overflow-y: auto;
-  padding-left: 24px;
+  scrollbar-width: thin;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #d8e1db;
+  border-radius: 6px;
+  background: #fff;
 }
 .bulk-ticket-trash-list li {
-  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 5px 8px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 18px;
+}
+.bulk-ticket-trash-list li + li {
+  border-top: 1px solid #edf1ee;
+}
+.bulk-ticket-trash-list li:hover {
+  background: #edf5ef;
+}
+.bulk-ticket-trash-list li > svg,
+.bulk-ticket-trash-list li > strong {
+  flex-shrink: 0;
+  color: #49765a;
+}
+.bulk-ticket-trash-title {
+  flex: 1 1 220px;
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+.bulk-ticket-trash-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .bulk-ticket-trash-confirm {

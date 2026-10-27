@@ -490,6 +490,8 @@ export function Tickets({
               key={currentSource}
               tickets={selection.selected}
               source={currentSource}
+              typeColors={settings?.typeColors}
+              statusColors={settings?.statusColors}
               disabled={!!busy}
               onRemoved={() => {
                 void run("refresh-bulk-trash", async () => {});
