@@ -107,7 +107,7 @@
     "services/frontend/src/app/ui/Mark.tsx": "908e7461c0a83f5cdf1bcab640b8565188fbc2ba9617cb2ec430a2205e2bc79f",
     "services/frontend/src/app/ui/OverviewBlock.tsx": "d23c6d7a0a7962b943f8e12ba82e4df972c44cfdb61a68d5867693d161f87ac9",
     "services/frontend/src/app/ui/PullRequestsBlock.tsx": "b12aca87f12dbdeb4fc35c8db9d7f68c17df2faceb272da80f581c5f95e71aba",
-    "services/frontend/src/app/ui/TicketLookupDialog.tsx": "19980746969e91b634f315fd322af0a145033a375a82bb300926f6e16d784e6b",
+    "services/frontend/src/app/ui/TicketLookupDialog.tsx": "ddd2e70db71dca4920a2584f0681bc3f5125f97a9d30f5038b10912733e85e66",
     "services/frontend/src/app/ui/TicketsBlock.tsx": "2b7b1cb4aac4aac327fd7f726aa16ab96a93343b9d4d356c5a8205eeabcb5e28",
     "services/frontend/src/app/ui/Workspace.tsx": "6aaad0d3dfaf0645cd4b83cb596409036da5b6c2480c9214d3b543ae0e1dfbc7",
     "services/frontend/src/app/ui/WorkspaceHeader.tsx": "96c31203448c4b859663a296ccfc4c84b4e3d6331bf059bef36963be1fa4a634",

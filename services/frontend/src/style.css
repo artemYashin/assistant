@@ -18263,3 +18263,11 @@ a.pr-branch-link:focus-visible {
   gap: 5px;
   flex-shrink: 0;
 }
+
+.ticket-lookup-breadcrumbs button,
+.ticket-lookup-current {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}

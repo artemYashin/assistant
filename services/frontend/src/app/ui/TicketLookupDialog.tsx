@@ -16,6 +16,7 @@ type TicketView = {
   selection: { id: number; title: string; type?: string; state?: string }[];
   citation?: { section: string; quote: string };
   cardRef: string;
+  ticketType: string;
 };
 
 export function TicketLookupDialog({
@@ -45,6 +46,7 @@ export function TicketLookupDialog({
   const [open, setOpen] = useState(false);
   const [id, setId] = useState("");
   const [cardRef, setCardRef] = useState("");
+  const [ticketType, setTicketType] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const titleId = useId();
@@ -57,12 +59,14 @@ export function TicketLookupDialog({
       selection,
       citation,
       cardRef,
+      ticketType,
     };
-  }, [viewKey, id, selection, citation, cardRef]);
+  }, [viewKey, id, selection, citation, cardRef, ticketType]);
   const reset = () => {
     request.current++;
     setOpen(false);
     setHistory([]);
+    setTicketType("");
     currentView.current = null;
     setSelection([]);
     setCitation(undefined);
@@ -75,9 +79,10 @@ export function TicketLookupDialog({
     dialog.current?.showModal();
   }, []);
   useAppShortcut(shortcutKey, shortcutPress, openLookup);
-  async function selectTicket(ticketId: number) {
+  async function selectTicket(ticketId: number, type = "") {
     const current = ++request.current;
     setId(String(ticketId));
+    setTicketType(type);
     setCardRef("");
     setBusy(true);
     setError("");
@@ -87,6 +92,7 @@ export function TicketLookupDialog({
       );
       if (current === request.current) {
         if (result.source !== source.current) throw new Error("Подключение Azure изменилось");
+        setTicketType(result.fields?.["System.WorkItemType"] || type);
         setCardRef(result.cardId);
       }
     } catch (e: any) {
@@ -126,7 +132,7 @@ export function TicketLookupDialog({
       setSelection(tickets);
       setOpen(true);
       dialog.current?.showModal();
-      void selectTicket(tickets[0].id);
+      void selectTicket(tickets[0].id, tickets[0].type);
     };
     window.addEventListener("orbit-show-ticket-details", show);
     return () => window.removeEventListener("orbit-show-ticket-details", show);
@@ -172,6 +178,7 @@ export function TicketLookupDialog({
     setSelection(previous.selection);
     setCitation(previous.citation);
     setCardRef(previous.cardRef);
+    setTicketType(previous.ticketType);
     setViewKey(previous.key);
     setBusy(false);
     setError("");
@@ -245,17 +252,29 @@ export function TicketLookupDialog({
                   onClick={() => goBack(index)}
                   title={`Вернуться к тикету #${view.id}`}
                 >
-                  Тикет #{view.id}
+                  {view.ticketType && (
+                    <StatusBadge kind="type" state={view.ticketType} colors={typeColors} />
+                  )}
+                  <span>#{view.id}</span>
                 </button>
                 <ChevronRight size={16} aria-hidden="true" />
               </Fragment>
             ))}
-            <span aria-current={history.length ? "page" : undefined}>
-              {selection.length > 1
-                ? `Тикеты · ${selection.length}`
-                : cardRef || selection.length
-                  ? `Тикет #${id}`
-                  : "Открыть тикет по номеру"}
+            <span
+              className="ticket-lookup-current"
+              aria-current={history.length ? "page" : undefined}
+            >
+              {cardRef || selection.length ? (
+                <>
+                  {ticketType && <StatusBadge kind="type" state={ticketType} colors={typeColors} />}
+                  <span>#{id}</span>
+                  {selection.length > 1 && (
+                    <small className="muted">· выбрано {selection.length}</small>
+                  )}
+                </>
+              ) : (
+                "Открыть тикет по номеру"
+              )}
             </span>
           </h2>
           {history.length > 0 && (
@@ -290,7 +309,7 @@ export function TicketLookupDialog({
         {open &&
           [
             ...history,
-            { key: viewKey, id, source: source.current, selection, citation, cardRef },
+            { key: viewKey, id, source: source.current, selection, citation, cardRef, ticketType },
           ].map((view) => {
             const { selection, id, cardRef, citation } = view;
             const active = view.key === viewKey;
@@ -307,7 +326,7 @@ export function TicketLookupDialog({
                             type="button"
                             key={ticket.id}
                             aria-current={String(ticket.id) === id ? "true" : undefined}
-                            onClick={() => void selectTicket(ticket.id)}
+                            onClick={() => void selectTicket(ticket.id, ticket.type)}
                           >
                             <Ticket size={16} aria-hidden="true" />
                             <span>
@@ -363,6 +382,7 @@ export function TicketLookupDialog({
                           const result = await api(`/tickets/${encodeURIComponent(id)}/details`);
                           if (current === request.current) {
                             source.current = result.source;
+                            setTicketType(result.fields?.["System.WorkItemType"] || "");
                             setCardRef(result.cardId);
                           }
                         } catch (e: any) {
