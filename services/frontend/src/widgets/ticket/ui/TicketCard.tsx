@@ -492,7 +492,7 @@ export function TicketCard({
               </div>
             )}
             <div className="ticket-overview-tags">
-              <dt>Теги</dt>
+              <dt>Локальные теги</dt>
               <dd>
                 {card.locallyAvailable || card.locallyTracked ? (
                   <TicketMetadata

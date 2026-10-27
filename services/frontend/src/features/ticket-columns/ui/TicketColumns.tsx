@@ -17,14 +17,14 @@ export const ticketColumns = [
   ["priority", "Локальный приоритет"],
   ["azurePriority", "Azure приоритет"],
   ["localDeadline", "Локальный дедлайн"],
-  ["tags", "Теги"],
+  ["tags", "Локальные теги"],
   ["azureTags", "Azure теги"],
   ["assigned", "Исполнитель в Azure"],
   ["developer_name", "Локальное поручение"],
   ["created_at", "Дата создания"],
   ["changed_at", "Дата изменения"],
-  ["added_at", "Добавлено в систему"],
-  ["synced_at", "Синхронизация"],
+  ["added_at", "Локально добавлено"],
+  ["synced_at", "Локально синхронизировано"],
   ["actions", "Просмотр и действия"],
 ] as const;
 export function useTicketColumns(trash = false, namespace = "active") {

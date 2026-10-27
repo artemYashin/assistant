@@ -41,7 +41,7 @@ export function TicketMetadata({
     localDeadline: "Локальный дедлайн",
     notes: "Заметки",
     priority: "Локальный приоритет",
-    tags: "Теги",
+    tags: "Локальные теги",
   }[field];
   return (
     <div className="ticket-metadata-control">

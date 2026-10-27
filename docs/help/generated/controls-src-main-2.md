@@ -121,6 +121,6 @@ Azure приоритет · Все Azure приоритеты
 
 ### Элемент
 
-Теги · Все теги
+Локальные теги · Все теги
 
 Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:384.

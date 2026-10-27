@@ -71,8 +71,8 @@ export const exportColumns = [
   },
   {
     key: "tags",
-    header: "Tags",
-    label: "Теги",
+    header: "Local Tags",
+    label: "Локальные теги",
     width: 36,
     value: (t: CsvTicket) =>
       t.imported === false && !t.inTrash ? "N/A" : (t.tags || []).join("; "),
@@ -124,8 +124,8 @@ export const exportColumns = [
   },
   {
     key: "added_at",
-    header: "Added to System (UTC)",
-    label: "Добавлено в систему",
+    header: "Locally Added (UTC)",
+    label: "Локально добавлено",
     width: 28,
     value: (t: CsvTicket) => (t.imported === false && !t.inTrash ? "N/A" : t.added_at || ""),
   },
