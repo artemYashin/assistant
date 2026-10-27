@@ -32,6 +32,7 @@ export function TicketKanban({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  const headers = useRef<HTMLDivElement>(null);
   const dragging = useRef<KanbanTicket | null>(null);
   const lock = useRef(false);
   const live = useRef(true);
@@ -151,8 +152,48 @@ export function TicketKanban({
         </p>
       )}
       <div
+        ref={headers}
+        className="ticket-kanban-headers"
+        onScroll={(event) => {
+          if (scroll.current) scroll.current.scrollLeft = event.currentTarget.scrollLeft;
+        }}
+      >
+        {columns.map((column) => (
+          <header
+            key={column.state}
+            className="ticket-kanban-heading"
+            onDragOver={(event) => {
+              if (
+                dragging.current &&
+                column.state &&
+                !busy &&
+                !disabled &&
+                dragging.current.state !== column.state
+              ) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                setOver(column.state);
+              }
+            }}
+            onDragLeave={() => setOver(null)}
+            onDrop={(event) => {
+              event.preventDefault();
+              const ticket = dragging.current;
+              stopDrag();
+              if (ticket) void prepare(ticket, column.state);
+            }}
+          >
+            <StatusBadge state={column.state || "Не указан"} colors={settings?.statusColors} />
+            <span className="ticket-view-count">{column.tickets.length}</span>
+          </header>
+        ))}
+      </div>
+      <div
         ref={scroll}
         className="ticket-kanban-scroll"
+        onScroll={(event) => {
+          if (headers.current) headers.current.scrollLeft = event.currentTarget.scrollLeft;
+        }}
         tabIndex={0}
         aria-label="Столбцы статусов Azure"
         onDragOver={(event) => {
@@ -201,10 +242,6 @@ export function TicketKanban({
               if (ticket) void prepare(ticket, column.state);
             }}
           >
-            <header>
-              <StatusBadge state={column.state || "Не указан"} colors={settings?.statusColors} />
-              <span className="ticket-view-count">{column.tickets.length}</span>
-            </header>
             <div className="ticket-kanban-cards">
               {column.tickets.map((ticket) => (
                 <article
