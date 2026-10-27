@@ -1,0 +1,36 @@
+.ticket-search-controls {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.ticket-search-controls-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  min-height: 40px;
+}
+.ticket-search-controls-content:not([hidden]) {
+  display: contents;
+}
+.ticket-search-controls-content[hidden] {
+  display: none;
+}
+.ticket-search-controls-content > :not(.ticket-management-toolbar) {
+  grid-column: 1 / -1;
+}
+.ticket-search-controls-content > .ticket-management-toolbar {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .ticket-search-controls {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+  .ticket-search-controls-toggle {
+    justify-self: start;
+  }
+}

@@ -1,3 +1,4 @@
+import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
 import { BulkTicketTrash } from "./BulkTicketTrash.js";
 import { hasLocalManagement } from "../../../../../backend/src/work-mode.js";
@@ -256,209 +257,214 @@ export function Tickets({
           <Link to="/tickets">Показать все тикеты</Link>
         </div>
       )}
-      <div className="ticket-management-toolbar">
-        <form
-          className="ticket-search-block"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (azureMode) void searchAzure(filters);
-          }}
-        >
-          <label className="search">
-            <Search size={17} />
-            <input
-              aria-label="Поиск тикетов"
-              maxLength={azureMode ? 200 : undefined}
-              placeholder={
-                azureMode ? "Номер, название или Azure тег…" : "Номер, название, исполнитель…"
-              }
-              disabled={!!rawTarget}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          {azureMode && (
-            <button type="submit" className="primary" disabled={browser.loading}>
-              <Search size={16} />
-              {browser.loading ? "Поиск…" : "Найти"}
-            </button>
-          )}
-        </form>
-        {!azureMode && (
-          <div className="ticket-add-block">
-            <form
-              className="ticket-add-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                run("track", () => api("/tickets", "POST", { id: Number(id) }), "Тикет добавлен");
-              }}
-            >
-              <NumberInput
-                aria-label="Номер тикета для добавления"
-                min="1"
-                required
-                placeholder="Номер тикета"
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-              />
-              <button className="primary" disabled={!!busy || sourceMismatch}>
-                <Plus size={16} />
-                Добавить по номеру
-              </button>
-            </form>
-            <button
-              type="button"
-              className="secondary"
-              disabled={!!busy}
-              onClick={() =>
-                run(
-                  "import",
-                  () => api("/tickets/import", "POST", {}),
-                  "Синхронизация тикетов завершена",
-                )
-              }
-            >
-              <RefreshCw size={15} />
-              Синхронизировать тикеты
-            </button>
-          </div>
-        )}
-      </div>
-      <TicketFilterPanel
-        storageKey={filterStorageKey}
-        filters={rawFilters}
-        onApply={applyFilters}
-        disabled={!!rawTarget}
-      >
-        {filterOptions.error && (
-          <p className="error" role="alert">
-            Не удалось загрузить справочник фильтров: {filterOptions.error}
-          </p>
-        )}
-        <div className="ticket-filters">
-          <button
-            className="secondary ticket-filter-reset"
-            title="Сбросить все фильтры и поиск"
-            onClick={() => {
-              if (rawTarget) navigate("/tickets");
-              setPriorityFilter([]);
-              setAzurePriorities([]);
-              setFilter("overdueDeadline", false);
-              setTagFilter([]);
-              setAzureTagFilter([]);
-              setTypeFilter([]);
-              setStateFilter([]);
-              setAssigneeFilter([]);
-              if (hasLocalManagement(settings)) setLocalFilter([]);
-              setQuery("");
+      <TicketSearchControls>
+        <div className="ticket-management-toolbar">
+          <form
+            className="ticket-search-block"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (azureMode) void searchAzure(filters);
             }}
           >
-            <RotateCcw size={15} /> Сбросить
-          </button>
-          <MultiSelect
-            label="Просрочен дедлайн"
-            placeholder="Любой дедлайн"
-            disabled={!!rawTarget}
-            value={overdueDeadline ? ["overdue"] : []}
-            onChange={(values) => setFilter("overdueDeadline", values.includes("overdue"))}
-            options={[{ value: "overdue", label: "Просрочен дедлайн" }]}
-          />
-          <MultiSelect
-            label="Azure приоритет"
-            placeholder="Все Azure приоритеты"
-            value={azurePriorityFilter}
-            onChange={setAzurePriorities}
-            options={[
-              { value: "", label: "Без Azure приоритета" },
-              ...filterOptions.azurePriorities.map((v) => ({ value: String(v), label: String(v) })),
-            ]}
-          />
-          <MultiSelect
-            label="Локальный приоритет"
-            placeholder="Все локальные приоритеты"
-            value={priorityFilter}
-            onChange={setPriorityFilter}
-            disabled={!!rawTarget}
-            options={filterOptions.priorities.map((v) => ({
-              value: String(v),
-              label: String(v),
-            }))}
-          />
-          <MultiSelect
-            label="Локальные теги"
-            placeholder="Все теги"
-            value={tagFilter}
-            onChange={setTagFilter}
-            disabled={!!rawTarget}
-            options={[
-              { value: "", label: "Без тегов" },
-              ...[...new Set<string>(filterTickets.flatMap((t: any) => t.tags || []))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
-            ]}
-          />
-          <MultiSelect
-            label="Azure теги"
-            allowCustom={azureMode}
-            placeholder="Все Azure теги"
-            value={azureTagFilter}
-            onChange={setAzureTagFilter}
-            disabled={!!rawTarget}
-            options={[
-              { value: "", label: "Без Azure тегов" },
-              ...[...new Set<string>(filterTickets.flatMap((t: any) => t.azureTags || []))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
-            ]}
-          />
-
-          <MultiSelect
-            label="Тип задачи"
-            placeholder="Все типы"
-            disabled={!!rawTarget}
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={filterOptions.types.map((value) => ({
-              value,
-              label: value || "Тип не указан",
-            }))}
-          />
-          <MultiSelect
-            label="Статус"
-            placeholder="Все статусы"
-            disabled={!!rawTarget}
-            value={stateFilter}
-            onChange={setStateFilter}
-            options={filterOptions.states.map((value) => ({
-              value,
-              label: value || "Статус не указан",
-            }))}
-          />
-          <AzureAssigneeFilter
-            disabled={!!rawTarget}
-            value={assigneeFilter}
-            onChange={setAssigneeFilter}
-            names={values("assigned")}
-          />
-          {hasLocalManagement(settings) && (
+            <label className="search">
+              <Search size={17} />
+              <input
+                aria-label="Поиск тикетов"
+                maxLength={azureMode ? 200 : undefined}
+                placeholder={
+                  azureMode ? "Номер, название или Azure тег…" : "Номер, название, исполнитель…"
+                }
+                disabled={!!rawTarget}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
+            {azureMode && (
+              <button type="submit" className="primary" disabled={browser.loading}>
+                <Search size={16} />
+                {browser.loading ? "Поиск…" : "Найти"}
+              </button>
+            )}
+          </form>
+          {!azureMode && (
+            <div className="ticket-add-block">
+              <form
+                className="ticket-add-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  run("track", () => api("/tickets", "POST", { id: Number(id) }), "Тикет добавлен");
+                }}
+              >
+                <NumberInput
+                  aria-label="Номер тикета для добавления"
+                  min="1"
+                  required
+                  placeholder="Номер тикета"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                />
+                <button className="primary" disabled={!!busy || sourceMismatch}>
+                  <Plus size={16} />
+                  Добавить по номеру
+                </button>
+              </form>
+              <button
+                type="button"
+                className="secondary"
+                disabled={!!busy}
+                onClick={() =>
+                  run(
+                    "import",
+                    () => api("/tickets/import", "POST", {}),
+                    "Синхронизация тикетов завершена",
+                  )
+                }
+              >
+                <RefreshCw size={15} />
+                Синхронизировать тикеты
+              </button>
+            </div>
+          )}
+        </div>
+        <TicketFilterPanel
+          storageKey={filterStorageKey}
+          filters={rawFilters}
+          onApply={applyFilters}
+          disabled={!!rawTarget}
+        >
+          {filterOptions.error && (
+            <p className="error" role="alert">
+              Не удалось загрузить справочник фильтров: {filterOptions.error}
+            </p>
+          )}
+          <div className="ticket-filters">
+            <button
+              className="secondary ticket-filter-reset"
+              title="Сбросить все фильтры и поиск"
+              onClick={() => {
+                if (rawTarget) navigate("/tickets");
+                setPriorityFilter([]);
+                setAzurePriorities([]);
+                setFilter("overdueDeadline", false);
+                setTagFilter([]);
+                setAzureTagFilter([]);
+                setTypeFilter([]);
+                setStateFilter([]);
+                setAssigneeFilter([]);
+                if (hasLocalManagement(settings)) setLocalFilter([]);
+                setQuery("");
+              }}
+            >
+              <RotateCcw size={15} /> Сбросить
+            </button>
             <MultiSelect
-              label="Локальное поручение"
-              placeholder="Все разработчики"
+              label="Просрочен дедлайн"
+              placeholder="Любой дедлайн"
               disabled={!!rawTarget}
-              value={localFilter}
-              onChange={setLocalFilter}
+              value={overdueDeadline ? ["overdue"] : []}
+              onChange={(values) => setFilter("overdueDeadline", values.includes("overdue"))}
+              options={[{ value: "overdue", label: "Просрочен дедлайн" }]}
+            />
+            <MultiSelect
+              label="Azure приоритет"
+              placeholder="Все Azure приоритеты"
+              value={azurePriorityFilter}
+              onChange={setAzurePriorities}
               options={[
-                { value: "", label: "Нет поручения" },
-                ...localDevelopers.map(([id, name]) => ({
-                  value: id,
-                  label: name,
-                  avatarName: name,
+                { value: "", label: "Без Azure приоритета" },
+                ...filterOptions.azurePriorities.map((v) => ({
+                  value: String(v),
+                  label: String(v),
                 })),
               ]}
             />
-          )}
-        </div>
-      </TicketFilterPanel>
+            <MultiSelect
+              label="Локальный приоритет"
+              placeholder="Все локальные приоритеты"
+              value={priorityFilter}
+              onChange={setPriorityFilter}
+              disabled={!!rawTarget}
+              options={filterOptions.priorities.map((v) => ({
+                value: String(v),
+                label: String(v),
+              }))}
+            />
+            <MultiSelect
+              label="Локальные теги"
+              placeholder="Все теги"
+              value={tagFilter}
+              onChange={setTagFilter}
+              disabled={!!rawTarget}
+              options={[
+                { value: "", label: "Без тегов" },
+                ...[...new Set<string>(filterTickets.flatMap((t: any) => t.tags || []))]
+                  .sort()
+                  .map((v) => ({ value: v, label: v })),
+              ]}
+            />
+            <MultiSelect
+              label="Azure теги"
+              allowCustom={azureMode}
+              placeholder="Все Azure теги"
+              value={azureTagFilter}
+              onChange={setAzureTagFilter}
+              disabled={!!rawTarget}
+              options={[
+                { value: "", label: "Без Azure тегов" },
+                ...[...new Set<string>(filterTickets.flatMap((t: any) => t.azureTags || []))]
+                  .sort()
+                  .map((v) => ({ value: v, label: v })),
+              ]}
+            />
+
+            <MultiSelect
+              label="Тип задачи"
+              placeholder="Все типы"
+              disabled={!!rawTarget}
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={filterOptions.types.map((value) => ({
+                value,
+                label: value || "Тип не указан",
+              }))}
+            />
+            <MultiSelect
+              label="Статус"
+              placeholder="Все статусы"
+              disabled={!!rawTarget}
+              value={stateFilter}
+              onChange={setStateFilter}
+              options={filterOptions.states.map((value) => ({
+                value,
+                label: value || "Статус не указан",
+              }))}
+            />
+            <AzureAssigneeFilter
+              disabled={!!rawTarget}
+              value={assigneeFilter}
+              onChange={setAssigneeFilter}
+              names={values("assigned")}
+            />
+            {hasLocalManagement(settings) && (
+              <MultiSelect
+                label="Локальное поручение"
+                placeholder="Все разработчики"
+                disabled={!!rawTarget}
+                value={localFilter}
+                onChange={setLocalFilter}
+                options={[
+                  { value: "", label: "Нет поручения" },
+                  ...localDevelopers.map(([id, name]) => ({
+                    value: id,
+                    label: name,
+                    avatarName: name,
+                  })),
+                ]}
+              />
+            )}
+          </div>
+        </TicketFilterPanel>
+      </TicketSearchControls>
       <div
         className="ticket-export-bar ticket-actions-panel"
         style={view === "kanban" ? { display: "none" } : undefined}

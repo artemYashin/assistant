@@ -1,3 +1,4 @@
+import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
 import type { TicketView } from "../model/kanban.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
@@ -231,140 +232,145 @@ export function TicketTrash({
         Статус и исполнитель изменяются в Azure. Заметки и приоритет
         {management && ", а также поручения"} сохраняются локально.
       </p>
-      <div className="ticket-management-toolbar">
-        <div className="ticket-search-block">
-          <label className="search">
-            <Search size={17} />
-            <input
-              aria-label="Поиск в корзине"
-              placeholder="Номер, название, исполнитель…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
+      <TicketSearchControls>
+        <div className="ticket-management-toolbar">
+          <div className="ticket-search-block">
+            <label className="search">
+              <Search size={17} />
+              <input
+                aria-label="Поиск в корзине"
+                placeholder="Номер, название, исполнитель…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
+          </div>
         </div>
-      </div>
-      <TicketFilterPanel
-        storageKey={filterStorageKey}
-        filters={rawFilters}
-        onApply={applyFilters}
-        disabled={false}
-      >
-        {filterOptions.error && (
-          <p className="error" role="alert">
-            Не удалось загрузить справочник фильтров: {filterOptions.error}
-          </p>
-        )}
-        <div className="ticket-filters">
-          <button
-            className="secondary ticket-filter-reset"
-            title="Сбросить все фильтры и поиск"
-            onClick={() => {
-              setPriorities([]);
-              setAzurePriorities([]);
-              setFilter("overdueDeadline", false);
-              setTags([]);
-              setAzureTags([]);
-              setQuery("");
-              setTypes([]);
-              setStates([]);
-              setPeople([]);
-              if (management) setLocalFilter([]);
-            }}
-          >
-            <RotateCcw size={15} /> Сбросить
-          </button>
-          <MultiSelect
-            label="Просрочен дедлайн"
-            placeholder="Любой дедлайн"
-            value={overdueDeadline ? ["overdue"] : []}
-            onChange={(values) => setFilter("overdueDeadline", values.includes("overdue"))}
-            options={[{ value: "overdue", label: "Просрочен дедлайн" }]}
-          />
-          <MultiSelect
-            label="Azure приоритет"
-            placeholder="Все Azure приоритеты"
-            value={azurePriorityFilter}
-            onChange={setAzurePriorities}
-            options={[
-              { value: "", label: "Без Azure приоритета" },
-              ...filterOptions.azurePriorities.map((v) => ({ value: String(v), label: String(v) })),
-            ]}
-          />
-          <MultiSelect
-            label="Локальный приоритет"
-            placeholder="Все локальные приоритеты"
-            value={priorities}
-            onChange={setPriorities}
-            options={filterOptions.priorities.map((v) => ({
-              value: String(v),
-              label: String(v),
-            }))}
-          />
-          <MultiSelect
-            label="Локальные теги"
-            placeholder="Все теги"
-            value={tags}
-            onChange={setTags}
-            options={[
-              { value: "", label: "Без тегов" },
-              ...[...new Set<string>(items.flatMap((t) => t.tags || []))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
-            ]}
-          />
-          <MultiSelect
-            label="Azure теги"
-            placeholder="Все Azure теги"
-            value={azureTags}
-            onChange={setAzureTags}
-            options={[
-              { value: "", label: "Без Azure тегов" },
-              ...[...new Set<string>(items.flatMap((t) => t.azureTags || []))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
-            ]}
-          />
-
-          <MultiSelect
-            label="Тип задачи"
-            placeholder="Все типы"
-            value={types}
-            onChange={setTypes}
-            options={filterOptions.types.map((value) => ({
-              value,
-              label: value || "Тип не указан",
-            }))}
-          />
-          <MultiSelect
-            label="Статус"
-            placeholder="Все статусы"
-            value={states}
-            onChange={setStates}
-            options={filterOptions.states.map((value) => ({
-              value,
-              label: value || "Статус не указан",
-            }))}
-          />
-          <AzureAssigneeFilter value={people} onChange={setPeople} names={values("assigned")} />
-          {management && (
+        <TicketFilterPanel
+          storageKey={filterStorageKey}
+          filters={rawFilters}
+          onApply={applyFilters}
+          disabled={false}
+        >
+          {filterOptions.error && (
+            <p className="error" role="alert">
+              Не удалось загрузить справочник фильтров: {filterOptions.error}
+            </p>
+          )}
+          <div className="ticket-filters">
+            <button
+              className="secondary ticket-filter-reset"
+              title="Сбросить все фильтры и поиск"
+              onClick={() => {
+                setPriorities([]);
+                setAzurePriorities([]);
+                setFilter("overdueDeadline", false);
+                setTags([]);
+                setAzureTags([]);
+                setQuery("");
+                setTypes([]);
+                setStates([]);
+                setPeople([]);
+                if (management) setLocalFilter([]);
+              }}
+            >
+              <RotateCcw size={15} /> Сбросить
+            </button>
             <MultiSelect
-              label="Локальное поручение"
-              placeholder="Все разработчики"
-              value={localFilter}
-              onChange={setLocalFilter}
+              label="Просрочен дедлайн"
+              placeholder="Любой дедлайн"
+              value={overdueDeadline ? ["overdue"] : []}
+              onChange={(values) => setFilter("overdueDeadline", values.includes("overdue"))}
+              options={[{ value: "overdue", label: "Просрочен дедлайн" }]}
+            />
+            <MultiSelect
+              label="Azure приоритет"
+              placeholder="Все Azure приоритеты"
+              value={azurePriorityFilter}
+              onChange={setAzurePriorities}
               options={[
-                { value: "", label: "Нет поручения" },
-                ...localOptions.map(([id, name]) => ({
-                  value: id,
-                  label: name,
-                  avatarName: name,
+                { value: "", label: "Без Azure приоритета" },
+                ...filterOptions.azurePriorities.map((v) => ({
+                  value: String(v),
+                  label: String(v),
                 })),
               ]}
             />
-          )}
-        </div>
-      </TicketFilterPanel>
+            <MultiSelect
+              label="Локальный приоритет"
+              placeholder="Все локальные приоритеты"
+              value={priorities}
+              onChange={setPriorities}
+              options={filterOptions.priorities.map((v) => ({
+                value: String(v),
+                label: String(v),
+              }))}
+            />
+            <MultiSelect
+              label="Локальные теги"
+              placeholder="Все теги"
+              value={tags}
+              onChange={setTags}
+              options={[
+                { value: "", label: "Без тегов" },
+                ...[...new Set<string>(items.flatMap((t) => t.tags || []))]
+                  .sort()
+                  .map((v) => ({ value: v, label: v })),
+              ]}
+            />
+            <MultiSelect
+              label="Azure теги"
+              placeholder="Все Azure теги"
+              value={azureTags}
+              onChange={setAzureTags}
+              options={[
+                { value: "", label: "Без Azure тегов" },
+                ...[...new Set<string>(items.flatMap((t) => t.azureTags || []))]
+                  .sort()
+                  .map((v) => ({ value: v, label: v })),
+              ]}
+            />
+
+            <MultiSelect
+              label="Тип задачи"
+              placeholder="Все типы"
+              value={types}
+              onChange={setTypes}
+              options={filterOptions.types.map((value) => ({
+                value,
+                label: value || "Тип не указан",
+              }))}
+            />
+            <MultiSelect
+              label="Статус"
+              placeholder="Все статусы"
+              value={states}
+              onChange={setStates}
+              options={filterOptions.states.map((value) => ({
+                value,
+                label: value || "Статус не указан",
+              }))}
+            />
+            <AzureAssigneeFilter value={people} onChange={setPeople} names={values("assigned")} />
+            {management && (
+              <MultiSelect
+                label="Локальное поручение"
+                placeholder="Все разработчики"
+                value={localFilter}
+                onChange={setLocalFilter}
+                options={[
+                  { value: "", label: "Нет поручения" },
+                  ...localOptions.map(([id, name]) => ({
+                    value: id,
+                    label: name,
+                    avatarName: name,
+                  })),
+                ]}
+              />
+            )}
+          </div>
+        </TicketFilterPanel>
+      </TicketSearchControls>
       {error && (
         <p role="alert" className="error">
           {error}
