@@ -11,6 +11,8 @@ export type KanbanTicket = {
   type?: string;
   assigned?: string;
   localDeadline?: string | null;
+  imported?: boolean;
+  inTrash?: boolean;
 };
 export function ticketStateColumns(
   tickets: KanbanTicket[],

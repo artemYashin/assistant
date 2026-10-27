@@ -258,7 +258,7 @@ export function TicketKanban({
                   {column.tickets.map((ticket) => (
                     <article
                       key={`${ticket.source}:${ticket.id}`}
-                      className="ticket-kanban-card"
+                      className={`ticket-kanban-card${ticket.inTrash ? " ticket-tone-trash" : ticket.imported === false ? " ticket-tone-new" : ""}`}
                       draggable={!busy && !disabled && ticket.source === source}
                       onDragStart={(event) => {
                         dragging.current = ticket;

@@ -8144,9 +8144,11 @@ summary > svg {
   font-size: 12px;
 }
 
+.ticket-kanban-card.ticket-tone-new,
 .ticket-table-fit > table > tbody > tr.ticket-tone-new > td {
   background: #fff7f6;
 }
+.ticket-kanban-card.ticket-tone-trash,
 .ticket-table-fit > table > tbody > tr.ticket-tone-trash > td {
   background: #fffbed;
 }
@@ -8157,6 +8159,7 @@ summary > svg {
   > td {
   transition: background-color 120ms ease;
 }
+.ticket-kanban-card.ticket-tone-new:is(:hover, :focus-within),
 .ticket-table-fit
   > table
   > tbody
@@ -8164,6 +8167,7 @@ summary > svg {
   > td {
   background-color: #ffe6e2;
 }
+.ticket-kanban-card.ticket-tone-trash:is(:hover, :focus-within),
 .ticket-table-fit
   > table
   > tbody

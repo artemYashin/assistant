@@ -440,7 +440,7 @@ export function TicketTrash({
       {view === "kanban" && loaded && (
         <TicketKanban
           key={currentSource}
-          tickets={filtered}
+          tickets={filtered.map((ticket) => ({ ...ticket, inTrash: true }))}
           states={filterOptions.states}
           selectedStates={states}
           settings={settings}
