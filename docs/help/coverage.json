@@ -377,7 +377,7 @@
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
     "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "ca0764c5226c7c24a3b279c8ed3dca8926dbf8e6e439c2c13f2bdf4edcfc4cc9",
     "services/frontend/src/widgets/ticket/ui/TicketLinkedPullRequests.tsx": "bd0c501f4eac6c8e9f8826df4dfe52e07a0c023ed2d1e99a2171b2a886073069",
-    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "35a42b0b2fc5cacae18e2e0a36a761088004c1922966dd3570c30c787d4728ba",
+    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "174f09d4f2ace1bf41a11db7b351ce1edfdb1db5520b4622dea818b665e2c0a9",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }
 }

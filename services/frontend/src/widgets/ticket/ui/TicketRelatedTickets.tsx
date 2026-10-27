@@ -72,8 +72,9 @@ export function TicketRelatedTickets({
     };
   }, [reference, version, onCount]);
   const types = [...new Set((data?.items || []).map((ticket) => ticket.type))];
+  const activeType = selectedType !== null && types.includes(selectedType) ? selectedType : null;
   const visible = (data?.items || []).filter(
-    (ticket) => selectedType === null || ticket.type === selectedType,
+    (ticket) => activeType === null || ticket.type === activeType,
   );
   return (
     <div>
@@ -96,7 +97,7 @@ export function TicketRelatedTickets({
           <div className="related-ticket-filters" role="group" aria-label="Типы связанных тикетов">
             <button
               type="button"
-              aria-pressed={selectedType === null}
+              aria-pressed={activeType === null}
               onClick={() => selectType(null)}
             >
               Все <span>{data.items.length}</span>
@@ -105,7 +106,7 @@ export function TicketRelatedTickets({
               <button
                 type="button"
                 key={type}
-                aria-pressed={selectedType === type}
+                aria-pressed={activeType === type}
                 onClick={() => selectType(type)}
               >
                 {type ? (
@@ -161,12 +162,6 @@ export function TicketRelatedTickets({
               </li>
             ))}
           </ul>
-          {!!data.items.length && !visible.length && (
-            <p className="ticket-empty">
-              Нет связанных тикетов типа «{selectedType || "Тип недоступен"}». Выберите другой тип
-              или «Все».
-            </p>
-          )}
         </>
       )}
       {data && !data.items.length && <p className="ticket-empty">Связанные тикеты не найдены.</p>}

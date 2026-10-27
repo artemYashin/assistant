@@ -9,10 +9,10 @@
 
 Тип недоступен
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:114.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:115.
 
 ### Сообщение
 
 Тикет недоступен в Azure
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:131.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:132.
