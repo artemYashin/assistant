@@ -7,12 +7,12 @@
 
 ### Элемент
 
-/
+Поиск: {…} · Найти…
 
-Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:85.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:113.
 
 ### Элемент
 
-Поиск: {…} · Найти…
+/
 
-Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:120.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:132.

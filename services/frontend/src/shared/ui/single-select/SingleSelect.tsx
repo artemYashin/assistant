@@ -1,4 +1,13 @@
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type CSSProperties,
+} from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search, LoaderCircle } from "lucide-react";
 
 export function SingleSelect({
@@ -13,6 +22,8 @@ export function SingleSelect({
   loading = false,
   loadingLabel = "Загрузка…",
   onOpen,
+  renderOption,
+  floating = false,
 }: {
   label: string;
   value: string;
@@ -23,6 +34,8 @@ export function SingleSelect({
   active?: boolean;
   loading?: boolean;
   loadingLabel?: string;
+  renderOption?: (option: { value: string; label: string }) => ReactNode;
+  floating?: boolean;
   onOpen?: () => void;
   onSearch?: (query: string) => void;
 }) {
@@ -31,12 +44,46 @@ export function SingleSelect({
   const root = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null),
     search = useRef<HTMLInputElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<CSSProperties>({});
   const id = useId();
+  useLayoutEffect(() => {
+    if (!open || !floating) return;
+    const update = () => {
+      const rect = trigger.current?.getBoundingClientRect();
+      if (!rect) return;
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      const upwards = below < 240 && above > below;
+      const height = Math.max(80, Math.min(360, upwards ? above : below));
+      const width = Math.min(Math.max(rect.width, 240), window.innerWidth - 24);
+      setPosition({
+        position: "fixed",
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        top: upwards ? "auto" : rect.bottom + 4,
+        bottom: upwards ? window.innerHeight - rect.top + 4 : "auto",
+        width,
+        minWidth: 0,
+        maxHeight: height,
+        overflowY: "auto",
+        margin: 0,
+        zIndex: 1000,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open, floating]);
   useEffect(() => {
     if (!open) return;
     search.current?.focus();
     const outside = (e: Event) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
+      if (!root.current?.contains(e.target as Node) && !panel.current?.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("pointerdown", outside);
     document.addEventListener("focusin", outside);
@@ -51,6 +98,56 @@ export function SingleSelect({
   const visible = options.filter((o) =>
     o.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   );
+  const dropdown = open ? (
+    <div
+      ref={panel}
+      style={floating ? position : undefined}
+      className="multi-select-panel"
+      id={`${id}-panel`}
+      role="dialog"
+      aria-labelledby={`${id}-label`}
+    >
+      {searchable && (
+        <div className="multi-select-search">
+          <Search size={15} />
+          <input
+            ref={search}
+            aria-label={`Поиск: ${label}`}
+            placeholder="Найти…"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              onSearch?.(e.target.value);
+            }}
+          />
+        </div>
+      )}
+      <div className="multi-select-options" aria-busy={loading}>
+        {loading && (
+          <p className="multi-select-empty" role="status">
+            <LoaderCircle size={15} className="spin" aria-hidden="true" /> {loadingLabel}
+          </p>
+        )}
+        {visible.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            className={`single-select-option${value === o.value ? " is-selected" : ""}`}
+            aria-pressed={value === o.value}
+            onClick={() => {
+              setOpen(false);
+              trigger.current?.focus();
+              onChange(o.value);
+            }}
+          >
+            <span>{renderOption ? renderOption(o) : o.label}</span>
+            {value === o.value && <Check size={16} aria-hidden="true" />}
+          </button>
+        ))}
+        {!loading && !visible.length && <p className="multi-select-empty">Ничего не найдено</p>}
+      </div>
+    </div>
+  ) : null;
   return (
     <div
       className="single-select"
@@ -66,7 +163,7 @@ export function SingleSelect({
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
           e.preventDefault();
           const buttons = Array.from(
-            root.current?.querySelectorAll<HTMLButtonElement>(".single-select-option") || [],
+            panel.current?.querySelectorAll<HTMLButtonElement>(".single-select-option") || [],
           );
           const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
           const next =
@@ -99,7 +196,11 @@ export function SingleSelect({
         }}
       >
         <span id={`${id}-value`}>
-          {options.find((o) => o.value === value)?.label || value || "Выберите…"}
+          {renderOption
+            ? renderOption(
+                options.find((o) => o.value === value) || { value, label: value || "Выберите…" },
+              )
+            : options.find((o) => o.value === value)?.label || value || "Выберите…"}
         </span>
         {loading ? (
           <LoaderCircle size={16} className="spin" aria-label={loadingLabel} />
@@ -107,54 +208,7 @@ export function SingleSelect({
           <ChevronDown size={16} className={open ? "is-open" : ""} />
         )}
       </button>
-      {open && (
-        <div
-          className="multi-select-panel"
-          id={`${id}-panel`}
-          role="dialog"
-          aria-labelledby={`${id}-label`}
-        >
-          {searchable && (
-            <div className="multi-select-search">
-              <Search size={15} />
-              <input
-                ref={search}
-                aria-label={`Поиск: ${label}`}
-                placeholder="Найти…"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  onSearch?.(e.target.value);
-                }}
-              />
-            </div>
-          )}
-          <div className="multi-select-options" aria-busy={loading}>
-            {loading && (
-              <p className="multi-select-empty" role="status">
-                <LoaderCircle size={15} className="spin" aria-hidden="true" /> {loadingLabel}
-              </p>
-            )}
-            {visible.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                className={`single-select-option${value === o.value ? " is-selected" : ""}`}
-                aria-pressed={value === o.value}
-                onClick={() => {
-                  setOpen(false);
-                  trigger.current?.focus();
-                  onChange(o.value);
-                }}
-              >
-                <span>{o.label}</span>
-                {value === o.value && <Check size={16} aria-hidden="true" />}
-              </button>
-            ))}
-            {!loading && !visible.length && <p className="multi-select-empty">Ничего не найдено</p>}
-          </div>
-        </div>
-      )}
+      {floating && dropdown ? createPortal(dropdown, document.body) : dropdown}
     </div>
   );
 }

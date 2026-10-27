@@ -1,3 +1,5 @@
+import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
+import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, GripVertical, LoaderCircle, Ticket, X } from "lucide-react";
 import { StatusBadge, TicketDate } from "../../../entities/ticket/index.js";
@@ -230,7 +232,12 @@ export function TicketKanban({
                     state={ticket.type || "Тип не указан"}
                     colors={settings?.typeColors}
                   />
-                  {ticket.assigned && <small className="muted">{ticket.assigned}</small>}
+                  {ticket.assigned && (
+                    <div className="ticket-kanban-assignee">
+                      <InitialsAvatar name={ticket.assigned} />
+                      <span>{ticket.assigned}</span>
+                    </div>
+                  )}
                   {ticket.localDeadline && (
                     <div
                       className={
@@ -242,21 +249,24 @@ export function TicketKanban({
                       Дедлайн: <TicketDate value={ticket.localDeadline} />
                     </div>
                   )}
-                  <label className="ticket-kanban-state">
-                    Статус в Azure
-                    <select
-                      aria-label={`Переместить тикет #${ticket.id}`}
+                  <div
+                    className="ticket-kanban-state"
+                    onDragStart={(event) => event.stopPropagation()}
+                  >
+                    <SingleSelect
+                      label="Статус в Azure"
                       value={ticket.state || ""}
                       disabled={busy || disabled || ticket.source !== source}
-                      onChange={(event) => void prepare(ticket, event.target.value)}
-                    >
-                      {columns.map(({ state }) => (
-                        <option key={state} value={state} disabled={!state}>
-                          {state || "Не указан"}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      onChange={(state) => void prepare(ticket, state)}
+                      options={columns
+                        .filter(({ state }) => !!state)
+                        .map(({ state }) => ({ value: state, label: state }))}
+                      floating
+                      renderOption={(option) => (
+                        <StatusBadge state={option.label} colors={settings?.statusColors} />
+                      )}
+                    />
+                  </div>
                 </article>
               ))}
               {!column.tickets.length && <p className="muted ticket-kanban-empty">Нет тикетов</p>}
