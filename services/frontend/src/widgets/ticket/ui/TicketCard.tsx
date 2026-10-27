@@ -13,7 +13,7 @@ import {
   highlightCitation,
   revealCitation,
 } from "../../../entities/ticket/index.js";
-import { AzureAssignee } from "../../../features/edit-ticket/index.js";
+import { TicketNoteForm, AzureAssignee } from "../../../features/edit-ticket/index.js";
 import { ImagePreview } from "../../../entities/rich-content/preview/index.js";
 import { openTicketAnalysis } from "../../../entities/chat/index.js";
 import { PrInfoPopup } from "../../../shared/ui/info-popup/index.js";
@@ -72,12 +72,14 @@ export function TicketCard({
   const tabId = useId();
   const [prsOpened, setPrsOpened] = useState(false);
   const [prCount, setPrCount] = useState<number | null>(null);
+  const [notesOpened, setNotesOpened] = useState(false);
   const [historyOpened, setHistoryOpened] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
   const tabScroll = useRef<Record<string, number>>({});
   const changeTab = (tab: string) => {
     if (contentRoot.current) tabScroll.current[activeTab] = contentRoot.current.scrollTop;
     setActiveTab(tab);
+    if (tab === "notes") setNotesOpened(true);
     if (tab === "prs") setPrsOpened(true);
     if (tab === "history") setHistoryOpened(true);
   };
@@ -122,6 +124,7 @@ export function TicketCard({
   useEffect(() => {
     setActiveTab("content");
     setHistoryOpened(false);
+    setNotesOpened(false);
     setPrsOpened(false);
     setPrCount(null);
     tabScroll.current = {};
@@ -538,32 +541,6 @@ export function TicketCard({
             </div>
           </dl>
           <div className="ticket-sidebar-actions">
-            {card.locallyAvailable || card.locallyTracked ? (
-              <TicketMetadata
-                ticket={{
-                  id: card.id,
-                  source: card.source,
-                  ...card.localMetadata,
-                }}
-                context={card.localContext}
-                field="notes"
-                showLabel
-                onChange={() => {}}
-              />
-            ) : (
-              <PrInfoPopup
-                title={`Локальные заметки · #${card.id}`}
-                className="secondary ticket-notes-trigger"
-                trigger={
-                  <>
-                    <NotebookPen size={16} /> Заметки
-                  </>
-                }
-              >
-                <MemoryMarkdown body={card.localMetadata?.notes || "Локальных заметок пока нет."} />
-                <p className="muted">Для редактирования добавьте тикет в локальный список.</p>
-              </PrInfoPopup>
-            )}
             <PrInfoPopup
               title={`Все поля тикета #${card.id}`}
               className="secondary"
@@ -767,6 +744,7 @@ export function TicketCard({
           >
             {[
               { id: "content", label: "Содержание", icon: FileText },
+              { id: "notes", label: "Заметки", icon: NotebookPen },
               {
                 id: "prs",
                 label: "Связанные PR",
@@ -806,6 +784,31 @@ export function TicketCard({
             ))}
           </div>
           <div ref={contentRoot} className="ticket-card-body">
+            <section
+              role="tabpanel"
+              id={tabId + "-panel-notes"}
+              aria-labelledby={tabId + "-notes"}
+              hidden={activeTab !== "notes"}
+            >
+              {notesOpened &&
+                (card.locallyAvailable || card.locallyTracked ? (
+                  <TicketNoteForm
+                    key={reference}
+                    ticket={{ id: card.id, source: card.source }}
+                    embedded
+                    onBusy={() => {}}
+                    onSaved={() => {}}
+                    onClose={() => {}}
+                  />
+                ) : (
+                  <>
+                    <MemoryMarkdown
+                      body={card.localMetadata?.notes || "Локальных заметок пока нет."}
+                    />
+                    <p className="muted">Для редактирования добавьте тикет в локальный список.</p>
+                  </>
+                ))}
+            </section>
             <section
               role="tabpanel"
               id={tabId + "-panel-history"}
