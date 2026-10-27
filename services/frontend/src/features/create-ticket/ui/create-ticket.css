@@ -132,10 +132,35 @@
   border-radius: 10px;
   min-width: 0;
 }
+.create-ticket-sidebar .single-select {
+  min-width: 0;
+}
+.create-ticket-sidebar .multi-select-trigger {
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
 .create-ticket-sidebar .multi-select-trigger > span {
   min-width: 0;
-  overflow-wrap: anywhere;
-  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.create-ticket-sidebar .multi-select-trigger .create-ticket-person {
+  display: flex;
+  min-width: 0;
+}
+.create-ticket-sidebar .multi-select-trigger .create-ticket-person > span:last-child,
+.create-ticket-sidebar .multi-select-trigger .ticket-type-badge {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.create-ticket-sidebar .multi-select-trigger .initials-avatar {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
 }
 .create-ticket-fields {
   min-width: 0;
