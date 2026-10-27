@@ -46,6 +46,7 @@
   min-width: 100%;
 }
 .ticket-kanban-scrollbar {
+  overscroll-behavior-x: contain;
   overflow-x: auto;
   overflow-y: hidden;
   margin-bottom: 12px;

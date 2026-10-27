@@ -23,11 +23,12 @@ export function useKanbanScroll() {
       if (event.defaultPrevented || event.ctrlKey) return;
       const delta = event.deltaX || (event.shiftKey ? event.deltaY : 0);
       if (!delta || bar.scrollWidth <= bar.clientWidth) return;
-      // Only Shift+wheel replaces the native gesture. For trackpads leave the
-      // vertical axis to the browser, including non-cancelable momentum events.
-      if (event.shiftKey) {
-        if (!event.cancelable) return;
-        event.preventDefault();
+      // The clipped viewport is not a native scroll container: CSS overscroll
+      // containment cannot stop history swipes here. Consume horizontal gestures
+      // even at either edge; leave predominantly vertical gestures to the browser.
+      if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        if (event.cancelable) event.preventDefault();
+        else if (event.shiftKey) return;
       }
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? view.clientWidth : 1;
       bar.scrollLeft += delta * unit;
