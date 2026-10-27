@@ -73,6 +73,7 @@ export class PullRequests {
     {
       monitor: Monitor;
       card: any;
+      reviewKey?: { monitor: string; repo: string; number: number };
       connectionProject: string;
       pat: string;
       diff?: Promise<
@@ -192,9 +193,50 @@ export class PullRequests {
       tickets: [],
       images: [],
     };
+    // A preview has its own read-only identity; reviews retain their persisted identity.
+    let reviewKey: { monitor: string; repo: string; number: number } | undefined;
+    for (const savedMonitor of this.monitors().filter(
+      (candidate) =>
+        azureBase(candidate.source) === source &&
+        (candidate.azure_project === project.name || candidate.azure_project === project.id),
+    )) {
+      const saved = this.store.db
+        .prepare(
+          "SELECT repo FROM pull_requests WHERE monitor=? AND lower(repo)=lower(?) AND number=?",
+        )
+        .get(savedMonitor.id, repo, number) as { repo: string } | undefined;
+      if (!saved) continue;
+      const key = { monitor: savedMonitor.id, repo: saved.repo, number };
+      const local = this.list(
+        { client: savedMonitor.client, project: savedMonitor.project },
+        key,
+      )[0];
+      if (!local?.review_count) continue;
+      reviewKey = key;
+      card.review_count = local.review_count;
+      card.last_saved_review = local.last_saved_review;
+      // Never label an older review as a review of the fresh Azure revision.
+      if (local.head === card.head && local.target === card.target) {
+        for (const field of [
+          "review_id",
+          "review_status",
+          "summary",
+          "coverage",
+          "error",
+          "usage_id",
+          "finished_at",
+          "model",
+          "review_usage",
+          "review_metadata",
+        ])
+          card[field] = local[field];
+      }
+      break;
+    }
     const entry = {
       monitor: m,
       card,
+      reviewKey,
       connectionProject: settings.azureProject,
       pat: this.store.secret("azure.pat") || "",
     };
@@ -247,6 +289,22 @@ export class PullRequests {
       this.previews.delete(id);
       throw error;
     }
+  }
+  reviews(monitor: string, repo: string, number: number) {
+    const key = monitor.startsWith("preview:")
+      ? this.preview(monitor, repo, number).reviewKey
+      : { monitor, repo, number };
+    if (!key) return [];
+    return this.store.db
+      .prepare(
+        "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? ORDER BY created_at DESC,rowid DESC",
+      )
+      .all(key.monitor, key.repo, key.number)
+      .map((review: any) => ({
+        ...review,
+        review_usage: new UsageLedger(this.store).reviewUsage(review.id, review.usage_id),
+        review_metadata: new UsageLedger(this.store).reviewMetadata(review.id, review.usage_id),
+      }));
   }
   private completedPending = new Map<string, Promise<any>>();
   async completed(monitor: string, page: number) {

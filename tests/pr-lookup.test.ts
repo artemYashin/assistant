@@ -164,6 +164,63 @@ test("known active lookup keeps the ordinary card and preserves populated record
   const active = await prs.lookup(42);
   assert.equal(active.href, `/pull-requests?monitor=existing&repo=${repo}&number=42`);
   assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
+  for (const [id, revision, date] of [
+    ["old-review", "old-head", "2026-10-25"],
+    ["latest-review", head, "2026-10-26"],
+  ]) {
+    store.db
+      .prepare(
+        "INSERT INTO pr_reviews(id,monitor,repo,number,head,target,status,summary,coverage,created_at,options) VALUES (?,'existing',?,42,?,?,'completed',?,'Full',?,?)",
+      )
+      .run(
+        id,
+        repo,
+        revision,
+        target,
+        `Report ${id}`,
+        date,
+        JSON.stringify({ maxToolCalls: 12, reviewerComment: "Saved comment" }),
+      );
+  }
+  const reviewsBefore = store.db.prepare("SELECT * FROM pr_reviews ORDER BY id").all();
+  const local = prs.list(
+    { client: "Customer", project: "Project" },
+    { monitor: "existing", repo, number: 42 },
+  )[0];
+  const completedDetail = {
+    ...detail,
+    status: "completed",
+    lastMergeSourceCommit: { commitId: head },
+    lastMergeTargetCommit: { commitId: target },
+  };
+  const completed = (await prs.previewDetail(completedDetail)).item;
+  assert.equal(completed.exactPreview, true);
+  assert.equal(completed.review_count, 2);
+  assert.equal(completed.summary, local.summary);
+  assert.deepEqual(completed.review_metadata, local.review_metadata);
+  assert.deepEqual(completed.last_saved_review, local.last_saved_review);
+  assert.deepEqual(prs.reviews(completed.monitor, repo, 42), prs.reviews("existing", repo, 42));
+  assert.equal(
+    prs.reviews(completed.monitor, repo, 42)[0].review_metadata.reviewerComment,
+    "Saved comment",
+  );
+  assert.throws(() => prs.reviews(completed.monitor, repo, 43), /устарел/);
+  const newer = (
+    await prs.previewDetail({ ...completedDetail, lastMergeSourceCommit: { commitId: "new-head" } })
+  ).item;
+  assert.equal(newer.summary, undefined);
+  assert.equal(newer.last_saved_review.head, head, "older report retains its reviewed revision");
+  assert.equal(newer.review_count, 2);
+  const foreign = (
+    await prs.previewDetail({
+      ...completedDetail,
+      repository: { ...detail.repository, project: { id: "another-project", name: "Foreign" } },
+    })
+  ).item;
+  assert.equal(foreign.review_count, undefined);
+  assert.deepEqual(prs.reviews(foreign.monitor, repo, 42), []);
+  assert.deepEqual(store.db.prepare("SELECT * FROM pr_reviews ORDER BY id").all(), reviewsBefore);
+  assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
   detail.status = "abandoned";
   linksFail = true;
   const abandoned = await prs.lookup(42);
@@ -171,6 +228,7 @@ test("known active lookup keeps the ordinary card and preserves populated record
   assert.match(abandoned.item.ticket_links_error, /403/);
   assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
   store.set("settings", { ...store.settings(), azureProject: "Changed" });
+  assert.throws(() => prs.reviews(completed.monitor, repo, 42), /Подключение Azure изменилось/);
   await assert.rejects(
     prs.commits(abandoned.item.monitor, repo, 42),
     /Подключение Azure изменилось/,

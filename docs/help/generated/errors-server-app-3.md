@@ -81,46 +81,46 @@
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1837.
+Источник: services/backend/src/app.ts:1826.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1852.
+Источник: services/backend/src/app.ts:1841.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1880.
+Источник: services/backend/src/app.ts:1869.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1885.
+Источник: services/backend/src/app.ts:1874.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1918.
+Источник: services/backend/src/app.ts:1907.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1920.
+Источник: services/backend/src/app.ts:1909.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:1937.
+Источник: services/backend/src/app.ts:1926.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:1946.
+Источник: services/backend/src/app.ts:1935.

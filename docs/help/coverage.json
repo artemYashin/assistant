@@ -2,7 +2,7 @@
   "note": "Source fingerprints for help maintenance. Regeneration does not replace review of authored articles.",
   "files": {
     "services/backend/src/agent.ts": "2890a5f927b5bd2391076731fbd5714110e130682ed9324bdab3f70b47d2d380",
-    "services/backend/src/app.ts": "00a3ef4dcb6593ed4c6ca2c883d518e0d76ad94aa1b90897c3f6163fcde0be72",
+    "services/backend/src/app.ts": "00f6f7174f426e5c45c857c378535798ee9e87f3b22b93b3e597ebecc7dd4fb9",
     "services/backend/src/auth.ts": "c56fb70e85c2297e7b2c5e443609968e86ea856d7e2ab9bfcd5d468d425cb404",
     "services/backend/src/azure-browser.ts": "a429cf21d9bda5541087ba34dcef6143634f3592ab591d56f29f18f6191d19d1",
     "services/backend/src/azure-pat-reminder.ts": "1150e1d87633e63c025b49a53a373330d393b3a4bbc3f071b4ec9e900b7622ef",
@@ -56,7 +56,7 @@
     "services/backend/src/pr-ticket-sources.ts": "a816cb7fddb19c019b923dd29639f132493b571f49d0d371538152c401f09943",
     "services/backend/src/pr-tools.ts": "a41383da78262e9aaafc934123ef99062beb290bd773f58af14136b78f02cd38",
     "services/backend/src/project-sync-scheduler.ts": "7e70c4c9c10272a40c238b438904dcb31c3cb00ebfd47cd3035c54174a84a832",
-    "services/backend/src/pull-requests.ts": "75c69b52c755f79132cbffd92628ef288f431ca1c33ab96f32db54dede451a51",
+    "services/backend/src/pull-requests.ts": "f4086c67cfb956c874f183eaaa0f1aba2b9a9728caa78212643307e66ffcb130",
     "services/backend/src/review-files.ts": "66b86728ed9faaed65486613190fdc8c7e8baed457bd8da528576410fc0a9271",
     "services/backend/src/review-progress.ts": "29ad1d689b02bfb922d9d6035a1c337c49c3c68b9b1862d05fd2283f216d1978",
     "services/backend/src/review-questions.ts": "06e2a05760416f1e716fbbb70efe40994ea48fe43d84eb0fb7a52de1097427e3",

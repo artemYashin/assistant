@@ -1799,18 +1799,7 @@ export function createApp(
         number: z.coerce.number().int().positive(),
       })
       .parse(req.query);
-    res.json(
-      store.db
-        .prepare(
-          "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? ORDER BY created_at DESC,rowid DESC",
-        )
-        .all(input.monitor, input.repo, input.number)
-        .map((review: any) => ({
-          ...review,
-          review_usage: new UsageLedger(store).reviewUsage(review.id, review.usage_id),
-          review_metadata: new UsageLedger(store).reviewMetadata(review.id, review.usage_id),
-        })),
-    );
+    res.json(pullRequests.reviews(input.monitor, input.repo, input.number));
   });
   app.get("/api/pr", (req, res) => {
     const target =
