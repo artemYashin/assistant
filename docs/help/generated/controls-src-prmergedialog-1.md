@@ -43,69 +43,69 @@ Rebase с merge commit
 
 ### Элемент
 
-Сохранить локальные связи с тикетами в Azure Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp; Write.
+Обойти проверки и политики Azure Требуется право Bypass policies when completing pull requests. Ожидание CI не блокирует отправку merge. Конфликты кода нужно разрешить; завершившийся с ошибкой CI блокируется в Orbit.
 
 Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:215.
 
 ### Элемент
 
-#
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:248.
-
-### Элемент
-
-Привязать тикет #{…} в Azure
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:249.
-
-### Элемент
-
-Обойти проверки и политики Azure Требуется право Bypass policies when completing pull requests. Ожидание CI не блокирует отправку merge. Конфликты кода нужно разрешить; завершившийся с ошибкой CI блокируется в Orbit.
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:290.
-
-### Элемент
-
 Причина обхода политик
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:310.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:235.
 
 ### Элемент
 
 Причина обхода политик · Почему PR нужно завершить без прохождения проверок
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:312.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:237.
 
 ### Элемент
 
 Привяжите сначала тикет / Не удалось проверить связанные тикеты / Проверяем связанные тикеты… / · Сменить статусы связанных тикетов Связано тикетов: {…} / Привяжите сначала тикет / Проверка связей с Azure…
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:326.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:251.
 
 ### Элемент
 
 Повторить проверку связей
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:365.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:290.
 
 ### Элемент
 
 Применить статус ко всем
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:380.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:305.
 
 ### Элемент
 
 Не менять статус
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:388.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:313.
 
 ### Элемент
 
 Новый статус #{…}
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:415.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:340.
+
+### Элемент
+
+Сохранить локальные связи с тикетами в Azure Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp; Write.
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:361.
+
+### Элемент
+
+#
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:394.
+
+### Элемент
+
+Привязать тикет #{…} в Azure
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:395.
 
 ### Элемент
 

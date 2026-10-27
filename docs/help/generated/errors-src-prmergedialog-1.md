@@ -15,4 +15,4 @@
 
 Не удалось проверить связанные тикеты
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:332.
+Источник: services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx:257.

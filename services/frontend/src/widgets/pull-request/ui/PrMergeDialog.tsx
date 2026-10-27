@@ -215,81 +215,6 @@ export function PrMergeDialog({
             <label className="pr-merge-toggle">
               <input
                 type="checkbox"
-                checked={linkLocalTickets}
-                disabled={busy}
-                onChange={(event) => {
-                  setLinkLocalTickets(event.target.checked);
-                  setPlan(null);
-                  setBusy(true);
-                }}
-              />
-              <span>
-                <strong>
-                  <Ticket size={16} /> Сохранить локальные связи с тикетами в Azure
-                </strong>
-                <small>
-                  Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи
-                  не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp;
-                  Write.
-                </small>
-              </span>
-            </label>
-            {linkLocalTickets && plan && (
-              <section className="pr-merge-tickets">
-                <h3>
-                  <Ticket size={18} /> Тикеты для привязки · {selectedLinks.length} из{" "}
-                  {plan.localTicketIds?.length || 0}
-                </h3>
-                <ul className="pr-merge-ticket-list">
-                  {(plan.localTicketIds || []).map((id) => {
-                    const ticket = plan.localTickets?.find((t) => t.id === id);
-                    return (
-                      <li key={id} className="pr-merge-ticket">
-                        <label className="pr-merge-link-choice">
-                          <input
-                            type="checkbox"
-                            aria-label={`Привязать тикет #${id} в Azure`}
-                            checked={selectedLinks.includes(id)}
-                            disabled={busy}
-                            onChange={(event) =>
-                              setSelectedLinkIds(
-                                event.target.checked
-                                  ? [...selectedLinks, id]
-                                  : selectedLinks.filter((value) => value !== id),
-                              )
-                            }
-                          />
-                          <span>
-                            <span className="pr-merge-ticket-heading">
-                              <span className="pr-merge-ticket-id">
-                                <Ticket size={14} />#{id}
-                              </span>
-                              <strong>{ticket?.title || "Тикет"}</strong>
-                            </span>
-                            {ticket?.state && (
-                              <StatusBadge state={ticket.state} colors={statusColors} />
-                            )}
-                          </span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="muted">
-                  {!plan.localTicketIds?.length
-                    ? "Локальных связей для сохранения нет. "
-                    : !selectedLinks.length
-                      ? "Ничего не выбрано — связи в Azure не изменятся. "
-                      : "В Azure будут сохранены только выбранные связи. "}
-                  При ошибке привязки merge не отправляется. Уже сохранённые связи остаются в Azure.
-                </p>
-              </section>
-            )}
-          </section>
-          <section className="pr-merge-option-block">
-            <label className="pr-merge-toggle">
-              <input
-                type="checkbox"
                 checked={bypassPolicy}
                 disabled={busy}
                 onChange={(event) => setBypassPolicy(event.target.checked)}
@@ -428,6 +353,81 @@ export function PrMergeDialog({
                 <p className="muted">
                   По умолчанию статусы не меняются. Выберите новый статус только для нужных тикетов.
                   Перед слиянием проверяются коммиты и список тикетов.
+                </p>
+              </section>
+            )}
+          </section>
+          <section className="pr-merge-option-block">
+            <label className="pr-merge-toggle">
+              <input
+                type="checkbox"
+                checked={linkLocalTickets}
+                disabled={busy}
+                onChange={(event) => {
+                  setLinkLocalTickets(event.target.checked);
+                  setPlan(null);
+                  setBusy(true);
+                }}
+              />
+              <span>
+                <strong>
+                  <Ticket size={16} /> Сохранить локальные связи с тикетами в Azure
+                </strong>
+                <small>
+                  Перед merge привязать вручную добавленные тикеты к PR в Azure. Существующие связи
+                  не дублируются. «Не учитывать» пропускаются. Требуется Work Items: Read &amp;
+                  Write.
+                </small>
+              </span>
+            </label>
+            {linkLocalTickets && plan && (
+              <section className="pr-merge-tickets">
+                <h3>
+                  <Ticket size={18} /> Тикеты для привязки · {selectedLinks.length} из{" "}
+                  {plan.localTicketIds?.length || 0}
+                </h3>
+                <ul className="pr-merge-ticket-list">
+                  {(plan.localTicketIds || []).map((id) => {
+                    const ticket = plan.localTickets?.find((t) => t.id === id);
+                    return (
+                      <li key={id} className="pr-merge-ticket">
+                        <label className="pr-merge-link-choice">
+                          <input
+                            type="checkbox"
+                            aria-label={`Привязать тикет #${id} в Azure`}
+                            checked={selectedLinks.includes(id)}
+                            disabled={busy}
+                            onChange={(event) =>
+                              setSelectedLinkIds(
+                                event.target.checked
+                                  ? [...selectedLinks, id]
+                                  : selectedLinks.filter((value) => value !== id),
+                              )
+                            }
+                          />
+                          <span>
+                            <span className="pr-merge-ticket-heading">
+                              <span className="pr-merge-ticket-id">
+                                <Ticket size={14} />#{id}
+                              </span>
+                              <strong>{ticket?.title || "Тикет"}</strong>
+                            </span>
+                            {ticket?.state && (
+                              <StatusBadge state={ticket.state} colors={statusColors} />
+                            )}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="muted">
+                  {!plan.localTicketIds?.length
+                    ? "Локальных связей для сохранения нет. "
+                    : !selectedLinks.length
+                      ? "Ничего не выбрано — связи в Azure не изменятся. "
+                      : "В Azure будут сохранены только выбранные связи. "}
+                  При ошибке привязки merge не отправляется. Уже сохранённые связи остаются в Azure.
                 </p>
               </section>
             )}

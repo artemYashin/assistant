@@ -352,7 +352,7 @@
     "services/frontend/src/widgets/pull-request/ui/PrCommitsDialog.tsx": "c3430f5e71a2b4ac653cc6965ce4526ad6cd6763a55f1a11dcc2443e0a4fc442",
     "services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx": "954f1f147009a00ac4fafbdb6c5e7849180f022b622da8d8d18e15ca2029c85a",
     "services/frontend/src/widgets/pull-request/ui/PrHealth.tsx": "50947fcfacc1d63e14140d10a2c283227a33944ae048020d2275d806ab2cc284",
-    "services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx": "569d9e57dd299f899cd483943b1f236b08ad1a2528b7e1762a86c0173fff8902",
+    "services/frontend/src/widgets/pull-request/ui/PrMergeDialog.tsx": "01e65f271880f09885da6aec41f2c52947565cb7116abf286f7fe85eddacb979",
     "services/frontend/src/widgets/pull-request/ui/PrReviewDialog.tsx": "c5cd7e63bd6b52137c172eaf64556a0a8da3bc5ff27269bb968bb15fa5669f04",
     "services/frontend/src/widgets/pull-request/ui/PrTicketLink.tsx": "26c89e852dd0d9f767356e6c3c450bbe83b8d0e66ff528f43b4c6744a6c3bae1",
     "services/frontend/src/widgets/pull-request/ui/PrTicketSourcesInfo.tsx": "2b5d5bb3d53923dabfba884c19d43d574e8b1735f81b8f530c0cadb8f81ff738",
