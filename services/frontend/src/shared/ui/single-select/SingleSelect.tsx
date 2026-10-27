@@ -45,7 +45,11 @@ export function SingleSelect({
     trigger = useRef<HTMLButtonElement>(null),
     search = useRef<HTMLInputElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<CSSProperties>({});
+  const [position, setPosition] = useState<CSSProperties>({
+    position: "fixed",
+    top: 0,
+    left: 0,
+  });
   const id = useId();
   useLayoutEffect(() => {
     if (!open || !floating) return;
@@ -80,7 +84,7 @@ export function SingleSelect({
   }, [open, floating]);
   useEffect(() => {
     if (!open) return;
-    search.current?.focus();
+    search.current?.focus({ preventScroll: true });
     const outside = (e: Event) => {
       if (!root.current?.contains(e.target as Node) && !panel.current?.contains(e.target as Node))
         setOpen(false);
@@ -136,7 +140,7 @@ export function SingleSelect({
             aria-pressed={value === o.value}
             onClick={() => {
               setOpen(false);
-              trigger.current?.focus();
+              trigger.current?.focus({ preventScroll: true });
               onChange(o.value);
             }}
           >
@@ -158,7 +162,7 @@ export function SingleSelect({
           e.preventDefault();
           e.stopPropagation();
           setOpen(false);
-          trigger.current?.focus();
+          trigger.current?.focus({ preventScroll: true });
         }
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
           e.preventDefault();

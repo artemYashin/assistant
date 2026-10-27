@@ -323,7 +323,7 @@
     "services/frontend/src/shared/ui/page-heading/index.ts": "e3ef06a3113355ed2988448c5f23ee08fd599e36d531205f081b11c13df79c68",
     "services/frontend/src/shared/ui/save-button/ContextSaveButton.tsx": "3c04a3a1839167d2974b1cea4a50f0debaab46f6511796791de38dc613b24146",
     "services/frontend/src/shared/ui/save-button/index.ts": "1a2774808f033ac14f7ce6e3b3386b409176ae28a225a224c5b7afc67bacacbe",
-    "services/frontend/src/shared/ui/single-select/SingleSelect.tsx": "ea5a2bdf2f9f929752aa80cf3eefb65f7f15c93cd1fe5a8eb9b255d397ef0071",
+    "services/frontend/src/shared/ui/single-select/SingleSelect.tsx": "0161e22888128169fba627e6d43426c2651c85afeaa99f08d633377d647ad16c",
     "services/frontend/src/shared/ui/single-select/index.ts": "fced1d5b2868f06778b8966fc410ac56d7f181d24137a91e6f939d5e4cb5d8a1",
     "services/frontend/src/widgets/assistant/index.ts": "cdf140b380e2d699a13775f96f1f0831990c9bf89cfec1c811d2de13a45cc844",
     "services/frontend/src/widgets/assistant/model/resize.tsx": "462f9a411726f6400e5059b7dbe323b1867a1c937a106ec430ced9efc2721c6c",
