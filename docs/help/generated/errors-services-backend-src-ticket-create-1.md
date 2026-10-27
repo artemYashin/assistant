@@ -69,22 +69,22 @@ Azure не вернул список типов задач
 
 Найдите и выберите исполнителя в Azure заново
 
-Источник: services/backend/src/ticket-create.ts:202.
+Источник: services/backend/src/ticket-create.ts:203.
 
 ### Сообщение
 
 Создание уже выполняется. Дождитесь результата.
 
-Источник: services/backend/src/ticket-create.ts:217.
+Источник: services/backend/src/ticket-create.ts:219.
 
 ### Сообщение
 
 Azure не вернул номер созданного тикета
 
-Источник: services/backend/src/ticket-create.ts:225.
+Источник: services/backend/src/ticket-create.ts:227.
 
 ### Сообщение
 
 Не удалось подтвердить результат создания. Проверьте Azure перед новой попыткой: тикет мог уже создаться. Черновик сохранён в открытой форме.
 
-Источник: services/backend/src/ticket-create.ts:237.
+Источник: services/backend/src/ticket-create.ts:255.

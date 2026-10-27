@@ -81,6 +81,7 @@ function CreateTicketForm({
     [],
   );
   const [texts, setTexts] = useState({ description: "", acceptance: "", steps: "" });
+  const [recent, setRecent] = useState<Person[]>([]);
   const [people, setPeople] = useState<Person[]>([]),
     [person, setPerson] = useState<Person | null>(null);
   const [query, setQuery] = useState(""),
@@ -112,6 +113,20 @@ function CreateTicketForm({
       live = false;
     };
   }, [source, type]);
+  useEffect(() => {
+    let live = true;
+    api(`/developers/recent-assignees?${new URLSearchParams({ source })}`)
+      .then((value) => {
+        if (live) setRecent(value.users);
+      })
+      .catch((e) => {
+        if (live) setError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [source]);
+  const suggestedPeople = query.trim().length < 2 ? recent : people;
   useEffect(() => {
     let live = true;
     setPeople([]);
@@ -266,15 +281,16 @@ function CreateTicketForm({
                   { value: "", label: "Не назначен" },
                   ...[
                     ...new Map(
-                      [...(person ? [person] : []), ...people.filter((p) => p.email)].map((p) => [
-                        p.id,
-                        p,
-                      ]),
+                      [...(person ? [person] : []), ...suggestedPeople.filter((p) => p.email)].map(
+                        (p) => [p.id, p],
+                      ),
                     ).values(),
                   ].map((p) => ({ value: p.id, label: `${p.name} · ${p.email}` })),
                 ]}
                 onChange={(id) =>
-                  setPerson(people.find((p) => p.id === id) || (person?.id === id ? person : null))
+                  setPerson(
+                    suggestedPeople.find((p) => p.id === id) || (person?.id === id ? person : null),
+                  )
                 }
                 onSearch={setQuery}
                 loading={searching}
@@ -284,8 +300,10 @@ function CreateTicketForm({
                     {o.value && (
                       <InitialsAvatar
                         name={
-                          (person?.id === o.value ? person : people.find((p) => p.id === o.value))
-                            ?.name || o.label
+                          (person?.id === o.value
+                            ? person
+                            : suggestedPeople.find((p) => p.id === o.value)
+                          )?.name || o.label
                         }
                       />
                     )}

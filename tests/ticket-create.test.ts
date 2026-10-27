@@ -224,3 +224,37 @@ test("field cache survives restart, expires at 24 hours, separates types/project
   await service.options(input.source, "Bug");
   assert.equal(reads, 5);
 });
+
+test("successful creation updates shared recent assignees; failures preserve prior choices", async (t) => {
+  const { store, service, input } = setup(t);
+  const recentKey = "azure.assignees.recent:" + input.source;
+  const recent = Array.from({ length: 8 }, (_, i) => ({
+    id: randomUUID(),
+    name: `Person ${i}`,
+    email: `p${i}@example.test`,
+  }));
+  store.set(recentKey, recent);
+  let reject = true;
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method !== "POST") return fields();
+    if (reject) return Response.json({ message: "Denied" }, { status: 400 });
+    return Response.json({ id: 99 });
+  };
+  const body = { ...input, assigneeId: recent[5].id };
+  await assert.rejects(service.create(body), /Denied/);
+  assert.deepEqual(store.get(recentKey, []), recent);
+  reject = false;
+  await service.create(body);
+  assert.deepEqual(store.get(recentKey, []), [
+    recent[5],
+    ...recent.filter((p) => p.id !== recent[5].id),
+  ]);
+  const next = { id: randomUUID(), name: "New person", email: "new@example.test" };
+  store.set("developers:" + input.source, [next]);
+  await service.create({ ...input, requestId: randomUUID(), assigneeId: next.id });
+  const saved = store.get<any[]>(recentKey, []);
+  assert.equal(saved.length, 8);
+  assert.deepEqual(saved[0], next);
+  assert.deepEqual(saved[1], recent[5]);
+  assert.deepEqual(store.get("azure.assignees.recent:Other", []), []);
+});

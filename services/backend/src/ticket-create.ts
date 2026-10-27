@@ -193,6 +193,7 @@ export class TicketCreate {
         throw new AppError(400, `Выбранный тип не поддерживает поле ${field}`);
       patch.push({ op: "add", path: `/fields/${field}`, value: await commentMarkdown(value) });
     }
+    let selectedUser: { id: string; name: string; email: string } | undefined;
     if (input.assigneeId) {
       const users = [
         ...this.store.get<any[]>("developers:" + input.source, []),
@@ -200,6 +201,7 @@ export class TicketCreate {
       ];
       const user = users.find((u) => u.id === input.assigneeId);
       if (!user?.email) throw new AppError(400, "Найдите и выберите исполнителя в Azure заново");
+      selectedUser = user;
       patch.push({ op: "add", path: "/fields/System.AssignedTo", value: user.email });
     }
     for (const relation of input.relations)
@@ -229,6 +231,22 @@ export class TicketCreate {
         title: item.fields?.["System.Title"] || input.title,
       };
       this.store.set(key, { fingerprint, result });
+      if (selectedUser) {
+        const recentKey = "azure.assignees.recent:" + input.source;
+        const recent = this.store.get<{ id: string; name: string; email: string }[]>(recentKey, []);
+        const assigned = item.fields?.["System.AssignedTo"];
+        this.store.set(
+          recentKey,
+          [
+            {
+              id: selectedUser.id,
+              name: assigned?.displayName || selectedUser.name,
+              email: assigned?.uniqueName || selectedUser.email,
+            },
+            ...recent.filter((user) => user.id !== selectedUser.id),
+          ].slice(0, 8),
+        );
+      }
       return result;
     } catch (error) {
       const status = (error as any)?.upstreamStatus;
