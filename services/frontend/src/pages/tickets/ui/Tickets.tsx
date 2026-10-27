@@ -467,6 +467,7 @@ export function Tickets({
         </TicketFilterPanel>
         {view === "kanban" && (
           <TicketKanbanSort
+            actions={<ExportTickets tickets={selection.selected} />}
             value={sort}
             onChange={setSort}
             tickets={sorted}

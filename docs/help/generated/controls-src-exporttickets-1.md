@@ -21,106 +21,106 @@
 
 Развернуть экспорт
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:437.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:442.
 
 ### Элемент
 
 Закрыть экспорт
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:445.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:450.
 
 ### Элемент
 
 Свернуть экспорт
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:471.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:476.
 
 ### Элемент
 
 Убрать из экспорта #{…}
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:534.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:539.
 
 ### Элемент
 
 Номер или название тикета · Найти тикет для экспорта
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:574.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:579.
 
 ### Элемент
 
 Отменить добавление
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:582.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:587.
 
 ### Элемент
 
 # · · В корзине /
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:597.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:602.
 
 ### Элемент
 
 Добавить тикет
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:629.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:634.
 
 ### Элемент
 
 Выбрать все
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:645.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:650.
 
 ### Элемент
 
 Снять выбор
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:661.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:666.
+
+### Элемент
+
+Переместить столбец: {…}
+
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:687.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:747.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:713.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:756.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:722.
 
 ### Элемент
 
 Название файла · Будет скачан:
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:778.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:744.
 
 ### Элемент
 
 Форматированная таблица для вставки в редакторы и чаты; оформление зависит от приложения / Текст с Markdown-разметкой для приложений, которые её поддерживают · / · Копирование… / Скопировано / Скопировать таблицу / Скопировать Markdown
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:797.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:763.
 
 ### Элемент
 
 Подготовка… / Скачать {…}
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:823.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:789.
 
 ### Элемент
 
 Отменить закрытие
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:843.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:809.
 
 ### Элемент
 
 Продолжить работу
 
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:857.
-
-### Элемент
-
-Закрыть и сбросить список
-
-Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:865.
+Источник: services/frontend/src/features/export-tickets/ui/ExportTickets.tsx:823.

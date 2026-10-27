@@ -1,5 +1,5 @@
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
-import { useDragAutoScroll } from "../../../shared/lib/drag-auto-scroll/index.js";
+import { usePointerSort } from "../../../shared/lib/pointer-sort/index.js";
 import { useTicketColumnResize } from "../model/useTicketColumnResize.js";
 import {
   Fragment,
@@ -90,17 +90,17 @@ export function useTicketColumns(trash = false, namespace = "active") {
   const dialog = useRef<HTMLDialogElement>(null);
   const [draftOrder, setDraftOrder] = useState<string[]>([]);
   const [draftHidden, setDraftHidden] = useState<string[]>([]);
-  const [dragged, setDragged] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{
-    key: string;
-    edge: "before" | "after";
-  } | null>(null);
-  const autoScroll = useDragAutoScroll();
-  const finishDrag = () => {
-    autoScroll.stop();
-    setDragged(null);
-    setDropTarget(null);
-  };
+  const visibleOrder = draftOrder.filter(allowed);
+  const sort = usePointerSort((from, to) => {
+    setDraftOrder((current) => {
+      const next = [...current];
+      const start = next.indexOf(visibleOrder[from]);
+      const end = next.indexOf(visibleOrder[to]);
+      next.splice(end, 0, ...next.splice(start, 1));
+      return next;
+    });
+  });
+  const finishDrag = sort.cancel;
   const close = () => {
     finishDrag();
     dialog.current?.close();
@@ -174,67 +174,25 @@ export function useTicketColumns(trash = false, namespace = "active") {
           <p className="muted">
             Перетащите строки за ручку слева. ID и название всегда остаются видимыми и идут первыми.
           </p>
-          <div
-            className="ticket-column-options"
-            onDragOver={(event) => autoScroll.onDragOver(event, !!dragged)}
-            onDragLeave={autoScroll.onDragLeave}
-          >
-            {draftOrder.filter(allowed).map((key) => {
+          <div className="ticket-column-options" ref={sort.list}>
+            {visibleOrder.map((key, index) => {
               const label = options.find(([id]) => id === key)![1];
               return (
                 <div
                   key={key}
-                  className={`ticket-column-option${!draftHidden.includes(key) ? " is-enabled" : ""}${dragged === key ? " is-dragging" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
-                  onDragOver={(event) => {
-                    if (!dragged || dragged === key) {
-                      setDropTarget(null);
-                      return;
-                    }
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = "move";
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    setDropTarget({
-                      key,
-                      edge: event.clientY < rect.top + rect.height / 2 ? "before" : "after",
-                    });
-                  }}
-                  onDragLeave={(event) => {
-                    if (
-                      !(event.relatedTarget instanceof Node) ||
-                      !event.currentTarget.contains(event.relatedTarget)
-                    ) {
-                      setDropTarget((current) => (current?.key === key ? null : current));
-                    }
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    if (dragged)
-                      reorder(
-                        dragged,
-                        key,
-                        event.clientY < rect.top + rect.height / 2 ? "before" : "after",
-                      );
-                    finishDrag();
-                  }}
+                  className={`ticket-column-option${!draftHidden.includes(key) ? " is-enabled" : ""}${sort.isActive(index) ? " is-dragging" : ""}`}
+                  style={sort.style(index)}
                 >
                   <button
                     type="button"
                     className="icon-button ticket-column-grip"
-                    draggable
+                    {...sort.handlers(index)}
                     aria-label={`Переместить столбец: ${label}`}
                     title="Перетащите для изменения порядка. С клавиатуры: Alt + ↑ / ↓."
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData("text/plain", key);
-                      event.dataTransfer.effectAllowed = "move";
-                      setDragged(key);
-                    }}
-                    onDragEnd={finishDrag}
                     onKeyDown={(event) => {
                       if (!event.altKey || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
                       event.preventDefault();
-                      const target =
-                        draftOrder[draftOrder.indexOf(key) + (event.key === "ArrowUp" ? -1 : 1)];
+                      const target = visibleOrder[index + (event.key === "ArrowUp" ? -1 : 1)];
                       if (target)
                         reorder(key, target, event.key === "ArrowUp" ? "before" : "after");
                     }}

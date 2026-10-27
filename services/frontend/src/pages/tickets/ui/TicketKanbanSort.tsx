@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ticketStateColumns, type KanbanTicket } from "../model/kanban.js";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { ticketColumns } from "../../../features/ticket-columns/index.js";
@@ -12,7 +13,9 @@ export function TicketKanbanSort({
   tickets,
   selectedStates,
   settings,
+  actions,
 }: {
+  actions?: ReactNode;
   value: string;
   onChange: (value: string) => void;
   trash?: boolean;
@@ -72,6 +75,7 @@ export function TicketKanbanSort({
         )}
       />
       <span className="muted ticket-kanban-sort-count">Показано: {count}</span>
+      {actions}
     </section>
   );
 }

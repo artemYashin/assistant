@@ -8471,7 +8471,7 @@ summary > svg {
   gap: 6px;
 }
 .ticket-columns-dialog .ticket-column-option.is-dragging {
-  opacity: 0.45;
+  opacity: 1;
 }
 .ticket-columns-dialog .ticket-column-option.is-drop-before {
   border-top-color: #427eae;
@@ -18198,4 +18198,34 @@ a.pr-branch-link:focus-visible {
 .project-kanban-options small {
   color: #64748b;
   line-height: 1.4;
+}
+
+.ticket-columns-dialog .ticket-column-option {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.ticket-column-option,
+.export-field {
+  position: relative;
+  transition: transform 160ms ease;
+}
+.ticket-column-option.is-dragging,
+.export-field.is-dragging {
+  box-shadow: 0 8px 22px #20394d30;
+  user-select: none;
+}
+.ticket-column-grip,
+.export-column-grip {
+  touch-action: none;
+  cursor: grab;
+}
+.ticket-column-option.is-dragging .ticket-column-grip,
+.export-field.is-dragging .export-column-grip {
+  cursor: grabbing;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket-column-option,
+  .export-field {
+    transition: none;
+  }
 }

@@ -369,6 +369,7 @@ export function TicketTrash({
         </TicketFilterPanel>
         {view === "kanban" && (
           <TicketKanbanSort
+            actions={<ExportTickets tickets={selection.selected} trash />}
             tickets={filtered}
             selectedStates={states}
             settings={settings}

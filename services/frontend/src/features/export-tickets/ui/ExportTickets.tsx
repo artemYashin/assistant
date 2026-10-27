@@ -4,7 +4,7 @@ import { ticketsMarkdown } from "../lib/tickets-markdown.js";
 import { ticketExportFilename } from "../lib/ticket-export-filename.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import type { TicketExportContext } from "../../../../../backend/src/ticket-export-context.js";
-import { useDragAutoScroll } from "../../../shared/lib/drag-auto-scroll/index.js";
+import { usePointerSort } from "../../../shared/lib/pointer-sort/index.js";
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import {
   exportColumns,
@@ -128,7 +128,6 @@ export function TicketExportDialog({
     };
   }, [minimized]);
   const management = useLocalManagement();
-  const autoScroll = useDragAutoScroll();
   const draftActive = useRef(false),
     minimizedRef = useRef(false);
   const draftTickets = useRef<(CsvTicket | number)[]>([]);
@@ -152,11 +151,17 @@ export function TicketExportDialog({
   const [enabled, setEnabled] = useState<ExportColumnKey[]>(defaultExportColumns);
   const [adding, setAdding] = useState(false),
     [query, setQuery] = useState("");
-  const [dragged, setDragged] = useState<ExportColumnKey | null>(null);
-  const [dropTarget, setDropTarget] = useState<{
-    key: ExportColumnKey;
-    edge: "before" | "after";
-  } | null>(null);
+  const visibleOrder = order.filter((key) => management || key !== "developers");
+  const sort = usePointerSort((from, to) => {
+    if (busy) return;
+    setOrder((current) => {
+      const next = [...current];
+      const start = next.indexOf(visibleOrder[from]);
+      const end = next.indexOf(visibleOrder[to]);
+      next.splice(end, 0, ...next.splice(start, 1));
+      return next;
+    });
+  });
   const lock = useRef(false),
     request = useRef<AbortController | null>(null);
   const columns = useMemo(
@@ -314,7 +319,7 @@ export function TicketExportDialog({
     closeConfirmation.current?.close();
     request.current?.abort();
     setLoading(false);
-    autoScroll.stop();
+    sort.cancel();
     dialog.current?.close();
     draftActive.current = false;
     setActive(false);
@@ -325,7 +330,7 @@ export function TicketExportDialog({
     setAdding(false);
   };
   const minimize = () => {
-    autoScroll.stop();
+    sort.cancel();
     dialog.current?.close();
     minimizedRef.current = true;
     setMinimized(true);
@@ -670,102 +675,63 @@ export function TicketExportDialog({
                 Снять выбор
               </button>
             </div>
-            <div
-              className="export-fields-list"
-              onDragOver={(event) => autoScroll.onDragOver(event, !!dragged && !busy)}
-              onDragLeave={autoScroll.onDragLeave}
-            >
-              {order
-                .filter((key) => management || key !== "developers")
-                .map((key, index) => {
-                  const column = exportColumns.find((c) => c.key === key)!;
-                  return (
-                    <div
-                      key={key}
-                      className={`export-field${enabled.includes(key) ? " is-enabled" : ""}${dropTarget?.key === key ? ` is-drop-${dropTarget.edge}` : ""}`}
-                      draggable={!busy}
-                      onDragStart={(e) => {
-                        setDragged(key);
-                        e.dataTransfer.setData("text/plain", key);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      onDragOver={(e) => {
-                        if (!busy && dragged) {
-                          e.preventDefault();
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setDropTarget(
-                            dragged === key
-                              ? null
-                              : {
-                                  key,
-                                  edge: e.clientY < rect.top + rect.height / 2 ? "before" : "after",
-                                },
-                          );
-                        }
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (!busy && dragged && dragged !== key) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const after = e.clientY >= rect.top + rect.height / 2;
-                          setOrder((current) => {
-                            const next = current.filter((item) => item !== dragged);
-                            next.splice(next.indexOf(key) + (after ? 1 : 0), 0, dragged);
-                            return next;
-                          });
-                        }
-                        autoScroll.stop();
-                        setDragged(null);
-                        setDropTarget(null);
-                      }}
-                      onDragEnd={() => {
-                        autoScroll.stop();
-                        setDragged(null);
-                        setDropTarget(null);
-                      }}
+            <div className="export-fields-list" ref={sort.list}>
+              {visibleOrder.map((key, index) => {
+                const column = exportColumns.find((c) => c.key === key)!;
+                return (
+                  <div
+                    key={key}
+                    className={`export-field${enabled.includes(key) ? " is-enabled" : ""}${sort.isActive(index) ? " is-dragging" : ""}`}
+                    style={sort.style(index)}
+                  >
+                    <button
+                      type="button"
+                      className="icon-button export-column-grip"
+                      aria-label={`Переместить столбец: ${column.label}`}
+                      disabled={busy}
+                      {...sort.handlers(index)}
                     >
                       <GripVertical size={16} />
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={enabled.includes(key)}
-                          disabled={busy}
-                          onChange={(e) =>
-                            setEnabled((current) =>
-                              e.target.checked
-                                ? [...current, key]
-                                : current.filter((k) => k !== key),
-                            )
-                          }
-                        />
-                        <span>
-                          {column.label}
-                          <small>{column.header}</small>
-                        </span>
-                      </label>
-                      <div>
-                        <button
-                          type="button"
-                          className="icon-button"
-                          aria-label={`Выше: ${column.label}`}
-                          disabled={busy || index === 0}
-                          onClick={() => move(key, order[index - 1])}
-                        >
-                          <ArrowUp size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-button"
-                          aria-label={`Ниже: ${column.label}`}
-                          disabled={busy || index === order.length - 1}
-                          onClick={() => move(key, order[index + 1])}
-                        >
-                          <ArrowDown size={13} />
-                        </button>
-                      </div>
+                    </button>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={enabled.includes(key)}
+                        disabled={busy}
+                        onChange={(e) =>
+                          setEnabled((current) =>
+                            e.target.checked ? [...current, key] : current.filter((k) => k !== key),
+                          )
+                        }
+                      />
+                      <span>
+                        {column.label}
+                        <small>{column.header}</small>
+                      </span>
+                    </label>
+                    <div>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label={`Выше: ${column.label}`}
+                        disabled={busy || index === 0}
+                        onClick={() => move(key, visibleOrder[index - 1])}
+                      >
+                        <ArrowUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label={`Ниже: ${column.label}`}
+                        disabled={busy || index === visibleOrder.length - 1}
+                        onClick={() => move(key, visibleOrder[index + 1])}
+                      >
+                        <ArrowDown size={13} />
+                      </button>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           </section>
         </div>

@@ -33,22 +33,22 @@ Deselect All
 
 Переместить столбец: {…} · Перетащите для изменения порядка. С клавиатуры: Alt + ↑ / ↓.
 
-Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:221.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:186.
 
 ### Элемент
 
 Ширины будут сброшены при сохранении / Сбросить ширины
 
-Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:262.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:220.
 
 ### Элемент
 
 Cancel
 
-Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:271.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:229.
 
 ### Элемент
 
 Сохранить
 
-Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:274.
+Источник: services/frontend/src/features/ticket-columns/ui/TicketColumns.tsx:232.
