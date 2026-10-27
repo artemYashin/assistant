@@ -1,3 +1,4 @@
+import { TicketRelatedTickets } from "./TicketRelatedTickets.js";
 import { TicketLinkedPullRequests } from "./TicketLinkedPullRequests.js";
 import { TicketHistory } from "./TicketHistory.js";
 import { locateContentLink } from "../lib/locate-content-link.js";
@@ -72,6 +73,8 @@ export function TicketCard({
   const tabId = useId();
   const [prsOpened, setPrsOpened] = useState(false);
   const [prCount, setPrCount] = useState<number | null>(null);
+  const [relatedOpened, setRelatedOpened] = useState(false);
+  const [relatedCount, setRelatedCount] = useState<number | undefined>();
   const [notesOpened, setNotesOpened] = useState(false);
   const [historyOpened, setHistoryOpened] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
@@ -79,6 +82,7 @@ export function TicketCard({
   const changeTab = (tab: string) => {
     if (contentRoot.current) tabScroll.current[activeTab] = contentRoot.current.scrollTop;
     setActiveTab(tab);
+    if (tab === "related") setRelatedOpened(true);
     if (tab === "notes") setNotesOpened(true);
     if (tab === "prs") setPrsOpened(true);
     if (tab === "history") setHistoryOpened(true);
@@ -124,6 +128,8 @@ export function TicketCard({
   useEffect(() => {
     setActiveTab("content");
     setHistoryOpened(false);
+    setRelatedOpened(false);
+    setRelatedCount(undefined);
     setNotesOpened(false);
     setPrsOpened(false);
     setPrCount(null);
@@ -744,7 +750,7 @@ export function TicketCard({
           >
             {[
               { id: "content", label: "Содержание", icon: FileText },
-              { id: "notes", label: "Заметки", icon: NotebookPen },
+              { id: "related", label: "Связанные тикеты", icon: Link2, count: relatedCount },
               {
                 id: "prs",
                 label: "Связанные PR",
@@ -765,6 +771,7 @@ export function TicketCard({
                 count: card.attachments.length,
               },
               { id: "history", label: "История", icon: History },
+              { id: "notes", label: "Заметки", icon: NotebookPen },
             ].map(({ id, label, icon: Icon, count }) => (
               <button
                 key={id}
@@ -924,6 +931,23 @@ export function TicketCard({
                 />
               </details>
             </div>
+            <section
+              className="ticket-tab-panel ticket-section-neutral"
+              role="tabpanel"
+              id={tabId + "-panel-related"}
+              aria-labelledby={tabId + "-related"}
+              hidden={activeTab !== "related"}
+            >
+              {relatedOpened && (
+                <TicketRelatedTickets
+                  key={reference}
+                  reference={reference}
+                  typeColors={typeColors}
+                  statusColors={colors}
+                  onCount={setRelatedCount}
+                />
+              )}
+            </section>
             <section
               className="ticket-tab-panel ticket-section-neutral"
               role="tabpanel"

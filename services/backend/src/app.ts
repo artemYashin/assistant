@@ -1363,6 +1363,9 @@ export function createApp(
       await connectors.ticketDetails(z.coerce.number().int().positive().parse(req.params.id), true),
     );
   });
+  app.get("/api/ticket-cards/:ref/related-tickets", async (req, res) => {
+    res.json(await connectors.relatedTickets(String(req.params.ref)));
+  });
   app.get("/api/ticket-cards/:ref/pull-requests", async (req, res) => {
     res.json(await ticketPullRequests.list(String(req.params.ref)));
   });

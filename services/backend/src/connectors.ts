@@ -1258,6 +1258,88 @@ export class Connectors {
       }));
     return { items, nextSkip: start > 0 ? start : null };
   }
+  async relatedTickets(ref: string) {
+    const card = this.ticketCard(ref);
+    const settings = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const source = this.store.source(settings);
+    const check = () => {
+      if (
+        card.source !== source ||
+        source !== this.store.source() ||
+        pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(409, "Подключение Azure изменилось. Откройте тикет заново.");
+    };
+    check();
+    const item = await this.azure(`workitems/${card.id}?$expand=relations`, {}, settings, pat);
+    check();
+    if (item.id !== card.id || !Array.isArray(item.relations ?? []))
+      throw new AppError(502, "Azure не вернул связи тикета");
+    const labels: Record<string, string> = {
+      "System.LinkTypes.Hierarchy-Reverse": "Родитель",
+      "System.LinkTypes.Hierarchy-Forward": "Дочерний",
+      "System.LinkTypes.Related": "Связанный",
+      "System.LinkTypes.Dependency-Forward": "Последователь",
+      "System.LinkTypes.Dependency-Reverse": "Предшественник",
+      "System.LinkTypes.Duplicate-Forward": "Дубликат",
+      "System.LinkTypes.Duplicate-Reverse": "Дубликат для",
+    };
+    const links = new Map<string, { id: number; relation: string }>();
+    for (const relation of item.relations || []) {
+      if (
+        typeof relation?.rel !== "string" ||
+        !relation.rel.includes("LinkTypes.") ||
+        typeof relation.url !== "string"
+      )
+        continue;
+      // Extract IDs only; never fetch arbitrary relation URLs with the PAT.
+      const match = /\/_apis\/wit\/workitems\/([1-9]\d*)$/i.exec(relation.url);
+      if (!match || !relation.url.startsWith(azureBase(settings.azureUrl) + "/")) continue;
+      const id = Number(match[1]);
+      if (!Number.isSafeInteger(id)) continue;
+      links.set(id + ":" + relation.rel, {
+        id,
+        relation: labels[relation.rel] || relation.attributes?.name || relation.rel,
+      });
+    }
+    const ids = [...new Set([...links.values()].map((link) => link.id))];
+    const details = new Map<number, any>();
+    for (let start = 0; start < ids.length; start += 200) {
+      const batch = await this.azure(
+        "workitemsbatch",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ids: ids.slice(start, start + 200),
+            fields: ["System.Title", "System.WorkItemType", "System.State", "System.TeamProject"],
+            errorPolicy: "Omit",
+          }),
+        },
+        settings,
+        pat,
+      );
+      check();
+      if (!Array.isArray(batch.value)) throw new AppError(502, "Azure не вернул связанные тикеты");
+      for (const ticket of batch.value) details.set(ticket.id, ticket.fields || {});
+    }
+    return {
+      source,
+      items: [...links.values()].map((link) => {
+        const fields = details.get(link.id);
+        return {
+          ...link,
+          title: fields?.["System.Title"] || "",
+          type: fields?.["System.WorkItemType"] || "",
+          state: fields?.["System.State"] || "",
+          project: fields?.["System.TeamProject"] || "",
+          canOpen: !!fields && fields["System.TeamProject"] === settings.azureProject,
+          unavailable: !fields,
+        };
+      }),
+    };
+  }
+
   ticketCard(ref: string) {
     const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as
       { data: string } | undefined;

@@ -57,70 +57,70 @@
 
 Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: services/backend/src/app.ts:1422.
+Источник: services/backend/src/app.ts:1425.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: services/backend/src/app.ts:1463.
+Источник: services/backend/src/app.ts:1466.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/app.ts:1468.
+Источник: services/backend/src/app.ts:1471.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1546.
+Источник: services/backend/src/app.ts:1549.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1572.
+Источник: services/backend/src/app.ts:1575.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1605.
+Источник: services/backend/src/app.ts:1608.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1910.
+Источник: services/backend/src/app.ts:1913.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1925.
+Источник: services/backend/src/app.ts:1928.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1953.
+Источник: services/backend/src/app.ts:1956.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1958.
+Источник: services/backend/src/app.ts:1961.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1991.
+Источник: services/backend/src/app.ts:1994.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1993.
+Источник: services/backend/src/app.ts:1996.

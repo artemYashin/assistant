@@ -2,7 +2,7 @@
   "note": "Source fingerprints for help maintenance. Regeneration does not replace review of authored articles.",
   "files": {
     "services/backend/src/agent.ts": "9252a16b31e693259b7584d7bcc613be616f701ac61c440f3191166bf9110d8e",
-    "services/backend/src/app.ts": "f42eac8351ecfb3ca4b9745b11f2a8f36d982c345b58976a9e567b80cfe943c3",
+    "services/backend/src/app.ts": "84d220f91d34a7ad668654dd74cc66f4a1ca7febaced6853490e4416085313d7",
     "services/backend/src/auth.ts": "c56fb70e85c2297e7b2c5e443609968e86ea856d7e2ab9bfcd5d468d425cb404",
     "services/backend/src/azure-browser.ts": "a429cf21d9bda5541087ba34dcef6143634f3592ab591d56f29f18f6191d19d1",
     "services/backend/src/azure-pat-reminder.ts": "1150e1d87633e63c025b49a53a373330d393b3a4bbc3f071b4ec9e900b7622ef",
@@ -27,7 +27,7 @@
     "services/backend/src/code-progress.ts": "7cd42399bccbf39e9340a218ffbc79b170a24e81543243408efeb77d1156c33b",
     "services/backend/src/code-tools.ts": "f7b71b637e94aa3a3294e5aaa65bd47e86fc65f827d7c494edd112e05d7ea185",
     "services/backend/src/comment-markdown.ts": "ce75ba3a708a4d1dc45ce892add7cf1671e4f79e1e1a2518e5b431b557c479e2",
-    "services/backend/src/connectors.ts": "86722f1a7f57e5cd137bf4a30135d3a8d481aa0c05a9cdcf3d0d8e460fc1149d",
+    "services/backend/src/connectors.ts": "c51544ed4ed073eaf750e269ba7fc16339558c2cc9133ea800ec400084bfc9ec",
     "services/backend/src/context-delete.ts": "2cbefdb9f4f088e33af83800619aee24c8e775c7babf8da69e64434d659c6564",
     "services/backend/src/developer-vacation-status.ts": "6a03bcb3406a898f0894c628e0a0a228b12773ca1f36a085888c23391c4baa37",
     "services/backend/src/developer-vacations.ts": "23ec238416061f91bbb69abc1422b3b0edcee46e28af96d2351ec398fdd557e3",
@@ -373,10 +373,11 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "78ef35d1d30f729d0fb03bb9f0de8fd40139852a7ad22b2f5a36806d9454fcd5",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "940a9988bb31ba56375d3f63cd20ca69cc24cbeba6c54404a96bebaf6d662c9a",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "fdeac024793a48952ca7ece6b10926c62668b6fd6b066feafa67acaa0a7b4df4",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
     "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "ca0764c5226c7c24a3b279c8ed3dca8926dbf8e6e439c2c13f2bdf4edcfc4cc9",
     "services/frontend/src/widgets/ticket/ui/TicketLinkedPullRequests.tsx": "bd0c501f4eac6c8e9f8826df4dfe52e07a0c023ed2d1e99a2171b2a886073069",
+    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "9f543916009d326ac3fe4bbb3b253b14df19b7f705f7e834575c2610331c662d",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }
 }
