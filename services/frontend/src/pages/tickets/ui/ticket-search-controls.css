@@ -12,6 +12,10 @@
   gap: 6px;
   white-space: nowrap;
   min-height: 40px;
+  align-self: center;
+}
+.ticket-search-controls-toggle[aria-expanded="true"] {
+  margin-bottom: 12px;
 }
 .ticket-search-controls-content:not([hidden]) {
   display: contents;
@@ -30,7 +34,8 @@
     grid-template-columns: minmax(0, 1fr);
     row-gap: 8px;
   }
-  .ticket-search-controls-toggle {
+  .ticket-search-controls-toggle[aria-expanded] {
     justify-self: start;
+    margin-bottom: 0;
   }
 }
