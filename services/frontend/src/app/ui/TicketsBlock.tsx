@@ -1,5 +1,5 @@
 import { Cloud } from "lucide-react";
-import { CreateTicket, TicketTrash } from "../../pages/tickets/index.js";
+import { TicketTrash } from "../../pages/tickets/index.js";
 import { Link } from "react-router-dom";
 import { Ticket, Trash2 } from "lucide-react";
 import { TicketViewSwitch, useTicketView, Tickets } from "../../pages/tickets/index.js";
@@ -65,7 +65,6 @@ export function TicketsBlock({
               Корзина
             </Link>
           </nav>
-          <CreateTicket settings={settings} />
           <TicketViewSwitch view={view} onChange={setView} />
         </div>
       )}

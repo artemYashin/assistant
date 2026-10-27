@@ -2,7 +2,11 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-left: auto;
+  justify-content: center;
+  padding: 9px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 9px;
 }
 .create-ticket-dialog {
   width: min(1180px, calc(100vw - 32px));

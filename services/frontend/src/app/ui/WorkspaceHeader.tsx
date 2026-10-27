@@ -1,6 +1,7 @@
 import { CalendarNotifications } from "../../widgets/calendar-notifications/index.js";
 import { ChevronRight, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { ContextPicker } from "../../widgets/context-settings/index.js";
+import { CreateTicket } from "../../pages/tickets/index.js";
 import { TicketLookupDialog } from "./TicketLookupDialog.js";
 import type { WorkspaceState } from "../model/useWorkspace.js";
 
@@ -38,6 +39,7 @@ export function WorkspaceHeader({
         onSettingsChange={() => setRefresh((value) => value + 1)}
       />
       <div className="topbar-actions">
+        <CreateTicket settings={settings} />
         <TicketLookupDialog
           typeColors={settings?.typeColors}
           statusColors={settings?.statusColors}
