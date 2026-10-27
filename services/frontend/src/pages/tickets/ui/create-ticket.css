@@ -5,7 +5,7 @@
   margin-left: auto;
 }
 .create-ticket-dialog {
-  width: min(820px, calc(100vw - 32px));
+  width: min(1180px, calc(100vw - 32px));
   max-height: 90dvh;
   padding: 24px;
   border: 1px solid #d7e2dc;
@@ -84,4 +84,52 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.create-ticket-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.create-ticket-sidebar {
+  display: grid;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid #dce7df;
+  background: #f5f8f6;
+  border-radius: 10px;
+  min-width: 0;
+}
+.create-ticket-sidebar .multi-select-trigger > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.create-ticket-fields {
+  min-width: 0;
+}
+.create-ticket-editor h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.create-ticket-editor .tiptap {
+  min-height: 140px;
+}
+@media (max-width: 800px) {
+  .create-ticket-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .create-ticket-sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 500px) {
+  .create-ticket-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.create-ticket-editor .tiptap > p:only-child:has(> br:only-child)::before {
+  content: "Введите текст…";
 }

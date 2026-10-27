@@ -18,6 +18,7 @@ type EditTarget = {
   label: string;
 };
 type Props = {
+  label?: string;
   notesOnly?: boolean;
   text: string;
   disabled: boolean;
@@ -194,7 +195,7 @@ export function CommentEditor(props: Props) {
     onTransaction: () => rerender((n) => n + 1),
     editorProps: {
       attributes: {
-        "aria-label": "Комментарий",
+        "aria-label": props.label || "Комментарий",
         role: "textbox",
         "aria-multiline": "true",
       },
@@ -427,10 +428,12 @@ export function CommentEditor(props: Props) {
         <textarea
           ref={rawInput}
           className="comment-markdown-input"
-          aria-label="Markdown комментария"
+          aria-label={props.label ? `${props.label} · Markdown` : "Markdown комментария"}
           value={props.text}
           disabled={props.disabled}
-          placeholder="Напишите комментарий в Markdown…"
+          placeholder={
+            props.label ? "Введите текст в Markdown…" : "Напишите комментарий в Markdown…"
+          }
           onChange={(event) => props.onChange(event.target.value)}
           onPaste={(event) => {
             const files = Array.from(event.clipboardData.files).filter((file) =>

@@ -1248,6 +1248,31 @@ export function createApp(
       .parse(req.query);
     res.json(await ticketCreate.options(source, type));
   });
+  const createImageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 3 },
+  }).single("image");
+  app.post(
+    "/api/azure/tickets/create-images",
+    (req, res, next) => {
+      createImageUpload(req, res, (error) =>
+        error ? next(new AppError(400, "Один файл PNG, JPEG, GIF или WebP до 10 МБ.")) : next(),
+      );
+    },
+    async (req, res) => {
+      const input = z
+        .object({
+          source: z.string().min(1).max(2000),
+          requestId: z.string().uuid(),
+          uploadId: z.string().uuid(),
+        })
+        .parse(req.body);
+      if (!req.file) throw new AppError(400, "Выберите изображение.");
+      res.json(
+        await ticketCreate.upload(input.source, input.requestId, input.uploadId, req.file.buffer),
+      );
+    },
+  );
   app.post("/api/azure/tickets/create", async (req, res) => {
     res.json(await ticketCreate.create(req.body));
   });

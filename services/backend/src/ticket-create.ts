@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { Store, AppError } from "./store.js";
 import { azureBase, requestJson } from "./http.js";
-import { commentMarkdown } from "./comment-markdown.js";
+import { commentImageType, commentMarkdown } from "./comment-markdown.js";
 
 export const createTicketSchema = z
   .object({
@@ -62,18 +62,49 @@ export class TicketCreate {
     const base = azureBase(s.azureUrl);
     const call = (path: string, init: RequestInit = {}) =>
       requestJson(
-        `${base}/${encodeURIComponent(s.azureProject)}/_apis/wit/${path}?api-version=${s.azureVersion}`,
+        `${base}/${encodeURIComponent(s.azureProject)}/_apis/wit/${path}${path.includes("?") ? "&" : "?"}api-version=${s.azureVersion}`,
         {
           ...init,
           headers: {
             Authorization: `Basic ${Buffer.from(`:${pat}`).toString("base64")}`,
             "Content-Type": "application/json-patch+json",
+            ...init.headers,
           },
         },
         "Azure DevOps",
         { includeErrorMessage: true },
       );
-    return { call, guard, base };
+    return { call, guard, base, project: s.azureProject };
+  }
+  async upload(source: string, requestId: string, uploadId: string, bytes: Buffer) {
+    z.string().uuid().parse(requestId);
+    z.string().uuid().parse(uploadId);
+    const { call, guard, base, project } = this.connection(source);
+    const type = commentImageType(bytes);
+    const key = `ticket.create-images:${source}:${requestId}`;
+    const hash = createHash("sha256").update(bytes).digest("hex");
+    const uploads = this.store.get<Record<string, { hash: string; url: string }>>(key, {});
+    if (uploads[uploadId]) {
+      if (uploads[uploadId].hash !== hash)
+        throw new AppError(409, "Изображение изменилось. Добавьте его заново.");
+      return uploads[uploadId];
+    }
+    if (Object.keys(uploads).length >= 10)
+      throw new AppError(400, "До 10 загруженных изображений на один черновик тикета.");
+    const extension = type === "image/jpeg" ? "jpg" : type.split("/")[1];
+    const item = await call(`attachments?fileName=image.${extension}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: new Uint8Array(bytes),
+    });
+    const id = z.string().uuid().parse(item.id);
+    const image = {
+      hash,
+      url: `${base}/${encodeURIComponent(project)}/_apis/wit/attachments/${id}`,
+    };
+    this.store.set(key, { ...this.store.get(key, {}), [uploadId]: image });
+    guard();
+    return image;
   }
   async options(source: string, type?: string) {
     const { call, guard } = this.connection(source);
@@ -112,7 +143,19 @@ export class TicketCreate {
       { op: "add", path: "/fields/System.Title", value: input.title },
     ];
     for (const [name, field] of Object.entries(fields)) {
-      const value = input[name as keyof typeof fields];
+      let value = input[name as keyof typeof fields];
+      value = value.replace(
+        /https:\/\/orbit\.invalid\/create-ticket-image\/([0-9a-f-]{36})/g,
+        (_match, id: string) => {
+          const image = this.store.get<Record<string, { url: string }>>(
+            `ticket.create-images:${input.source}:${input.requestId}`,
+            {},
+          )[id];
+          if (!image)
+            throw new AppError(400, "Изображение ещё не загружено. Повторите создание тикета.");
+          return image.url;
+        },
+      );
       if (!value.trim()) continue;
       if (!options.fields?.includes(field))
         throw new AppError(400, `Выбранный тип не поддерживает поле ${field}`);

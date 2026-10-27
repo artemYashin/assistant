@@ -7,36 +7,36 @@
 
 ### Элемент
 
-Markdown комментария · Напишите комментарий в Markdown…
+{…} · Markdown / Markdown комментария · Введите текст в Markdown… / Напишите комментарий в Markdown…
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:427.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:428.
 
 ### Элемент
 
 Описание изображения / Текст ссылки
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:472.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:475.
 
 ### Элемент
 
 Адрес
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:481.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:484.
 
 ### Элемент
 
 Сохранить
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:490.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:493.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:493.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:496.
 
 ### Элемент
 
 Удалить · картинку / ссылку
 
-Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:496.
+Источник: services/frontend/src/entities/rich-content/ui/CommentEditor.tsx:499.

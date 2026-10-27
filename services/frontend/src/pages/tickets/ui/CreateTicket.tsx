@@ -1,3 +1,4 @@
+import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -8,6 +9,7 @@ import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { ticketPath } from "../../../shared/config/routes/index.js";
 import "./create-ticket.css";
 
+const imageMarker = (id: string) => `https://orbit.invalid/create-ticket-image/${id}`;
 type Person = { id: string; name: string; email: string };
 const textFields = [
   ["description", "System.Description", "Описание"],
@@ -71,6 +73,13 @@ function CreateTicketForm({
   const [fields, setFields] = useState<string[]>([]),
     [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
+  const images = useRef<{ id: string; file: File; preview: string; uploaded?: boolean }[]>([]);
+  useEffect(
+    () => () => {
+      images.current.forEach((image) => URL.revokeObjectURL(image.preview));
+    },
+    [],
+  );
   const [texts, setTexts] = useState({ description: "", acceptance: "", steps: "" });
   const [people, setPeople] = useState<Person[]>([]),
     [person, setPerson] = useState<Person | null>(null);
@@ -136,6 +145,28 @@ function CreateTicketForm({
     dialog.addEventListener("cancel", cancel);
     return () => dialog.removeEventListener("cancel", cancel);
   }, [busy, dialog]);
+  function addImages(files: File[]) {
+    if (busy) return [];
+    const added: { src: string; alt: string }[] = [];
+    for (const file of files) {
+      if (
+        !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
+        !file.size ||
+        file.size > 10 * 1024 * 1024
+      ) {
+        setError("Поддерживаются PNG, JPEG, GIF и WebP до 10 МБ.");
+        continue;
+      }
+      if (images.current.length >= 10) {
+        setError("До 10 изображений на один черновик тикета.");
+        break;
+      }
+      const id = crypto.randomUUID();
+      images.current.push({ id, file, preview: URL.createObjectURL(file) });
+      added.push({ src: imageMarker(id), alt: file.name || "Изображение" });
+    }
+    return added;
+  }
   async function create() {
     if (busy || result) return;
     if (relations.some((r) => !/^[1-9]\d*$/.test(r.id) || !Number.isSafeInteger(Number(r.id)))) {
@@ -145,6 +176,22 @@ function CreateTicketForm({
     setBusy(true);
     setError("");
     try {
+      const visibleText = textFields
+        .filter(([, field]) => fields.includes(field))
+        .map(([key]) => texts[key])
+        .join("\n");
+      for (const image of images.current.filter((image) =>
+        visibleText.includes(imageMarker(image.id)),
+      )) {
+        if (image.uploaded) continue;
+        const form = new FormData();
+        form.append("source", source);
+        form.append("requestId", requestId);
+        form.append("uploadId", image.id);
+        form.append("image", image.file);
+        await api("/azure/tickets/create-images", "POST", form);
+        image.uploaded = true;
+      }
       const value = await api("/azure/tickets/create", "POST", {
         requestId,
         source,
@@ -158,7 +205,7 @@ function CreateTicketForm({
       });
       setResult(value);
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message + " Черновик и загруженные картинки остаются в открытой форме.");
     } finally {
       setBusy(false);
     }
@@ -191,142 +238,157 @@ function CreateTicketForm({
         </div>
       ) : (
         <>
-          <div className="create-ticket-fields">
-            <SingleSelect
-              label="Тип задачи"
-              value={type}
-              options={[
-                { value: "", label: "Выберите тип задачи" },
-                ...types.map((t) => ({ value: t, label: t })),
-              ]}
-              onChange={setType}
-              disabled={busy}
-              loading={loading}
-              renderOption={(o) =>
-                o.value ? <StatusBadge kind="type" state={o.label} colors={colors} /> : o.label
-              }
-            />
-            <label>
-              Название
-              <input
-                value={title}
-                maxLength={255}
+          <div
+            className="create-ticket-layout"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.stopPropagation();
+            }}
+          >
+            <aside className="create-ticket-sidebar" aria-label="Поля тикета">
+              <SingleSelect
+                label="Тип задачи"
+                value={type}
+                options={[
+                  { value: "", label: "Выберите тип задачи" },
+                  ...types.map((t) => ({ value: t, label: t })),
+                ]}
+                onChange={setType}
                 disabled={busy}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Что нужно сделать?"
+                loading={loading}
+                renderOption={(o) =>
+                  o.value ? <StatusBadge kind="type" state={o.label} colors={colors} /> : o.label
+                }
               />
-            </label>
-            <SingleSelect
-              label="Исполнитель Azure"
-              value={person?.id || ""}
-              options={[
-                { value: "", label: "Не назначен" },
-                ...[
-                  ...new Map(
-                    [...(person ? [person] : []), ...people.filter((p) => p.email)].map((p) => [
-                      p.id,
-                      p,
-                    ]),
-                  ).values(),
-                ].map((p) => ({ value: p.id, label: `${p.name} · ${p.email}` })),
-              ]}
-              onChange={(id) =>
-                setPerson(people.find((p) => p.id === id) || (person?.id === id ? person : null))
-              }
-              onSearch={setQuery}
-              loading={searching}
-              disabled={busy}
-              renderOption={(o) => (
-                <span className="create-ticket-person">
-                  {o.value && (
-                    <InitialsAvatar
-                      name={
-                        (person?.id === o.value ? person : people.find((p) => p.id === o.value))
-                          ?.name || o.label
+              <SingleSelect
+                label="Исполнитель Azure"
+                value={person?.id || ""}
+                options={[
+                  { value: "", label: "Не назначен" },
+                  ...[
+                    ...new Map(
+                      [...(person ? [person] : []), ...people.filter((p) => p.email)].map((p) => [
+                        p.id,
+                        p,
+                      ]),
+                    ).values(),
+                  ].map((p) => ({ value: p.id, label: `${p.name} · ${p.email}` })),
+                ]}
+                onChange={(id) =>
+                  setPerson(people.find((p) => p.id === id) || (person?.id === id ? person : null))
+                }
+                onSearch={setQuery}
+                loading={searching}
+                disabled={busy}
+                renderOption={(o) => (
+                  <span className="create-ticket-person">
+                    {o.value && (
+                      <InitialsAvatar
+                        name={
+                          (person?.id === o.value ? person : people.find((p) => p.id === o.value))
+                            ?.name || o.label
+                        }
+                      />
+                    )}
+                    <span>{o.label}</span>
+                  </span>
+                )}
+              />
+            </aside>
+            <div className="create-ticket-fields">
+              <label>
+                Название
+                <input
+                  value={title}
+                  maxLength={255}
+                  disabled={busy}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Что нужно сделать?"
+                />
+              </label>
+              {textFields
+                .filter(([, field]) => fields.includes(field))
+                .map(([key, , label]) => (
+                  <section key={key} className="create-ticket-editor" aria-label={label}>
+                    <h3>{label}</h3>
+                    <CommentEditor
+                      label={label}
+                      text={texts[key]}
+                      disabled={busy}
+                      onChange={(text) => setTexts((old) => ({ ...old, [key]: text }))}
+                      onImages={addImages}
+                      resolveImage={(src) =>
+                        images.current.find((image) => imageMarker(image.id) === src)?.preview ||
+                        src
                       }
                     />
-                  )}
-                  <span>{o.label}</span>
-                </span>
-              )}
-            />
-            {textFields
-              .filter(([, field]) => fields.includes(field))
-              .map(([key, , label]) => (
-                <label key={key}>
-                  {label}
-                  <textarea
-                    aria-label={label}
-                    rows={4}
-                    maxLength={100000}
-                    value={texts[key]}
-                    disabled={busy}
-                    onChange={(e) => setTexts((old) => ({ ...old, [key]: e.target.value }))}
-                    placeholder="Текст или Markdown"
-                  />
-                </label>
-              ))}
-            <section className="create-ticket-relations">
-              <strong>Связанные тикеты</strong>
-              <p className="muted">
-                Выберите роль существующего тикета относительно нового: родитель (Parent), дочерний
-                (Child) или связанный (Related).
-              </p>
-              {relations.map((r) => (
-                <div className="create-ticket-relation" key={r.key}>
-                  <SingleSelect
-                    label="Связь"
-                    value={r.kind}
-                    searchable={false}
-                    options={[
-                      { value: "parent", label: "Родитель · Parent" },
-                      { value: "child", label: "Дочерний · Child" },
-                      { value: "related", label: "Связанный · Related" },
-                    ]}
-                    disabled={busy}
-                    onChange={(kind) =>
-                      setRelations((old) => old.map((v) => (v.key === r.key ? { ...v, kind } : v)))
-                    }
-                  />
-                  <label>
-                    Номер тикета
-                    <input
-                      inputMode="numeric"
-                      value={r.id}
+                  </section>
+                ))}
+              <section className="create-ticket-relations">
+                <strong>Связанные тикеты</strong>
+                <p className="muted">
+                  Выберите роль существующего тикета относительно нового: родитель (Parent),
+                  дочерний (Child) или связанный (Related).
+                </p>
+                {relations.map((r) => (
+                  <div className="create-ticket-relation" key={r.key}>
+                    <SingleSelect
+                      label="Связь"
+                      value={r.kind}
+                      searchable={false}
+                      options={[
+                        { value: "parent", label: "Родитель · Parent" },
+                        { value: "child", label: "Дочерний · Child" },
+                        { value: "related", label: "Связанный · Related" },
+                      ]}
                       disabled={busy}
-                      placeholder="#12345"
-                      onChange={(e) => {
-                        const id = e.target.value.replace(/\D/g, "");
-                        setRelations((old) => old.map((v) => (v.key === r.key ? { ...v, id } : v)));
-                      }}
+                      onChange={(kind) =>
+                        setRelations((old) =>
+                          old.map((v) => (v.key === r.key ? { ...v, kind } : v)),
+                        )
+                      }
                     />
-                  </label>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Удалить связь"
-                    disabled={busy}
-                    onClick={() => setRelations((old) => old.filter((v) => v.key !== r.key))}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className="secondary"
-                disabled={busy || relations.length >= 50}
-                onClick={() =>
-                  setRelations((old) => [
-                    ...old,
-                    { key: crypto.randomUUID(), kind: "related", id: "" },
-                  ])
-                }
-              >
-                <Plus size={15} />
-                Добавить связь
-              </button>
-            </section>
+                    <label>
+                      Номер тикета
+                      <input
+                        inputMode="numeric"
+                        value={r.id}
+                        disabled={busy}
+                        placeholder="#12345"
+                        onChange={(e) => {
+                          const id = e.target.value.replace(/\D/g, "");
+                          setRelations((old) =>
+                            old.map((v) => (v.key === r.key ? { ...v, id } : v)),
+                          );
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Удалить связь"
+                      disabled={busy}
+                      onClick={() => setRelations((old) => old.filter((v) => v.key !== r.key))}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy || relations.length >= 50}
+                  onClick={() =>
+                    setRelations((old) => [
+                      ...old,
+                      { key: crypto.randomUUID(), kind: "related", id: "" },
+                    ])
+                  }
+                >
+                  <Plus size={15} />
+                  Добавить связь
+                </button>
+              </section>
+            </div>
           </div>
           {error && (
             <p className="error" role="alert">
@@ -334,11 +396,19 @@ function CreateTicketForm({
             </p>
           )}
           <footer className="create-ticket-footer">
-            <span className="muted">Создание изменит данные в Azure DevOps.</span>
+            <span className="muted">
+              Картинки загружаются при создании в Azure. До 10 файлов по 10 МБ.
+            </span>
             <button
               type="button"
               className="primary"
-              disabled={busy || loading || !type || !title.trim()}
+              disabled={
+                busy ||
+                loading ||
+                !type ||
+                !title.trim() ||
+                Object.values(texts).some((text) => text.length > 100000)
+              }
               onClick={() => void create()}
             >
               {busy ? <LoaderCircle size={16} className="spin" /> : <Plus size={16} />}{" "}

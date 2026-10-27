@@ -9,118 +9,112 @@
 
 Создать тикет
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:23.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:25.
 
 ### Элемент
 
 Закрыть
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:173.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:220.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:188.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:235.
 
 ### Элемент
 
 Тип задачи
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:195.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:248.
 
 ### Элемент
 
 Выберите тип задачи
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:199.
-
-### Элемент
-
-Название
-
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:209.
-
-### Элемент
-
-Что нужно сделать?
-
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:211.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:252.
 
 ### Элемент
 
 Исполнитель Azure
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:219.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:262.
 
 ### Элемент
 
 Не назначен
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:223.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:266.
 
 ### Элемент
 
 {…} · {…}
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:231.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:274.
 
 ### Элемент
 
-Текст или Markdown
+Название
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:258.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:298.
+
+### Элемент
+
+Что нужно сделать?
+
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:300.
 
 ### Элемент
 
 Связь
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:277.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:334.
 
 ### Элемент
 
 Родитель · Parent
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:282.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:339.
 
 ### Элемент
 
 Дочерний · Child
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:283.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:340.
 
 ### Элемент
 
 Связанный · Related
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:284.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:341.
 
 ### Элемент
 
 Номер тикета
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:291.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:350.
 
 ### Элемент
 
 #12345
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:293.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:352.
 
 ### Элемент
 
 Удалить связь
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:304.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:365.
 
 ### Элемент
 
 Добавить связь
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:315.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:376.
 
 ### Элемент
 
 / · · Создаю… / Создать в Azure
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:338.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:402.

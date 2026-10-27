@@ -130,3 +130,54 @@ test("uncertain create cannot be retried, definitive validation failure can", as
   await assert.rejects(service.create(input), /предыдущего создания/);
   assert.equal(writes, 2);
 });
+
+test("creation images validate bytes, reuse uploads and resolve only this draft's image markers", async (t) => {
+  const { store, service, input } = setup(t);
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5X8AAAAASUVORK5CYII=",
+    "base64",
+  );
+  const uploadId = randomUUID(),
+    attachmentId = randomUUID();
+  let uploads = 0,
+    creates = 0;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes("/attachments?")) {
+      uploads++;
+      assert.match(String(url), /fileName=image.png&api-version=7.1/);
+      assert.equal(new Headers(init?.headers).get("content-type"), "application/octet-stream");
+      return Response.json({ id: attachmentId, url: "https://untrusted.test/ignore" });
+    }
+    if (init?.method !== "POST") return fields();
+    creates++;
+    const patch = JSON.parse(String(init.body));
+    const description = patch.find((p: any) => p.path === "/fields/System.Description").value;
+    assert.ok(
+      description.includes(
+        `https://ado.test/Collection/Project/_apis/wit/attachments/${attachmentId}`,
+      ),
+    );
+    assert.ok(!description.includes("orbit.invalid") && !description.includes("untrusted.test"));
+    if (creates === 1) return Response.json({ message: "Validation failure" }, { status: 400 });
+    return Response.json({ id: 44 });
+  };
+  await assert.rejects(
+    service.upload(input.source, input.requestId, uploadId, Buffer.from("not an image")),
+    /изображения/,
+  );
+  const image = await service.upload(input.source, input.requestId, uploadId, png);
+  assert.deepEqual(
+    await new TicketCreate(store).upload(input.source, input.requestId, uploadId, png),
+    image,
+  );
+  assert.equal(uploads, 1);
+  const body = {
+    ...input,
+    description: `![Screenshot](https://orbit.invalid/create-ticket-image/${uploadId})`,
+  };
+  await assert.rejects(service.create({ ...body, requestId: randomUUID() }), /не загружено/);
+  await assert.rejects(service.create(body), /Validation failure/);
+  assert.equal((await service.create(body)).id, 44);
+  assert.equal(uploads, 1);
+  assert.equal(creates, 2);
+});
