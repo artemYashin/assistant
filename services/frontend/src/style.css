@@ -18011,3 +18011,13 @@ a.pr-branch-link:focus-visible {
   min-width: 0;
   justify-items: start;
 }
+
+.bulk-ticket-trash-list {
+  max-height: 35dvh;
+  overflow-y: auto;
+  padding-left: 24px;
+}
+.bulk-ticket-trash-list li {
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}

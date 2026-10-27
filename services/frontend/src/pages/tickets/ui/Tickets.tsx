@@ -1,3 +1,4 @@
+import { BulkTicketTrash } from "./BulkTicketTrash.js";
 import { hasLocalManagement } from "../../../../../backend/src/work-mode.js";
 import { NumberInput } from "../../../shared/ui/number-input/index.js";
 import { TicketColorLegend } from "../../../entities/ticket/index.js";
@@ -483,6 +484,17 @@ export function Tickets({
               Просмотреть
               <span className="ticket-view-count">{selection.selected.length}</span>
             </button>
+          )}
+          {!!selection.selected.length && (
+            <BulkTicketTrash
+              key={currentSource}
+              tickets={selection.selected}
+              source={currentSource}
+              disabled={!!busy}
+              onRemoved={() => {
+                void run("refresh-bulk-trash", async () => {});
+              }}
+            />
           )}
           {azureMode && (
             <ImportAzureTickets
