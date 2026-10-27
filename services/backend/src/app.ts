@@ -1,3 +1,4 @@
+import { TicketCreate } from "./ticket-create.js";
 import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
 import { hasLocalManagement } from "./work-mode.js";
@@ -1239,6 +1240,16 @@ export function createApp(
       .strict()
       .parse(req.body);
     res.json(await connectors.importAzureSelection(input.ids, input.source));
+  });
+  const ticketCreate = new TicketCreate(store);
+  app.get("/api/azure/tickets/create-options", async (req, res) => {
+    const { source, type } = z
+      .object({ source: z.string().min(1).max(2000), type: z.string().min(1).max(200).optional() })
+      .parse(req.query);
+    res.json(await ticketCreate.options(source, type));
+  });
+  app.post("/api/azure/tickets/create", async (req, res) => {
+    res.json(await ticketCreate.create(req.body));
   });
   app.get("/api/azure/tickets/catalog", async (_req, res) => {
     const source = store.source();
