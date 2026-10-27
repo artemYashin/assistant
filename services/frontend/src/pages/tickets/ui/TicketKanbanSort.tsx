@@ -1,3 +1,4 @@
+import { ticketStateColumns, type KanbanTicket } from "../model/kanban.js";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { ticketColumns } from "../../../features/ticket-columns/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
@@ -8,12 +9,26 @@ export function TicketKanbanSort({
   value,
   onChange,
   trash = false,
+  tickets,
+  selectedStates,
+  settings,
 }: {
   value: string;
   onChange: (value: string) => void;
   trash?: boolean;
+  tickets: KanbanTicket[];
+  selectedStates: string[];
+  settings?: { kanbanHiddenStates?: string[]; kanbanFilterColumnsByStatus?: boolean };
 }) {
   const management = useLocalManagement();
+  const count = ticketStateColumns(
+    tickets,
+    [],
+    [],
+    selectedStates,
+    settings?.kanbanHiddenStates,
+    settings?.kanbanFilterColumnsByStatus,
+  ).reduce((total, column) => total + column.tickets.length, 0);
   const field = value.replace(/-(asc|desc)$/, "");
   const direction = value.endsWith("-asc") ? "asc" : "desc";
   const fields: readonly (readonly [string, string])[] = [
@@ -56,6 +71,7 @@ export function TicketKanbanSort({
           </span>
         )}
       />
+      <span className="muted ticket-kanban-sort-count">Показано: {count}</span>
     </section>
   );
 }

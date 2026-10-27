@@ -37,3 +37,9 @@
   width: max(100%, 240px);
   max-width: calc(100vw - 40px);
 }
+
+.ticket-kanban-sort-count {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 12px;
+}

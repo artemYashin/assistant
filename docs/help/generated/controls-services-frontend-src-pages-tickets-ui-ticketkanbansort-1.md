@@ -9,22 +9,22 @@
 
 Сортировать по
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:35.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:50.
 
 ### Элемент
 
 Порядок
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:42.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:57.
 
 ### Элемент
 
 По возрастанию
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:46.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:61.
 
 ### Элемент
 
 По убыванию
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:47.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx:62.

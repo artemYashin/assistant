@@ -51,7 +51,7 @@ error dismissible
 
 Ничего не найдено
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:686.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:694.
 
 ### Сообщение
 

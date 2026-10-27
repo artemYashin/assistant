@@ -369,6 +369,9 @@ export function TicketTrash({
         </TicketFilterPanel>
         {view === "kanban" && (
           <TicketKanbanSort
+            tickets={filtered}
+            selectedStates={states}
+            settings={settings}
             value={filters.sort}
             onChange={(value) => setFilter("sort", value)}
             trash

@@ -465,7 +465,15 @@ export function Tickets({
             )}
           </div>
         </TicketFilterPanel>
-        {view === "kanban" && <TicketKanbanSort value={sort} onChange={setSort} />}
+        {view === "kanban" && (
+          <TicketKanbanSort
+            value={sort}
+            onChange={setSort}
+            tickets={sorted}
+            selectedStates={stateFilter}
+            settings={settings}
+          />
+        )}
       </TicketSearchControls>
       <div
         className="ticket-export-bar ticket-actions-panel"
