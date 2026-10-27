@@ -35,6 +35,7 @@ test("related tickets read legacy cards, preserve links and unavailable rows, ba
     if (String(url).includes("workitemsbatch")) {
       const ids = JSON.parse(init.body).ids;
       batches.push(ids);
+      assert.ok(JSON.parse(init.body).fields.includes("System.AssignedTo"));
       if (fail) return Response.json({ value: null });
       if (changed) store.set("settings", { ...store.settings(), azureProject: "Other" });
       return Response.json({
@@ -44,6 +45,8 @@ test("related tickets read legacy cards, preserve links and unavailable rows, ba
             id,
             fields: {
               "System.Title": "Ticket " + id,
+              "System.AssignedTo":
+                id === 1 ? { displayName: "Ada Lovelace" } : id === 2 ? "Grace Hopper" : undefined,
               "System.State": "New",
               "System.WorkItemType": "Bug",
               "System.TeamProject": id === 2 ? "Other" : "Project",
@@ -75,6 +78,9 @@ test("related tickets read legacy cards, preserve links and unavailable rows, ba
   );
   assert.equal(data.items[0].relation, "Дочерний");
   assert.equal(data.items[0].canOpen, true);
+  assert.equal(data.items[0].assigned, "Ada Lovelace");
+  assert.equal(data.items[1].assigned, "Grace Hopper");
+  assert.equal(data.items[3].assigned, "");
   assert.equal(data.items[1].project, "Other");
   assert.equal(data.items[1].canOpen, false);
   assert.equal(data.items[2].unavailable, true);

@@ -9,22 +9,22 @@
 
 Обновить связи
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:81.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:83.
 
 ### Элемент
 
 Все
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:98.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:100.
 
 ### Элемент
 
 /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:106.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:108.
 
 ### Элемент
 
 Открыть тикет / Тикет недоступен в Azure / Для открытия выберите проект Azure: · #
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:124.
+Источник: services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx:126.

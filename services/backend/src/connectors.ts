@@ -1312,7 +1312,13 @@ export class Connectors {
           method: "POST",
           body: JSON.stringify({
             ids: ids.slice(start, start + 200),
-            fields: ["System.Title", "System.WorkItemType", "System.State", "System.TeamProject"],
+            fields: [
+              "System.Title",
+              "System.WorkItemType",
+              "System.State",
+              "System.TeamProject",
+              "System.AssignedTo",
+            ],
             errorPolicy: "Omit",
           }),
         },
@@ -1327,8 +1333,10 @@ export class Connectors {
       source,
       items: [...links.values()].map((link) => {
         const fields = details.get(link.id);
+        const assigned = fields?.["System.AssignedTo"];
         return {
           ...link,
+          assigned: typeof assigned === "string" ? assigned : assigned?.displayName || "",
           title: fields?.["System.Title"] || "",
           type: fields?.["System.WorkItemType"] || "",
           state: fields?.["System.State"] || "",

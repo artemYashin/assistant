@@ -27,7 +27,7 @@
     "services/backend/src/code-progress.ts": "7cd42399bccbf39e9340a218ffbc79b170a24e81543243408efeb77d1156c33b",
     "services/backend/src/code-tools.ts": "f7b71b637e94aa3a3294e5aaa65bd47e86fc65f827d7c494edd112e05d7ea185",
     "services/backend/src/comment-markdown.ts": "ce75ba3a708a4d1dc45ce892add7cf1671e4f79e1e1a2518e5b431b557c479e2",
-    "services/backend/src/connectors.ts": "c51544ed4ed073eaf750e269ba7fc16339558c2cc9133ea800ec400084bfc9ec",
+    "services/backend/src/connectors.ts": "8ee62f1af093e3acd035d3bb733bcdf1d18da7943e51f8a01e5773c4cc8e02c5",
     "services/backend/src/context-delete.ts": "2cbefdb9f4f088e33af83800619aee24c8e775c7babf8da69e64434d659c6564",
     "services/backend/src/developer-vacation-status.ts": "6a03bcb3406a898f0894c628e0a0a228b12773ca1f36a085888c23391c4baa37",
     "services/backend/src/developer-vacations.ts": "23ec238416061f91bbb69abc1422b3b0edcee46e28af96d2351ec398fdd557e3",
@@ -377,7 +377,7 @@
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
     "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "ca0764c5226c7c24a3b279c8ed3dca8926dbf8e6e439c2c13f2bdf4edcfc4cc9",
     "services/frontend/src/widgets/ticket/ui/TicketLinkedPullRequests.tsx": "bd0c501f4eac6c8e9f8826df4dfe52e07a0c023ed2d1e99a2171b2a886073069",
-    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "174f09d4f2ace1bf41a11db7b351ce1edfdb1db5520b4622dea818b665e2c0a9",
+    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "5d4384f41e74421b9682abfc1fff14e0d5ec46f927e36295d80e72fe55e34f10",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }
 }

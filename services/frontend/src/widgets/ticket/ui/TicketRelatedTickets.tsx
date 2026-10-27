@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Ticket } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
+import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { StatusBadge } from "../../../entities/ticket/index.js";
 
 import "./ticket-related-tickets.css";
@@ -10,6 +11,7 @@ const filterKey = "orbit.related-tickets.type";
 type Related = {
   id: number;
   title: string;
+  assigned?: string;
   relation: string;
   type: string;
   state: string;
@@ -150,6 +152,12 @@ export function TicketRelatedTickets({
                     </span>
                   </span>
                   <span className="related-ticket-badges">
+                    {!ticket.unavailable && (
+                      <span className="related-ticket-assignee">
+                        {ticket.assigned && <InitialsAvatar name={ticket.assigned} />}
+                        <span>{ticket.assigned || "Не назначен"}</span>
+                      </span>
+                    )}
                     {ticket.type && (
                       <StatusBadge kind="type" state={ticket.type} colors={typeColors} />
                     )}
