@@ -144,8 +144,12 @@
   font-size: 14px;
   margin: 0 0 8px;
 }
-.create-ticket-editor .tiptap {
+.create-ticket-editor .tiptap,
+.create-ticket-editor .comment-markdown-input {
   min-height: 140px;
+  max-height: none;
+  resize: vertical;
+  overflow: auto;
 }
 @media (max-width: 800px) {
   .create-ticket-layout {
