@@ -9,4 +9,4 @@
 
 Не удалось сохранить порядок.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:62.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:67.

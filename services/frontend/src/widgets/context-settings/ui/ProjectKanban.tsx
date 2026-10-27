@@ -1,3 +1,5 @@
+import { StatusBadge } from "../../../entities/ticket/index.js";
+import { useStatusSort } from "../model/useStatusSort.js";
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
@@ -14,7 +16,7 @@ export function ProjectKanban({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [dragged, setDragged] = useState<string | null>(null);
+  const [colors, setColors] = useState<Record<string, string>>({});
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({
@@ -26,8 +28,10 @@ export function ProjectKanban({
       api(`/tickets/filter-options?${query}`, "GET", undefined, controller.signal),
     ])
       .then(([saved, catalog]) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setOrder([...new Set<string>([...saved.order, ...catalog.states.filter(Boolean)])]);
+          setColors(saved.statusColors || {});
+        }
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -43,6 +47,7 @@ export function ProjectKanban({
     });
     setMessage("");
   }
+  const sort = useStatusSort(move);
   if (!context.client || !context.project)
     return <p className="muted">Выберите заказчика и проект для настройки канбана.</p>;
   return (
@@ -50,7 +55,7 @@ export function ProjectKanban({
       className="project-import-panel"
       onSubmit={async (event) => {
         event.preventDefault();
-        if (!order || busy) return;
+        if (!order || busy || sort.dragging) return;
         setBusy(true);
         setError("");
         setMessage("");
@@ -71,30 +76,31 @@ export function ProjectKanban({
         Видимые столбцы выбираются фильтром «Статус» на странице тикетов. Новые статусы добавляются
         справа, пока вы не настроите их порядок.
       </p>
-      <div className="project-kanban-order">
+      <div className="project-kanban-order" ref={sort.list}>
         {order?.map((state, index) => (
           <div
             key={state}
-            className="project-kanban-order-row"
-            draggable={!busy}
-            onDragStart={() => setDragged(state)}
-            onDragEnd={() => setDragged(null)}
-            onDragOver={(event) => {
-              if (dragged && !busy) event.preventDefault();
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              if (dragged && !busy) move(order.indexOf(dragged), index);
-              setDragged(null);
-            }}
+            className={`project-kanban-order-row${sort.isActive(index) ? " is-dragging" : ""}`}
+            style={sort.style(index)}
           >
-            <GripVertical size={16} className="muted" />
-            <span>{state}</span>
+            <button
+              type="button"
+              className="icon-button project-kanban-drag-handle"
+              aria-label={`Перетащить: ${state}`}
+              title="Перетащите для изменения порядка. Escape — отмена"
+              disabled={busy}
+              {...sort.handlers(index)}
+            >
+              <GripVertical size={15} />
+            </button>
+            <span className="project-kanban-status">
+              <StatusBadge state={state} colors={colors} />
+            </span>
             <button
               type="button"
               className="icon-button"
               aria-label={`Выше: ${state}`}
-              disabled={busy || index === 0}
+              disabled={busy || sort.dragging || index === 0}
               onClick={() => move(index, index - 1)}
             >
               <ArrowUp size={16} />
@@ -103,7 +109,7 @@ export function ProjectKanban({
               type="button"
               className="icon-button"
               aria-label={`Ниже: ${state}`}
-              disabled={busy || index === order.length - 1}
+              disabled={busy || sort.dragging || index === order.length - 1}
               onClick={() => move(index, index + 1)}
             >
               <ArrowDown size={16} />
@@ -122,7 +128,7 @@ export function ProjectKanban({
         </p>
       )}
       {message && <p role="status">{message}</p>}
-      <ContextSaveButton type="submit" busy={busy} disabled={!order} />
+      <ContextSaveButton type="submit" busy={busy} disabled={!order || sort.dragging} />
     </form>
   );
 }

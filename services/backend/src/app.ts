@@ -389,7 +389,8 @@ export function createApp(
   });
   app.get("/api/context/kanban", (req, res) => {
     const context = contextSchema.parse(req.query);
-    res.json({ order: store.settings(context).kanbanStateOrder });
+    const settings = store.settings(context);
+    res.json({ order: settings.kanbanStateOrder, statusColors: settings.statusColors });
   });
   app.put("/api/context/kanban", (req, res) => {
     const { context, order } = z

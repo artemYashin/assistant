@@ -18086,8 +18086,11 @@ a.pr-branch-link:focus-visible {
 .project-kanban-order-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 4px 8px;
+  position: relative;
+  transition: transform 160ms ease;
+  min-height: 36px;
   border: 1px solid #d7e2ec;
   border-radius: 8px;
   background: #f4f8fc;
@@ -18095,6 +18098,36 @@ a.pr-branch-link:focus-visible {
 .project-kanban-order-row > span {
   flex: 1;
 }
-.project-kanban-order-row[draggable="true"] {
+.project-kanban-order-row.is-dragging {
+  box-shadow: 0 8px 22px #20394d30;
+  border-color: #8eb5cc;
+  background: #fff;
+  user-select: none;
+}
+.project-kanban-order-row .icon-button {
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 4px;
+}
+.project-kanban-drag-handle {
   cursor: grab;
+  touch-action: none;
+}
+.project-kanban-order-row.is-dragging .project-kanban-drag-handle {
+  cursor: grabbing;
+}
+.project-kanban-status {
+  min-width: 0;
+}
+.project-kanban-status .ticket-state-badge {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (prefers-reduced-motion: reduce) {
+  .project-kanban-order-row {
+    transition: none;
+  }
 }

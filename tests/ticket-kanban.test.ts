@@ -89,6 +89,7 @@ test("kanban API validates project and preserves order after rejected writes", a
   });
   const context = { client: "C", project: "P" };
   store.addContext(context);
+  store.set("settings", { ...store.rawSettings(), statusColors: { New: "#112233" } });
   const { app } = createApp(store);
   const headers = {
     Host: "localhost:43871",
@@ -122,4 +123,5 @@ test("kanban API validates project and preserves order after rejected writes", a
     .expect(400);
   const read = await request(app).get("/api/context/kanban").query(context).set(auth).expect(200);
   assert.deepEqual(read.body.order, ["New", "Active"]);
+  assert.deepEqual(read.body.statusColors, { New: "#112233" });
 });
