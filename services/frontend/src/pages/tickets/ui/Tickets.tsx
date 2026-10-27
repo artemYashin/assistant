@@ -239,7 +239,7 @@ export function Tickets({
           subtitle={
             azureMode
               ? `${settings?.azureProject || "Проект не настроен"} · поиск по кнопке или Enter, по 50 задач на страницу.`
-              : "Актуальный статус из Azure DevOps. Данные обновляются в фоне."
+              : undefined
           }
         />
         {!azureMode && <LastSync at={lastSync} />}
