@@ -24,6 +24,7 @@ export function TicketKanban({
   settings?: {
     kanbanStateOrder?: string[];
     kanbanHiddenStates?: string[];
+    kanbanFilterColumnsByStatus?: boolean;
     typeColors?: Record<string, string>;
     statusColors?: Record<string, string>;
   };
@@ -136,6 +137,7 @@ export function TicketKanban({
     settings?.kanbanStateOrder,
     selectedStates,
     settings?.kanbanHiddenStates,
+    settings?.kanbanFilterColumnsByStatus,
   );
   const visibleCount = columns.reduce((total, column) => total + column.tickets.length, 0);
   return (

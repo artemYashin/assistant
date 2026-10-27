@@ -9,118 +9,118 @@
 
 Подключение изменилось. Обновите карточку тикета.
 
-Источник: services/backend/src/app.ts:1149.
+Источник: services/backend/src/app.ts:1157.
 
 ### Сообщение
 
 Подключение изменилось. Откройте редактор заново.
 
-Источник: services/backend/src/app.ts:1163.
+Источник: services/backend/src/app.ts:1171.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: services/backend/src/app.ts:1235.
+Источник: services/backend/src/app.ts:1243.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
-Источник: services/backend/src/app.ts:1254.
+Источник: services/backend/src/app.ts:1262.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите карточку перед удалением.
 
-Источник: services/backend/src/app.ts:1275.
+Источник: services/backend/src/app.ts:1283.
 
 ### Сообщение
 
 Назначение из Azure больше не поддерживается. Выберите разработчиков из локального списка проекта.
 
-Источник: services/backend/src/app.ts:1279.
+Источник: services/backend/src/app.ts:1287.
 
 ### Сообщение
 
 Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: services/backend/src/app.ts:1368.
+Источник: services/backend/src/app.ts:1376.
 
 ### Сообщение
 
 Выберите изображение.
 
-Источник: services/backend/src/app.ts:1378.
+Источник: services/backend/src/app.ts:1386.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: services/backend/src/app.ts:1409.
+Источник: services/backend/src/app.ts:1417.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/app.ts:1414.
+Источник: services/backend/src/app.ts:1422.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1492.
+Источник: services/backend/src/app.ts:1500.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1518.
+Источник: services/backend/src/app.ts:1526.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1551.
+Источник: services/backend/src/app.ts:1559.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1856.
+Источник: services/backend/src/app.ts:1864.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1871.
+Источник: services/backend/src/app.ts:1879.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1899.
+Источник: services/backend/src/app.ts:1907.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1904.
+Источник: services/backend/src/app.ts:1912.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1937.
+Источник: services/backend/src/app.ts:1945.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1939.
+Источник: services/backend/src/app.ts:1947.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:1956.
+Источник: services/backend/src/app.ts:1964.

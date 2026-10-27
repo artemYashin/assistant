@@ -105,22 +105,22 @@
 
 Выберите существующий проект для настройки канбана.
 
-Источник: services/backend/src/app.ts:414.
+Источник: services/backend/src/app.ts:416.
 
 ### Сообщение
 
 Выберите существующий проект для настройки автоимпорта.
 
-Источник: services/backend/src/app.ts:454.
+Источник: services/backend/src/app.ts:462.
 
 ### Сообщение
 
 Выберите типы и статусы для автоимпорта
 
-Источник: services/backend/src/app.ts:456.
+Источник: services/backend/src/app.ts:464.
 
 ### Сообщение
 
 Выберите исполнителей для автоимпорта
 
-Источник: services/backend/src/app.ts:458.
+Источник: services/backend/src/app.ts:466.

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 
 type Drag = {
   from: number;
@@ -18,6 +18,18 @@ export function useStatusSort(onMove: (from: number, to: number) => void) {
   const list = useRef<HTMLDivElement>(null);
   const active = useRef<Drag | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
+  const [settling, setSettling] = useState(false);
+  useLayoutEffect(() => {
+    if (!settling) return;
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setSettling(false));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [settling]);
   const pointer = useRef({ x: 0, y: 0 });
   const cancel = () => {
     active.current = null;
@@ -101,7 +113,9 @@ export function useStatusSort(onMove: (from: number, to: number) => void) {
     list,
     dragging: !!drag,
     style(index: number) {
-      if (!drag) return undefined;
+      // Reordering changes layout positions: clear old transforms without
+      // animating them a second time from the new positions.
+      if (!drag) return settling ? { transition: "none" } : undefined;
       if (index === drag.from)
         return {
           transform: `translate3d(${drag.x}px, ${drag.y}px, 0)`,
@@ -127,6 +141,7 @@ export function useStatusSort(onMove: (from: number, to: number) => void) {
       },
       onPointerUp: () => {
         const current = active.current;
+        if (current && current.from !== current.to) setSettling(true);
         cancel();
         if (current && current.from !== current.to) onMove(current.from, current.to);
       },

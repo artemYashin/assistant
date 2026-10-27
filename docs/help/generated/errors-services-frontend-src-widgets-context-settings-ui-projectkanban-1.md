@@ -9,4 +9,4 @@
 
 Не удалось сохранить настройки.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:76.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:83.

@@ -393,15 +393,17 @@ export function createApp(
     res.json({
       order: settings.kanbanStateOrder,
       hiddenStates: settings.kanbanHiddenStates,
+      filterColumnsByStatus: settings.kanbanFilterColumnsByStatus,
       statusColors: settings.statusColors,
     });
   });
   app.put("/api/context/kanban", (req, res) => {
-    const { context, order, hiddenStates } = z
+    const { context, order, hiddenStates, filterColumnsByStatus } = z
       .object({
         context: contextSchema,
         order: z.array(text.min(1).max(200)).max(200),
         hiddenStates: z.array(text.min(1).max(200)).max(200).optional(),
+        filterColumnsByStatus: z.boolean().optional(),
       })
       .parse(req.body);
     if (
@@ -414,8 +416,14 @@ export function createApp(
       throw new AppError(400, "Выберите существующий проект для настройки канбана.");
     const unique = [...new Set(order)];
     const hidden = [...new Set(hiddenStates ?? store.settings(context).kanbanHiddenStates)];
-    store.set(store.kanbanKey(context), { order: unique, hiddenStates: hidden });
-    res.json({ order: unique, hiddenStates: hidden });
+    const saved = {
+      order: unique,
+      hiddenStates: hidden,
+      filterColumnsByStatus:
+        filterColumnsByStatus ?? store.settings(context).kanbanFilterColumnsByStatus,
+    };
+    store.set(store.kanbanKey(context), saved);
+    res.json(saved);
   });
   app.get("/api/context/ticket-import", (req, res) => {
     const context = contextSchema.parse(req.query);

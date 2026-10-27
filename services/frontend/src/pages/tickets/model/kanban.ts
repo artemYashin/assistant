@@ -18,10 +18,15 @@ export function ticketStateColumns(
   order: string[] = [],
   selected: string[] = [],
   hidden: string[] = [],
+  filterColumnsByStatus = false,
 ) {
   const rank = new Map(order.map((state, index) => [state, index]));
   return [...new Set([...states, ...tickets.map((ticket) => ticket.state || ""), ...selected])]
-    .filter((state) => !hidden.includes(state) && (!selected.length || selected.includes(state)))
+    .filter(
+      (state) =>
+        !hidden.includes(state) &&
+        (!filterColumnsByStatus || !selected.length || selected.includes(state)),
+    )
     .sort((a, b) => {
       const left = rank.get(a) ?? order.length;
       const right = rank.get(b) ?? order.length;

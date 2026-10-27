@@ -9,52 +9,52 @@
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:1965.
+Источник: services/backend/src/app.ts:1973.
 
 ### Сообщение
 
 Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.
 
-Источник: services/backend/src/app.ts:1966.
+Источник: services/backend/src/app.ts:1974.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/app.ts:1981.
+Источник: services/backend/src/app.ts:1989.
 
 ### Сообщение
 
 Не удалось распознать запись. Проверьте логи voice-контейнера.
 
-Источник: services/backend/src/app.ts:1984.
+Источник: services/backend/src/app.ts:1992.
 
 ### Сообщение
 
 Маршрут не найден
 
-Источник: services/backend/src/app.ts:1992.
+Источник: services/backend/src/app.ts:2000.
 
 ### Сообщение
 
 Проверьте поля формы
 
-Источник: services/backend/src/app.ts:1998.
+Источник: services/backend/src/app.ts:2006.
 
 ### Сообщение
 
 Request failed:
 
-Источник: services/backend/src/app.ts:2004.
+Источник: services/backend/src/app.ts:2012.
 
 ### Сообщение
 
 UnknownError
 
-Источник: services/backend/src/app.ts:2004.
+Источник: services/backend/src/app.ts:2012.
 
 ### Сообщение
 
 Внутренняя ошибка. Проверьте настройки и повторите запрос.
 
-Источник: services/backend/src/app.ts:2006.
+Источник: services/backend/src/app.ts:2014.
