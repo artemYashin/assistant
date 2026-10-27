@@ -247,7 +247,9 @@ export function CreateTicketForm({
       <header ref={heading} className="create-ticket-heading">
         <div>
           <h2>Создать тикет в Azure</h2>
-          <span className="muted">{project}</span>
+          <span className="create-ticket-collection" title={project}>
+            Коллекция: {project}
+          </span>
         </div>
         <button
           type="button"

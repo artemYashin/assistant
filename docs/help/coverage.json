@@ -190,7 +190,7 @@
     "services/frontend/src/features/configure-calendar/index.ts": "d1a74dd0114152950bed5069c8f9b6f185b030f6810a043ab2b775efa63fcb23",
     "services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx": "af7604874efa3e0951918613d1439360935cc760e5abc233dc4eccbea1ef8c31",
     "services/frontend/src/features/create-ticket/index.ts": "c2f48658ab05b52ee922537515fe75ed1c363445f37af5b20b5def576eafe9a5",
-    "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx": "ca15960482ef5119f1c53ca90f1e1f7d0f107cd2dd400854c2fc7b10891a312d",
+    "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx": "fca866ba4567e05cf000bda913b8945c9b84b8ed868dd13ec334167d03231588",
     "services/frontend/src/features/edit-ticket/index.ts": "a5621c4071816316148469cc5d42be300243336d171836ad1fac7de3290851e1",
     "services/frontend/src/features/edit-ticket/ui/AzureAssignee.tsx": "381bf7c00e212009f3b4104a594300f3b484cc338b6c5598cb2d63bb53d0435e",
     "services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx": "603ddd2aba0b24197c9ad974c0afa10e922cbbaceea92c77bf5a70bbf45bb440",

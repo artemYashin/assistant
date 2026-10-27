@@ -15,4 +15,4 @@ https://orbit.invalid/create-ticket-image/{…}
 
 Azure пока не вернул созданный тикет. Повторите импорт.
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:284.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:286.
