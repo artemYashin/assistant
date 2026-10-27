@@ -79,7 +79,7 @@ test("related tickets read legacy cards, preserve links and unavailable rows, ba
   assert.equal(data.items[1].canOpen, false);
   assert.equal(data.items[2].unavailable, true);
   assert.deepEqual(service.ticketCard("legacy"), card);
-  assert.equal(store.db.prepare("SELECT count(*) AS n FROM tickets").get()?.n, 0);
+  assert.equal((store.db.prepare("SELECT count(*) AS n FROM tickets").get() as { n: number }).n, 0);
   fail = true;
   await assert.rejects(service.relatedTickets("legacy"), /связанные тикеты/);
   fail = false;
