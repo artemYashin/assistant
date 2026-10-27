@@ -231,7 +231,7 @@
     "services/frontend/src/features/render-content/lib/rehype-review-format.ts": "7c7dc36e0e9c97986e99997ff4c8445f4176f15617ff70f57ad6aae2b40b530c",
     "services/frontend/src/features/render-content/lib/remark-description-breaks.ts": "8d72c7cbe4d48782b55ce3115c6fa813a80a4bb6837b380577255c7fc577ca08",
     "services/frontend/src/features/render-content/lib/remark-ticket-citations.ts": "3892cd05a450e01ad27f0fdf2ab1410294a17f535cfd710e46683b0ce3a9d26e",
-    "services/frontend/src/features/render-content/ui/ChatMarkdown.tsx": "c56a0a9598a8e3feceddf86c11ea0215a88b194a4e9d374474316c50c0d38473",
+    "services/frontend/src/features/render-content/ui/ChatMarkdown.tsx": "392925b4b4650caeb00a67da16e6b239dfe7b906c401ea5dacf38dec6ed37f24",
     "services/frontend/src/features/render-content/ui/MemoryMarkdown.tsx": "6028b0e58cc2bf58d3a77ab6c58eb347862360bc9ea507f24641c0497295e418",
     "services/frontend/src/features/render-content/ui/TicketRichText.tsx": "f13fd5ac64ff570b8339459b2bdae6eb7216710572ad50e2798224c949f6509f",
     "services/frontend/src/features/repository-jobs/index.ts": "bb46d51356b4dbd773460baea603ff435b228abee339b99e634225ebdc58a336",

@@ -6,7 +6,7 @@ import { chatPrCard } from "../../../entities/chat/index.js";
 import { Link } from "react-router-dom";
 import { remarkTicketCitations } from "../lib/remark-ticket-citations.js";
 import { ImagePreview } from "../../../entities/rich-content/preview/index.js";
-import { useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { azureTicketPath, shareTicketUrl } from "../../../entities/ticket/index.js";
 import {
   ShieldAlert,
@@ -31,6 +31,28 @@ import { remarkDescriptionBreaks } from "../lib/remark-description-breaks.js";
 
 const ticketAsset = (url: string) =>
   /^\/api\/ticket-cards\/[a-zA-Z0-9-]+\/attachments\/[0-9a-f-]{36}$/i.test(url);
+
+type MarkdownImages = { source: string; preview: string | null }[];
+const MarkdownImagesContext = createContext<MarkdownImages | undefined>(undefined);
+
+// Keep the image component identity stable when polling returns a new images array.
+const MarkdownImage: Components["img"] = ({ src, alt }) => {
+  const images = useContext(MarkdownImagesContext);
+  if (typeof src === "string" && ticketAsset(src))
+    return <ImagePreview src={src} alt={alt || "Изображение"} />;
+  const preview = images?.find((image) => image.source === src)?.preview;
+  if (
+    preview &&
+    (preview.startsWith("/api/pr/image?") ||
+      /^\/api\/ticket-cards\/[^/]+\/attachments\/[^/]+$/.test(preview))
+  )
+    return <ImagePreview key={preview} src={preview} alt={alt} className="pr-image-link" />;
+  return typeof src === "string" && /^https?:\/\//i.test(src) ? (
+    <ImagePreview src={src} alt={alt || "Изображение"} thumbnail={true} />
+  ) : (
+    <span>{alt || "Изображение"}</span>
+  );
+};
 
 function ExternalLinkIcon({ href }: { href: string }) {
   let host = "";
@@ -139,7 +161,7 @@ export function ChatMarkdown({
 }: {
   text: string;
   azureSource?: string;
-  images?: { source: string; preview: string | null }[];
+  images?: MarkdownImages;
   preserveLineBreaks?: boolean;
   reviewRevision?: string;
   review?: boolean;
@@ -316,56 +338,43 @@ export function ChatMarkdown({
         }
         return <ExternalLinkBadge href={href}>{children}</ExternalLinkBadge>;
       },
-      img: ({ src, alt }) => {
-        if (typeof src === "string" && ticketAsset(src))
-          return <ImagePreview src={src} alt={alt || "Изображение"} />;
-        const preview = images?.find((image) => image.source === src)?.preview;
-        if (
-          preview &&
-          (preview.startsWith("/api/pr/image?") ||
-            /^\/api\/ticket-cards\/[^/]+\/attachments\/[^/]+$/.test(preview))
-        )
-          return <ImagePreview key={preview} src={preview} alt={alt} className="pr-image-link" />;
-        return typeof src === "string" && /^https?:\/\//i.test(src) ? (
-          <ImagePreview src={src} alt={alt || "Изображение"} thumbnail={true} />
-        ) : (
-          <span>{alt || "Изображение"}</span>
-        );
-      },
+      img: MarkdownImage,
       table: ({ children }) => (
         <div className="chat-markdown-table">
           <table>{children}</table>
         </div>
       ),
     }),
-    [azureSource, images, review, reviewRevision],
+    [azureSource, review, reviewRevision],
   );
   return (
-    <div className="chat-markdown">
-      <Markdown
-        remarkPlugins={
-          preserveLineBreaks
-            ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations]
-            : [remarkGfm, remarkTicketCitations]
-        }
-        rehypePlugins={review ? [rehypeReviewFormat] : []}
-        skipHtml
-        urlTransform={(url, key) =>
-          ticketAsset(url) ||
-          (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url)))
-            ? url
-            : key === "href" && chatTicketPath(url)
-              ? chatTicketPath(url)!
-              : key === "src" && images?.some((image) => image.source === url && image.preview)
-                ? url
-                : /^(https?:\/\/|mailto:)/i.test(url)
+    <MarkdownImagesContext.Provider value={images}>
+      <div className="chat-markdown">
+        <Markdown
+          remarkPlugins={
+            preserveLineBreaks
+              ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations]
+              : [remarkGfm, remarkTicketCitations]
+          }
+          rehypePlugins={review ? [rehypeReviewFormat] : []}
+          skipHtml
+          urlTransform={(url, key) =>
+            ticketAsset(url) ||
+            (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url)))
+              ? url
+              : key === "href" && chatTicketPath(url)
+                ? chatTicketPath(url)!
+                : key === "src" && images?.some((image) => image.source === url && image.preview)
                   ? url
-                  : ""
-        }
-        components={components}
-      >
-        {text}
-      </Markdown>
-    </div>
+                  : /^(https?:\/\/|mailto:)/i.test(url)
+                    ? url
+                    : ""
+          }
+          components={components}
+        >
+          {text}
+        </Markdown>
+      </div>
+    </MarkdownImagesContext.Provider>
   );
 }
