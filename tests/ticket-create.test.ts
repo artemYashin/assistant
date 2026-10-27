@@ -111,7 +111,7 @@ test("validation and connection changes prevent writes", async (t) => {
     store.set("settings", { ...store.rawSettings(), azureProject: "Other" });
     return fields();
   };
-  await assert.rejects(service.create(input), /изменилось/);
+  await assert.rejects(service.create({ ...input, type: "Task" }), /изменилось/);
   assert.equal(writes, 0);
 });
 test("uncertain create cannot be retried, definitive validation failure can", async (t) => {
@@ -180,4 +180,47 @@ test("creation images validate bytes, reuse uploads and resolve only this draft'
   assert.equal((await service.create(body)).id, 44);
   assert.equal(uploads, 1);
   assert.equal(creates, 2);
+});
+
+test("field cache survives restart, expires at 24 hours, separates types/projects and retries failures", async (t) => {
+  const { store, service, input } = setup(t);
+  let now = Date.now(),
+    reads = 0;
+  t.mock.method(Date, "now", () => now);
+  globalThis.fetch = async () => {
+    reads++;
+    return fields();
+  };
+  await Promise.all([service.options(input.source, "Bug"), service.options(input.source, "Bug")]);
+  assert.equal(reads, 1);
+  const reopened = new Store(store.dir);
+  try {
+    await new TicketCreate(reopened).options(input.source, "Bug");
+    assert.equal(reads, 1);
+  } finally {
+    reopened.close();
+  }
+  now += 24 * 60 * 60 * 1000 - 1;
+  await service.options(input.source, "Bug");
+  assert.equal(reads, 1);
+  now++;
+  globalThis.fetch = async () => {
+    reads++;
+    return Response.json({ value: [{}] });
+  };
+  await assert.rejects(service.options(input.source, "Bug"), /корректный список/);
+  globalThis.fetch = async () => {
+    reads++;
+    return fields();
+  };
+  await service.options(input.source, "Bug");
+  assert.equal(reads, 3);
+  await service.options(input.source, "Task");
+  assert.equal(reads, 4);
+  store.set("settings", { ...store.rawSettings(), azureProject: "Other" });
+  await service.options(store.source(), "Bug");
+  assert.equal(reads, 5);
+  store.set("settings", { ...store.rawSettings(), azureProject: "Project" });
+  await service.options(input.source, "Bug");
+  assert.equal(reads, 5);
 });

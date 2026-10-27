@@ -47,7 +47,9 @@ const relationTypes = {
   child: "System.LinkTypes.Hierarchy-Forward",
   related: "System.LinkTypes.Related",
 };
+const FIELD_CACHE_TTL = 24 * 60 * 60 * 1000;
 export class TicketCreate {
+  private readonly fieldLoads = new Map<string, Promise<{ fields: string[] }>>();
   constructor(private store: Store) {}
   private connection(source: string) {
     const s = this.store.settings(),
@@ -106,18 +108,48 @@ export class TicketCreate {
     guard();
     return image;
   }
-  async options(source: string, type?: string) {
+  async options(source: string, type?: string): Promise<{ fields?: string[]; types?: string[] }> {
     const { call, guard } = this.connection(source);
-    const result = await call(
-      type ? `workitemtypes/${encodeURIComponent(type)}/fields` : "workitemtypes",
-    );
+    if (type) {
+      const key = "ticket.create-fields:" + JSON.stringify([source, type]);
+      const cached = this.store.get<{ loadedAt: number; fields: string[] } | null>(key, null);
+      const age = cached ? Date.now() - cached.loadedAt : NaN;
+      if (
+        cached &&
+        age >= 0 &&
+        age < FIELD_CACHE_TTL &&
+        Array.isArray(cached.fields) &&
+        cached.fields.every((field) => typeof field === "string" && field.length > 0)
+      )
+        return { fields: cached.fields };
+      let pending = this.fieldLoads.get(key);
+      if (!pending) {
+        pending = (async () => {
+          const result = await call(`workitemtypes/${encodeURIComponent(type)}/fields`);
+          guard();
+          if (
+            !Array.isArray(result.value) ||
+            result.value.some(
+              (field: any) => typeof field?.referenceName !== "string" || !field.referenceName,
+            )
+          )
+            throw new AppError(502, "Azure не вернул корректный список полей типа задачи");
+          const fields = result.value.map((field: any) => field.referenceName) as string[];
+          this.store.set(key, { loadedAt: Date.now(), fields });
+          return { fields };
+        })().finally(() => this.fieldLoads.delete(key));
+        this.fieldLoads.set(key, pending);
+      }
+      const result = await pending;
+      guard();
+      return result;
+    }
+    const result = await call("workitemtypes");
     guard();
-    if (!Array.isArray(result.value))
-      throw new AppError(502, "Azure не вернул список полей или типов задач");
-    return type
-      ? { fields: result.value.map((f: any) => f.referenceName) }
-      : { types: result.value.filter((t: any) => !t.isDisabled).map((t: any) => t.name) };
+    if (!Array.isArray(result.value)) throw new AppError(502, "Azure не вернул список типов задач");
+    return { types: result.value.filter((t: any) => !t.isDisabled).map((t: any) => t.name) };
   }
+
   async create(body: unknown) {
     const input = createTicketSchema.parse(body);
     const { call, guard, base } = this.connection(input.source);
