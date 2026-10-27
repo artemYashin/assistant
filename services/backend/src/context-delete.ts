@@ -75,6 +75,7 @@ export function deleteContext(store: Store, context: Context, confirmation: stri
     ]);
     const offsets: Record<string, number> = {
       "ticket-import:": 0,
+      "ticket-kanban:": 0,
       "azure.context:": 0,
       "project.azure:": 1,
       "chat.active:": 0,

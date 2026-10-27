@@ -387,6 +387,29 @@ export function createApp(
     );
     res.json({ ok: true });
   });
+  app.get("/api/context/kanban", (req, res) => {
+    const context = contextSchema.parse(req.query);
+    res.json({ order: store.settings(context).kanbanStateOrder });
+  });
+  app.put("/api/context/kanban", (req, res) => {
+    const { context, order } = z
+      .object({
+        context: contextSchema,
+        order: z.array(text.min(1).max(200)).max(200),
+      })
+      .parse(req.body);
+    if (
+      !context.client ||
+      !context.project ||
+      !store
+        .contexts()
+        .some((item) => item.client === context.client && item.project === context.project)
+    )
+      throw new AppError(400, "Выберите существующий проект для настройки канбана.");
+    const unique = [...new Set(order)];
+    store.set(store.kanbanKey(context), unique);
+    res.json({ order: unique });
+  });
   app.get("/api/context/ticket-import", (req, res) => {
     const context = contextSchema.parse(req.query);
     res.json({ ...store.settings(context), ...context });

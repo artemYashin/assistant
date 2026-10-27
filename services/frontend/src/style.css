@@ -18076,3 +18076,25 @@ a.pr-branch-link:focus-visible {
   background: #962727;
   border-color: #852222;
 }
+
+.project-kanban-order {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  max-width: 620px;
+}
+.project-kanban-order-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #f4f8fc;
+}
+.project-kanban-order-row > span {
+  flex: 1;
+}
+.project-kanban-order-row[draggable="true"] {
+  cursor: grab;
+}

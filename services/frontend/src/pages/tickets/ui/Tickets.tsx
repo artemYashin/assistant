@@ -1,3 +1,4 @@
+import { TicketKanban } from "./TicketKanban.js";
 import { BulkTicketTrash } from "./BulkTicketTrash.js";
 import { hasLocalManagement } from "../../../../../backend/src/work-mode.js";
 import { NumberInput } from "../../../shared/ui/number-input/index.js";
@@ -32,6 +33,7 @@ export function Tickets({
   settings,
   context,
   azureMode = false,
+  view = "table",
 }: any) {
   const currentSource = `${(settings?.azureUrl || "").replace(/\/$/, "")}|${settings?.azureProject || ""}`;
   const browser = useAzureTicketBrowser(
@@ -457,7 +459,10 @@ export function Tickets({
           )}
         </div>
       </TicketFilterPanel>
-      <div className="ticket-export-bar ticket-actions-panel">
+      <div
+        className="ticket-export-bar ticket-actions-panel"
+        style={view === "kanban" ? { display: "none" } : undefined}
+      >
         <div className="ticket-display-summary">
           {columns.control}
           {selection.selected.length >= 1 && (
@@ -586,10 +591,12 @@ export function Tickets({
               Показаны первые 20 000 результатов. Уточните фильтры, чтобы увидеть остальные.
             </p>
           )}
-          <p className="muted">
-            Сортировка — по всему результату поиска. Экспорт — выбранные тикеты; список можно
-            дополнить в окне экспорта.
-          </p>
+          {view === "table" && (
+            <p className="muted">
+              Сортировка — по всему результату поиска. Экспорт — выбранные тикеты; список можно
+              дополнить в окне экспорта.
+            </p>
+          )}
         </>
       )}
       {!azureMode && (
@@ -600,7 +607,23 @@ export function Tickets({
           Удалённый тикет можно вернуть кнопкой «Добавить по номеру».
         </p>
       )}
+      {view === "kanban" && (
+        <TicketKanban
+          key={currentSource}
+          tickets={sorted}
+          states={filterOptions.states}
+          selectedStates={stateFilter}
+          settings={settings}
+          source={currentSource}
+          disabled={!!busy || (azureMode && browser.loading)}
+          onChange={() => {
+            if (azureMode) void searchAzure(filters);
+            else void run("refresh-kanban", async () => {});
+          }}
+        />
+      )}
       <div
+        style={view === "kanban" ? { display: "none" } : undefined}
         className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}`}
       >
         <table ref={columns.resize.tableRef}>

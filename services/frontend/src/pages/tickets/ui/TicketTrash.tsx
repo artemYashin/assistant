@@ -1,3 +1,5 @@
+import { TicketKanban } from "./TicketKanban.js";
+import type { TicketView } from "../model/kanban.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { TicketColorLegend } from "../../../entities/ticket/index.js";
 import { BulkTicketStatus } from "../../../features/edit-ticket/index.js";
@@ -19,7 +21,9 @@ export function TicketTrash({
   context,
   onChange,
   settings,
+  view = "table",
 }: {
+  view?: TicketView;
   onChange: () => void;
   context: { client: string; project: string };
   settings?: any;
@@ -369,7 +373,10 @@ export function TicketTrash({
       {!loaded ? (
         <p role="status">Загрузка корзины…</p>
       ) : (
-        <div className="ticket-export-bar ticket-actions-panel">
+        <div
+          className="ticket-export-bar ticket-actions-panel"
+          style={view === "kanban" ? { display: "none" } : undefined}
+        >
           <div className="ticket-display-summary">
             {display.control}
             {selection.selected.length >= 1 && (
@@ -420,7 +427,23 @@ export function TicketTrash({
           </div>
         </div>
       )}
+      {view === "kanban" && loaded && (
+        <TicketKanban
+          key={currentSource}
+          tickets={filtered}
+          states={filterOptions.states}
+          selectedStates={states}
+          settings={settings}
+          source={currentSource}
+          disabled={busy !== null}
+          onChange={() => {
+            setVersion((v) => v + 1);
+            onChange();
+          }}
+        />
+      )}
       <div
+        style={view === "kanban" ? { display: "none" } : undefined}
         className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}${display.resize.manual ? " has-manual-widths" : ""}`}
       >
         <table ref={display.resize.tableRef}>

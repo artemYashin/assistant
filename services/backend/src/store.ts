@@ -49,6 +49,7 @@ export const defaults = {
   azureImportAssignees: [] as { id: string; name: string; email: string }[],
   azureTypes: [] as string[],
   azureStates: [] as string[],
+  kanbanStateOrder: [] as string[],
   statusColors: {} as Record<string, string>,
   typeColors: {} as Record<string, string>,
   syncSeconds: 600,
@@ -575,6 +576,9 @@ export class Store {
     const legacy = this.get<string | null>(this.projectAzureKey(context), null);
     return legacy === null ? null : { azureUrl: this.rawSettings().azureUrl, azureProject: legacy };
   }
+  kanbanKey(context: Context) {
+    return "ticket-kanban:" + JSON.stringify([context.client, context.project]);
+  }
   ticketImportKey(context: Context) {
     return "ticket-import:" + JSON.stringify([context.client, context.project]);
   }
@@ -595,6 +599,7 @@ export class Store {
       ...settings,
       ...(project || customer || {}),
       ...imported,
+      kanbanStateOrder: this.get<string[]>(this.kanbanKey(scope), []),
       syncSchedule: {
         ...(imported.syncSchedule || settings.syncSchedule),
         timeZone: settings.syncSchedule.timeZone,
@@ -697,6 +702,7 @@ export class Store {
       }
       const offsets: Record<string, number> = {
         "ticket-import:": 0,
+        "ticket-kanban:": 0,
         "azure.context:": 0,
         "project.azure:": 1,
         "chat.active:": 0,

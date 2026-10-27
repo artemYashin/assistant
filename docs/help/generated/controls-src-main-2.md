@@ -27,13 +27,13 @@
 
 Azure тикеты
 
-Источник: services/frontend/src/app/ui/TicketsBlock.tsx:47.
+Источник: services/frontend/src/app/ui/TicketsBlock.tsx:49.
 
 ### Элемент
 
 Корзина
 
-Источник: services/frontend/src/app/ui/TicketsBlock.tsx:56.
+Источник: services/frontend/src/app/ui/TicketsBlock.tsx:58.
 
 ### Элемент
 
@@ -45,82 +45,82 @@ Azure тикеты
 
 Сортировать: {…}, {…} · /
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:190.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:192.
 
 ### Элемент
 
 Показать все тикеты
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:254.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:256.
 
 ### Элемент
 
 Поиск тикетов · Номер, название или Azure тег… / Номер, название, исполнитель…
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:267.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:269.
 
 ### Элемент
 
 Поиск… / Найти
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:279.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:281.
 
 ### Элемент
 
 Номер тикета для добавления · Номер тикета
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:294.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:296.
 
 ### Элемент
 
 Добавить по номеру
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:302.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:304.
 
 ### Элемент
 
 Синхронизировать тикеты
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:307.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:309.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:337.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:339.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:356.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:358.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:362.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:364.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:364.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:366.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:370.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:372.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:374.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:376.
 
 ### Элемент
 
 Локальные теги · Все теги
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:385.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:387.

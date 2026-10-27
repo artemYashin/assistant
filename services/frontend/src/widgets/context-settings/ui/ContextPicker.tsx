@@ -1,3 +1,5 @@
+import { ProjectKanban } from "./ProjectKanban.js";
+import { Columns3 } from "lucide-react";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { ProjectTicketImport } from "./ProjectTicketImport.js";
 import { DeleteContextButton } from "./DeleteContextButton.js";
@@ -36,7 +38,7 @@ export function ContextPicker({
 }) {
   const management = useLocalManagement();
   const [section, setSection] = useState<
-    "browse" | "catalog" | "repository" | "developers" | "import"
+    "browse" | "catalog" | "repository" | "developers" | "import" | "kanban"
   >("catalog");
   useEffect(() => {
     if (!management && section === "developers") setSection("catalog");
@@ -303,6 +305,14 @@ export function ContextPicker({
                 <Plus size={16} />
                 Автоматический импорт
               </button>
+              <button
+                type="button"
+                aria-pressed={section === "kanban"}
+                onClick={() => setSection("kanban")}
+              >
+                <Columns3 size={16} />
+                Канбан
+              </button>
               {management && (
                 <button
                   type="button"
@@ -314,6 +324,15 @@ export function ContextPicker({
                 </button>
               )}
             </div>
+            {section === "kanban" && (
+              <div className="context-manager-section">
+                <ProjectKanban
+                  key={JSON.stringify(context)}
+                  context={context}
+                  onSaved={onSettingsChange}
+                />
+              </div>
+            )}
             {section === "import" && (
               <div className="context-manager-section">
                 <ProjectTicketImport

@@ -9,10 +9,10 @@
 
 Не удалось загрузить корзину
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:527.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:550.
 
 ### Сообщение
 
 Ничего не найдено
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:529.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:552.

@@ -7,24 +7,30 @@
 
 ### Элемент
 
+Добавить и выбрать
+
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:519.
+
+### Элемент
+
 Переименовать: {…} · Переименовать
 
-Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:566.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:585.
 
 ### Элемент
 
 Закрыть
 
-Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:593.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:612.
 
 ### Элемент
 
 : новое название
 
-Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:616.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:635.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:633.
+Источник: services/frontend/src/widgets/context-settings/ui/ContextPicker.tsx:652.
