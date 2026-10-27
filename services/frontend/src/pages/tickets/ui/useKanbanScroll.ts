@@ -20,14 +20,18 @@ export function useKanbanScroll() {
       sync();
     };
     const wheel = (event: WheelEvent) => {
+      if (event.defaultPrevented || event.ctrlKey) return;
       const delta = event.deltaX || (event.shiftKey ? event.deltaY : 0);
       if (!delta || bar.scrollWidth <= bar.clientWidth) return;
-      event.preventDefault();
+      // Only Shift+wheel replaces the native gesture. For trackpads leave the
+      // vertical axis to the browser, including non-cancelable momentum events.
+      if (event.shiftKey) {
+        if (!event.cancelable) return;
+        event.preventDefault();
+      }
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? view.clientWidth : 1;
       bar.scrollLeft += delta * unit;
       sync();
-      // A diagonal trackpad gesture must still scroll the document vertically.
-      if (event.deltaX && event.deltaY && !event.shiftKey) window.scrollBy(0, event.deltaY * unit);
     };
     let touch: { x: number; y: number; left: number } | null = null;
     const touchStart = (event: TouchEvent) => {
