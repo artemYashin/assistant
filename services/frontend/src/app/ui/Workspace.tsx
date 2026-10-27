@@ -1,3 +1,4 @@
+import { WelcomeCelebration } from "./WelcomeCelebration.js";
 import { TicketCard } from "../../widgets/ticket/index.js";
 import { WorkModeContext } from "../../entities/work-mode/index.js";
 import { workMode } from "../../../../backend/src/work-mode.js";
@@ -9,6 +10,7 @@ import { WorkspacePages } from "./WorkspacePages.js";
 
 export function Workspace() {
   const {
+    ticketsReady,
     settings,
     assistantOpen,
     sidebarCollapsed,
@@ -39,6 +41,11 @@ export function Workspace() {
   } = useWorkspace();
   return (
     <WorkModeContext.Provider value={workMode(settings)}>
+      <WelcomeCelebration
+        ready={ticketsReady}
+        count={tickets.length}
+        onViewTickets={() => setPage("tickets")}
+      />
       <div className={`workspace ${assistantOpen ? "with-assistant" : ""}`}>
         <WorkspaceSidebar
           settings={settings}

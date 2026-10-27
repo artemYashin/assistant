@@ -9,7 +9,7 @@
 
 Страница не найдена
 
-Источник: services/frontend/src/app/model/useWorkspace.ts:175.
+Источник: services/frontend/src/app/model/useWorkspace.ts:177.
 
 ### Сообщение
 

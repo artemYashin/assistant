@@ -30,6 +30,7 @@ export function useWorkspace() {
     () => saveChatPreference("orbit.sidebar.collapsed", String(sidebarCollapsed)),
     [sidebarCollapsed],
   );
+  const [ticketsReady, setTicketsReady] = useState(false);
   const [settings, setSettings] = useState<any>(null),
     [overview, setOverview] = useState<any>({}),
     [reviewQuestions, setReviewQuestions] = useState<any[]>([]),
@@ -93,6 +94,7 @@ export function useWorkspace() {
     if (generation !== loadGeneration.current) return;
     setOverview(o);
     setTickets(t);
+    setTicketsReady(true);
     setMemories(m);
     setReviewQuestions(rq);
     setMemoryProposals(mp);
@@ -174,6 +176,7 @@ export function useWorkspace() {
           ? "Настройки"
           : navigation.find((n) => n.id === page)?.label || "Страница не найдена";
   return {
+    ticketsReady,
     settings,
     assistantOpen,
     sidebarCollapsed,
