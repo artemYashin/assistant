@@ -37,13 +37,13 @@
 
 ### Элемент
 
-Открыть в Azure DevOps
+Открыть в ADO
 
 Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:687.
 
 ### Элемент
 
-Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Удаляю… / Удалить
+Переместить в локальную корзину на 30 дней. Azure не изменяется. · / · Переношу… / В корзину
 
 Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:692.
 

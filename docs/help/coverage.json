@@ -375,7 +375,7 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "78ef35d1d30f729d0fb03bb9f0de8fd40139852a7ad22b2f5a36806d9454fcd5",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "c88d3bcdf9741305092751dcb0a0c16038c22ba9c7d7fc60b61e778c376ebc37",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "1523ec34109d70353d7923867eb9f011d34c936c46a6b398081697e56b918116",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
     "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "ca0764c5226c7c24a3b279c8ed3dca8926dbf8e6e439c2c13f2bdf4edcfc4cc9",
     "services/frontend/src/widgets/ticket/ui/TicketLinkedPullRequests.tsx": "bd0c501f4eac6c8e9f8826df4dfe52e07a0c023ed2d1e99a2171b2a886073069",

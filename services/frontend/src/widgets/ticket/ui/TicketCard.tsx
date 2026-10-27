@@ -686,7 +686,7 @@ export function TicketCard({
               </Link>
               <a href={card.url} target="_blank" rel="noreferrer">
                 <ExternalLink size={15} />
-                Открыть в Azure DevOps
+                Открыть в ADO
               </a>
               {card.locallyTracked && (
                 <button
@@ -718,7 +718,7 @@ export function TicketCard({
                   }}
                 >
                   {removing ? <LoaderCircle size={15} className="spin" /> : <Trash2 size={15} />}
-                  {removing ? "Удаляю…" : "Удалить"}
+                  {removing ? "Переношу…" : "В корзину"}
                 </button>
               )}
               <button
