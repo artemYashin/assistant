@@ -20,8 +20,31 @@
 .ticket-lookup-dialog .ticket-related-create-panel {
   overflow-y: auto;
 }
+.ticket-related-create-panel .create-ticket-heading {
+  gap: 10px;
+}
+.ticket-related-create-panel .create-ticket-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
 .ticket-related-create-panel .create-ticket-heading h2 {
+  flex-shrink: 0;
+  margin: 0;
   font-size: 17px;
+}
+.ticket-related-create-panel .create-ticket-heading > div > .muted {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid #d5e2d9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.ticket-related-create-panel .create-ticket-heading > button {
+  flex-shrink: 0;
 }
 .ticket-related-create-panel .create-ticket-layout {
   grid-template-columns: minmax(0, 1fr);
