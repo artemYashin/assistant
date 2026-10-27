@@ -38,11 +38,15 @@
   max-width: 100%;
 }
 .ticket-kanban-scroll {
-  display: flex;
-  gap: 14px;
   overflow-x: auto;
   padding: 0 2px 18px;
+}
+.ticket-kanban-columns {
+  display: flex;
+  gap: 14px;
   align-items: stretch;
+  width: max-content;
+  min-width: 100%;
 }
 .ticket-kanban-column {
   flex: 0 0 290px;
@@ -175,17 +179,14 @@
 }
 
 .ticket-kanban-headers {
-  position: sticky;
-  top: calc(var(--topbar-height, 70px) + 8px);
+  position: relative;
   z-index: 20;
   display: flex;
   gap: 14px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 4px 2px 0;
-}
-.ticket-kanban-headers::-webkit-scrollbar {
-  display: none;
+  width: max-content;
+  min-width: 100%;
+  background: #f8f9f6;
+  will-change: transform;
 }
 .ticket-kanban-heading {
   box-shadow: 0 3px 5px #243c5010;

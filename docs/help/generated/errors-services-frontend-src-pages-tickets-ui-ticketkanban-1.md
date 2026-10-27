@@ -9,34 +9,34 @@
 
 Подключение изменилось. Откройте доску заново.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:79.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:105.
 
 ### Сообщение
 
 Статус «{…}» недоступен для этого типа тикета. Azure не изменён.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:81.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:107.
 
 ### Сообщение
 
 Тикет уже в этом статусе. Обновите список.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:82.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:108.
 
 ### Сообщение
 
 Не удалось проверить статусы.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:86.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:112.
 
 ### Сообщение
 
 Azure не подтвердил новый статус. Проверьте тикет перед повтором.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:104.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:130.
 
 ### Сообщение
 
 Не удалось изменить статус.
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:117.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:143.
