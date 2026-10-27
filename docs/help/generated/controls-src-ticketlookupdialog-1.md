@@ -9,34 +9,46 @@
 
 Открыть тикет по номеру · Открыть тикет
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:137.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:193.
+
+### Элемент
+
+Вернуться к тикету #{…} · Тикет #
+
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:243.
+
+### Элемент
+
+Назад
+
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:262.
 
 ### Элемент
 
 Закрыть деталку и вернуться к вводу номера / Закрыть поиск тикета · Вернуться к вводу номера / Закрыть
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:170.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:266.
 
 ### Элемент
 
 #
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:191.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:306.
 
 ### Элемент
 
 Повторить
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:220.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:339.
 
 ### Элемент
 
 Номер тикета
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:250.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:375.
 
 ### Элемент
 
 Загрузка… / Показать тикет
 
-Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:262.
+Источник: services/frontend/src/app/ui/TicketLookupDialog.tsx:387.

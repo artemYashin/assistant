@@ -163,6 +163,7 @@ export function CreateTicketForm({
   useEffect(() => {
     const host = dialog || heading.current?.closest("dialog");
     const cancel = (e: Event) => {
+      if (heading.current?.closest("[hidden]")) return;
       e.stopPropagation();
       if (busy || !dialog) e.preventDefault();
       if (!busy && !dialog) onClose();

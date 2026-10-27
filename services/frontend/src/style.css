@@ -7377,7 +7377,7 @@ summary > svg {
 .ticket-lookup-dialog.is-detail > .ticket-lookup-dialog-heading {
   flex: 0 0 auto;
 }
-.ticket-lookup-dialog.is-detail > .ticket-detail,
+.ticket-lookup-dialog.is-detail > .ticket-lookup-frame > .ticket-detail,
 .ticket-lookup-dialog.is-detail .ticket-viewer-content > .ticket-detail {
   flex: 1 1 0;
   min-height: 0;
@@ -18222,4 +18222,44 @@ a.pr-branch-link:focus-visible {
   .export-field {
     transition: none;
   }
+}
+
+.ticket-lookup-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+.ticket-lookup-frame[hidden] {
+  display: none;
+}
+.ticket-lookup-dialog-heading .ticket-lookup-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.ticket-lookup-breadcrumbs button {
+  padding: 3px 7px;
+  border: 1px solid #c9dfd1;
+  border-radius: 6px;
+  color: #285341;
+  background: #edf6ef;
+  font: inherit;
+}
+.ticket-lookup-breadcrumbs button:hover {
+  background: #dceee1;
+}
+.ticket-lookup-breadcrumbs > svg {
+  flex-shrink: 0;
+  color: #7b847d;
+}
+.ticket-lookup-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
