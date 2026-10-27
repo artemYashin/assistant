@@ -26,6 +26,7 @@ export function TicketKanban({
     kanbanStateOrder?: string[];
     kanbanHiddenStates?: string[];
     kanbanFilterColumnsByStatus?: boolean;
+    kanbanHideEmptyColumns?: boolean;
     typeColors?: Record<string, string>;
     statusColors?: Record<string, string>;
   };
@@ -139,7 +140,18 @@ export function TicketKanban({
     selectedStates,
     settings?.kanbanHiddenStates,
     settings?.kanbanFilterColumnsByStatus,
+    settings?.kanbanHideEmptyColumns,
   );
+  const stateOptions = ticketStateColumns(
+    tickets,
+    states,
+    settings?.kanbanStateOrder,
+    selectedStates,
+    settings?.kanbanHiddenStates,
+    settings?.kanbanFilterColumnsByStatus,
+  )
+    .filter(({ state }) => !!state)
+    .map(({ state }) => ({ value: state, label: state }));
   const visibleCount = columns.reduce((total, column) => total + column.tickets.length, 0);
   return (
     <section className="ticket-kanban" aria-label="Канбан тикетов">
@@ -304,9 +316,7 @@ export function TicketKanban({
                           value={ticket.state || ""}
                           disabled={busy || disabled || ticket.source !== source}
                           onChange={(state) => void prepare(ticket, state)}
-                          options={columns
-                            .filter(({ state }) => !!state)
-                            .map(({ state }) => ({ value: state, label: state }))}
+                          options={stateOptions}
                           floating
                           renderOption={(option) => (
                             <StatusBadge state={option.label} colors={settings?.statusColors} />

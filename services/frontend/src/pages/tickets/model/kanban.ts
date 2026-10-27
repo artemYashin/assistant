@@ -19,6 +19,7 @@ export function ticketStateColumns(
   selected: string[] = [],
   hidden: string[] = [],
   filterColumnsByStatus = false,
+  hideEmptyColumns = false,
 ) {
   const rank = new Map(order.map((state, index) => [state, index]));
   return [...new Set([...states, ...tickets.map((ticket) => ticket.state || ""), ...selected])]
@@ -35,5 +36,6 @@ export function ticketStateColumns(
     .map((state) => ({
       state,
       tickets: tickets.filter((ticket) => (ticket.state || "") === state),
-    }));
+    }))
+    .filter((column) => !hideEmptyColumns || column.tickets.length > 0);
 }

@@ -7,30 +7,48 @@
 
 ### Элемент
 
+Фильтр статуса скрывает столбцы канбана Показывать только столбцы выбранных в фильтре статусов.
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:94.
+
+### Элемент
+
 Фильтр статуса скрывает столбцы канбана
 
 Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:95.
 
 ### Элемент
 
+Скрывать пустые столбцы Скрывать столбцы без карточек с учётом текущего поиска и фильтров.
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:110.
+
+### Элемент
+
+Скрывать пустые столбцы
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:111.
+
+### Элемент
+
 Перетащить: {…} · Перетащите для изменения порядка. Escape — отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:119.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:140.
 
 ### Элемент
 
 Показывать в канбане: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:129.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:150.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:147.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:168.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:156.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:177.

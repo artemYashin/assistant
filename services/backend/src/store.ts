@@ -52,6 +52,7 @@ export const defaults = {
   kanbanStateOrder: [] as string[],
   kanbanHiddenStates: [] as string[],
   kanbanFilterColumnsByStatus: false,
+  kanbanHideEmptyColumns: false,
   statusColors: {} as Record<string, string>,
   typeColors: {} as Record<string, string>,
   syncSeconds: 600,
@@ -597,7 +598,13 @@ export class Store {
     const customer = scope.client ? this.azureBinding({ client: scope.client, project: "" }) : null;
     const project = scope.client && scope.project ? this.azureBinding(scope) : null;
     const kanban = this.get<
-      string[] | { order: string[]; hiddenStates?: string[]; filterColumnsByStatus?: boolean }
+      | string[]
+      | {
+          order: string[];
+          hiddenStates?: string[];
+          filterColumnsByStatus?: boolean;
+          hideEmptyColumns?: boolean;
+        }
     >(this.kanbanKey(scope), []);
     const imported = this.ticketImport(scope) as Partial<Settings>;
     return {
@@ -609,6 +616,7 @@ export class Store {
       kanbanFilterColumnsByStatus: Array.isArray(kanban)
         ? false
         : (kanban.filterColumnsByStatus ?? false),
+      kanbanHideEmptyColumns: Array.isArray(kanban) ? false : (kanban.hideEmptyColumns ?? false),
       syncSchedule: {
         ...(imported.syncSchedule || settings.syncSchedule),
         timeZone: settings.syncSchedule.timeZone,

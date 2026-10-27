@@ -18166,3 +18166,32 @@ a.pr-branch-link:focus-visible {
   min-height: 40px;
   padding-block: 0;
 }
+
+.project-kanban-options {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+.project-kanban-options .project-kanban-filter-toggle {
+  padding: 12px 14px;
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  background: #f4f8fc;
+  gap: 12px;
+}
+.project-kanban-options .project-kanban-filter-toggle:has(input:checked) {
+  background: #edf7ef;
+  border-color: #a0c9aa;
+}
+.project-kanban-options .project-kanban-filter-toggle:focus-within {
+  outline: 2px solid #8eb5cc;
+  outline-offset: 1px;
+}
+.project-kanban-options .project-kanban-filter-toggle > span {
+  display: grid;
+  gap: 4px;
+}
+.project-kanban-options small {
+  color: #64748b;
+  line-height: 1.4;
+}

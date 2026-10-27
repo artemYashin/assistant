@@ -14,6 +14,7 @@ export function ProjectKanban({
 }) {
   const checkboxId = useId();
   const [order, setOrder] = useState<string[] | null>(null);
+  const [hideEmptyColumns, setHideEmptyColumns] = useState(false);
   const [filterColumnsByStatus, setFilterColumnsByStatus] = useState(false);
   const [hiddenStates, setHiddenStates] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -42,6 +43,7 @@ export function ProjectKanban({
           setColors(saved.statusColors || {});
           setHiddenStates(saved.hiddenStates || []);
           setFilterColumnsByStatus(saved.filterColumnsByStatus ?? false);
+          setHideEmptyColumns(saved.hideEmptyColumns ?? false);
         }
       })
       .catch((e) => {
@@ -76,6 +78,7 @@ export function ProjectKanban({
             order,
             hiddenStates,
             filterColumnsByStatus,
+            hideEmptyColumns,
           });
           setMessage("Настройки канбана сохранены.");
           onSaved();
@@ -87,26 +90,44 @@ export function ProjectKanban({
       }}
     >
       <h3>Канбан · статусы</h3>
+      <div className="project-kanban-options">
+        <label className="project-kanban-filter-toggle">
+          <input
+            type="checkbox"
+            aria-label="Фильтр статуса скрывает столбцы канбана"
+            checked={filterColumnsByStatus}
+            disabled={busy || sort.dragging}
+            onChange={(event) => {
+              setFilterColumnsByStatus(event.target.checked);
+              setMessage("");
+            }}
+          />
+          <span>
+            <strong>Фильтр статуса скрывает столбцы канбана</strong>
+            <small>Показывать только столбцы выбранных в фильтре статусов.</small>
+          </span>
+        </label>
+        <label className="project-kanban-filter-toggle">
+          <input
+            type="checkbox"
+            aria-label="Скрывать пустые столбцы"
+            checked={hideEmptyColumns}
+            disabled={busy || sort.dragging}
+            onChange={(event) => {
+              setHideEmptyColumns(event.target.checked);
+              setMessage("");
+            }}
+          />
+          <span>
+            <strong>Скрывать пустые столбцы</strong>
+            <small>Скрывать столбцы без карточек с учётом текущего поиска и фильтров.</small>
+          </span>
+        </label>
+      </div>
       <p className="muted">
         Сверху вниз — порядок столбцов слева направо. Перетащите статус или используйте стрелки.
         Нажмите на строку или снимите галочку, чтобы скрыть статус из канбана. Новые статусы
         добавляются справа, пока вы не настроите их порядок.
-      </p>
-      <label className="project-kanban-filter-toggle">
-        <input
-          type="checkbox"
-          checked={filterColumnsByStatus}
-          disabled={busy || sort.dragging}
-          onChange={(event) => {
-            setFilterColumnsByStatus(event.target.checked);
-            setMessage("");
-          }}
-        />
-        Фильтр статуса скрывает столбцы канбана
-      </label>
-      <p className="muted">
-        По умолчанию фильтр ограничивает только карточки. Включите настройку, чтобы показывать
-        только столбцы выбранных в фильтре статусов.
       </p>
       <div className="project-kanban-order" ref={sort.list}>
         {order?.map((state, index) => (

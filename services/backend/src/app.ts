@@ -394,16 +394,18 @@ export function createApp(
       order: settings.kanbanStateOrder,
       hiddenStates: settings.kanbanHiddenStates,
       filterColumnsByStatus: settings.kanbanFilterColumnsByStatus,
+      hideEmptyColumns: settings.kanbanHideEmptyColumns,
       statusColors: settings.statusColors,
     });
   });
   app.put("/api/context/kanban", (req, res) => {
-    const { context, order, hiddenStates, filterColumnsByStatus } = z
+    const { context, order, hiddenStates, filterColumnsByStatus, hideEmptyColumns } = z
       .object({
         context: contextSchema,
         order: z.array(text.min(1).max(200)).max(200),
         hiddenStates: z.array(text.min(1).max(200)).max(200).optional(),
         filterColumnsByStatus: z.boolean().optional(),
+        hideEmptyColumns: z.boolean().optional(),
       })
       .parse(req.body);
     if (
@@ -419,6 +421,7 @@ export function createApp(
     const saved = {
       order: unique,
       hiddenStates: hidden,
+      hideEmptyColumns: hideEmptyColumns ?? store.settings(context).kanbanHideEmptyColumns,
       filterColumnsByStatus:
         filterColumnsByStatus ?? store.settings(context).kanbanFilterColumnsByStatus,
     };

@@ -47,6 +47,14 @@ test("kanban columns respect state filters and configured order, including empty
     ticketStateColumns(tickets, ["Done"], ["New", "Active", "Done"], ["New"]).map((c) => c.state),
     ["New", "Active", "Done", "Custom"],
   );
+  assert.deepEqual(
+    ticketStateColumns(tickets, ["Done"], ["New", "Active", "Done"], [], [], false, true).map(
+      (c) => c.state,
+    ),
+    ["New", "Active", "Custom"],
+  );
+  assert.deepEqual(ticketStateColumns([], ["New", "Done"], [], [], [], false, true), []);
+  assert.deepEqual(ticketStateColumns(tickets, ["Done"], [], ["Done"], [], true, true), []);
   assert.equal(parseTicketView(null), "table");
   assert.equal(parseTicketView("invalid"), "table");
   assert.equal(parseTicketView("kanban"), "kanban");
@@ -80,6 +88,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
   }
   assert.deepEqual(store.settings(first).kanbanHiddenStates, []);
   assert.equal(store.settings(first).kanbanFilterColumnsByStatus, false);
+  assert.equal(store.settings(first).kanbanHideEmptyColumns, false);
   store.set(store.kanbanKey(first), { order: ["New", "Active"], hiddenStates: ["Active"] });
   for (let i = 0; i < 2; i++) {
     store.close();
@@ -88,15 +97,18 @@ test("kanban settings upgrade populated storage without changing existing prefer
     assert.deepEqual(store.settings(first).kanbanStateOrder, ["New", "Active"]);
   }
   assert.equal(store.settings(first).kanbanFilterColumnsByStatus, false);
+  assert.equal(store.settings(first).kanbanHideEmptyColumns, false);
   store.set(store.kanbanKey(first), {
     order: ["New", "Active"],
     hiddenStates: ["Active"],
     filterColumnsByStatus: true,
+    hideEmptyColumns: true,
   });
   for (let i = 0; i < 2; i++) {
     store.close();
     store = new Store(dir);
     assert.equal(store.settings(first).kanbanFilterColumnsByStatus, true);
+    assert.equal(store.settings(first).kanbanHideEmptyColumns, true);
   }
   assert.equal(store.settings(second).kanbanFilterColumnsByStatus, false);
   assert.deepEqual(store.settings(second).kanbanHiddenStates, []);
@@ -111,6 +123,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
   assert.deepEqual(store.settings(moved).kanbanStateOrder, ["New", "Active"]);
   assert.deepEqual(store.settings(moved).kanbanHiddenStates, ["Active"]);
   assert.equal(store.settings(moved).kanbanFilterColumnsByStatus, true);
+  assert.equal(store.settings(moved).kanbanHideEmptyColumns, true);
   deleteContext(store, moved, "удалить");
   assert.equal(store.get(store.kanbanKey(moved), null), null);
 });
@@ -149,6 +162,7 @@ test("kanban API validates project and preserves order after rejected writes", a
       order: ["New", "Active", "New"],
       hiddenStates: ["Active", "Active"],
       filterColumnsByStatus: true,
+      hideEmptyColumns: true,
     })
     .expect(200);
   await request(app)
@@ -173,6 +187,7 @@ test("kanban API validates project and preserves order after rejected writes", a
     .expect(200);
   const read = await request(app).get("/api/context/kanban").query(context).set(auth).expect(200);
   assert.equal(read.body.filterColumnsByStatus, true);
+  assert.equal(read.body.hideEmptyColumns, true);
   assert.deepEqual(read.body.hiddenStates, ["Active"]);
   assert.deepEqual(read.body.order, ["New", "Active"]);
   assert.deepEqual(read.body.statusColors, { New: "#112233" });
