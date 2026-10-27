@@ -18,6 +18,16 @@
   border-radius: 16px;
   overflow-y: auto;
 }
+.create-ticket-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.create-ticket-dialog > * {
+  flex-shrink: 0;
+}
+.create-ticket-dialog > .create-ticket-layout {
+  margin-bottom: 20px;
+}
 .create-ticket-dialog::backdrop {
   background: #10251b66;
 }
@@ -67,7 +77,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 20px;
+  margin-top: auto;
   padding-top: 16px;
   border-top: 1px solid #e1e8e3;
 }
