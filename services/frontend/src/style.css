@@ -18021,3 +18021,21 @@ a.pr-branch-link:focus-visible {
   padding: 4px 0;
   overflow-wrap: anywhere;
 }
+
+.bulk-ticket-trash-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  background: #b33333;
+  color: #fff;
+  border: 1px solid #9c2929;
+}
+.bulk-ticket-trash-confirm > svg {
+  flex-shrink: 0;
+}
+.bulk-ticket-trash-confirm:hover:not(:disabled) {
+  background: #962727;
+  border-color: #852222;
+}

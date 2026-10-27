@@ -137,7 +137,7 @@ export function BulkTicketTrash({
               </button>
               <button
                 type="button"
-                className="danger"
+                className="primary bulk-ticket-trash-confirm"
                 disabled={busy || !snapshot.length}
                 onClick={() => void remove()}
               >
