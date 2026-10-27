@@ -390,13 +390,18 @@ export function createApp(
   app.get("/api/context/kanban", (req, res) => {
     const context = contextSchema.parse(req.query);
     const settings = store.settings(context);
-    res.json({ order: settings.kanbanStateOrder, statusColors: settings.statusColors });
+    res.json({
+      order: settings.kanbanStateOrder,
+      hiddenStates: settings.kanbanHiddenStates,
+      statusColors: settings.statusColors,
+    });
   });
   app.put("/api/context/kanban", (req, res) => {
-    const { context, order } = z
+    const { context, order, hiddenStates } = z
       .object({
         context: contextSchema,
         order: z.array(text.min(1).max(200)).max(200),
+        hiddenStates: z.array(text.min(1).max(200)).max(200).optional(),
       })
       .parse(req.body);
     if (
@@ -408,8 +413,9 @@ export function createApp(
     )
       throw new AppError(400, "Выберите существующий проект для настройки канбана.");
     const unique = [...new Set(order)];
-    store.set(store.kanbanKey(context), unique);
-    res.json({ order: unique });
+    const hidden = [...new Set(hiddenStates ?? store.settings(context).kanbanHiddenStates)];
+    store.set(store.kanbanKey(context), { order: unique, hiddenStates: hidden });
+    res.json({ order: unique, hiddenStates: hidden });
   });
   app.get("/api/context/ticket-import", (req, res) => {
     const context = contextSchema.parse(req.query);

@@ -36,6 +36,11 @@ test("kanban columns respect state filters and configured order, including empty
     ticketStateColumns(tickets, ["Done"], ["New", "Active", "Done"]).map((c) => c.state),
     ["New", "Active", "Done", "Custom"],
   );
+  assert.deepEqual(ticketStateColumns(tickets, ["Done", "New"], [], ["New"], ["New"]), []);
+  assert.deepEqual(
+    ticketStateColumns(tickets, ["Done"], [], [], ["New", "Active", "Custom"]).map((c) => c.state),
+    ["Done"],
+  );
   assert.equal(parseTicketView(null), "table");
   assert.equal(parseTicketView("invalid"), "table");
   assert.equal(parseTicketView("kanban"), "kanban");
@@ -67,6 +72,15 @@ test("kanban settings upgrade populated storage without changing existing prefer
     store = new Store(dir);
     assert.deepEqual(store.settings(first).kanbanStateOrder, ["New", "Active"]);
   }
+  assert.deepEqual(store.settings(first).kanbanHiddenStates, []);
+  store.set(store.kanbanKey(first), { order: ["New", "Active"], hiddenStates: ["Active"] });
+  for (let i = 0; i < 2; i++) {
+    store.close();
+    store = new Store(dir);
+    assert.deepEqual(store.settings(first).kanbanHiddenStates, ["Active"]);
+    assert.deepEqual(store.settings(first).kanbanStateOrder, ["New", "Active"]);
+  }
+  assert.deepEqual(store.settings(second).kanbanHiddenStates, []);
   assert.deepEqual(store.settings(second).kanbanStateOrder, []);
   assert.equal(store.settings(first).llmTimeoutSeconds, 180);
   assert.deepEqual(store.settings(first).azureStates, ["Active"]);
@@ -76,6 +90,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
   store.renameContext({ client: "C", project: "" }, "Customer");
   const moved = { client: "Customer", project: "Renamed" };
   assert.deepEqual(store.settings(moved).kanbanStateOrder, ["New", "Active"]);
+  assert.deepEqual(store.settings(moved).kanbanHiddenStates, ["Active"]);
   deleteContext(store, moved, "удалить");
   assert.equal(store.get(store.kanbanKey(moved), null), null);
 });
@@ -109,7 +124,7 @@ test("kanban API validates project and preserves order after rejected writes", a
   await request(app)
     .put("/api/context/kanban")
     .set(auth)
-    .send({ context, order: ["New", "Active", "New"] })
+    .send({ context, order: ["New", "Active", "New"], hiddenStates: ["Active", "Active"] })
     .expect(200);
   await request(app)
     .put("/api/context/kanban")
@@ -121,7 +136,18 @@ test("kanban API validates project and preserves order after rejected writes", a
     .set(auth)
     .send({ context: { ...context, project: "Missing" }, order: ["Done"] })
     .expect(400);
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: ["New", "Active"], hiddenStates: [""] })
+    .expect(400);
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: ["New", "Active"] })
+    .expect(200);
   const read = await request(app).get("/api/context/kanban").query(context).set(auth).expect(200);
+  assert.deepEqual(read.body.hiddenStates, ["Active"]);
   assert.deepEqual(read.body.order, ["New", "Active"]);
   assert.deepEqual(read.body.statusColors, { New: "#112233" });
 });

@@ -9,16 +9,22 @@
 
 Перетащить: {…} · Перетащите для изменения порядка. Escape — отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:86.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:94.
+
+### Элемент
+
+Показывать в канбане: {…}
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:104.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:99.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:121.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:108.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:130.

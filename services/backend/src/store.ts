@@ -50,6 +50,7 @@ export const defaults = {
   azureTypes: [] as string[],
   azureStates: [] as string[],
   kanbanStateOrder: [] as string[],
+  kanbanHiddenStates: [] as string[],
   statusColors: {} as Record<string, string>,
   typeColors: {} as Record<string, string>,
   syncSeconds: 600,
@@ -594,12 +595,17 @@ export class Store {
     const scope = context || settings;
     const customer = scope.client ? this.azureBinding({ client: scope.client, project: "" }) : null;
     const project = scope.client && scope.project ? this.azureBinding(scope) : null;
+    const kanban = this.get<string[] | { order: string[]; hiddenStates?: string[] }>(
+      this.kanbanKey(scope),
+      [],
+    );
     const imported = this.ticketImport(scope) as Partial<Settings>;
     return {
       ...settings,
       ...(project || customer || {}),
       ...imported,
-      kanbanStateOrder: this.get<string[]>(this.kanbanKey(scope), []),
+      kanbanStateOrder: Array.isArray(kanban) ? kanban : kanban.order,
+      kanbanHiddenStates: Array.isArray(kanban) ? [] : kanban.hiddenStates || [],
       syncSchedule: {
         ...(imported.syncSchedule || settings.syncSchedule),
         timeZone: settings.syncSchedule.timeZone,

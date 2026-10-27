@@ -23,6 +23,7 @@ export function TicketKanban({
   source: string;
   settings?: {
     kanbanStateOrder?: string[];
+    kanbanHiddenStates?: string[];
     typeColors?: Record<string, string>;
     statusColors?: Record<string, string>;
   };
@@ -124,11 +125,18 @@ export function TicketKanban({
       }
     }
   }
-  const columns = ticketStateColumns(tickets, states, settings?.kanbanStateOrder, selectedStates);
+  const columns = ticketStateColumns(
+    tickets,
+    states,
+    settings?.kanbanStateOrder,
+    selectedStates,
+    settings?.kanbanHiddenStates,
+  );
+  const visibleCount = columns.reduce((total, column) => total + column.tickets.length, 0);
   return (
     <section className="ticket-kanban" aria-label="Канбан тикетов">
       <p className="muted">
-        Показано: {tickets.length}. Перенесите карточку в другой статус или выберите статус на
+        Показано: {visibleCount}. Перенесите карточку в другой статус или выберите статус на
         карточке. Изменение в Azure требует подтверждения.
       </p>
       {notice && (
@@ -136,9 +144,10 @@ export function TicketKanban({
           {notice}
         </p>
       )}
-      {!tickets.length && (
+      {!visibleCount && (
         <p role="status" className="muted">
-          Нет тикетов для показа. Проверьте фильтры или выполните поиск.
+          Нет тикетов для показа. Проверьте фильтры и настройки видимости статусов или выполните
+          поиск.
         </p>
       )}
       <div

@@ -7,6 +7,6 @@
 
 ### Сообщение
 
-Не удалось сохранить порядок.
+Не удалось сохранить настройки.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:67.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:75.

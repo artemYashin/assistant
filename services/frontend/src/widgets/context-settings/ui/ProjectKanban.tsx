@@ -13,6 +13,7 @@ export function ProjectKanban({
   onSaved: () => void;
 }) {
   const [order, setOrder] = useState<string[] | null>(null);
+  const [hiddenStates, setHiddenStates] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -29,8 +30,15 @@ export function ProjectKanban({
     ])
       .then(([saved, catalog]) => {
         if (!controller.signal.aborted) {
-          setOrder([...new Set<string>([...saved.order, ...catalog.states.filter(Boolean)])]);
+          setOrder([
+            ...new Set<string>([
+              ...saved.order,
+              ...(saved.hiddenStates || []),
+              ...catalog.states.filter(Boolean),
+            ]),
+          ]);
           setColors(saved.statusColors || {});
+          setHiddenStates(saved.hiddenStates || []);
         }
       })
       .catch((e) => {
@@ -60,21 +68,21 @@ export function ProjectKanban({
         setError("");
         setMessage("");
         try {
-          await api("/context/kanban", "PUT", { context, order });
-          setMessage("Порядок статусов канбана сохранён.");
+          await api("/context/kanban", "PUT", { context, order, hiddenStates });
+          setMessage("Настройки канбана сохранены.");
           onSaved();
         } catch (e) {
-          setError(e instanceof Error ? e.message : "Не удалось сохранить порядок.");
+          setError(e instanceof Error ? e.message : "Не удалось сохранить настройки.");
         } finally {
           setBusy(false);
         }
       }}
     >
-      <h3>Канбан · порядок статусов</h3>
+      <h3>Канбан · статусы</h3>
       <p className="muted">
         Сверху вниз — порядок столбцов слева направо. Перетащите статус или используйте стрелки.
-        Видимые столбцы выбираются фильтром «Статус» на странице тикетов. Новые статусы добавляются
-        справа, пока вы не настроите их порядок.
+        Снимите галочку, чтобы скрыть статус из канбана. Фильтр «Статус» дополнительно сужает список
+        включённых столбцов. Новые статусы добавляются справа, пока вы не настроите их порядок.
       </p>
       <div className="project-kanban-order" ref={sort.list}>
         {order?.map((state, index) => (
@@ -93,6 +101,20 @@ export function ProjectKanban({
             >
               <GripVertical size={15} />
             </button>
+            <input
+              type="checkbox"
+              aria-label={`Показывать в канбане: ${state}`}
+              checked={!hiddenStates.includes(state)}
+              disabled={busy || sort.dragging}
+              onChange={(event) => {
+                setHiddenStates((previous) =>
+                  event.target.checked
+                    ? previous.filter((item) => item !== state)
+                    : [...previous, state],
+                );
+                setMessage("");
+              }}
+            />
             <span className="project-kanban-status">
               <StatusBadge state={state} colors={colors} />
             </span>
