@@ -1,7 +1,7 @@
-/* The board uses a translated track, not a native horizontal scroll container.
-   Stop history swipes at the viewport too, including non-cancelable wheel events.
-   Restrict this to pages with a mounted board and leave vertical scrolling alone. */
-html:has(.ticket-kanban) {
+/* Chrome versions differ in whether viewport overscroll comes from html or body.
+   Keep both protected while Kanban is selected, including loading/empty views. */
+html:has(.ticket-kanban, .ticket-view-switch[data-view="kanban"]),
+body:has(.ticket-kanban, .ticket-view-switch[data-view="kanban"]) {
   overscroll-behavior-x: none;
 }
 .ticket-page-navigation {

@@ -285,7 +285,7 @@
     "services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx": "2b610178b5ee98a5e724b004ead05cc92c6bf21c38f26859fabe8252c363780d",
     "services/frontend/src/pages/tickets/ui/TicketSearchControls.tsx": "4e0bb6004d2ab0553a5abfeda394c97de22f9ca86dbfbc4ca55895055cad3bae",
     "services/frontend/src/pages/tickets/ui/TicketTrash.tsx": "01a33c043c506ab34e0b31e7d5e7af61eab24456751af76fa7a6e4b8e1a1c51e",
-    "services/frontend/src/pages/tickets/ui/TicketViewSwitch.tsx": "f97a201d87af044320836f86203729d618a213a957788b87f74e6166296385e9",
+    "services/frontend/src/pages/tickets/ui/TicketViewSwitch.tsx": "9aa012d3241ad5cd551adb8dcddb2bb613a1797ee8aa605c86ffb6b1bedc5b7c",
     "services/frontend/src/pages/tickets/ui/Tickets.tsx": "5571aa9e4dfd54866e2a9d842cb38de99a6d60114cc2f9b7d848614ea5ef6c8b",
     "services/frontend/src/pages/tickets/ui/useKanbanScroll.ts": "37251a98d855e07c20e55a21fe30c99f3971adc124bd5c9a6f1036ed4d00160e",
     "services/frontend/src/pages/updates/index.ts": "2dee4b3d5c5e4dbb43ce88accaed619ec2de6fd97d2bce93fdbaa3db9259db5a",

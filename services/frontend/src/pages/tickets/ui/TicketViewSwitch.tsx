@@ -31,7 +31,7 @@ export function TicketViewSwitch({
   onChange: (view: TicketView) => void;
 }) {
   return (
-    <div className="ticket-view-switch" role="group" aria-label="Вид тикетов">
+    <div className="ticket-view-switch" data-view={view} role="group" aria-label="Вид тикетов">
       <button type="button" aria-pressed={view === "table"} onClick={() => onChange("table")}>
         <Table2 size={16} />
         Таблица
