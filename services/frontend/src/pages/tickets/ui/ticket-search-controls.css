@@ -39,3 +39,10 @@
     margin-bottom: 0;
   }
 }
+
+.ticket-search-controls-content > .ticket-filter-panel {
+  margin-bottom: 0;
+}
+.ticket-search-controls + .ticket-actions-panel {
+  margin-top: 0;
+}

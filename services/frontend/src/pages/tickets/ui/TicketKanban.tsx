@@ -142,10 +142,7 @@ export function TicketKanban({
   const visibleCount = columns.reduce((total, column) => total + column.tickets.length, 0);
   return (
     <section className="ticket-kanban" aria-label="Канбан тикетов">
-      <p className="muted">
-        Показано: {visibleCount}. Перенесите карточку в другой статус или выберите статус на
-        карточке. Изменение в Azure требует подтверждения.
-      </p>
+      <p className="muted ticket-kanban-summary">Показано: {visibleCount}</p>
       {notice && (
         <p role="status" className="ticket-kanban-notice">
           {notice}

@@ -228,10 +228,6 @@ export function TicketTrash({
           </p>
         </div>
       </div>
-      <p className="muted">
-        Статус и исполнитель изменяются в Azure. Заметки и приоритет
-        {management && ", а также поручения"} сохраняются локально.
-      </p>
       <TicketSearchControls>
         <div className="ticket-management-toolbar">
           <div className="ticket-search-block">
