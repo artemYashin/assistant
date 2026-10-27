@@ -175,6 +175,12 @@ export function TicketRelatedTickets({
                       <StatusBadge kind="type" state={ticket.type} colors={typeColors} />
                     )}
                     {ticket.state && <StatusBadge state={ticket.state} colors={statusColors} />}
+                    <span
+                      className="related-ticket-relation"
+                      title="Связь этого тикета с открытым тикетом"
+                    >
+                      {ticket.relation}
+                    </span>
                     {ticket.unavailable && (
                       <span>Тикет удалён или недоступен с текущими правами Azure.</span>
                     )}
