@@ -18131,3 +18131,19 @@ a.pr-branch-link:focus-visible {
     transition: none;
   }
 }
+
+.project-kanban-order-row {
+  cursor: pointer;
+}
+.project-kanban-order-row.is-hidden {
+  background: #f0f1f3;
+  border-color: #d7dadd;
+}
+.project-kanban-order-row.is-hidden .project-kanban-status {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.project-kanban-order-row:focus-within {
+  outline: 2px solid #8eb5cc;
+  outline-offset: 1px;
+}

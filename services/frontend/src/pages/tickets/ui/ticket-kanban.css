@@ -190,3 +190,19 @@
 .ticket-kanban-heading {
   box-shadow: 0 3px 5px #243c5010;
 }
+
+.ticket-kanban-heading .ticket-view-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 30px;
+  padding: 3px 8px;
+  border: 1px solid #bed4e5;
+  border-radius: 8px;
+  background: #e5eff7;
+  color: #42677e;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}

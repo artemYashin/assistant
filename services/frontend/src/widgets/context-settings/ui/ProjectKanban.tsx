@@ -1,6 +1,6 @@
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import { useStatusSort } from "../model/useStatusSort.js";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { ContextSaveButton } from "../../../shared/ui/save-button/index.js";
@@ -12,6 +12,7 @@ export function ProjectKanban({
   context: { client: string; project: string };
   onSaved: () => void;
 }) {
+  const checkboxId = useId();
   const [order, setOrder] = useState<string[] | null>(null);
   const [hiddenStates, setHiddenStates] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -81,14 +82,16 @@ export function ProjectKanban({
       <h3>Канбан · статусы</h3>
       <p className="muted">
         Сверху вниз — порядок столбцов слева направо. Перетащите статус или используйте стрелки.
-        Снимите галочку, чтобы скрыть статус из канбана. Фильтр «Статус» дополнительно сужает список
-        включённых столбцов. Новые статусы добавляются справа, пока вы не настроите их порядок.
+        Нажмите на строку или снимите галочку, чтобы скрыть статус из канбана. Фильтр «Статус»
+        дополнительно сужает список включённых столбцов. Новые статусы добавляются справа, пока вы
+        не настроите их порядок.
       </p>
       <div className="project-kanban-order" ref={sort.list}>
         {order?.map((state, index) => (
-          <div
+          <label
             key={state}
-            className={`project-kanban-order-row${sort.isActive(index) ? " is-dragging" : ""}`}
+            htmlFor={`${checkboxId}-${index}`}
+            className={`project-kanban-order-row${sort.isActive(index) ? " is-dragging" : ""}${hiddenStates.includes(state) ? " is-hidden" : ""}`}
             style={sort.style(index)}
           >
             <button
@@ -102,6 +105,7 @@ export function ProjectKanban({
               <GripVertical size={15} />
             </button>
             <input
+              id={`${checkboxId}-${index}`}
               type="checkbox"
               aria-label={`Показывать в канбане: ${state}`}
               checked={!hiddenStates.includes(state)}
@@ -136,7 +140,7 @@ export function ProjectKanban({
             >
               <ArrowDown size={16} />
             </button>
-          </div>
+          </label>
         ))}
       </div>
       {order?.length === 0 && (
