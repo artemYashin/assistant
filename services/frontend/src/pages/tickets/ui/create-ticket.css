@@ -133,3 +133,25 @@
 .create-ticket-editor .tiptap > p:only-child:has(> br:only-child)::before {
   content: "Введите текст…";
 }
+
+.create-ticket-relation .multi-select-trigger,
+.create-ticket-relation .export-ticket-search,
+.create-ticket-relation .create-ticket-remove-relation {
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+.create-ticket-relation .create-ticket-remove-relation {
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #b42318;
+  background: #fff1f0;
+  border: 1px solid #f3b6b1;
+  border-radius: 8px;
+}
+.create-ticket-relation .create-ticket-remove-relation:hover:not(:disabled) {
+  background: #ffe0dc;
+  border-color: #d94b40;
+}

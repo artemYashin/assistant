@@ -8,3 +8,5 @@ export * from "./model/viewed-ticket.js";
 export * from "./ui/TicketColorLegend.js";
 export * from "./lib/TicketSectionScroll.js";
 export { StatusBadge } from "./ui/StatusBadge.js";
+
+export { TicketAutocomplete, type RelatedTicket } from "./ui/TicketAutocomplete.js";

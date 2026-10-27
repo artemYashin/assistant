@@ -8,6 +8,7 @@ import { StatusBadge } from "../../../entities/ticket/index.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { ticketPath } from "../../../shared/config/routes/index.js";
 import "./create-ticket.css";
+import { TicketAutocomplete, type RelatedTicket } from "../../../entities/ticket/index.js";
 
 const imageMarker = (id: string) => `https://orbit.invalid/create-ticket-image/${id}`;
 type Person = { id: string; name: string; email: string };
@@ -87,6 +88,27 @@ function CreateTicketForm({
   const [query, setQuery] = useState(""),
     [searching, setSearching] = useState(false);
   const [relations, setRelations] = useState<{ key: string; kind: string; id: string }[]>([]);
+  const [catalog, setCatalog] = useState<RelatedTicket[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const hasRelations = relations.length > 0;
+  useEffect(() => {
+    if (!hasRelations) return;
+    let live = true;
+    setCatalogLoading(true);
+    api<RelatedTicket[]>("/tickets")
+      .then((rows) => {
+        if (live) setCatalog(rows.filter((ticket) => ticket.source === source));
+      })
+      .catch((e) => {
+        if (live) setError(e.message);
+      })
+      .finally(() => {
+        if (live) setCatalogLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [hasRelations, source]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [result, setResult] = useState<{ id: number; source: string } | null>(null);
@@ -365,24 +387,23 @@ function CreateTicketForm({
                         )
                       }
                     />
-                    <label>
-                      Номер тикета
-                      <input
-                        inputMode="numeric"
-                        value={r.id}
-                        disabled={busy}
-                        placeholder="#12345"
-                        onChange={(e) => {
-                          const id = e.target.value.replace(/\D/g, "");
-                          setRelations((old) =>
-                            old.map((v) => (v.key === r.key ? { ...v, id } : v)),
-                          );
-                        }}
-                      />
-                    </label>
+                    <TicketAutocomplete
+                      value={r.id}
+                      disabled={busy}
+                      loading={catalogLoading}
+                      tickets={catalog.filter(
+                        (ticket) =>
+                          !relations.some(
+                            (other) => other.key !== r.key && Number(other.id) === ticket.id,
+                          ),
+                      )}
+                      onChange={(id) =>
+                        setRelations((old) => old.map((v) => (v.key === r.key ? { ...v, id } : v)))
+                      }
+                    />
                     <button
                       type="button"
-                      className="icon-button"
+                      className="icon-button create-ticket-remove-relation"
                       aria-label="Удалить связь"
                       disabled={busy}
                       onClick={() => setRelations((old) => old.filter((v) => v.key !== r.key))}

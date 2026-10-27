@@ -1,0 +1,27 @@
+.ticket-autocomplete {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.ticket-autocomplete > label {
+  font-size: 13px;
+}
+.ticket-autocomplete .export-ticket-search {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 40px;
+}
+.ticket-autocomplete .export-ticket-search input {
+  height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.ticket-autocomplete .export-ticket-results {
+  top: calc(100% + 4px);
+  bottom: auto;
+  z-index: 10;
+}
+.ticket-autocomplete .export-ticket-results > button[aria-selected="true"] {
+  background: #eaf5ef;
+}

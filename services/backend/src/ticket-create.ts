@@ -49,6 +49,7 @@ const relationTypes = {
 };
 const FIELD_CACHE_TTL = 24 * 60 * 60 * 1000;
 export class TicketCreate {
+  private readonly typeLoads = new Map<string, Promise<{ types: string[] }>>();
   private readonly fieldLoads = new Map<string, Promise<{ fields: string[] }>>();
   constructor(private store: Store) {}
   private connection(source: string) {
@@ -144,10 +145,38 @@ export class TicketCreate {
       guard();
       return result;
     }
-    const result = await call("workitemtypes");
+    const key = "ticket.create-types:" + source;
+    const cached = this.store.get<{ loadedAt: number; types: string[] } | null>(key, null);
+    const age = cached ? Date.now() - cached.loadedAt : NaN;
+    if (
+      cached &&
+      age >= 0 &&
+      age < FIELD_CACHE_TTL &&
+      Array.isArray(cached.types) &&
+      cached.types.every((name) => typeof name === "string" && name.length > 0)
+    )
+      return { types: cached.types };
+    let pending = this.typeLoads.get(key);
+    if (!pending) {
+      pending = (async () => {
+        const result = await call("workitemtypes");
+        guard();
+        if (
+          !Array.isArray(result.value) ||
+          result.value.some((t: any) => typeof t?.name !== "string" || !t.name)
+        )
+          throw new AppError(502, "Azure не вернул корректный список типов задач");
+        const types = result.value
+          .filter((t: any) => !t.isDisabled)
+          .map((t: any) => t.name) as string[];
+        this.store.set(key, { loadedAt: Date.now(), types });
+        return { types };
+      })().finally(() => this.typeLoads.delete(key));
+      this.typeLoads.set(key, pending);
+    }
+    const result = await pending;
     guard();
-    if (!Array.isArray(result.value)) throw new AppError(502, "Azure не вернул список типов задач");
-    return { types: result.value.filter((t: any) => !t.isDisabled).map((t: any) => t.name) };
+    return result;
   }
 
   async create(body: unknown) {

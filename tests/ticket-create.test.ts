@@ -258,3 +258,42 @@ test("successful creation updates shared recent assignees; failures preserve pri
   assert.deepEqual(saved[1], recent[5]);
   assert.deepEqual(store.get("azure.assignees.recent:Other", []), []);
 });
+
+test("task types cache persists, coalesces requests, expires after a day and isolates projects", async (t) => {
+  const { store, service, input } = setup(t);
+  let requests = 0;
+  let malformed = false;
+  globalThis.fetch = async () => {
+    requests++;
+    return Response.json({
+      value: malformed ? [{}] : [{ name: "Bug" }, { name: "Hidden", isDisabled: true }],
+    });
+  };
+  const expected = { types: ["Bug"] };
+  assert.deepEqual(
+    await Promise.all([service.options(input.source), service.options(input.source)]),
+    [expected, expected],
+  );
+  assert.equal(requests, 1);
+  const reopened = new Store(store.dir);
+  try {
+    assert.deepEqual(await new TicketCreate(reopened).options(input.source), expected);
+    assert.equal(requests, 1);
+  } finally {
+    reopened.close();
+  }
+  const key = "ticket.create-types:" + input.source;
+  const expired = { loadedAt: Date.now() - 86400000, types: ["Old"] };
+  store.set(key, expired);
+  malformed = true;
+  await assert.rejects(service.options(input.source), /список типов/);
+  assert.deepEqual(store.get(key, null), expired);
+  malformed = false;
+  assert.deepEqual(await service.options(input.source), expected);
+  assert.equal(requests, 3);
+  store.set("settings", { ...store.rawSettings(), azureProject: "Other" });
+  assert.deepEqual(await service.options(store.source()), expected);
+  assert.equal(requests, 4);
+  assert.deepEqual(store.get<{ types: string[] }>(key, { types: [] }).types, ["Bug"]);
+  await assert.rejects(service.options(input.source), /Подключение изменилось/);
+});

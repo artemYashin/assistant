@@ -9,82 +9,82 @@
 
 Подключение изменилось. Откройте создание тикета заново.
 
-Источник: services/backend/src/ticket-create.ts:59.
+Источник: services/backend/src/ticket-create.ts:60.
 
 ### Сообщение
 
 Настройте подключение Azure DevOps и PAT
 
-Источник: services/backend/src/ticket-create.ts:63.
+Источник: services/backend/src/ticket-create.ts:64.
 
 ### Сообщение
 
 Изображение изменилось. Добавьте его заново.
 
-Источник: services/backend/src/ticket-create.ts:91.
+Источник: services/backend/src/ticket-create.ts:92.
 
 ### Сообщение
 
 До 10 загруженных изображений на один черновик тикета.
 
-Источник: services/backend/src/ticket-create.ts:95.
+Источник: services/backend/src/ticket-create.ts:96.
 
 ### Сообщение
 
 Azure не вернул корректный список полей типа задачи
 
-Источник: services/backend/src/ticket-create.ts:136.
+Источник: services/backend/src/ticket-create.ts:137.
 
 ### Сообщение
 
-Azure не вернул список типов задач
-
-Источник: services/backend/src/ticket-create.ts:149.
-
-### Сообщение
-
-Тикет #{…} уже создан. Откройте новую форму для другого тикета.
-
-Источник: services/backend/src/ticket-create.ts:162.
-
-### Сообщение
-
-Результат предыдущего создания ещё не подтверждён. Проверьте Azure перед новой попыткой, чтобы не создать дубль.
+Azure не вернул корректный список типов задач
 
 Источник: services/backend/src/ticket-create.ts:168.
 
 ### Сообщение
 
+Тикет #{…} уже создан. Откройте новую форму для другого тикета.
+
+Источник: services/backend/src/ticket-create.ts:191.
+
+### Сообщение
+
+Результат предыдущего создания ещё не подтверждён. Проверьте Azure перед новой попыткой, чтобы не создать дубль.
+
+Источник: services/backend/src/ticket-create.ts:197.
+
+### Сообщение
+
 Изображение ещё не загружено. Повторите создание тикета.
 
-Источник: services/backend/src/ticket-create.ts:187.
+Источник: services/backend/src/ticket-create.ts:216.
 
 ### Сообщение
 
 Выбранный тип не поддерживает поле {…}
 
-Источник: services/backend/src/ticket-create.ts:193.
+Источник: services/backend/src/ticket-create.ts:222.
 
 ### Сообщение
 
 Найдите и выберите исполнителя в Azure заново
 
-Источник: services/backend/src/ticket-create.ts:203.
+Источник: services/backend/src/ticket-create.ts:232.
 
 ### Сообщение
 
 Создание уже выполняется. Дождитесь результата.
 
-Источник: services/backend/src/ticket-create.ts:219.
+Источник: services/backend/src/ticket-create.ts:248.
 
 ### Сообщение
 
 Azure не вернул номер созданного тикета
 
-Источник: services/backend/src/ticket-create.ts:227.
+Источник: services/backend/src/ticket-create.ts:256.
 
 ### Сообщение
 
 Не удалось подтвердить результат создания. Проверьте Azure перед новой попыткой: тикет мог уже создаться. Черновик сохранён в открытой форме.
 
-Источник: services/backend/src/ticket-create.ts:255.
+Источник: services/backend/src/ticket-create.ts:284.

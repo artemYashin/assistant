@@ -9,4 +9,4 @@
 
 https://orbit.invalid/create-ticket-image/{…}
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:12.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:13.
