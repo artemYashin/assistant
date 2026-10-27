@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { ticketColumns } from "../../../features/ticket-columns/index.js";
 import { useLocalManagement } from "../../../entities/work-mode/index.js";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
@@ -32,10 +32,6 @@ export function TicketKanbanSort({
   ];
   return (
     <section className="ticket-kanban-sort-panel" aria-label="Сортировка канбана">
-      <strong className="ticket-kanban-sort-title">
-        <ArrowUpDown size={17} />
-        Сортировка
-      </strong>
       <SingleSelect
         label="Сортировать по"
         value={field}
