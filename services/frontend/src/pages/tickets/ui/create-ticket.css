@@ -70,7 +70,22 @@
   border-top: 1px solid #e1e8e3;
 }
 .create-ticket-success {
-  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0 0 4px;
+}
+.create-ticket-success p {
+  margin: 0;
+}
+.create-ticket-dialog:has(.create-ticket-success) {
+  height: auto;
+  min-height: 0;
+}
+.create-ticket-dialog:has(.create-ticket-success) .create-ticket-heading {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
 }
 @media (max-width: 600px) {
   .create-ticket-dialog {

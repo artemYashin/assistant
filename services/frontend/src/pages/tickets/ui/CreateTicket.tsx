@@ -2,12 +2,10 @@ import { useChatToggleShortcut as useAppShortcut } from "../../../features/voice
 import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, X, LoaderCircle } from "lucide-react";
-import { Link } from "react-router-dom";
 import { api } from "../../../shared/api/http/index.js";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
-import { ticketPath } from "../../../shared/config/routes/index.js";
 import "./create-ticket.css";
 import { TicketAutocomplete, type RelatedTicket } from "../../../entities/ticket/index.js";
 
@@ -121,7 +119,13 @@ function CreateTicketForm({
   }, [hasRelations, source]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const [result, setResult] = useState<{ id: number; source: string } | null>(null);
+  const [result, setResult] = useState<{
+    id: number;
+    source: string;
+    title: string;
+    imported: boolean;
+    importError: string;
+  } | null>(null);
   useEffect(() => {
     let live = true;
     setLoading(true);
@@ -259,6 +263,7 @@ function CreateTicketForm({
         relations: relations.map((r) => ({ kind: r.kind, id: Number(r.id) })),
       });
       setResult(value);
+      if (value.imported) window.dispatchEvent(new Event("orbit:ticket-tracked"));
     } catch (e: any) {
       setError(e.message + " Черновик и загруженные картинки остаются в открытой форме.");
     } finally {
@@ -285,11 +290,56 @@ function CreateTicketForm({
       {result ? (
         <div className="create-ticket-success">
           <p role="status">
-            Тикет #{result.id} создан в Azure. В локальный список он автоматически не добавляется.
+            Тикет #{result.id} создан в Azure{result.imported ? " и импортирован в Orbit" : ""}.
           </p>
-          <Link className="primary" to={ticketPath(result.id, result.source)} onClick={onClose}>
+          {!result.imported && (
+            <>
+              <p className="error" role="alert">
+                Импорт не завершён: {result.importError}
+              </p>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const imported = await api("/azure/tickets/import", "POST", {
+                      ids: [result.id],
+                      source: result.source,
+                    });
+                    if (imported.missing.includes(result.id))
+                      throw new Error("Azure пока не вернул созданный тикет. Повторите импорт.");
+                    setResult({ ...result, imported: true, importError: "" });
+                    window.dispatchEvent(new Event("orbit:ticket-tracked"));
+                  } catch (e: any) {
+                    setResult({ ...result, importError: e.message });
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? "Импортирую…" : "Повторить импорт"}
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(
+                new CustomEvent("orbit-show-ticket-details", {
+                  detail: {
+                    source: result.source,
+                    tickets: [{ id: result.id, title: result.title || title }],
+                  },
+                }),
+              );
+            }}
+          >
             Открыть тикет #{result.id}
-          </Link>
+          </button>
         </div>
       ) : (
         <>

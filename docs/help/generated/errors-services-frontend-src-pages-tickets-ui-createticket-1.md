@@ -9,4 +9,10 @@
 
 https://orbit.invalid/create-ticket-image/{…}
 
-Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:14.
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:12.
+
+### Сообщение
+
+Azure пока не вернул созданный тикет. Повторите импорт.
+
+Источник: services/frontend/src/pages/tickets/ui/CreateTicket.tsx:312.

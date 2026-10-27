@@ -43,48 +43,60 @@ Azure не вернул корректный список типов задач
 
 ### Сообщение
 
+Azure пока не вернул созданный тикет. Повторите импорт.
+
+Источник: services/backend/src/ticket-create.ts:190.
+
+### Сообщение
+
+Не удалось импортировать тикет
+
+Источник: services/backend/src/ticket-create.ts:196.
+
+### Сообщение
+
 Тикет #{…} уже создан. Откройте новую форму для другого тикета.
 
-Источник: services/backend/src/ticket-create.ts:191.
+Источник: services/backend/src/ticket-create.ts:210.
 
 ### Сообщение
 
 Результат предыдущего создания ещё не подтверждён. Проверьте Azure перед новой попыткой, чтобы не создать дубль.
 
-Источник: services/backend/src/ticket-create.ts:197.
+Источник: services/backend/src/ticket-create.ts:216.
 
 ### Сообщение
 
 Изображение ещё не загружено. Повторите создание тикета.
 
-Источник: services/backend/src/ticket-create.ts:216.
+Источник: services/backend/src/ticket-create.ts:235.
 
 ### Сообщение
 
 Выбранный тип не поддерживает поле {…}
 
-Источник: services/backend/src/ticket-create.ts:222.
+Источник: services/backend/src/ticket-create.ts:241.
 
 ### Сообщение
 
 Найдите и выберите исполнителя в Azure заново
 
-Источник: services/backend/src/ticket-create.ts:232.
+Источник: services/backend/src/ticket-create.ts:251.
 
 ### Сообщение
 
 Создание уже выполняется. Дождитесь результата.
 
-Источник: services/backend/src/ticket-create.ts:248.
+Источник: services/backend/src/ticket-create.ts:267.
 
 ### Сообщение
 
 Azure не вернул номер созданного тикета
 
-Источник: services/backend/src/ticket-create.ts:256.
+Источник: services/backend/src/ticket-create.ts:275.
 
 ### Сообщение
 
 Не удалось подтвердить результат создания. Проверьте Azure перед новой попыткой: тикет мог уже создаться. Черновик сохранён в открытой форме.
 
-Источник: services/backend/src/ticket-create.ts:284.
+Источник: services/backend/src/ticket-create.ts:303.

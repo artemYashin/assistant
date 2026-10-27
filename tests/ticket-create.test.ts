@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { Store } from "../services/backend/src/store.js";
+import { Connectors } from "../services/backend/src/connectors.js";
 import { TicketCreate } from "../services/backend/src/ticket-create.js";
 
 function setup(t: any) {
@@ -296,4 +297,79 @@ test("task types cache persists, coalesces requests, expires after a day and iso
   assert.equal(requests, 4);
   assert.deepEqual(store.get<{ types: string[] }>(key, { types: [] }).types, ["Bug"]);
   await assert.rejects(service.options(input.source), /Подключение изменилось/);
+});
+
+test("creation import failure preserves Azure receipt and retry never creates a duplicate", async (t) => {
+  const { service, input } = setup(t);
+  let creates = 0;
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method !== "POST") return fields();
+    creates++;
+    return Response.json({ id: 77 });
+  };
+  let attempts = 0;
+  const importer = async (ids: number[], source: string) => {
+    assert.deepEqual(ids, [77]);
+    assert.equal(source, input.source);
+    attempts++;
+    if (attempts === 1) throw new Error("Import unavailable");
+    return { missing: attempts === 2 ? [77] : [] };
+  };
+  const failed = await service.createAndImport(input, importer);
+  assert.equal(failed.id, 77);
+  assert.equal(failed.imported, false);
+  assert.equal(failed.importError, "Import unavailable");
+  assert.equal((await service.createAndImport(input, importer)).imported, false);
+  assert.equal((await service.createAndImport(input, importer)).imported, true);
+  assert.equal(creates, 1);
+});
+
+test("new Azure ticket imports into a populated local list and repeated creation preserves local data", async (t) => {
+  const { store, service, input } = setup(t);
+  const connectors = new Connectors(store);
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,42,'Existing','Active','','Bug','','','')")
+    .run(input.source);
+  let creates = 0,
+    imports = 0;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes("workitemsbatch")) {
+      imports++;
+      return Response.json({
+        value: [
+          {
+            id: 78,
+            fields: {
+              "System.TeamProject": "Project",
+              "System.Title": "Created",
+              "System.WorkItemType": "Bug",
+              "System.State": "New",
+              "System.Description": "<p>Description</p>",
+            },
+          },
+        ],
+      });
+    }
+    if (init?.method !== "POST") return fields();
+    creates++;
+    return Response.json({ id: 78 });
+  };
+  const importer = (ids: number[], source: string) => connectors.importAzureSelection(ids, source);
+  assert.equal((await service.createAndImport(input, importer)).imported, true);
+  assert.equal(
+    (store.db.prepare("SELECT title FROM tickets WHERE id=78").get() as any).title,
+    "Created",
+  );
+  store.db.prepare("UPDATE tickets SET title='Local snapshot' WHERE id=78").run();
+  assert.equal((await service.createAndImport(input, importer)).imported, true);
+  assert.equal(creates, 1);
+  assert.equal(imports, 1);
+  assert.equal(
+    (store.db.prepare("SELECT title FROM tickets WHERE id=78").get() as any).title,
+    "Local snapshot",
+  );
+  assert.equal(
+    (store.db.prepare("SELECT title FROM tickets WHERE id=42").get() as any).title,
+    "Existing",
+  );
 });

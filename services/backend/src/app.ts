@@ -1277,7 +1277,11 @@ export function createApp(
     },
   );
   app.post("/api/azure/tickets/create", async (req, res) => {
-    res.json(await ticketCreate.create(req.body));
+    res.json(
+      await ticketCreate.createAndImport(req.body, (ids, source) =>
+        connectors.importAzureSelection(ids, source),
+      ),
+    );
   });
   app.get("/api/azure/tickets/catalog", async (_req, res) => {
     const source = store.source();

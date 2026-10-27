@@ -179,6 +179,25 @@ export class TicketCreate {
     return result;
   }
 
+  async createAndImport(
+    body: unknown,
+    importTicket: (ids: number[], source: string) => Promise<{ missing: number[] }>,
+  ) {
+    const result = await this.create(body);
+    try {
+      const imported = await importTicket([result.id], result.source);
+      if (imported.missing.includes(result.id))
+        throw new Error("Azure пока не вернул созданный тикет. Повторите импорт.");
+      return { ...result, imported: true, importError: "" };
+    } catch (error) {
+      return {
+        ...result,
+        imported: false,
+        importError: error instanceof Error ? error.message : "Не удалось импортировать тикет",
+      };
+    }
+  }
+
   async create(body: unknown) {
     const input = createTicketSchema.parse(body);
     const { call, guard, base } = this.connection(input.source);
