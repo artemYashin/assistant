@@ -361,7 +361,7 @@ export function Settings({ settings, context, run, busy }: any) {
             <div className="form-grid">
               <Field
                 label="Лимит времени ответа, секунд"
-                hint="От 15 до 600 секунд. При превышении приложение отменяет запрос и завершает runtime."
+                hint="От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime."
               >
                 <NumberInput
                   min="15"

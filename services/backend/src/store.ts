@@ -54,7 +54,7 @@ export const defaults = {
   syncSeconds: 600,
   syncSchedule: syncScheduleSchema.parse({}),
   calendarNotifications: calendarNotificationsSchema.parse({}),
-  llmTimeoutSeconds: 180,
+  llmTimeoutSeconds: 300,
   llmMaxTokens: 250000,
   reviewMaxTokens: 1000000,
   reviewMaxToolCalls: 30,
