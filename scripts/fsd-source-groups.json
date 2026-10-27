@@ -95,5 +95,30 @@
         "path": "services/frontend/src/widgets/assistant/ui/Assistant.tsx"
       }
     ]
+  },
+  {
+    "path": "services/frontend/src/pages/tickets/ui/CreateTicket.tsx",
+    "declarations": [
+      {
+        "name": "imageMarker",
+        "path": "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx"
+      },
+      {
+        "name": "Person",
+        "path": "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx"
+      },
+      {
+        "name": "textFields",
+        "path": "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx"
+      },
+      {
+        "name": "CreateTicket",
+        "path": "services/frontend/src/pages/tickets/ui/CreateTicket.tsx"
+      },
+      {
+        "name": "CreateTicketForm",
+        "path": "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx"
+      }
+    ]
   }
 ]

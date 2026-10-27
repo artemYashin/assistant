@@ -1,3 +1,5 @@
+import { CreateTicketForm } from "../../../features/create-ticket/index.js";
+import "./ticket-related-create.css";
 import { TicketRelatedTickets } from "./TicketRelatedTickets.js";
 import { TicketLinkedPullRequests } from "./TicketLinkedPullRequests.js";
 import { TicketHistory } from "./TicketHistory.js";
@@ -73,6 +75,8 @@ export function TicketCard({
   const tabId = useId();
   const [prsOpened, setPrsOpened] = useState(false);
   const [prCount, setPrCount] = useState<number | null>(null);
+  const [creatingRelated, setCreatingRelated] = useState(false);
+  const [relatedVersion, setRelatedVersion] = useState(0);
   const [relatedOpened, setRelatedOpened] = useState(false);
   const [relatedCount, setRelatedCount] = useState<number | undefined>();
   const [notesOpened, setNotesOpened] = useState(false);
@@ -129,6 +133,8 @@ export function TicketCard({
     setActiveTab("content");
     setHistoryOpened(false);
     setRelatedOpened(false);
+    setCreatingRelated(false);
+    setRelatedVersion(0);
     setRelatedCount(undefined);
     setNotesOpened(false);
     setPrsOpened(false);
@@ -384,8 +390,21 @@ export function TicketCard({
       data-viewed-ticket-id={card.id}
       data-viewed-ticket-source={card.source}
     >
-      <div className="ticket-detail-layout">
-        <aside className="ticket-detail-sidebar" aria-label="Поля тикета">
+      <div className={`ticket-detail-layout${creatingRelated ? " is-creating-related" : ""}`}>
+        {creatingRelated && (
+          <aside className="ticket-related-create-panel" aria-label="Создание связанного тикета">
+            <CreateTicketForm
+              key={reference}
+              source={card.source}
+              project={card.project || f["System.TeamProject"] || ""}
+              colors={typeColors}
+              parentTicketId={card.id}
+              onClose={() => setCreatingRelated(false)}
+              onCreated={() => setRelatedVersion((v) => v + 1)}
+            />
+          </aside>
+        )}
+        <aside className="ticket-detail-sidebar" aria-label="Поля тикета" hidden={creatingRelated}>
           <dl className="ticket-metadata">
             <div>
               <dt>Номер</dt>
@@ -945,6 +964,9 @@ export function TicketCard({
                   typeColors={typeColors}
                   statusColors={colors}
                   onCount={setRelatedCount}
+                  refreshKey={relatedVersion}
+                  onCreate={() => setCreatingRelated(true)}
+                  creating={creatingRelated}
                 />
               )}
             </section>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RefreshCw, Ticket } from "lucide-react";
+import { RefreshCw, Ticket, Plus } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { StatusBadge } from "../../../entities/ticket/index.js";
@@ -24,11 +24,17 @@ export function TicketRelatedTickets({
   typeColors,
   statusColors,
   onCount,
+  onCreate,
+  creating = false,
+  refreshKey = 0,
 }: {
   reference: string;
   typeColors: Record<string, string>;
   statusColors: Record<string, string>;
   onCount: (count: number) => void;
+  onCreate?: () => void;
+  creating?: boolean;
+  refreshKey?: number;
 }) {
   const [selectedType, setSelectedType] = useState<string | null>(() => {
     try {
@@ -72,7 +78,7 @@ export function TicketRelatedTickets({
     return () => {
       live = false;
     };
-  }, [reference, version, onCount]);
+  }, [reference, version, onCount, refreshKey]);
   const types = [...new Set((data?.items || []).map((ticket) => ticket.type))];
   const activeType = selectedType !== null && types.includes(selectedType) ? selectedType : null;
   const visible = (data?.items || []).filter(
@@ -80,14 +86,21 @@ export function TicketRelatedTickets({
   );
   return (
     <div>
-      <button
-        type="button"
-        className="secondary"
-        disabled={busy}
-        onClick={() => setVersion((v) => v + 1)}
-      >
-        <RefreshCw size={15} /> Обновить связи
-      </button>
+      <div className="related-ticket-actions">
+        {onCreate && (
+          <button type="button" className="primary" disabled={creating} onClick={onCreate}>
+            <Plus size={15} /> Создать связанный тикет
+          </button>
+        )}
+        <button
+          type="button"
+          className="secondary"
+          disabled={busy}
+          onClick={() => setVersion((v) => v + 1)}
+        >
+          <RefreshCw size={15} /> Обновить связи
+        </button>
+      </div>
       {busy && <p role="status">Загружаю связанные тикеты…</p>}
       {error && (
         <p role="alert" className="error">

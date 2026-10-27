@@ -189,6 +189,8 @@
     "services/frontend/src/features/complete-reminder/ui/DailyCompletionButton.tsx": "564b712c7d13672001cd322954ac8f116dc3bb73b373652574808a1297e65351",
     "services/frontend/src/features/configure-calendar/index.ts": "d1a74dd0114152950bed5069c8f9b6f185b030f6810a043ab2b775efa63fcb23",
     "services/frontend/src/features/configure-calendar/ui/CalendarSettings.tsx": "af7604874efa3e0951918613d1439360935cc760e5abc233dc4eccbea1ef8c31",
+    "services/frontend/src/features/create-ticket/index.ts": "c2f48658ab05b52ee922537515fe75ed1c363445f37af5b20b5def576eafe9a5",
+    "services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx": "ca15960482ef5119f1c53ca90f1e1f7d0f107cd2dd400854c2fc7b10891a312d",
     "services/frontend/src/features/edit-ticket/index.ts": "a5621c4071816316148469cc5d42be300243336d171836ad1fac7de3290851e1",
     "services/frontend/src/features/edit-ticket/ui/AzureAssignee.tsx": "381bf7c00e212009f3b4104a594300f3b484cc338b6c5598cb2d63bb53d0435e",
     "services/frontend/src/features/edit-ticket/ui/BulkTicketStatus.tsx": "603ddd2aba0b24197c9ad974c0afa10e922cbbaceea92c77bf5a70bbf45bb440",
@@ -278,7 +280,7 @@
     "services/frontend/src/pages/tickets/index.ts": "dc5f056ec9520cdea471838405c5a154a70e1d10aae86962aa89a936c8d7be3a",
     "services/frontend/src/pages/tickets/model/kanban.ts": "f7c142bf82994541e08c804852ba22c7dce9a7c65441002465d8ace165f1739f",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",
-    "services/frontend/src/pages/tickets/ui/CreateTicket.tsx": "8197761f7f757030be258d45bd2159478d72b201955a525ec75d40ae5e7cfba8",
+    "services/frontend/src/pages/tickets/ui/CreateTicket.tsx": "7d180c91d32c9e15b646af53a09de8c666fa28b3e35ae400626a8115bfdaf8e7",
     "services/frontend/src/pages/tickets/ui/TicketKanban.tsx": "6a206fe3ced1b31e6aa6a001d101351ffffdc266ddfbc6342e54f58b55f45960",
     "services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx": "2b610178b5ee98a5e724b004ead05cc92c6bf21c38f26859fabe8252c363780d",
     "services/frontend/src/pages/tickets/ui/TicketSearchControls.tsx": "4e0bb6004d2ab0553a5abfeda394c97de22f9ca86dbfbc4ca55895055cad3bae",
@@ -373,11 +375,11 @@
     "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx": "78ef35d1d30f729d0fb03bb9f0de8fd40139852a7ad22b2f5a36806d9454fcd5",
     "services/frontend/src/widgets/ticket/index.ts": "811f1b0e006e9c905a36455a3503e3b3a092f379bf6913ccf0c8bbc64054aeee",
     "services/frontend/src/widgets/ticket/lib/locate-content-link.ts": "8ac0925bb68c01331f49f984083b483174f60e4a5e0a1ef45556979946a5f4af",
-    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "fdeac024793a48952ca7ece6b10926c62668b6fd6b066feafa67acaa0a7b4df4",
+    "services/frontend/src/widgets/ticket/ui/TicketCard.tsx": "c88d3bcdf9741305092751dcb0a0c16038c22ba9c7d7fc60b61e778c376ebc37",
     "services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx": "e406338a18dc2498dc0dc77623740c6a93c0b8064943fd9c19e4d304fde41fd9",
     "services/frontend/src/widgets/ticket/ui/TicketHistory.tsx": "ca0764c5226c7c24a3b279c8ed3dca8926dbf8e6e439c2c13f2bdf4edcfc4cc9",
     "services/frontend/src/widgets/ticket/ui/TicketLinkedPullRequests.tsx": "bd0c501f4eac6c8e9f8826df4dfe52e07a0c023ed2d1e99a2171b2a886073069",
-    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "5d4384f41e74421b9682abfc1fff14e0d5ec46f927e36295d80e72fe55e34f10",
+    "services/frontend/src/widgets/ticket/ui/TicketRelatedTickets.tsx": "656eaeb9d81088e5ed0b3d31260ac811f70b59fe4beff355fe5afaba0573f652",
     "services/voice/app.py": "520e9e98a47b01fae5f7d328a17bbaf684fa1868f209bdf02801ef3f740d3c0e"
   }
 }
