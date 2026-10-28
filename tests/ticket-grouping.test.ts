@@ -106,7 +106,7 @@ test("shared child is shown under each parent with distinct row keys and one sel
   );
   assert.deepEqual(
     rows.map((row) => row.ticket.id),
-    [1, 3, 2, 3, 3],
+    [1, 3, 2, 3],
   );
   assert.equal(new Set(rows.map((row) => row.key)).size, rows.length);
   assert.deepEqual(
@@ -144,4 +144,76 @@ test("collapsed parents retain expansion affordance without requiring child deta
   assert.equal(rows[0].expandable, true);
   assert.equal(rows[0].expanded, false);
   assert.equal(rows[1].expandable, false);
+});
+
+test("known children leave root list even while parents are collapsed", () => {
+  const rows = groupedTicketRows(
+    [ticket(3, { type: "Task" }), ticket(1)],
+    true,
+    ["User Story"],
+    {
+      1: { id: 1, childIds: [3] },
+    },
+    new Set(),
+  );
+  assert.deepEqual(
+    rows.map((row) => row.ticket.id),
+    [1],
+  );
+});
+
+test("children remain roots when their parent is filtered out or its type is not selected", () => {
+  const parents = { 1: { id: 1, childIds: [3] } };
+  assert.deepEqual(
+    groupedTicketRows([ticket(3)], true, ["User Story"], parents, new Set()).map(
+      (row) => row.ticket.id,
+    ),
+    [3],
+  );
+  assert.deepEqual(
+    groupedTicketRows([ticket(1), ticket(3)], true, ["Bug"], parents, new Set()).map(
+      (row) => row.ticket.id,
+    ),
+    [1, 3],
+  );
+});
+
+test("one-level chains and cycles retain reachable roots independently of sorting", () => {
+  const parents = {
+    1: { id: 1, childIds: [2], children: [ticket(2)] },
+    2: { id: 2, childIds: [3], children: [ticket(3)] },
+  };
+  for (const roots of [
+    [ticket(1), ticket(2), ticket(3)],
+    [ticket(3), ticket(2), ticket(1)],
+  ]) {
+    const rows = groupedTicketRows(roots, true, ["User Story"], parents, new Set([1, 2]));
+    assert.deepEqual(
+      rows
+        .filter((row) => !row.child)
+        .map((row) => row.ticket.id)
+        .sort(),
+      [1, 3],
+    );
+    assert.deepEqual(
+      uniqueGroupTickets(rows)
+        .map((row) => row.id)
+        .sort(),
+      [1, 2, 3],
+    );
+  }
+  const cycle = groupedTicketRows(
+    [ticket(2), ticket(1)],
+    true,
+    ["User Story"],
+    {
+      1: { id: 1, childIds: [2], children: [ticket(2)] },
+      2: { id: 2, childIds: [1], children: [ticket(1)] },
+    },
+    new Set([1, 2]),
+  );
+  assert.deepEqual(
+    cycle.map((row) => row.ticket.id),
+    [1, 2],
+  );
 });

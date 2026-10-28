@@ -282,7 +282,7 @@
     "services/frontend/src/pages/settings/ui/LoginCode.tsx": "b53f7582ef9c5a0081f69d3463e881eb34feb1ae0a451e450bfde66d7919cdb1",
     "services/frontend/src/pages/settings/ui/Settings.tsx": "66e49abab57a41851e52d66414f76870cb0108d35a9fcf37ec18ecd143ab1a55",
     "services/frontend/src/pages/tickets/index.ts": "dc5f056ec9520cdea471838405c5a154a70e1d10aae86962aa89a936c8d7be3a",
-    "services/frontend/src/pages/tickets/model/grouping.ts": "27f6286b6539ea19d2dd132850e7dd9e744594fbb02d9ddee1a2e7ffbb642b96",
+    "services/frontend/src/pages/tickets/model/grouping.ts": "ea8dfb93794c8ade5305a2fa98573e08e1ec63e3b5f3fd5e8cf6260e7d2a2b3a",
     "services/frontend/src/pages/tickets/model/kanban.ts": "a6ec32f9af6670d3f30cd03c758ca314f53bc4107445a74ceb6d554a6511d14c",
     "services/frontend/src/pages/tickets/model/useTicketGrouping.ts": "9ea32adcc14d56ac791148809d13a78beda590f9a0c3726390bdaeb2e239b84b",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",
