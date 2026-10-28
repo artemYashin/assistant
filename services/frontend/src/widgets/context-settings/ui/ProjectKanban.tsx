@@ -158,10 +158,6 @@ export function ProjectKanban({
           </span>
         </label>
       </div>
-      <p className="muted">
-        Сверху вниз — порядок столбцов слева направо. Перетаскивайте за ручку. Нажмите на строку,
-        чтобы показать или скрыть столбец.
-      </p>
       <button
         type="button"
         className="secondary"
@@ -171,8 +167,13 @@ export function ProjectKanban({
           setMessage("");
         }}
       >
+        <Folder size={16} aria-hidden="true" />
         Добавить группу
       </button>
+      <p className="muted">
+        Сверху вниз — порядок столбцов слева направо. Перетаскивайте за ручку. Нажмите на строку,
+        чтобы показать или скрыть столбец.
+      </p>
       {draft &&
         createPortal(
           <dialog
