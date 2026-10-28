@@ -282,9 +282,10 @@
 }
 .create-ticket-sidebar .local-tags-editor-field {
   min-height: 40px;
-  padding: 8px 10px;
+  padding: 4px 10px;
   box-sizing: border-box;
   align-items: center;
+  align-content: center;
 }
 .create-ticket-sidebar .local-tags-editor > .muted {
   font-size: 10px;
