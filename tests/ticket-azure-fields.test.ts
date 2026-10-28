@@ -65,8 +65,11 @@ for (const membership of ["imported", "trash", "unimported"]) {
         writes++;
         const patch = JSON.parse(String(init.body));
         assert.deepEqual(patch[0], { op: "test", path: "/rev", value: 5 });
-        for (const entry of patch.slice(1))
-          fields[entry.path.slice("/fields/".length)] = entry.value;
+        for (const entry of patch.slice(1)) {
+          const key = entry.path.slice("/fields/".length);
+          if (entry.op === "remove") delete fields[key];
+          else fields[key] = entry.value;
+        }
       } else reads++;
       return Response.json({ id: 42, rev: 5, fields });
     };
@@ -90,7 +93,7 @@ for (const membership of ["imported", "trash", "unimported"]) {
     if (membership === "trash") assert.equal(store.ticketTrash()[0].removedAt, removal);
     if (membership !== "unimported") assert.deepEqual(ticketMetadata(store, 42).tags, ["local"]);
     await service.editAzureFields(42, source, { azureTags: [] });
-    assert.equal(fields["System.Tags"], "");
+    assert.equal(fields["System.Tags"], undefined);
     assert.equal(fields["Microsoft.VSTS.Common.Priority"], 1);
   });
 }
@@ -126,4 +129,44 @@ test("Azure field writes reject wrong projects, stale connections and invalid va
     service.editAzureFields(42, source, { azurePriority: 1 }),
     /другому проекту/,
   );
+});
+
+test("tag edits replace existing sets, remove the last tag, and add only when the field is absent", async (t) => {
+  const { service, source } = setup(t);
+  const fields: Record<string, unknown> = {
+    "System.TeamProject": "P",
+    "System.Tags": "Keep; Delete",
+  };
+  const operations: string[] = [];
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method === "PATCH") {
+      const patch = JSON.parse(String(init.body));
+      assert.deepEqual(patch[0], { op: "test", path: "/rev", value: 7 });
+      for (const entry of patch.slice(1)) {
+        assert.equal(entry.path, "/fields/System.Tags");
+        operations.push(entry.op);
+        if (entry.op === "replace") {
+          assert.ok(Object.hasOwn(fields, "System.Tags"));
+          fields["System.Tags"] = entry.value;
+        } else if (entry.op === "remove") {
+          assert.ok(Object.hasOwn(fields, "System.Tags"));
+          assert.ok(!Object.hasOwn(entry, "value"));
+          delete fields["System.Tags"];
+        } else {
+          assert.equal(entry.op, "add");
+          assert.ok(!Object.hasOwn(fields, "System.Tags"), "an existing tag set must be replaced");
+          fields["System.Tags"] = entry.value;
+        }
+      }
+    }
+    return Response.json({ id: 42, rev: 7, fields });
+  };
+  assert.equal((await service.editAzureFields(42, source, { azureTags: ["Keep"] })).verified, true);
+  assert.equal(fields["System.Tags"], "Keep");
+  await service.editAzureFields(42, source, { azureTags: [] });
+  assert.ok(!Object.hasOwn(fields, "System.Tags"));
+  await service.editAzureFields(42, source, { azureTags: [] });
+  await service.editAzureFields(42, source, { azureTags: ["New"] });
+  assert.equal(fields["System.Tags"], "New");
+  assert.deepEqual(operations, ["replace", "remove", "add"]);
 });

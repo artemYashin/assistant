@@ -6671,8 +6671,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   )
@@ -6693,8 +6695,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   ):is(
@@ -6714,8 +6718,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   )
@@ -6734,8 +6740,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   )
@@ -6763,8 +6771,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   )
@@ -6790,8 +6800,10 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+      [data-column="azurePriority"],
       [data-column="localDeadline"],
       [data-column="tags"],
+      [data-column="azureTags"],
       [data-column="developer_name"],
       [data-column="assigned"]
     )
@@ -6807,8 +6819,10 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+      [data-column="azurePriority"],
       [data-column="localDeadline"],
       [data-column="tags"],
+      [data-column="azureTags"],
       [data-column="developer_name"],
       [data-column="assigned"]
     ):is(
@@ -6831,8 +6845,10 @@ summary > svg {
   > td:is(
     [data-column="state"],
     [data-column="priority"],
+    [data-column="azurePriority"],
     [data-column="localDeadline"],
     [data-column="tags"],
+    [data-column="azureTags"],
     [data-column="developer_name"],
     [data-column="assigned"]
   )
@@ -6848,8 +6864,10 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+      [data-column="azurePriority"],
       [data-column="localDeadline"],
       [data-column="tags"],
+      [data-column="azureTags"],
       [data-column="developer_name"],
       [data-column="assigned"]
     )
@@ -6861,8 +6879,10 @@ summary > svg {
     > td:is(
       [data-column="state"],
       [data-column="priority"],
+      [data-column="azurePriority"],
       [data-column="localDeadline"],
       [data-column="tags"],
+      [data-column="azureTags"],
       [data-column="developer_name"],
       [data-column="assigned"]
     )

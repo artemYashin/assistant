@@ -9,118 +9,118 @@
 
 Черновик изменился. Повторите отправку с новым идентификатором.
 
-Источник: services/backend/src/connectors.ts:1234.
+Источник: services/backend/src/connectors.ts:1244.
 
 ### Сообщение
 
 Не найдена загруженная картинка. Добавьте её заново.
 
-Источник: services/backend/src/connectors.ts:1242.
+Источник: services/backend/src/connectors.ts:1252.
 
 ### Сообщение
 
 Azure не вернул версию тикета. Повторите отправку.
 
-Источник: services/backend/src/connectors.ts:1269.
+Источник: services/backend/src/connectors.ts:1279.
 
 ### Сообщение
 
 Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.
 
-Источник: services/backend/src/connectors.ts:1313.
+Источник: services/backend/src/connectors.ts:1323.
 
 ### Сообщение
 
 Некорректная страница истории
 
-Источник: services/backend/src/connectors.ts:1354.
+Источник: services/backend/src/connectors.ts:1364.
 
 ### Сообщение
 
 Azure не вернул версию тикета для истории
 
-Источник: services/backend/src/connectors.ts:1371.
+Источник: services/backend/src/connectors.ts:1381.
 
 ### Сообщение
 
 Некорректный ответ истории Azure
 
-Источник: services/backend/src/connectors.ts:1383.
+Источник: services/backend/src/connectors.ts:1393.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте тикет заново.
 
-Источник: services/backend/src/connectors.ts:1408.
+Источник: services/backend/src/connectors.ts:1418.
 
 ### Сообщение
 
 Azure не вернул связи тикета
 
-Источник: services/backend/src/connectors.ts:1414.
+Источник: services/backend/src/connectors.ts:1424.
 
 ### Сообщение
 
 Azure не вернул связанные тикеты
 
-Источник: services/backend/src/connectors.ts:1465.
+Источник: services/backend/src/connectors.ts:1475.
 
 ### Сообщение
 
 Карточка не найдена
 
-Источник: services/backend/src/connectors.ts:1490.
+Источник: services/backend/src/connectors.ts:1500.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/connectors.ts:1496.
+Источник: services/backend/src/connectors.ts:1506.
 
 ### Сообщение
 
 Встроенное изображение недоступно
 
-Источник: services/backend/src/connectors.ts:1507.
+Источник: services/backend/src/connectors.ts:1517.
 
 ### Сообщение
 
 Подключите Azure DevOps
 
-Источник: services/backend/src/connectors.ts:1515.
+Источник: services/backend/src/connectors.ts:1525.
 
 ### Сообщение
 
 Не удалось загрузить вложение
 
-Источник: services/backend/src/connectors.ts:1526.
+Источник: services/backend/src/connectors.ts:1536.
 
 ### Сообщение
 
 Вложение больше 20 МБ
 
-Источник: services/backend/src/connectors.ts:1537.
+Источник: services/backend/src/connectors.ts:1547.
 
 ### Сообщение
 
 В описаниях PR более 500 новых тикетов: сузьте выборку PR.
 
-Источник: services/backend/src/connectors.ts:1572.
+Источник: services/backend/src/connectors.ts:1582.
 
 ### Сообщение
 
 Подключение Azure изменилось во время импорта
 
-Источник: services/backend/src/connectors.ts:1585.
+Источник: services/backend/src/connectors.ts:1595.
 
 ### Сообщение
 
 Azure вернул неверный список тикетов
 
-Источник: services/backend/src/connectors.ts:1587.
+Источник: services/backend/src/connectors.ts:1597.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите поиск.
 
-Источник: services/backend/src/connectors.ts:1604.
+Источник: services/backend/src/connectors.ts:1614.

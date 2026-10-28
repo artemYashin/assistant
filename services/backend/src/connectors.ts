@@ -761,7 +761,17 @@ export class Connectors {
           ]),
       ...(patch.azureTags === undefined
         ? []
-        : [{ op: "add", path: "/fields/System.Tags", value: patch.azureTags.join("; ") }]),
+        : patch.azureTags.length
+          ? [
+              {
+                op: Object.hasOwn(before.fields, "System.Tags") ? "replace" : "add",
+                path: "/fields/System.Tags",
+                value: patch.azureTags.join("; "),
+              },
+            ]
+          : Object.hasOwn(before.fields, "System.Tags")
+            ? [{ op: "remove", path: "/fields/System.Tags" }]
+            : []),
     ];
     let failure: unknown;
     try {
