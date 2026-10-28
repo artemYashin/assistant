@@ -284,7 +284,7 @@
     "services/frontend/src/pages/tickets/index.ts": "dc5f056ec9520cdea471838405c5a154a70e1d10aae86962aa89a936c8d7be3a",
     "services/frontend/src/pages/tickets/model/grouping.ts": "ea8dfb93794c8ade5305a2fa98573e08e1ec63e3b5f3fd5e8cf6260e7d2a2b3a",
     "services/frontend/src/pages/tickets/model/kanban.ts": "a6ec32f9af6670d3f30cd03c758ca314f53bc4107445a74ceb6d554a6511d14c",
-    "services/frontend/src/pages/tickets/model/useTicketGrouping.ts": "9ea32adcc14d56ac791148809d13a78beda590f9a0c3726390bdaeb2e239b84b",
+    "services/frontend/src/pages/tickets/model/useTicketGrouping.ts": "e307863182ad1a488d900f1501498047e1cc9e39435811ca536ccbb31f449778",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",
     "services/frontend/src/pages/tickets/ui/CreateTicket.tsx": "7d180c91d32c9e15b646af53a09de8c666fa28b3e35ae400626a8115bfdaf8e7",
     "services/frontend/src/pages/tickets/ui/TicketGroupingControls.tsx": "3a376291c704013392bda60cb8be2474b67aa59a1bcd2e6f30aa1f94d4e45cbd",

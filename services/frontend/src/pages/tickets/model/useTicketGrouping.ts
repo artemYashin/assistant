@@ -32,6 +32,10 @@ export function useTicketGrouping(
   const expanded = expansion.key === key ? expansion.ids : new Set<number>();
   const [revision, setRevision] = useState({ number: 0, force: false });
   const forcedToken = useRef("");
+  const lifecycle = useRef({ token: "", live: false });
+  const observed = useRef<{ token: string; ids: Set<number> }>({ token: "", ids: new Set() });
+  const requests = useRef(new Map<number, object>());
+  const [pending, setPending] = useState<Set<number>>(new Set());
   const [data, setData] = useState<{ token: string; parents: Record<number, ParentChildren> }>({
     token: "",
     parents: {},
@@ -77,7 +81,10 @@ export function useTicketGrouping(
   useEffect(() => {
     let live = true;
     const parentIds: number[] = JSON.parse(ids);
-    const selected: number[] = JSON.parse(expandedKey);
+    const current = { token, live: true };
+    lifecycle.current = current;
+    requests.current.clear();
+    setPending(new Set());
     setError("");
     setLoading(parentIds.length > 0);
     const load = async () => {
@@ -111,24 +118,6 @@ export function useTicketGrouping(
           ]),
         ),
       }));
-      const opened = parentIds.filter(
-        (id) => selected.includes(id) && parents[id]?.childIds.length,
-      );
-      for (let offset = 0; offset < opened.length; offset += 200) {
-        const result = await api<{ parents: ParentChildren[] }>("/tickets/children", "POST", {
-          source,
-          ids: opened.slice(offset, offset + 200),
-          includeChildren: true,
-        });
-        if (!live) return;
-        setData((old) => ({
-          token,
-          parents: {
-            ...(old.token === token ? old.parents : {}),
-            ...Object.fromEntries(result.parents.map((parent) => [parent.id, parent])),
-          },
-        }));
-      }
     };
     void load()
       .catch((e) => {
@@ -139,8 +128,67 @@ export function useTicketGrouping(
       });
     return () => {
       live = false;
+      current.live = false;
     };
-  }, [ids, source, token, expandedKey, revision.force]);
+  }, [ids, source, token, revision.force]);
+  useEffect(() => {
+    if (data.token !== token) return;
+    const current = lifecycle.current;
+    const selected = new Set<number>(JSON.parse(expandedKey));
+    const previous = observed.current.token === token ? observed.current.ids : new Set<number>();
+    observed.current = { token, ids: selected };
+    for (const id of previous) {
+      if (!selected.has(id)) {
+        requests.current.delete(id);
+        setPending((old) => {
+          const next = new Set(old);
+          next.delete(id);
+          return next;
+        });
+      }
+    }
+    const candidates = new Set<number>(JSON.parse(ids));
+    for (const id of selected) {
+      if (previous.has(id) || !candidates.has(id)) continue;
+      const request = {};
+      requests.current.set(id, request);
+      setPending((old) => new Set(old).add(id));
+      setError("");
+      const valid = () =>
+        current.live && lifecycle.current === current && requests.current.get(id) === request;
+      void api<{ parents: ParentChildren[] }>("/tickets/children", "POST", {
+        source,
+        ids: [id],
+        includeChildren: true,
+      })
+        .then((result) => {
+          if (!valid()) return;
+          setData((old) =>
+            old.token === token
+              ? {
+                  token,
+                  parents: {
+                    ...old.parents,
+                    ...Object.fromEntries(result.parents.map((parent) => [parent.id, parent])),
+                  },
+                }
+              : old,
+          );
+        })
+        .catch((e) => {
+          if (valid()) setError(e.message);
+        })
+        .finally(() => {
+          if (!valid()) return;
+          requests.current.delete(id);
+          setPending((old) => {
+            const next = new Set(old);
+            next.delete(id);
+            return next;
+          });
+        });
+    }
+  }, [data.token, expandedKey, ids, source, token]);
   const update = (next: GroupPreferences) => {
     setSaved({ key, preferences: next });
     try {
@@ -162,7 +210,7 @@ export function useTicketGrouping(
     rows,
     selectable: uniqueGroupTickets(rows),
     error,
-    loading,
+    loading: loading || pending.size > 0,
     refreshRelations: () => setRevision((v) => ({ number: v.number + 1, force: true })),
     retry: () => setRevision((v) => ({ number: v.number + 1, force: false })),
     toggle: (id: number) =>
