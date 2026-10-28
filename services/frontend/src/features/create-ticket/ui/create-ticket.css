@@ -156,6 +156,17 @@
   background: #f5f8f6;
   border-radius: 10px;
   min-width: 0;
+  align-content: start;
+}
+.create-ticket-sidebar > label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+.create-ticket-sidebar > label > input {
+  width: 100%;
+  box-sizing: border-box;
 }
 .create-ticket-sidebar .single-select {
   min-width: 0;

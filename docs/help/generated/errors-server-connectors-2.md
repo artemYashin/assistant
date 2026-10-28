@@ -9,118 +9,118 @@
 
 Тикет относится к другому проекту Azure
 
-Источник: services/backend/src/connectors.ts:740.
+Источник: services/backend/src/connectors.ts:745.
 
 ### Сообщение
 
 Azure не вернул ревизию тикета
 
-Источник: services/backend/src/connectors.ts:745.
+Источник: services/backend/src/connectors.ts:750.
 
 ### Сообщение
 
-Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.
+Не удалось проверить поля после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.
 
-Источник: services/backend/src/connectors.ts:773.
-
-### Сообщение
-
-Изменение исполнителя не подтверждено. {…}
-
-Источник: services/backend/src/connectors.ts:786.
+Источник: services/backend/src/connectors.ts:785.
 
 ### Сообщение
 
-Azure вернул другого исполнителя; проверьте права и правила проекта.
+Изменение полей не подтверждено. {…}
 
-Источник: services/backend/src/connectors.ts:788.
+Источник: services/backend/src/connectors.ts:803.
 
 ### Сообщение
 
-Azure не вернул типы задач
+Проверьте права и правила проекта Azure.
+
+Источник: services/backend/src/connectors.ts:805.
+
+### Сообщение
+
+Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
 Источник: services/backend/src/connectors.ts:814.
 
 ### Сообщение
 
+Найдите пользователя через поиск Azure: нужен email или уникальный аккаунт.
+
+Источник: services/backend/src/connectors.ts:822.
+
+### Сообщение
+
+Не удалось проверить исполнителя после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.
+
+Источник: services/backend/src/connectors.ts:862.
+
+### Сообщение
+
+Изменение исполнителя не подтверждено. {…}
+
+Источник: services/backend/src/connectors.ts:875.
+
+### Сообщение
+
+Azure вернул другого исполнителя; проверьте права и правила проекта.
+
+Источник: services/backend/src/connectors.ts:877.
+
+### Сообщение
+
+Azure не вернул типы задач
+
+Источник: services/backend/src/connectors.ts:903.
+
+### Сообщение
+
 Номер или проект тикета не соответствует запросу
 
-Источник: services/backend/src/connectors.ts:850.
+Источник: services/backend/src/connectors.ts:939.
 
 ### Сообщение
 
 Тикет относится к другому проекту Azure DevOps
 
-Источник: services/backend/src/connectors.ts:979.
+Источник: services/backend/src/connectors.ts:1068.
 
 ### Сообщение
 
 Некорректный ответ Comments API
 
-Источник: services/backend/src/connectors.ts:996.
+Источник: services/backend/src/connectors.ts:1085.
 
 ### Сообщение
 
 Комментарии загружены не полностью: достигнут защитный лимит
 
-Источник: services/backend/src/connectors.ts:1000.
+Источник: services/backend/src/connectors.ts:1089.
 
 ### Сообщение
 
 Комментарии недоступны: проверьте разрешения и поддержку Comments API на вашем Azure Server
 
-Источник: services/backend/src/connectors.ts:1007.
+Источник: services/backend/src/connectors.ts:1096.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: services/backend/src/connectors.ts:1087.
+Источник: services/backend/src/connectors.ts:1176.
 
 ### Сообщение
 
 Изображение изменилось. Добавьте его заново.
 
-Источник: services/backend/src/connectors.ts:1094.
+Источник: services/backend/src/connectors.ts:1183.
 
 ### Сообщение
 
 Azure не вернул ссылку на изображение. Повторите загрузку.
 
-Источник: services/backend/src/connectors.ts:1114.
+Источник: services/backend/src/connectors.ts:1203.
 
 ### Сообщение
 
 Комментарий должен содержать от 1 до 10000 символов
 
-Источник: services/backend/src/connectors.ts:1133.
-
-### Сообщение
-
-Черновик изменился. Повторите отправку с новым идентификатором.
-
-Источник: services/backend/src/connectors.ts:1145.
-
-### Сообщение
-
-Не найдена загруженная картинка. Добавьте её заново.
-
-Источник: services/backend/src/connectors.ts:1153.
-
-### Сообщение
-
-Azure не вернул версию тикета. Повторите отправку.
-
-Источник: services/backend/src/connectors.ts:1180.
-
-### Сообщение
-
-Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.
-
-Источник: services/backend/src/connectors.ts:1224.
-
-### Сообщение
-
-Некорректная страница истории
-
-Источник: services/backend/src/connectors.ts:1265.
+Источник: services/backend/src/connectors.ts:1222.

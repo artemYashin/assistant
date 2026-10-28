@@ -1,4 +1,5 @@
 import { ticketInlineImages, withTicketInlineImages } from "./ticket-inline-images.js";
+import { azureTicketFieldsPatch } from "./ticket-azure-fields.js";
 import { azurePrLinks } from "./ticket-pull-requests.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { commentMarkdown, commentImageType } from "./comment-markdown.js";
@@ -716,6 +717,94 @@ export class Connectors {
         } ${searchFailure}`
       : "";
     return { users, truncated: graphTruncated || results.length > 20, warning };
+  }
+  async creationStates(source: string, type: string) {
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const guard = () => {
+      if (source !== this.store.source() || pat !== this.store.secret("azure.pat"))
+        throw new AppError(409, "Подключение Azure изменилось. Откройте форму заново.");
+    };
+    guard();
+    const states = await this.typeStates(type, s, pat);
+    guard();
+    return states;
+  }
+  async editAzureFields(id: number, source: string, body: unknown) {
+    const patch = azureTicketFieldsPatch.parse(body);
+    const s = this.store.settings(),
+      pat = this.store.secret("azure.pat");
+    const guard = () => {
+      if (source !== this.store.source() || pat !== this.store.secret("azure.pat"))
+        throw new AppError(409, "Подключение Azure изменилось. Обновите тикет.");
+    };
+    guard();
+    const read = async () => {
+      const item = await this.azure(`workitems/${id}`, {}, s, pat);
+      if (item.id !== id || item.fields?.["System.TeamProject"] !== s.azureProject)
+        throw new AppError(400, "Тикет относится к другому проекту Azure");
+      return item;
+    };
+    const before = await read();
+    if (!Number.isSafeInteger(before.rev))
+      throw new AppError(502, "Azure не вернул ревизию тикета");
+    guard();
+    const changes = [
+      ...(patch.azurePriority === undefined
+        ? []
+        : [
+            {
+              op: "add",
+              path: "/fields/Microsoft.VSTS.Common.Priority",
+              value: patch.azurePriority,
+            },
+          ]),
+      ...(patch.azureTags === undefined
+        ? []
+        : [{ op: "add", path: "/fields/System.Tags", value: patch.azureTags.join("; ") }]),
+    ];
+    let failure: unknown;
+    try {
+      await this.azure(
+        `workitems/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json-patch+json" },
+          body: JSON.stringify([{ op: "test", path: "/rev", value: before.rev }, ...changes]),
+        },
+        s,
+        pat,
+      );
+    } catch (error) {
+      failure = error;
+    }
+    let after: any;
+    try {
+      after = await read();
+    } catch {
+      throw new AppError(
+        502,
+        "Не удалось проверить поля после записи. Изменение могло выполниться; обновите тикет перед повторной попыткой.",
+      );
+    }
+    guard();
+    this.refreshTicketAfterEdit(after, s);
+    const tags = String(after.fields["System.Tags"] || "")
+      .split(";")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const canonical = (values: string[]) =>
+      [...new Set(values.map((v) => v.toLocaleLowerCase()))].sort().join("\n");
+    if (
+      (patch.azurePriority !== undefined &&
+        Number(after.fields[AZURE_PRIORITY_FIELD]) !== patch.azurePriority) ||
+      (patch.azureTags !== undefined && canonical(tags) !== canonical(patch.azureTags))
+    )
+      throw new AppError(
+        409,
+        `Изменение полей не подтверждено. ${failure instanceof Error ? failure.message : "Проверьте права и правила проекта Azure."}`,
+      );
+    return { id, source, fields: after.fields, verified: true };
   }
   async assignTicket(id: number, source: string, userId: string | null) {
     const s = this.store.settings(),

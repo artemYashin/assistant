@@ -119,12 +119,8 @@ export function TicketDataRow({
           "N/A"
         )}
       </td>
-      <td
-        data-column="azurePriority"
-        hidden={columns.hidden("azurePriority")}
-        title="Приоритет Azure DevOps · только чтение"
-      >
-        {t.azurePriority ?? "—"}
+      <td data-column="azurePriority" hidden={columns.hidden("azurePriority")}>
+        <TicketMetadata ticket={t} context={context} field="azurePriority" onChange={onChange} />
       </td>
       <td data-column="localDeadline" hidden={columns.hidden("localDeadline")}>
         {local ? (
@@ -141,15 +137,7 @@ export function TicketDataRow({
         )}
       </td>
       <td data-column="azureTags" hidden={columns.hidden("azureTags")}>
-        <span className="ticket-tag-list azure-ticket-tags" title="Azure теги · только чтение">
-          {t.azureTags?.length
-            ? t.azureTags.map((tag: string) => (
-                <span className="badge" key={tag}>
-                  {tag}
-                </span>
-              ))
-            : "—"}
-        </span>
+        <TicketMetadata ticket={t} context={context} field="azureTags" onChange={onChange} />
       </td>
       <td data-column="assigned" hidden={columns.hidden("assigned")}>
         <AzureAssignee ticket={t} onChange={onChange} />

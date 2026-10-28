@@ -2,6 +2,7 @@ import { TicketCreate } from "./ticket-create.js";
 import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
 import { hasLocalManagement } from "./work-mode.js";
+import { knownAzureTags } from "./ticket-azure-fields.js";
 import { registerTicketNotes } from "./ticket-note-images.js";
 import { registerNotes } from "./notes.js";
 import { azurePatExpirySchema } from "./azure-pat-reminder.js";
@@ -1297,10 +1298,18 @@ export function createApp(
   });
   const ticketCreate = new TicketCreate(store);
   app.get("/api/azure/tickets/create-options", async (req, res) => {
-    const { source, type } = z
-      .object({ source: z.string().min(1).max(2000), type: z.string().min(1).max(200).optional() })
+    const { source, type, states } = z
+      .object({
+        source: z.string().min(1).max(2000),
+        type: z.string().min(1).max(200).optional(),
+        states: z.enum(["true"]).optional(),
+      })
       .parse(req.query);
-    res.json(await ticketCreate.options(source, type));
+    const options = await ticketCreate.options(source, type);
+    res.json({
+      ...options,
+      ...(states && type ? { states: await connectors.creationStates(source, type) } : {}),
+    });
   });
   const createImageUpload = multer({
     storage: multer.memoryStorage(),
@@ -1342,6 +1351,20 @@ export function createApp(
       types: types.map((t) => t.name),
       states: [...new Set(types.flatMap((t) => t.states))],
     });
+  });
+  app.get("/api/azure/ticket-tags", (req, res) => {
+    const source = z.string().min(1).max(2000).parse(req.query.source);
+    if (source !== store.source())
+      throw new AppError(409, "Подключение Azure изменилось. Обновите форму.");
+    res.json(knownAzureTags(store, source));
+  });
+  app.put("/api/tickets/:id/azure-fields", async (req, res) => {
+    const id = z.coerce.number().int().positive().safe().parse(req.params.id);
+    const { source, patch } = z
+      .object({ source: z.string().min(1).max(2000), patch: z.unknown() })
+      .strict()
+      .parse(req.body);
+    res.json(await connectors.editAzureFields(id, source, patch));
   });
   app.put("/api/tickets/:id/assignee", async (req, res) => {
     const id = z.coerce.number().int().positive().parse(req.params.id);

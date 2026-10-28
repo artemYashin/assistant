@@ -9,34 +9,34 @@
 
 тикета # · /
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:94.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:99.
 
 ### Элемент
 
 Закрыть
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:175.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:201.
 
 ### Элемент
 
-Локальный приоритет (1 — самый высокий)
+(1 — самый высокий)
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:241.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:281.
 
 ### Элемент
 
 По одному тегу на строку (до 30) / Ваши заметки
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:261.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:314.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:278.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:331.
 
 ### Элемент
 
 Сохраняю… / Сохранить
 
-Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:281.
+Источник: services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx:334.

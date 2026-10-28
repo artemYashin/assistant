@@ -9,73 +9,73 @@
 
 Без тегов
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:400.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:401.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:406.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:407.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:414.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:415.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:421.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:422.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:432.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:433.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:450.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:451.
 
 ### Элемент
 
 Нет поручения
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:457.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:458.
 
 ### Элемент
 
 Просмотреть
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:486.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:487.
 
 ### Элемент
 
 Снять выбор
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:543.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:544.
 
 ### Элемент
 
 Назад
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:567.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:568.
 
 ### Элемент
 
 Страница {…}
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:577.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:578.
 
 ### Элемент
 
 Далее
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:594.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:595.
 
 ### Элемент
 

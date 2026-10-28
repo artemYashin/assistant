@@ -1,3 +1,6 @@
+import { CreateTicketProperties, emptyProperties } from "./CreateTicketProperties.js";
+import { useLocalManagement } from "../../../entities/work-mode/index.js";
+import { fromWall } from "../../../entities/calendar/index.js";
 import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, LoaderCircle } from "lucide-react";
@@ -36,6 +39,46 @@ export function CreateTicketForm({
   onCreated?: () => void;
 }) {
   const heading = useRef<HTMLElement>(null);
+  const management = useLocalManagement();
+  const [properties, setProperties] = useState(emptyProperties);
+  const [config, setConfig] = useState<any>(null);
+  const [developers, setDevelopers] = useState<any[]>([]);
+  const [knownTags, setKnownTags] = useState<string[]>([]);
+  const [knownAzureTags, setKnownAzureTags] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
+  const [optionsReady, setOptionsReady] = useState(false);
+  const submitted = useRef<any>(null);
+  useEffect(() => {
+    let live = true;
+    setConfig(null);
+    api("/settings")
+      .then(async (settings) => {
+        const settingsSource = `${(settings.azureUrl || "").replace(/\/$/, "")}|${settings.azureProject || ""}`;
+        if (settingsSource !== source)
+          throw new Error("Подключение изменилось. Откройте форму заново.");
+        const [tags, azureTags, people] = await Promise.all([
+          api(`/local-ticket-tags?${new URLSearchParams({ source })}`),
+          api(`/azure/ticket-tags?${new URLSearchParams({ source })}`),
+          management
+            ? api(
+                `/local-developers?${new URLSearchParams({ client: settings.client, project: settings.project })}`,
+              )
+            : Promise.resolve([]),
+        ]);
+        if (live) {
+          setConfig(settings);
+          setKnownTags(tags);
+          setKnownAzureTags(azureTags);
+          setDevelopers(people);
+        }
+      })
+      .catch((e) => {
+        if (live) setError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [source, management]);
   const [requestId] = useState(() => crypto.randomUUID());
   const [types, setTypes] = useState<string[]>([]),
     [type, setType] = useState("");
@@ -94,13 +137,22 @@ export function CreateTicketForm({
     let live = true;
     setLoading(true);
     setFields([]);
+    setOptionsReady(false);
+    setStates([]);
     api(
-      `/azure/tickets/create-options?${new URLSearchParams({ source, ...(type ? { type } : {}) })}`,
+      `/azure/tickets/create-options?${new URLSearchParams({ source, ...(type ? { type, states: "true" } : {}) })}`,
     )
       .then((v) => {
         if (live) {
-          if (type) setFields(v.fields);
-          else {
+          if (type) {
+            setFields(v.fields);
+            setOptionsReady(true);
+            setStates(v.states || []);
+            setProperties((old) => ({
+              ...old,
+              state: (v.states || []).includes(old.state) ? old.state : "",
+            }));
+          } else {
             setTypes(v.types);
             try {
               const previous = localStorage.getItem("orbit.ticket-create.type:" + source);
@@ -199,9 +251,23 @@ export function CreateTicketForm({
       setError("Укажите корректные номера связанных тикетов.");
       return;
     }
+    if (!config || !optionsReady) return;
+    if (
+      !Number.isSafeInteger(Number(properties.priority)) ||
+      Number(properties.priority) < 1 ||
+      (properties.azurePriority &&
+        (!Number.isSafeInteger(Number(properties.azurePriority)) ||
+          Number(properties.azurePriority) < 1))
+    ) {
+      setError("Приоритет должен быть целым положительным числом.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
+      const localDeadline = properties.localDeadline
+        ? fromWall(properties.localDeadline, config.syncSchedule.timeZone)
+        : null;
       const visibleText = textFields
         .filter(([, field]) => fields.includes(field))
         .map(([key]) => texts[key])
@@ -218,19 +284,37 @@ export function CreateTicketForm({
         await api("/azure/tickets/create-images", "POST", form);
         image.uploaded = true;
       }
-      const value = await api("/azure/tickets/create", "POST", {
+      submitted.current = {
         requestId,
         source,
         type,
         title,
         assigneeId: person?.id || null,
+        ...(properties.state && fields.includes("System.State") ? { state: properties.state } : {}),
+        ...(properties.azurePriority && fields.includes("Microsoft.VSTS.Common.Priority")
+          ? { azurePriority: Number(properties.azurePriority) }
+          : {}),
+        ...(fields.includes("System.Tags") && properties.azureTags.trim()
+          ? { azureTags: properties.azureTags.split("\n").filter(Boolean) }
+          : {}),
+        local: {
+          context: { client: config.client, project: config.project },
+          metadata: {
+            priority: Number(properties.priority),
+            tags: properties.tags.split("\n").filter(Boolean),
+            localDeadline,
+          },
+          ...(management ? { developerIds: properties.developerIds } : {}),
+        },
         ...Object.fromEntries(
           textFields.map(([key, field]) => [key, fields.includes(field) ? texts[key] : ""]),
         ),
         relations: relations.map((r) => ({ kind: r.kind, id: Number(r.id) })),
-      });
+      };
+      const value = await api("/azure/tickets/create", "POST", submitted.current);
       setResult(value);
       onCreated?.();
+      window.dispatchEvent(new Event("orbit-calendar-changed"));
       if (value.imported)
         window.dispatchEvent(
           new CustomEvent("orbit:ticket-tracked", {
@@ -270,7 +354,7 @@ export function CreateTicketForm({
           {!result.imported && (
             <>
               <p className="error" role="alert">
-                Импорт не завершён: {result.importError}
+                Импорт или сохранение локальных полей не завершены: {result.importError}
               </p>
               <button
                 type="button"
@@ -279,13 +363,10 @@ export function CreateTicketForm({
                 onClick={async () => {
                   setBusy(true);
                   try {
-                    const imported = await api("/azure/tickets/import", "POST", {
-                      ids: [result.id],
-                      source: result.source,
-                    });
-                    if (imported.missing.includes(result.id))
-                      throw new Error("Azure пока не вернул созданный тикет. Повторите импорт.");
-                    setResult({ ...result, imported: true, importError: "" });
+                    const imported = await api("/azure/tickets/create", "POST", submitted.current);
+                    if (!imported.imported) throw new Error(imported.importError);
+                    setResult(imported);
+                    window.dispatchEvent(new Event("orbit-calendar-changed"));
                     window.dispatchEvent(
                       new CustomEvent("orbit:ticket-tracked", {
                         detail: { id: result.id, source: result.source },
@@ -387,6 +468,18 @@ export function CreateTicketForm({
                     <span>{o.label}</span>
                   </span>
                 )}
+              />
+              <CreateTicketProperties
+                value={properties}
+                onChange={setProperties}
+                fields={fields}
+                states={states}
+                settings={config}
+                developers={developers}
+                knownTags={knownTags}
+                knownAzureTags={knownAzureTags}
+                management={management}
+                disabled={busy || loading || !config}
               />
             </aside>
             <div className="create-ticket-fields">
@@ -499,6 +592,8 @@ export function CreateTicketForm({
               disabled={
                 busy ||
                 loading ||
+                !config ||
+                !optionsReady ||
                 !type ||
                 !title.trim() ||
                 Object.values(texts).some((text) => text.length > 100000)

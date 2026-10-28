@@ -118,7 +118,7 @@
   "src/ReviewQuestions.tsx": "services/frontend/src/widgets/review-questions/ui/ReviewQuestions.tsx",
   "src/TicketControls.tsx": "services/frontend/src/features/edit-ticket/ui/TicketControls.tsx",
   "src/TicketMetadata.tsx": "services/frontend/src/features/edit-ticket/ui/TicketMetadata.tsx",
-  "src/LocalTagsEditor.tsx": "services/frontend/src/features/edit-ticket/ui/LocalTagsEditor.tsx",
+  "src/LocalTagsEditor.tsx": "services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx",
   "src/ChatMarkdown.tsx": "services/frontend/src/features/render-content/ui/ChatMarkdown.tsx",
   "src/ChatTools.tsx": "services/frontend/src/widgets/assistant/ui/ChatTools.tsx",
   "src/ChatStream.tsx": "services/frontend/src/widgets/assistant/ui/ChatStream.tsx",

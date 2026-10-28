@@ -9,112 +9,112 @@
 
 Поиск в корзине · Номер, название, исполнитель…
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:237.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:238.
 
 ### Элемент
 
 Сбросить все фильтры и поиск · Сбросить
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:258.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:259.
 
 ### Элемент
 
 Просрочен дедлайн · Любой дедлайн
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:276.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:277.
 
 ### Элемент
 
 Просрочен дедлайн
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:281.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:282.
 
 ### Элемент
 
 Azure приоритет · Все Azure приоритеты
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:283.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:284.
 
 ### Элемент
 
 Без Azure приоритета
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:289.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:290.
 
 ### Элемент
 
 Локальный приоритет · Все локальные приоритеты
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:296.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:297.
 
 ### Элемент
 
 Локальные теги · Все теги
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:306.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:307.
 
 ### Элемент
 
 Без тегов
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:312.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:313.
 
 ### Элемент
 
 Azure теги · Все Azure теги
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:318.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:319.
 
 ### Элемент
 
 Без Azure тегов
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:324.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:325.
 
 ### Элемент
 
 Тип задачи · Все типы
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:331.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:332.
 
 ### Элемент
 
 Статус · Все статусы
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:341.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:342.
 
 ### Элемент
 
 Локальное поручение · Все разработчики
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:353.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:354.
 
 ### Элемент
 
 Нет поручения
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:359.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:360.
 
 ### Элемент
 
 Просмотреть
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:397.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:398.
 
 ### Элемент
 
 Снять выбор
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:429.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:430.
 
 ### Элемент
 
 Сортировать: {…}, {…} · /
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:496.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:497.
 
 ### Элемент
 
 Сортировать: Тип задачи · Тип · /
 
-Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:521.
+Источник: services/frontend/src/pages/tickets/ui/TicketTrash.tsx:522.

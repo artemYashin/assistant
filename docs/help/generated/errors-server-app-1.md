@@ -9,118 +9,118 @@
 
 Неизвестный Host
 
-Источник: services/backend/src/app.ts:198.
+Источник: services/backend/src/app.ts:199.
 
 ### Сообщение
 
 Недопустимый Origin
 
-Источник: services/backend/src/app.ts:200.
+Источник: services/backend/src/app.ts:201.
 
 ### Сообщение
 
 Запрос должен поступить из интерфейса Orbit
 
-Источник: services/backend/src/app.ts:202.
+Источник: services/backend/src/app.ts:203.
 
 ### Сообщение
 
 Слишком много попыток входа. Повторите через 15 минут.
 
-Источник: services/backend/src/app.ts:242.
+Источник: services/backend/src/app.ts:243.
 
 ### Сообщение
 
 Войдите в Orbit
 
-Источник: services/backend/src/app.ts:253.
+Источник: services/backend/src/app.ts:254.
 
 ### Сообщение
 
 Обновите страницу: недействительный CSRF token
 
-Источник: services/backend/src/app.ts:255.
+Источник: services/backend/src/app.ts:256.
 
 ### Сообщение
 
 Локальные разработчики и поручения недоступны в режиме разработчика.
 
-Источник: services/backend/src/app.ts:265.
+Источник: services/backend/src/app.ts:266.
 
 ### Сообщение
 
 Дождитесь завершения активных запросов, синхронизации и работы ассистента, затем повторите удаление.
 
-Источник: services/backend/src/app.ts:296.
+Источник: services/backend/src/app.ts:297.
 
 ### Сообщение
 
 Проект должен принадлежать заказчику
 
-Источник: services/backend/src/app.ts:314.
+Источник: services/backend/src/app.ts:315.
 
 ### Сообщение
 
 Сначала добавьте заказчика и проект
 
-Источник: services/backend/src/app.ts:322.
+Источник: services/backend/src/app.ts:323.
 
 ### Сообщение
 
 Ассистент отвечает в текущем проекте. Дождитесь завершения или остановите ответ перед сменой проекта.
 
-Источник: services/backend/src/app.ts:328.
+Источник: services/backend/src/app.ts:329.
 
 ### Сообщение
 
 Дождитесь завершения ответа ассистента или остановите его перед изменением подключения Azure.
 
-Источник: services/backend/src/app.ts:354.
+Источник: services/backend/src/app.ts:355.
 
 ### Сообщение
 
 Выберите заказчика
 
-Источник: services/backend/src/app.ts:366.
+Источник: services/backend/src/app.ts:367.
 
 ### Сообщение
 
 Заказчик или проект не найден
 
-Источник: services/backend/src/app.ts:371.
+Источник: services/backend/src/app.ts:372.
 
 ### Сообщение
 
 Укажите проект Azure DevOps
 
-Источник: services/backend/src/app.ts:373.
+Источник: services/backend/src/app.ts:374.
 
 ### Сообщение
 
 Глобальное подключение не может наследовать настройки
 
-Источник: services/backend/src/app.ts:379.
+Источник: services/backend/src/app.ts:380.
 
 ### Сообщение
 
 Выберите существующий проект для настройки канбана.
 
-Источник: services/backend/src/app.ts:439.
+Источник: services/backend/src/app.ts:440.
 
 ### Сообщение
 
 Проверьте группы канбана и статус по умолчанию.
 
-Источник: services/backend/src/app.ts:453.
+Источник: services/backend/src/app.ts:454.
 
 ### Сообщение
 
 Каждый статус может входить только в одну группу канбана.
 
-Источник: services/backend/src/app.ts:457.
+Источник: services/backend/src/app.ts:458.
 
 ### Сообщение
 
 Выберите существующий проект для настройки автоимпорта.
 
-Источник: services/backend/src/app.ts:508.
+Источник: services/backend/src/app.ts:509.

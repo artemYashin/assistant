@@ -336,6 +336,19 @@ export function TicketCard({
     window.addEventListener("orbit:ticket-assignee", changed);
     return () => window.removeEventListener("orbit:ticket-assignee", changed);
   }, []);
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const { id, source, fields } = (event as CustomEvent).detail;
+      setCard((old: any) => {
+        if (old?.id !== id || old?.source !== source) return old;
+        const updated = { ...old, fields };
+        delete updated.markdownFields;
+        return updated;
+      });
+    };
+    window.addEventListener("orbit:ticket-azure-fields", changed);
+    return () => window.removeEventListener("orbit:ticket-azure-fields", changed);
+  }, []);
   const linkGroups = useMemo(
     () =>
       card
@@ -546,22 +559,24 @@ export function TicketCard({
             </div>
             <div>
               <dt>Azure приоритет</dt>
-              <dd title="Приоритет Azure DevOps · только чтение">
-                {card.fields?.["Microsoft.VSTS.Common.Priority"] ?? "—"}
+              <dd>
+                <TicketMetadata
+                  ticket={{ ...card, azurePriority: f["Microsoft.VSTS.Common.Priority"] }}
+                  context={card.localContext}
+                  field="azurePriority"
+                  onChange={() => {}}
+                />
               </dd>
             </div>
             <div className="ticket-overview-tags">
               <dt>Azure теги</dt>
-              <dd title="Теги Azure DevOps · только чтение">
-                {azureTags.length ? (
-                  azureTags.map((tag) => (
-                    <span className="badge azure-ticket-tag" key={tag}>
-                      {tag}
-                    </span>
-                  ))
-                ) : (
-                  <span className="muted">—</span>
-                )}
+              <dd>
+                <TicketMetadata
+                  ticket={{ ...card, azureTags }}
+                  context={card.localContext}
+                  field="azureTags"
+                  onChange={() => {}}
+                />
               </dd>
             </div>
           </dl>

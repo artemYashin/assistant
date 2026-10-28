@@ -5,6 +5,7 @@ import { fromWall, wallTime } from "../../../entities/calendar/index.js";
 import { useEffect, useRef, useState } from "react";
 import { NotebookPen, Pencil, X } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
+import { TagsEditor } from "../../../shared/ui/tags-editor/index.js";
 import { LocalTagsEditor } from "./LocalTagsEditor.js";
 
 export function TicketMetadata({
@@ -16,7 +17,7 @@ export function TicketMetadata({
 }: {
   ticket: any;
   context: { client: string; project: string };
-  field: "notes" | "priority" | "tags" | "localDeadline";
+  field: "notes" | "priority" | "tags" | "localDeadline" | "azurePriority" | "azureTags";
   onChange: () => void;
   showLabel?: boolean;
 }) {
@@ -42,6 +43,8 @@ export function TicketMetadata({
     notes: "Заметки",
     priority: "Локальный приоритет",
     tags: "Локальные теги",
+    azurePriority: "Azure приоритет",
+    azureTags: "Azure теги",
   }[field];
   return (
     <div className="ticket-metadata-control">
@@ -75,13 +78,15 @@ export function TicketMetadata({
           )}
         </span>
       )}
-      {field === "priority" && (
-        <span className="badge ticket-priority-badge">{ticket.priority ?? 1}</span>
+      {(field === "priority" || field === "azurePriority") && (
+        <span className="badge ticket-priority-badge">
+          {ticket[field] ?? (field === "priority" ? 1 : "—")}
+        </span>
       )}
-      {field === "tags" && (
-        <span className="ticket-tag-list" title={(ticket.tags || []).join(", ")}>
-          {ticket.tags?.length ? (
-            ticket.tags.map((tag: string) => (
+      {(field === "tags" || field === "azureTags") && (
+        <span className="ticket-tag-list" title={(ticket[field] || []).join(", ")}>
+          {ticket[field]?.length ? (
+            ticket[field].map((tag: string) => (
               <span className="badge" key={tag}>
                 {tag}
               </span>
@@ -123,12 +128,33 @@ export function TicketMetadata({
   );
 }
 function Editor({ ticket, context, field, label, onClose, onChange }: any) {
+  const azure = field === "azureTags" || field === "azurePriority";
+  const [knownTags, setKnownTags] = useState<string[]>([]);
+  const [tagsError, setTagsError] = useState("");
+  const [tagsLoading, setTagsLoading] = useState(field === "azureTags");
+  useEffect(() => {
+    if (field !== "azureTags") return;
+    let live = true;
+    api(`/azure/ticket-tags?${new URLSearchParams({ source: ticket.source })}`)
+      .then((tags) => {
+        if (live) setKnownTags(tags);
+      })
+      .catch((e) => {
+        if (live) setTagsError(e.message);
+      })
+      .finally(() => {
+        if (live) setTagsLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [field, ticket.source]);
   const ref = useRef<HTMLDialogElement>(null);
   const [value, setValue] = useState(
     field === "localDeadline"
       ? ""
-      : field === "tags"
-        ? (ticket.tags || []).join("\n")
+      : field === "tags" || field === "azureTags"
+        ? (ticket[field] || []).join("\n")
         : String(ticket[field] ?? (field === "priority" ? 1 : "")),
   );
   const [zone, setZone] = useState("UTC");
@@ -182,7 +208,11 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
           <X size={18} />
         </button>
       </div>
-      <p className="muted">Только в Orbit. В Azure эти данные не отправляются.</p>
+      <p className="muted">
+        {azure
+          ? "Изменение будет сохранено в Azure DevOps. Локальные поля не изменятся."
+          : "Только в Orbit. В Azure эти данные не отправляются."}
+      </p>
       {field === "notes" ? (
         <TicketNoteForm ticket={ticket} onSaved={onChange} onClose={onClose} onBusy={setBusy} />
       ) : (
@@ -201,26 +231,36 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
                         ? ticket.localDeadline
                         : fromWall(value, zone)
                       : null
-                    : field === "priority"
+                    : field === "priority" || field === "azurePriority"
                       ? Number(value)
-                      : field === "tags"
+                      : field === "tags" || field === "azureTags"
                         ? value
                             .split("\n")
                             .map((s: string) => s.trim())
                             .filter(Boolean)
                         : value,
               };
-              const saved = await api("/tickets/" + ticket.id + "/metadata", "PUT", {
-                source: ticket.source,
-                context,
-                patch,
-              });
-              window.dispatchEvent(
-                new CustomEvent("orbit:ticket-metadata", {
-                  detail: { id: ticket.id, source: ticket.source, value: saved },
-                }),
-              );
-              window.dispatchEvent(new Event("orbit-calendar-changed"));
+              if (azure) {
+                const saved = await api(`/tickets/${ticket.id}/azure-fields`, "PUT", {
+                  source: ticket.source,
+                  patch,
+                });
+                window.dispatchEvent(
+                  new CustomEvent("orbit:ticket-azure-fields", { detail: saved }),
+                );
+              } else {
+                const saved = await api("/tickets/" + ticket.id + "/metadata", "PUT", {
+                  source: ticket.source,
+                  context,
+                  patch,
+                });
+                window.dispatchEvent(
+                  new CustomEvent("orbit:ticket-metadata", {
+                    detail: { id: ticket.id, source: ticket.source, value: saved },
+                  }),
+                );
+                window.dispatchEvent(new Event("orbit-calendar-changed"));
+              }
               onChange();
               onClose();
             } catch (e: any) {
@@ -237,9 +277,9 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
               onChange={setValue}
               disabled={busy}
             />
-          ) : field === "priority" ? (
+          ) : field === "priority" || field === "azurePriority" ? (
             <label>
-              Локальный приоритет (1 — самый высокий)
+              {label} (1 — самый высокий)
               <NumberInput
                 min={1}
                 step={1}
@@ -250,6 +290,19 @@ function Editor({ ticket, context, field, label, onClose, onChange }: any) {
                 disabled={busy}
               />
             </label>
+          ) : field === "azureTags" ? (
+            <TagsEditor
+              label="Azure теги"
+              known={knownTags}
+              loading={tagsLoading}
+              error={tagsError}
+              forbidSemicolon
+              maxTags={100}
+              maxLength={400}
+              value={value}
+              onChange={setValue}
+              disabled={busy}
+            />
           ) : field === "tags" ? (
             <LocalTagsEditor
               value={value}

@@ -3,6 +3,10 @@ import { z } from "zod";
 import { Store, AppError } from "./store.js";
 import { azureBase, requestJson } from "./http.js";
 import { commentImageType, commentMarkdown } from "./comment-markdown.js";
+import { azureTagsInput } from "./ticket-azure-fields.js";
+import { metadataContext, metadataPatch, saveTicketMetadata } from "./ticket-metadata.js";
+import { LocalDevelopers } from "./local-developers.js";
+import { hasLocalManagement } from "./work-mode.js";
 
 export const createTicketSchema = z
   .object({
@@ -11,6 +15,17 @@ export const createTicketSchema = z
     type: z.string().trim().min(1).max(200),
     title: z.string().trim().min(1).max(255),
     assigneeId: z.string().uuid().nullable(),
+    state: z.string().trim().min(1).max(200).optional(),
+    azurePriority: z.number().int().positive().safe().optional(),
+    azureTags: azureTagsInput.optional(),
+    local: z
+      .object({
+        context: metadataContext,
+        metadata: metadataPatch.omit({ notes: true }),
+        developerIds: z.array(z.string().min(1).max(200)).max(50).optional(),
+      })
+      .strict()
+      .optional(),
     description: z.string().max(100000).default(""),
     acceptance: z.string().max(100000).default(""),
     steps: z.string().max(100000).default(""),
@@ -184,10 +199,35 @@ export class TicketCreate {
     importTicket: (ids: number[], source: string) => Promise<{ missing: number[] }>,
   ) {
     const result = await this.create(body);
+    const input = createTicketSchema.parse(body);
+    const key = `ticket.create:${input.source}:${input.requestId}`;
+    // A replay after a completed creation must not restore a ticket that the user
+    // has since moved to trash or overwrite later local edits.
+    if (input.local && this.store.get<any>(key, {}).localApplied)
+      return { ...result, imported: true, importError: "" };
     try {
       const imported = await importTicket([result.id], result.source);
       if (imported.missing.includes(result.id))
         throw new Error("Azure пока не вернул созданный тикет. Повторите импорт.");
+      if (input.local && !this.store.get<any>(key, {}).localApplied) {
+        this.store.db.transaction(() => {
+          saveTicketMetadata(
+            this.store,
+            result.id,
+            result.source,
+            input.local!.context,
+            input.local!.metadata,
+          );
+          if (input.local!.developerIds !== undefined)
+            new LocalDevelopers(this.store).assign(
+              result.id,
+              input.local!.developerIds,
+              input.local!.context,
+              result.source,
+            );
+          this.store.set(key, { ...this.store.get<any>(key, {}), localApplied: true });
+        })();
+      }
       return { ...result, imported: true, importError: "" };
     } catch (error) {
       return {
@@ -218,10 +258,34 @@ export class TicketCreate {
         "Результат предыдущего создания ещё не подтверждён. Проверьте Azure перед новой попыткой, чтобы не создать дубль.",
       );
     }
+    if (input.local) {
+      const s = this.store.settings();
+      if (input.local.context.client !== s.client || input.local.context.project !== s.project)
+        throw new AppError(409, "Проект изменился. Откройте создание тикета заново.");
+      if (input.local.developerIds?.length) {
+        if (!hasLocalManagement(s))
+          throw new AppError(403, "Локальные поручения недоступны в режиме разработчика.");
+        const available = new Set(
+          new LocalDevelopers(this.store).list(input.local.context).map((p) => p.id),
+        );
+        if (input.local.developerIds.some((id) => !available.has(id)))
+          throw new AppError(400, "Локальный разработчик недоступен. Обновите форму.");
+      }
+    }
     const options = await this.options(input.source, input.type);
     const patch: { op: string; path: string; value: unknown }[] = [
       { op: "add", path: "/fields/System.Title", value: input.title },
     ];
+    for (const [field, value] of [
+      ["System.State", input.state],
+      ["Microsoft.VSTS.Common.Priority", input.azurePriority],
+      ["System.Tags", input.azureTags?.join("; ")],
+    ] as const) {
+      if (value === undefined) continue;
+      if (!options.fields?.includes(field))
+        throw new AppError(400, `Выбранный тип не поддерживает поле ${field}`);
+      patch.push({ op: "add", path: `/fields/${field}`, value });
+    }
     const usedImages = new Set<string>();
     for (const [name, field] of Object.entries(fields)) {
       let value = input[name as keyof typeof fields];

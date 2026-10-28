@@ -396,3 +396,172 @@ test("new Azure ticket imports into a populated local list and repeated creation
     "Existing",
   );
 });
+
+test("creation includes Azure fields and applies local properties once after a recoverable import failure", async (t) => {
+  const { store, service, input } = setup(t);
+  const { LocalDevelopers } = await import("../services/backend/src/local-developers.js");
+  const { ticketMetadata, saveTicketMetadata } =
+    await import("../services/backend/src/ticket-metadata.js");
+  const context = { client: store.settings().client, project: store.settings().project };
+  const developers = new LocalDevelopers(store);
+  const [person] = developers.add(["Local owner"], context);
+  const deadline = "2026-11-10T12:00:00.000Z";
+  const body = {
+    ...input,
+    state: "Active",
+    azurePriority: 3,
+    azureTags: ["Backend", "backend", "Ready"],
+    local: {
+      context,
+      metadata: { priority: 7, tags: ["local"], localDeadline: deadline },
+      developerIds: [person.id],
+    },
+  };
+  store.db
+    .prepare("INSERT INTO tickets VALUES (?,42,'Existing','New','','Bug','','','')")
+    .run(input.source);
+  saveTicketMetadata(store, 42, input.source, context, { priority: 9, tags: ["preserved"] });
+  let creates = 0;
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method !== "POST")
+      return Response.json({
+        value: [
+          "System.Description",
+          "System.State",
+          "System.Tags",
+          "Microsoft.VSTS.Common.Priority",
+        ].map((referenceName) => ({ referenceName })),
+      });
+    creates++;
+    const patch = JSON.parse(String(init.body));
+    assert.equal(patch.find((p: any) => p.path === "/fields/System.State").value, "Active");
+    assert.equal(
+      patch.find((p: any) => p.path === "/fields/Microsoft.VSTS.Common.Priority").value,
+      3,
+    );
+    assert.equal(patch.find((p: any) => p.path === "/fields/System.Tags").value, "backend; Ready");
+    assert.ok(!patch.some((p: any) => /local|deadline|developer/i.test(p.path)));
+    return Response.json({ id: 80 });
+  };
+  let fail = true;
+  const importer = async () => {
+    if (fail) throw new Error("Temporary import failure");
+    store.db
+      .prepare("INSERT OR IGNORE INTO tickets VALUES (?,80,'Created','Active','','Bug','','','')")
+      .run(input.source);
+    return { missing: [] };
+  };
+  assert.equal((await service.createAndImport(body, importer)).imported, false);
+  assert.equal(ticketMetadata(store, 80, input.source).localDeadline, null);
+  fail = false;
+  assert.equal((await new TicketCreate(store).createAndImport(body, importer)).imported, true);
+  assert.deepEqual(ticketMetadata(store, 80, input.source), {
+    priority: 7,
+    tags: ["local"],
+    notes: "",
+    localDeadline: deadline,
+  });
+  assert.deepEqual(
+    developers.assigned(80).map((p) => p.id),
+    [person.id],
+  );
+  saveTicketMetadata(store, 80, input.source, context, {
+    priority: 15,
+    tags: ["edited"],
+    localDeadline: null,
+  });
+  developers.assign(80, [], context);
+  assert.equal((await new TicketCreate(store).createAndImport(body, importer)).imported, true);
+  assert.equal(ticketMetadata(store, 80).priority, 15);
+  assert.equal(ticketMetadata(store, 80).localDeadline, null);
+  assert.deepEqual(developers.assigned(80), []);
+  assert.equal(ticketMetadata(store, 42).priority, 9);
+  store.removeLocalTicket(80);
+  const removedAt = store.ticketTrash().find((ticket) => ticket.id === 80)?.removedAt;
+  await service.createAndImport(body, async () => {
+    throw new Error("Completed creation must not import again");
+  });
+  assert.equal(store.ticketTrash().find((ticket) => ticket.id === 80)?.removedAt, removedAt);
+  assert.equal(creates, 1);
+});
+
+test("creation rejects unavailable local assignees and unsupported Azure fields before creating anything", async (t) => {
+  const { store, service, input } = setup(t);
+  let posts = 0;
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method === "POST") posts++;
+    return fields();
+  };
+  await assert.rejects(service.create({ ...input, azurePriority: 2 }), /не поддерживает поле/);
+  await assert.rejects(
+    service.create({
+      ...input,
+      local: {
+        context: { client: store.settings().client, project: store.settings().project },
+        metadata: {},
+        developerIds: ["missing"],
+      },
+    }),
+    /разработчик недоступен/,
+  );
+  await assert.rejects(service.create({ ...input, azureTags: ["split;tag"] }));
+  assert.equal(posts, 0);
+});
+
+test("old persisted creation receipts remain valid after adding optional fields", async (t) => {
+  const { store, service, input } = setup(t);
+  const { createHash } = await import("node:crypto");
+  const oldInput = {
+    requestId: input.requestId,
+    source: input.source,
+    type: input.type,
+    title: input.title,
+    assigneeId: input.assigneeId,
+    description: input.description,
+    acceptance: input.acceptance,
+    steps: input.steps,
+    relations: input.relations,
+  };
+  store.set(`ticket.create:${input.source}:${input.requestId}`, {
+    fingerprint: createHash("sha256").update(JSON.stringify(oldInput)).digest("hex"),
+    result: { id: 90, source: input.source, title: input.title },
+  });
+  globalThis.fetch = async () => {
+    throw new Error("Must not recreate an existing ticket");
+  };
+  assert.equal((await service.create(input)).id, 90);
+});
+
+test("local creation properties roll back together and can be retried after an assignee disappears", async (t) => {
+  const { store, service, input } = setup(t);
+  const { LocalDevelopers } = await import("../services/backend/src/local-developers.js");
+  const { ticketMetadata } = await import("../services/backend/src/ticket-metadata.js");
+  const context = { client: store.settings().client, project: store.settings().project };
+  const developers = new LocalDevelopers(store);
+  const [person] = developers.add(["Owner"], context);
+  const body = {
+    ...input,
+    local: {
+      context,
+      metadata: { priority: 8, localDeadline: "2026-11-10T12:00:00.000Z" },
+      developerIds: [person.id],
+    },
+  };
+  globalThis.fetch = async (_url, init) =>
+    init?.method === "POST" ? Response.json({ id: 91 }) : fields();
+  const importer = async () => {
+    store.db
+      .prepare("INSERT OR IGNORE INTO tickets VALUES (?,91,'New','New','','Bug','','','')")
+      .run(input.source);
+    developers.remove(person.id);
+    return { missing: [] };
+  };
+  assert.equal((await service.createAndImport(body, importer)).imported, false);
+  assert.equal(ticketMetadata(store, 91).priority, 1);
+  assert.equal(ticketMetadata(store, 91).localDeadline, null);
+  assert.ok(!store.get<any>(`ticket.create:${input.source}:${input.requestId}`, {}).localApplied);
+  developers.add(["Owner"], context);
+  assert.equal((await service.createAndImport(body, async () => ({ missing: [] }))).imported, true);
+  assert.equal(ticketMetadata(store, 91).priority, 8);
+  assert.equal(developers.assigned(91)[0].id, person.id);
+});

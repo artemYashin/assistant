@@ -62,6 +62,7 @@ export function TicketTrash({
     const events = [
       "orbit:ticket-state",
       "orbit:ticket-assignee",
+      "orbit:ticket-azure-fields",
       "orbit:ticket-metadata",
       "orbit:ticket-developers",
       "orbit:ticket-tracked",
