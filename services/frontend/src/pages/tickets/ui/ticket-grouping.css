@@ -66,14 +66,20 @@
   padding-left: 8px;
   padding-right: 8px;
 }
+.ticket-table-fit:has(.ticket-group-row-controls) > table > colgroup > col:first-child {
+  width: 76px !important;
+}
 .ticket-group-row-controls {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
 }
 .ticket-group-row-controls > .ticket-group-marker {
+  position: absolute;
+  right: calc(100% + 7px);
+  top: 50%;
+  transform: translateY(-50%);
   width: 22px;
-  flex: 0 0 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
