@@ -15,16 +15,16 @@
 
 Не удалось найти ссылку в текущем содержимом тикета. Возможно, оно изменилось.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:201.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:209.
 
 ### Сообщение
 
 Не удалось импортировать тикет. Проверьте доступ к нему в Azure.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:643.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:651.
 
 ### Сообщение
 
 Не удалось скопировать. Проверьте доступ к буферу обмена.
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1137.
+Источник: services/frontend/src/widgets/ticket/ui/TicketCard.tsx:1145.

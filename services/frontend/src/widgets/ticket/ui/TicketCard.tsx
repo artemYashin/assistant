@@ -156,17 +156,25 @@ export function TicketCard({
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
   const analysisPending = useRef(false);
+  const management = useLocalManagement();
+  const [detailManagement, setDetailManagement] = useState(false);
   const [typeColors, setTypeColors] = useState<Record<string, string>>({});
   const [colors, setColors] = useState<Record<string, string>>({});
   useEffect(() => {
+    let live = true;
+    setDetailManagement(false);
     api("/settings")
       .then((s) => {
+        if (!live) return;
+        setDetailManagement(s.workMode !== "developer");
         setColors(s.statusColors || {});
         setTypeColors(s.typeColors || {});
       })
       .catch(() => {});
-  }, []);
-  const management = useLocalManagement();
+    return () => {
+      live = false;
+    };
+  }, [management]);
   const [card, setCard] = useState<any>(null),
     [error, setError] = useState("");
   useEffect(() => {
@@ -520,7 +528,7 @@ export function TicketCard({
                 </dd>
               </div>
             )}
-            {management && (
+            {management && detailManagement && (
               <div>
                 <dt>Локальное поручение</dt>
                 <dd>
