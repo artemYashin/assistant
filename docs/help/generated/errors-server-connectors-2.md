@@ -109,18 +109,18 @@ Azure не вернул ссылку на изображение. Повтори
 
 ### Сообщение
 
+Azure не вернул версию тикета. Повторите отправку.
+
+Источник: services/backend/src/connectors.ts:1180.
+
+### Сообщение
+
 Azure не вернул номер комментария. Проверьте тикет в Azure перед повторной отправкой.
 
-Источник: services/backend/src/connectors.ts:1178.
+Источник: services/backend/src/connectors.ts:1224.
 
 ### Сообщение
 
 Некорректная страница истории
 
-Источник: services/backend/src/connectors.ts:1219.
-
-### Сообщение
-
-Azure не вернул версию тикета для истории
-
-Источник: services/backend/src/connectors.ts:1236.
+Источник: services/backend/src/connectors.ts:1265.

@@ -1165,6 +1165,52 @@ export class Connectors {
       .replace(/'/g, "&#39;")
       .replace(/\r\n?|\n/g, "<br>");
     const html = options.markdown ? await commentMarkdown(text) : `<p>${escaped}</p>`;
+    // Attach before publishing: a failed link must not produce an inaccessible comment.
+    // Read live relations on retries, including when a previous PATCH response was lost.
+    if (images.length) {
+      const current = await this.azure(
+        `workitems/${card.id}?$expand=relations`,
+        {},
+        s,
+        this.store.secret("azure.pat"),
+      );
+      if (source !== this.store.source())
+        throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+      if (current.id !== card.id || !Number.isSafeInteger(current.rev) || current.rev < 1)
+        throw new AppError(502, "Azure не вернул версию тикета. Повторите отправку.");
+      const attached = new Set(
+        (current.relations || [])
+          .filter((relation: any) => relation.rel === "AttachedFile")
+          .map((relation: any) =>
+            /\/attachments\/([0-9a-f-]{36})(?:[?/#]|$)/i
+              .exec(relation.url || "")?.[1]
+              ?.toLowerCase(),
+          ),
+      );
+      const missing = [...new Map(images.map((image: any) => [image.id, image])).values()].filter(
+        (image: any) => !attached.has(image.id.toLowerCase()),
+      );
+      if (missing.length)
+        await this.azure(
+          `workitems/${card.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json-patch+json" },
+            body: JSON.stringify([
+              { op: "test", path: "/rev", value: current.rev },
+              ...missing.map((image: any) => ({
+                op: "add",
+                path: "/relations/-",
+                value: { rel: "AttachedFile", url: image.url, attributes: { name: image.name } },
+              })),
+            ]),
+          },
+          s,
+          this.store.secret("azure.pat"),
+        );
+      if (source !== this.store.source())
+        throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    }
     const result = await this.azure(
       `workitems/${card.id}/comments?format=html`,
       { method: "POST", body: JSON.stringify({ text: html }) },

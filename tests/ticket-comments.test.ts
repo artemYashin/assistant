@@ -81,6 +81,8 @@ test("Markdown images reuse completed uploads and comment receipts after a retry
   let uploads = 0,
     posts = 0;
   const imageId = "12345678-1234-1234-1234-123456789012";
+  let patches = 0;
+  const relations: any[] = [];
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
     if (String(url).includes("/attachments?")) {
       uploads++;
@@ -88,7 +90,21 @@ test("Markdown images reuse completed uploads and comment receipts after a retry
       assert.ok(init.body instanceof Uint8Array);
       return Response.json({ id: imageId });
     }
+    if (init.method === "PATCH") {
+      patches++;
+      assert.equal(init.headers["Content-Type"], "application/json-patch+json");
+      const patch = JSON.parse(init.body);
+      assert.deepEqual(patch[0], { op: "test", path: "/rev", value: 3 });
+      assert.equal(patch.length, 2);
+      assert.equal(patch[1].value.rel, "AttachedFile");
+      assert.match(patch[1].value.url, new RegExp(imageId));
+      if (patches === 1) return Response.json({ message: "link failed" }, { status: 400 });
+      relations.push(patch[1].value);
+      // Azure applied the link, but Orbit did not receive a successful response.
+      return Response.json({ message: "response lost" }, { status: 400 });
+    }
     if (init.method === "POST") {
+      assert.equal(relations.length, 1);
       posts++;
       const html = JSON.parse(init.body).text;
       assert.match(html, /<strong>Hello<\/strong>/);
@@ -102,6 +118,8 @@ test("Markdown images reuse completed uploads and comment receipts after a retry
     }
     return Response.json({
       id: 42,
+      rev: 3,
+      relations,
       fields: { "System.TeamProject": "Project" },
     });
   });
@@ -119,13 +137,18 @@ test("Markdown images reuse completed uploads and comment receipts after a retry
   const text = `**Hello**\n\n![Photo](${image.url})`;
   const options = {
     markdown: true,
-    imageUploads: ["upload-1"],
+    imageUploads: ["upload-1", "upload-1"],
     requestId: "request-1",
   };
+  await assert.rejects(() => connectors.addTicketComment("one", text, options));
+  assert.equal(posts, 0, "No comment is published when attachment linking fails");
+  await assert.rejects(() => connectors.addTicketComment("one", text, options));
+  assert.equal(posts, 0);
   await assert.rejects(() => connectors.addTicketComment("one", text, options));
   const result = await connectors.addTicketComment("one", text, options);
   assert.deepEqual(await connectors.addTicketComment("one", text, options), result);
   assert.equal(posts, 2);
+  assert.equal(patches, 2, "Retry discovers the existing link and does not duplicate it");
   assert.equal(uploads, 1);
   assert.equal(connectors.ticketCard("one").attachments[0].id, imageId);
   assert.equal(connectors.ticketCard("one").comments.length, 1);
