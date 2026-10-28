@@ -530,7 +530,19 @@ export function createApp(
     }),
   );
   app.put("/api/settings", (req, res) => {
-    const parsed = settingsSchema.parse(req.body);
+    // GET includes project-scoped/read-only values. Older open clients echo them
+    // back; ignore only these known fields, keeping validation strict otherwise.
+    const {
+      kanbanStateOrder: _kanbanOrder,
+      kanbanGroups: _kanbanGroups,
+      kanbanHiddenStates: _kanbanHidden,
+      kanbanFilterColumnsByStatus: _kanbanFilter,
+      kanbanHideEmptyColumns: _kanbanEmpty,
+      githubConnected: _githubConnected,
+      azurePatSet: _azurePatSet,
+      ...editable
+    } = req.body ?? {};
+    const parsed = settingsSchema.parse(editable);
     const {
       azurePat,
       prDailyLimit: _retiredPrDailyLimit,

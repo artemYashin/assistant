@@ -2,7 +2,7 @@
   "note": "Source fingerprints for help maintenance. Regeneration does not replace review of authored articles.",
   "files": {
     "services/backend/src/agent.ts": "9252a16b31e693259b7584d7bcc613be616f701ac61c440f3191166bf9110d8e",
-    "services/backend/src/app.ts": "93d0c57616558dafeb57903908f769805f62083a83f3b1cd866628dd3fa72e61",
+    "services/backend/src/app.ts": "ddc116be3c9fd71808d3397756fcf6cff36948467fc9251d29b43cbaeb0a51b5",
     "services/backend/src/auth.ts": "c56fb70e85c2297e7b2c5e443609968e86ea856d7e2ab9bfcd5d468d425cb404",
     "services/backend/src/azure-browser.ts": "a429cf21d9bda5541087ba34dcef6143634f3592ab591d56f29f18f6191d19d1",
     "services/backend/src/azure-pat-reminder.ts": "1150e1d87633e63c025b49a53a373330d393b3a4bbc3f071b4ec9e900b7622ef",
@@ -277,7 +277,7 @@
     "services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx": "c6ef3328b7af0d54e245ee5a703b4640fe4dde2f71f68d2f1cde530b5cabf299",
     "services/frontend/src/pages/settings/index.ts": "6c0c064c31c9e76ca0d454a483295aff5441fb022e54d6f9b9b8057bf28c8db8",
     "services/frontend/src/pages/settings/ui/LoginCode.tsx": "b53f7582ef9c5a0081f69d3463e881eb34feb1ae0a451e450bfde66d7919cdb1",
-    "services/frontend/src/pages/settings/ui/Settings.tsx": "3d49f06ca9af9df6f3461f9517079ad5b2e8ceeed8dd796234e473f6d31ccec2",
+    "services/frontend/src/pages/settings/ui/Settings.tsx": "66e49abab57a41851e52d66414f76870cb0108d35a9fcf37ec18ecd143ab1a55",
     "services/frontend/src/pages/tickets/index.ts": "dc5f056ec9520cdea471838405c5a154a70e1d10aae86962aa89a936c8d7be3a",
     "services/frontend/src/pages/tickets/model/kanban.ts": "cf8b88fe37cb8681a0e5c6c5010f1463c2d32fe590a43feb2ffe06f49d91c0b9",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",

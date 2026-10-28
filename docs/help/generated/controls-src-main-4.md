@@ -75,52 +75,52 @@ Code Review
 
 Режим работы · Общий режим для этой установки. Данные и настройки скрытых элементов сохраняются. Это настройка интерфейса и ассистента, а не права доступа. · Lead — все возможности Разработчик — без локальных поручений и отпусков
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:147.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:156.
 
 ### Элемент
 
 Lead — все возможности · Разработчик — без локальных поручений и отпусков
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:151.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:160.
 
 ### Элемент
 
 Lead — все возможности
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:155.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:164.
 
 ### Элемент
 
 Разработчик — без локальных поручений и отпусков
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:156.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:165.
 
 ### Элемент
 
 Действие при клике на тикет · В таблицах «Тикеты», «Azure тикеты» и «Корзина». Сохраните настройки для применения. Кнопки и ссылки в строке выполняют свои обычные действия. · Открыть деталку в попапе Открыть деталку под тикетом Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:163.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:172.
 
 ### Элемент
 
 Открыть деталку в попапе · Открыть деталку под тикетом · Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:167.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:176.
 
 ### Элемент
 
 Открыть деталку в попапе
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:171.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:180.
 
 ### Элемент
 
 Открыть деталку под тикетом
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:172.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:181.
 
 ### Элемент
 
 Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:173.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:182.

@@ -66,7 +66,16 @@ export function Settings({ settings, context, run, busy }: any) {
   }, [settings.githubConnected, githubFlow?.status]);
   const set = (key: string, value: any) => setForm((f: any) => ({ ...f, [key]: value }));
   async function save() {
-    const { githubConnected, azurePatSet, ...values } = form;
+    const {
+      githubConnected,
+      azurePatSet,
+      kanbanStateOrder,
+      kanbanGroups,
+      kanbanHiddenStates,
+      kanbanFilterColumnsByStatus,
+      kanbanHideEmptyColumns,
+      ...values
+    } = form;
     await api("/settings", "PUT", {
       ...values,
       client: context.client,
