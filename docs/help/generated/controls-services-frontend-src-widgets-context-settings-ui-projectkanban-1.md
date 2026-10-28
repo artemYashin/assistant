@@ -111,10 +111,10 @@
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:420.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:421.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:429.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:430.

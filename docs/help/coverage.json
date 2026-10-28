@@ -351,7 +351,7 @@
     "services/frontend/src/widgets/context-settings/ui/DeveloperDirectory.tsx": "547b427f4e0e05fa753a9ddb460190ea8d6d54f37aebb8f56a620bb6c88f7cb7",
     "services/frontend/src/widgets/context-settings/ui/DeveloperStatusSettings.tsx": "3591cd792b23598c1cbf2b81476951def4991683dd63ab1d3ae6d5f18a7bcea1",
     "services/frontend/src/widgets/context-settings/ui/ProjectAzureSettings.tsx": "7feebafd7d2fbf638f8cf58618783e431b9b243615548403b3103a57809a6477",
-    "services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx": "e9e095cf011708e85c059031b74303b8a3886dfdc1dd542205dd31899e55606c",
+    "services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx": "5087f5ef34cf902430cf7bad69b8eb9910573d0273615e8411b5ea2555b4ff07",
     "services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx": "3c9f8de4649e4af42afa43427aae2e23e39228ef284b6220b69571ca8f6de9c8",
     "services/frontend/src/widgets/context-settings/ui/ProjectTicketImport.tsx": "edbfa2de317bd7874a8d491987e0da469e68514a6fa0c184515e244601a05493",
     "services/frontend/src/widgets/context-settings/ui/TicketImportSettings.tsx": "3596a881a4561b2c45a532e124775dde21e95c528298bff97395b293eefe6716",

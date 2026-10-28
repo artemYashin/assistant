@@ -11,7 +11,7 @@ type Group = {
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import { useStatusSort } from "../model/useStatusSort.js";
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Folder, GripVertical, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Folder, GripVertical, Pencil, X } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { ContextSaveButton } from "../../../shared/ui/save-button/index.js";
 
@@ -410,10 +410,11 @@ export function ProjectKanban({
               {group && (
                 <button
                   type="button"
-                  className="text-button"
+                  className="secondary project-kanban-group-edit"
                   disabled={busy || sort.dragging || !!draft}
                   onClick={() => setDraft({ ...group, states: [...group.states] })}
                 >
+                  <Pencil size={13} aria-hidden="true" />
                   Изменить
                 </button>
               )}
