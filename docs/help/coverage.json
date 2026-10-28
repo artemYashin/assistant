@@ -2,7 +2,7 @@
   "note": "Source fingerprints for help maintenance. Regeneration does not replace review of authored articles.",
   "files": {
     "services/backend/src/agent.ts": "9252a16b31e693259b7584d7bcc613be616f701ac61c440f3191166bf9110d8e",
-    "services/backend/src/app.ts": "7700c04c3558b86185a691a68c9ea9ba993162351d0927f59ff955d253a14999",
+    "services/backend/src/app.ts": "b32cca0566fdbaaa7ea3e3ca41f29f531c81cdcf5d1b83118e36a88878686f45",
     "services/backend/src/auth.ts": "c56fb70e85c2297e7b2c5e443609968e86ea856d7e2ab9bfcd5d468d425cb404",
     "services/backend/src/azure-browser.ts": "a429cf21d9bda5541087ba34dcef6143634f3592ab591d56f29f18f6191d19d1",
     "services/backend/src/azure-pat-reminder.ts": "1150e1d87633e63c025b49a53a373330d393b3a4bbc3f071b4ec9e900b7622ef",

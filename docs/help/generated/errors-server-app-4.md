@@ -49,18 +49,18 @@
 
 ### Сообщение
 
-Request failed:
-
-Источник: services/backend/src/app.ts:2073.
-
-### Сообщение
-
 UnknownError
 
-Источник: services/backend/src/app.ts:2073.
+Источник: services/backend/src/app.ts:2077.
 
 ### Сообщение
 
-Внутренняя ошибка. Проверьте настройки и повторите запрос.
+Request failed:
 
-Источник: services/backend/src/app.ts:2075.
+Источник: services/backend/src/app.ts:2093.
+
+### Сообщение
+
+Внутренняя ошибка. Повторите запрос; если ошибка сохраняется, найдите запись в логах по коду диагностики: {…}
+
+Источник: services/backend/src/app.ts:2105.

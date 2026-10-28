@@ -40,7 +40,7 @@ import express, { type Request, type Response, type NextFunction } from "express
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import multer from "multer";
-import { randomBytes, createHash } from "node:crypto";
+import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
 import { Store, AppError, type Context, defaults } from "./store.js";
@@ -2070,9 +2070,39 @@ export function createApp(
     if (error instanceof AppError) return res.status(error.status).json({ error: error.message });
     if (error instanceof multer.MulterError)
       return res.status(400).json({ error: "Аудиозапись слишком большая (максимум 20 МБ)" });
-    console.error("Request failed:", error instanceof Error ? error.name : "UnknownError");
+    const reference = randomUUID();
+    const errorType =
+      error instanceof Error && /^[A-Za-z0-9_]{1,80}$/.test(error.name)
+        ? error.name
+        : "UnknownError";
+    const rawCode = error instanceof Error ? (error as Error & { code?: unknown }).code : undefined;
+    // Keep only source filenames/line numbers, never messages, arguments, URLs or absolute paths.
+    const frames =
+      error instanceof Error
+        ? (error.stack || "")
+            .split("\n")
+            .slice(1)
+            .filter((line) => /^\s+at /.test(line))
+            .slice(0, 8)
+            .flatMap((line) => {
+              const match = /(?:^|[/\\])([A-Za-z0-9_.-]+\.(?:[cm]?[jt]s)):(\d+):(\d+)/.exec(line);
+              return match ? [`${match[1]}:${match[2]}:${match[3]}`] : [];
+            })
+        : [];
+    console.error(
+      "Request failed:",
+      JSON.stringify({
+        reference,
+        errorType,
+        code:
+          typeof rawCode === "string" && /^[A-Z_0-9]{1,80}$/.test(rawCode) ? rawCode : undefined,
+        method: _req.method,
+        route: typeof _req.route?.path === "string" ? _req.route.path : undefined,
+        frames,
+      }),
+    );
     res.status(500).json({
-      error: "Внутренняя ошибка. Проверьте настройки и повторите запрос.",
+      error: `Внутренняя ошибка. Повторите запрос; если ошибка сохраняется, найдите запись в логах по коду диагностики: ${reference}`,
     });
   });
   return { app, sync, agent, reviewAgent, connectors, pullRequests, codeBrowser };
