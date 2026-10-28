@@ -42,7 +42,13 @@ export function ticketStateColumns(
     .filter((column) => !hideEmptyColumns || column.tickets.length > 0);
 }
 
-export type KanbanGroup = { id: string; name: string; states: string[]; defaultState: string };
+export type KanbanGroup = {
+  id: string;
+  name: string;
+  states: string[];
+  color?: string | null;
+  defaultState: string;
+};
 export function groupedTicketColumns(
   tickets: KanbanTicket[],
   states: string[],
@@ -66,7 +72,14 @@ export function groupedTicketColumns(
   );
   const result = new Map<
     string,
-    { state: string; name: string; states: string[]; defaultState: string; tickets: KanbanTicket[] }
+    {
+      state: string;
+      name: string;
+      states: string[];
+      color?: string | null;
+      defaultState: string;
+      tickets: KanbanTicket[];
+    }
   >();
   for (const column of individual) {
     const group = members.get(column.state);
@@ -76,6 +89,7 @@ export function groupedTicketColumns(
       target = {
         state: id,
         name: group?.name ?? column.state,
+        color: group?.color,
         states: [],
         defaultState: group?.defaultState ?? column.state,
         tickets: [],

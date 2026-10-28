@@ -9,94 +9,112 @@
 
 Фильтр статуса скрывает столбцы канбана Показывать только столбцы выбранных в фильтре статусов.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:116.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:128.
 
 ### Элемент
 
 Фильтр статуса скрывает столбцы канбана
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:117.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:129.
 
 ### Элемент
 
 Скрывать пустые столбцы Скрывать столбцы без карточек с учётом текущего поиска и фильтров.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:132.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:144.
 
 ### Элемент
 
 Скрывать пустые столбцы
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:133.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:145.
 
 ### Элемент
 
 Добавить группу
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:153.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:165.
+
+### Элемент
+
+Закрыть редактор группы
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:196.
 
 ### Элемент
 
 Название группы
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:166.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:206.
+
+### Элемент
+
+Цвет группы
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:216.
+
+### Элемент
+
+Сбросить цвет
+
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:228.
 
 ### Элемент
 
 Статусы группы · Выберите статусы
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:175.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:237.
 
 ### Элемент
 
 Статус по умолчанию при переносе
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:197.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:261.
 
 ### Элемент
 
 Применить группу
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:206.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:270.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:236.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:304.
 
 ### Элемент
 
 Разгруппировать
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:245.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:313.
 
 ### Элемент
 
 Перетащить: {…} · Перетащите для изменения порядка. Escape — отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:293.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:363.
 
 ### Элемент
 
 Показывать в канбане: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:303.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:373.
 
 ### Элемент
 
 Изменить
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:331.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:406.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:340.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:415.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:349.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:424.

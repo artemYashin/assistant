@@ -105,6 +105,7 @@ export function MultiSelect({
       ref={root}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
+          e.preventDefault();
           e.stopPropagation();
           setOpen(false);
           trigger.current?.focus();

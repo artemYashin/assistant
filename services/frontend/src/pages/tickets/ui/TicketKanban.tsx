@@ -239,7 +239,10 @@ export function TicketKanban({
                   if (ticket) void prepare(ticket, column.defaultState, column.states, column.name);
                 }}
               >
-                <StatusBadge state={column.name || "Не указан"} colors={settings?.statusColors} />
+                <StatusBadge
+                  state={column.name || "Не указан"}
+                  colors={column.color ? { [column.name]: column.color } : settings?.statusColors}
+                />
                 <span className="ticket-view-count">{column.tickets.length}</span>
               </header>
             ))}

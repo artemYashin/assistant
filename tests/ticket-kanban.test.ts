@@ -118,6 +118,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
       name: "Работа",
       states: ["Active", "Review"],
       defaultState: "Review",
+      color: "#123456",
     },
   ];
   const savedKanban = store.get<any>(store.kanbanKey(first), {});
@@ -241,6 +242,34 @@ test("kanban API validates project and preserves order after rejected writes", a
     assert.deepEqual(store.settings(context).kanbanGroups, [group]);
     assert.deepEqual(store.settings(context).kanbanStateOrder, ["New", group.id]);
   }
+  const colored = { ...group, color: "#123456" };
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: [group.id], groups: [colored] })
+    .expect(200);
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: [group.id], groups: [group] })
+    .expect(200);
+  assert.deepEqual(
+    store.settings(context).kanbanGroups,
+    [colored],
+    "Old open clients preserve the configured color",
+  );
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: [group.id], groups: [{ ...group, color: "red;invalid" }] })
+    .expect(400);
+  assert.deepEqual(store.settings(context).kanbanGroups, [colored]);
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: [group.id], groups: [{ ...group, color: null }] })
+    .expect(200);
+  assert.equal(store.settings(context).kanbanGroups[0].color, null);
   await request(app)
     .put("/api/context/kanban")
     .set(auth)
@@ -256,6 +285,7 @@ test("grouped kanban combines states without duplicates, preserves ticket sortin
     name: "В работе",
     states: ["Active", "Review"],
     defaultState: "Active",
+    color: "#123456",
   };
   const tickets = [
     { id: 4, source: "s", state: "Review" },
@@ -275,6 +305,7 @@ test("grouped kanban combines states without duplicates, preserves ticket sortin
       [group],
     );
   const full = columns();
+  assert.equal(full[1].color, "#123456");
   assert.deepEqual(
     full.map((c) => c.name),
     ["New", "В работе", "Done", "Other"],

@@ -415,6 +415,11 @@ export function createApp(
               name: text.min(1).max(100),
               states: z.array(text.min(1).max(200)).min(1).max(200),
               defaultState: text.min(1).max(200),
+              color: z
+                .string()
+                .regex(/^#[0-9a-fA-F]{6}$/)
+                .nullable()
+                .optional(),
             }),
           )
           .max(200)
@@ -432,7 +437,15 @@ export function createApp(
         .some((item) => item.client === context.client && item.project === context.project)
     )
       throw new AppError(400, "Выберите существующий проект для настройки канбана.");
-    const savedGroups = groups ?? store.settings(context).kanbanGroups;
+    const previousGroups = store.settings(context).kanbanGroups;
+    const savedGroups = groups
+      ? groups.map((group) => {
+          const previous = previousGroups.find((item) => item.id === group.id);
+          return group.color === undefined && previous?.color
+            ? { ...group, color: previous.color }
+            : group;
+        })
+      : previousGroups;
     const groupIds = new Set<string>();
     const groupStates = new Set<string>();
     for (const group of savedGroups) {

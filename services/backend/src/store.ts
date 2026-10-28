@@ -52,7 +52,13 @@ export const defaults = {
   azureTypes: [] as string[],
   azureStates: [] as string[],
   kanbanStateOrder: [] as string[],
-  kanbanGroups: [] as { id: string; name: string; states: string[]; defaultState: string }[],
+  kanbanGroups: [] as {
+    id: string;
+    name: string;
+    states: string[];
+    color?: string | null;
+    defaultState: string;
+  }[],
   kanbanHiddenStates: [] as string[],
   kanbanFilterColumnsByStatus: false,
   kanbanHideEmptyColumns: false,

@@ -18302,3 +18302,32 @@ a.pr-branch-link:focus-visible {
 .project-kanban-group-badges {
   margin-top: 4px;
 }
+
+.project-kanban-group-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+.project-kanban-group-dialog .project-kanban-group-editor {
+  border: 0;
+  padding: 0;
+  margin-top: 16px;
+  background: transparent;
+}
+.project-kanban-group-name .ticket-state-badge {
+  font-weight: 400;
+}
+.project-kanban-group-color {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.project-kanban-group-color > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.project-kanban-group-color input[type="color"] {
+  width: 40px;
+  height: 32px;
+  padding: 2px;
+}

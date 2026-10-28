@@ -9,4 +9,4 @@
 
 Ошибка поиска
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:214.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:215.
