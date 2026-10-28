@@ -1,3 +1,4 @@
+import { parseTicketRelations, type TicketRelation } from "./ticket-relations.js";
 import { collectTicketNoteImages } from "./ticket-note-images.js";
 import { calendarNotificationsSchema } from "./calendar-model.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
@@ -102,6 +103,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS pull_requests (monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, title TEXT NOT NULL, author TEXT NOT NULL, url TEXT NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, draft INTEGER NOT NULL, in_scope INTEGER NOT NULL DEFAULT 1, synced_at TEXT NOT NULL, PRIMARY KEY(monitor,repo,number));
       CREATE TABLE IF NOT EXISTS pr_diff_cache (monitor TEXT NOT NULL,repo TEXT NOT NULL,number INTEGER NOT NULL,revision TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(monitor,repo,number),FOREIGN KEY(monitor,repo,number) REFERENCES pull_requests(monitor,repo,number) ON DELETE CASCADE);
       CREATE TABLE IF NOT EXISTS pr_reviews (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL, summary TEXT, coverage TEXT, error TEXT, usage_id TEXT, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, UNIQUE(monitor,repo,number,head,target));
+      CREATE TABLE IF NOT EXISTS ticket_relations_cache (source TEXT NOT NULL,id INTEGER NOT NULL,relations TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL,PRIMARY KEY(source,id));
       CREATE TABLE IF NOT EXISTS ticket_content_cache (source TEXT NOT NULL,id INTEGER NOT NULL,section TEXT NOT NULL,body TEXT NOT NULL,search_text TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(source,id,section));
       CREATE TABLE IF NOT EXISTS ticket_cards (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS contexts (client TEXT NOT NULL, project TEXT NOT NULL, PRIMARY KEY(client,project));
@@ -1004,6 +1006,32 @@ export class Store {
       .prepare("UPDATE ticket_trash SET body=? WHERE source=? AND id=?")
       .run(JSON.stringify(body), source, item.id);
   }
+  cacheTicketRelations(item: any, source: string, base: string, expanded = false) {
+    const relations = parseTicketRelations(
+      expanded && item.relations === undefined ? [] : item.relations,
+      base,
+    );
+    // Partial field-only responses must not erase an existing relation snapshot.
+    if (relations === null || !Number.isSafeInteger(item.id) || item.id < 1) return;
+    const revision = Number.isSafeInteger(item.rev) && item.rev > 0 ? item.rev : 0;
+    this.db
+      .prepare(
+        `INSERT INTO ticket_relations_cache(source,id,relations,revision,updated_at)
+      VALUES (?,?,?,?,?) ON CONFLICT(source,id) DO UPDATE SET
+      relations=excluded.relations,revision=excluded.revision,updated_at=excluded.updated_at
+      WHERE excluded.revision >= ticket_relations_cache.revision`,
+      )
+      .run(source, item.id, JSON.stringify(relations), revision, new Date().toISOString());
+  }
+  ticketRelations(id: number, source = this.source()) {
+    const row = this.db
+      .prepare("SELECT relations,updated_at FROM ticket_relations_cache WHERE source=? AND id=?")
+      .get(source, id) as { relations: string; updated_at: string } | undefined;
+    return {
+      relations: row ? (JSON.parse(row.relations) as TicketRelation[]) : null,
+      relationsUpdatedAt: row?.updated_at ?? null,
+    };
+  }
   ticketTrash() {
     this.purgeTicketTrash();
     return (
@@ -1022,6 +1050,7 @@ export class Store {
       }[];
       return {
         ...JSON.parse(row.body),
+        ...this.ticketRelations(row.id, row.source),
         added_at: this.ticketAddedAt(row.id, row.source),
         created_at:
           this.ticketCreatedAt(row.id, row.source) ?? JSON.parse(row.body).created_at ?? null,

@@ -1,3 +1,4 @@
+import { useTicketHierarchy } from "./useTicketHierarchy.js";
 import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
@@ -233,6 +234,12 @@ export function Tickets({
         return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
       });
   const selection = useTicketSelection<any>(sorted, JSON.stringify([currentSource, context]));
+  const hierarchy = useTicketHierarchy<any>(
+    sorted,
+    currentSource,
+    sourceMismatch ? undefined : (targetId ?? undefined),
+    view === "table",
+  );
   return (
     <>
       <div className="ticket-page-intro">
@@ -482,6 +489,7 @@ export function Tickets({
       >
         <div className="ticket-display-summary">
           {columns.control}
+          {hierarchy.control}
           {selection.selected.length >= 1 && (
             <button
               type="button"
@@ -625,9 +633,10 @@ export function Tickets({
           }}
         />
       )}
+      {view === "table" && hierarchy.notice}
       <div
         style={view === "kanban" ? { display: "none" } : undefined}
-        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}`}
+        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}${hierarchy.grouped ? " is-hierarchical" : ""}`}
       >
         <table ref={columns.resize.tableRef}>
           {columns.resize.colgroup}
@@ -709,10 +718,15 @@ export function Tickets({
                 </td>
               </tr>
             )}
-            {sorted.map((t: any) => (
+            {hierarchy.rows.map(({ ticket: t, depth, children, expanded }) => (
               <TicketDataRow
                 key={`${t.source}:${t.id}`}
                 ticket={t}
+                hierarchy={
+                  hierarchy.grouped
+                    ? { depth, children, expanded, onToggle: () => hierarchy.toggle(t) }
+                    : undefined
+                }
                 columns={columns}
                 settings={settings}
                 context={context}

@@ -1,5 +1,5 @@
 import { TicketDate } from "../../../entities/ticket/index.js";
-import { ArchiveRestore, LoaderCircle } from "lucide-react";
+import { ArchiveRestore, LoaderCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { CopyTicketId } from "../../../entities/ticket/index.js";
 import { TicketTableRow } from "./TicketCard.js";
 import { TicketMetadata } from "../../../features/edit-ticket/index.js";
@@ -19,6 +19,7 @@ export function TicketDataRow({
   onRestore,
   restoring = false,
   highlighted = false,
+  hierarchy,
 }: any) {
   const local = t.imported !== false || t.inTrash;
   const tone = t.inTrash ? "trash" : t.imported === false ? "new" : undefined;
@@ -75,13 +76,33 @@ export function TicketDataRow({
       }
     >
       <td className="ticket-selection-column">
-        <input
-          className="ticket-checkbox"
-          type="checkbox"
-          aria-label={`Выбрать тикет #${t.id}`}
-          checked={checked}
-          onChange={onToggle}
-        />
+        <div className={hierarchy ? "ticket-hierarchy-selection" : undefined}>
+          {hierarchy &&
+            (hierarchy.children > 0 ? (
+              <button
+                type="button"
+                className="ticket-hierarchy-toggle"
+                aria-label={`${hierarchy.expanded ? "Свернуть" : "Развернуть"} подзадачи тикета #${t.id}`}
+                aria-expanded={hierarchy.expanded}
+                title={`${hierarchy.children} дочерних тикетов в текущих результатах`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  hierarchy.onToggle();
+                }}
+              >
+                {hierarchy.expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+            ) : (
+              <span className="ticket-hierarchy-spacer" aria-hidden="true" />
+            ))}
+          <input
+            className="ticket-checkbox"
+            type="checkbox"
+            aria-label={`Выбрать тикет #${t.id}`}
+            checked={checked}
+            onChange={onToggle}
+          />
+        </div>
       </td>
       <td className="ticket-identity-column">
         <div className="ticket-id-type">
@@ -99,9 +120,14 @@ export function TicketDataRow({
         </div>
       </td>
       <td className="ticket-title-column">
-        <b className="ticket-title-clamp" title={t.title}>
-          {t.title}
-        </b>
+        <div
+          className={hierarchy?.depth ? "ticket-hierarchy-title" : undefined}
+          style={hierarchy?.depth ? { marginLeft: Math.min(hierarchy.depth, 8) * 16 } : undefined}
+        >
+          <b className="ticket-title-clamp" title={t.title}>
+            {t.title}
+          </b>
+        </div>
       </td>
       <td data-column="state" hidden={columns.hidden("state")}>
         <TicketStatus

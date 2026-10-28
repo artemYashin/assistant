@@ -1,3 +1,4 @@
+import { useTicketHierarchy } from "./useTicketHierarchy.js";
 import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
@@ -200,6 +201,7 @@ export function TicketTrash({
     filtered,
     JSON.stringify([settings?.azureUrl, settings?.azureProject]),
   );
+  const hierarchy = useTicketHierarchy(filtered, currentSource, undefined, view === "table");
   const columns = [
     ["id", "ID"],
     ["title", "Тикет"],
@@ -393,6 +395,7 @@ export function TicketTrash({
         >
           <div className="ticket-display-summary">
             {display.control}
+            {hierarchy.control}
             {selection.selected.length >= 1 && (
               <button
                 type="button"
@@ -456,9 +459,10 @@ export function TicketTrash({
           }}
         />
       )}
+      {view === "table" && hierarchy.notice}
       <div
         style={view === "kanban" ? { display: "none" } : undefined}
-        className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}${display.resize.manual ? " has-manual-widths" : ""}`}
+        className={`panel ticket-table-fit ticket-trash-table${filtered.length ? "" : " is-empty"}${display.resize.manual ? " has-manual-widths" : ""}${hierarchy.grouped ? " is-hierarchical" : ""}`}
       >
         <table ref={display.resize.tableRef}>
           {display.resize.colgroup}
@@ -573,10 +577,15 @@ export function TicketTrash({
                 </td>
               </tr>
             )}
-            {filtered.map((t) => (
+            {hierarchy.rows.map(({ ticket: t, depth, children, expanded }) => (
               <TicketDataRow
                 key={`${t.source}:${t.id}`}
                 ticket={{ ...t, inTrash: true }}
+                hierarchy={
+                  hierarchy.grouped
+                    ? { depth, children, expanded, onToggle: () => hierarchy.toggle(t) }
+                    : undefined
+                }
                 columns={display}
                 settings={settings}
                 context={context}

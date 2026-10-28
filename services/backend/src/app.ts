@@ -1204,6 +1204,7 @@ export function createApp(
         const developers = localDevelopers.assigned(ticket.id, ticket.source);
         return {
           ...ticket,
+          ...store.ticketRelations(ticket.id, ticket.source),
           added_at: store.ticketAddedAt(ticket.id, ticket.source),
           created_at: store.ticketCreatedAt(ticket.id, ticket.source),
           ...ticketMetadata(store, ticket.id, ticket.source),
@@ -1216,6 +1217,17 @@ export function createApp(
         };
       });
   app.get("/api/tickets", (_req, res) => res.json(localTickets()));
+  app.post("/api/tickets/relations", async (req, res) => {
+    const input = z
+      .object({
+        source: z.string().min(1).max(2200),
+        ids: z.array(z.number().int().positive()).min(1).max(200),
+        refresh: z.boolean().default(false),
+      })
+      .strict()
+      .parse(req.body);
+    res.json(await connectors.ticketRelationsBatch(input.ids, input.source, input.refresh));
+  });
   app.post("/api/azure/tickets/search", async (req, res) => {
     const input = azureBrowseSchema.parse(req.body);
     const result = await connectors.browseAzureTickets(input, [

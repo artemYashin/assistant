@@ -9,16 +9,22 @@
 
 Восстановить тикет · Восстановить тикет #{…} · /
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:59.
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:60.
+
+### Элемент
+
+{…} подзадачи тикета #{…} · {…} дочерних тикетов в текущих результатах · /
+
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:82.
 
 ### Элемент
 
 Выбрать тикет #{…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:78.
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:98.
 
 ### Элемент
 
 #
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:89.
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:110.

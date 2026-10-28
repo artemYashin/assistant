@@ -9,16 +9,28 @@
 
 Azure вернул неверный номер тикета
 
-Источник: services/backend/src/connectors.ts:1720.
+Источник: services/backend/src/connectors.ts:1741.
+
+### Сообщение
+
+Подключение изменилось. Обновите список тикетов.
+
+Источник: services/backend/src/connectors.ts:1764.
+
+### Сообщение
+
+Azure не вернул связи тикетов
+
+Источник: services/backend/src/connectors.ts:1788.
 
 ### Сообщение
 
 Выберите типы и статусы задач: Заказчики и проекты → Автоматический импорт
 
-Источник: services/backend/src/connectors.ts:1752.
+Источник: services/backend/src/connectors.ts:1827.
 
 ### Сообщение
 
 Azure вернул неполный список тикетов
 
-Источник: services/backend/src/connectors.ts:1816.
+Источник: services/backend/src/connectors.ts:1892.

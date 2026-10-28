@@ -142,6 +142,7 @@ export class Connectors {
     );
   }
   private cacheTicketContent(item: any, s: Settings, complete = false) {
+    this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl));
     const fields = item.fields || {};
     const source = this.store.source(s),
       base = azureBase(s.azureUrl);
@@ -1053,6 +1054,7 @@ export class Connectors {
         this.cacheTicketContent(item, s, true);
       })();
     }
+    this.store.cacheTicketRelations(item, this.store.source(s), base, true);
     const cardId = randomUUID();
     const card = {
       id,
@@ -1276,6 +1278,7 @@ export class Connectors {
     check();
     if (item.id !== card.id || !Array.isArray(item.relations ?? []))
       throw new AppError(502, "Azure не вернул связи тикета");
+    this.store.cacheTicketRelations(item, source, azureBase(settings.azureUrl), true);
     const labels: Record<string, string> = {
       "System.LinkTypes.Hierarchy-Reverse": "Родитель",
       "System.LinkTypes.Hierarchy-Forward": "Дочерний",
@@ -1426,7 +1429,7 @@ export class Connectors {
         "workitemsbatch",
         {
           method: "POST",
-          body: JSON.stringify({ ids: batch, errorPolicy: "Omit" }),
+          body: JSON.stringify({ ids: batch, $expand: "relations", errorPolicy: "Omit" }),
         },
         s,
         pat,
@@ -1436,8 +1439,10 @@ export class Connectors {
       if (!Array.isArray(result.value))
         throw new AppError(502, "Azure вернул неверный список тикетов");
       for (const item of result.value) {
-        if (batch.includes(item.id) && item.fields?.["System.TeamProject"] === s.azureProject)
+        if (batch.includes(item.id) && item.fields?.["System.TeamProject"] === s.azureProject) {
+          this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl), true);
           this.saveTicket(item, s);
+        }
       }
     }
   }
@@ -1511,6 +1516,7 @@ export class Connectors {
         body: JSON.stringify({
           ids,
           fields: browseFields,
+          $expand: "relations",
           errorPolicy: "Omit",
         }),
       },
@@ -1524,7 +1530,13 @@ export class Connectors {
         (item: any) =>
           ids.includes(item.id) && item.fields?.["System.TeamProject"] === s.azureProject,
       )
-      .map((item: any) => azureSummary(item, source, azureBase(s.azureUrl), s.azureProject))
+      .map((item: any) => {
+        this.store.cacheTicketRelations(item, source, azureBase(s.azureUrl), true);
+        return {
+          ...azureSummary(item, source, azureBase(s.azureUrl), s.azureProject),
+          ...this.store.ticketRelations(item.id, source),
+        };
+      })
       .sort((a: any, b: any) => ids.indexOf(a.id) - ids.indexOf(b.id));
     return {
       tickets,
@@ -1554,6 +1566,7 @@ export class Connectors {
         method: "POST",
         body: JSON.stringify({
           ids: missing,
+          $expand: "relations",
           fields: [
             ...browseFields,
             "System.Description",
@@ -1576,6 +1589,7 @@ export class Connectors {
         this.store.db
           .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
           .run(source, item.id);
+        this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl), true);
         this.saveTicket(item, s);
         this.store.db
           .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
@@ -1630,6 +1644,7 @@ export class Connectors {
         method: "POST",
         body: JSON.stringify({
           ids,
+          $expand: "relations",
           errorPolicy: "Omit",
           fields: [
             ...(add
@@ -1662,6 +1677,7 @@ export class Connectors {
         ids.includes(item.id) && item.fields?.["System.TeamProject"] === s.azureProject,
     );
     const tickets = items.map((item: any) => {
+      this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl), true);
       const f = item.fields;
       return {
         id: item.id,
@@ -1713,7 +1729,12 @@ export class Connectors {
   async trackTicket(id: number, guard: () => void = () => {}) {
     this.store.purgeTicketTrash();
     const s = this.store.settings();
-    const item = await this.azure(`workitems/${id}`, {}, s, this.store.secret("azure.pat"));
+    const item = await this.azure(
+      `workitems/${id}?$expand=relations`,
+      {},
+      s,
+      this.store.secret("azure.pat"),
+    );
     guard();
     if (this.store.source(s) !== this.store.source())
       throw new AppError(409, "Подключение Azure изменилось во время запроса");
@@ -1723,12 +1744,66 @@ export class Connectors {
     this.store.db
       .prepare("UPDATE ticket_local SET removed=0 WHERE source=? AND id=?")
       .run(this.store.source(s), id);
+    this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl), true);
     this.saveTicket(item, s);
     this.store.db
       .prepare("DELETE FROM ticket_trash WHERE source=? AND id=?")
       .run(this.store.source(s), id);
     this.store.audit("ticket.tracked", String(id));
     return item.id;
+  }
+  async ticketRelationsBatch(ids: number[], source: string, refresh = false) {
+    const settings = this.store.settings();
+    const pat = this.store.secret("azure.pat");
+    const check = () => {
+      if (
+        source !== this.store.source(settings) ||
+        source !== this.store.source() ||
+        pat !== this.store.secret("azure.pat")
+      )
+        throw new AppError(409, "Подключение изменилось. Обновите список тикетов.");
+    };
+    check();
+    const unique = [...new Set(ids)];
+    const missing = unique.filter(
+      (id) => refresh || this.store.ticketRelations(id, source).relations === null,
+    );
+    const received = new Set<number>();
+    if (missing.length) {
+      const response = await this.azure(
+        "workitemsbatch",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ids: missing,
+            fields: ["System.TeamProject"],
+            $expand: "relations",
+            errorPolicy: "Omit",
+          }),
+        },
+        settings,
+        pat,
+      );
+      check();
+      if (!Array.isArray(response.value)) throw new AppError(502, "Azure не вернул связи тикетов");
+      this.store.db.transaction(() => {
+        for (const item of response.value) {
+          if (
+            !missing.includes(item.id) ||
+            item.fields?.["System.TeamProject"] !== settings.azureProject
+          )
+            continue;
+          if (item.relations !== undefined && !Array.isArray(item.relations)) continue;
+          this.store.cacheTicketRelations(item, source, azureBase(settings.azureUrl), true);
+          received.add(item.id);
+        }
+      })();
+    }
+    return {
+      source,
+      unavailable: missing.filter((id) => !received.has(id)),
+      tickets: unique.map((id) => ({ id, ...this.store.ticketRelations(id, source) })),
+    };
   }
   async syncTickets(
     importSelected = false,
@@ -1792,6 +1867,7 @@ export class Connectors {
             method: "POST",
             body: JSON.stringify({
               ids: stage.slice(i, i + 200),
+              $expand: "relations",
               fields: [
                 "System.Description",
                 "Microsoft.VSTS.Common.AcceptanceCriteria",
@@ -1815,6 +1891,7 @@ export class Connectors {
         if (!Array.isArray(result.value) || result.value.length !== stage.slice(i, i + 200).length)
           throw new AppError(502, "Azure вернул неполный список тикетов");
         for (const item of result.value) {
+          this.store.cacheTicketRelations(item, this.store.source(s), azureBase(s.azureUrl), true);
           this.saveTicket(item, s);
           this.cacheTicketContent(item, s, true);
           already.add(item.id);

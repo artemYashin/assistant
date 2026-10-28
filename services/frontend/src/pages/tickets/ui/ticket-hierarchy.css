@@ -1,0 +1,68 @@
+.ticket-hierarchy-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #d4e2d8;
+  background: #eef4f0;
+  border-radius: 8px;
+}
+.ticket-hierarchy-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ticket-hierarchy-switch button[aria-pressed="true"] {
+  background: #fff;
+  color: #285341;
+  box-shadow: 0 1px 3px #19365020;
+}
+.ticket-hierarchy-switch button:hover {
+  background: #dceee1;
+}
+.ticket-hierarchy-notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 10px;
+  font-size: 11px;
+  color: #68786e;
+}
+.ticket-table-fit.is-hierarchical > table > tbody > tr > td.ticket-selection-column {
+  padding: 10px 3px;
+}
+.ticket-table-fit.is-hierarchical > table > thead > tr > th.ticket-selection-column {
+  padding: 10px 3px 10px 22px;
+}
+.ticket-hierarchy-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.ticket-hierarchy-toggle,
+.ticket-hierarchy-spacer {
+  width: 18px;
+  height: 22px;
+  flex: 0 0 18px;
+}
+.ticket-hierarchy-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  color: #285341;
+}
+.ticket-hierarchy-toggle:hover {
+  background: #dceee1;
+}
+.ticket-hierarchy-title {
+  min-width: 0;
+  border-left: 2px solid #d7e7dd;
+  padding-left: 10px;
+}
