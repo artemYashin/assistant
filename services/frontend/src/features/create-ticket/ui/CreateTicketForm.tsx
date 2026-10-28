@@ -45,7 +45,6 @@ export function CreateTicketForm({
   const [developers, setDevelopers] = useState<any[]>([]);
   const [knownTags, setKnownTags] = useState<string[]>([]);
   const [knownAzureTags, setKnownAzureTags] = useState<string[]>([]);
-  const [states, setStates] = useState<string[]>([]);
   const [optionsReady, setOptionsReady] = useState(false);
   const submitted = useRef<any>(null);
   useEffect(() => {
@@ -138,20 +137,14 @@ export function CreateTicketForm({
     setLoading(true);
     setFields([]);
     setOptionsReady(false);
-    setStates([]);
     api(
-      `/azure/tickets/create-options?${new URLSearchParams({ source, ...(type ? { type, states: "true" } : {}) })}`,
+      `/azure/tickets/create-options?${new URLSearchParams({ source, ...(type ? { type } : {}) })}`,
     )
       .then((v) => {
         if (live) {
           if (type) {
             setFields(v.fields);
             setOptionsReady(true);
-            setStates(v.states || []);
-            setProperties((old) => ({
-              ...old,
-              state: (v.states || []).includes(old.state) ? old.state : "",
-            }));
           } else {
             setTypes(v.types);
             try {
@@ -290,7 +283,6 @@ export function CreateTicketForm({
         type,
         title,
         assigneeId: person?.id || null,
-        ...(properties.state && fields.includes("System.State") ? { state: properties.state } : {}),
         ...(properties.azurePriority && fields.includes("Microsoft.VSTS.Common.Priority")
           ? { azurePriority: Number(properties.azurePriority) }
           : {}),
@@ -473,7 +465,6 @@ export function CreateTicketForm({
                 value={properties}
                 onChange={setProperties}
                 fields={fields}
-                states={states}
                 settings={config}
                 developers={developers}
                 knownTags={knownTags}

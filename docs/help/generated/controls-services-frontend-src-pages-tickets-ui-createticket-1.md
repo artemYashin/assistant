@@ -15,100 +15,100 @@
 
 Закрыть
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:339.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:331.
 
 ### Элемент
 
 Импортирую… / Повторить импорт
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:359.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:351.
 
 ### Элемент
 
 Открыть тикет #
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:387.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:379.
 
 ### Элемент
 
 Тип задачи
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:414.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:406.
 
 ### Элемент
 
 Выберите тип задачи
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:418.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:410.
 
 ### Элемент
 
 Исполнитель Azure
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:435.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:427.
 
 ### Элемент
 
 Не назначен
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:439.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:431.
 
 ### Элемент
 
 {…} · {…}
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:446.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:438.
 
 ### Элемент
 
 Название
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:486.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:477.
 
 ### Элемент
 
 Что нужно сделать?
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:488.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:479.
 
 ### Элемент
 
 Связь
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:522.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:513.
 
 ### Элемент
 
 Родитель · Parent
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:527.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:518.
 
 ### Элемент
 
 Дочерний · Child
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:528.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:519.
 
 ### Элемент
 
 Связанный · Related
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:529.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:520.
 
 ### Элемент
 
 Удалить связь
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:552.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:543.
 
 ### Элемент
 
 Добавить связь
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:563.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:554.
 
 ### Элемент
 
 / · · Создаю… / Создать в Azure
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:589.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:580.

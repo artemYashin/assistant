@@ -7,30 +7,24 @@
 
 ### Элемент
 
-Статус Azure
-
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:61.
-
-### Элемент
-
-По умолчанию Azure
-
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:66.
-
-### Элемент
-
 Локальный приоритет
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:80.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:54.
 
 ### Элемент
 
 Azure приоритет
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:92.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:66.
+
+### Элемент
+
+По умолчанию Azure
+
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:68.
 
 ### Элемент
 
 Локальное поручение · Не назначено
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:125.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketProperties.tsx:99.

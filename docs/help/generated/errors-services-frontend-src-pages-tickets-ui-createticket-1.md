@@ -15,4 +15,4 @@ https://orbit.invalid/create-ticket-image/{…}
 
 Подключение изменилось. Откройте форму заново.
 
-Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:58.
+Источник: services/frontend/src/features/create-ticket/ui/CreateTicketForm.tsx:57.

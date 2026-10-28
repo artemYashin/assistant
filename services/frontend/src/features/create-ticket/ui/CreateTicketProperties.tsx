@@ -1,9 +1,7 @@
-import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { MultiSelect } from "../../../shared/ui/multi-select/index.js";
 import { NumberInput } from "../../../shared/ui/number-input/index.js";
 import { TagsEditor } from "../../../shared/ui/tags-editor/index.js";
 import { CalendarDateField } from "../../../entities/calendar/index.js";
-import { StatusBadge } from "../../../entities/ticket/index.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import {
   developerOnVacation,
@@ -12,7 +10,6 @@ import {
 } from "../../../entities/developer/index.js";
 
 export type CreateProperties = {
-  state: string;
   priority: string;
   azurePriority: string;
   tags: string;
@@ -21,7 +18,6 @@ export type CreateProperties = {
   localDeadline: string;
 };
 export const emptyProperties: CreateProperties = {
-  state: "",
   priority: "1",
   azurePriority: "",
   tags: "",
@@ -33,7 +29,6 @@ export function CreateTicketProperties({
   value,
   onChange,
   fields,
-  states,
   settings,
   developers,
   knownTags,
@@ -44,7 +39,6 @@ export function CreateTicketProperties({
   value: CreateProperties;
   onChange: (value: CreateProperties) => void;
   fields: string[];
-  states: string[];
   settings: any;
   developers: any[];
   knownTags: string[];
@@ -57,26 +51,6 @@ export function CreateTicketProperties({
   const now = new Date().toISOString();
   return (
     <>
-      {fields.includes("System.State") && (
-        <SingleSelect
-          floating
-          label="Статус Azure"
-          value={value.state}
-          options={[
-            { value: "", label: "По умолчанию Azure" },
-            ...states.map((state) => ({ value: state, label: state })),
-          ]}
-          onChange={(state) => set("state", state)}
-          disabled={disabled}
-          renderOption={(option) =>
-            option.value ? (
-              <StatusBadge state={option.value} colors={settings?.statusColors} />
-            ) : (
-              option.label
-            )
-          }
-        />
-      )}
       <label>
         Локальный приоритет
         <NumberInput
