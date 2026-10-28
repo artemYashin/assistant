@@ -69,52 +69,52 @@
 
 Статус по умолчанию при переносе
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:261.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:262.
 
 ### Элемент
 
 Применить группу
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:270.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:271.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:304.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:305.
 
 ### Элемент
 
 Разгруппировать
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:313.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:314.
 
 ### Элемент
 
 Перетащить: {…} · Перетащите для изменения порядка. Escape — отмена
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:363.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:364.
 
 ### Элемент
 
 Показывать в канбане: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:373.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:374.
 
 ### Элемент
 
 Изменить
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:406.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:407.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:415.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:416.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:424.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:425.

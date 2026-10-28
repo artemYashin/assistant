@@ -1,4 +1,12 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type CSSProperties,
+  useLayoutEffect,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { InitialsAvatar } from "../initials-avatar/index.js";
 import { Check, ChevronDown, Info, Search } from "lucide-react";
 
@@ -19,6 +27,7 @@ export function MultiSelect({
   searchOptions,
   allowCustom = false,
   renderOption,
+  floating = false,
 }: {
   label: string;
   placeholder: string;
@@ -29,6 +38,7 @@ export function MultiSelect({
   searchOptions?: (query: string) => Promise<SearchResult>;
   allowCustom?: boolean;
   renderOption?: (option: Option) => ReactNode;
+  floating?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -63,9 +73,47 @@ export function MultiSelect({
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const id = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<CSSProperties>({ position: "fixed", top: 0, left: 0 });
+  useLayoutEffect(() => {
+    if (!open || !floating) return;
+    const element = panel.current;
+    if (!element) return;
+    const update = () => {
+      const rect = trigger.current?.getBoundingClientRect();
+      if (!rect) return;
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      const upwards = below < 260 && above > below;
+      const width = Math.min(Math.max(rect.width, 240), window.innerWidth - 24);
+      setPosition({
+        position: "fixed",
+        margin: 0,
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        right: "auto",
+        top: upwards ? "auto" : rect.bottom + 4,
+        bottom: upwards ? window.innerHeight - rect.top + 4 : "auto",
+        width,
+        maxHeight: Math.max(80, Math.min(420, upwards ? above : below)),
+        overflowY: "auto",
+      });
+    };
+    // The native top layer escapes the dialog's scrolling/clipping area while
+    // keeping the dropdown inside its DOM tree for focus and outside-click handling.
+    element.showPopover();
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      if (element.matches(":popover-open")) element.hidePopover();
+    };
+  }, [open, floating]);
+
   useEffect(() => {
     if (!open) return;
-    search.current?.focus();
+    search.current?.focus({ preventScroll: true });
     const outside = (event: Event) => {
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -138,6 +186,9 @@ export function MultiSelect({
       </button>
       {open && (
         <div
+          ref={panel}
+          popover={floating ? "manual" : undefined}
+          style={floating ? position : undefined}
           id={`${id}-panel`}
           className="multi-select-panel"
           role="group"

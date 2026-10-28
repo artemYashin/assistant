@@ -9,34 +9,34 @@
 
 /
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:118.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:166.
 
 ### Элемент
 
 Поиск: {…} · Имя или e-mail · от 2 символов / Найти…
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:148.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:199.
 
 ### Элемент
 
 Добавить фильтр « · »
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:162.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:213.
 
 ### Элемент
 
 Ошибка поиска / Поиск ограничен
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:213.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:264.
 
 ### Элемент
 
 Сбросить
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:222.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:273.
 
 ### Элемент
 
 Готово
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:230.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:281.

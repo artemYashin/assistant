@@ -236,6 +236,7 @@ export function ProjectKanban({
               </div>
               <MultiSelect
                 label="Статусы группы"
+                floating
                 placeholder="Выберите статусы"
                 disabled={busy}
                 value={draft.states}
