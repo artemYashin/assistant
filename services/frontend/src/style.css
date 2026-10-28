@@ -3258,10 +3258,19 @@ td > small {
 }
 .multi-select-option {
   position: relative;
+  width: 100%;
+  min-height: 30px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-weight: 400;
+  flex-direction: row;
+  flex-wrap: nowrap;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 9px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
@@ -3271,12 +3280,6 @@ td > small {
 .multi-select-option:hover,
 .multi-select-option.is-selected {
   background: #edf3e9;
-}
-.multi-select-option input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
 }
 .multi-select-check {
   display: flex;

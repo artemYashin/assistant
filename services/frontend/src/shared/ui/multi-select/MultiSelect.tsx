@@ -174,20 +174,21 @@ export function MultiSelect({
                 {option.group && option.group !== visible[index - 1]?.group && (
                   <div className="multi-select-group">{option.group}</div>
                 )}
-                <label
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={value.includes(option.value)}
+                  disabled={disabled}
                   className={`multi-select-option${value.includes(option.value) ? " is-selected" : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() =>
+                    onChange(
+                      value.includes(option.value)
+                        ? value.filter((item) => item !== option.value)
+                        : [...value, option.value],
+                    )
+                  }
                 >
-                  <input
-                    type="checkbox"
-                    checked={value.includes(option.value)}
-                    onChange={(e) =>
-                      onChange(
-                        e.target.checked
-                          ? [...value, option.value]
-                          : value.filter((v) => v !== option.value),
-                      )
-                    }
-                  />
                   <span className="multi-select-check" aria-hidden="true">
                     {value.includes(option.value) && <Check size={13} />}
                   </span>
@@ -195,7 +196,7 @@ export function MultiSelect({
                   <span className="multi-select-option-text">
                     {renderOption ? renderOption(option) : option.label}
                   </span>
-                </label>
+                </button>
               </div>
             ))}
             {!visible.length && !searching && !searchError && (

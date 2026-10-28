@@ -27,16 +27,16 @@
 
 Ошибка поиска / Поиск ограничен
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:211.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:212.
 
 ### Элемент
 
 Сбросить
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:220.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:221.
 
 ### Элемент
 
 Готово
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:228.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:229.

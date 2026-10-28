@@ -325,7 +325,7 @@
     "services/frontend/src/shared/ui/initials-avatar/index.ts": "d1c0a3b70e543c5c087ad0737ebf0cf7fe758b58bd5e1dd200d95b46af9b6b7f",
     "services/frontend/src/shared/ui/last-sync/LastSync.tsx": "b45cdd4d73f8ed886ac17b2ed08801e8f7f69b88fdf1e258b0afce1462b7a74e",
     "services/frontend/src/shared/ui/last-sync/index.ts": "5e381a15cb70a5822f7059c8ac1d49bcca1dfd9c7e3364b39123a22546eb44ae",
-    "services/frontend/src/shared/ui/multi-select/MultiSelect.tsx": "56372d0614bc48d3eccced4ed74c9c24f4c11f87757c5adc83ce85e0ae21679c",
+    "services/frontend/src/shared/ui/multi-select/MultiSelect.tsx": "04e87b8a01d595ee5feeb36706369bb9b2f3ee0fc6bf56eb42982c11640d7943",
     "services/frontend/src/shared/ui/multi-select/index.ts": "c2642c4595ca41ee7b4dd527b64a8c6063af239534db45170754ca9f26bf6824",
     "services/frontend/src/shared/ui/number-input/NumberInput.tsx": "2a4dbe1bd1f838dca5ee08527ebb516ab43004d637d38899c64bfac14418cd8f",
     "services/frontend/src/shared/ui/number-input/index.ts": "cc2f036bdbde4c7d7f372a3f159d85a628cd9f3867d8e49261a28ca4943b1123",
