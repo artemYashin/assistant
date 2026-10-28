@@ -27,10 +27,10 @@ Azure не вернул связи тикетов
 
 Выберите типы и статусы задач: Заказчики и проекты → Автоматический импорт
 
-Источник: services/backend/src/connectors.ts:1795.
+Источник: services/backend/src/connectors.ts:1798.
 
 ### Сообщение
 
 Azure вернул неполный список тикетов
 
-Источник: services/backend/src/connectors.ts:1846.
+Источник: services/backend/src/connectors.ts:1849.

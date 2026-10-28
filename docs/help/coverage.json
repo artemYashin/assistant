@@ -27,7 +27,7 @@
     "services/backend/src/code-progress.ts": "7cd42399bccbf39e9340a218ffbc79b170a24e81543243408efeb77d1156c33b",
     "services/backend/src/code-tools.ts": "f7b71b637e94aa3a3294e5aaa65bd47e86fc65f827d7c494edd112e05d7ea185",
     "services/backend/src/comment-markdown.ts": "ce75ba3a708a4d1dc45ce892add7cf1671e4f79e1e1a2518e5b431b557c479e2",
-    "services/backend/src/connectors.ts": "a8f311083ff2316b0a2a489c46d64f92c05cd1672eb78527e5760ebdf9c515f6",
+    "services/backend/src/connectors.ts": "f7c7bd2a9f28c10a1783c7e35c4890f7e2cf70e154495e06698b90a85039c29e",
     "services/backend/src/context-delete.ts": "2cbefdb9f4f088e33af83800619aee24c8e775c7babf8da69e64434d659c6564",
     "services/backend/src/developer-vacation-status.ts": "6a03bcb3406a898f0894c628e0a0a228b12773ca1f36a085888c23391c4baa37",
     "services/backend/src/developer-vacations.ts": "23ec238416061f91bbb69abc1422b3b0edcee46e28af96d2351ec398fdd557e3",

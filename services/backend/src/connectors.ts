@@ -1756,6 +1756,9 @@ export class Connectors {
       if (!Array.isArray(response.value)) throw new AppError(502, "Azure не вернул связи тикетов");
       this.store.db.transaction(() => {
         for (const item of response.value) {
+          // Omitted/unavailable batch entries may be null. Keep their cached links
+          // and report them as unavailable rather than aborting the whole batch.
+          if (!item || !Number.isSafeInteger(item.id) || item.id <= 0) continue;
           if (
             !missing.includes(item.id) ||
             item.fields?.["System.TeamProject"] !== settings.azureProject
