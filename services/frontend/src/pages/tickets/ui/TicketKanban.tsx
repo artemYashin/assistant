@@ -5,10 +5,21 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, GripVertical, LoaderCircle, Ticket, X } from "lucide-react";
 import { StatusBadge, TicketDate } from "../../../entities/ticket/index.js";
 import { api } from "../../../shared/api/http/index.js";
-import { ticketStateColumns, type KanbanTicket } from "../model/kanban.js";
+import {
+  ticketStateColumns,
+  groupedTicketColumns,
+  type KanbanGroup,
+  type KanbanTicket,
+} from "../model/kanban.js";
 import "./ticket-kanban.css";
 
-type Move = { ticket: KanbanTicket; from: string; to: string };
+type Move = {
+  ticket: KanbanTicket;
+  from: string;
+  to: string;
+  choices?: string[];
+  groupName?: string;
+};
 export function TicketKanban({
   tickets,
   states,
@@ -24,6 +35,7 @@ export function TicketKanban({
   source: string;
   settings?: {
     kanbanStateOrder?: string[];
+    kanbanGroups?: KanbanGroup[];
     kanbanHiddenStates?: string[];
     kanbanFilterColumnsByStatus?: boolean;
     kanbanHideEmptyColumns?: boolean;
@@ -71,10 +83,11 @@ export function TicketKanban({
       setMove(null);
     }
   }
-  async function prepare(ticket: KanbanTicket, to: string) {
+  async function prepare(ticket: KanbanTicket, to: string, choices?: string[], groupName?: string) {
+    if (choices?.includes(ticket.state || "")) return;
     if (lock.current || disabled || ticket.source !== source || !to || to === ticket.state) return;
     lock.current = true;
-    setMove({ ticket, from: ticket.state || "Не указан", to });
+    setMove({ ticket, from: ticket.state || "Не указан", to, choices, groupName });
     setBusy(true);
     setReady(false);
     setError("");
@@ -84,10 +97,20 @@ export function TicketKanban({
       const data = await api(`/tickets/${ticket.id}/states`);
       if (!live.current) return;
       if (data.source !== source) throw new Error("Подключение изменилось. Откройте доску заново.");
-      if (!Array.isArray(data.states) || !data.states.includes(to))
-        throw new Error(`Статус «${to}» недоступен для этого типа тикета. Azure не изменён.`);
-      if (data.state === to) throw new Error("Тикет уже в этом статусе. Обновите список.");
-      setMove({ ticket, from: data.state || "Не указан", to });
+      const allowed = (choices || [to]).filter(
+        (state) => Array.isArray(data.states) && data.states.includes(state),
+      );
+      if (!allowed.length)
+        throw new Error("В этой колонке нет доступных статусов для типа тикета. Azure не изменён.");
+      if (choices?.includes(data.state) || (!choices && data.state === to))
+        throw new Error("Тикет уже в этой колонке. Обновите список.");
+      setMove({
+        ticket,
+        from: data.state || "Не указан",
+        to: allowed.includes(to) ? to : allowed[0],
+        choices: choices ? allowed : undefined,
+        groupName,
+      });
       setReady(true);
     } catch (e) {
       if (live.current) setError(e instanceof Error ? e.message : "Не удалось проверить статусы.");
@@ -133,7 +156,7 @@ export function TicketKanban({
       }
     }
   }
-  const columns = ticketStateColumns(
+  const columns = groupedTicketColumns(
     tickets,
     states,
     settings?.kanbanStateOrder,
@@ -141,10 +164,11 @@ export function TicketKanban({
     settings?.kanbanHiddenStates,
     settings?.kanbanFilterColumnsByStatus,
     settings?.kanbanHideEmptyColumns,
+    settings?.kanbanGroups,
   );
   const stateOptions = ticketStateColumns(
     tickets,
-    states,
+    [...states, ...(settings?.kanbanGroups || []).flatMap((group) => group.states)],
     settings?.kanbanStateOrder,
     selectedStates,
     settings?.kanbanHiddenStates,
@@ -200,7 +224,7 @@ export function TicketKanban({
                     column.state &&
                     !busy &&
                     !disabled &&
-                    dragging.current.state !== column.state
+                    !column.states.includes(dragging.current.state || "")
                   ) {
                     event.preventDefault();
                     event.dataTransfer.dropEffect = "move";
@@ -212,10 +236,10 @@ export function TicketKanban({
                   event.preventDefault();
                   const ticket = dragging.current;
                   stopDrag();
-                  if (ticket) void prepare(ticket, column.state);
+                  if (ticket) void prepare(ticket, column.defaultState, column.states, column.name);
                 }}
               >
-                <StatusBadge state={column.state || "Не указан"} colors={settings?.statusColors} />
+                <StatusBadge state={column.name || "Не указан"} colors={settings?.statusColors} />
                 <span className="ticket-view-count">{column.tickets.length}</span>
               </header>
             ))}
@@ -225,14 +249,14 @@ export function TicketKanban({
               <section
                 key={column.state}
                 className={`ticket-kanban-column${over === column.state ? " is-drop-target" : ""}`}
-                aria-label={`Статус: ${column.state || "Не указан"}`}
+                aria-label={`Столбец: ${column.name || "Не указан"}`}
                 onDragOver={(event) => {
                   if (
                     dragging.current &&
                     column.state &&
                     !busy &&
                     !disabled &&
-                    dragging.current.state !== column.state
+                    !column.states.includes(dragging.current.state || "")
                   ) {
                     event.preventDefault();
                     event.dataTransfer.dropEffect = "move";
@@ -250,7 +274,7 @@ export function TicketKanban({
                   event.preventDefault();
                   const ticket = dragging.current;
                   stopDrag();
-                  if (ticket) void prepare(ticket, column.state);
+                  if (ticket) void prepare(ticket, column.defaultState, column.states, column.name);
                 }}
               >
                 <div className="ticket-kanban-cards">
@@ -369,6 +393,18 @@ export function TicketKanban({
             <p>
               #{move.ticket.id} · {move.ticket.title}
             </p>
+            {move.choices && move.choices.length > 1 && (
+              <SingleSelect
+                label={`Статус Azure · ${move.groupName}`}
+                value={move.to}
+                disabled={busy || !ready}
+                options={move.choices.map((state) => ({ value: state, label: state }))}
+                renderOption={(option) => (
+                  <StatusBadge state={option.value} colors={settings?.statusColors} />
+                )}
+                onChange={(to) => setMove({ ...move, to })}
+              />
+            )}
             <div className="ticket-kanban-transition">
               <StatusBadge state={move.from} colors={settings?.statusColors} />
               <ArrowRight size={18} />

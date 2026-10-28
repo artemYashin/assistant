@@ -41,3 +41,59 @@ export function ticketStateColumns(
     }))
     .filter((column) => !hideEmptyColumns || column.tickets.length > 0);
 }
+
+export type KanbanGroup = { id: string; name: string; states: string[]; defaultState: string };
+export function groupedTicketColumns(
+  tickets: KanbanTicket[],
+  states: string[],
+  order: string[] = [],
+  selected: string[] = [],
+  hidden: string[] = [],
+  filterColumnsByStatus = false,
+  hideEmptyColumns = false,
+  groups: KanbanGroup[] = [],
+) {
+  const members = new Map(
+    groups.flatMap((group) => group.states.map((state) => [state, group] as const)),
+  );
+  const individual = ticketStateColumns(
+    tickets,
+    [...states, ...groups.flatMap((g) => g.states)],
+    order,
+    selected,
+    hidden,
+    filterColumnsByStatus,
+  );
+  const result = new Map<
+    string,
+    { state: string; name: string; states: string[]; defaultState: string; tickets: KanbanTicket[] }
+  >();
+  for (const column of individual) {
+    const group = members.get(column.state);
+    const id = group?.id ?? column.state;
+    let target = result.get(id);
+    if (!target) {
+      target = {
+        state: id,
+        name: group?.name ?? column.state,
+        states: [],
+        defaultState: group?.defaultState ?? column.state,
+        tickets: [],
+      };
+      result.set(id, target);
+    }
+    target.states.push(column.state);
+  }
+  // Preserve the selected ticket sort across states inside a group.
+  for (const column of result.values()) {
+    column.tickets = tickets.filter((ticket) => column.states.includes(ticket.state || ""));
+    if (!column.states.includes(column.defaultState)) column.defaultState = column.states[0];
+  }
+  const rank = (id: string) => {
+    const index = order.indexOf(id);
+    return index < 0 ? order.length : index;
+  };
+  return [...result.values()]
+    .sort((a, b) => rank(a.state) - rank(b.state) || a.name.localeCompare(b.name, "ru"))
+    .filter((column) => !hideEmptyColumns || column.tickets.length);
+}

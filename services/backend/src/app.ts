@@ -396,6 +396,7 @@ export function createApp(
     const settings = store.settings(context);
     res.json({
       order: settings.kanbanStateOrder,
+      groups: settings.kanbanGroups,
       hiddenStates: settings.kanbanHiddenStates,
       filterColumnsByStatus: settings.kanbanFilterColumnsByStatus,
       hideEmptyColumns: settings.kanbanHideEmptyColumns,
@@ -403,10 +404,21 @@ export function createApp(
     });
   });
   app.put("/api/context/kanban", (req, res) => {
-    const { context, order, hiddenStates, filterColumnsByStatus, hideEmptyColumns } = z
+    const { context, order, hiddenStates, filterColumnsByStatus, hideEmptyColumns, groups } = z
       .object({
         context: contextSchema,
         order: z.array(text.min(1).max(200)).max(200),
+        groups: z
+          .array(
+            z.object({
+              id: z.string().regex(/^group:[0-9a-f-]{36}$/),
+              name: text.min(1).max(100),
+              states: z.array(text.min(1).max(200)).min(1).max(200),
+              defaultState: text.min(1).max(200),
+            }),
+          )
+          .max(200)
+          .optional(),
         hiddenStates: z.array(text.min(1).max(200)).max(200).optional(),
         filterColumnsByStatus: z.boolean().optional(),
         hideEmptyColumns: z.boolean().optional(),
@@ -420,10 +432,24 @@ export function createApp(
         .some((item) => item.client === context.client && item.project === context.project)
     )
       throw new AppError(400, "Выберите существующий проект для настройки канбана.");
+    const savedGroups = groups ?? store.settings(context).kanbanGroups;
+    const groupIds = new Set<string>();
+    const groupStates = new Set<string>();
+    for (const group of savedGroups) {
+      if (groupIds.has(group.id) || !group.states.includes(group.defaultState))
+        throw new AppError(400, "Проверьте группы канбана и статус по умолчанию.");
+      groupIds.add(group.id);
+      for (const state of group.states) {
+        if (groupStates.has(state) || state.startsWith("group:"))
+          throw new AppError(400, "Каждый статус может входить только в одну группу канбана.");
+        groupStates.add(state);
+      }
+    }
     const unique = [...new Set(order)];
     const hidden = [...new Set(hiddenStates ?? store.settings(context).kanbanHiddenStates)];
     const saved = {
       order: unique,
+      groups: savedGroups,
       hiddenStates: hidden,
       hideEmptyColumns: hideEmptyColumns ?? store.settings(context).kanbanHideEmptyColumns,
       filterColumnsByStatus:

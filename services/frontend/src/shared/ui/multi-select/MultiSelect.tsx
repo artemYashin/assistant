@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { InitialsAvatar } from "../initials-avatar/index.js";
 import { Check, ChevronDown, Info, Search } from "lucide-react";
 
@@ -18,6 +18,7 @@ export function MultiSelect({
   disabled = false,
   searchOptions,
   allowCustom = false,
+  renderOption,
 }: {
   label: string;
   placeholder: string;
@@ -27,6 +28,7 @@ export function MultiSelect({
   disabled?: boolean;
   searchOptions?: (query: string) => Promise<SearchResult>;
   allowCustom?: boolean;
+  renderOption?: (option: Option) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -190,7 +192,9 @@ export function MultiSelect({
                     {value.includes(option.value) && <Check size={13} />}
                   </span>
                   {option.avatarName && <InitialsAvatar name={option.avatarName} />}
-                  <span className="multi-select-option-text">{option.label}</span>
+                  <span className="multi-select-option-text">
+                    {renderOption ? renderOption(option) : option.label}
+                  </span>
                 </label>
               </div>
             ))}

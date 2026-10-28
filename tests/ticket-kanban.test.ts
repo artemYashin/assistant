@@ -8,6 +8,7 @@ import { Store } from "../services/backend/src/store.js";
 import { createApp } from "../services/backend/src/app.js";
 import { deleteContext } from "../services/backend/src/context-delete.js";
 import {
+  groupedTicketColumns,
   parseTicketView,
   ticketStateColumns,
 } from "../services/frontend/src/pages/tickets/model/kanban.js";
@@ -86,6 +87,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
     store = new Store(dir);
     assert.deepEqual(store.settings(first).kanbanStateOrder, ["New", "Active"]);
   }
+  assert.deepEqual(store.settings(first).kanbanGroups, []);
   assert.deepEqual(store.settings(first).kanbanHiddenStates, []);
   assert.equal(store.settings(first).kanbanFilterColumnsByStatus, false);
   assert.equal(store.settings(first).kanbanHideEmptyColumns, false);
@@ -110,6 +112,24 @@ test("kanban settings upgrade populated storage without changing existing prefer
     assert.equal(store.settings(first).kanbanFilterColumnsByStatus, true);
     assert.equal(store.settings(first).kanbanHideEmptyColumns, true);
   }
+  const groups = [
+    {
+      id: "group:12345678-1234-1234-1234-123456789012",
+      name: "Работа",
+      states: ["Active", "Review"],
+      defaultState: "Review",
+    },
+  ];
+  const savedKanban = store.get<any>(store.kanbanKey(first), {});
+  store.set(store.kanbanKey(first), { ...savedKanban, groups });
+  for (let i = 0; i < 2; i++) {
+    store.close();
+    store = new Store(dir);
+    assert.deepEqual(store.settings(first).kanbanGroups, groups);
+    assert.deepEqual(store.settings(first).kanbanHiddenStates, ["Active"]);
+    assert.equal(store.settings(first).llmTimeoutSeconds, 180);
+  }
+  assert.deepEqual(store.settings(second).kanbanGroups, []);
   assert.equal(store.settings(second).kanbanFilterColumnsByStatus, false);
   assert.deepEqual(store.settings(second).kanbanHiddenStates, []);
   assert.deepEqual(store.settings(second).kanbanStateOrder, []);
@@ -122,6 +142,7 @@ test("kanban settings upgrade populated storage without changing existing prefer
   const moved = { client: "Customer", project: "Renamed" };
   assert.deepEqual(store.settings(moved).kanbanStateOrder, ["New", "Active"]);
   assert.deepEqual(store.settings(moved).kanbanHiddenStates, ["Active"]);
+  assert.deepEqual(store.settings(moved).kanbanGroups, groups);
   assert.equal(store.settings(moved).kanbanFilterColumnsByStatus, true);
   assert.equal(store.settings(moved).kanbanHideEmptyColumns, true);
   deleteContext(store, moved, "удалить");
@@ -191,4 +212,97 @@ test("kanban API validates project and preserves order after rejected writes", a
   assert.deepEqual(read.body.hiddenStates, ["Active"]);
   assert.deepEqual(read.body.order, ["New", "Active"]);
   assert.deepEqual(read.body.statusColors, { New: "#112233" });
+  const group = {
+    id: "group:12345678-1234-1234-1234-123456789012",
+    name: "Работа",
+    states: ["Active", "Review"],
+    defaultState: "Active",
+  };
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: ["New", group.id], groups: [group] })
+    .expect(200);
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: ["New", group.id] })
+    .expect(200);
+  for (const groups of [
+    [{ ...group, defaultState: "Missing" }],
+    [group, { ...group, id: "group:22345678-1234-1234-1234-123456789012" }],
+    [{ ...group, states: ["Active", "Active"] }],
+  ]) {
+    await request(app)
+      .put("/api/context/kanban")
+      .set(auth)
+      .send({ context, order: [], groups })
+      .expect(400);
+    assert.deepEqual(store.settings(context).kanbanGroups, [group]);
+    assert.deepEqual(store.settings(context).kanbanStateOrder, ["New", group.id]);
+  }
+  await request(app)
+    .put("/api/context/kanban")
+    .set(auth)
+    .send({ context, order: ["New", "Active", "Review"], groups: [] })
+    .expect(200);
+  assert.deepEqual(store.settings(context).kanbanGroups, []);
+  assert.deepEqual(store.settings(context).kanbanHiddenStates, ["Active"]);
+});
+
+test("grouped kanban combines states without duplicates, preserves ticket sorting and filters", () => {
+  const group = {
+    id: "group:12345678-1234-1234-1234-123456789012",
+    name: "В работе",
+    states: ["Active", "Review"],
+    defaultState: "Active",
+  };
+  const tickets = [
+    { id: 4, source: "s", state: "Review" },
+    { id: 1, source: "s", state: "New" },
+    { id: 3, source: "s", state: "Active" },
+    { id: 2, source: "s", state: "Other", inTrash: true },
+  ];
+  const columns = (selected: string[] = [], hidden: string[] = [], filter = false, empty = false) =>
+    groupedTicketColumns(
+      tickets,
+      ["New", "Done"],
+      ["New", group.id, "Done"],
+      selected,
+      hidden,
+      filter,
+      empty,
+      [group],
+    );
+  const full = columns();
+  assert.deepEqual(
+    full.map((c) => c.name),
+    ["New", "В работе", "Done", "Other"],
+  );
+  assert.deepEqual(
+    full[1].tickets.map((t) => t.id),
+    [4, 3],
+  );
+  assert.equal(
+    full.reduce((count, c) => count + c.tickets.length, 0),
+    tickets.length,
+  );
+  assert.deepEqual(
+    columns(["Review"], [], true).map((c) => c.name),
+    ["В работе"],
+  );
+  assert.equal(columns(["Review"], [], true)[0].defaultState, "Review");
+  assert.deepEqual(
+    columns([], ["Active", "Review"]).map((c) => c.name),
+    ["New", "Done", "Other"],
+  );
+  assert.deepEqual(
+    columns([], [], false, true).map((c) => c.name),
+    ["New", "В работе", "Other"],
+  );
+  assert.equal(
+    columns(["New"])[1].tickets.length,
+    2,
+    "Status filters hide columns only when configured",
+  );
 });

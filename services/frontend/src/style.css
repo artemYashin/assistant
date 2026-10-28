@@ -18274,3 +18274,28 @@ a.pr-branch-link:focus-visible {
   flex-wrap: wrap;
   gap: 6px;
 }
+
+.project-kanban-group-editor {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  background: #f7fafc;
+  max-width: 620px;
+}
+.project-kanban-group-editor > label {
+  display: grid;
+  gap: 6px;
+}
+.project-kanban-group-actions,
+.project-kanban-group-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.project-kanban-group-badges {
+  margin-top: 4px;
+}

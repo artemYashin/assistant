@@ -1,3 +1,6 @@
+import { MultiSelect } from "../../../shared/ui/multi-select/index.js";
+import { SingleSelect } from "../../../shared/ui/single-select/index.js";
+type Group = { id: string; name: string; states: string[]; defaultState: string };
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import { useStatusSort } from "../model/useStatusSort.js";
 import { useEffect, useId, useState } from "react";
@@ -17,6 +20,9 @@ export function ProjectKanban({
   const [hideEmptyColumns, setHideEmptyColumns] = useState(false);
   const [filterColumnsByStatus, setFilterColumnsByStatus] = useState(false);
   const [hiddenStates, setHiddenStates] = useState<string[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [draft, setDraft] = useState<Group | null>(null);
+  const [catalogStates, setCatalogStates] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -33,13 +39,28 @@ export function ProjectKanban({
     ])
       .then(([saved, catalog]) => {
         if (!controller.signal.aborted) {
-          setOrder([
+          const loadedGroups: Group[] = saved.groups || [];
+          const members = new Set(loadedGroups.flatMap((group) => group.states));
+          const available = [
             ...new Set<string>([
-              ...saved.order,
+              ...saved.order.filter((id: string) => !id.startsWith("group:")),
               ...(saved.hiddenStates || []),
               ...catalog.states.filter(Boolean),
+              ...members,
             ]),
-          ]);
+          ];
+          setCatalogStates(available);
+          setGroups(loadedGroups);
+          setDraft(null);
+          setOrder(
+            [
+              ...new Set<string>([
+                ...saved.order,
+                ...loadedGroups.map((group) => group.id),
+                ...available,
+              ]),
+            ].filter((id) => !members.has(id)),
+          );
           setColors(saved.statusColors || {});
           setHiddenStates(saved.hiddenStates || []);
           setFilterColumnsByStatus(saved.filterColumnsByStatus ?? false);
@@ -68,7 +89,7 @@ export function ProjectKanban({
       className="project-import-panel"
       onSubmit={async (event) => {
         event.preventDefault();
-        if (!order || busy || sort.dragging) return;
+        if (!order || busy || sort.dragging || draft) return;
         setBusy(true);
         setError("");
         setMessage("");
@@ -76,6 +97,7 @@ export function ProjectKanban({
           await api("/context/kanban", "PUT", {
             context,
             order,
+            groups,
             hiddenStates,
             filterColumnsByStatus,
             hideEmptyColumns,
@@ -89,14 +111,14 @@ export function ProjectKanban({
         }
       }}
     >
-      <h3>Канбан · статусы</h3>
+      <h3>Канбан · столбцы</h3>
       <div className="project-kanban-options">
         <label className="project-kanban-filter-toggle">
           <input
             type="checkbox"
             aria-label="Фильтр статуса скрывает столбцы канбана"
             checked={filterColumnsByStatus}
-            disabled={busy || sort.dragging}
+            disabled={busy || sort.dragging || !!draft}
             onChange={(event) => {
               setFilterColumnsByStatus(event.target.checked);
               setMessage("");
@@ -112,7 +134,7 @@ export function ProjectKanban({
             type="checkbox"
             aria-label="Скрывать пустые столбцы"
             checked={hideEmptyColumns}
-            disabled={busy || sort.dragging}
+            disabled={busy || sort.dragging || !!draft}
             onChange={(event) => {
               setHideEmptyColumns(event.target.checked);
               setMessage("");
@@ -125,66 +147,217 @@ export function ProjectKanban({
         </label>
       </div>
       <p className="muted">
-        Сверху вниз — порядок столбцов слева направо. Перетащите статус или используйте стрелки.
-        Нажмите на строку или снимите галочку, чтобы скрыть статус из канбана. Новые статусы
-        добавляются справа, пока вы не настроите их порядок.
+        Сверху вниз — порядок столбцов слева направо. Перетаскивайте за ручку. Нажмите на строку,
+        чтобы показать или скрыть столбец.
       </p>
-      <div className="project-kanban-order" ref={sort.list}>
-        {order?.map((state, index) => (
-          <label
-            key={state}
-            htmlFor={`${checkboxId}-${index}`}
-            className={`project-kanban-order-row${sort.isActive(index) ? " is-dragging" : ""}${hiddenStates.includes(state) ? " is-hidden" : ""}`}
-            style={sort.style(index)}
-          >
+      <button
+        type="button"
+        className="secondary"
+        disabled={busy || sort.dragging || !order || !!draft}
+        onClick={() => {
+          setDraft({ id: `group:${crypto.randomUUID()}`, name: "", states: [], defaultState: "" });
+          setMessage("");
+        }}
+      >
+        Добавить группу
+      </button>
+      {draft && (
+        <section className="project-kanban-group-editor">
+          <label>
+            Название группы
+            <input
+              value={draft.name}
+              maxLength={100}
+              disabled={busy}
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            />
+          </label>
+          <MultiSelect
+            label="Статусы группы"
+            placeholder="Выберите статусы"
+            disabled={busy}
+            value={draft.states}
+            options={catalogStates
+              .filter(
+                (state) =>
+                  !groups.some((group) => group.id !== draft.id && group.states.includes(state)),
+              )
+              .map((state) => ({ value: state, label: state }))}
+            renderOption={(option) => <StatusBadge state={option.value} colors={colors} />}
+            onChange={(states) =>
+              setDraft({
+                ...draft,
+                states,
+                defaultState: states.includes(draft.defaultState)
+                  ? draft.defaultState
+                  : states[0] || "",
+              })
+            }
+          />
+          <SingleSelect
+            label="Статус по умолчанию при переносе"
+            value={draft.defaultState}
+            disabled={busy || !draft.states.length}
+            options={draft.states.map((state) => ({ value: state, label: state }))}
+            renderOption={(option) => <StatusBadge state={option.value} colors={colors} />}
+            onChange={(defaultState) => setDraft({ ...draft, defaultState })}
+          />
+          <div className="project-kanban-group-actions">
             <button
               type="button"
-              className="icon-button project-kanban-drag-handle"
-              aria-label={`Перетащить: ${state}`}
-              title="Перетащите для изменения порядка. Escape — отмена"
-              disabled={busy}
-              {...sort.handlers(index)}
-            >
-              <GripVertical size={15} />
-            </button>
-            <input
-              id={`${checkboxId}-${index}`}
-              type="checkbox"
-              aria-label={`Показывать в канбане: ${state}`}
-              checked={!hiddenStates.includes(state)}
-              disabled={busy || sort.dragging}
-              onChange={(event) => {
-                setHiddenStates((previous) =>
-                  event.target.checked
-                    ? previous.filter((item) => item !== state)
-                    : [...previous, state],
-                );
+              className="primary"
+              disabled={busy || !draft.name.trim() || !draft.states.length || !draft.defaultState}
+              onClick={() => {
+                const previous = groups.find((group) => group.id === draft.id);
+                const next = { ...draft, name: draft.name.trim() };
+                setGroups([...groups.filter((group) => group.id !== draft.id), next]);
+                setOrder((current) => {
+                  const rows = current || [];
+                  const insertion = rows.findIndex(
+                    (id) => id === draft.id || draft.states.includes(id),
+                  );
+                  const remaining = rows.filter(
+                    (id) => id !== draft.id && !draft.states.includes(id),
+                  );
+                  remaining.splice(Math.max(0, insertion), 0, draft.id);
+                  return [
+                    ...new Set([
+                      ...remaining,
+                      ...(previous?.states || []).filter((state) => !draft.states.includes(state)),
+                    ]),
+                  ];
+                });
+                setDraft(null);
                 setMessage("");
               }}
-            />
-            <span className="project-kanban-status">
-              <StatusBadge state={state} colors={colors} />
-            </span>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={`Выше: ${state}`}
-              disabled={busy || sort.dragging || index === 0}
-              onClick={() => move(index, index - 1)}
             >
-              <ArrowUp size={16} />
+              Применить группу
             </button>
             <button
               type="button"
-              className="icon-button"
-              aria-label={`Ниже: ${state}`}
-              disabled={busy || sort.dragging || index === order.length - 1}
-              onClick={() => move(index, index + 1)}
+              className="secondary"
+              disabled={busy}
+              onClick={() => setDraft(null)}
             >
-              <ArrowDown size={16} />
+              Отмена
             </button>
-          </label>
-        ))}
+            {groups.some((group) => group.id === draft.id) && (
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={() => {
+                  const group = groups.find((item) => item.id === draft.id)!;
+                  setGroups(groups.filter((item) => item.id !== draft.id));
+                  setOrder((current) =>
+                    (current || []).flatMap((id) => (id === draft.id ? group.states : [id])),
+                  );
+                  setDraft(null);
+                  setMessage("");
+                }}
+              >
+                Разгруппировать
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+      <div className="project-kanban-order" ref={sort.list}>
+        {order?.map((state, index) => {
+          const group = groups.find((item) => item.id === state);
+          const members = group?.states || [state];
+          const hidden = members.every((member) => hiddenStates.includes(member));
+          const toggle = (visible: boolean) => {
+            setHiddenStates((previous) =>
+              visible
+                ? previous.filter((item) => !members.includes(item))
+                : [...new Set([...previous, ...members])],
+            );
+            setMessage("");
+          };
+          return (
+            <div
+              key={state}
+              onClick={(event) => {
+                if (
+                  !busy &&
+                  !sort.dragging &&
+                  !draft &&
+                  !(event.target as HTMLElement).closest("button,input,label")
+                )
+                  toggle(hidden);
+              }}
+              className={`project-kanban-order-row${sort.isActive(index) ? " is-dragging" : ""}${hidden ? " is-hidden" : ""}`}
+              style={sort.style(index)}
+            >
+              <button
+                type="button"
+                className="icon-button project-kanban-drag-handle"
+                aria-label={`Перетащить: ${group?.name || state}`}
+                title="Перетащите для изменения порядка. Escape — отмена"
+                disabled={busy || !!draft}
+                {...sort.handlers(index)}
+              >
+                <GripVertical size={15} />
+              </button>
+              <input
+                id={`${checkboxId}-${index}`}
+                type="checkbox"
+                aria-label={`Показывать в канбане: ${group?.name || state}`}
+                checked={!hidden}
+                ref={(input) => {
+                  if (input)
+                    input.indeterminate =
+                      !hidden && members.some((member) => hiddenStates.includes(member));
+                }}
+                disabled={busy || sort.dragging || !!draft}
+                onChange={(event) => toggle(event.target.checked)}
+              />
+              <span className="project-kanban-status">
+                {group ? (
+                  <>
+                    <strong>{group.name}</strong>
+                    <span className="project-kanban-group-badges">
+                      {members.map((member) => (
+                        <StatusBadge key={member} state={member} colors={colors} />
+                      ))}
+                    </span>
+                  </>
+                ) : (
+                  <StatusBadge state={state} colors={colors} />
+                )}
+              </span>
+              {group && (
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={busy || sort.dragging || !!draft}
+                  onClick={() => setDraft({ ...group, states: [...group.states] })}
+                >
+                  Изменить
+                </button>
+              )}
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Выше: ${group?.name || state}`}
+                disabled={busy || sort.dragging || !!draft || index === 0}
+                onClick={() => move(index, index - 1)}
+              >
+                <ArrowUp size={16} />
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Ниже: ${group?.name || state}`}
+                disabled={busy || sort.dragging || !!draft || index === order.length - 1}
+                onClick={() => move(index, index + 1)}
+              >
+                <ArrowDown size={16} />
+              </button>
+            </div>
+          );
+        })}
       </div>
       {order?.length === 0 && (
         <p className="muted">
@@ -197,7 +370,7 @@ export function ProjectKanban({
         </p>
       )}
       {message && <p role="status">{message}</p>}
-      <ContextSaveButton type="submit" busy={busy} disabled={!order || sort.dragging} />
+      <ContextSaveButton type="submit" busy={busy} disabled={!order || sort.dragging || !!draft} />
     </form>
   );
 }

@@ -7,120 +7,120 @@
 
 ### Сообщение
 
+Выберите типы и статусы для автоимпорта
+
+Источник: services/backend/src/app.ts:497.
+
+### Сообщение
+
+Выберите исполнителей для автоимпорта
+
+Источник: services/backend/src/app.ts:499.
+
+### Сообщение
+
 Дождитесь завершения ответа ассистента и ревью или остановите их перед сменой режима.
 
-Источник: services/backend/src/app.ts:525.
+Источник: services/backend/src/app.ts:551.
 
 ### Сообщение
 
 Укажите новую дату истечения PAT. Скрыть напоминание удалением настроенной даты нельзя.
 
-Источник: services/backend/src/app.ts:530.
+Источник: services/backend/src/app.ts:556.
 
 ### Сообщение
 
 Запись памяти не найдена
 
-Источник: services/backend/src/app.ts:611.
+Источник: services/backend/src/app.ts:637.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем удалите чат.
 
-Источник: services/backend/src/app.ts:681.
+Источник: services/backend/src/app.ts:707.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем уберите тикет из контекста.
 
-Источник: services/backend/src/app.ts:688.
+Источник: services/backend/src/app.ts:714.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем очистите историю.
 
-Источник: services/backend/src/app.ts:714.
+Источник: services/backend/src/app.ts:740.
 
 ### Сообщение
 
 Не удалось принять вложение. Максимальный размер файла — 10 МБ.
 
-Источник: services/backend/src/app.ts:787.
+Источник: services/backend/src/app.ts:813.
 
 ### Сообщение
 
 Выберите файл.
 
-Источник: services/backend/src/app.ts:795.
+Источник: services/backend/src/app.ts:821.
 
 ### Сообщение
 
 Этот запрос уже завершён. Обновите отчёт использования LLM.
 
-Источник: services/backend/src/app.ts:825.
+Источник: services/backend/src/app.ts:851.
 
 ### Сообщение
 
 Проект изменился. Отправьте сообщение заново в нужном проекте.
 
-Источник: services/backend/src/app.ts:873.
+Источник: services/backend/src/app.ts:899.
 
 ### Сообщение
 
 Ассистент ещё отвечает на предыдущий запрос
 
-Источник: services/backend/src/app.ts:875.
+Источник: services/backend/src/app.ts:901.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте деталку заново.
 
-Источник: services/backend/src/app.ts:877.
+Источник: services/backend/src/app.ts:903.
 
 ### Сообщение
 
 Подключение Azure изменилось. Выберите тикеты заново.
 
-Источник: services/backend/src/app.ts:879.
+Источник: services/backend/src/app.ts:905.
 
 ### Сообщение
 
 Не удалось завершить ответ ассистента
 
-Источник: services/backend/src/app.ts:960.
+Источник: services/backend/src/app.ts:986.
 
 ### Сообщение
 
 Предложение не найдено
 
-Источник: services/backend/src/app.ts:982.
+Источник: services/backend/src/app.ts:1008.
 
 ### Сообщение
 
 Выберите проект
 
-Источник: services/backend/src/app.ts:1035.
+Источник: services/backend/src/app.ts:1061.
 
 ### Сообщение
 
 Подключение изменилось; откройте настройки заново
 
-Источник: services/backend/src/app.ts:1037.
+Источник: services/backend/src/app.ts:1063.
 
 ### Сообщение
 
 Статусы не должны повторяться без учёта регистра
 
-Источник: services/backend/src/app.ts:1040.
-
-### Сообщение
-
-Разработчик не найден в этом проекте
-
-Источник: services/backend/src/app.ts:1068.
-
-### Сообщение
-
-Подключение изменилось
-
-Источник: services/backend/src/app.ts:1131.
+Источник: services/backend/src/app.ts:1066.

@@ -52,6 +52,7 @@ export const defaults = {
   azureTypes: [] as string[],
   azureStates: [] as string[],
   kanbanStateOrder: [] as string[],
+  kanbanGroups: [] as { id: string; name: string; states: string[]; defaultState: string }[],
   kanbanHiddenStates: [] as string[],
   kanbanFilterColumnsByStatus: false,
   kanbanHideEmptyColumns: false,
@@ -615,6 +616,7 @@ export class Store {
       | {
           order: string[];
           hiddenStates?: string[];
+          groups?: Settings["kanbanGroups"];
           filterColumnsByStatus?: boolean;
           hideEmptyColumns?: boolean;
         }
@@ -625,6 +627,7 @@ export class Store {
       ...(project || customer || {}),
       ...imported,
       kanbanStateOrder: Array.isArray(kanban) ? kanban : kanban.order,
+      kanbanGroups: Array.isArray(kanban) ? [] : kanban.groups || [],
       kanbanHiddenStates: Array.isArray(kanban) ? [] : kanban.hiddenStates || [],
       kanbanFilterColumnsByStatus: Array.isArray(kanban)
         ? false
