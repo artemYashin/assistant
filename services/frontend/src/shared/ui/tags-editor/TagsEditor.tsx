@@ -1,5 +1,4 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { X, Plus, ChevronDown } from "lucide-react";
 
 export function TagsEditor({
@@ -57,7 +56,10 @@ export function TagsEditor({
     if (editing !== null) input.current?.focus();
   }, [editing]);
   useLayoutEffect(() => {
-    if (!open || editing === null) return;
+    if (!open || editing === null || disabled) return;
+    const element = menu.current;
+    if (!element) return;
+    element.showPopover();
     const place = () => {
       const rect = anchor.current?.getBoundingClientRect();
       if (!rect) return;
@@ -83,11 +85,12 @@ export function TagsEditor({
     };
     window.addEventListener("scroll", scroll, true);
     return () => {
+      if (element.matches(":popover-open")) element.hidePopover();
       observer.disconnect();
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", scroll, true);
     };
-  }, [open, editing]);
+  }, [open, editing, disabled]);
   useEffect(() => {
     if (active >= 0)
       menu.current
@@ -130,7 +133,6 @@ export function TagsEditor({
     onChange(unique.join("\n"));
     close();
   }
-  const host = anchor.current?.closest("dialog");
   return (
     <div className="local-tags-editor">
       <span className="local-tags-editor-label">{label}</span>
@@ -256,48 +258,44 @@ export function TagsEditor({
           )
         )}
       </div>
-      {open &&
-        editing !== null &&
-        !disabled &&
-        host &&
-        createPortal(
-          <div
-            ref={menu}
-            id={id}
-            className="local-tags-suggestions"
-            role="listbox"
-            aria-label={`Существующие теги: ${label}`}
-            style={placement}
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            {loading ? (
-              <p>Загружаю теги…</p>
-            ) : options.length ? (
-              options.map((tag, index) => (
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={active === index}
-                  tabIndex={-1}
-                  id={`${id}-${index}`}
-                  data-option={index}
-                  key={tag}
-                  onClick={() => commit(tag)}
-                >
-                  {tag}
-                </button>
-              ))
-            ) : (
-              <p>
-                {draft.trim()
-                  ? "Enter — добавить свой тег"
-                  : "Существующих тегов нет — введите новый"}
-              </p>
-            )}
-            {error && <p>Подсказки недоступны. Можно ввести тег вручную.</p>}
-          </div>,
-          host,
-        )}
+      {open && editing !== null && !disabled && (
+        <div
+          ref={menu}
+          popover="manual"
+          id={id}
+          className="local-tags-suggestions"
+          role="listbox"
+          aria-label={`Существующие теги: ${label}`}
+          style={{ ...placement, right: "auto", bottom: "auto" }}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          {loading ? (
+            <p>Загружаю теги…</p>
+          ) : options.length ? (
+            options.map((tag, index) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={active === index}
+                tabIndex={-1}
+                id={`${id}-${index}`}
+                data-option={index}
+                key={tag}
+                onClick={() => commit(tag)}
+              >
+                {tag}
+              </button>
+            ))
+          ) : (
+            <p>
+              {draft.trim()
+                ? "Enter — добавить свой тег"
+                : "Существующих тегов нет — введите новый"}
+            </p>
+          )}
+          {error && <p>Подсказки недоступны. Можно ввести тег вручную.</p>}
+        </div>
+      )}
       {validation && (
         <p className="error" role="alert">
           {validation}

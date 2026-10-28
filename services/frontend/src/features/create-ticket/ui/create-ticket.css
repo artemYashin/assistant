@@ -226,7 +226,7 @@
   }
 }
 
-.create-ticket-editor .tiptap > p:only-child:has(> br:only-child)::before {
+.create-ticket-editor .comment-editor-shell[data-empty="true"] .tiptap::before {
   content: "Введите текст…";
 }
 
@@ -250,4 +250,76 @@
 .create-ticket-relation .create-ticket-remove-relation:hover:not(:disabled) {
   background: #ffe0dc;
   border-color: #d94b40;
+}
+
+/* Shared by the dialog and the inline related-ticket form. */
+.create-ticket-sidebar > label,
+.create-ticket-sidebar .multi-select-label,
+.create-ticket-sidebar .local-tags-editor-label,
+.create-ticket-sidebar .calendar-date-label {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #475d4b;
+}
+.create-ticket-sidebar .multi-select-label,
+.create-ticket-sidebar .calendar-date-label {
+  margin-bottom: 6px;
+}
+.create-ticket-sidebar .local-tags-editor {
+  gap: 6px;
+}
+.create-ticket-sidebar > label > input,
+.create-ticket-sidebar .calendar-date-trigger,
+.create-ticket-sidebar .multi-select-trigger {
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 400;
+  box-sizing: border-box;
+  border-radius: 7px;
+}
+.create-ticket-sidebar .local-tags-editor-field {
+  min-height: 40px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  align-items: center;
+}
+.create-ticket-sidebar .local-tags-editor > .muted {
+  font-size: 10px;
+  line-height: 14px;
+}
+.create-ticket-sidebar .multi-select-trigger:has(.create-ticket-selected-person) {
+  height: auto;
+}
+.create-ticket-sidebar
+  .multi-select-trigger
+  > .multi-select-selected-badges:has(.create-ticket-selected-person) {
+  flex-wrap: wrap;
+  white-space: normal;
+  overflow: visible;
+  gap: 4px;
+}
+.create-ticket-sidebar .multi-select-selected-badges > span:has(.create-ticket-selected-person) {
+  max-width: 100%;
+  min-width: 0;
+}
+.create-ticket-selected-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 6px 2px 2px;
+  border: 1px solid #d5e2cf;
+  border-radius: 7px;
+  background: #edf5e9;
+  font-size: 11px;
+}
+.create-ticket-selected-person > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

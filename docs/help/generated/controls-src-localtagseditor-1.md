@@ -9,34 +9,34 @@
 
 Редактировать тег
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:141.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:143.
 
 ### Элемент
 
 Удалить тег {…}
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:149.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:151.
 
 ### Элемент
 
 Новый или существующий тег · Введите или выберите тег…
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:167.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:169.
 
 ### Элемент
 
 Показать существующие теги
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:222.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:224.
 
 ### Элемент
 
 Отменить ввод тега
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:234.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:236.
 
 ### Элемент
 
 Добавить тег
 
-Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:247.
+Источник: services/frontend/src/shared/ui/tags-editor/TagsEditor.tsx:249.

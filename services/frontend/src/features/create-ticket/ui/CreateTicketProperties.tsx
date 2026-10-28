@@ -127,6 +127,12 @@ export function CreateTicketProperties({
           label="Локальное поручение"
           placeholder="Не назначено"
           options={developers.map((p) => ({ value: p.id, label: p.name }))}
+          renderSelected={(option) => (
+            <span className="create-ticket-selected-person" title={option.label}>
+              <InitialsAvatar name={option.label} />
+              <span>{option.label}</span>
+            </span>
+          )}
           value={value.developerIds}
           onChange={(ids) => set("developerIds", ids)}
           disabled={disabled}
