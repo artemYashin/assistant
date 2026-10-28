@@ -1177,6 +1177,7 @@ export function TicketCopyButton({
 
 export function TicketTableRow({
   tone,
+  rowInstance,
   unavailable = false,
   id,
   children,
@@ -1190,6 +1191,7 @@ export function TicketTableRow({
   columnOrder = [],
 }: {
   tone?: "new" | "trash";
+  rowInstance?: string;
   unavailable?: boolean;
   actions?: ReactNode;
   columns?: number;
@@ -1240,7 +1242,7 @@ export function TicketTableRow({
     <>
       <tr
         ref={rowRef}
-        id={`ticket-${id}`}
+        id={rowInstance ? `ticket-${id}-${encodeURIComponent(rowInstance)}` : `ticket-${id}`}
         tabIndex={unavailable ? undefined : 0}
         aria-selected={rowSelected}
         aria-expanded={onRowActivate ? undefined : open}

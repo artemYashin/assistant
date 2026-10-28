@@ -34,7 +34,9 @@ test("Azure priority survives sync/restart/trash, filters independently, and exp
     .prepare("INSERT INTO ticket_metadata VALUES (?,?,?,?,?)")
     .run(source, 1, "needle", 5, "[]");
   t.mock.method(globalThis, "fetch", async (_url: any, init: any) => {
-    assert.ok(JSON.parse(init.body).fields.includes(AZURE_PRIORITY_FIELD));
+    const request = JSON.parse(init.body);
+    assert.equal(request.$expand, "Relations");
+    assert.equal(request.fields, undefined);
     return Response.json({
       value: JSON.parse(init.body).ids.map((id: number) => ({
         id,

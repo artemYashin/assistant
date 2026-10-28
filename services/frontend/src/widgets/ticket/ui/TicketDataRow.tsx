@@ -1,5 +1,11 @@
 import { TicketDate } from "../../../entities/ticket/index.js";
-import { ArchiveRestore, LoaderCircle } from "lucide-react";
+import {
+  ArchiveRestore,
+  LoaderCircle,
+  ChevronDown,
+  ChevronRight,
+  CornerDownRight,
+} from "lucide-react";
 import { CopyTicketId } from "../../../entities/ticket/index.js";
 import { TicketTableRow } from "./TicketCard.js";
 import { TicketMetadata } from "../../../features/edit-ticket/index.js";
@@ -19,13 +25,29 @@ export function TicketDataRow({
   onRestore,
   restoring = false,
   highlighted = false,
+  group,
+  onToggleGroup,
+  rowInstance,
 }: any) {
   const local = t.imported !== false || t.inTrash;
   const tone = t.inTrash ? "trash" : t.imported === false ? "new" : undefined;
   const date = (v: string | number) => <TicketDate value={v} />;
+  if (t.unavailable)
+    return (
+      <tr className="ticket-tone-new">
+        <td colSpan={columns.count}>
+          <span className="ticket-group-row-controls">
+            <CornerDownRight size={16} />
+            <strong>#{t.id}</strong>
+            <span>{t.title || "Тикет недоступен в текущем проекте Azure"}</span>
+          </span>
+        </td>
+      </tr>
+    );
   return (
     <TicketTableRow
       id={t.id}
+      rowInstance={rowInstance}
       rowSelected={settings?.ticketClickAction === "select" ? checked : undefined}
       onRowActivate={
         settings?.ticketClickAction === "select"
@@ -75,13 +97,36 @@ export function TicketDataRow({
       }
     >
       <td className="ticket-selection-column">
-        <input
-          className="ticket-checkbox"
-          type="checkbox"
-          aria-label={`Выбрать тикет #${t.id}`}
-          checked={checked}
-          onChange={onToggle}
-        />
+        <span className={group ? "ticket-group-row-controls" : undefined}>
+          {group &&
+            (group.child ? (
+              <span className="ticket-group-marker" title="Дочерний тикет">
+                <CornerDownRight size={16} />
+              </span>
+            ) : group.expandable ? (
+              <button
+                type="button"
+                className="ticket-group-marker"
+                aria-expanded={group.expanded}
+                aria-label={`${group.expanded ? "Свернуть" : "Развернуть"} дочерние тикеты #${t.id}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleGroup?.();
+                }}
+              >
+                {group.expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+            ) : (
+              <span className="ticket-group-marker" />
+            ))}
+          <input
+            className="ticket-checkbox"
+            type="checkbox"
+            aria-label={`Выбрать тикет #${t.id}`}
+            checked={checked}
+            onChange={onToggle}
+          />
+        </span>
       </td>
       <td className="ticket-identity-column">
         <div className="ticket-id-type">
@@ -99,7 +144,10 @@ export function TicketDataRow({
         </div>
       </td>
       <td className="ticket-title-column">
-        <b className="ticket-title-clamp" title={t.title}>
+        <b
+          className={`ticket-title-clamp${group?.child ? " ticket-group-child-title" : ""}`}
+          title={t.title}
+        >
           {t.title}
         </b>
       </td>

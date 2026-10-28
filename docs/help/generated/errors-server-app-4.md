@@ -9,76 +9,76 @@
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:2039.
+Источник: services/backend/src/app.ts:2044.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:2072.
+Источник: services/backend/src/app.ts:2077.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:2074.
+Источник: services/backend/src/app.ts:2079.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:2091.
+Источник: services/backend/src/app.ts:2096.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:2100.
+Источник: services/backend/src/app.ts:2105.
 
 ### Сообщение
 
 Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.
 
-Источник: services/backend/src/app.ts:2101.
+Источник: services/backend/src/app.ts:2106.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/app.ts:2116.
+Источник: services/backend/src/app.ts:2121.
 
 ### Сообщение
 
 Не удалось распознать запись. Проверьте логи voice-контейнера.
 
-Источник: services/backend/src/app.ts:2119.
+Источник: services/backend/src/app.ts:2124.
 
 ### Сообщение
 
 Маршрут не найден
 
-Источник: services/backend/src/app.ts:2127.
+Источник: services/backend/src/app.ts:2132.
 
 ### Сообщение
 
 Проверьте поля формы
 
-Источник: services/backend/src/app.ts:2133.
+Источник: services/backend/src/app.ts:2138.
 
 ### Сообщение
 
 Request failed:
 
-Источник: services/backend/src/app.ts:2139.
+Источник: services/backend/src/app.ts:2144.
 
 ### Сообщение
 
 UnknownError
 
-Источник: services/backend/src/app.ts:2139.
+Источник: services/backend/src/app.ts:2144.
 
 ### Сообщение
 
 Внутренняя ошибка. Проверьте настройки и повторите запрос.
 
-Источник: services/backend/src/app.ts:2141.
+Источник: services/backend/src/app.ts:2146.

@@ -1,0 +1,100 @@
+.ticket-grouping-control,
+.ticket-grouping-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ticket-grouping-switch {
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 3px;
+  border: 1px solid #d3dfd7;
+  border-radius: 8px;
+  background: #f5f8f6;
+}
+.ticket-grouping-switch button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ticket-grouping-switch button[aria-pressed="true"] {
+  background: #dcefe2;
+  color: #28583b;
+}
+.ticket-grouping-dialog {
+  width: min(460px, calc(100vw - 32px));
+  box-sizing: border-box;
+  border: 1px solid #d3dfd7;
+  border-radius: 12px;
+  padding: 20px;
+}
+.ticket-grouping-dialog::backdrop {
+  background: #10251b66;
+}
+.ticket-grouping-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ticket-grouping-dialog h3 {
+  margin: 0;
+}
+.ticket-grouping-dialog p,
+.ticket-actions-panel .ticket-display-summary .ticket-grouping-dialog p {
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ticket-grouping-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.ticket-table-fit:has(.ticket-group-row-controls)
+  > table
+  > :is(thead, tbody)
+  > tr
+  > :is(th, td).ticket-selection-column {
+  width: 76px;
+  min-width: 76px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.ticket-group-row-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ticket-group-row-controls > .ticket-group-marker {
+  width: 22px;
+  flex: 0 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #81988a;
+}
+.ticket-group-row-controls button.ticket-group-marker {
+  height: 26px;
+  padding: 0;
+  border-radius: 5px;
+  color: #356849;
+}
+.ticket-group-row-controls button.ticket-group-marker:hover {
+  background: #dcefe2;
+}
+.ticket-group-child-title {
+  padding-left: 12px;
+  border-left: 2px solid #b7cec0;
+}
+
+.ticket-grouping-control > .icon-button {
+  width: 36px;
+  height: 40px;
+  flex: 0 0 36px;
+}

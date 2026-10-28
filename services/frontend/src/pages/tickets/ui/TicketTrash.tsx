@@ -1,3 +1,5 @@
+import { useTicketGrouping } from "../model/useTicketGrouping.js";
+import { TicketGroupingControls } from "./TicketGroupingControls.js";
 import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
@@ -197,8 +199,14 @@ export function TicketTrash({
             });
       return (sort.descending ? -cmp : cmp) || a.id - b.id;
     });
+  const grouping = useTicketGrouping(
+    filtered.map((ticket) => ({ ...ticket, inTrash: true })),
+    currentSource,
+    context,
+    view === "table",
+  );
   const selection = useTicketSelection(
-    filtered,
+    grouping.selectable,
     JSON.stringify([settings?.azureUrl, settings?.azureProject]),
   );
   const columns = [
@@ -370,7 +378,7 @@ export function TicketTrash({
         </TicketFilterPanel>
         {view === "kanban" && (
           <TicketKanbanSort
-            actions={<ExportTickets tickets={selection.selected} trash />}
+            actions={<ExportTickets tickets={selection.selected} />}
             tickets={filtered}
             selectedStates={states}
             settings={settings}
@@ -394,6 +402,11 @@ export function TicketTrash({
         >
           <div className="ticket-display-summary">
             {display.control}
+            <TicketGroupingControls
+              grouping={grouping}
+              types={filterOptions.types}
+              colors={settings?.typeColors}
+            />
             {selection.selected.length >= 1 && (
               <button
                 type="button"
@@ -438,7 +451,7 @@ export function TicketTrash({
                 onChange();
               }}
             />
-            <ExportTickets tickets={selection.selected} trash />
+            <ExportTickets tickets={selection.selected} />
           </div>
         </div>
       )}
@@ -469,7 +482,7 @@ export function TicketTrash({
                 <th className="ticket-selection-column">
                   <SelectAllTickets
                     count={selection.selected.length}
-                    total={filtered.length}
+                    total={grouping.selectable.length}
                     onChange={selection.toggleAll}
                   />
                 </th>
@@ -574,23 +587,36 @@ export function TicketTrash({
                 </td>
               </tr>
             )}
-            {filtered.map((t) => (
-              <TicketDataRow
-                key={`${t.source}:${t.id}`}
-                ticket={{ ...t, inTrash: true }}
-                columns={display}
-                settings={settings}
-                context={context}
-                checked={selection.checked(t)}
-                onToggle={() => selection.toggle(t)}
-                onChange={() => {
-                  setVersion((v) => v + 1);
-                  onChange();
-                }}
-                onRestore={() => void restore(t)}
-                restoring={busy !== null}
-              />
-            ))}
+            {grouping.rows.map((row) => {
+              const t = row.ticket;
+              return (
+                <TicketDataRow
+                  key={row.key}
+                  rowInstance={row.child ? row.key : undefined}
+                  group={grouping.preferences.mode === "grouped" ? row : undefined}
+                  onToggleGroup={() => grouping.toggle(t.id)}
+                  ticket={t}
+                  columns={display}
+                  settings={settings}
+                  context={context}
+                  checked={selection.checked(t)}
+                  onToggle={() => selection.toggle(t)}
+                  onChange={() => {
+                    grouping.retry();
+                    setVersion((v) => v + 1);
+                    onChange();
+                  }}
+                  onRestore={
+                    t.inTrash
+                      ? () => {
+                          void restore(t).then(grouping.retry);
+                        }
+                      : undefined
+                  }
+                  restoring={busy !== null}
+                />
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -1,3 +1,5 @@
+import { useTicketGrouping } from "../model/useTicketGrouping.js";
+import { TicketGroupingControls } from "./TicketGroupingControls.js";
 import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
 import { TicketKanban } from "./TicketKanban.js";
@@ -233,7 +235,11 @@ export function Tickets({
                 });
         return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
       });
-  const selection = useTicketSelection<any>(sorted, JSON.stringify([currentSource, context]));
+  const grouping = useTicketGrouping(sorted, currentSource, context, view === "table");
+  const selection = useTicketSelection<any>(
+    grouping.selectable,
+    JSON.stringify([currentSource, context]),
+  );
   return (
     <>
       <div className="ticket-page-intro">
@@ -483,6 +489,11 @@ export function Tickets({
       >
         <div className="ticket-display-summary">
           {columns.control}
+          <TicketGroupingControls
+            grouping={grouping}
+            types={filterOptions.types}
+            colors={settings?.typeColors}
+          />
           {selection.selected.length >= 1 && (
             <button
               type="button"
@@ -517,6 +528,7 @@ export function Tickets({
               statusColors={settings?.statusColors}
               disabled={!!busy}
               onRemoved={() => {
+                grouping.retry();
                 void run("refresh-bulk-trash", async () => {});
               }}
             />
@@ -526,6 +538,7 @@ export function Tickets({
               tickets={selection.selected}
               source={currentSource}
               onImported={() => {
+                grouping.retry();
                 selection.clear();
                 void run("refresh-azure-import", async () => {});
               }}
@@ -638,7 +651,7 @@ export function Tickets({
                 <th className="ticket-selection-column">
                   <SelectAllTickets
                     count={selection.selected.length}
-                    total={sorted.length}
+                    total={grouping.selectable.length}
                     onChange={selection.toggleAll}
                   />
                 </th>
@@ -710,52 +723,61 @@ export function Tickets({
                 </td>
               </tr>
             )}
-            {sorted.map((t: any) => (
-              <TicketDataRow
-                key={`${t.source}:${t.id}`}
-                ticket={t}
-                columns={columns}
-                settings={settings}
-                context={context}
-                checked={selection.checked(t)}
-                onToggle={() => selection.toggle(t)}
-                onChange={() => run("refresh-ticket", async () => {})}
-                highlighted={targetId === t.id && !sourceMismatch}
-                restoring={busy === "restore"}
-                onRestore={
-                  azureMode && t.inTrash
-                    ? () =>
-                        run(
-                          "restore",
-                          async () => {
-                            await api(`/tickets/${t.id}/restore`, "POST", {
-                              source: t.source,
-                            });
-                            window.dispatchEvent(
-                              new CustomEvent("orbit:ticket-tracked", {
-                                detail: { id: t.id, source: t.source },
-                              }),
-                            );
-                          },
-                          "Тикет восстановлен",
-                        )
-                    : undefined
-                }
-                onRemove={
-                  azureMode && !t.imported
-                    ? undefined
-                    : () =>
-                        run(
-                          "remove",
-                          () =>
-                            api(`/tickets/${t.id}`, "DELETE", {
-                              source: t.source,
-                            }),
-                          "Тикет перемещён в корзину на 30 дней",
-                        )
-                }
-              />
-            ))}
+            {grouping.rows.map((row) => {
+              const t = row.ticket;
+              return (
+                <TicketDataRow
+                  key={row.key}
+                  rowInstance={row.child ? row.key : undefined}
+                  group={grouping.preferences.mode === "grouped" ? row : undefined}
+                  onToggleGroup={() => grouping.toggle(t.id)}
+                  ticket={t}
+                  columns={columns}
+                  settings={settings}
+                  context={context}
+                  checked={selection.checked(t)}
+                  onToggle={() => selection.toggle(t)}
+                  onChange={() => {
+                    grouping.retry();
+                    void run("refresh-ticket", async () => {});
+                  }}
+                  highlighted={!row.child && targetId === t.id && !sourceMismatch}
+                  restoring={busy === "restore"}
+                  onRestore={
+                    t.inTrash
+                      ? () =>
+                          run(
+                            "restore",
+                            async () => {
+                              await api(`/tickets/${t.id}/restore`, "POST", {
+                                source: t.source,
+                              });
+                              window.dispatchEvent(
+                                new CustomEvent("orbit:ticket-tracked", {
+                                  detail: { id: t.id, source: t.source },
+                                }),
+                              );
+                            },
+                            "Тикет восстановлен",
+                          )
+                      : undefined
+                  }
+                  onRemove={
+                    t.imported === false || t.inTrash
+                      ? undefined
+                      : () =>
+                          run(
+                            "remove",
+                            async () => {
+                              await api(`/tickets/${t.id}`, "DELETE", { source: t.source });
+                              grouping.retry();
+                            },
+                            "Тикет перемещён в корзину на 30 дней",
+                          )
+                  }
+                />
+              );
+            })}
           </tbody>
         </table>
       </div>

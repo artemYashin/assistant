@@ -1,3 +1,4 @@
+import { cachedChildIds, saveChildIds, type TicketChildrenInput } from "./ticket-children.js";
 import { ticketInlineImages, withTicketInlineImages } from "./ticket-inline-images.js";
 import { azureTicketFieldsPatch } from "./ticket-azure-fields.js";
 import { azurePrLinks } from "./ticket-pull-requests.js";
@@ -1890,6 +1891,118 @@ export class Connectors {
     this.store.audit("ticket.tracked", String(id));
     return item.id;
   }
+  async ticketChildren(input: TicketChildrenInput, local: any[] = []) {
+    const settings = this.store.settings(),
+      source = this.store.source(settings),
+      pat = this.store.secret("azure.pat");
+    const check = () => {
+      if (
+        input.source !== source ||
+        this.store.source() !== source ||
+        this.store.secret("azure.pat") !== pat
+      )
+        throw new AppError(
+          409,
+          "Подключение Azure изменилось. Повторите загрузку дочерних тикетов.",
+        );
+    };
+    check();
+    const ids = [...new Set(input.ids)];
+    const missing = ids.filter(
+      (id) => input.forceRefresh || cachedChildIds(this.store, source, id) === undefined,
+    );
+    if (missing.length) {
+      const response = await this.azure(
+        "workitemsbatch",
+        {
+          method: "POST",
+          body: JSON.stringify({ ids: missing, $expand: "Relations", errorPolicy: "Omit" }),
+        },
+        settings,
+        pat,
+      );
+      check();
+      if (!Array.isArray(response.value)) throw new AppError(502, "Azure не вернул связи тикетов");
+      if (
+        input.forceRefresh &&
+        missing.some(
+          (id) =>
+            !response.value.some(
+              (item: any) =>
+                item.id === id && item.fields?.["System.TeamProject"] === settings.azureProject,
+            ),
+        )
+      )
+        throw new AppError(
+          502,
+          "Не удалось обновить связи: родительский тикет недоступен в текущем проекте Azure",
+        );
+      this.store.db.transaction(() => {
+        for (const item of response.value) {
+          if (
+            !missing.includes(item.id) ||
+            item.fields?.["System.TeamProject"] !== settings.azureProject
+          )
+            continue;
+          if (!Array.isArray(item.relations ?? []))
+            throw new AppError(502, "Azure вернул неверные связи тикета");
+          saveChildIds(this.store, source, item, azureBase(settings.azureUrl));
+        }
+      })();
+    }
+    const parents = ids.map((id) => ({
+      id,
+      childIds: cachedChildIds(this.store, source, id) || [],
+    }));
+    if (!input.includeChildren) return { source, parents };
+    const childIds = [...new Set(parents.flatMap((parent) => parent.childIds))];
+    const rows = new Map<number, any>();
+    const localRows = new Map(
+      local.filter((row) => row.source === source).map((row) => [row.id, row]),
+    );
+    for (let i = 0; i < childIds.length; i += 200) {
+      const batch = childIds.slice(i, i + 200);
+      const response = await this.azure(
+        "workitemsbatch",
+        {
+          method: "POST",
+          body: JSON.stringify({ ids: batch, fields: browseFields, errorPolicy: "Omit" }),
+        },
+        settings,
+        pat,
+      );
+      check();
+      if (!Array.isArray(response.value))
+        throw new AppError(502, "Azure не вернул дочерние тикеты");
+      for (const item of response.value) {
+        if (!batch.includes(item.id)) continue;
+        if (item.fields?.["System.TeamProject"] !== settings.azureProject) continue;
+        const existing = localRows.get(item.id);
+        rows.set(item.id, {
+          ...existing,
+          ...azureSummary(item, source, azureBase(settings.azureUrl), settings.azureProject),
+          imported: !!existing && !existing.inTrash,
+          inTrash: !!existing?.inTrash,
+        });
+      }
+    }
+    return {
+      source,
+      parents: parents.map((parent) => ({
+        ...parent,
+        children: parent.childIds.map(
+          (id) =>
+            rows.get(id) || {
+              id,
+              source,
+              title: "Тикет недоступен в текущем проекте Azure",
+              unavailable: true,
+              imported: false,
+            },
+        ),
+      })),
+    };
+  }
   async syncTickets(
     importSelected = false,
     automatic = false,
@@ -1899,6 +2012,14 @@ export class Connectors {
     const s = this.store.settings(context);
     const already = fetched?.get(this.store.source(s)) || new Set<number>();
     const pat = this.store.secret("azure.pat");
+    const check = () => {
+      if (
+        this.store.source(this.store.settings(context)) !== this.store.source(s) ||
+        this.store.secret("azure.pat") !== pat
+      )
+        throw new AppError(409, "Подключение Azure изменилось во время синхронизации");
+    };
+    check();
     const ids = new Set(
       (
         this.store.db
@@ -1931,6 +2052,7 @@ export class Connectors {
         s,
         pat,
       );
+      check();
       for (const item of result.workItems || []) {
         matched.add(item.id);
         ids.add(item.id);
@@ -1952,33 +2074,35 @@ export class Connectors {
             method: "POST",
             body: JSON.stringify({
               ids: stage.slice(i, i + 200),
-              fields: [
-                "System.Description",
-                "Microsoft.VSTS.Common.AcceptanceCriteria",
-                "Microsoft.VSTS.TCM.ReproSteps",
-                "System.Title",
-                "System.State",
-                "System.AssignedTo",
-                "System.WorkItemType",
-                "System.ChangedDate",
-                "System.CreatedDate",
-                AZURE_PRIORITY_FIELD,
-                "System.Tags",
-                "System.TeamProject",
-              ],
+              $expand: "Relations",
               errorPolicy: "Fail",
             }),
           },
           s,
           pat,
         );
+        check();
         if (!Array.isArray(result.value) || result.value.length !== stage.slice(i, i + 200).length)
           throw new AppError(502, "Azure вернул неполный список тикетов");
-        for (const item of result.value) {
-          this.saveTicket(item, s);
-          this.cacheTicketContent(item, s, true);
-          already.add(item.id);
-        }
+        const batchIds = stage.slice(i, i + 200);
+        if (
+          new Set(result.value.map((item: any) => item.id)).size !== batchIds.length ||
+          result.value.some(
+            (item: any) =>
+              !batchIds.includes(item.id) ||
+              item.fields?.["System.TeamProject"] !== s.azureProject ||
+              !Array.isArray(item.relations ?? []),
+          )
+        )
+          throw new AppError(502, "Azure вернул неверные данные или связи тикетов");
+        this.store.db.transaction(() => {
+          for (const item of result.value) {
+            this.saveTicket(item, s);
+            saveChildIds(this.store, this.store.source(s), item, azureBase(s.azureUrl));
+            this.cacheTicketContent(item, s, true);
+          }
+        })();
+        for (const id of batchIds) already.add(id);
         fetched?.set(this.store.source(s), already);
       }
     }

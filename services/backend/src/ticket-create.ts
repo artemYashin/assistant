@@ -352,7 +352,15 @@ export class TicketCreate {
         source: input.source,
         title: item.fields?.["System.Title"] || input.title,
       };
-      this.store.set(key, { fingerprint, result });
+      this.store.db.transaction(() => {
+        this.store.set(key, { fingerprint, result });
+        // A newly created child changes the existing parent's outgoing links.
+        for (const relation of input.relations)
+          if (relation.kind === "parent")
+            this.store.db
+              .prepare("DELETE FROM ticket_children_cache WHERE source=? AND parent_id=?")
+              .run(input.source, relation.id);
+      })();
       if (selectedUser) {
         const recentKey = "azure.assignees.recent:" + input.source;
         const recent = this.store.get<{ id: string; name: string; email: string }[]>(recentKey, []);

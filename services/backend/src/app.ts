@@ -1,3 +1,4 @@
+import { ticketChildrenSchema } from "./ticket-children.js";
 import { TicketCreate } from "./ticket-create.js";
 import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
@@ -1268,6 +1269,10 @@ export function createApp(
         };
       });
   app.get("/api/tickets", (_req, res) => res.json(localTickets()));
+  app.post("/api/tickets/children", async (req, res) => {
+    const input = ticketChildrenSchema.parse(req.body);
+    res.json(await connectors.ticketChildren(input, [...localTickets(), ...store.ticketTrash()]));
+  });
   app.post("/api/azure/tickets/search", async (req, res) => {
     const input = azureBrowseSchema.parse(req.body);
     const result = await connectors.browseAzureTickets(input, [
