@@ -159,6 +159,19 @@ test("creation images validate bytes, reuse uploads and resolve only this draft'
       ),
     );
     assert.ok(!description.includes("orbit.invalid") && !description.includes("untrusted.test"));
+    assert.deepEqual(
+      patch.filter((p: any) => p.value?.rel === "AttachedFile"),
+      [
+        {
+          op: "add",
+          path: "/relations/-",
+          value: {
+            rel: "AttachedFile",
+            url: `https://ado.test/Collection/Project/_apis/wit/attachments/${attachmentId}`,
+          },
+        },
+      ],
+    );
     if (creates === 1) return Response.json({ message: "Validation failure" }, { status: 400 });
     return Response.json({ id: 44 });
   };
@@ -172,9 +185,19 @@ test("creation images validate bytes, reuse uploads and resolve only this draft'
     image,
   );
   assert.equal(uploads, 1);
+  // A previously uploaded image removed from the editor must not become an attachment.
+  const uploadKey = `ticket.create-images:${input.source}:${input.requestId}`;
+  store.set(uploadKey, {
+    ...store.get(uploadKey, {}),
+    [randomUUID()]: {
+      hash: "unused",
+      url: `https://ado.test/Collection/Project/_apis/wit/attachments/${randomUUID()}`,
+    },
+  });
   const body = {
     ...input,
     description: `![Screenshot](https://orbit.invalid/create-ticket-image/${uploadId})`,
+    steps: `![Same screenshot](https://orbit.invalid/create-ticket-image/${uploadId})`,
   };
   await assert.rejects(service.create({ ...body, requestId: randomUUID() }), /не загружено/);
   await assert.rejects(service.create(body), /Validation failure/);

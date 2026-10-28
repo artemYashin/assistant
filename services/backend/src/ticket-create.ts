@@ -222,6 +222,7 @@ export class TicketCreate {
     const patch: { op: string; path: string; value: unknown }[] = [
       { op: "add", path: "/fields/System.Title", value: input.title },
     ];
+    const usedImages = new Set<string>();
     for (const [name, field] of Object.entries(fields)) {
       let value = input[name as keyof typeof fields];
       value = value.replace(
@@ -233,6 +234,7 @@ export class TicketCreate {
           )[id];
           if (!image)
             throw new AppError(400, "Изображение ещё не загружено. Повторите создание тикета.");
+          usedImages.add(image.url);
           return image.url;
         },
       );
@@ -260,6 +262,14 @@ export class TicketCreate {
           rel: relationTypes[relation.kind],
           url: `${base}/_apis/wit/workItems/${relation.id}`,
         },
+      });
+    // An inline URL alone does not attach the uploaded file to the work item.
+    // Bind each used upload in the same creation request, including restored drafts.
+    for (const url of usedImages)
+      patch.push({
+        op: "add",
+        path: "/relations/-",
+        value: { rel: "AttachedFile", url },
       });
     guard();
     // Recheck after asynchronous validation: concurrent clicks must not create two items.

@@ -69,34 +69,34 @@ Azure пока не вернул созданный тикет. Повторит
 
 Изображение ещё не загружено. Повторите создание тикета.
 
-Источник: services/backend/src/ticket-create.ts:235.
+Источник: services/backend/src/ticket-create.ts:236.
 
 ### Сообщение
 
 Выбранный тип не поддерживает поле {…}
 
-Источник: services/backend/src/ticket-create.ts:241.
+Источник: services/backend/src/ticket-create.ts:243.
 
 ### Сообщение
 
 Найдите и выберите исполнителя в Azure заново
 
-Источник: services/backend/src/ticket-create.ts:251.
+Источник: services/backend/src/ticket-create.ts:253.
 
 ### Сообщение
 
 Создание уже выполняется. Дождитесь результата.
 
-Источник: services/backend/src/ticket-create.ts:267.
+Источник: services/backend/src/ticket-create.ts:277.
 
 ### Сообщение
 
 Azure не вернул номер созданного тикета
 
-Источник: services/backend/src/ticket-create.ts:275.
+Источник: services/backend/src/ticket-create.ts:285.
 
 ### Сообщение
 
 Не удалось подтвердить результат создания. Проверьте Azure перед новой попыткой: тикет мог уже создаться. Черновик сохранён в открытой форме.
 
-Источник: services/backend/src/ticket-create.ts:303.
+Источник: services/backend/src/ticket-create.ts:313.
