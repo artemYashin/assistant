@@ -50,6 +50,19 @@
   height: 22px;
   flex: 0 0 18px;
 }
+.ticket-hierarchy-spacer.is-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.ticket-hierarchy-spacer.is-child::before {
+  content: "";
+  width: 2px;
+  height: 16px;
+  border-radius: 2px;
+  background: #91b39d;
+}
 .ticket-hierarchy-toggle {
   display: inline-flex;
   align-items: center;

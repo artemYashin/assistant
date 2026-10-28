@@ -21,10 +21,10 @@
 
 Выбрать тикет #{…}
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:98.
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:101.
 
 ### Элемент
 
 #
 
-Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:110.
+Источник: services/frontend/src/widgets/ticket/ui/TicketDataRow.tsx:113.

@@ -39,19 +39,19 @@ error dismissible
 
 Проект не настроен
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:250.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:255.
 
 ### Сообщение
 
 Некорректный номер тикета в ссылке.
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:260.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:265.
 
 ### Сообщение
 
 Ничего не найдено
 
-Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:704.
+Источник: services/frontend/src/pages/tickets/ui/Tickets.tsx:711.
 
 ### Сообщение
 

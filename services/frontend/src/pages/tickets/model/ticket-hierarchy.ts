@@ -9,8 +9,17 @@ export type HierarchyTicket = {
 export const hierarchyKey = (ticket: { source: string; id: number }) =>
   JSON.stringify([ticket.source, ticket.id]);
 
-/** Preserve the input sort order within each sibling group; never add filtered-out rows. */
-export function ticketHierarchy<T extends HierarchyTicket>(tickets: T[], expanded: Set<string>) {
+/** Preserve sibling order. Optional trash rows appear only in branches containing a result. */
+export function ticketHierarchy<T extends HierarchyTicket>(
+  tickets: T[],
+  expanded: Set<string>,
+  trash: T[] = [],
+) {
+  const resultKeys = new Set(tickets.map(hierarchyKey));
+  tickets = [
+    ...tickets,
+    ...trash.filter((ticket) => ticket.inTrash && !resultKeys.has(hierarchyKey(ticket))),
+  ];
   const byKey = new Map(tickets.map((ticket) => [hierarchyKey(ticket), ticket]));
   const parents = new Map<string, string>();
   const imported = (ticket: HierarchyTicket) =>
@@ -60,9 +69,23 @@ export function ticketHierarchy<T extends HierarchyTicket>(tickets: T[], expande
     }
     for (const value of path) checked.add(value);
   }
+  // Include trash ancestors/descendants only when their branch contains an original result.
+  const includedRoots = new Set<string>();
+  for (const key of resultKeys) {
+    let root = key;
+    while (parents.has(root)) root = parents.get(root)!;
+    includedRoots.add(root);
+  }
+  const included = new Set<string>();
+  for (const key of byKey.keys()) {
+    let root = key;
+    while (parents.has(root)) root = parents.get(root)!;
+    if (includedRoots.has(root)) included.add(key);
+  }
   const children = new Map<string, T[]>();
   const roots: T[] = [];
   for (const ticket of byKey.values()) {
+    if (!included.has(hierarchyKey(ticket))) continue;
     const parent = parents.get(hierarchyKey(ticket));
     if (!parent) roots.push(ticket);
     else {
@@ -82,5 +105,9 @@ export function ticketHierarchy<T extends HierarchyTicket>(tickets: T[], expande
       for (let i = nested.length - 1; i >= 0; i--)
         stack.push({ ticket: nested[i], depth: row.depth + 1 });
   }
-  return { rows, parents };
+  return {
+    rows,
+    parents,
+    tickets: [...byKey.values()].filter((ticket) => included.has(hierarchyKey(ticket))),
+  };
 }

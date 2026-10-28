@@ -61,6 +61,7 @@ export function Tickets({
   }, [azureMode, refreshAzure]);
   const run = async (...args: any[]) => {
     await parentRun(...args);
+    hierarchy.refreshTrash();
     if (azureMode) browser.refresh();
   };
   const tickets = azureMode
@@ -233,12 +234,16 @@ export function Tickets({
                 });
         return (direction === "desc" ? -cmp : cmp) || a.id - b.id;
       });
-  const selection = useTicketSelection<any>(sorted, JSON.stringify([currentSource, context]));
   const hierarchy = useTicketHierarchy<any>(
     sorted,
     currentSource,
     sourceMismatch ? undefined : (targetId ?? undefined),
     view === "table",
+    true,
+  );
+  const selection = useTicketSelection<any>(
+    hierarchy.tickets,
+    JSON.stringify([currentSource, context]),
   );
   return (
     <>
@@ -542,6 +547,8 @@ export function Tickets({
             {azureMode
               ? `На странице: ${sorted.length}`
               : `Показано ${sorted.length} из ${tickets.length}`}
+            {hierarchy.tickets.length > sorted.length &&
+              ` · Из корзины в иерархии: ${hierarchy.tickets.length - sorted.length}`}
           </p>
           {azureMode && <TicketColorLegend />}
         </div>
@@ -646,7 +653,7 @@ export function Tickets({
                 <th className="ticket-selection-column">
                   <SelectAllTickets
                     count={selection.selected.length}
-                    total={sorted.length}
+                    total={hierarchy.tickets.length}
                     onChange={selection.toggleAll}
                   />
                 </th>
@@ -736,7 +743,7 @@ export function Tickets({
                 highlighted={targetId === t.id && !sourceMismatch}
                 restoring={busy === "restore"}
                 onRestore={
-                  azureMode && t.inTrash
+                  t.inTrash
                     ? () =>
                         run(
                           "restore",
@@ -755,7 +762,7 @@ export function Tickets({
                     : undefined
                 }
                 onRemove={
-                  azureMode && !t.imported
+                  t.inTrash || (azureMode && !t.imported)
                     ? undefined
                     : () =>
                         run(

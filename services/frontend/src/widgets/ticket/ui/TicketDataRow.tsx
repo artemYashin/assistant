@@ -93,7 +93,10 @@ export function TicketDataRow({
                 {hierarchy.expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
             ) : (
-              <span className="ticket-hierarchy-spacer" aria-hidden="true" />
+              <span
+                className={`ticket-hierarchy-spacer${hierarchy.depth > 0 ? " is-child" : ""}`}
+                aria-hidden="true"
+              />
             ))}
           <input
             className="ticket-checkbox"

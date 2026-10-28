@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { List, ListTree, LoaderCircle, RefreshCw } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { hierarchyKey, ticketHierarchy, type HierarchyTicket } from "../model/ticket-hierarchy.js";
@@ -10,6 +10,7 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
   source: string,
   targetId?: number,
   enabled = true,
+  includeTrash = false,
 ) {
   const [grouped, setGrouped] = useState(() => {
     try {
@@ -18,6 +19,39 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
       return false;
     }
   });
+  const [trash, setTrash] = useState<T[]>([]);
+  const [trashError, setTrashError] = useState("");
+  const [trashVersion, setTrashVersion] = useState(0);
+  const refreshTrash = useCallback(() => setTrashVersion((value) => value + 1), []);
+  useEffect(() => {
+    if (!grouped || !enabled || !includeTrash) return;
+    const events = [
+      "orbit:ticket-removed",
+      "orbit:ticket-tracked",
+      "orbit:ticket-metadata",
+      "orbit:ticket-developers",
+      "orbit:ticket-state",
+      "orbit:ticket-assignee",
+    ];
+    events.forEach((name) => window.addEventListener(name, refreshTrash));
+    return () => events.forEach((name) => window.removeEventListener(name, refreshTrash));
+  }, [grouped, enabled, includeTrash, refreshTrash]);
+  useEffect(() => {
+    if (!grouped || !enabled || !includeTrash) return;
+    let live = true;
+    setTrashError("");
+    void api<T[]>("/tickets/trash")
+      .then((rows) => {
+        if (live) setTrash(rows.filter((row) => row.source === source));
+      })
+      .catch((error) => {
+        if (live)
+          setTrashError(`Не удалось загрузить связанные тикеты из корзины: ${error.message}`);
+      });
+    return () => {
+      live = false;
+    };
+  }, [grouped, enabled, includeTrash, source, trashVersion]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [snapshots, setSnapshots] = useState<Map<string, HierarchyTicket>>(() => new Map());
   const snapshotRef = useRef(snapshots);
@@ -25,9 +59,15 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
   const lastRefresh = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const trashCandidates = useMemo(() => {
+    if (!includeTrash || !grouped || !enabled) return [];
+    const keys = new Set(tickets.map(hierarchyKey));
+    return trash.filter((row) => row.source === source && !keys.has(hierarchyKey(row)));
+  }, [includeTrash, grouped, enabled, trash, source, tickets]);
+  const candidates = useMemo(() => [...tickets, ...trashCandidates], [tickets, trashCandidates]);
   // A stable, data-only dependency avoids refetching because a table re-rendered.
   const request = JSON.stringify(
-    tickets.map(({ id, source, relations, relationsUpdatedAt, imported, inTrash }) => ({
+    candidates.map(({ id, source, relations, relationsUpdatedAt, imported, inTrash }) => ({
       id,
       source,
       relations,
@@ -93,7 +133,7 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
   }, [grouped, source, request, reload, enabled]);
   const enriched = useMemo(
     () =>
-      tickets.map((ticket) => {
+      candidates.map((ticket) => {
         const cached = snapshots.get(hierarchyKey(ticket));
         return cached &&
           (ticket.relations == null ||
@@ -105,9 +145,13 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
             }
           : ticket;
       }),
-    [tickets, snapshots],
+    [candidates, snapshots],
   );
-  const tree = useMemo(() => ticketHierarchy(enriched, expanded), [enriched, expanded]);
+  const tree = useMemo(
+    () =>
+      ticketHierarchy(enriched.slice(0, tickets.length), expanded, enriched.slice(tickets.length)),
+    [enriched, expanded, tickets.length],
+  );
   useEffect(() => {
     if (!grouped || !enabled || !targetId) return;
     let key = tree.parents.get(hierarchyKey({ source, id: targetId }));
@@ -129,6 +173,8 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
   }
   return {
     grouped,
+    refreshTrash,
+    tickets: grouped && enabled ? tree.tickets : tickets,
     rows: grouped
       ? tree.rows
       : tickets.map((ticket) => ({ ticket, depth: 0, children: 0, expanded: false })),
@@ -157,7 +203,10 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
             title="Обновить связи из Azure"
             aria-label="Обновить связи из Azure"
             disabled={loading}
-            onClick={() => setReload((value) => value + 1)}
+            onClick={() => {
+              setReload((value) => value + 1);
+              refreshTrash();
+            }}
           >
             {loading ? <LoaderCircle size={15} className="spin" /> : <RefreshCw size={15} />}
           </button>
@@ -169,7 +218,14 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
         <span>
           Группировка Parent/Child внутри текущих результатов. Фильтры и выбор для массовых действий
           учитывают также свёрнутые строки.
+          {includeTrash &&
+            " Связанные строки из корзины добавляются независимо от фильтров и выделены оранжевым."}
         </span>
+        {trashError && (
+          <span role="alert" className="error">
+            {trashError}
+          </span>
+        )}
         {loading && <span role="status">Загружаю связи…</span>}
         {error && (
           <span role="alert" className="error">

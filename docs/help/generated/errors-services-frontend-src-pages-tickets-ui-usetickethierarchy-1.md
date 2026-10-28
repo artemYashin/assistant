@@ -7,12 +7,18 @@
 
 ### Сообщение
 
+Не удалось загрузить связанные тикеты из корзины: {…}
+
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:49.
+
+### Сообщение
+
 Подключение изменилось. Обновите список.
 
-Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:70.
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:110.
 
 ### Сообщение
 
 Часть связей недоступна в Azure. Используется прежний кэш; неизвестные связи не сгруппированы. Можно повторить обновление.
 
-Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:81.
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:121.
