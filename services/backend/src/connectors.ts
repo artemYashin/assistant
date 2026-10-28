@@ -1,13 +1,7 @@
 import { azurePrLinks } from "./ticket-pull-requests.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { commentMarkdown, commentImageType } from "./comment-markdown.js";
-import {
-  browseQuery,
-  browseFields,
-  azureSummary,
-  orderBrowseIds,
-  type AzureBrowse,
-} from "./azure-browser.js";
+import { browseQuery, azureSummary, orderBrowseIds, type AzureBrowse } from "./azure-browser.js";
 import { azureLookupSchema, type AzureLookup } from "./azure-ticket-consent.js";
 import { changeTicketStates, type StatusChange } from "./ticket-status-batch.js";
 import { changeTicketState } from "./ticket-status.js";
@@ -139,6 +133,7 @@ export class Connectors {
         },
       },
       "Azure DevOps",
+      { includeErrorMessage: path === "workitemsbatch" || path.startsWith("wiql") },
     );
   }
   private cacheTicketContent(item: any, s: Settings, complete = false) {
@@ -1515,7 +1510,6 @@ export class Connectors {
         method: "POST",
         body: JSON.stringify({
           ids,
-          fields: browseFields,
           $expand: "relations",
           errorPolicy: "Omit",
         }),
@@ -1567,12 +1561,6 @@ export class Connectors {
         body: JSON.stringify({
           ids: missing,
           $expand: "relations",
-          fields: [
-            ...browseFields,
-            "System.Description",
-            "Microsoft.VSTS.Common.AcceptanceCriteria",
-            "Microsoft.VSTS.TCM.ReproSteps",
-          ],
           errorPolicy: "Omit",
         }),
       },
@@ -1646,25 +1634,6 @@ export class Connectors {
           ids,
           $expand: "relations",
           errorPolicy: "Omit",
-          fields: [
-            ...(add
-              ? [
-                  "System.Description",
-                  "Microsoft.VSTS.Common.AcceptanceCriteria",
-                  "Microsoft.VSTS.TCM.ReproSteps",
-                ]
-              : []),
-            "System.Id",
-            "System.TeamProject",
-            "System.Title",
-            "System.WorkItemType",
-            "System.State",
-            "System.AssignedTo",
-            "System.ChangedDate",
-            "System.CreatedDate",
-            AZURE_PRIORITY_FIELD,
-            "System.Tags",
-          ],
         }),
       },
       s,
@@ -1776,7 +1745,6 @@ export class Connectors {
           method: "POST",
           body: JSON.stringify({
             ids: missing,
-            fields: ["System.TeamProject"],
             $expand: "relations",
             errorPolicy: "Omit",
           }),
@@ -1868,20 +1836,6 @@ export class Connectors {
             body: JSON.stringify({
               ids: stage.slice(i, i + 200),
               $expand: "relations",
-              fields: [
-                "System.Description",
-                "Microsoft.VSTS.Common.AcceptanceCriteria",
-                "Microsoft.VSTS.TCM.ReproSteps",
-                "System.Title",
-                "System.State",
-                "System.AssignedTo",
-                "System.WorkItemType",
-                "System.ChangedDate",
-                "System.CreatedDate",
-                AZURE_PRIORITY_FIELD,
-                "System.Tags",
-                "System.TeamProject",
-              ],
               errorPolicy: "Fail",
             }),
           },

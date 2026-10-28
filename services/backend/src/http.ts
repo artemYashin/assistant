@@ -96,6 +96,7 @@ export async function requestJson(
   options: { includeErrorMessage?: boolean } = {},
 ): Promise<any> {
   let pageText: string | undefined;
+  let errorDetail: string | undefined;
   const fail = (kind: string, message: string, response?: Response, code?: string): never => {
     const reference = randomUUID();
     // Never log raw headers, bodies or exception messages; only sanitized HTML text.
@@ -108,6 +109,7 @@ export async function requestJson(
         kind,
         status: response?.status,
         pageText,
+        errorDetail,
         format: response?.headers.get("content-type")?.includes("json")
           ? "json"
           : response?.headers.get("content-type")?.includes("html")
@@ -140,6 +142,7 @@ export async function requestJson(
   if (contentType.toLowerCase().includes("text/html")) pageText = await htmlPreview(response, init);
   if (!response.ok) {
     const detail = options.includeErrorMessage ? await azureErrorDetail(response, init) : "";
+    errorDetail = detail || undefined;
     return fail(
       "http",
       detail
