@@ -1,3 +1,4 @@
+import { matchesTicketFilters } from "../model/matches-ticket-filters.js";
 import { useTicketHierarchy } from "./useTicketHierarchy.js";
 import { TicketKanbanSort } from "./TicketKanbanSort.js";
 import { TicketSearchControls } from "./TicketSearchControls.js";
@@ -155,42 +156,15 @@ export function Tickets({
   const filteredTickets = tickets.filter((t: any) => {
     if (azureMode) return true;
     if (rawTarget) return !sourceMismatch && t.id === targetId;
-    const matchesQuery = [
-      "id",
-      "title",
-      "type",
-      "state",
-      "assigned",
-      ...(hasLocalManagement(settings) ? ["developer_name"] : []),
-      "notes",
-      "tags",
-      "azureTags",
-    ].some((key) =>
-      String(t[key] || "")
-        .toLocaleLowerCase()
-        .includes(query.trim().toLocaleLowerCase()),
-    );
-    return (
-      matchesQuery &&
-      (!overdueDeadline || (t.localDeadline && Date.parse(t.localDeadline) < Date.now())) &&
-      (!azurePriorityFilter.length ||
-        azurePriorityFilter.includes(t.azurePriority == null ? "" : String(t.azurePriority))) &&
-      (!priorityFilter.length || priorityFilter.includes(String(t.priority ?? 1))) &&
-      (!tagFilter.length ||
-        tagFilter.some((tag) => (tag === "" ? !t.tags?.length : t.tags?.includes(tag)))) &&
-      (!azureTagFilter.length ||
-        azureTagFilter.some((tag) =>
-          tag === "" ? !t.azureTags?.length : t.azureTags?.includes(tag),
-        )) &&
-      (!typeFilter.length || typeFilter.includes(t.type || "")) &&
-      (!stateFilter.length || stateFilter.includes(t.state || "")) &&
-      (!assigneeFilter.length || assigneeFilter.includes(t.assigned || "")) &&
-      (!localFilter.length ||
-        localFilter.some((id) =>
-          id === "" ? !t.developers?.length : t.developers?.some((d: any) => d.id === id),
-        ))
-    );
+    return matchesTicketFilters(t, filters, hasLocalManagement(settings));
   });
+  const matchesTrash = (ticket: any) => {
+    if (!azureMode && rawTarget) return !sourceMismatch && ticket.id === targetId;
+    const applied = azureMode ? browser.appliedFilters : filters;
+    return (
+      !!applied && matchesTicketFilters(ticket, applied, hasLocalManagement(settings), azureMode)
+    );
+  };
   const [sortKey, sortDirection] = sort.split("-");
   const sortButton = (key: string, label: string) => (
     <button
@@ -240,6 +214,7 @@ export function Tickets({
     sourceMismatch ? undefined : (targetId ?? undefined),
     view === "table",
     true,
+    matchesTrash,
   );
   const selection = useTicketSelection<any>(
     hierarchy.tickets,
@@ -544,11 +519,11 @@ export function Tickets({
             />
           )}
           <p className="muted" role="status">
-            {azureMode
-              ? `На странице: ${sorted.length}`
-              : `Показано ${sorted.length} из ${tickets.length}`}
-            {hierarchy.tickets.length > sorted.length &&
-              ` · Из корзины в иерархии: ${hierarchy.tickets.length - sorted.length}`}
+            {hierarchy.grouped
+              ? `В иерархии: ${hierarchy.tickets.length} уникальных тикетов · Из корзины: ${hierarchy.tickets.filter((ticket) => ticket.inTrash).length}`
+              : azureMode
+                ? `На странице: ${sorted.length}`
+                : `Показано ${sorted.length} из ${tickets.length}`}
           </p>
           {azureMode && <TicketColorLegend />}
         </div>
@@ -643,7 +618,7 @@ export function Tickets({
       {view === "table" && hierarchy.notice}
       <div
         style={view === "kanban" ? { display: "none" } : undefined}
-        className={`panel ticket-table-fit ticket-active-table${sorted.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}${hierarchy.grouped ? " is-hierarchical" : ""}`}
+        className={`panel ticket-table-fit ticket-active-table${hierarchy.tickets.length ? "" : " is-empty"}${columns.resize.manual ? " has-manual-widths" : ""}${hierarchy.grouped ? " is-hierarchical" : ""}`}
       >
         <table ref={columns.resize.tableRef}>
           {columns.resize.colgroup}
@@ -698,7 +673,7 @@ export function Tickets({
             </tr>
           </thead>
           <tbody>
-            {!sorted.length && (
+            {!hierarchy.tickets.length && (
               <tr className="ticket-empty-row">
                 <td colSpan={columns.count}>
                   <Empty
@@ -725,9 +700,9 @@ export function Tickets({
                 </td>
               </tr>
             )}
-            {hierarchy.rows.map(({ ticket: t, depth, children, expanded }) => (
+            {hierarchy.rows.map(({ key, ticket: t, depth, children, expanded }) => (
               <TicketDataRow
-                key={`${t.source}:${t.id}`}
+                key={key}
                 ticket={t}
                 hierarchy={
                   hierarchy.grouped

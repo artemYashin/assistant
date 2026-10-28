@@ -11,6 +11,7 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
   targetId?: number,
   enabled = true,
   includeTrash = false,
+  matchesTrash?: (ticket: T) => boolean,
 ) {
   const [grouped, setGrouped] = useState(() => {
     try {
@@ -147,18 +148,27 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
       }),
     [candidates, snapshots],
   );
-  const tree = useMemo(
-    () =>
-      ticketHierarchy(enriched.slice(0, tickets.length), expanded, enriched.slice(tickets.length)),
-    [enriched, expanded, tickets.length],
-  );
+  const tree = useMemo(() => {
+    const primary = enriched.slice(0, tickets.length);
+    const extra = enriched.slice(tickets.length);
+    if (includeTrash) extra.push(...primary.filter((ticket) => ticket.inTrash));
+    return ticketHierarchy(
+      includeTrash ? primary.filter((ticket) => !ticket.inTrash) : primary,
+      expanded,
+      extra.filter((ticket) => !matchesTrash || matchesTrash(ticket)),
+    );
+  }, [enriched, expanded, tickets.length, matchesTrash, includeTrash]);
   useEffect(() => {
     if (!grouped || !enabled || !targetId) return;
-    let key = tree.parents.get(hierarchyKey({ source, id: targetId }));
     const ancestors: string[] = [];
-    while (key) {
+    const seen = new Set<string>();
+    const pending = [...(tree.parents.get(hierarchyKey({ source, id: targetId })) || [])];
+    while (pending.length) {
+      const key = pending.pop()!;
+      if (seen.has(key)) continue;
+      seen.add(key);
       ancestors.push(key);
-      key = tree.parents.get(key);
+      pending.push(...(tree.parents.get(key) || []));
     }
     if (ancestors.some((id) => !expanded.has(id)))
       setExpanded((old) => new Set([...old, ...ancestors]));
@@ -177,7 +187,13 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
     tickets: grouped && enabled ? tree.tickets : tickets,
     rows: grouped
       ? tree.rows
-      : tickets.map((ticket) => ({ ticket, depth: 0, children: 0, expanded: false })),
+      : tickets.map((ticket) => ({
+          key: hierarchyKey(ticket),
+          ticket,
+          depth: 0,
+          children: 0,
+          expanded: false,
+        })),
     toggle: (ticket: HierarchyTicket) =>
       setExpanded((old) => {
         const next = new Set(old);
@@ -219,7 +235,7 @@ export function useTicketHierarchy<T extends HierarchyTicket>(
           Группировка Parent/Child внутри текущих результатов. Фильтры и выбор для массовых действий
           учитывают также свёрнутые строки.
           {includeTrash &&
-            " Связанные строки из корзины добавляются независимо от фильтров и выделены оранжевым."}
+            " Дочерние строки из корзины проходят те же фильтры и выделены оранжевым. Повторы под разными родителями учитываются в выборе один раз."}
         </span>
         {trashError && (
           <span role="alert" className="error">

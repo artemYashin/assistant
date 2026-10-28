@@ -9,16 +9,16 @@
 
 Список
 
-Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:191.
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:207.
 
 ### Элемент
 
 По иерархии
 
-Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:195.
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:211.
 
 ### Элемент
 
 Обновить связи из Azure · /
 
-Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:200.
+Источник: services/frontend/src/pages/tickets/ui/useTicketHierarchy.tsx:216.

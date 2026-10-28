@@ -108,6 +108,7 @@ export function useAzureTicketBrowser(enabled: boolean, source: string, workspac
     }
   }
   return {
+    appliedFilters: applied.current,
     rows,
     catalog,
     error,

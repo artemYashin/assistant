@@ -577,9 +577,9 @@ export function TicketTrash({
                 </td>
               </tr>
             )}
-            {hierarchy.rows.map(({ ticket: t, depth, children, expanded }) => (
+            {hierarchy.rows.map(({ key, ticket: t, depth, children, expanded }) => (
               <TicketDataRow
-                key={`${t.source}:${t.id}`}
+                key={key}
                 ticket={{ ...t, inTrash: true }}
                 hierarchy={
                   hierarchy.grouped
