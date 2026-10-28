@@ -2,7 +2,7 @@ import { useKanbanScroll } from "./useKanbanScroll.js";
 import { InitialsAvatar } from "../../../shared/ui/initials-avatar/index.js";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, GripVertical, LoaderCircle, Ticket, X } from "lucide-react";
+import { ArrowRight, Folder, GripVertical, LoaderCircle, Ticket, X } from "lucide-react";
 import { StatusBadge, TicketDate } from "../../../entities/ticket/index.js";
 import { api } from "../../../shared/api/http/index.js";
 import {
@@ -241,6 +241,11 @@ export function TicketKanban({
               >
                 <StatusBadge
                   state={column.name || "Не указан"}
+                  icon={
+                    settings?.kanbanGroups?.some((group) => group.id === column.state) ? (
+                      <Folder size={14} aria-hidden="true" />
+                    ) : undefined
+                  }
                   colors={column.color ? { [column.name]: column.color } : settings?.statusColors}
                 />
                 <span className="ticket-view-count">{column.tickets.length}</span>

@@ -9,28 +9,28 @@
 
 Статус в Azure
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:340.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:345.
 
 ### Элемент
 
 Закрыть подтверждение
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:384.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:389.
 
 ### Элемент
 
 Статус Azure · {…}
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:400.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:405.
 
 ### Элемент
 
 Отмена
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:433.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:438.
 
 ### Элемент
 
 Изменить статус в Azure
 
-Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:436.
+Источник: services/frontend/src/pages/tickets/ui/TicketKanban.tsx:441.

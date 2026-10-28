@@ -92,6 +92,13 @@ body:has(.ticket-kanban, .ticket-view-switch[data-view="kanban"]) {
   padding: 14px;
   border-bottom: 1px solid #dbe4ed;
 }
+.ticket-kanban-heading > .ticket-state-badge {
+  align-items: center;
+  gap: 5px;
+}
+.ticket-kanban-heading > .ticket-state-badge > svg {
+  flex-shrink: 0;
+}
 .ticket-kanban-cards {
   display: grid;
   align-content: start;

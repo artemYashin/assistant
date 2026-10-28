@@ -282,7 +282,7 @@
     "services/frontend/src/pages/tickets/model/kanban.ts": "a6ec32f9af6670d3f30cd03c758ca314f53bc4107445a74ceb6d554a6511d14c",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",
     "services/frontend/src/pages/tickets/ui/CreateTicket.tsx": "7d180c91d32c9e15b646af53a09de8c666fa28b3e35ae400626a8115bfdaf8e7",
-    "services/frontend/src/pages/tickets/ui/TicketKanban.tsx": "b981d8497f0abff114968e2f387710b8aca89dbc9ace4e8baff67034ec757032",
+    "services/frontend/src/pages/tickets/ui/TicketKanban.tsx": "b0fc734eddf9cca5b66324f070e5684e36ee404cd13f7edfacb08bf3fa69aabb",
     "services/frontend/src/pages/tickets/ui/TicketKanbanSort.tsx": "2b610178b5ee98a5e724b004ead05cc92c6bf21c38f26859fabe8252c363780d",
     "services/frontend/src/pages/tickets/ui/TicketSearchControls.tsx": "4e0bb6004d2ab0553a5abfeda394c97de22f9ca86dbfbc4ca55895055cad3bae",
     "services/frontend/src/pages/tickets/ui/TicketTrash.tsx": "01a33c043c506ab34e0b31e7d5e7af61eab24456751af76fa7a6e4b8e1a1c51e",
