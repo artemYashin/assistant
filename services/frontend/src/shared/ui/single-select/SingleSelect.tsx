@@ -7,7 +7,6 @@ import {
   type ReactNode,
   type CSSProperties,
 } from "react";
-import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search, LoaderCircle } from "lucide-react";
 
 export function SingleSelect({
@@ -53,6 +52,8 @@ export function SingleSelect({
   const id = useId();
   useLayoutEffect(() => {
     if (!open || !floating) return;
+    const element = panel.current;
+    if (!element) return;
     const update = () => {
       const rect = trigger.current?.getBoundingClientRect();
       if (!rect) return;
@@ -64,6 +65,7 @@ export function SingleSelect({
       setPosition({
         position: "fixed",
         left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        right: "auto",
         top: upwards ? "auto" : rect.bottom + 4,
         bottom: upwards ? window.innerHeight - rect.top + 4 : "auto",
         width,
@@ -74,12 +76,15 @@ export function SingleSelect({
         zIndex: 1000,
       });
     };
+    // Keep focus inside the owning dialog while escaping its scroll area.
+    element.showPopover();
     update();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
+      if (element.matches(":popover-open")) element.hidePopover();
     };
   }, [open, floating]);
   useEffect(() => {
@@ -105,6 +110,7 @@ export function SingleSelect({
   const dropdown = open ? (
     <div
       ref={panel}
+      popover={floating ? "manual" : undefined}
       style={floating ? position : undefined}
       className="multi-select-panel"
       id={`${id}-panel`}
@@ -212,7 +218,7 @@ export function SingleSelect({
           <ChevronDown size={16} className={open ? "is-open" : ""} />
         )}
       </button>
-      {floating && dropdown ? createPortal(dropdown, document.body) : dropdown}
+      {dropdown}
     </div>
   );
 }

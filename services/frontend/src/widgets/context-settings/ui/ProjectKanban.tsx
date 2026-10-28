@@ -263,6 +263,7 @@ export function ProjectKanban({
               />
               <SingleSelect
                 label="Статус по умолчанию при переносе"
+                floating
                 value={draft.defaultState}
                 disabled={busy || !draft.states.length}
                 options={draft.states.map((state) => ({ value: state, label: state }))}
