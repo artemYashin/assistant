@@ -121,3 +121,72 @@ Services live in services/frontend/src (FSD), services/backend/src,
 services/code-browser and services/voice. Root package/lockfile and Compose remain
 shared. Run npm and Compose from the repository root. Keep runtime data locations
 and bind mounts stable when reorganizing source files.
+
+# Subagent workflow
+
+For new functionality, changes spanning multiple areas, and fixes with significant
+behavioural or data risks, use four subagent roles in the order below. These are
+roles in a workflow, not a requirement to run four agents simultaneously. This
+section explicitly authorizes delegation for repository work. It does not change
+the tool access of Orbit's own chat and review agents.
+
+1. **Requirements.** Start here before implementation. Inspect the request and
+   relevant existing behaviour. Produce concise requirements, acceptance criteria,
+   edge cases and affected areas. Check compatibility with saved data, Lead and
+   Developer modes, related UI, assistant tools and documentation where applicable.
+   Identify contradictions, missing decisions and regression risks. Resolve routine
+   details within the user's intent; send essential questions to the coordinator
+   rather than inventing requirements or expanding scope. User clarification is
+   needed only when a material decision cannot safely be inferred, not as a routine
+   approval gate for every task.
+2. **Development.** Implement against those criteria using existing components and
+   architecture. Include necessary migrations or backward-compatible readers, help
+   updates and release notes under the rules above. Hand off changed files, a short
+   behaviour summary, compatibility assessment, checks already run and remaining
+   risks. Do not silently drop acceptance criteria.
+3. **UI and UX.** For UI changes, inspect the implemented result in a browser when
+   available. Check consistency with existing screens, alignment, spacing, sizes,
+   responsive layouts, overflow, menus, dialogs, keyboard/focus behaviour and empty,
+   loading, error and success states as applicable. Verify shared forms in each
+   entry point. Make bounded presentation fixes only with explicit file ownership;
+   return behavioural issues to Development. If browser access is unavailable,
+   report that visual verification was not performed; source inspection is not a
+   substitute for a rendered check. For backend-only work, state why this stage is
+   not applicable.
+4. **Testing and regressions.** Independently compare the final implementation with
+   the original acceptance criteria. Run repository checks and relevant tests;
+   for the full workflow, run the full automated test suite when feasible. Add
+   meaningful missing coverage for new logic and significant regression paths.
+   Check populated-data upgrades, repeat operations, partial failures and affected
+   neighbouring features where relevant. Report exact checks, results and anything
+   skipped or unavailable. Send defects back for correction and recheck the affected
+   areas after fixes. Never treat passing tests as proof that all bugs are absent.
+
+The primary agent coordinates all stages, retains the user's original request and
+clarifications, resolves disagreements, reviews the combined diff and owns the
+final commit and push when authorized. Subagents must not commit, push, merge or
+change branches independently. Give each stage the relevant requirements, previous
+findings and unresolved issues; do not rely on an abbreviated handoff alone to
+replace the original request. Do not push with unresolved material defects or
+unmet requirements without clearly resolving the scope with the user.
+
+Assign non-overlapping file ownership before parallel edits. Agents share a
+workspace: never have multiple agents modify the same files concurrently or undo
+another agent's work. Independent verification may run in parallel once its inputs
+are ready; coordinate tests that share ports, fixtures or generated files. Respect
+current concurrency limits, counting the coordinator as an agent. When slots are
+limited, reuse an idle agent for the next role or execute stages sequentially. If
+subagent tools are unavailable, perform the applicable stages directly and disclose
+that limitation rather than claiming delegation occurred.
+
+## Short workflow for small changes
+
+For narrow, low-risk changes such as spacing, a label, or repository documentation,
+use implementation plus the appropriate focused review/checks; the coordinator may
+perform these directly without spawning all four roles. A UI tweak still needs a
+visual check when feasible, and an instruction/documentation edit needs a review
+for clarity and consistency. Escalate to the full workflow if investigation reveals
+shared behaviour, data migration, concurrency or wider regression risks. The short
+workflow never waives the existing formatting, required checks, data-preservation,
+documentation or release rules. Avoid new tests that merely mirror trivial
+presentation changes.
