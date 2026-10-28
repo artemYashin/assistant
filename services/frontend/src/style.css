@@ -18331,3 +18331,20 @@ a.pr-branch-link:focus-visible {
   height: 32px;
   padding: 2px;
 }
+
+.multi-select-trigger > .multi-select-selected-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.multi-select-selected-badges > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.multi-select-selected-badges .ticket-state-badge {
+  font-size: 11px;
+  white-space: nowrap;
+}

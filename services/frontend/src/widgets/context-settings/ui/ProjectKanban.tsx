@@ -249,6 +249,7 @@ export function ProjectKanban({
                   )
                   .map((state) => ({ value: state, label: state }))}
                 renderOption={(option) => <StatusBadge state={option.value} colors={colors} />}
+                renderSelected={(option) => <StatusBadge state={option.value} colors={colors} />}
                 onChange={(states) =>
                   setDraft({
                     ...draft,

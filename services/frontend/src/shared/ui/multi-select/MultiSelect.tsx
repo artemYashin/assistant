@@ -27,6 +27,7 @@ export function MultiSelect({
   searchOptions,
   allowCustom = false,
   renderOption,
+  renderSelected,
   floating = false,
 }: {
   label: string;
@@ -38,6 +39,7 @@ export function MultiSelect({
   searchOptions?: (query: string) => Promise<SearchResult>;
   allowCustom?: boolean;
   renderOption?: (option: Option) => ReactNode;
+  renderSelected?: (option: Option) => ReactNode;
   floating?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -176,8 +178,30 @@ export function MultiSelect({
           setOpen(!open);
         }}
       >
-        <span id={`${id}-value`}>{value.length ? selectedLabel : placeholder}</span>
-        {value.length > 0 && (
+        <span
+          id={`${id}-value`}
+          className={renderSelected && value.length ? "multi-select-selected-badges" : undefined}
+          title={
+            renderSelected && value.length
+              ? value
+                  .map((item) => options.find((option) => option.value === item)?.label || item)
+                  .join(", ")
+              : undefined
+          }
+        >
+          {value.length
+            ? renderSelected
+              ? value.map((item) => {
+                  const option = options.find((option) => option.value === item) || {
+                    value: item,
+                    label: item,
+                  };
+                  return <span key={item}>{renderSelected(option)}</span>;
+                })
+              : selectedLabel
+            : placeholder}
+        </span>
+        {value.length > 0 && !renderSelected && (
           <span className="multi-select-count" aria-hidden="true">
             {value.length}
           </span>

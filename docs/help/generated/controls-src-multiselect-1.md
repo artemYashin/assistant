@@ -7,36 +7,42 @@
 
 ### Элемент
 
-/
+/ /
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:166.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:168.
 
 ### Элемент
 
 Поиск: {…} · Имя или e-mail · от 2 символов / Найти…
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:199.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:223.
 
 ### Элемент
 
 Добавить фильтр « · »
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:213.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:237.
+
+### Элемент
+
+/
+
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:253.
 
 ### Элемент
 
 Ошибка поиска / Поиск ограничен
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:264.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:288.
 
 ### Элемент
 
 Сбросить
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:273.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:297.
 
 ### Элемент
 
 Готово
 
-Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:281.
+Источник: services/frontend/src/shared/ui/multi-select/MultiSelect.tsx:305.
