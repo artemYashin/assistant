@@ -1,3 +1,4 @@
+import { ticketInlineImages, withTicketInlineImages } from "./ticket-inline-images.js";
 import { azurePrLinks } from "./ticket-pull-requests.js";
 import { azurePriorityValue, AZURE_PRIORITY_FIELD } from "./azure-priority.js";
 import { commentMarkdown, commentImageType } from "./comment-markdown.js";
@@ -955,7 +956,7 @@ export class Connectors {
     this.store.db
       .prepare("INSERT INTO ticket_cards VALUES (?,?)")
       .run(cardId, JSON.stringify(card));
-    return { cardId, ...card };
+    return { cardId, ...withTicketInlineImages(card) };
   }
   async ticketDetails(id: number, allowCachedFallback = false) {
     const s = this.store.settings(),
@@ -1076,7 +1077,7 @@ export class Connectors {
     this.store.db
       .prepare("INSERT INTO ticket_cards VALUES (?,?)")
       .run(cardId, JSON.stringify(card));
-    return { cardId, ...card };
+    return { cardId, ...withTicketInlineImages(card) };
   }
   async uploadCommentImage(ref: string, bytes: Buffer, name: string, uploadId: string) {
     const card = this.ticketCard(ref),
@@ -1352,7 +1353,7 @@ export class Connectors {
     const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as
       { data: string } | undefined;
     if (!row) throw new AppError(404, "Карточка не найдена");
-    return JSON.parse(row.data);
+    return withTicketInlineImages(JSON.parse(row.data));
   }
   async attachment(ref: string, id: string) {
     const card = this.ticketCard(ref);
@@ -1361,6 +1362,20 @@ export class Connectors {
     const s = this.store.settings();
     if (card.source !== this.store.source(s))
       throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    if (attachment.inline) {
+      const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as {
+        data: string;
+      };
+      const image = [...ticketInlineImages(JSON.parse(row.data)).values()].find(
+        (image) => image.id === id,
+      );
+      if (!image) throw new AppError(404, "Встроенное изображение недоступно");
+      return {
+        body: image.body,
+        type: image.type,
+        name: `image.${image.type === "image/jpeg" ? "jpg" : image.type.split("/")[1]}`,
+      };
+    }
     const pat = this.store.secret("azure.pat");
     if (!pat) throw new AppError(400, "Подключите Azure DevOps");
     const response = await fetch(

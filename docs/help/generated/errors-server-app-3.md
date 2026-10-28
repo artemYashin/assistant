@@ -69,58 +69,58 @@
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/app.ts:1471.
+Источник: services/backend/src/app.ts:1475.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1549.
+Источник: services/backend/src/app.ts:1553.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1575.
+Источник: services/backend/src/app.ts:1579.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1608.
+Источник: services/backend/src/app.ts:1612.
 
 ### Сообщение
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:1913.
+Источник: services/backend/src/app.ts:1917.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:1928.
+Источник: services/backend/src/app.ts:1932.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:1956.
+Источник: services/backend/src/app.ts:1960.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:1961.
+Источник: services/backend/src/app.ts:1965.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:1994.
+Источник: services/backend/src/app.ts:1998.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:1996.
+Источник: services/backend/src/app.ts:2000.

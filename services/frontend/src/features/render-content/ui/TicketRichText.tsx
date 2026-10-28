@@ -7,6 +7,10 @@ export function TicketRichText({ value, card, reference, markdown = false }: any
   const raw = typeof value === "string" ? value : "";
   const preview = (source: string) => {
     try {
+      const inlineId =
+        /^https:\/\/orbit\.invalid\/ticket-inline-image\/(inline-[0-9a-f]{64})$/.exec(source)?.[1];
+      if (inlineId && card.attachments.some((a: any) => a.id === inlineId && a.inline && a.image))
+        return `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${inlineId}`;
       const base = new URL(card.base);
       const url = new URL(source, card.base + "/");
       if (

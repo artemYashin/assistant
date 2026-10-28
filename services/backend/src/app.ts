@@ -1464,6 +1464,10 @@ export function createApp(
     const card = connectors.ticketCard(String(req.params.ref));
     if (card.source !== store.source())
       throw new AppError(409, "Подключение Azure изменилось: загрузите тикет заново");
+    const inline = card.attachments.find(
+      (attachment: any) => attachment.id === req.params.id && attachment.inline,
+    );
+    if (inline) return res.json({ url: "" });
     const id = z.string().uuid().parse(req.params.id);
     if (
       !card.attachments.some((attachment: any) => attachment.id.toLowerCase() === id.toLowerCase())
