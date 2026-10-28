@@ -1,3 +1,4 @@
+import { reorderOffsets } from "./layout.js";
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 
 type Drag = {
@@ -109,6 +110,7 @@ export function usePointerSort(onMove: (from: number, to: number) => void) {
     active.current = next;
     setDrag(next);
   }
+  const offsets = drag ? reorderOffsets(drag.tops, drag.heights, drag.from, drag.to) : [];
   return {
     list,
     cancel,
@@ -123,13 +125,7 @@ export function usePointerSort(onMove: (from: number, to: number) => void) {
           zIndex: 2,
           transition: "none",
         };
-      const next =
-        drag.from < drag.to && index > drag.from && index <= drag.to
-          ? index - 1
-          : drag.from > drag.to && index >= drag.to && index < drag.from
-            ? index + 1
-            : index;
-      return { transform: `translateY(${drag.tops[next] - drag.tops[index]}px)` };
+      return { transform: `translateY(${offsets[index]}px)` };
     },
     isActive: (index: number) => drag?.from === index,
     handlers: (index: number) => ({
