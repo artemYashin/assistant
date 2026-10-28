@@ -11,7 +11,7 @@ type Group = {
 import { StatusBadge } from "../../../entities/ticket/index.js";
 import { useStatusSort } from "../model/useStatusSort.js";
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, GripVertical, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Folder, GripVertical, X } from "lucide-react";
 import { api } from "../../../shared/api/http/index.js";
 import { ContextSaveButton } from "../../../shared/ui/save-button/index.js";
 
@@ -391,6 +391,7 @@ export function ProjectKanban({
                     <span className="project-kanban-group-name">
                       <StatusBadge
                         state={group.name}
+                        icon={<Folder size={14} aria-hidden="true" />}
                         colors={group.color ? { [group.name]: group.color } : {}}
                       />
                     </span>

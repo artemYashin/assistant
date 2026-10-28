@@ -105,16 +105,16 @@
 
 Изменить
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:408.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:409.
 
 ### Элемент
 
 Выше: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:417.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:418.
 
 ### Элемент
 
 Ниже: {…}
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:426.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectKanban.tsx:427.
