@@ -356,6 +356,12 @@ export function CommentEditor(props: Props) {
   }
   return (
     <div
+      data-notes-only={props.notesOnly || undefined}
+      data-empty={
+        editor.state.doc.childCount === 1 &&
+        editor.state.doc.firstChild?.type.name === "paragraph" &&
+        editor.state.doc.firstChild.content.size === 0
+      }
       className={`comment-editor-shell ${preview ? "is-preview" : ""} ${props.disabled ? "is-busy" : ""}`}
     >
       <div

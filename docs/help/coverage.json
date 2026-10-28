@@ -159,7 +159,7 @@
     "services/frontend/src/entities/repository/workers/repository-search-highlight.worker.ts": "cc02f7c6451f9848e8fbe1ab6210380a0ea7bb8dfa294c6281d5b562b8ffb009",
     "services/frontend/src/entities/rich-content/editor/index.ts": "15f355296d6633128414ffdf1a28a778deaca8bd9867a03b3cc1b0f14d2610e7",
     "services/frontend/src/entities/rich-content/preview/index.ts": "2dfcde3fcded8b7b70cd9d0f9f3ae55a8631d1d53fa03ce39840cc031a4fe639",
-    "services/frontend/src/entities/rich-content/ui/CommentEditor.tsx": "1d4d0192d17f8609baafdff7edfd5cb3d41df00f6d89ed1a891b8d132f362c75",
+    "services/frontend/src/entities/rich-content/ui/CommentEditor.tsx": "3c8edc4be9b062970a7cf9f62896668d734693c2fad24b95454f8a53fdf14728",
     "services/frontend/src/entities/rich-content/ui/ImageActions.tsx": "2483657b5a0806bf18ef31a49563d560fcc95898b23fc8c57eccbba1d0359c1a",
     "services/frontend/src/entities/rich-content/ui/ImagePreview.tsx": "5089d6e4a912d08d148723359ed96939cb5dfda875252e8b6dfae7c5cac88108",
     "services/frontend/src/entities/schedule/index.ts": "2cea2c121a9b2cbff26ca9b35e141ec94d632c9a2b87206974833e7827c2f71c",

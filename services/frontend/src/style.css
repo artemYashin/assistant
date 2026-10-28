@@ -15107,12 +15107,15 @@ a.pr-branch-link:focus-visible {
 .comment-editor-shell .tiptap p:last-child {
   margin-bottom: 0;
 }
-.comment-editor-shell .tiptap > p:only-child:has(> br:only-child)::before {
+.comment-editor-shell[data-empty="true"] .tiptap::before {
   content: "Напишите комментарий…";
   color: #8593a0;
   pointer-events: none;
   float: left;
   height: 0;
+}
+.comment-editor-shell[data-empty="true"][data-notes-only="true"] .tiptap::before {
+  content: "Напишите заметку…";
 }
 .comment-editor-shell .tiptap pre {
   padding: 12px;
