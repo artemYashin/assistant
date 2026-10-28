@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ ${ORBIT_OPTIONAL_DOCKER_CREDENTIALS:-} != 1 ]]; then
+  orbit_entry_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+  exec bash "$orbit_entry_dir/scripts/with-optional-docker-credentials.sh" bash "$orbit_entry_dir/update.sh" "$@"
+fi
 if (($#)); then echo 'Usage: bash update.sh'; exit 1; fi
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 source scripts/orbit-launch.sh

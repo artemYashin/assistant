@@ -6,4 +6,4 @@ if (($#)); then
   exit 1
 fi
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-exec bash "$script_dir/migrate-docker-storage.sh" --init
+exec bash "$script_dir/with-optional-docker-credentials.sh" bash "$script_dir/migrate-docker-storage.sh" --init
