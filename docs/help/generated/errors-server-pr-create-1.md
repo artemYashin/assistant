@@ -51,76 +51,76 @@ No branch stats
 
 Не удалось определить последние ваши ветки. Показан обычный список.
 
-Источник: services/backend/src/pr-create.ts:119.
+Источник: services/backend/src/pr-create.ts:124.
 
 ### Сообщение
 
 Azure не вернул последний коммит ветки
 
-Источник: services/backend/src/pr-create.ts:140.
+Источник: services/backend/src/pr-create.ts:145.
 
 ### Сообщение
 
 Выберите разные source и target ветки
 
-Источник: services/backend/src/pr-create.ts:168.
+Источник: services/backend/src/pr-create.ts:173.
 
 ### Сообщение
 
 Создание этого PR уже выполняется
 
-Источник: services/backend/src/pr-create.ts:170.
+Источник: services/backend/src/pr-create.ts:175.
 
 ### Сообщение
 
 Этот запрос уже использован с другими данными. Вернитесь к исходной форме.
 
-Источник: services/backend/src/pr-create.ts:186.
+Источник: services/backend/src/pr-create.ts:191.
 
 ### Сообщение
 
 Результат создания PR пока не подтверждён. Проверьте список PR в Azure перед новым запросом; повторное создание остановлено.
 
-Источник: services/backend/src/pr-create.ts:198.
+Источник: services/backend/src/pr-create.ts:203.
 
 ### Сообщение
 
 Ветка {…} больше не существует
 
-Источник: services/backend/src/pr-create.ts:215.
+Источник: services/backend/src/pr-create.ts:220.
 
 ### Сообщение
 
 Не удалось проверить существующие PR
 
-Источник: services/backend/src/pr-create.ts:221.
+Источник: services/backend/src/pr-create.ts:226.
 
 ### Сообщение
 
 Настройки изменились. Откройте диалог заново
 
-Источник: services/backend/src/pr-create.ts:225.
+Источник: services/backend/src/pr-create.ts:230.
 
 ### Сообщение
 
 https://orbit.invalid/pr-image/{…}
 
-Источник: services/backend/src/pr-create.ts:229.
+Источник: services/backend/src/pr-create.ts:234.
 
 ### Сообщение
 
 Описание со ссылками на изображения превышает 20000 символов. Сократите описание.
 
-Источник: services/backend/src/pr-create.ts:234.
+Источник: services/backend/src/pr-create.ts:239.
 
 ### Сообщение
 
 Azure не подтвердил номер PR. Проверьте список PR перед повтором
 
-Источник: services/backend/src/pr-create.ts:258.
+Источник: services/backend/src/pr-create.ts:263.
 
 ### Сообщение
 
 Attachments unavailable
 
-Источник: services/backend/src/pr-create.ts:293.
+Источник: services/backend/src/pr-create.ts:298.

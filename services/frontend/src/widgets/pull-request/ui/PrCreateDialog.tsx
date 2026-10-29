@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { GitPullRequest, X } from "lucide-react";
+import { GitPullRequest, GitCommitHorizontal, LoaderCircle, X } from "lucide-react";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
 import { api } from "../../../shared/api/http/index.js";
+function relativeBranchUpdate(date: string, now: number) {
+  const elapsed = now - Date.parse(date);
+  if (!Number.isFinite(elapsed)) return "";
+  const minutes = Math.max(0, Math.floor(elapsed / 60000));
+  if (minutes < 1) return "updated now";
+  const amount =
+    minutes < 60 ? minutes : minutes < 1440 ? Math.floor(minutes / 60) : Math.floor(minutes / 1440);
+  const unit = minutes < 60 ? "minute" : minutes < 1440 ? "hour" : "day";
+  return `updated ${new Intl.RelativeTimeFormat("en", { numeric: "always" }).format(-amount, unit)}`;
+}
 function BranchSelect({
   monitor,
   label,
@@ -18,12 +28,18 @@ function BranchSelect({
   disabled: boolean;
   personal?: boolean;
 }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!personal) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, [personal]);
   const [query, setQuery] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{
     branches: string[];
     more: boolean;
-    personalBranches?: string[];
+    branchUpdatedAt?: Record<string, string>;
     warning?: string;
   }>({
     branches: [],
@@ -62,10 +78,28 @@ function BranchSelect({
         value={value}
         options={[...new Set([...data.branches, ...(value ? [value] : [])])].map((v) => ({
           value: v,
-          label:
-            v.replace(/^refs\/heads\//, "") +
-            (data.personalBranches?.includes(v) ? " · мой push" : ""),
+          label: v.replace(/^refs\/heads\//, ""),
         }))}
+        renderOption={
+          personal
+            ? (option) => {
+                const date = data.branchUpdatedAt?.[option.value];
+                const updated = date ? relativeBranchUpdate(date, now) : "";
+                return (
+                  <span className="pr-branch-option">
+                    <span>{option.label}</span>
+                    {updated && (
+                      <small
+                        title={`Последний ваш push: ${new Date(date!).toLocaleString("ru-RU")}`}
+                      >
+                        {updated}
+                      </small>
+                    )}
+                  </span>
+                );
+              }
+            : undefined
+        }
         onChange={onChange}
         onSearch={setQuery}
         onOpen={() => setRefresh((n) => n + 1)}
@@ -315,7 +349,7 @@ export function PrCreateDialog({
               required
               maxLength={400}
               value={title}
-              disabled={locked}
+              disabled={locked || headLoading}
               onChange={(e) => {
                 titleEdited.current = true;
                 setTitle(e.target.value);
@@ -330,14 +364,20 @@ export function PrCreateDialog({
           )}
           <button
             type="button"
-            className="pr-create-title-refresh"
+            className="secondary pr-create-title-refresh"
             disabled={locked || !source || headLoading}
+            aria-busy={headLoading}
             onClick={() => {
               titleEdited.current = false;
               setHeadRefresh((n) => n + 1);
             }}
           >
-            Взять название из коммита
+            {headLoading ? (
+              <LoaderCircle size={16} className="spin" aria-hidden="true" />
+            ) : (
+              <GitCommitHorizontal size={16} aria-hidden="true" />
+            )}
+            Использовать название из последнего коммита
           </button>
           <div className="pr-create-description">
             <span className="multi-select-label">Описание</span>
@@ -386,6 +426,7 @@ export function PrCreateDialog({
             className="primary"
             disabled={
               busy ||
+              headLoading ||
               !monitor ||
               !source ||
               !target ||

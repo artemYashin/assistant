@@ -163,10 +163,13 @@ test("personal recent branches rank by authenticated pushes, validate deleted br
       return json({ value: [{ name: "main" }, { name: "personal" }] });
     return json({ value: [{ name: "refs/heads/main" }] });
   });
-  assert.deepEqual((await f.service.branches(f.input.monitor, "", true)).branches, [
-    "refs/heads/personal",
-    "refs/heads/main",
-  ]);
+  const personal = await f.service.branches(f.input.monitor, "", true);
+  assert.deepEqual(personal.branches, ["refs/heads/personal", "refs/heads/main"]);
+  assert.ok("branchUpdatedAt" in personal);
+  assert.deepEqual(personal.branchUpdatedAt, {
+    "refs/heads/personal": "2026-10-29T00:00:00.000Z",
+    "refs/heads/main": "2026-10-28T00:00:00.000Z",
+  });
   fail = true;
   const result = await f.service.branches(f.input.monitor, "", true);
   assert.deepEqual(result.branches, ["refs/heads/main"]);

@@ -9,118 +9,118 @@
 
 Коммит не найден среди первых 1000 коммитов текущего PR
 
-Источник: services/backend/src/pull-requests.ts:1519.
+Источник: services/backend/src/pull-requests.ts:1529.
 
 ### Сообщение
 
 Azure не вернул данные коммита
 
-Источник: services/backend/src/pull-requests.ts:1534.
+Источник: services/backend/src/pull-requests.ts:1544.
 
 ### Сообщение
 
 Azure вернул некорректный родительский коммит
 
-Источник: services/backend/src/pull-requests.ts:1537.
+Источник: services/backend/src/pull-requests.ts:1547.
 
 ### Сообщение
 
 Коммиты PR не загружены. Обновите pull request.
 
-Источник: services/backend/src/pull-requests.ts:1554.
+Источник: services/backend/src/pull-requests.ts:1564.
 
 ### Сообщение
 
 Версия PR изменилась во время загрузки. Откройте diff заново.
 
-Источник: services/backend/src/pull-requests.ts:1626.
+Источник: services/backend/src/pull-requests.ts:1636.
 
 ### Сообщение
 
 PR не найден
 
-Источник: services/backend/src/pull-requests.ts:1658.
+Источник: services/backend/src/pull-requests.ts:1668.
 
 ### Сообщение
 
 PR уже закрыт
 
-Источник: services/backend/src/pull-requests.ts:1665.
+Источник: services/backend/src/pull-requests.ts:1675.
 
 ### Сообщение
 
 Изменения PR обновились. Откройте diff заново перед комментированием.
 
-Источник: services/backend/src/pull-requests.ts:1670.
+Источник: services/backend/src/pull-requests.ts:1680.
 
 ### Сообщение
 
 Не удалось сопоставить версию diff с Azure. Обновите diff.
 
-Источник: services/backend/src/pull-requests.ts:1685.
+Источник: services/backend/src/pull-requests.ts:1695.
 
 ### Сообщение
 
 Azure не вернул изменения файлов
 
-Источник: services/backend/src/pull-requests.ts:1694.
+Источник: services/backend/src/pull-requests.ts:1704.
 
 ### Сообщение
 
 Файл не найден в правой части изменений PR
 
-Источник: services/backend/src/pull-requests.ts:1699.
+Источник: services/backend/src/pull-requests.ts:1709.
 
 ### Сообщение
 
 Строка не найдена в файле выбранной версии
 
-Источник: services/backend/src/pull-requests.ts:1706.
+Источник: services/backend/src/pull-requests.ts:1716.
 
 ### Сообщение
 
 Azure не подтвердил комментарий. Проверьте PR перед повторной отправкой.
 
-Источник: services/backend/src/pull-requests.ts:1743.
+Источник: services/backend/src/pull-requests.ts:1753.
 
 ### Сообщение
 
 Не удалось сопоставить комментарии с версией diff. Откройте diff заново.
 
-Источник: services/backend/src/pull-requests.ts:1765.
+Источник: services/backend/src/pull-requests.ts:1775.
 
 ### Сообщение
 
 Azure не вернул комментарии PR
 
-Источник: services/backend/src/pull-requests.ts:1774.
+Источник: services/backend/src/pull-requests.ts:1784.
 
 ### Сообщение
 
 Azure не вернул базу или список изменений
 
-Источник: services/backend/src/pull-requests.ts:1827.
+Источник: services/backend/src/pull-requests.ts:1837.
 
 ### Сообщение
 
 Azure изменил базу сравнения при загрузке списка файлов
 
-Источник: services/backend/src/pull-requests.ts:1843.
+Источник: services/backend/src/pull-requests.ts:1853.
 
 ### Сообщение
 
 Достигнут лимит 100 файлов для загрузки содержимого.
 
-Источник: services/backend/src/pull-requests.ts:1867.
+Источник: services/backend/src/pull-requests.ts:1877.
 
 ### Сообщение
 
 Список изменений загружен не полностью: достигнут лимит загрузки списка файлов.
 
-Источник: services/backend/src/pull-requests.ts:1894.
+Источник: services/backend/src/pull-requests.ts:1904.
 
 ### Сообщение
 
 Список файлов неполный: лимит 100 файлов после исключений
 
-Источник: services/backend/src/pull-requests.ts:1896.
+Источник: services/backend/src/pull-requests.ts:1906.

@@ -109,6 +109,11 @@ export class PrCreate {
       return {
         branches,
         personalBranches: branches.filter((name) => recent.has(name)),
+        branchUpdatedAt: Object.fromEntries(
+          branches
+            .filter((name) => recent.has(name))
+            .map((name) => [name, new Date(recent.get(name)!).toISOString()]),
+        ),
         more: data.value.length >= 100,
       };
     } catch {

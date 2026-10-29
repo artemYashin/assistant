@@ -9,58 +9,58 @@
 
 Azure did not confirm attachment
 
-Источник: services/backend/src/pr-create.ts:306.
+Источник: services/backend/src/pr-create.ts:311.
 
 ### Сообщение
 
 Azure did not confirm description
 
-Источник: services/backend/src/pr-create.ts:330.
+Источник: services/backend/src/pr-create.ts:335.
 
 ### Сообщение
 
 PR создан, но описание с изображениями не сохранено полностью. Повторите отправку из этой формы: новый PR не будет создан.
 
-Источник: services/backend/src/pr-create.ts:340.
+Источник: services/backend/src/pr-create.ts:345.
 
 ### Сообщение
 
 Не все изображения приложены к запросу.
 
-Источник: services/backend/src/pr-create.ts:353.
+Источник: services/backend/src/pr-create.ts:358.
 
 ### Сообщение
 
 Повторяющийся идентификатор изображения.
 
-Источник: services/backend/src/pr-create.ts:355.
+Источник: services/backend/src/pr-create.ts:360.
 
 ### Сообщение
 
 Не найден файл изображения.
 
-Источник: services/backend/src/pr-create.ts:358.
+Источник: services/backend/src/pr-create.ts:363.
 
 ### Сообщение
 
 Изображение должно быть не больше 10 МБ.
 
-Источник: services/backend/src/pr-create.ts:361.
+Источник: services/backend/src/pr-create.ts:366.
 
 ### Сообщение
 
 Поддерживаются только PNG, JPEG, GIF и WebP.
 
-Источник: services/backend/src/pr-create.ts:372.
+Источник: services/backend/src/pr-create.ts:377.
 
 ### Сообщение
 
 Изображение отсутствует в описании.
 
-Источник: services/backend/src/pr-create.ts:374.
+Источник: services/backend/src/pr-create.ts:379.
 
 ### Сообщение
 
 Прикрепите изображения через редактор: локальные ссылки недоступны другим пользователям.
 
-Источник: services/backend/src/pr-create.ts:398.
+Источник: services/backend/src/pr-create.ts:403.

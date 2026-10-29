@@ -9,4 +9,4 @@
 
 https://orbit.invalid/pr-image/{…}
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:86.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:120.

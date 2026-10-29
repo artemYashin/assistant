@@ -21,7 +21,7 @@ import {
   type ReviewActions,
   type ReviewQuestion,
 } from "./review-questions.js";
-import { descriptionImages, azureImageUrl, readAzureImage } from "./pr-images.js";
+import { prDescriptionImages, azureImageUrl, readAzureImage } from "./pr-images.js";
 import { Connectors, plainText } from "./connectors.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
@@ -272,11 +272,14 @@ export class PullRequests {
         card.ticket_links_error = error.message;
       }
       this.credentials(m);
-      card.images = descriptionImages(card.description).map((imageSource) => ({
+      const rendered = prDescriptionImages(card.description);
+      const images = rendered.sources.map((imageSource) => ({
         source: imageSource,
-        preview: azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version)
-          ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, original: new URL(imageSource, card.url).href })}`
-          : null,
+        preview: rendered.inline.has(imageSource)
+          ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource })}`
+          : azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version)
+            ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, original: new URL(imageSource, card.url).href })}`
+            : null,
       }));
       while (this.previews.size > 32) {
         const oldest = this.previews.keys().next().value!;
@@ -284,7 +287,7 @@ export class PullRequests {
         this.countCache.delete(JSON.stringify([oldest, old.card.repo, old.card.number]));
         this.previews.delete(oldest);
       }
-      return { item: card };
+      return { item: { ...card, description: rendered.description, images } };
     } catch (error) {
       this.previews.delete(id);
       throw error;
@@ -798,8 +801,10 @@ export class PullRequests {
         const descriptionIds = prTicketIds(row.description);
         const titleIds = prTicketIds(row.title || "");
         const azureLinks = cachedPrLinks(this.store, row.monitor, row.repo, row.number);
+        const rendered = prDescriptionImages(row.description);
         return {
           ...row,
+          description: rendered.description,
           review_progress: this.reviewProgress.text(
             row.review_id,
             row.review_status,
@@ -833,18 +838,20 @@ export class PullRequests {
           })(),
           ticket_source: source,
           ticket_links_error: azureLinks.error,
-          images: descriptionImages(row.description).map((source) => ({
+          images: rendered.sources.map((source) => ({
             source,
-            preview: azureImageUrl(
-              source,
-              m.source,
-              row.url,
-              row.repo,
-              row.number,
-              this.store.settings().azureVersion,
-            )
-              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, original: new URL(source, row.url).href })}`
-              : null,
+            preview: rendered.inline.has(source)
+              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
+              : azureImageUrl(
+                    source,
+                    m.source,
+                    row.url,
+                    row.repo,
+                    row.number,
+                    this.store.settings().azureVersion,
+                  )
+                ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, original: new URL(source, row.url).href })}`
+                : null,
           })),
           tickets: [
             ...new Set([
@@ -989,9 +996,12 @@ export class PullRequests {
   async image(monitor: string, repo: string, number: number, source: string) {
     const m = this.readMonitor(monitor);
     const row = this.readCard(monitor, repo, number);
-    if (!m || !row || !descriptionImages(row.description).includes(source))
+    const rendered = row ? prDescriptionImages(row.description) : null;
+    if (!m || !row || !rendered?.sources.includes(source))
       throw new AppError(404, "Изображение не найдено в описании PR");
     const credentials = this.credentials(m);
+    const inline = rendered.inline.get(source);
+    if (inline) return inline;
     const url = azureImageUrl(source, m.source, row.url, repo, number, credentials.version);
     if (!url) throw new AppError(400, "Это не вложение Azure текущего подключения");
     const result = await readAzureImage(url, credentials.pat);
