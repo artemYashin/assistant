@@ -25,36 +25,24 @@
 
 ### Элемент
 
-Репозиторий
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:306.
-
-### Элемент
-
-{…} / {…} · {…}
-
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:311.
-
-### Элемент
-
 Название
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:346.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:336.
 
 ### Элемент
 
 / · Использовать название из последнего коммита
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:365.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:355.
 
 ### Элемент
 
 · Черновик
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:402.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:392.
 
 ### Элемент
 
 Создаём PR и загружаем изображения… / Повторить отправку / Создать PR в Azure
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:425.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:415.

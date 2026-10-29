@@ -130,7 +130,7 @@ export function PrCreateDialog({
   onCreated: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [monitor, setMonitor] = useState(monitors[0]?.id || "");
+  const [monitor] = useState(monitors[0]?.id || "");
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
   const [title, setTitle] = useState("");
@@ -303,21 +303,11 @@ export function PrCreateDialog({
           }}
         >
           {!monitors.length && <p>Сначала добавьте Git-репозиторий в «Заказчики и проекты».</p>}
-          <SingleSelect
-            label="Репозиторий"
-            value={monitor}
-            options={monitors.map((m) => ({
-              value: m.id,
-              label: `${m.client} / ${m.project} · ${m.repository}`,
-            }))}
-            disabled={locked}
-            onChange={(v) => {
-              setMonitor(v);
-              setSource("");
-              setTarget("");
-              if (!titleEdited.current) setTitle("");
-            }}
-          />
+          {selected && (
+            <div className="pr-create-repository">
+              <span className="muted">Репозиторий:</span> {selected.repository}
+            </div>
+          )}
           {selected && (
             <div className="pr-create-branches" key={monitor}>
               <BranchSelect
