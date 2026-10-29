@@ -47,6 +47,9 @@ const MarkdownImage: Components["img"] = ({ src, alt }) => {
       /^\/api\/ticket-cards\/[^/]+\/attachments\/[^/]+$/.test(preview))
   )
     return <ImagePreview key={preview} src={preview} alt={alt} className="pr-image-link" />;
+  // PR/ticket image metadata is an allowlist. Never bypass a missing local
+  // preview with a direct Azure request (blocked by CSP and missing credentials).
+  if (images !== undefined) return <span>{alt || "Изображение"} · предпросмотр недоступен</span>;
   return typeof src === "string" && /^https?:\/\//i.test(src) ? (
     <ImagePreview src={src} alt={alt || "Изображение"} thumbnail={true} />
   ) : (

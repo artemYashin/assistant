@@ -21,16 +21,16 @@ https://orbit.invalid/pr-inline-image/{…}
 
 Изображение недоступно в Azure
 
-Источник: services/backend/src/pr-images.ts:174.
+Источник: services/backend/src/pr-images.ts:181.
 
 ### Сообщение
 
 Изображение больше 20 МБ
 
-Источник: services/backend/src/pr-images.ts:185.
+Источник: services/backend/src/pr-images.ts:192.
 
 ### Сообщение
 
 Поддерживаются PNG, JPEG, GIF и WebP
 
-Источник: services/backend/src/pr-images.ts:202.
+Источник: services/backend/src/pr-images.ts:209.

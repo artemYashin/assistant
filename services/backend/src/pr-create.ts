@@ -228,12 +228,16 @@ export class PrCreate {
       const fresh = this.connection(input.monitor);
       if (JSON.stringify(fresh) !== JSON.stringify(c))
         throw new AppError(409, "Настройки изменились. Откройте диалог заново");
+      // Azure returns a canonical GUID after create; reserve its full length now.
+      const lengthRoot = c.root.replace(/[^/]+$/, (name) =>
+        name.length < 36 ? "0".repeat(36) : name,
+      );
       let resolvedLength = input.description;
       for (const file of uploads)
         resolvedLength = resolvedLength
           .split(`https://orbit.invalid/pr-image/${file.id}`)
           .join(
-            `${c.root}/pullRequests/2147483647/attachments/${input.requestId}-${file.id}.${file.extension}?api-version=${encodeURIComponent(c.version)}`,
+            `${lengthRoot}/pullRequests/2147483647/attachments/${input.requestId}-${file.id}.${file.extension}?api-version=${encodeURIComponent(c.version)}`,
           );
       if (resolvedLength.length > 20000)
         throw new AppError(
@@ -262,6 +266,11 @@ export class PrCreate {
       if (!Number.isInteger(result.pullRequestId))
         throw new AppError(502, "Azure не подтвердил номер PR. Проверьте список PR перед повтором");
       receipt.number = result.pullRequestId;
+      if (
+        typeof result.repository?.id === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(result.repository.id)
+      )
+        receipt.repositoryId = result.repository.id;
       save();
       return await this.finishImages(c, input, uploads, receipt, save);
     } finally {
@@ -276,6 +285,10 @@ export class PrCreate {
     save: () => void,
   ) {
     const number = receipt.number!;
+    // Optional for old receipts: deterministic names and uploaded IDs are unchanged.
+    const attachmentRoot = receipt.repositoryId
+      ? c.root.replace(/[^/]+$/, encodeURIComponent(receipt.repositoryId))
+      : c.root;
     if (!uploads.length) {
       receipt.complete = true;
       save();
@@ -285,7 +298,7 @@ export class PrCreate {
       let description = input.description;
       for (const file of uploads) {
         const name = `${input.requestId}-${file.id}.${file.extension}`;
-        const url = `${c.root}/pullRequests/${number}/attachments/${name}?api-version=${encodeURIComponent(c.version)}`;
+        const url = `${attachmentRoot}/pullRequests/${number}/attachments/${name}?api-version=${encodeURIComponent(c.version)}`;
         if (!receipt.uploaded.includes(file.id)) {
           // Deterministic attachment names let a retry recover an upload whose
           // successful response was lost, without creating another attachment.
@@ -348,7 +361,13 @@ export class PrCreate {
   }
 }
 
-type Receipt = { digest: string; number: number | null; uploaded: string[]; complete: boolean };
+type Receipt = {
+  repositoryId?: string;
+  digest: string;
+  number: number | null;
+  uploaded: string[];
+  complete: boolean;
+};
 type Upload = { id: string; extension: string; buffer: Buffer };
 function validateImages(
   input: z.infer<typeof createPrSchema>,

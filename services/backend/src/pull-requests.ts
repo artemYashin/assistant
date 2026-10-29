@@ -277,7 +277,14 @@ export class PullRequests {
         source: imageSource,
         preview: rendered.inline.has(imageSource)
           ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource })}`
-          : azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version)
+          : azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version, {
+                repositories: [m.repository, card.repository].filter(
+                  (value): value is string => typeof value === "string",
+                ),
+                projects: [m.azure_project, card.azure_project].filter(
+                  (value): value is string => typeof value === "string",
+                ),
+              })
             ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, original: new URL(imageSource, card.url).href })}`
             : null,
       }));
@@ -849,6 +856,7 @@ export class PullRequests {
                     row.repo,
                     row.number,
                     this.store.settings().azureVersion,
+                    { repositories: [m.repository], projects: [m.azure_project] },
                   )
                 ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, original: new URL(source, row.url).href })}`
                 : null,
@@ -1002,7 +1010,52 @@ export class PullRequests {
     const credentials = this.credentials(m);
     const inline = rendered.inline.get(source);
     if (inline) return inline;
-    const url = azureImageUrl(source, m.source, row.url, repo, number, credentials.version);
+    let url = azureImageUrl(
+      source,
+      m.source,
+      row.url,
+      repo,
+      number,
+      credentials.version,
+      monitor.startsWith("preview:")
+        ? {
+            repositories: [row.repository].filter(
+              (value): value is string => typeof value === "string",
+            ),
+            projects: [row.azure_project].filter(
+              (value): value is string => typeof value === "string",
+            ),
+          }
+        : {},
+    );
+    // Monitor names may differ from the GUID stored by synchronization. Preview
+    // eligibility is only a hint: resolve aliases through Azure before sending PAT.
+    if (
+      !url &&
+      azureImageUrl(source, m.source, row.url, repo, number, credentials.version, {
+        repositories: [m.repository],
+        projects: [m.azure_project],
+      })
+    ) {
+      const metadata = await this.get(m, `git/repositories/${enc(repo)}`, credentials);
+      const project = metadata.project;
+      if (
+        typeof metadata.id === "string" &&
+        metadata.id.toLowerCase() === repo.toLowerCase() &&
+        typeof metadata.name === "string" &&
+        [project?.name, project?.id].some(
+          (value) =>
+            typeof value === "string" && value.toLowerCase() === m.azure_project.toLowerCase(),
+        )
+      ) {
+        url = azureImageUrl(source, m.source, row.url, repo, number, credentials.version, {
+          repositories: [metadata.name],
+          projects: [project.name, project.id].filter(
+            (value): value is string => typeof value === "string",
+          ),
+        });
+      }
+    }
     if (!url) throw new AppError(400, "Это не вложение Azure текущего подключения");
     const result = await readAzureImage(url, credentials.pat);
     if (this.credentials(m).pat !== credentials.pat)

@@ -200,3 +200,43 @@ test("old populated PR snapshots and exact previews serve only their own inline 
   await assert.rejects(prs.image(preview.monitor, "repo", 4, preview.images[0].source), /устарел/);
   assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests ORDER BY number").all(), before);
 });
+
+test("exact PR preview resolves original project and repo name links from trusted PR metadata", async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "orbit-pr-alias-"));
+  const store = new Store(directory);
+  t.after(() => {
+    store.close();
+    rmSync(directory, { recursive: true, force: true });
+  });
+  store.set("settings", { ...store.settings(), azureUrl: base, azureProject: "Project" });
+  store.setSecret("azure.pat", "fixture");
+  const source = `${base}/Project/_apis/git/repositories/Repository/pullRequests/3/attachments/test.png`;
+  const prs = new PullRequests(store, {
+    active: () => null,
+    chat: async () => ({ body: "", requestId: "" }),
+  });
+  t.mock.method(globalThis, "fetch", async (input: any) => {
+    const url = String(input);
+    if (url.includes("/attachments/"))
+      return new Response(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    if (url.includes("/workitems")) return Response.json({ value: [] });
+    return Response.json({
+      pullRequestId: 3,
+      status: "completed",
+      title: "Fixture",
+      description: `![image](${source})`,
+      repository: {
+        id: "repo-guid",
+        name: "Repository",
+        project: { id: "project-guid", name: "Project" },
+      },
+      lastMergeSourceCommit: { commitId: "a".repeat(40) },
+      lastMergeTargetCommit: { commitId: "b".repeat(40) },
+      sourceRefName: "refs/heads/feature",
+      targetRefName: "refs/heads/main",
+    });
+  });
+  const preview = (await prs.lookup(3)).item;
+  assert.match(preview.images[0].preview, /^\/api\/pr\/image\?/);
+  assert.equal((await prs.image(preview.monitor, "repo-guid", 3, source)).type, "image/png");
+});

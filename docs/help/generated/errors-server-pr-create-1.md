@@ -105,22 +105,22 @@ Azure не вернул последний коммит ветки
 
 https://orbit.invalid/pr-image/{…}
 
-Источник: services/backend/src/pr-create.ts:234.
+Источник: services/backend/src/pr-create.ts:238.
 
 ### Сообщение
 
 Описание со ссылками на изображения превышает 20000 символов. Сократите описание.
 
-Источник: services/backend/src/pr-create.ts:239.
+Источник: services/backend/src/pr-create.ts:243.
 
 ### Сообщение
 
 Azure не подтвердил номер PR. Проверьте список PR перед повтором
 
-Источник: services/backend/src/pr-create.ts:263.
+Источник: services/backend/src/pr-create.ts:267.
 
 ### Сообщение
 
 Attachments unavailable
 
-Источник: services/backend/src/pr-create.ts:298.
+Источник: services/backend/src/pr-create.ts:311.

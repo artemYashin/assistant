@@ -125,6 +125,7 @@ export function azureImageUrl(
   repo: string,
   number: number,
   version: string,
+  aliases: { repositories?: string[]; projects?: string[] } = {},
 ): string | null {
   try {
     const url = new URL(raw, prUrl);
@@ -141,16 +142,22 @@ export function azureImageUrl(
         local,
       );
     const git =
-      /^(?:[^/]+\/)?_apis\/git\/repositories\/([^/]+)\/pullRequests\/(\d+)\/attachments\/([^/]+)$/i.exec(
+      /^(?:([^/]+)\/)?_apis\/git\/repositories\/([^/]+)\/pullRequests\/(\d+)\/attachments\/([^/]+)$/i.exec(
         local,
       );
+    const currentProject = decodeURIComponent(new URL(prUrl).pathname)
+      .slice(prefix.length)
+      .split("/_git/")[0];
+    const projects = [currentProject, ...(aliases.projects || [])].map((s) => s.toLowerCase());
+    const repositories = [repo, ...(aliases.repositories || [])].map((s) => s.toLowerCase());
     if (
       !wit &&
       !(
         git &&
-        git[1].toLowerCase() === repo.toLowerCase() &&
-        Number(git[2]) === number &&
-        ![".", ".."].includes(git[3])
+        (!git[1] || projects.includes(git[1].toLowerCase())) &&
+        repositories.includes(git[2].toLowerCase()) &&
+        Number(git[3]) === number &&
+        ![".", ".."].includes(git[4])
       )
     )
       return null;

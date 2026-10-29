@@ -9,28 +9,28 @@
 
 / /
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:92.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:95.
 
 ### Элемент
 
 Открыть тикет #{…} · #
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:195.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:198.
 
 ### Элемент
 
 {…}{…} · {…} · :{…}{…} /
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:233.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:236.
 
 ### Элемент
 
 Перейти к pull request
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:282.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:285.
 
 ### Элемент
 
 Показать в тикете
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:297.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:300.

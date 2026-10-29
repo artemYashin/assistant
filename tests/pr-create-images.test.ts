@@ -315,3 +315,111 @@ test("safeToEdit only unlocks a new unattempted request, never uncertain or comp
   f.store.set(key, { ...f.store.get(key, {}), number: 42, complete: true });
   assert.equal(f.service.safeToEdit(f.input), false);
 });
+
+for (const canonical of [false, true]) {
+  test(`created attachment resolves after sync stores repository GUID (canonical=${canonical})`, async (t) => {
+    const f = fixture(t);
+    const repo = "11111111-2222-3333-4444-555555555555";
+    let description = "";
+    let metadataReads = 0;
+    let metadataOverride: Record<string, unknown> = {};
+    let imageReads = 0;
+    t.mock.method(globalThis, "fetch", async (raw: any, init: any) => {
+      const url = new URL(String(raw));
+      if (url.pathname.endsWith("/refs"))
+        return json({ value: [{ name: `refs/${url.searchParams.get("filter")}` }] });
+      if (init.method === "PATCH") {
+        description = JSON.parse(init.body).description;
+        return json({ pullRequestId: 42, description });
+      }
+      if (url.pathname.includes("/attachments/")) {
+        if (init.method === "POST") return json({ displayName: url.pathname.split("/").at(-1) });
+        imageReads++;
+        return new Response(f.files[0].buffer);
+      }
+      if (url.pathname.endsWith("/attachments")) return json([]);
+      if (init.method === "POST")
+        return json({ pullRequestId: 42, ...(canonical ? { repository: { id: repo } } : {}) });
+      if (url.pathname.endsWith(`/repositories/${repo}`)) {
+        metadataReads++;
+        return json({
+          id: repo,
+          name: "repo",
+          project: { name: "Project", id: "project-guid" },
+          ...metadataOverride,
+        });
+      }
+      return json({ value: [] });
+    });
+    await f.service.create(f.input, f.files);
+    assert.ok(description.includes(`/repositories/${canonical ? repo : "repo"}/`));
+    f.store.db
+      .prepare(
+        "INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      )
+      .run(
+        f.input.monitor,
+        repo,
+        42,
+        "Fixture",
+        "Author",
+        `https://ado.test/collection/Project/_git/${repo}/pullrequest/42`,
+        "a".repeat(40),
+        "b".repeat(40),
+        0,
+        1,
+        "2026-10-29",
+        description,
+      );
+    const prs = new PullRequests(f.store, {
+      active: () => null,
+      chat: async () => ({ body: "", requestId: "" }),
+    });
+    const item = prs.list({ client: "A", project: "B" })[0];
+    assert.match(item.images[0].preview, /^\/api\/pr\/image\?/);
+    assert.equal(
+      (await prs.image(f.input.monitor, repo, 42, item.images[0].source)).type,
+      "image/png",
+    );
+    assert.equal(metadataReads, canonical ? 0 : 1);
+    assert.equal(imageReads, 1);
+    if (!canonical) {
+      for (const override of [
+        { id: "wrong-guid" },
+        { project: { name: "Other", id: "other-guid" } },
+      ]) {
+        metadataOverride = override;
+        await assert.rejects(
+          prs.image(f.input.monitor, repo, 42, item.images[0].source),
+          /не вложение/,
+        );
+        assert.equal(imageReads, 1);
+      }
+      metadataOverride = {};
+    }
+    for (const bad of [
+      item.images[0].source.replace("/Project/", "/AnotherProject/"),
+      item.images[0].source.replace(
+        `/repositories/${canonical ? repo : "repo"}/`,
+        "/repositories/foreign/",
+      ),
+      item.images[0].source.replace("/pullRequests/42/", "/pullRequests/43/"),
+    ]) {
+      f.store.db
+        .prepare("UPDATE pull_requests SET description=? WHERE monitor=?")
+        .run(`![bad](${bad})`, f.input.monitor);
+      await assert.rejects(prs.image(f.input.monitor, repo, 42, bad), /не вложение/);
+    }
+    assert.equal(imageReads, 1);
+    f.store.db
+      .prepare("UPDATE pull_requests SET description=? WHERE monitor=?")
+      .run(description, f.input.monitor);
+    assert.deepEqual(await new PrCreate(f.store).create(f.input, f.files), {
+      number: 42,
+      existing: false,
+    });
+    assert.deepEqual(f.store.db.prepare("SELECT description FROM pull_requests").get(), {
+      description,
+    });
+  });
+}
