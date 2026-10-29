@@ -15,28 +15,28 @@
 
 Ошибка запроса
 
-Источник: services/frontend/src/shared/api/http/api.ts:58.
+Источник: services/frontend/src/shared/api/http/api.ts:64.
 
 ### Сообщение
 
 Пустой ответ сервера
 
-Источник: services/frontend/src/shared/api/http/api.ts:62.
+Источник: services/frontend/src/shared/api/http/api.ts:68.
 
 ### Сообщение
 
 Ответ сервера слишком большой
 
-Источник: services/frontend/src/shared/api/http/api.ts:73.
+Источник: services/frontend/src/shared/api/http/api.ts:79.
 
 ### Сообщение
 
 Некорректное завершение ответа
 
-Источник: services/frontend/src/shared/api/http/api.ts:81.
+Источник: services/frontend/src/shared/api/http/api.ts:87.
 
 ### Сообщение
 
 Соединение прервано. Проверьте состояние операции повторно.
 
-Источник: services/frontend/src/shared/api/http/api.ts:91.
+Источник: services/frontend/src/shared/api/http/api.ts:97.

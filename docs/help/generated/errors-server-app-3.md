@@ -97,30 +97,30 @@
 
 ### Сообщение
 
+Прикрепите не больше 10 изображений по 10 МБ.
+
+Источник: services/backend/src/app.ts:1669.
+
+### Сообщение
+
+Некорректные данные формы PR.
+
+Источник: services/backend/src/app.ts:1678.
+
+### Сообщение
+
+Проверьте поля формы
+
+Источник: services/backend/src/app.ts:1691.
+
+### Сообщение
+
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1653.
+Источник: services/backend/src/app.ts:1708.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1686.
-
-### Сообщение
-
-Синхронизация уже выполняется
-
-Источник: services/backend/src/app.ts:1991.
-
-### Сообщение
-
-Ошибка синхронизации Azure DevOps
-
-Источник: services/backend/src/app.ts:2006.
-
-### Сообщение
-
-sync.error
-
-Источник: services/backend/src/app.ts:2034.
+Источник: services/backend/src/app.ts:1742.

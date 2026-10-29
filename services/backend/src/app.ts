@@ -1635,25 +1635,81 @@ export function createApp(
       .object({
         monitor: z.string().min(1),
         q: z.string().max(300).default(""),
+        personal: z.enum(["true", "false"]).optional(),
       })
       .parse(req.query);
-    res.json(await prCreate.branches(q.monitor, q.q));
+    res.json(await prCreate.branches(q.monitor, q.q, q.personal === "true"));
   });
-  app.post("/api/pr/create", async (req, res) => {
-    const result = await prCreate.create(req.body);
-    // Creation has already succeeded: a refresh failure must not invite a
-    // second creation attempt or hide the confirmed PR number.
-    let refreshError: string;
-    try {
-      await pullRequests.sync(req.body.monitor);
-      const monitor = pullRequests.monitors().find((m) => m.id === req.body.monitor);
-      refreshError =
-        monitor?.error || (!monitor?.enabled ? "Мониторинг репозитория выключен." : "");
-    } catch {
-      refreshError = "Не удалось обновить список PR. Повторите синхронизацию.";
-    }
-    res.json({ ...result, refreshError });
+  app.get("/api/pr/branch-head", async (req, res) => {
+    const q = z
+      .object({ monitor: z.string().min(1), source: z.string().min(1).max(1000) })
+      .parse(req.query);
+    res.json(await prCreate.branchHead(q.monitor, q.source));
   });
+  const prImageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { files: 10, fileSize: 10 * 1024 * 1024, fields: 1, fieldSize: 100000, parts: 11 },
+  }).array("images", 10);
+  app.post(
+    "/api/pr/create",
+    (req, res, next) => {
+      if (!req.is("multipart/form-data")) return next();
+      prImageUpload(req, res, (error) => {
+        if (!error) return next();
+        let input: unknown;
+        try {
+          input = JSON.parse(req.body?.input);
+        } catch {
+          /* An incomplete form cannot prove request identity. */
+        }
+        if (prCreate.safeToEdit(input))
+          return res
+            .status(400)
+            .json({ error: "Прикрепите не больше 10 изображений по 10 МБ.", safeToEdit: true });
+        next(new AppError(400, "Прикрепите не больше 10 изображений по 10 МБ."));
+      });
+    },
+    async (req, res) => {
+      let input = req.body;
+      if (req.is("multipart/form-data")) {
+        try {
+          input = JSON.parse(req.body.input);
+        } catch {
+          throw new AppError(400, "Некорректные данные формы PR.");
+        }
+      }
+      let result;
+      try {
+        result = await prCreate.create(
+          input,
+          (req.files as Express.Multer.File[] | undefined) || [],
+        );
+      } catch (error) {
+        if (!prCreate.safeToEdit(input)) throw error;
+        if (error instanceof z.ZodError)
+          return res.status(400).json({
+            error: "Проверьте поля формы",
+            fields: error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+            safeToEdit: true,
+          });
+        if (error instanceof AppError)
+          return res.status(error.status).json({ error: error.message, safeToEdit: true });
+        throw error;
+      }
+      // Creation has already succeeded: a refresh failure must not invite a
+      // second creation attempt or hide the confirmed PR number.
+      let refreshError: string;
+      try {
+        await pullRequests.sync(input.monitor);
+        const monitor = pullRequests.monitors().find((m) => m.id === input.monitor);
+        refreshError =
+          monitor?.error || (!monitor?.enabled ? "Мониторинг репозитория выключен." : "");
+      } catch {
+        refreshError = "Не удалось обновить список PR. Повторите синхронизацию.";
+      }
+      res.json({ ...result, refreshError });
+    },
+  );
   app.get("/api/pr/projects", (_req, res) => res.json(pullRequests.monitors()));
   app.post("/api/pr/projects", (req, res) => {
     const input = z

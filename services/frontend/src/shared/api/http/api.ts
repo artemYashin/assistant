@@ -22,7 +22,13 @@ export async function api<T = any>(
   });
   const data = await response.json().catch(() => ({ error: "Сервер вернул некорректный ответ" }));
   if (!response.ok)
-    throw new Error(data.error + (data.fields ? `: ${data.fields.join("; ")}` : ""));
+    throw Object.assign(
+      new Error(data.error + (data.fields ? `: ${data.fields.join("; ")}` : "")),
+      {
+        status: response.status,
+        details: data,
+      },
+    );
   return data;
 }
 

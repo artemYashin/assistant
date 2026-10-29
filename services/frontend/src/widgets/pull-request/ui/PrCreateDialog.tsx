@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GitPullRequest, X } from "lucide-react";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
+import { CommentEditor } from "../../../entities/rich-content/editor/index.js";
 import { api } from "../../../shared/api/http/index.js";
 function BranchSelect({
   monitor,
@@ -8,16 +9,23 @@ function BranchSelect({
   value,
   onChange,
   disabled,
+  personal = false,
 }: {
   monitor: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   disabled: boolean;
+  personal?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [refresh, setRefresh] = useState(0);
-  const [data, setData] = useState<{ branches: string[]; more: boolean }>({
+  const [data, setData] = useState<{
+    branches: string[];
+    more: boolean;
+    personalBranches?: string[];
+    warning?: string;
+  }>({
     branches: [],
     more: false,
   });
@@ -29,7 +37,9 @@ function BranchSelect({
     setError("");
     setData({ branches: [], more: false });
     const timer = setTimeout(() => {
-      void api(`/pr/branches?${new URLSearchParams({ monitor, q: query })}`)
+      void api(
+        `/pr/branches?${new URLSearchParams({ monitor, q: query, ...(personal ? { personal: "true" } : {}) })}`,
+      )
         .then((v) => {
           if (live) setData(v);
         })
@@ -44,7 +54,7 @@ function BranchSelect({
       live = false;
       clearTimeout(timer);
     };
-  }, [monitor, query, refresh]);
+  }, [monitor, query, refresh, personal]);
   return (
     <div>
       <SingleSelect
@@ -52,7 +62,9 @@ function BranchSelect({
         value={value}
         options={[...new Set([...data.branches, ...(value ? [value] : [])])].map((v) => ({
           value: v,
-          label: v.replace(/^refs\/heads\//, ""),
+          label:
+            v.replace(/^refs\/heads\//, "") +
+            (data.personalBranches?.includes(v) ? " · мой push" : ""),
         }))}
         onChange={onChange}
         onSearch={setQuery}
@@ -61,6 +73,7 @@ function BranchSelect({
         loadingLabel="Ищем ветки в Azure…"
         disabled={disabled}
       />
+      {data.warning && <small role="status">{data.warning}</small>}
       {data.more && <small>Первые 100 веток. Уточните поиск.</small>}
       {error && (
         <p className="error" role="alert">
@@ -70,6 +83,9 @@ function BranchSelect({
     </div>
   );
 }
+const imageMarker = (id: string) => `https://orbit.invalid/pr-image/${id}`;
+type DraftImage = { id: string; file: File; preview: string };
+
 export function PrCreateDialog({
   monitors,
   onClose,
@@ -90,6 +106,97 @@ export function PrCreateDialog({
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
   const submitting = useRef(false);
+  const titleEdited = useRef(false);
+  const [headRefresh, setHeadRefresh] = useState(0);
+  const [headLoading, setHeadLoading] = useState(false);
+  const [headError, setHeadError] = useState("");
+  const images = useRef<DraftImage[]>([]);
+  const submission = useRef<FormData | null>(null);
+  const locked = busy || submission.current !== null;
+  useEffect(() => () => images.current.forEach((image) => URL.revokeObjectURL(image.preview)), []);
+  useEffect(() => {
+    if (!monitor || !source) {
+      setHeadLoading(false);
+      setHeadError("");
+      return;
+    }
+    let live = true;
+    setHeadLoading(true);
+    setHeadError("");
+    void api(`/pr/branch-head?${new URLSearchParams({ monitor, source })}`)
+      .then((head) => {
+        if (live && !titleEdited.current && !submission.current) setTitle(head.title);
+      })
+      .catch((e) => {
+        if (live) setHeadError(e.message);
+      })
+      .finally(() => {
+        if (live) setHeadLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [monitor, source, headRefresh]);
+  function addImages(files: File[]) {
+    if (locked) return [];
+    setError("");
+    const used = images.current.filter((image) => description.includes(imageMarker(image.id)));
+    const added: { src: string; alt: string }[] = [];
+    for (const file of files) {
+      if (
+        !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
+        !file.size ||
+        file.size > 10 * 1024 * 1024
+      ) {
+        setError("Поддерживаются PNG, JPEG, GIF и WebP до 10 МБ.");
+        continue;
+      }
+      if (used.length + added.length >= 10) {
+        setError("В описание можно добавить до 10 изображений.");
+        break;
+      }
+      const image = { id: crypto.randomUUID(), file, preview: URL.createObjectURL(file) };
+      images.current.push(image);
+      added.push({ src: imageMarker(image.id), alt: "Изображение" });
+    }
+    return added;
+  }
+  async function submit() {
+    if (submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      if (!submission.current) {
+        const used = images.current.filter((image) => description.includes(imageMarker(image.id)));
+        const body = new FormData();
+        body.append(
+          "input",
+          JSON.stringify({
+            monitor,
+            source,
+            target,
+            title,
+            description,
+            draft,
+            requestId: crypto.randomUUID(),
+            images: used.map(({ id }) => ({ id })),
+          }),
+        );
+        used.forEach((image) => body.append("images", image.file, image.id));
+        submission.current = body;
+      }
+      const created = await api("/pr/create", "POST", submission.current);
+      setResult(created);
+      onCreated();
+    } catch (e: any) {
+      if (e.details?.safeToEdit === true) submission.current = null;
+      setError(e.message);
+    } finally {
+      setBusy(false);
+      submitting.current = false;
+    }
+  }
   useEffect(() => {
     ref.current?.showModal();
   }, []);
@@ -122,35 +229,43 @@ export function PrCreateDialog({
               : "Список обновлён. "}
             Фильтр «Только required reviewer» может скрывать ваш PR.
           </p>
-          <button onClick={onClose}>Готово</button>
+          {result.existing && (
+            <p className="muted">Описание и изображения существующего PR не изменены.</p>
+          )}
+          {result.incomplete && (
+            <div className="pr-create-recovery">
+              <p className="error" role="alert">
+                {result.attachmentError}
+              </p>
+              <p>
+                PR уже создан. Повтор продолжит загрузку скриншотов и сохранение описания в этот же
+                PR.
+              </p>
+              <button
+                type="button"
+                className="primary"
+                disabled={busy}
+                onClick={() => void submit()}
+              >
+                {busy ? "Завершаем…" : "Повторить сохранение описания"}
+              </button>
+            </div>
+          )}
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          <button type="button" disabled={busy} onClick={onClose}>
+            Готово
+          </button>
         </div>
       ) : (
         <form
           className="pr-create-form"
-          onSubmit={async (e) => {
+          onSubmit={(e) => {
             e.preventDefault();
-            if (submitting.current) return;
-            submitting.current = true;
-            setBusy(true);
-            setError("");
-            try {
-              setResult(
-                await api("/pr/create", "POST", {
-                  monitor,
-                  source,
-                  target,
-                  title,
-                  description,
-                  draft,
-                }),
-              );
-              onCreated();
-            } catch (e: any) {
-              setError(e.message);
-            } finally {
-              setBusy(false);
-              submitting.current = false;
-            }
+            void submit();
           }}
         >
           {!monitors.length && <p>Сначала добавьте Git-репозиторий в «Заказчики и проекты».</p>}
@@ -161,11 +276,12 @@ export function PrCreateDialog({
               value: m.id,
               label: `${m.client} / ${m.project} · ${m.repository}`,
             }))}
-            disabled={busy}
+            disabled={locked}
             onChange={(v) => {
               setMonitor(v);
               setSource("");
               setTarget("");
+              if (!titleEdited.current) setTitle("");
             }}
           />
           {selected && (
@@ -174,15 +290,19 @@ export function PrCreateDialog({
                 monitor={monitor}
                 label="Source · откуда"
                 value={source}
-                onChange={setSource}
-                disabled={busy}
+                onChange={(value) => {
+                  setSource(value);
+                  if (!titleEdited.current) setTitle("");
+                }}
+                personal
+                disabled={locked}
               />
               <BranchSelect
                 monitor={monitor}
                 label="Target · куда"
                 value={target}
                 onChange={setTarget}
-                disabled={busy}
+                disabled={locked}
               />
             </div>
           )}
@@ -195,25 +315,55 @@ export function PrCreateDialog({
               required
               maxLength={400}
               value={title}
-              disabled={busy}
-              onChange={(e) => setTitle(e.target.value)}
+              disabled={locked}
+              onChange={(e) => {
+                titleEdited.current = true;
+                setTitle(e.target.value);
+              }}
             />
           </label>
-          <label>
-            Описание
-            <textarea
-              rows={6}
-              maxLength={20000}
-              value={description}
-              disabled={busy}
-              onChange={(e) => setDescription(e.target.value)}
+          {headLoading && <small role="status">Читаем последний коммит source…</small>}
+          {headError && (
+            <p className="error" role="alert">
+              {headError}. Название можно указать вручную.
+            </p>
+          )}
+          <button
+            type="button"
+            className="pr-create-title-refresh"
+            disabled={locked || !source || headLoading}
+            onClick={() => {
+              titleEdited.current = false;
+              setHeadRefresh((n) => n + 1);
+            }}
+          >
+            Взять название из коммита
+          </button>
+          <div className="pr-create-description">
+            <span className="multi-select-label">Описание</span>
+            <CommentEditor
+              label="Описание"
+              text={description}
+              disabled={locked}
+              onChange={setDescription}
+              onImages={addImages}
+              resolveImage={(src) =>
+                images.current.find((image) => imageMarker(image.id) === src)?.preview || src
+              }
             />
-          </label>
+            <small className="muted">
+              Скриншоты будут прикреплены к PR в Azure и доступны участникам с доступом к
+              репозиторию. До 10 файлов по 10 МБ.
+            </small>
+          </div>
+          <small className={description.length > 20000 ? "error" : "muted"}>
+            {description.length} / 20 000 символов описания
+          </small>
           <label className="checkbox">
             <input
               type="checkbox"
               checked={draft}
-              disabled={busy}
+              disabled={locked}
               onChange={(e) => setDraft(e.target.checked)}
             />{" "}
             Черновик
@@ -223,14 +373,32 @@ export function PrCreateDialog({
               {error}
             </p>
           )}
+          {submission.current && error && (
+            <p className="muted">
+              Поля сохранены для безопасного повтора. Если ответ потерялся, повторите отправку из
+              этого окна, чтобы проверить результат.
+            </p>
+          )}
           <p className="muted">
             PR будет создан в Azure DevOps. Требуется PAT с Code: Read & Write.
           </p>
           <button
             className="primary"
-            disabled={busy || !monitor || !source || !target || source === target || !title.trim()}
+            disabled={
+              busy ||
+              !monitor ||
+              !source ||
+              !target ||
+              source === target ||
+              !title.trim() ||
+              description.length > 20000
+            }
           >
-            {busy ? "Создаём…" : "Создать PR в Azure"}
+            {busy
+              ? "Создаём PR и загружаем изображения…"
+              : submission.current
+                ? "Повторить отправку"
+                : "Создать PR в Azure"}
           </button>
         </form>
       )}

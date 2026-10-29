@@ -9,58 +9,118 @@
 
 Репозиторий не настроен
 
-Источник: services/backend/src/pr-create.ts:22.
+Источник: services/backend/src/pr-create.ts:29.
 
 ### Сообщение
 
 Подключение Azure изменилось: сохраните репозиторий заново
 
-Источник: services/backend/src/pr-create.ts:26.
+Источник: services/backend/src/pr-create.ts:33.
 
 ### Сообщение
 
 Укажите PAT Azure: Code Read & Write
 
-Источник: services/backend/src/pr-create.ts:27.
+Источник: services/backend/src/pr-create.ts:34.
 
 ### Сообщение
 
 Azure не вернул список веток
 
-Источник: services/backend/src/pr-create.ts:49.
+Источник: services/backend/src/pr-create.ts:57.
+
+### Сообщение
+
+No authenticated user
+
+Источник: services/backend/src/pr-create.ts:74.
+
+### Сообщение
+
+No pushes
+
+Источник: services/backend/src/pr-create.ts:80.
+
+### Сообщение
+
+No branch stats
+
+Источник: services/backend/src/pr-create.ts:103.
+
+### Сообщение
+
+Не удалось определить последние ваши ветки. Показан обычный список.
+
+Источник: services/backend/src/pr-create.ts:119.
+
+### Сообщение
+
+Azure не вернул последний коммит ветки
+
+Источник: services/backend/src/pr-create.ts:140.
 
 ### Сообщение
 
 Выберите разные source и target ветки
 
-Источник: services/backend/src/pr-create.ts:60.
+Источник: services/backend/src/pr-create.ts:168.
 
 ### Сообщение
 
 Создание этого PR уже выполняется
 
-Источник: services/backend/src/pr-create.ts:62.
+Источник: services/backend/src/pr-create.ts:170.
+
+### Сообщение
+
+Этот запрос уже использован с другими данными. Вернитесь к исходной форме.
+
+Источник: services/backend/src/pr-create.ts:186.
+
+### Сообщение
+
+Результат создания PR пока не подтверждён. Проверьте список PR в Azure перед новым запросом; повторное создание остановлено.
+
+Источник: services/backend/src/pr-create.ts:198.
 
 ### Сообщение
 
 Ветка {…} больше не существует
 
-Источник: services/backend/src/pr-create.ts:79.
+Источник: services/backend/src/pr-create.ts:215.
 
 ### Сообщение
 
 Не удалось проверить существующие PR
 
-Источник: services/backend/src/pr-create.ts:85.
+Источник: services/backend/src/pr-create.ts:221.
 
 ### Сообщение
 
 Настройки изменились. Откройте диалог заново
 
-Источник: services/backend/src/pr-create.ts:89.
+Источник: services/backend/src/pr-create.ts:225.
+
+### Сообщение
+
+https://orbit.invalid/pr-image/{…}
+
+Источник: services/backend/src/pr-create.ts:229.
+
+### Сообщение
+
+Описание со ссылками на изображения превышает 20000 символов. Сократите описание.
+
+Источник: services/backend/src/pr-create.ts:234.
 
 ### Сообщение
 
 Azure не подтвердил номер PR. Проверьте список PR перед повтором
 
-Источник: services/backend/src/pr-create.ts:108.
+Источник: services/backend/src/pr-create.ts:258.
+
+### Сообщение
+
+Attachments unavailable
+
+Источник: services/backend/src/pr-create.ts:293.

@@ -9,46 +9,52 @@
 
 Закрыть
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:110.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:217.
+
+### Элемент
+
+Завершаем… / Повторить сохранение описания
+
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:244.
 
 ### Элемент
 
 Готово
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:125.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:259.
 
 ### Элемент
 
 Репозиторий
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:157.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:272.
 
 ### Элемент
 
 {…} / {…} · {…}
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:162.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:277.
 
 ### Элемент
 
 Название
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:192.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:312.
 
 ### Элемент
 
-Описание
+Взять название из коммита
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:202.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:331.
 
 ### Элемент
 
 · Черновик
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:212.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:362.
 
 ### Элемент
 
-Создаём… / Создать PR в Azure
+Создаём PR и загружаем изображения… / Повторить отправку / Создать PR в Azure
 
-Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:229.
+Источник: services/frontend/src/widgets/pull-request/ui/PrCreateDialog.tsx:385.

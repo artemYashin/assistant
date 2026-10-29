@@ -5087,6 +5087,20 @@ summary > svg {
   display: grid;
   gap: 6px;
 }
+.pr-create-title-refresh {
+  justify-self: start;
+  font-size: 12px;
+}
+.pr-create-description {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+.pr-create-recovery {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
 .pr-create-branches {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
