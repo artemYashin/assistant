@@ -276,7 +276,7 @@
     "services/frontend/src/pages/pull-requests/index.ts": "2b8b4c135714b2f0f9638d2c67c5a3a90ed3eef105648f182ba157812c21da5d",
     "services/frontend/src/pages/pull-requests/ui/CompletedPullRequests.tsx": "ff75b6ee913432fed9aea662ab3c17f7eeca323bd6cacf6fff49835b74ebc681",
     "services/frontend/src/pages/pull-requests/ui/LinkedPullRequest.tsx": "eee65a975bc336009966c46446d3407799482a2792d37711d71607b9591d3217",
-    "services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx": "c6ef3328b7af0d54e245ee5a703b4640fe4dde2f71f68d2f1cde530b5cabf299",
+    "services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx": "4d2d34c9da271fd122fefbc9f7d45a676f01d635c509fa92d28efddd0cb89a20",
     "services/frontend/src/pages/settings/index.ts": "6c0c064c31c9e76ca0d454a483295aff5441fb022e54d6f9b9b8057bf28c8db8",
     "services/frontend/src/pages/settings/ui/LoginCode.tsx": "b53f7582ef9c5a0081f69d3463e881eb34feb1ae0a451e450bfde66d7919cdb1",
     "services/frontend/src/pages/settings/ui/Settings.tsx": "66e49abab57a41851e52d66414f76870cb0108d35a9fcf37ec18ecd143ab1a55",

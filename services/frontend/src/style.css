@@ -7294,7 +7294,8 @@ summary > svg {
   padding: 12px 0;
   border-top: 1px solid var(--border);
 }
-.ticket-card-title > .ticket-copy-control {
+.ticket-card-title > .ticket-copy-control,
+.pr-title > .ticket-copy-control {
   vertical-align: middle;
   margin-right: 6px;
 }

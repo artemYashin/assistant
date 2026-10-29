@@ -1,3 +1,4 @@
+import { TicketCopyButton } from "../../../widgets/ticket/index.js";
 import { PrChangeButtons } from "../../../widgets/pull-request/index.js";
 import { defaultPrFilters, usePrFilters } from "../../../features/filter-pull-requests/index.js";
 import { PrTicketSourcesInfo } from "../../../widgets/pull-request/index.js";
@@ -629,7 +630,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                   >
                     {(["preparing_git", "queued"].includes(p.review_status) && p.review_progress) ||
                       statuses[p.review_status] ||
-                      "Ревью не запускалось"}
+                      "AI review не запускалось"}
                   </span>
                   {(p.summary || p.coverage || p.last_saved_review) && <ReviewResult pr={p} />}
                   {p.review_count > 1 && <ReviewHistory pr={p} />}
@@ -669,6 +670,7 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
                     <InitialsAvatar name={p.author || "?"} />
                     <div className="pr-identity-text">
                       <h2 className="pr-title">
+                        <TicketCopyButton value={p.url} label="Скопировать ссылку на PR" link />
                         <a href={p.url} target="_blank" rel="noreferrer" title={p.title}>
                           #{p.number} · {p.title}
                         </a>
