@@ -2732,7 +2732,7 @@ td > small {
 .pr-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   min-width: 0;
 }
 .pr-kind-badge {
@@ -7321,8 +7321,7 @@ summary > svg {
   padding: 12px 0;
   border-top: 1px solid var(--border);
 }
-.ticket-card-title > .ticket-copy-control,
-.pr-title > .ticket-copy-control {
+.ticket-card-title > .ticket-copy-control {
   vertical-align: middle;
   margin-right: 6px;
 }
