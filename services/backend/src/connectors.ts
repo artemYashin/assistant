@@ -1348,8 +1348,8 @@ export class Connectors {
           ).values(),
         ];
         saved.comments = [
-          ...(saved.comments || []).filter((c: any) => c.id !== comment.id),
           comment,
+          ...(saved.comments || []).filter((c: any) => c.id !== comment.id),
         ];
         this.store.db
           .prepare("UPDATE ticket_cards SET data=? WHERE id=?")

@@ -235,7 +235,7 @@ export function TicketCard({
                   ]),
                 ).values(),
               ],
-              comments: [...old.comments.filter((c: any) => c.id !== comment.id), comment],
+              comments: [comment, ...old.comments.filter((c: any) => c.id !== comment.id)],
             }
           : old,
       );
@@ -940,6 +940,11 @@ export function TicketCard({
                   <MessageSquare size={17} aria-hidden="true" />
                   Комментарии <span className="ticket-count">{card.comments.length}</span>
                 </summary>
+                <TicketCommentForm
+                  key={reference}
+                  reference={reference}
+                  draftKey={JSON.stringify([card.source, card.id])}
+                />
                 {card.comments.length ? (
                   <div className="ticket-comments">
                     {card.comments.map((c: any) => (
@@ -966,11 +971,6 @@ export function TicketCard({
                 ) : (
                   <p className="ticket-empty">Комментарии отсутствуют в загруженных данных.</p>
                 )}
-                <TicketCommentForm
-                  key={reference}
-                  reference={reference}
-                  draftKey={JSON.stringify([card.source, card.id])}
-                />
               </details>
             </div>
             <section

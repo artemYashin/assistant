@@ -23,7 +23,10 @@ test("ticket comments escape plain text, update cached cards and reject stale so
   for (const ref of ["one", "two"])
     store.db
       .prepare("INSERT INTO ticket_cards VALUES (?,?)")
-      .run(ref, JSON.stringify({ id: 42, source, comments: [] }));
+      .run(
+        ref,
+        JSON.stringify({ id: 42, source, comments: [{ id: 16, text: "Previous comment" }] }),
+      );
   const calls: string[] = [];
   t.mock.method(globalThis, "fetch", async (url: any, init: any) => {
     const u = new URL(String(url));
@@ -51,7 +54,14 @@ test("ticket comments escape plain text, update cached cards and reject stale so
   const result = await connectors.addTicketComment("one", "<b>Hello</b>\nNext & last");
   assert.equal(result.comment.author, "Anna");
   assert.deepEqual(calls, ["GET", "POST"]);
-  for (const ref of ["one", "two"]) assert.equal(connectors.ticketCard(ref).comments[0].id, 17);
+  for (const ref of ["one", "two"]) {
+    const comments = connectors.ticketCard(ref).comments;
+    assert.deepEqual(
+      comments.map((comment: any) => comment.id),
+      [17, 16],
+    );
+    assert.equal(comments[1].text, "Previous comment");
+  }
   await assert.rejects(() => connectors.addTicketComment("one", "  "), /10000/);
   store.set("settings", { ...store.settings(), azureProject: "Other" });
   await assert.rejects(
