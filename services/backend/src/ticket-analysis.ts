@@ -53,6 +53,7 @@ export async function listTicketAnalysis(
       `Название: ${fields["System.Title"] || row.title}`,
       `Описание:\n${plainText(fields["System.Description"] || "")}`,
       `Критерии приёмки:\n${plainText(fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || "")}`,
+      `Системная информация:\n${plainText(fields["Microsoft.VSTS.TCM.SystemInfo"] || "")}`,
       `Шаги воспроизведения:\n${plainText(fields["Microsoft.VSTS.TCM.ReproSteps"] || "")}`,
       `Локальные заметки:\n${ticketMetadata(store, row.id).notes}`,
       "Комментарии:\n" +

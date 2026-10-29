@@ -78,6 +78,6 @@ export function readTicketLinks(store: Store, input: unknown) {
     cachedAt: includeCacheInfo
       ? rows.map((row) => ({ section: row.section, at: row.updated_at }))
       : undefined,
-    note: "Only links/images from cached description, criteria and repro. No full bodies, comments or Azure calls. No matches does not prove missing designs; broaden search or inspect a short content snippet.",
+    note: "Only links/images from cached description, criteria, repro and system information. No full bodies, comments or Azure calls. No matches does not prove missing designs; broaden search or inspect a short content snippet.",
   };
 }

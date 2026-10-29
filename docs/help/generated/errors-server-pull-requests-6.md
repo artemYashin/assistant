@@ -39,22 +39,22 @@
 
 Требования, комментарии и локальные заметки превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.
 
-Источник: services/backend/src/pull-requests.ts:2356.
+Источник: services/backend/src/pull-requests.ts:2357.
 
 ### Сообщение
 
 Соберите все вопросы в один вызов
 
-Источник: services/backend/src/pull-requests.ts:2448.
+Источник: services/backend/src/pull-requests.ts:2450.
 
 ### Сообщение
 
 Слишком много вопросов для выбранного режима
 
-Источник: services/backend/src/pull-requests.ts:2450.
+Источник: services/backend/src/pull-requests.ts:2452.
 
 ### Сообщение
 
 Ошибка подготовки или выполнения ревью. Автоповтор отключён.
 
-Источник: services/backend/src/pull-requests.ts:2493.
+Источник: services/backend/src/pull-requests.ts:2495.

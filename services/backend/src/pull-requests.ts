@@ -2345,6 +2345,7 @@ export class PullRequests {
             acceptanceCriteria: plainText(
               card.fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || "",
             ),
+            systemInfo: plainText(card.fields["Microsoft.VSTS.TCM.SystemInfo"] || ""),
             reproductionSteps: plainText(card.fields["Microsoft.VSTS.TCM.ReproSteps"] || ""),
             comments: card.comments.map(({ author, date, text }) => ({
               author,
@@ -2428,6 +2429,7 @@ export class PullRequests {
                     description: ticket.description,
                     criteria: ticket.acceptanceCriteria,
                     repro: ticket.reproductionSteps,
+                    systemInfo: ticket.systemInfo,
                   })),
                 }
               : undefined,

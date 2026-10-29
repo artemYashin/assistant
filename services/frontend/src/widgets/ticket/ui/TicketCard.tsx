@@ -44,6 +44,7 @@ import {
   Trash2,
   FileText,
   ListChecks,
+  MonitorCog,
   Bug,
   GitPullRequest,
   MessageSquare,
@@ -61,6 +62,7 @@ const ticketContentSections = [
   ["System.Description", "Описание"],
   ["Microsoft.VSTS.TCM.ReproSteps", "Шаги воспроизведения"],
   ["Microsoft.VSTS.Common.AcceptanceCriteria", "Критерии приёмки"],
+  ["Microsoft.VSTS.TCM.SystemInfo", "Системная информация"],
 ];
 
 export function TicketCard({
@@ -911,7 +913,9 @@ export function TicketCard({
                         ? "description"
                         : key === "Microsoft.VSTS.TCM.ReproSteps"
                           ? "repro"
-                          : "criteria"
+                          : key === "Microsoft.VSTS.TCM.SystemInfo"
+                            ? "systemInfo"
+                            : "criteria"
                     }
                     open
                   >
@@ -920,6 +924,8 @@ export function TicketCard({
                         <FileText size={17} aria-hidden="true" />
                       ) : key === "Microsoft.VSTS.TCM.ReproSteps" ? (
                         <Bug size={17} aria-hidden="true" />
+                      ) : key === "Microsoft.VSTS.TCM.SystemInfo" ? (
+                        <MonitorCog size={17} aria-hidden="true" />
                       ) : (
                         <ListChecks size={17} aria-hidden="true" />
                       )}

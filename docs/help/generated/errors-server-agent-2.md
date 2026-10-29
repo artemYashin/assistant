@@ -9,118 +9,118 @@
 
 Не удалось восстановить просьбу о смене статуса из сообщения и подтверждения.
 
-Источник: services/backend/src/agent.ts:693.
+Источник: services/backend/src/agent.ts:694.
 
 ### Сообщение
 
 Номер отсутствует в подтверждённом плане и результатах инструментов текущего запроса. Проверьте список одним list_tickets с ids.
 
-Источник: services/backend/src/agent.ts:695.
+Источник: services/backend/src/agent.ts:696.
 
 ### Сообщение
 
 Во время ревью изменение статусов недоступно.
 
-Источник: services/backend/src/agent.ts:699.
+Источник: services/backend/src/agent.ts:700.
 
 ### Сообщение
 
 Нужна явная команда сменить статус этого тикета. [{…}] {…} Запрос записи в Azure не отправлялся.
 
-Источник: services/backend/src/agent.ts:705.
+Источник: services/backend/src/agent.ts:706.
 
 ### Сообщение
 
 Azure недоступен
 
-Источник: services/backend/src/agent.ts:713.
+Источник: services/backend/src/agent.ts:714.
 
 ### Сообщение
 
 Одна смена статуса на тикет за запрос. Для следующего перехода отправьте новую команду.
 
-Источник: services/backend/src/agent.ts:721.
+Источник: services/backend/src/agent.ts:722.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: services/backend/src/agent.ts:732.
+Источник: services/backend/src/agent.ts:733.
 
 ### Сообщение
 
 Одна смена статуса на тикет за запрос
 
-Источник: services/backend/src/agent.ts:777.
+Источник: services/backend/src/agent.ts:778.
 
 ### Сообщение
 
 Во время ревью изменение локального трекера недоступно
 
-Источник: services/backend/src/agent.ts:827.
+Источник: services/backend/src/agent.ts:828.
 
 ### Сообщение
 
 Одно изменение локального списка на тикет за запрос. Отправьте следующую команду отдельно.
 
-Источник: services/backend/src/agent.ts:832.
+Источник: services/backend/src/agent.ts:833.
 
 ### Сообщение
 
 Выбранная модель не поддерживает изображения. Выберите модель с поддержкой vision; вложения сохранены.
 
-Источник: services/backend/src/agent.ts:909.
+Источник: services/backend/src/agent.ts:910.
 
 ### Сообщение
 
 Выбранная модель принимает до {…} изображений за запрос. Уберите лишние изображения или выберите другую модель.
 
-Источник: services/backend/src/agent.ts:915.
+Источник: services/backend/src/agent.ts:916.
 
 ### Сообщение
 
 Достигнут лимит вызовов инструментов на ревью. Для нового запуска увеличьте «Максимум инструментов на ревью» в окне запуска. Значение по умолчанию задаётся в настройках Code Review.
 
-Источник: services/backend/src/agent.ts:929.
+Источник: services/backend/src/agent.ts:930.
 
 ### Сообщение
 
 Достигнут лимит вызовов инструментов.
 
-Источник: services/backend/src/agent.ts:930.
+Источник: services/backend/src/agent.ts:931.
 
 ### Сообщение
 
 Сессия чата ещё не готова.
 
-Источник: services/backend/src/agent.ts:956.
+Источник: services/backend/src/agent.ts:957.
 
 ### Сообщение
 
 Выбранная модель не поддерживает изображения.
 
-Источник: services/backend/src/agent.ts:962.
+Источник: services/backend/src/agent.ts:963.
 
 ### Сообщение
 
 Закрытие деталки требует подключённого интерфейса чата
 
-Источник: services/backend/src/agent.ts:1019.
+Источник: services/backend/src/agent.ts:1020.
 
 ### Сообщение
 
 Открытие деталки требует подключённого интерфейса чата
 
-Источник: services/backend/src/agent.ts:1045.
+Источник: services/backend/src/agent.ts:1046.
 
 ### Сообщение
 
 Тикет #{…} отсутствует локально; сначала согласуйте его запрос в Azure
 
-Источник: services/backend/src/agent.ts:1093.
+Источник: services/backend/src/agent.ts:1094.
 
 ### Сообщение
 
 Azure не вернул статусы тикета #{…}
 
-Источник: services/backend/src/agent.ts:1106.
+Источник: services/backend/src/agent.ts:1107.

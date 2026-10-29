@@ -128,7 +128,7 @@ export function searchTicketContent(store: Store, input: unknown) {
     hasMore,
     nextAfterId: hasMore ? tickets.at(-1)!.id : null,
     coverage: { total: coverage.total, cached: coverage.cached || 0 },
-    note: "Local notes and cached descriptions/acceptance criteria/repro steps; coverage.cached counts only Azure body caches; may be stale or incomplete. Text matches in the requested searchMode, not verified semantic relationships. No Azure calls.",
+    note: "Local notes and cached descriptions/acceptance criteria/repro steps/system information; coverage.cached counts only Azure body caches; may be stale or incomplete. Text matches in the requested searchMode, not verified semantic relationships. No Azure calls.",
   };
 }
 
@@ -169,7 +169,7 @@ export function readCachedTicket(store: Store, input: unknown) {
     content: content.slice(offset, end),
     offset,
     nextOffset: end < content.length ? end : null,
-    missingSections: ["description", "criteria", "repro"].filter(
+    missingSections: ["description", "criteria", "repro", "systemInfo"].filter(
       (section) => !rows.some((row) => row.section === section),
     ),
     cachedAt: includeCacheInfo

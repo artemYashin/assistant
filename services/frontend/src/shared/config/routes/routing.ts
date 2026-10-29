@@ -43,7 +43,7 @@ export function chatTicketCitation(value: string) {
     quote = params.get("quote");
   if (
     !section ||
-    !["description", "criteria", "repro"].includes(section) ||
+    !["description", "criteria", "repro", "systemInfo"].includes(section) ||
     !quote ||
     quote.length > 600
   )

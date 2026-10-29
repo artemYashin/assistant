@@ -9,64 +9,64 @@
 
 Не удалось определить статус
 
-Источник: services/backend/src/agent.ts:1120.
+Источник: services/backend/src/agent.ts:1121.
 
 ### Сообщение
 
 Сначала покажите план через request_azure_ticket_lookup и дождитесь выбора: только сведения или запросить и добавить
 
-Источник: services/backend/src/agent.ts:1143.
+Источник: services/backend/src/agent.ts:1144.
 
 ### Сообщение
 
 Чтение описаний более 30 разных локальных тикетов за один запрос может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.
 
-Источник: services/backend/src/agent.ts:1249.
+Источник: services/backend/src/agent.ts:1250.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке
 
-Источник: services/backend/src/agent.ts:1315.
+Источник: services/backend/src/agent.ts:1316.
 
 ### Сообщение
 
 Запись не входит в выбранные разделы памяти ревью.
 
-Источник: services/backend/src/agent.ts:1331.
+Источник: services/backend/src/agent.ts:1332.
 
 ### Сообщение
 
 Session is not ready
 
-Источник: services/backend/src/agent.ts:1367.
+Источник: services/backend/src/agent.ts:1368.
 
 ### Сообщение
 
 Не удалось сохранить отчёт расхода; запрос остановлен.
 
-Источник: services/backend/src/agent.ts:1510.
+Источник: services/backend/src/agent.ts:1511.
 
 ### Сообщение
 
 Не удалось получить данные
 
-Источник: services/backend/src/agent.ts:1559.
+Источник: services/backend/src/agent.ts:1560.
 
 ### Сообщение
 
 Запрос обработан. Проверьте память и ожидающие подтверждения.
 
-Источник: services/backend/src/agent.ts:1598.
+Источник: services/backend/src/agent.ts:1599.
 
 ### Сообщение
 
 Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.
 
-Источник: services/backend/src/agent.ts:1636.
+Источник: services/backend/src/agent.ts:1637.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/agent.ts:1668.
+Источник: services/backend/src/agent.ts:1669.

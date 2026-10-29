@@ -9,10 +9,10 @@
 
 Подключение Azure изменилось. Цитата относится к исходному подключению ревью.
 
-Источник: services/backend/src/ticket-citation.ts:32.
+Источник: services/backend/src/ticket-citation.ts:38.
 
 ### Сообщение
 
 Цитата не найдена в доступном тексте этого раздела. Используйте точную цитату из прочитанного тикета.
 
-Источник: services/backend/src/ticket-citation.ts:45.
+Источник: services/backend/src/ticket-citation.ts:51.

@@ -162,6 +162,7 @@ export class Connectors {
       description: "System.Description",
       criteria: "Microsoft.VSTS.Common.AcceptanceCriteria",
       repro: "Microsoft.VSTS.TCM.ReproSteps",
+      systemInfo: "Microsoft.VSTS.TCM.SystemInfo",
     };
     const save = this.store.db.prepare(
       "INSERT INTO ticket_content_cache VALUES (?,?,?,?,?,?) ON CONFLICT(source,id,section) DO UPDATE SET body=excluded.body,search_text=excluded.search_text,updated_at=excluded.updated_at",
@@ -1007,6 +1008,7 @@ export class Connectors {
       description: "System.Description",
       criteria: "Microsoft.VSTS.Common.AcceptanceCriteria",
       repro: "Microsoft.VSTS.TCM.ReproSteps",
+      systemInfo: "Microsoft.VSTS.TCM.SystemInfo",
     };
     for (const section of sections) {
       const field = sectionFields[section.section];
@@ -1719,6 +1721,7 @@ export class Connectors {
             "System.Description",
             "Microsoft.VSTS.Common.AcceptanceCriteria",
             "Microsoft.VSTS.TCM.ReproSteps",
+            "Microsoft.VSTS.TCM.SystemInfo",
           ],
           errorPolicy: "Omit",
         }),
@@ -1797,6 +1800,7 @@ export class Connectors {
                   "System.Description",
                   "Microsoft.VSTS.Common.AcceptanceCriteria",
                   "Microsoft.VSTS.TCM.ReproSteps",
+                  "Microsoft.VSTS.TCM.SystemInfo",
                 ]
               : []),
             "System.Id",
@@ -1956,6 +1960,7 @@ export class Connectors {
                 "System.Description",
                 "Microsoft.VSTS.Common.AcceptanceCriteria",
                 "Microsoft.VSTS.TCM.ReproSteps",
+                "Microsoft.VSTS.TCM.SystemInfo",
                 "System.Title",
                 "System.State",
                 "System.AssignedTo",

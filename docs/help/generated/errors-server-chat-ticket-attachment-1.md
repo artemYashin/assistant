@@ -15,4 +15,4 @@
 
 Полный текст тикета превышает 200 000 символов. Для анализа такого объёма разделите задачу на части; содержимое не было отправлено модели.
 
-Источник: services/backend/src/chat-ticket-attachment.ts:32.
+Источник: services/backend/src/chat-ticket-attachment.ts:33.

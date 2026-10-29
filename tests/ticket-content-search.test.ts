@@ -44,7 +44,7 @@ test("imports cache content, search is bounded/paged/source scoped, sync clears 
   const detail = readCachedTicket(store, { id: 1 });
   assert.equal(detail.available, true);
   assert.ok(detail.content?.includes("Протокол обмена"));
-  assert.deepEqual(detail.missingSections, ["criteria", "repro"]);
+  assert.deepEqual(detail.missingSections, ["criteria", "repro", "systemInfo"]);
   assert.equal(readCachedTicket(store, { id: 999 }).available, false);
   const longText = "x".repeat(7500);
   store.db

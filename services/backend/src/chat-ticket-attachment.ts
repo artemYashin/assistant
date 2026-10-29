@@ -16,6 +16,7 @@ export function ticketAnalysisAttachment(card: any, source: string) {
     description: plainText(String(fields["System.Description"] || "")),
     acceptanceCriteria: plainText(String(fields["Microsoft.VSTS.Common.AcceptanceCriteria"] || "")),
     reproSteps: plainText(String(fields["Microsoft.VSTS.TCM.ReproSteps"] || "")),
+    systemInfo: plainText(String(fields["Microsoft.VSTS.TCM.SystemInfo"] || "")),
     comments: (card.comments || []).map((comment: any) => ({
       author: comment.author || "",
       date: comment.date || "",
@@ -35,7 +36,10 @@ export function ticketAnalysisAttachment(card: any, source: string) {
     );
   return attachment;
 }
-export type TicketAnalysisAttachment = ReturnType<typeof ticketAnalysisAttachment>;
+export type TicketAnalysisAttachment = Omit<
+  ReturnType<typeof ticketAnalysisAttachment>,
+  "systemInfo"
+> & { systemInfo?: string };
 export function attachmentPreview(attachment: TicketAnalysisAttachment | null) {
   return attachment
     ? {

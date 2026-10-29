@@ -5,7 +5,13 @@ import { Store, AppError } from "./store.js";
 const normalize = (text: string) => text.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim();
 export type TicketCitationEvidence = {
   source: string;
-  tickets: { id: number; description: string; criteria: string; repro: string }[];
+  tickets: {
+    id: number;
+    description: string;
+    criteria: string;
+    repro: string;
+    systemInfo?: string;
+  }[];
 };
 export function ticketCitationTool(
   store: Store,
@@ -17,11 +23,11 @@ export function ticketCitationTool(
       (evidence
         ? "Verify only against the linked ticket sections already supplied to this review; IDs outside that evidence are not allowed. "
         : "") +
-      "Create a verified UI citation to an exact short quote already read from a ticket description, criteria or repro section. Uses supplied review evidence or local cache only, no Azure call. Returns quote and link opening the original section with highlighting. Never invent quotes. Read content first; if unavailable/mismatched, report that instead of claiming evidence.",
+      "Create a verified UI citation to an exact short quote already read from a ticket description, criteria, repro or systemInfo section. Uses supplied review evidence or local cache only, no Azure call. Returns quote and link opening the original section with highlighting. Never invent quotes. Read content first; if unavailable/mismatched, report that instead of claiming evidence.",
     parameters: z
       .object({
         id: z.number().int().positive(),
-        section: z.enum(["description", "criteria", "repro"]),
+        section: z.enum(["description", "criteria", "repro", "systemInfo"]),
         quote: z.string().trim().min(3).max(600),
       })
       .strict(),
@@ -41,7 +47,7 @@ export function ticketCitationTool(
         : (store.db
             .prepare("SELECT body FROM ticket_content_cache WHERE source=? AND id=? AND section=?")
             .get(source, id, section) as { body: string } | undefined);
-      if (!row || !normalize(row.body).includes(normalize(quote)))
+      if (!row || !normalize(row.body || "").includes(normalize(quote)))
         throw new AppError(
           400,
           "Цитата не найдена в доступном тексте этого раздела. Используйте точную цитату из прочитанного тикета.",
