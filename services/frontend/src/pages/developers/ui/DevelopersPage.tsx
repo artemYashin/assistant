@@ -19,8 +19,6 @@ import {
   Palmtree,
   CalendarClock,
   Save,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   CheckCheck,
   Ticket,
@@ -271,8 +269,7 @@ function DeveloperCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
-  const [tab, setTab] = useState("active"),
-    [page, setPage] = useState(0);
+  const [tab, setTab] = useState("active");
   const [notes, setNotes] = useState(person.notes || "");
   const [notesSaved, setNotesSaved] = useState(false);
   useEffect(() => {
@@ -296,8 +293,6 @@ function DeveloperCard({
   const list = [...(tab === "active" ? active : tab === "review" ? review : done)].sort(
     (a, b) => (a.priority ?? 1) - (b.priority ?? 1) || b.id - a.id,
   );
-  const pages = Math.max(1, Math.ceil(list.length / 5)),
-    current = Math.min(page, pages - 1);
   async function saveNotes() {
     if (busy) return;
     setBusy(true);
@@ -455,41 +450,20 @@ function DeveloperCard({
       </header>
       <div id={contentId} hidden={!expanded} className="developer-board-content">
         <nav className="pr-page-tabs" aria-label={`Тикеты: ${person.name}`}>
-          <button
-            type="button"
-            aria-pressed={tab === "active"}
-            onClick={() => {
-              setTab("active");
-              setPage(0);
-            }}
-          >
+          <button type="button" aria-pressed={tab === "active"} onClick={() => setTab("active")}>
             <Ticket size={15} />
             Активные · {active.length}
           </button>
-          <button
-            type="button"
-            aria-pressed={tab === "review"}
-            onClick={() => {
-              setTab("review");
-              setPage(0);
-            }}
-          >
+          <button type="button" aria-pressed={tab === "review"} onClick={() => setTab("review")}>
             <ClipboardCheck size={15} /> На проверке · {review.length}
           </button>
-          <button
-            type="button"
-            aria-pressed={tab === "done"}
-            onClick={() => {
-              setTab("done");
-              setPage(0);
-            }}
-          >
+          <button type="button" aria-pressed={tab === "done"} onClick={() => setTab("done")}>
             <CheckCheck size={15} />
             Завершённые · {done.length}
           </button>
         </nav>
         <div className="developer-board-tickets">
-          {list.slice(current * 5, current * 5 + 5).map((ticket) => (
+          {list.map((ticket) => (
             <div className="developer-board-ticket" key={`${ticket.source}:${ticket.id}`}>
               <div className="developer-ticket-heading">
                 <TicketCopyButton
@@ -539,31 +513,6 @@ function DeveloperCard({
             </p>
           )}
         </div>
-        {pages > 1 && (
-          <div className="developer-board-pagination">
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={`Предыдущие тикеты: ${person.name}`}
-              disabled={!current}
-              onClick={() => setPage(current - 1)}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span>
-              {current + 1} / {pages}
-            </span>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={`Следующие тикеты: ${person.name}`}
-              disabled={current === pages - 1}
-              onClick={() => setPage(current + 1)}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
       </div>
     </article>
   );

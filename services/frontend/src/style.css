@@ -6038,15 +6038,6 @@ summary > svg {
   gap: 5px;
   margin-top: 8px;
 }
-.developer-board-pagination {
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 10px;
-  font-size: 12px;
-}
 .developer-board-notes {
   min-width: 0;
 }

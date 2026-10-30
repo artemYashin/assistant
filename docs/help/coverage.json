@@ -273,7 +273,7 @@
     "services/frontend/src/pages/code-repository/ui/CodeBrowserPage.tsx": "8840f666dfc66bcef8a40f7c59c8627b6e8427ae30dfec2df617344901089eac",
     "services/frontend/src/pages/code-repository/ui/RepositoryCommits.tsx": "936cab1d7abc24558544b39a7a7753939743423e867d48c2acd2e5f9e128e8aa",
     "services/frontend/src/pages/developers/index.ts": "a4cab49c95498c4998684b07fe0e3e956350a4637e019c71c9cf908ebb8e3f03",
-    "services/frontend/src/pages/developers/ui/DevelopersPage.tsx": "13c1c749dc1ee47927ac2aa2d9709635cf9a8e30d6175876645d9374e30599f5",
+    "services/frontend/src/pages/developers/ui/DevelopersPage.tsx": "58b1662d3083c4b65f21bdb7a711bb15a11341c74a6fa286ac093fd0e6be55ac",
     "services/frontend/src/pages/memory/index.ts": "4655c0c786bea3ec5fcdda3afacb95b5eb1c1d12be3186ec38874773fe5d3c93",
     "services/frontend/src/pages/memory/ui/Memory.tsx": "f31c70ae533df8021963b99f2b2c2e90cd5fb6b60eeec9e187ffa1c68de0dc4a",
     "services/frontend/src/pages/notes/index.ts": "c1f5604c16742649b09a1cd82cd4f6a84895fa70ae54a12d90083d32cd33d98a",
