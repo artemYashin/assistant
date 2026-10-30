@@ -101,3 +101,27 @@ test("MCAS alias maps to local preview only for the configured host and collecti
     "missing_attachment",
   );
 });
+
+test("root-relative UUID image addresses use scoped attachment metadata", () => {
+  for (const short of [`/${id}?fileName=image.png`, `/${id}`, `/${id.toUpperCase()}?x=1`]) {
+    assert.equal(
+      ticketImagePreview(short, card, "ref").preview,
+      `/api/ticket-cards/ref/attachments/${id}`,
+    );
+    assert.equal(
+      ticketImagePreview(short, { base, attachments: [] }, "ref").diagnostic?.reason,
+      "missing_attachment",
+    );
+  }
+  for (const invalid of [
+    `//evil.test/${id}`,
+    `/other/${id}`,
+    `/${id}/extra`,
+    `/${id}extra`,
+    `/../${id}`,
+    `/%2f${id}`,
+    `https://evil.test/${id}`,
+    `https://dev.azure.com/${id}`,
+  ])
+    assert.equal(ticketImagePreview(invalid, card, "ref").preview, null);
+});

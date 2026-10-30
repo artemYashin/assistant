@@ -73,12 +73,19 @@ export function ticketImagePreview(source: string, card: ImageCard, reference: s
       url.protocol === "https:" &&
       url.hostname === `${base.hostname}.mcas.ms` &&
       url.port === base.port;
+    const shortId =
+      /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[?#][^\\\s]*)?$/i.exec(
+        source.trim(),
+      )?.[1];
+    if (shortId && (base.protocol !== "https:" || base.username || base.password))
+      return fail("invalid_url");
     diagnostic.sameOrigin = url.origin === base.origin || mcasAlias;
     diagnostic.sameCollection = url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/");
     diagnostic.hasQuery = !!url.search;
     if (!diagnostic.sameOrigin) return fail("different_origin");
-    if (!diagnostic.sameCollection) return fail("different_collection");
-    const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(url.pathname)?.[1];
+    if (!shortId && !diagnostic.sameCollection) return fail("different_collection");
+    const id =
+      shortId || /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(url.pathname)?.[1];
     if (!id) return fail("unsupported_path");
     const attachment = attachments.find((a) => a.id.toLowerCase() === id.toLowerCase());
     diagnostic.attachmentFound = !!attachment;

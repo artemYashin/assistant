@@ -67,14 +67,14 @@ export function plainText(value: string) {
 export function ticketContentText(
   value: string,
   base?: string,
-  rewrite: (url: string) => string = (url) => url,
+  rewrite: (url: string, source?: string) => string = (url) => url,
 ) {
   const links: string[] = [];
   const url = (raw: string) => {
     try {
       const parsed = new URL(plainText(raw), base);
       return /^https?:$/.test(parsed.protocol)
-        ? rewrite(parsed.href).replace(/\(/g, "%28").replace(/\)/g, "%29")
+        ? rewrite(parsed.href, plainText(raw)).replace(/\(/g, "%28").replace(/\)/g, "%29")
         : "";
     } catch {
       return "";
@@ -94,7 +94,7 @@ export function ticketContentText(
     return key;
   };
   const markdown = value.replace(
-    /(!?)\[([^\]\n]*)\]\((https?:[^\s)]+)\)/gi,
+    /(!?)\[([^\]\n]*)\]\((https?:[^\s)]+|\/[^\s)]+)\)/gi,
     (match, image, title, target) => {
       const href = url(target);
       return href ? stash(`${image}[${label(title)}](${href})`) : match;
@@ -150,8 +150,8 @@ export class Connectors {
     const source = this.store.source(s),
       base = azureBase(s.azureUrl);
     const reference = `cache-${createHash("sha256").update(source).digest("hex").slice(0, 24)}-${item.id}`;
-    const rewrite = (url: string) => {
-      const id = ticketAttachmentId(url, base);
+    const rewrite = (url: string, raw?: string) => {
+      const id = ticketAttachmentId(raw ?? url, base);
       return id ? `/api/ticket-cards/${reference}/attachments/${id}` : url;
     };
     const sections = {

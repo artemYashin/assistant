@@ -1,3 +1,4 @@
+import { shortTicketAttachmentId } from "./ticket-attachment-url.js";
 import { azureImageOriginAllowed } from "./azure-image-origin.js";
 import { createHash } from "node:crypto";
 import { ticketInlineImages } from "./ticket-inline-images.js";
@@ -50,7 +51,8 @@ export function prDescriptionImages(description: string) {
     for (const match of node.value.matchAll(/<img\b[^>]*>/gi)) {
       const src = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(match[0]);
       const source = src?.[1] ?? src?.[2] ?? src?.[3];
-      if (!source || !/^(?:data:image\/|blob:)/i.test(source)) continue;
+      if (!source || (!/^(?:data:image\/|blob:)/i.test(source) && !shortTicketAttachmentId(source)))
+        continue;
       const start = node.position.start.offset + match.index;
       htmlImages.push({ start, end: start + match[0].length, source });
       rawSources.push(source);
@@ -129,8 +131,12 @@ export function azureImageUrl(
   aliases: { repositories?: string[]; projects?: string[] } = {},
 ): string | null {
   try {
-    const url = new URL(raw, prUrl);
     const root = new URL(base);
+    const shortId = shortTicketAttachmentId(raw);
+    const url = new URL(
+      shortId ? `${base.replace(/\/$/, "")}/_apis/wit/attachments/${shortId}` : raw,
+      prUrl,
+    );
     if (url.protocol !== "https:" || !azureImageOriginAllowed(url, root)) return null;
     const path = decodeURIComponent(url.pathname);
     const prefix = decodeURIComponent(root.pathname).replace(/\/$/, "") + "/";
