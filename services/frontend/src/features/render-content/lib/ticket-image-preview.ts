@@ -27,6 +27,15 @@ type ImageCard = {
   attachments?: { id: string; inline?: boolean; image?: boolean }[];
 };
 
+// Match the backend short attachment resolver and URL boundary whitespace semantics.
+function trimImageUrlPadding(source: string): string {
+  let start = 0;
+  let end = source.length;
+  while (start < end && source.charCodeAt(start) <= 32) start++;
+  while (end > start && source.charCodeAt(end - 1) <= 32) end--;
+  return source.slice(start, end);
+}
+
 /** A diagnostic deliberately contains no source URL, ticket text or attachment IDs. */
 export function ticketImagePreview(source: string, card: ImageCard, reference: string) {
   const diagnostic: TicketImageDiagnostic = {
@@ -75,7 +84,7 @@ export function ticketImagePreview(source: string, card: ImageCard, reference: s
       url.port === base.port;
     const shortId =
       /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[?#][^\\\s]*)?$/i.exec(
-        source.trim(),
+        trimImageUrlPadding(source),
       )?.[1];
     if (shortId && (base.protocol !== "https:" || base.username || base.password))
       return fail("invalid_url");

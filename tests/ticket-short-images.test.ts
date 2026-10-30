@@ -1,5 +1,7 @@
 import { azureImageUrl, prDescriptionImages } from "../services/backend/src/pr-images.js";
 import test from "node:test";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,6 +20,10 @@ const png = Buffer.from(
 
 test("short attachment IDs only accept an exact root-relative UUID", () => {
   assert.equal(ticketAttachmentId(proxy, base), id);
+  for (let code = 0; code <= 32; code++) {
+    const padding = String.fromCharCode(code);
+    assert.equal(ticketAttachmentId(padding + proxy + padding, base), id);
+  }
   assert.equal(ticketAttachmentId(`/${id}`, base), id);
   for (const invalidBase of [
     "http://dev.azure.com/example",
@@ -41,6 +47,12 @@ test("short attachment IDs only accept an exact root-relative UUID", () => {
     `/not-an-attachment?fileName=image.png`,
     `/${id.replace(/1/g, "-")}`,
     `/${id}\\evil`,
+    `/%06${id}`,
+    `%06/${id}`,
+    `\\u0006/${id}`,
+    `/${id.slice(0, 8)}\u0006${id.slice(8)}`,
+    `\u0006//evil.example/${id}`,
+    `\u0006/folder/${id}`,
   ])
     assert.equal(ticketAttachmentId(invalid, base), undefined, invalid);
 });
@@ -57,109 +69,128 @@ function fixture(t: any) {
   return { store, connectors: new Connectors(store) };
 }
 
-test("saved HTML and Markdown short URL comments recover read-only and download via original API", async (t) => {
-  const { store, connectors } = fixture(t);
-  const original = JSON.stringify({
-    id: 42,
-    source: store.source(),
-    base,
-    project: "Project",
-    loadedAt: "2026-10-01T00:00:00Z",
-    fields: {},
-    attachments: [],
-    comments: [
-      { richText: `<img src="${proxy}">` },
-      { richText: `![image](${proxy} "Screenshot")` },
-    ],
+for (const proxy of [`/${id}?fileName=image.png`, `\u0006/${id}?fileName=image.png\u0006`]) {
+  const label = proxy.startsWith("\u0006") ? "C0 boundary padding" : "plain URL";
+  test(`saved HTML and Markdown comments recover read-only (${label})`, async (t) => {
+    const { store, connectors } = fixture(t);
+    const original = JSON.stringify({
+      id: 42,
+      source: store.source(),
+      base,
+      project: "Project",
+      loadedAt: "2026-10-01T00:00:00Z",
+      fields: {},
+      attachments: [],
+      comments: [
+        { richText: `<img src="${proxy}">` },
+        { richText: `![image](${proxy} "Screenshot")` },
+      ],
+    });
+    store.db.prepare("INSERT INTO ticket_cards VALUES (?,?)").run("old", original);
+    const metadata = { id, name: "Saved filename.png", image: false, custom: "preserved" };
+    const withMetadata = JSON.stringify({ ...JSON.parse(original), attachments: [metadata] });
+    store.db.prepare("INSERT INTO ticket_cards VALUES (?,?)").run("metadata", withMetadata);
+    assert.deepEqual(connectors.ticketCard("metadata").attachments, [{ ...metadata, image: true }]);
+    assert.equal(
+      (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("metadata") as any).data,
+      withMetadata,
+    );
+    for (let i = 0; i < 2; i++) {
+      const card = connectors.ticketCard("old");
+      assert.deepEqual(
+        card.attachments.map((a: any) => a.id),
+        [id],
+      );
+      assert.deepEqual(card.comments, JSON.parse(original).comments);
+    }
+    t.mock.method(globalThis, "fetch", async (url: any, options: any) => {
+      assert.equal(
+        String(url),
+        `${base}/Project/_apis/wit/attachments/${id}?api-version=${store.settings().azureVersion}`,
+      );
+      assert.equal(options.redirect, "error");
+      assert.equal(
+        options.headers.Authorization,
+        `Basic ${Buffer.from(":test-pat").toString("base64")}`,
+      );
+      return new Response(png, { headers: { "Content-Type": "image/png" } });
+    });
+    assert.deepEqual((await connectors.attachment("old", id)).body, png);
+    assert.equal(
+      (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("old") as any).data,
+      original,
+    );
+    t.mock.method(globalThis, "fetch", async () => new Response("offline", { status: 503 }));
+    await assert.rejects(connectors.attachment("old", id), /Не удалось загрузить/);
+    const cached = await connectors.ticketDetails(42, true);
+    assert.equal(cached.attachments[0].id, id);
+    assert.equal(
+      (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("old") as any).data,
+      original,
+    );
   });
-  store.db.prepare("INSERT INTO ticket_cards VALUES (?,?)").run("old", original);
-  const metadata = { id, name: "Saved filename.png", image: false, custom: "preserved" };
-  const withMetadata = JSON.stringify({ ...JSON.parse(original), attachments: [metadata] });
-  store.db.prepare("INSERT INTO ticket_cards VALUES (?,?)").run("metadata", withMetadata);
-  assert.deepEqual(connectors.ticketCard("metadata").attachments, [{ ...metadata, image: true }]);
-  assert.equal(
-    (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("metadata") as any).data,
-    withMetadata,
-  );
-  for (let i = 0; i < 2; i++) {
-    const card = connectors.ticketCard("old");
+
+  test(`fresh comments and cached ticket content discover the same attachment (${label})`, async (t) => {
+    const { store, connectors } = fixture(t);
+    const fields = {
+      "System.Title": "Example",
+      "System.TeamProject": "Project",
+      "System.Description": `<img src="${proxy}">`,
+      "Microsoft.VSTS.Common.AcceptanceCriteria": proxy.startsWith("\u0006")
+        ? `<img src="${proxy}">`
+        : `![image](${proxy})`,
+      "Microsoft.VSTS.TCM.ReproSteps": `<img src="${proxy}">`,
+      "Microsoft.VSTS.TCM.SystemInfo": proxy.startsWith("\u0006")
+        ? `<img src="${proxy}">`
+        : `![image](${proxy})`,
+    };
+    t.mock.method(globalThis, "fetch", async (url: any) => {
+      assert.equal(new URL(String(url)).origin, new URL(base).origin);
+      if (String(url).includes("/comments"))
+        return Response.json({
+          comments: [
+            {
+              id: 1,
+              text: proxy.startsWith("\u0006") ? `<img src="${proxy}">` : `![image](${proxy})`,
+            },
+          ],
+        });
+      return Response.json({ id: 42, fields, relations: [] });
+    });
+    const card = await connectors.ticketDetails(42);
     assert.deepEqual(
       card.attachments.map((a: any) => a.id),
       [id],
     );
-    assert.deepEqual(card.comments, JSON.parse(original).comments);
-  }
-  t.mock.method(globalThis, "fetch", async (url: any, options: any) => {
-    assert.equal(
-      String(url),
-      `${base}/Project/_apis/wit/attachments/${id}?api-version=${store.settings().azureVersion}`,
-    );
-    assert.equal(options.redirect, "error");
-    assert.equal(
-      options.headers.Authorization,
-      `Basic ${Buffer.from(":test-pat").toString("base64")}`,
-    );
-    return new Response(png, { headers: { "Content-Type": "image/png" } });
+    // Exercise the same caching operation used by synchronization without requiring import setup.
+    (connectors as any).cacheTicketContent({ id: 42, fields }, store.settings(), true);
+    const content = store.db
+      .prepare("SELECT section, body FROM ticket_content_cache WHERE source=? AND id=?")
+      .all(store.source(), 42) as any[];
+    assert.equal(content.length, 4);
+    for (const section of content)
+      assert.match(
+        section.body,
+        new RegExp(`/api/ticket-cards/cache-[a-f0-9]+-42/attachments/${id}`),
+      );
   });
-  assert.deepEqual((await connectors.attachment("old", id)).body, png);
-  assert.equal(
-    (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("old") as any).data,
-    original,
-  );
-  t.mock.method(globalThis, "fetch", async () => new Response("offline", { status: 503 }));
-  await assert.rejects(connectors.attachment("old", id), /Не удалось загрузить/);
-  const cached = await connectors.ticketDetails(42, true);
-  assert.equal(cached.attachments[0].id, id);
-  assert.equal(
-    (store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get("old") as any).data,
-    original,
-  );
-});
 
-test("fresh short URL comments and cached ticket content discover the same attachment", async (t) => {
-  const { store, connectors } = fixture(t);
-  const fields = {
-    "System.Title": "Example",
-    "System.TeamProject": "Project",
-    "System.Description": `<img src="${proxy}">`,
-    "Microsoft.VSTS.Common.AcceptanceCriteria": `![image](${proxy})`,
-    "Microsoft.VSTS.TCM.ReproSteps": `<img src="${proxy}">`,
-    "Microsoft.VSTS.TCM.SystemInfo": `![image](${proxy})`,
-  };
-  t.mock.method(globalThis, "fetch", async (url: any) => {
-    assert.equal(new URL(String(url)).origin, new URL(base).origin);
-    if (String(url).includes("/comments"))
-      return Response.json({ comments: [{ id: 1, text: `![image](${proxy})` }] });
-    return Response.json({ id: 42, fields, relations: [] });
-  });
-  const card = await connectors.ticketDetails(42);
-  assert.deepEqual(
-    card.attachments.map((a: any) => a.id),
-    [id],
-  );
-  // Exercise the same caching operation used by synchronization without requiring import setup.
-  (connectors as any).cacheTicketContent({ id: 42, fields }, store.settings(), true);
-  const content = store.db
-    .prepare("SELECT section, body FROM ticket_content_cache WHERE source=? AND id=?")
-    .all(store.source(), 42) as any[];
-  assert.equal(content.length, 4);
-  for (const section of content)
-    assert.match(
-      section.body,
-      new RegExp(`/api/ticket-cards/cache-[a-f0-9]+-42/attachments/${id}`),
+  test(`PR shorthand uses canonical WIT API (${label})`, () => {
+    const raw = `<div><img src="${proxy}"></div>`;
+    const images = prDescriptionImages(raw);
+    assert.deepEqual(images.sources, [proxy.replaceAll("\u0006", "")]);
+    assert.ok(!images.description.includes("\u0006"));
+    assert.match(images.description, /!\[Изображение\]/);
+    const tree = unified().use(remarkParse).parse(images.description);
+    const image = (tree.children[0] as any).children[0];
+    assert.equal(image.type, "image");
+    assert.equal(image.url, images.sources[0]);
+    const prUrl = `${base}/Project/_git/repo/pullrequest/42`;
+    assert.equal(
+      azureImageUrl(proxy, base, prUrl, "repo", 42, "7.1"),
+      `${base}/_apis/wit/attachments/${id}?api-version=7.1`,
     );
-});
-
-test("PR shorthand uses canonical WIT API and preserves raw descriptions", () => {
-  const raw = `<div><img src="${proxy}"></div>`;
-  const images = prDescriptionImages(raw);
-  assert.deepEqual(images.sources, [proxy]);
-  assert.match(images.description, /!\[Изображение\]/);
-  const prUrl = `${base}/Project/_git/repo/pullrequest/42`;
-  assert.equal(
-    azureImageUrl(proxy, base, prUrl, "repo", 42, "7.1"),
-    `${base}/_apis/wit/attachments/${id}?api-version=7.1`,
-  );
-  assert.equal(azureImageUrl(`https://evil.example/${id}`, base, prUrl, "repo", 42, "7.1"), null);
-  assert.equal(azureImageUrl(`${base}/${id}`, base, prUrl, "repo", 42, "7.1"), null);
-});
+    assert.equal(azureImageUrl(`https://evil.example/${id}`, base, prUrl, "repo", 42, "7.1"), null);
+    assert.equal(azureImageUrl(`${base}/${id}`, base, prUrl, "repo", 42, "7.1"), null);
+  });
+}

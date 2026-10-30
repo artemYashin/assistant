@@ -1,9 +1,18 @@
 import { azureImageOriginAllowed } from "./azure-image-origin.js";
 
+/** Match URL parsing of boundary C0 controls and spaces without changing the path. */
+export function trimImageUrlPadding(source: string): string {
+  let start = 0;
+  let end = source.length;
+  while (start < end && source.charCodeAt(start) <= 32) start++;
+  while (end > start && source.charCodeAt(end - 1) <= 32) end--;
+  return source.slice(start, end);
+}
+
 /** Azure sometimes emits a bare root-relative attachment ID in rich text. */
 export function shortTicketAttachmentId(source: string): string | undefined {
   return /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[?#][^\\\s]*)?$/i
-    .exec(source.trim())?.[1]
+    .exec(trimImageUrlPadding(source))?.[1]
     .toLowerCase();
 }
 

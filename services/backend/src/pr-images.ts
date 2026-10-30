@@ -1,4 +1,4 @@
-import { shortTicketAttachmentId } from "./ticket-attachment-url.js";
+import { shortTicketAttachmentId, trimImageUrlPadding } from "./ticket-attachment-url.js";
 import { azureImageOriginAllowed } from "./azure-image-origin.js";
 import { createHash } from "node:crypto";
 import { ticketInlineImages } from "./ticket-inline-images.js";
@@ -64,6 +64,9 @@ export function prDescriptionImages(description: string) {
     fields: Object.fromEntries(rawSources.map((source, i) => [i, source])),
   });
   const mapped = (source: string) => {
+    // Converted HTML is rendered through Markdown, which would percent-encode
+    // boundary controls and no longer match the attachment source map.
+    if (shortTicketAttachmentId(source)) source = trimImageUrlPadding(source);
     if (!/^data:image\//i.test(source)) {
       sources.add(source);
       return source;

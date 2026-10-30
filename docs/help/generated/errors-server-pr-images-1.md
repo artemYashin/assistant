@@ -9,28 +9,28 @@
 
 unavailable-
 
-Источник: services/backend/src/pr-images.ts:72.
+Источник: services/backend/src/pr-images.ts:75.
 
 ### Сообщение
 
 https://orbit.invalid/pr-inline-image/{…}
 
-Источник: services/backend/src/pr-images.ts:73.
+Источник: services/backend/src/pr-images.ts:76.
 
 ### Сообщение
 
 Изображение недоступно в Azure
 
-Источник: services/backend/src/pr-images.ts:189.
+Источник: services/backend/src/pr-images.ts:192.
 
 ### Сообщение
 
 Изображение больше 20 МБ
 
-Источник: services/backend/src/pr-images.ts:200.
+Источник: services/backend/src/pr-images.ts:203.
 
 ### Сообщение
 
 Поддерживаются PNG, JPEG, GIF и WebP
 
-Источник: services/backend/src/pr-images.ts:217.
+Источник: services/backend/src/pr-images.ts:220.

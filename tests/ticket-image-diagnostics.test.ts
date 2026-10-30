@@ -103,7 +103,12 @@ test("MCAS alias maps to local preview only for the configured host and collecti
 });
 
 test("root-relative UUID image addresses use scoped attachment metadata", () => {
-  for (const short of [`/${id}?fileName=image.png`, `/${id}`, `/${id.toUpperCase()}?x=1`]) {
+  for (const short of [
+    `/${id}?fileName=image.png`,
+    `/${id}`,
+    `/${id.toUpperCase()}?x=1`,
+    `\u0006/${id}?fileName=image.png\u0006`,
+  ]) {
     assert.equal(
       ticketImagePreview(short, card, "ref").preview,
       `/api/ticket-cards/ref/attachments/${id}`,
@@ -120,6 +125,13 @@ test("root-relative UUID image addresses use scoped attachment metadata", () => 
     `/${id}extra`,
     `/../${id}`,
     `/%2f${id}`,
+    `%06/${id}`,
+    `/%06${id}`,
+    `\\u0006/${id}`,
+    `/${id.slice(0, 8)}\u0006${id.slice(8)}`,
+    `\u0006//evil.test/${id}`,
+    `\u0006/other/${id}`,
+
     `https://evil.test/${id}`,
     `https://dev.azure.com/${id}`,
   ])
