@@ -24,7 +24,7 @@ export function markdownImageSources(text: string): string[] {
         : node.type === "imageReference"
           ? definitions.get(node.identifier)
           : undefined;
-    if (source) sources.add(source);
+    if (typeof source === "string") sources.add(source);
   });
   return [...sources];
 }

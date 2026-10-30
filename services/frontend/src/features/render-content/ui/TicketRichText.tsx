@@ -1,3 +1,5 @@
+import { ticketImagePreview } from "../lib/ticket-image-preview.js";
+import { TicketImageUnavailable } from "./TicketImageUnavailable.js";
 import { ImagePreview } from "../../../entities/rich-content/preview/index.js";
 import { createElement, Fragment, type ReactNode } from "react";
 import { ChatCodeSnippet } from "../../../entities/repository/snippet/index.js";
@@ -6,35 +8,12 @@ import { ChatMarkdown } from "./ChatMarkdown.js";
 
 export function TicketRichText({ value, card, reference, markdown = false }: any) {
   const raw = typeof value === "string" ? value : "";
-  const preview = (source: string) => {
-    try {
-      const inlineId =
-        /^https:\/\/orbit\.invalid\/ticket-inline-image\/(inline-[0-9a-f]{64})$/.exec(source)?.[1];
-      if (inlineId && card.attachments.some((a: any) => a.id === inlineId && a.inline && a.image))
-        return `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${inlineId}`;
-      const base = new URL(card.base);
-      const url = new URL(source, card.base + "/");
-      if (
-        url.origin !== base.origin ||
-        !url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")
-      )
-        return null;
-      const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(url.pathname)?.[1];
-      const attachment = card.attachments.find(
-        (a: any) => a.id.toLowerCase() === id?.toLowerCase() && a.image,
-      );
-      return attachment
-        ? `/api/ticket-cards/${encodeURIComponent(reference)}/attachments/${encodeURIComponent(attachment.id)}`
-        : null;
-    } catch {
-      return null;
-    }
-  };
+  const preview = (source: string) => ticketImagePreview(source, card, reference);
   const outsideCode = raw.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?^ {0,3}\1[ \t]*$/gm, "");
   if (markdown || !/<\/?[a-z][\w-]*(?:\s[^>]*|\/?)>/i.test(outsideCode)) {
     const images = markdownImageSources(raw).map((source) => ({
       source,
-      preview: preview(source),
+      ...preview(source),
     }));
     return <ChatMarkdown text={raw} images={images} />;
   }
@@ -124,12 +103,13 @@ export function TicketRichText({ value, card, reference, markdown = false }: any
         if (++breaks > 2) return null;
       } else breaks = 0;
       if (tag === "img") {
-        const src = preview(node.getAttribute("src") || "");
+        const result = preview(node.getAttribute("src") || "");
+        const src = result.preview;
         const alt = node.getAttribute("alt") || "Изображение";
         return src ? (
           <ImagePreview key={index} src={src} alt={alt} className="ticket-inline-image" />
         ) : (
-          <span key={index}>[{alt}: предпросмотр недоступен]</span>
+          <TicketImageUnavailable key={index} diagnostic={result.diagnostic!} />
         );
       }
       if (tag === "pre") {

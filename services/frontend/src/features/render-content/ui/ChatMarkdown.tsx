@@ -1,3 +1,5 @@
+import type { TicketImageDiagnostic } from "../lib/ticket-image-preview.js";
+import { TicketImageUnavailable } from "./TicketImageUnavailable.js";
 import { rehypeReviewFormat, reviewText, reviewLabelKind } from "../lib/rehype-review-format.js";
 import type { Element, ElementContent } from "hast";
 import { MarkdownCodeBlock } from "../../../entities/repository/snippet/index.js";
@@ -32,7 +34,11 @@ import { remarkDescriptionBreaks } from "../lib/remark-description-breaks.js";
 const ticketAsset = (url: string) =>
   /^\/api\/ticket-cards\/[a-zA-Z0-9-]+\/attachments\/[0-9a-f-]{36}$/i.test(url);
 
-type MarkdownImages = { source: string; preview: string | null }[];
+type MarkdownImages = {
+  source: string;
+  preview: string | null;
+  diagnostic?: TicketImageDiagnostic;
+}[];
 const MarkdownImagesContext = createContext<MarkdownImages | undefined>(undefined);
 
 // Keep the image component identity stable when polling returns a new images array.
@@ -40,7 +46,8 @@ const MarkdownImage: Components["img"] = ({ src, alt }) => {
   const images = useContext(MarkdownImagesContext);
   if (typeof src === "string" && ticketAsset(src))
     return <ImagePreview src={src} alt={alt || "Изображение"} />;
-  const preview = images?.find((image) => image.source === src)?.preview;
+  const image = images?.find((image) => image.source === src);
+  const preview = image?.preview;
   if (
     preview &&
     (preview.startsWith("/api/pr/image?") ||
@@ -49,6 +56,7 @@ const MarkdownImage: Components["img"] = ({ src, alt }) => {
     return <ImagePreview key={preview} src={preview} alt={alt} className="pr-image-link" />;
   // PR/ticket image metadata is an allowlist. Never bypass a missing local
   // preview with a direct Azure request (blocked by CSP and missing credentials).
+  if (image?.diagnostic) return <TicketImageUnavailable diagnostic={image.diagnostic} />;
   if (images !== undefined) return <span>{alt || "Изображение"} · предпросмотр недоступен</span>;
   return typeof src === "string" && /^https?:\/\//i.test(src) ? (
     <ImagePreview src={src} alt={alt || "Изображение"} thumbnail={true} />
@@ -367,7 +375,10 @@ export function ChatMarkdown({
               ? url
               : key === "href" && chatTicketPath(url)
                 ? chatTicketPath(url)!
-                : key === "src" && images?.some((image) => image.source === url && image.preview)
+                : key === "src" &&
+                    images?.some(
+                      (image) => image.source === url && (image.preview || image.diagnostic),
+                    )
                   ? url
                   : /^(https?:\/\/|mailto:)/i.test(url)
                     ? url
