@@ -1,6 +1,7 @@
 import { ImagePreview } from "../../../entities/rich-content/preview/index.js";
 import { createElement, Fragment, type ReactNode } from "react";
 import { ChatCodeSnippet } from "../../../entities/repository/snippet/index.js";
+import { markdownImageSources } from "../lib/markdown-images.js";
 import { ChatMarkdown } from "./ChatMarkdown.js";
 
 export function TicketRichText({ value, card, reference, markdown = false }: any) {
@@ -30,10 +31,10 @@ export function TicketRichText({ value, card, reference, markdown = false }: any
     }
   };
   const outsideCode = raw.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?^ {0,3}\1[ \t]*$/gm, "");
-  if (markdown || !/<\/?[a-z][^>]*>/i.test(outsideCode)) {
-    const images = [...raw.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => ({
-      source: m[1],
-      preview: preview(m[1]),
+  if (markdown || !/<\/?[a-z][\w-]*(?:\s[^>]*|\/?)>/i.test(outsideCode)) {
+    const images = markdownImageSources(raw).map((source) => ({
+      source,
+      preview: preview(source),
     }));
     return <ChatMarkdown text={raw} images={images} />;
   }

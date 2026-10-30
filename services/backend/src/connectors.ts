@@ -1,3 +1,4 @@
+import { markdownImageSources } from "./markdown-images.js";
 import { ticketInlineImages, withTicketInlineImages } from "./ticket-inline-images.js";
 import { azureTicketFieldsPatch } from "./ticket-azure-fields.js";
 import { azurePrLinks } from "./ticket-pull-requests.js";
@@ -1057,7 +1058,7 @@ export class Connectors {
     this.store.db
       .prepare("INSERT INTO ticket_cards VALUES (?,?)")
       .run(cardId, JSON.stringify(card));
-    return { cardId, ...withTicketInlineImages(card) };
+    return { cardId, ...(this.ticketCard(cardId) as typeof card) };
   }
   async ticketDetails(id: number, allowCachedFallback = false) {
     const s = this.store.settings(),
@@ -1134,10 +1135,11 @@ export class Connectors {
     for (const relation of item.relations || [])
       if (relation.rel === "AttachedFile")
         add(relation.url, relation.attributes?.name || "Вложение");
-    const content = [
-      ...Object.values(item.fields || {}).filter((v) => typeof v === "string"),
+    const parts = [
+      ...Object.values(item.fields || {}).filter((v): v is string => typeof v === "string"),
       ...comments.map((c) => c.renderedText || c.text || ""),
-    ].join("\n");
+    ];
+    const content = parts.join("\n");
     for (const imageTag of content.matchAll(/<img\b[^>]*>/gi)) {
       const source = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(imageTag[0]);
       if (source)
@@ -1147,8 +1149,9 @@ export class Connectors {
           true,
         );
     }
-    for (const match of content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g))
-      add(match[1], "Изображение в комментарии", true);
+    for (const part of parts)
+      for (const source of markdownImageSources(part))
+        add(source, "Изображение в комментарии", true);
     if (this.store.hasLocalTicket(id, this.store.source(s))) {
       this.store.db.transaction(() => {
         this.saveTicket(item, s);
@@ -1500,7 +1503,46 @@ export class Connectors {
     const row = this.store.db.prepare("SELECT data FROM ticket_cards WHERE id=?").get(ref) as
       { data: string } | undefined;
     if (!row) throw new AppError(404, "Карточка не найдена");
-    return withTicketInlineImages(JSON.parse(row.data));
+    const card = JSON.parse(row.data);
+    // Old snapshots may have missed titled/reference Markdown image metadata.
+    // Recover only attachments present in their own content and Azure collection.
+    const attachments = new Map<string, any>(
+      (card.attachments || []).map((a: any) => [a.id.toLowerCase(), a]),
+    );
+    const parts = [
+      ...Object.values(card.fields || {}),
+      ...(card.comments || []).map((c: any) => c.richText || c.text || ""),
+    ];
+    for (const part of parts) {
+      if (typeof part !== "string") continue;
+      for (const source of markdownImageSources(part)) {
+        try {
+          const base = new URL(card.base);
+          const url = new URL(source, card.base + "/");
+          const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i
+            .exec(url.pathname)?.[1]
+            .toLowerCase();
+          if (
+            !id ||
+            url.origin !== base.origin ||
+            !url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")
+          )
+            continue;
+          const previous = attachments.get(id);
+          attachments.set(id, {
+            ...previous,
+            id: previous?.id || id,
+            name: previous?.name || "Изображение в комментарии",
+            image: true,
+          });
+        } catch {
+          /* Malformed or external addresses remain unavailable. */
+        }
+      }
+    }
+    return withTicketInlineImages<any>(
+      attachments.size ? { ...card, attachments: [...attachments.values()] } : card,
+    );
   }
   async attachment(ref: string, id: string) {
     const card = this.ticketCard(ref);
