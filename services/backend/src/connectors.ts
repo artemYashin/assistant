@@ -1,3 +1,4 @@
+import { ticketAttachmentId } from "./ticket-attachment-url.js";
 import { markdownImageSources } from "./markdown-images.js";
 import { ticketInlineImages, withTicketInlineImages } from "./ticket-inline-images.js";
 import { azureTicketFieldsPatch } from "./ticket-azure-fields.js";
@@ -150,14 +151,8 @@ export class Connectors {
       base = azureBase(s.azureUrl);
     const reference = `cache-${createHash("sha256").update(source).digest("hex").slice(0, 24)}-${item.id}`;
     const rewrite = (url: string) => {
-      const u = new URL(url),
-        b = new URL(base);
-      const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(u.pathname)?.[1];
-      return id &&
-        u.origin === b.origin &&
-        u.pathname.startsWith(b.pathname.replace(/\/$/, "") + "/")
-        ? `/api/ticket-cards/${reference}/attachments/${id.toLowerCase()}`
-        : url;
+      const id = ticketAttachmentId(url, base);
+      return id ? `/api/ticket-cards/${reference}/attachments/${id}` : url;
     };
     const sections = {
       description: "System.Description",
@@ -1113,16 +1108,8 @@ export class Connectors {
     const attachments: { id: string; name: string; image: boolean }[] = [];
     const add = (url: string, name = "Вложение", image = false) => {
       try {
-        const u = new URL(url, base + "/");
-        const b = new URL(base);
-        const match = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i.exec(u.pathname);
-        if (
-          u.origin !== b.origin ||
-          !u.pathname.startsWith(b.pathname.replace(/\/$/, "") + "/") ||
-          !match
-        )
-          return;
-        const attachmentId = match[1].toLowerCase();
+        const attachmentId = ticketAttachmentId(url, base);
+        if (!attachmentId) return;
         if (!attachments.some((a) => a.id === attachmentId))
           attachments.push({
             id: attachmentId,
@@ -1504,7 +1491,7 @@ export class Connectors {
       { data: string } | undefined;
     if (!row) throw new AppError(404, "Карточка не найдена");
     const card = JSON.parse(row.data);
-    // Old snapshots may have missed titled/reference Markdown image metadata.
+    // Old snapshots may have missed HTML/Markdown or proxy image metadata.
     // Recover only attachments present in their own content and Azure collection.
     const attachments = new Map<string, any>(
       (card.attachments || []).map((a: any) => [a.id.toLowerCase(), a]),
@@ -1515,19 +1502,15 @@ export class Connectors {
     ];
     for (const part of parts) {
       if (typeof part !== "string") continue;
-      for (const source of markdownImageSources(part)) {
+      const sources = [...markdownImageSources(part)];
+      for (const tag of part.matchAll(/<img\b[^>]*>/gi)) {
+        const source = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tag[0]);
+        if (source) sources.push((source[1] ?? source[2] ?? source[3]).replace(/&amp;/gi, "&"));
+      }
+      for (const source of sources) {
         try {
-          const base = new URL(card.base);
-          const url = new URL(source, card.base + "/");
-          const id = /\/_apis\/wit\/attachments\/([0-9a-f-]{36})(?:$|\/)/i
-            .exec(url.pathname)?.[1]
-            .toLowerCase();
-          if (
-            !id ||
-            url.origin !== base.origin ||
-            !url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")
-          )
-            continue;
+          const id = ticketAttachmentId(source, card.base);
+          if (!id) continue;
           const previous = attachments.get(id);
           attachments.set(id, {
             ...previous,

@@ -240,3 +240,40 @@ test("exact PR preview resolves original project and repo name links from truste
   assert.match(preview.images[0].preview, /^\/api\/pr\/image\?/);
   assert.equal((await prs.image(preview.monitor, "repo-guid", 3, source)).type, "image/png");
 });
+
+test("PR MCAS WIT and native attachments normalize to configured API before fetching", async (t) => {
+  const native = `${base}/Project/_apis/git/repositories/repo/pullRequests/1/attachments/test.png`;
+  const calls: string[] = [];
+  t.mock.method(globalThis, "fetch", async (url: any) => {
+    calls.push(String(url));
+    return new Response(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  });
+  for (const original of [attachment, native]) {
+    const proxy = original.replace("dev.azure.com", "dev.azure.com.mcas.ms");
+    const normalized = resolve(`${proxy}?fileName=image.png&mcasCtx=private#fragment`);
+    assert.equal(normalized, `${original}?api-version=7.1`);
+    await readAzureImage(normalized!, "fixture");
+    for (const invalid of [
+      proxy.replace(".mcas.ms", ".mcas.ms.evil.test"),
+      proxy.replace("dev.azure.com", "foreign.azure.com"),
+      proxy.replace("https:", "http:"),
+      proxy.replace("https://", "https://user:pass@"),
+      proxy.replace(".mcas.ms/", ".mcas.ms:8443/"),
+      proxy.replace("/org/", "/org-other/"),
+      proxy.replace("/org/Project/", "/org/../../other/"),
+    ])
+      assert.equal(resolve(invalid), null, invalid);
+  }
+  assert.deepEqual(
+    calls,
+    [attachment, native].map((url) => `${url}?api-version=7.1`),
+  );
+  assert.equal(
+    resolve(native.replace("/repo/", "/other/").replace("dev.azure.com", "dev.azure.com.mcas.ms")),
+    null,
+  );
+  assert.equal(
+    resolve(native.replace("/1/", "/2/").replace("dev.azure.com", "dev.azure.com.mcas.ms")),
+    null,
+  );
+});

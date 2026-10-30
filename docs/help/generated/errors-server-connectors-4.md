@@ -9,58 +9,58 @@
 
 Результаты поиска устарели. Нажмите «Найти», чтобы обновить список страниц.
 
-Источник: services/backend/src/connectors.ts:1672.
+Источник: services/backend/src/connectors.ts:1655.
 
 ### Сообщение
 
 Некорректные номера тикетов Azure
 
-Источник: services/backend/src/connectors.ts:1691.
+Источник: services/backend/src/connectors.ts:1674.
 
 ### Сообщение
 
 Azure не вернул данные тикетов
 
-Источник: services/backend/src/connectors.ts:1725.
+Источник: services/backend/src/connectors.ts:1708.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите импорт.
 
-Источник: services/backend/src/connectors.ts:1747.
+Источник: services/backend/src/connectors.ts:1730.
 
 ### Сообщение
 
 Azure не вернул результаты поиска
 
-Источник: services/backend/src/connectors.ts:1826.
+Источник: services/backend/src/connectors.ts:1809.
 
 ### Сообщение
 
 Azure не вернул тикеты
 
-Источник: services/backend/src/connectors.ts:1865.
+Источник: services/backend/src/connectors.ts:1848.
 
 ### Сообщение
 
 Подключение Azure изменилось во время запроса
 
-Источник: services/backend/src/connectors.ts:1925.
+Источник: services/backend/src/connectors.ts:1908.
 
 ### Сообщение
 
 Azure вернул неверный номер тикета
 
-Источник: services/backend/src/connectors.ts:1926.
+Источник: services/backend/src/connectors.ts:1909.
 
 ### Сообщение
 
 Выберите типы и статусы задач: Заказчики и проекты → Автоматический импорт
 
-Источник: services/backend/src/connectors.ts:1958.
+Источник: services/backend/src/connectors.ts:1941.
 
 ### Сообщение
 
 Azure вернул неполный список тикетов
 
-Источник: services/backend/src/connectors.ts:2023.
+Источник: services/backend/src/connectors.ts:2006.

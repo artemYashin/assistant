@@ -67,7 +67,13 @@ export function ticketImagePreview(source: string, card: ImageCard, reference: s
   try {
     const base = new URL(card.base);
     const url = new URL(source, card.base + "/");
-    diagnostic.sameOrigin = url.origin === base.origin;
+    if (url.username || url.password) return fail("invalid_url");
+    const mcasAlias =
+      base.protocol === "https:" &&
+      url.protocol === "https:" &&
+      url.hostname === `${base.hostname}.mcas.ms` &&
+      url.port === base.port;
+    diagnostic.sameOrigin = url.origin === base.origin || mcasAlias;
     diagnostic.sameCollection = url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/");
     diagnostic.hasQuery = !!url.search;
     if (!diagnostic.sameOrigin) return fail("different_origin");

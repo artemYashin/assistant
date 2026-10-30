@@ -79,3 +79,25 @@ test("legacy missing attachment metadata remains readable and reports its absenc
     `/api/ticket-cards/ref/attachments/${id}`,
   );
 });
+
+test("MCAS alias maps to local preview only for the configured host and collection", () => {
+  const proxy = source.replace("dev.azure.com", "dev.azure.com.mcas.ms");
+  assert.equal(
+    ticketImagePreview(proxy, card, "ref").preview,
+    `/api/ticket-cards/ref/attachments/${id}`,
+  );
+  for (const invalid of [
+    proxy.replace("dev.azure.com.mcas.ms", "foreign.example.mcas.ms"),
+    proxy.replace(".mcas.ms", ".mcas.ms.evil.example"),
+    proxy.replace(".mcas.ms", ".mcas.ms:444"),
+    proxy.replace("https:", "http:"),
+    proxy.replace("private-org", "other-org"),
+    proxy.replace("https://", "https://user:password@"),
+  ]) {
+    assert.equal(ticketImagePreview(invalid, card, "ref").preview, null);
+  }
+  assert.equal(
+    ticketImagePreview(proxy, { base, attachments: [] }, "ref").diagnostic?.reason,
+    "missing_attachment",
+  );
+});

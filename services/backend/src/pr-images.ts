@@ -1,3 +1,4 @@
+import { azureImageOriginAllowed } from "./azure-image-origin.js";
 import { createHash } from "node:crypto";
 import { ticketInlineImages } from "./ticket-inline-images.js";
 import { unified } from "unified";
@@ -130,8 +131,7 @@ export function azureImageUrl(
   try {
     const url = new URL(raw, prUrl);
     const root = new URL(base);
-    if (url.protocol !== "https:" || url.origin !== root.origin || url.username || url.password)
-      return null;
+    if (url.protocol !== "https:" || !azureImageOriginAllowed(url, root)) return null;
     const path = decodeURIComponent(url.pathname);
     const prefix = decodeURIComponent(root.pathname).replace(/\/$/, "") + "/";
     // eslint-disable-next-line no-control-regex -- Remove control bytes from untrusted input/output.
@@ -161,6 +161,8 @@ export function azureImageUrl(
       )
     )
       return null;
+    // MCAS is an input alias only; never send credentials to the browser proxy.
+    url.hostname = root.hostname;
     url.search = new URLSearchParams({ "api-version": version }).toString();
     url.hash = "";
     return url.href;
