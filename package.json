@@ -1,6 +1,6 @@
 {
   "name": "orbit-personal-assistant",
-  "version": "0.71.6",
+  "version": "0.71.7",
   "private": true,
   "type": "module",
   "scripts": {
@@ -37,6 +37,7 @@
     "jszip": "^3.10.2",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.468.0",
+    "micromark-util-sanitize-uri": "2.0.1",
     "multer": "^2.0.2",
     "re2js": "2.9.0",
     "react": "^19.1.0",

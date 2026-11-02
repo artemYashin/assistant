@@ -4,6 +4,8 @@ import { createHash } from "node:crypto";
 import { ticketInlineImages } from "./ticket-inline-images.js";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
+import { normalizeUri } from "micromark-util-sanitize-uri";
+import { decodeNamedCharacterReference } from "decode-named-character-reference";
 import { AppError } from "./store.js";
 
 export function descriptionImages(description: string): string[] {
@@ -23,6 +25,19 @@ export function descriptionImages(description: string): string[] {
     ),
   ];
 }
+
+function htmlImageSource(value: string): string {
+  return value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]+);/gi, (entity, name: string) => {
+    if (!name.startsWith("#")) return decodeNamedCharacterReference(name) || entity;
+    const code = /^#x/i.test(name) ? parseInt(name.slice(2), 16) : Number(name.slice(1));
+    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff)
+      ? String.fromCodePoint(code)
+      : entity;
+  });
+}
+
+// Escape entities in a Markdown destination without changing its parsed URL.
+const imageMarkdown = (source: string) => `![Изображение](${source.replace(/&/g, "&amp;")})`;
 
 // Read-time adaptation only: keep original descriptions in SQLite and exact-preview snapshots.
 export function prDescriptionImages(description: string) {
@@ -50,9 +65,8 @@ export function prDescriptionImages(description: string) {
     if (/<(?:script|style|textarea|pre|code)\b|<!--/i.test(node.value)) continue;
     for (const match of node.value.matchAll(/<img\b[^>]*>/gi)) {
       const src = /\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(match[0]);
-      const source = src?.[1] ?? src?.[2] ?? src?.[3];
-      if (!source || (!/^(?:data:image\/|blob:)/i.test(source) && !shortTicketAttachmentId(source)))
-        continue;
+      const source = htmlImageSource(src?.[1] ?? src?.[2] ?? src?.[3] ?? "");
+      if (!source) continue;
       const start = node.position.start.offset + match.index;
       htmlImages.push({ start, end: start + match[0].length, source });
       rawSources.push(source);
@@ -68,6 +82,9 @@ export function prDescriptionImages(description: string) {
     // boundary controls and no longer match the attachment source map.
     if (shortTicketAttachmentId(source)) source = trimImageUrlPadding(source);
     if (!/^data:image\//i.test(source)) {
+      // Match remark-rehype's image src, including Unicode and spaces in Azure
+      // attachment names/query strings. Also quote Markdown delimiters safely.
+      source = normalizeUri(source).replace(/\(/g, "%28").replace(/\)/g, "%29");
       sources.add(source);
       return source;
     }
@@ -86,7 +103,7 @@ export function prDescriptionImages(description: string) {
       replacements.push({
         start: node.position.start.offset,
         end: node.position.end.offset,
-        text: `![Изображение](${replacement})`,
+        text: imageMarkdown(replacement),
       });
   }
   for (const node of html) {
@@ -98,7 +115,7 @@ export function prDescriptionImages(description: string) {
     for (const image of contained.sort((a, b) => b.start - a.start))
       text =
         text.slice(0, image.start - start) +
-        `\n\n![Изображение](${mapped(image.source)})\n\n` +
+        `\n\n${imageMarkdown(mapped(image.source))}\n\n` +
         text.slice(image.end - start);
     // HTML wrappers would otherwise cause Markdown to hide the converted image.
     // Keep their text, never forward attributes or enable raw HTML rendering.

@@ -210,21 +210,31 @@ test("exact PR preview resolves original project and repo name links from truste
   });
   store.set("settings", { ...store.settings(), azureUrl: base, azureProject: "Project" });
   store.setSecret("azure.pat", "fixture");
-  const source = `${base}/Project/_apis/git/repositories/Repository/pullRequests/3/attachments/test.png`;
+  const source = `${base}/Project/_apis/git/repositories/Repository/pullRequests/3/attachments/Снимок экрана(1).png`;
   const prs = new PullRequests(store, {
     active: () => null,
     chat: async () => ({ body: "", requestId: "" }),
   });
-  t.mock.method(globalThis, "fetch", async (input: any) => {
+  t.mock.method(globalThis, "fetch", async (input: any, options: any) => {
     const url = String(input);
-    if (url.includes("/attachments/"))
+    if (url.includes("/attachments/")) {
+      assert.equal(
+        url,
+        new URL(source.replace(/\(/g, "%28").replace(/\)/g, "%29")).href + "?api-version=7.1",
+      );
+      assert.equal(
+        options.headers.Authorization,
+        `Basic ${Buffer.from(":fixture").toString("base64")}`,
+      );
+      assert.equal(options.redirect, "error");
       return new Response(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    }
     if (url.includes("/workitems")) return Response.json({ value: [] });
     return Response.json({
       pullRequestId: 3,
       status: "completed",
       title: "Fixture",
-      description: `![image](${source})`,
+      description: `<div><img src="${source.replace("dev.azure.com", "dev.azure.com.mcas.ms")}?fileName=Снимок.png&amp;download=true"></div>`,
       repository: {
         id: "repo-guid",
         name: "Repository",
@@ -238,7 +248,10 @@ test("exact PR preview resolves original project and repo name links from truste
   });
   const preview = (await prs.lookup(3)).item;
   assert.match(preview.images[0].preview, /^\/api\/pr\/image\?/);
-  assert.equal((await prs.image(preview.monitor, "repo-guid", 3, source)).type, "image/png");
+  assert.equal(
+    (await prs.image(preview.monitor, "repo-guid", 3, preview.images[0].source)).type,
+    "image/png",
+  );
 });
 
 test("PR MCAS WIT and native attachments normalize to configured API before fetching", async (t) => {
@@ -276,4 +289,120 @@ test("PR MCAS WIT and native attachments normalize to configured API before fetc
     resolve(native.replace("/1/", "/2/").replace("dev.azure.com", "dev.azure.com.mcas.ms")),
     null,
   );
+});
+
+test("PR image metadata matches rendered URLs for native/MCAS Unicode, spaces and HTML entities", async () => {
+  const { unified } = await import("unified");
+  const { default: remarkParse } = await import("remark-parse");
+  const { default: remarkRehype } = await import("remark-rehype");
+  for (const host of ["dev.azure.com", "dev.azure.com.mcas.ms"]) {
+    const source = `https://${host}/org/Project/_apis/git/repositories/repo/pullRequests/1/attachments/Снимок экрана(1).png?fileName=Снимок экрана.png&copy;=literal`;
+    for (const description of [
+      `![image.png](<${source.replace(/&/g, "&amp;")}>)`,
+      `![image.png][pic]\n\n[link][pic]\n\n[pic]: <${source.replace(/&/g, "&amp;")}>`,
+      `<div>Before<img src="${source.replace(/&/g, "&amp;")}" onerror="alert(1)">After</div>`,
+      `<img src="${source.replace(/&/g, "&#38;")}">`,
+    ]) {
+      const rendered = prDescriptionImages(description);
+      assert.equal(rendered.sources.length, 1);
+      const tree = unified().use(remarkParse).parse(rendered.description);
+      const hast = await unified().use(remarkRehype).run(tree);
+      const urls: string[] = [];
+      const visit = (node: any) => {
+        if (node.tagName === "img") urls.push(node.properties.src);
+        node.children?.forEach(visit);
+      };
+      visit(hast);
+      assert.deepEqual(urls, rendered.sources);
+      assert.ok(resolve(rendered.sources[0])?.startsWith(base + "/Project/_apis/git/"));
+      assert.equal(rendered.description.includes("onerror"), false);
+      assert.equal(rendered.sources[0].includes("&copy;=literal"), true);
+      assert.deepEqual(prDescriptionImages(description).sources, rendered.sources);
+    }
+  }
+  const rejected = [
+    "https://dev.azure.com.mcas.ms.evil.test/org/Project/_apis/wit/attachments/12345678-1234-1234-1234-123456789abc",
+    attachment.replace("/org/", "/other/"),
+    "javascript:alert(1)",
+    "//foreign.test/image.png",
+  ];
+  for (const source of rejected) {
+    const result = prDescriptionImages(`<img src="${source}">`);
+    assert.equal(result.sources.length, 1);
+    assert.equal(resolve(result.sources[0]), null);
+  }
+});
+
+test("saved PR HTML/native MCAS images adapt read-only and fetch only canonical Azure URLs", async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "orbit-pr-mcas-saved-"));
+  const store = new Store(directory);
+  t.after(() => {
+    store.close();
+    rmSync(directory, { recursive: true, force: true });
+  });
+  store.set("settings", { ...store.settings(), azureUrl: base, azureProject: "Project" });
+  store.setSecret("azure.pat", "fixture");
+  const prs = new PullRequests(store, {
+    active: () => null,
+    chat: async () => ({ body: "", requestId: "" }),
+  });
+  store.db
+    .prepare(
+      "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?)",
+    )
+    .run("monitor", "client", "project", base, "Project", "all", 1, "repo");
+  const source = `${base}/Project/_apis/git/repositories/repo/pullRequests/1/attachments/Снимок экрана.png`;
+  const description = `<div>Screenshot<img src="${source.replace("dev.azure.com", "dev.azure.com.mcas.ms")}?fileName=Снимок.png&amp;download=true"></div>\n\n![image.png](<${source}>)`;
+  store.db
+    .prepare(
+      "INSERT INTO pull_requests(monitor,repo,number,title,author,url,head,target,draft,in_scope,synced_at,description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+    )
+    .run(
+      "monitor",
+      "repo",
+      1,
+      "Fixture",
+      "Author",
+      `${base}/Project/_git/repo/pullrequest/1`,
+      "a".repeat(40),
+      "b".repeat(40),
+      0,
+      1,
+      "2026-11-02",
+      description,
+    );
+  const before = store.db.prepare("SELECT * FROM pull_requests").all();
+  const calls: string[] = [];
+  let fail = false;
+  t.mock.method(globalThis, "fetch", async (input: any, options: any) => {
+    const url = String(input);
+    calls.push(url);
+    assert.equal(url, new URL(source).href + "?api-version=7.1");
+    assert.equal(
+      options.headers.Authorization,
+      `Basic ${Buffer.from(":fixture").toString("base64")}`,
+    );
+    assert.equal(options.redirect, "error");
+    return fail
+      ? new Response("Unavailable", { status: 503 })
+      : new Response(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  });
+  for (let repeat = 0; repeat < 2; repeat++) {
+    const card = prs.list({ client: "client", project: "project" })[0];
+    assert.equal(card.images.length, 2);
+    for (const image of card.images) {
+      assert.match(image.preview, /^\/api\/pr\/image\?/);
+      assert.equal((await prs.image("monitor", "repo", 1, image.source)).type, "image/png");
+    }
+    assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
+  }
+  fail = true;
+  const card = prs.list({ client: "client", project: "project" })[0];
+  await assert.rejects(prs.image("monitor", "repo", 1, card.images[0].source), /недоступно/);
+  await assert.rejects(
+    prs.image("monitor", "repo", 1, "https://foreign.test/image.png"),
+    /не найдено/,
+  );
+  assert.equal(calls.length, 5);
+  assert.deepEqual(store.db.prepare("SELECT * FROM pull_requests").all(), before);
 });

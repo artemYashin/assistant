@@ -51,7 +51,7 @@
     "services/backend/src/pr-counts.ts": "126b0eac3169864744b1b929d59f6f1a624a0c25d55385ce46f6167b29601b1f",
     "services/backend/src/pr-create.ts": "e3be2f1c017e9a6cc798c1a4ee4c2a61c2ccdf5c1074d5d496c9f15d6b6cb91b",
     "services/backend/src/pr-health.ts": "d5e8632b335c5f37b31796f359094e006bcf83cf7b6338425bf0104c7bfc1532",
-    "services/backend/src/pr-images.ts": "b9f5366b6cc816e9885b6216c25190a35aa9f3977aac7921356584dbb7ac74da",
+    "services/backend/src/pr-images.ts": "f60b8efa475357dc55b5f8beea2823c4dea46d15ae9c13fc1e5339b2a860757b",
     "services/backend/src/pr-merge.ts": "2eb2a0e45d65821f4ff4023a2dbd8b43407af392b5aee5d81226f8d14a7f22f3",
     "services/backend/src/pr-reviewer-filter.ts": "32de9c6e0b560b9ba06ab7b38106a20b4a3a109eb5cd2b8bdeac0fb4a7f4393c",
     "services/backend/src/pr-source.ts": "409aa8ebf768eae103c97b620a989559952cbb6c8e9a54b01e1b18893feccdd0",
