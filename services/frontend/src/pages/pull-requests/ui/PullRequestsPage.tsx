@@ -85,7 +85,12 @@ function PrDescription({ pr }: any) {
       </summary>
       {open &&
         (pr.description ? (
-          <ChatMarkdown text={pr.description} images={pr.images} preserveLineBreaks />
+          <ChatMarkdown
+            text={pr.description}
+            images={pr.images}
+            imageScope="pr"
+            preserveLineBreaks
+          />
         ) : (
           <p className="muted">Описание не указано.</p>
         ))}

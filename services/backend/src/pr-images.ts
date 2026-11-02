@@ -140,8 +140,35 @@ export function prDescriptionImages(description: string) {
   return { description: rendered, sources: [...sources], inline };
 }
 
+export type PrImageReason =
+  | "empty_source"
+  | "invalid_url"
+  | "unsupported_protocol"
+  | "credentials_in_url"
+  | "different_origin"
+  | "different_collection"
+  | "invalid_path"
+  | "unsupported_path"
+  | "different_project"
+  | "different_repository"
+  | "different_pr"
+  | "temporary_blob"
+  | "invalid_inline"
+  | "missing_metadata"
+  | "unmapped_source"
+  | "missing_diagnostic"
+  | "invalid_preview";
+
+export type PrImageDiagnostic = {
+  scope: "pr";
+  format: 1;
+  stage: "before_request";
+  reason: PrImageReason;
+};
+
 // Only attachment download endpoints on the configured Azure collection receive the PAT.
-export function azureImageUrl(
+// Return enums only: diagnostics must never include source URLs, names, IDs or query values.
+export function azureImageResolution(
   raw: string,
   base: string,
   prUrl: string,
@@ -149,19 +176,31 @@ export function azureImageUrl(
   number: number,
   version: string,
   aliases: { repositories?: string[]; projects?: string[] } = {},
-): string | null {
+): { url: string | null; diagnostic?: PrImageDiagnostic } {
+  const fail = (reason: PrImageReason) => ({
+    url: null,
+    diagnostic: { scope: "pr", format: 1, stage: "before_request", reason } as PrImageDiagnostic,
+  });
   try {
+    if (!raw.trim()) return fail("empty_source");
+    if (/^blob:/i.test(raw)) return fail("temporary_blob");
+    if (/^data:/i.test(raw) || raw.startsWith("https://orbit.invalid/pr-inline-image/"))
+      return fail("invalid_inline");
     const root = new URL(base);
     const shortId = shortTicketAttachmentId(raw);
     const url = new URL(
       shortId ? `${base.replace(/\/$/, "")}/_apis/wit/attachments/${shortId}` : raw,
       prUrl,
     );
-    if (url.protocol !== "https:" || !azureImageOriginAllowed(url, root)) return null;
+    if (url.protocol !== "https:") return fail("unsupported_protocol");
+    if (url.username || url.password || root.username || root.password)
+      return fail("credentials_in_url");
+    if (!azureImageOriginAllowed(url, root)) return fail("different_origin");
     const path = decodeURIComponent(url.pathname);
     const prefix = decodeURIComponent(root.pathname).replace(/\/$/, "") + "/";
-    // eslint-disable-next-line no-control-regex -- Remove control bytes from untrusted input/output.
-    if (!path.startsWith(prefix) || /[\\\x00-\x1f]/.test(path)) return null;
+    if (!path.startsWith(prefix)) return fail("different_collection");
+    // eslint-disable-next-line no-control-regex -- Reject control bytes from untrusted URL paths.
+    if (/[\\\x00-\x1f]/.test(path)) return fail("invalid_path");
     const local = path.slice(prefix.length);
     const wit =
       /^(?:[^/]+\/)?_apis\/wit\/attachments\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -176,25 +215,25 @@ export function azureImageUrl(
       .split("/_git/")[0];
     const projects = [currentProject, ...(aliases.projects || [])].map((s) => s.toLowerCase());
     const repositories = [repo, ...(aliases.repositories || [])].map((s) => s.toLowerCase());
-    if (
-      !wit &&
-      !(
-        git &&
-        (!git[1] || projects.includes(git[1].toLowerCase())) &&
-        repositories.includes(git[2].toLowerCase()) &&
-        Number(git[3]) === number &&
-        ![".", ".."].includes(git[4])
-      )
-    )
-      return null;
+    if (!wit) {
+      if (!git) return fail("unsupported_path");
+      if (git[1] && !projects.includes(git[1].toLowerCase())) return fail("different_project");
+      if (!repositories.includes(git[2].toLowerCase())) return fail("different_repository");
+      if (Number(git[3]) !== number) return fail("different_pr");
+      if ([".", ".."].includes(git[4])) return fail("invalid_path");
+    }
     // MCAS is an input alias only; never send credentials to the browser proxy.
     url.hostname = root.hostname;
     url.search = new URLSearchParams({ "api-version": version }).toString();
     url.hash = "";
-    return url.href;
+    return { url: url.href };
   } catch {
-    return null;
+    return fail("invalid_url");
   }
+}
+
+export function azureImageUrl(...args: Parameters<typeof azureImageResolution>): string | null {
+  return azureImageResolution(...args).url;
 }
 
 export async function readAzureImage(url: string, pat: string) {

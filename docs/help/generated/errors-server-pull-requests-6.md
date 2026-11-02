@@ -9,52 +9,52 @@
 
 Связи тикетов PR изменились. Откройте запуск ревью заново и выберите связанные тикеты.
 
-Источник: services/backend/src/pull-requests.ts:2308.
+Источник: services/backend/src/pull-requests.ts:2329.
 
 ### Сообщение
 
 Выберите не более 20 связанных тикетов для одного ревью или отключите чтение тикетов.
 
-Источник: services/backend/src/pull-requests.ts:2313.
+Источник: services/backend/src/pull-requests.ts:2334.
 
 ### Сообщение
 
 Некорректная связь тикета
 
-Источник: services/backend/src/pull-requests.ts:2320.
+Источник: services/backend/src/pull-requests.ts:2341.
 
 ### Сообщение
 
 Источник Azure изменился
 
-Источник: services/backend/src/pull-requests.ts:2325.
+Источник: services/backend/src/pull-requests.ts:2346.
 
 ### Сообщение
 
 Тикет #{…}: {…}. Повторите позже или отключите чтение тикетов.
 
-Источник: services/backend/src/pull-requests.ts:2328.
+Источник: services/backend/src/pull-requests.ts:2349.
 
 ### Сообщение
 
 Требования, комментарии и локальные заметки превышают лимит 80 000 символов. Ревью не запущено: отключите чтение тикетов для проверки только кода.
 
-Источник: services/backend/src/pull-requests.ts:2357.
+Источник: services/backend/src/pull-requests.ts:2378.
 
 ### Сообщение
 
 Соберите все вопросы в один вызов
 
-Источник: services/backend/src/pull-requests.ts:2450.
+Источник: services/backend/src/pull-requests.ts:2471.
 
 ### Сообщение
 
 Слишком много вопросов для выбранного режима
 
-Источник: services/backend/src/pull-requests.ts:2452.
+Источник: services/backend/src/pull-requests.ts:2473.
 
 ### Сообщение
 
 Ошибка подготовки или выполнения ревью. Автоповтор отключён.
 
-Источник: services/backend/src/pull-requests.ts:2495.
+Источник: services/backend/src/pull-requests.ts:2516.

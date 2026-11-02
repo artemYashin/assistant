@@ -9,40 +9,40 @@
 
 Лимит этого запуска не сохранён
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:130.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:135.
 
 ### Сообщение
 
 Данные о расходе недоступны
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:141.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:146.
 
 ### Сообщение
 
 Этот PR не найден в локальной базе.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:512.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:517.
 
 ### Сообщение
 
 Pull request станет черновиком. Текущее автоматическое ревью будет остановлено.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:907.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:912.
 
 ### Сообщение
 
 PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:918.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:923.
 
 ### Сообщение
 
 источник больше недоступен
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:965.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:970.
 
 ### Сообщение
 
 Не загружен: проверьте доступ, существование и проект тикета
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:976.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:981.

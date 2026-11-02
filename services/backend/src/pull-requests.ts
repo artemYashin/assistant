@@ -21,7 +21,12 @@ import {
   type ReviewActions,
   type ReviewQuestion,
 } from "./review-questions.js";
-import { prDescriptionImages, azureImageUrl, readAzureImage } from "./pr-images.js";
+import {
+  prDescriptionImages,
+  azureImageUrl,
+  azureImageResolution,
+  readAzureImage,
+} from "./pr-images.js";
 import { Connectors, plainText } from "./connectors.js";
 import { randomUUID } from "node:crypto";
 import { createTwoFilesPatch } from "diff";
@@ -273,21 +278,33 @@ export class PullRequests {
       }
       this.credentials(m);
       const rendered = prDescriptionImages(card.description);
-      const images = rendered.sources.map((imageSource) => ({
-        source: imageSource,
-        preview: rendered.inline.has(imageSource)
-          ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource })}`
-          : azureImageUrl(imageSource, m.source, card.url, repo, number, credentials.version, {
-                repositories: [m.repository, card.repository].filter(
-                  (value): value is string => typeof value === "string",
-                ),
-                projects: [m.azure_project, card.azure_project].filter(
-                  (value): value is string => typeof value === "string",
-                ),
-              })
-            ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, original: new URL(imageSource, card.url).href })}`
-            : null,
-      }));
+      const images = rendered.sources.map((imageSource) => {
+        const resolution = azureImageResolution(
+          imageSource,
+          m.source,
+          card.url,
+          repo,
+          number,
+          credentials.version,
+          {
+            repositories: [m.repository, card.repository].filter(
+              (value): value is string => typeof value === "string",
+            ),
+            projects: [m.azure_project, card.azure_project].filter(
+              (value): value is string => typeof value === "string",
+            ),
+          },
+        );
+        const inline = rendered.inline.has(imageSource);
+        return {
+          source: imageSource,
+          preview:
+            inline || resolution.url
+              ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, ...(inline ? {} : { original: new URL(imageSource, card.url).href }) })}`
+              : null,
+          ...(!inline && !resolution.url ? { diagnostic: resolution.diagnostic } : {}),
+        };
+      });
       while (this.previews.size > 32) {
         const oldest = this.previews.keys().next().value!;
         const old = this.previews.get(oldest)!;
@@ -845,22 +862,26 @@ export class PullRequests {
           })(),
           ticket_source: source,
           ticket_links_error: azureLinks.error,
-          images: rendered.sources.map((source) => ({
-            source,
-            preview: rendered.inline.has(source)
-              ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source })}`
-              : azureImageUrl(
-                    source,
-                    m.source,
-                    row.url,
-                    row.repo,
-                    row.number,
-                    this.store.settings().azureVersion,
-                    { repositories: [m.repository], projects: [m.azure_project] },
-                  )
-                ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, original: new URL(source, row.url).href })}`
-                : null,
-          })),
+          images: rendered.sources.map((source) => {
+            const resolution = azureImageResolution(
+              source,
+              m.source,
+              row.url,
+              row.repo,
+              row.number,
+              this.store.settings().azureVersion,
+              { repositories: [m.repository], projects: [m.azure_project] },
+            );
+            const inline = rendered.inline.has(source);
+            return {
+              source,
+              preview:
+                inline || resolution.url
+                  ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, ...(inline ? {} : { original: new URL(source, row.url).href }) })}`
+                  : null,
+              ...(!inline && !resolution.url ? { diagnostic: resolution.diagnostic } : {}),
+            };
+          }),
           tickets: [
             ...new Set([
               ...descriptionIds,

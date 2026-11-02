@@ -9,118 +9,118 @@
 
 Git-репозиторий не указан. Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» укажите имя или ID Git-репозитория и сохраните настройки.
 
-Источник: services/backend/src/pull-requests.ts:1200.
+Источник: services/backend/src/pull-requests.ts:1221.
 
 ### Сообщение
 
 Более 5000 PR: синхронизация не завершена
 
-Источник: services/backend/src/pull-requests.ts:1207.
+Источник: services/backend/src/pull-requests.ts:1228.
 
 ### Сообщение
 
 Azure вернул неверный список PR
 
-Источник: services/backend/src/pull-requests.ts:1214.
+Источник: services/backend/src/pull-requests.ts:1235.
 
 ### Сообщение
 
 Azure вернул неверную деталку PR
 
-Источник: services/backend/src/pull-requests.ts:1227.
+Источник: services/backend/src/pull-requests.ts:1248.
 
 ### Сообщение
 
 Azure вернул некорректные связи PR
 
-Источник: services/backend/src/pull-requests.ts:1241.
+Источник: services/backend/src/pull-requests.ts:1262.
 
 ### Сообщение
 
 Не удалось обновить связи Azure. Список может быть неполным или устаревшим.
 
-Источник: services/backend/src/pull-requests.ts:1246.
+Источник: services/backend/src/pull-requests.ts:1267.
 
 ### Сообщение
 
 Не удалось импортировать тикеты из PR. Проверьте Work Items: Read и подключение Azure.
 
-Источник: services/backend/src/pull-requests.ts:1325.
+Источник: services/backend/src/pull-requests.ts:1346.
 
 ### Сообщение
 
 Не удалось синхронизировать PR. Проверьте соединение и доступ.
 
-Источник: services/backend/src/pull-requests.ts:1336.
+Источник: services/backend/src/pull-requests.ts:1357.
 
 ### Сообщение
 
 Изменение этого PR уже выполняется
 
-Источник: services/backend/src/pull-requests.ts:1350.
+Источник: services/backend/src/pull-requests.ts:1371.
 
 ### Сообщение
 
 PR недоступен. Обновите список.
 
-Источник: services/backend/src/pull-requests.ts:1355.
+Источник: services/backend/src/pull-requests.ts:1376.
 
 ### Сообщение
 
 PR уже закрыт или изменился. Обновите список.
 
-Источник: services/backend/src/pull-requests.ts:1366.
+Источник: services/backend/src/pull-requests.ts:1387.
 
 ### Сообщение
 
 Azure не подтвердил новое состояние PR. Список обновлён; проверьте состояние перед повтором.
 
-Источник: services/backend/src/pull-requests.ts:1393.
+Источник: services/backend/src/pull-requests.ts:1414.
 
 ### Сообщение
 
 Настройте Git-репозиторий в «Заказчики и проекты».
 
-Источник: services/backend/src/pull-requests.ts:1445.
+Источник: services/backend/src/pull-requests.ts:1466.
 
 ### Сообщение
 
 Azure не вернул список коммитов ветки
 
-Источник: services/backend/src/pull-requests.ts:1466.
+Источник: services/backend/src/pull-requests.ts:1487.
 
 ### Сообщение
 
 PR не найден. Синхронизируйте список.
 
-Источник: services/backend/src/pull-requests.ts:1488.
+Источник: services/backend/src/pull-requests.ts:1509.
 
 ### Сообщение
 
 Коммиты PR ещё не загружены
 
-Источник: services/backend/src/pull-requests.ts:1511.
+Источник: services/backend/src/pull-requests.ts:1532.
 
 ### Сообщение
 
 Не удалось загрузить количество
 
-Источник: services/backend/src/pull-requests.ts:1527.
+Источник: services/backend/src/pull-requests.ts:1548.
 
 ### Сообщение
 
 Azure не вернул список коммитов
 
-Источник: services/backend/src/pull-requests.ts:1550.
+Источник: services/backend/src/pull-requests.ts:1571.
 
 ### Сообщение
 
 Azure повторил страницу коммитов. Обновите историю.
 
-Источник: services/backend/src/pull-requests.ts:1554.
+Источник: services/backend/src/pull-requests.ts:1575.
 
 ### Сообщение
 
 Некорректный SHA коммита
 
-Источник: services/backend/src/pull-requests.ts:1568.
+Источник: services/backend/src/pull-requests.ts:1589.

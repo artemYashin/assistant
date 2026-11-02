@@ -9,4 +9,4 @@
 
 Удалить локальную привязку. Связи из Azure, названия и описания останутся. / Удалить локальную привязку тикета к PR · Отвязать
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:1029.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:1034.

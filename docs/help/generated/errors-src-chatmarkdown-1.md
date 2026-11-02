@@ -7,6 +7,12 @@
 
 ### Сообщение
 
+invalid_preview
+
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:73.
+
+### Сообщение
+
 Не удалось скопировать ссылку
 
-Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:113.
+Источник: services/frontend/src/features/render-content/ui/ChatMarkdown.tsx:133.

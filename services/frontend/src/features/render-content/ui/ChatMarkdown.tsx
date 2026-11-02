@@ -1,3 +1,5 @@
+import type { PrImageDiagnostic } from "../lib/pr-image-diagnostic.js";
+import { PrImageUnavailable } from "./PrImageUnavailable.js";
 import type { TicketImageDiagnostic } from "../lib/ticket-image-preview.js";
 import { TicketImageUnavailable } from "./TicketImageUnavailable.js";
 import { rehypeReviewFormat, reviewText, reviewLabelKind } from "../lib/rehype-review-format.js";
@@ -37,13 +39,15 @@ const ticketAsset = (url: string) =>
 type MarkdownImages = {
   source: string;
   preview: string | null;
-  diagnostic?: TicketImageDiagnostic;
+  diagnostic?: TicketImageDiagnostic | PrImageDiagnostic;
 }[];
 const MarkdownImagesContext = createContext<MarkdownImages | undefined>(undefined);
+const MarkdownImageScopeContext = createContext<"pr" | undefined>(undefined);
 
 // Keep the image component identity stable when polling returns a new images array.
 const MarkdownImage: Components["img"] = ({ src, alt }) => {
   const images = useContext(MarkdownImagesContext);
+  const scope = useContext(MarkdownImageScopeContext);
   if (typeof src === "string" && ticketAsset(src))
     return <ImagePreview src={src} alt={alt || "Изображение"} />;
   const image = images?.find((image) => image.source === src);
@@ -56,7 +60,23 @@ const MarkdownImage: Components["img"] = ({ src, alt }) => {
     return <ImagePreview key={preview} src={preview} alt={alt} className="pr-image-link" />;
   // PR/ticket image metadata is an allowlist. Never bypass a missing local
   // preview with a direct Azure request (blocked by CSP and missing credentials).
-  if (image?.diagnostic) return <TicketImageUnavailable diagnostic={image.diagnostic} />;
+  if (scope === "pr")
+    return (
+      <PrImageUnavailable
+        diagnostic={image?.diagnostic}
+        fallback={
+          images === undefined
+            ? "missing_metadata"
+            : !image
+              ? "unmapped_source"
+              : preview
+                ? "invalid_preview"
+                : "missing_diagnostic"
+        }
+      />
+    );
+  if (image?.diagnostic && !("scope" in image.diagnostic))
+    return <TicketImageUnavailable diagnostic={image.diagnostic} />;
   if (images !== undefined) return <span>{alt || "Изображение"} · предпросмотр недоступен</span>;
   return typeof src === "string" && /^https?:\/\//i.test(src) ? (
     <ImagePreview src={src} alt={alt || "Изображение"} thumbnail={true} />
@@ -165,6 +185,7 @@ function quoteTickets(node?: Element) {
 export function ChatMarkdown({
   text,
   images,
+  imageScope,
   azureSource,
   preserveLineBreaks = false,
   reviewRevision,
@@ -173,6 +194,7 @@ export function ChatMarkdown({
   text: string;
   azureSource?: string;
   images?: MarkdownImages;
+  imageScope?: "pr";
   preserveLineBreaks?: boolean;
   reviewRevision?: string;
   review?: boolean;
@@ -359,36 +381,40 @@ export function ChatMarkdown({
     [azureSource, review, reviewRevision],
   );
   return (
-    <MarkdownImagesContext.Provider value={images}>
-      <div className="chat-markdown">
-        <Markdown
-          remarkPlugins={
-            preserveLineBreaks
-              ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations]
-              : [remarkGfm, remarkTicketCitations]
-          }
-          rehypePlugins={review ? [rehypeReviewFormat] : []}
-          skipHtml
-          urlTransform={(url, key) =>
-            ticketAsset(url) ||
-            (key === "href" && (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url)))
-              ? url
-              : key === "href" && chatTicketPath(url)
-                ? chatTicketPath(url)!
-                : key === "src" &&
-                    images?.some(
-                      (image) => image.source === url && (image.preview || image.diagnostic),
-                    )
-                  ? url
-                  : /^(https?:\/\/|mailto:)/i.test(url)
+    <MarkdownImageScopeContext.Provider value={imageScope}>
+      <MarkdownImagesContext.Provider value={images}>
+        <div className="chat-markdown">
+          <Markdown
+            remarkPlugins={
+              preserveLineBreaks
+                ? [remarkGfm, remarkDescriptionBreaks, remarkTicketCitations]
+                : [remarkGfm, remarkTicketCitations]
+            }
+            rehypePlugins={review ? [rehypeReviewFormat] : []}
+            skipHtml
+            urlTransform={(url, key) =>
+              ticketAsset(url) ||
+              (key === "href" &&
+                (chatTicketCitation(url) || chatPrCard(url) || chatCodeBranch(url)))
+                ? url
+                : key === "href" && chatTicketPath(url)
+                  ? chatTicketPath(url)!
+                  : key === "src" &&
+                      (imageScope === "pr" ||
+                        images?.some(
+                          (image) => image.source === url && (image.preview || image.diagnostic),
+                        ))
                     ? url
-                    : ""
-          }
-          components={components}
-        >
-          {text}
-        </Markdown>
-      </div>
-    </MarkdownImagesContext.Provider>
+                    : /^(https?:\/\/|mailto:)/i.test(url)
+                      ? url
+                      : ""
+            }
+            components={components}
+          >
+            {text}
+          </Markdown>
+        </div>
+      </MarkdownImagesContext.Provider>
+    </MarkdownImageScopeContext.Provider>
   );
 }

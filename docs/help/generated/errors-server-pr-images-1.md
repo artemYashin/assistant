@@ -19,18 +19,48 @@ https://orbit.invalid/pr-inline-image/{…}
 
 ### Сообщение
 
+invalid_url
+
+Источник: services/backend/src/pr-images.ts:145.
+
+### Сообщение
+
+invalid_path
+
+Источник: services/backend/src/pr-images.ts:150.
+
+### Сообщение
+
+invalid_inline
+
+Источник: services/backend/src/pr-images.ts:156.
+
+### Сообщение
+
+invalid_preview
+
+Источник: services/backend/src/pr-images.ts:160.
+
+### Сообщение
+
+https://orbit.invalid/pr-inline-image/
+
+Источник: services/backend/src/pr-images.ts:187.
+
+### Сообщение
+
 Изображение недоступно в Azure
 
-Источник: services/backend/src/pr-images.ts:209.
+Источник: services/backend/src/pr-images.ts:248.
 
 ### Сообщение
 
 Изображение больше 20 МБ
 
-Источник: services/backend/src/pr-images.ts:220.
+Источник: services/backend/src/pr-images.ts:259.
 
 ### Сообщение
 
 Поддерживаются PNG, JPEG, GIF и WebP
 
-Источник: services/backend/src/pr-images.ts:237.
+Источник: services/backend/src/pr-images.ts:276.
