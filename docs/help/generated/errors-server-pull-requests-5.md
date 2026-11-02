@@ -9,118 +9,118 @@
 
 Бинарный файл: текстовый diff недоступен.
 
-Источник: services/backend/src/pull-requests.ts:1995.
+Источник: services/backend/src/pull-requests.ts:2015.
 
 ### Сообщение
 
 Подготовка diff остановлена по времени или завершению приложения.
 
-Источник: services/backend/src/pull-requests.ts:2012.
+Источник: services/backend/src/pull-requests.ts:2032.
 
 ### Сообщение
 
 Подготовка diff остановлена по времени или завершению приложения
 
-Источник: services/backend/src/pull-requests.ts:2013.
+Источник: services/backend/src/pull-requests.ts:2033.
 
 ### Сообщение
 
 Достигнут общий лимит размера diff.
 
-Источник: services/backend/src/pull-requests.ts:2020.
+Источник: services/backend/src/pull-requests.ts:2040.
 
 ### Сообщение
 
 Достигнут лимит diff {…} символов; оставшиеся файлы не проверены.
 
-Источник: services/backend/src/pull-requests.ts:2021.
+Источник: services/backend/src/pull-requests.ts:2041.
 
 ### Сообщение
 
 Размер diff превышает лимит одного файла: {…} из {…} символов.
 
-Источник: services/backend/src/pull-requests.ts:2051.
+Источник: services/backend/src/pull-requests.ts:2071.
 
 ### Сообщение
 
 {…}: diff {…} символов превышает лимит одного файла {…}. Исключите сгенерированный файл или увеличьте лимит diff в настройках репозитория.
 
-Источник: services/backend/src/pull-requests.ts:2054.
+Источник: services/backend/src/pull-requests.ts:2074.
 
 ### Сообщение
 
 Недостаточно общего бюджета diff: требуется {…}, осталось {…} символов.
 
-Источник: services/backend/src/pull-requests.ts:2061.
+Источник: services/backend/src/pull-requests.ts:2081.
 
 ### Сообщение
 
 {…}: требуется {…} символов, осталось {…} из {…}. Файл не проверен; настройте исключения или лимит diff.
 
-Источник: services/backend/src/pull-requests.ts:2064.
+Источник: services/backend/src/pull-requests.ts:2084.
 
 ### Сообщение
 
 Не удалось загрузить содержимое из Azure. Повторите открытие diff.
 
-Источник: services/backend/src/pull-requests.ts:2084.
+Источник: services/backend/src/pull-requests.ts:2104.
 
 ### Сообщение
 
 {…}: содержимое недоступно, бинарное или слишком большое
 
-Источник: services/backend/src/pull-requests.ts:2087.
+Источник: services/backend/src/pull-requests.ts:2107.
 
 ### Сообщение
 
 Pull request недоступен для подготовки ветки.
 
-Источник: services/backend/src/pull-requests.ts:2121.
+Источник: services/backend/src/pull-requests.ts:2141.
 
 ### Сообщение
 
 Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся
 
-Источник: services/backend/src/pull-requests.ts:2143.
+Источник: services/backend/src/pull-requests.ts:2163.
 
 ### Сообщение
 
 Подключите GitHub Copilot
 
-Источник: services/backend/src/pull-requests.ts:2148.
+Источник: services/backend/src/pull-requests.ts:2168.
 
 ### Сообщение
 
 Этот запрос ревью уже завершён.
 
-Источник: services/backend/src/pull-requests.ts:2186.
+Источник: services/backend/src/pull-requests.ts:2206.
 
 ### Сообщение
 
 Ревью остановлено пользователем
 
-Источник: services/backend/src/pull-requests.ts:2214.
+Источник: services/backend/src/pull-requests.ts:2234.
 
 ### Сообщение
 
 Приложение завершает работу
 
-Источник: services/backend/src/pull-requests.ts:2265.
+Источник: services/backend/src/pull-requests.ts:2285.
 
 ### Сообщение
 
 Нет доступного текстового diff для ревью
 
-Источник: services/backend/src/pull-requests.ts:2289.
+Источник: services/backend/src/pull-requests.ts:2309.
 
 ### Сообщение
 
 Мониторинг изменён во время подготовки ревью
 
-Источник: services/backend/src/pull-requests.ts:2299.
+Источник: services/backend/src/pull-requests.ts:2319.
 
 ### Сообщение
 
 Не удалось прочитать связи тикетов PR
 
-Источник: services/backend/src/pull-requests.ts:2316.
+Источник: services/backend/src/pull-requests.ts:2336.

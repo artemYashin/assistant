@@ -236,6 +236,35 @@ export function azureImageUrl(...args: Parameters<typeof azureImageResolution>):
   return azureImageResolution(...args).url;
 }
 
+/** Local preview eligibility only; these path names are not trusted download aliases.
+ * Resolve the configured repository through Azure before using a candidate URL.
+ */
+export function azureImageNeedsIdentityLookup(
+  ...args: Parameters<typeof azureImageResolution>
+): boolean {
+  const initial = azureImageResolution(...args);
+  if (!["different_project", "different_repository"].includes(initial.diagnostic?.reason || ""))
+    return false;
+  try {
+    const [raw, base, prUrl, repo, number, version] = args;
+    const root = new URL(base);
+    const path = decodeURIComponent(new URL(raw, prUrl).pathname);
+    const prefix = decodeURIComponent(root.pathname).replace(/\/$/, "") + "/";
+    const match =
+      /^(?:([^/]+)\/)?_apis\/git\/repositories\/([^/]+)\/pullRequests\/(\d+)\/attachments\/([^/]+)$/i.exec(
+        path.slice(prefix.length),
+      );
+    if (!match) return false;
+    // The same validator still checks origin, collection, endpoint and PR number.
+    return !!azureImageResolution(raw, base, prUrl, repo, number, version, {
+      projects: match[1] ? [match[1]] : [],
+      repositories: [match[2]],
+    }).url;
+  } catch {
+    return false;
+  }
+}
+
 export async function readAzureImage(url: string, pat: string) {
   const response = await fetch(url, {
     method: "GET",

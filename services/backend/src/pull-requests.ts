@@ -25,6 +25,7 @@ import {
   prDescriptionImages,
   azureImageUrl,
   azureImageResolution,
+  azureImageNeedsIdentityLookup,
   readAzureImage,
 } from "./pr-images.js";
 import { Connectors, plainText } from "./connectors.js";
@@ -296,13 +297,23 @@ export class PullRequests {
           },
         );
         const inline = rendered.inline.has(imageSource);
+        const needsIdentityLookup = azureImageNeedsIdentityLookup(
+          imageSource,
+          m.source,
+          card.url,
+          repo,
+          number,
+          credentials.version,
+        );
         return {
           source: imageSource,
           preview:
-            inline || resolution.url
+            inline || resolution.url || needsIdentityLookup
               ? `/api/pr/image?${new URLSearchParams({ monitor: id, repo, number: String(number), source: imageSource, ...(inline ? {} : { original: new URL(imageSource, card.url).href }) })}`
               : null,
-          ...(!inline && !resolution.url ? { diagnostic: resolution.diagnostic } : {}),
+          ...(!inline && !resolution.url && !needsIdentityLookup
+            ? { diagnostic: resolution.diagnostic }
+            : {}),
         };
       });
       while (this.previews.size > 32) {
@@ -873,13 +884,23 @@ export class PullRequests {
               { repositories: [m.repository], projects: [m.azure_project] },
             );
             const inline = rendered.inline.has(source);
+            const needsIdentityLookup = azureImageNeedsIdentityLookup(
+              source,
+              m.source,
+              row.url,
+              row.repo,
+              row.number,
+              this.store.settings().azureVersion,
+            );
             return {
               source,
               preview:
-                inline || resolution.url
+                inline || resolution.url || needsIdentityLookup
                   ? `/api/pr/image?${new URLSearchParams({ monitor: row.monitor, repo: row.repo, number: String(row.number), source, ...(inline ? {} : { original: new URL(source, row.url).href }) })}`
                   : null,
-              ...(!inline && !resolution.url ? { diagnostic: resolution.diagnostic } : {}),
+              ...(!inline && !resolution.url && !needsIdentityLookup
+                ? { diagnostic: resolution.diagnostic }
+                : {}),
             };
           }),
           tickets: [
@@ -1049,16 +1070,15 @@ export class PullRequests {
           }
         : {},
     );
-    // Monitor names may differ from the GUID stored by synchronization. Preview
-    // eligibility is only a hint: resolve aliases through Azure before sending PAT.
+    // Unknown names/GUIDs are only hints for a local preview. Fetch identity from
+    // the configured repository, never from a repository named by the image URL.
     if (
       !url &&
-      azureImageUrl(source, m.source, row.url, repo, number, credentials.version, {
-        repositories: [m.repository],
-        projects: [m.azure_project],
-      })
+      azureImageNeedsIdentityLookup(source, m.source, row.url, repo, number, credentials.version)
     ) {
       const metadata = await this.get(m, `git/repositories/${enc(repo)}`, credentials);
+      if (this.credentials(m).pat !== credentials.pat)
+        throw new AppError(409, "Подключение Azure изменилось");
       const project = metadata.project;
       if (
         typeof metadata.id === "string" &&
