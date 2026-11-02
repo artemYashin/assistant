@@ -258,7 +258,6 @@ export function ProjectRepository({
             Общий лимит diff для ревью и просмотра (символы)
             <NumberInput
               min={40000}
-              max={400000}
               step={1000}
               value={diffBudget}
               onChange={(e) => setDiffBudget(Number(e.target.value))}

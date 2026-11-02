@@ -87,10 +87,10 @@ src/api/generated/ src/api/client.ts **/*.generated.ts
 
 Синхронизировать PR Обновлять активные pull request этого репозитория при синхронизации.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:277.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:276.
 
 ### Элемент
 
 Все активные PR Импортировать независимо от ревьюеров и автора. Снимите галочку, чтобы выбрать людей ниже.
 
-Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:288.
+Источник: services/frontend/src/widgets/context-settings/ui/ProjectRepository.tsx:287.

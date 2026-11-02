@@ -1,7 +1,7 @@
 import { z } from "zod";
 export const reviewFileSettings = z.object({
   ignoredPaths: z.array(z.string().trim().min(1).max(300)).max(100).default([]),
-  diffBudget: z.number().int().min(40000).max(400000).default(160000),
+  diffBudget: z.number().int().min(40000).default(160000),
 });
 /** Root-relative glob: * excludes slash; ** includes slash; trailing slash means directory. */
 export function ignoredReviewPath(path: string, patterns: string[]) {
