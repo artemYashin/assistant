@@ -22,6 +22,11 @@ if orbit_real_helper=$(PATH="$orbit_lookup_path" command -v "${0##*/}"); then
   exec "$orbit_real_helper" "$@"
 fi
 case "$1" in
+  list)
+    # Compose/BuildKit enumerate credentials before public image builds. An
+    # absent helper has no available entries; keep the protocol valid JSON.
+    echo '{}'
+    ;;
   get)
     echo 'Orbit: Docker credential helper is unavailable; trying anonymous registry access.' >&2
     # Exact Docker credential-helper protocol sentinel; do not expose/store secrets.

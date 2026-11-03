@@ -13,7 +13,7 @@ command -v git >/dev/null || orbit_fail 'Git is required.'
 git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null || orbit_fail 'The current branch needs an upstream.'
 # Fetch before downtime: authentication/network errors do not stop the application.
 git fetch
-trap 'echo "Update failed; startup NOT confirmed. Data was not reset. If pull failed, use docker compose start; after a build failure, retry docker compose up --build -d." >&2' ERR
+trap 'echo "Update failed; startup NOT confirmed. Data was not reset. If pull failed, use bash scripts/with-optional-docker-credentials.sh docker compose start; after a build failure, retry bash scripts/with-optional-docker-credentials.sh docker compose up --build -d." >&2' ERR
 docker compose stop
 git pull --ff-only
 docker compose up --build -d

@@ -25,8 +25,8 @@ bash scripts/first-start.sh
 ```sh
 docker compose logs -f orbit voice
 docker compose down
-# Повторный запуск:
-docker compose up -d
+# Повторный запуск (с поддержкой отсутствующего credential helper):
+bash scripts/with-optional-docker-credentials.sh docker compose up -d
 ```
 
 `docker compose down` сохраняет папки `docker-data/`. Не удаляйте их при обновлении.
