@@ -9,19 +9,19 @@
 
 Предпочтительный язык памяти · Ассистент будет использовать этот язык для новых предложений. Существующие записи не переводятся; язык ответов в чате не меняется.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:701.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:702.
 
 ### Элемент
 
 English
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:705.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:706.
 
 ### Элемент
 
 Сохранить настройки
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:720.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:721.
 
 ### Элемент
 

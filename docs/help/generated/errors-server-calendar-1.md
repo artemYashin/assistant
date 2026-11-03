@@ -9,64 +9,64 @@
 
 Отпуска недоступны в режиме разработчика.
 
-Источник: services/backend/src/calendar.ts:87.
+Источник: services/backend/src/calendar.ts:92.
 
 ### Сообщение
 
-Напоминание о PAT нельзя скрыть, завершить или удалить. Обновите токен и дату в Настройки → Azure DevOps.
+Напоминание о PAT нельзя завершить, удалить или изменить его содержимое. Видимость и предупреждение настраиваются отдельно. Обновите токен и дату в Настройки → Azure DevOps.
 
-Источник: services/backend/src/calendar.ts:89.
+Источник: services/backend/src/calendar.ts:94.
 
 ### Сообщение
 
 Измените даты отпуска в настройках разработчика.
 
-Источник: services/backend/src/calendar.ts:105.
+Источник: services/backend/src/calendar.ts:110.
 
 ### Сообщение
 
 Измените локальный дедлайн в карточке тикета.
 
-Источник: services/backend/src/calendar.ts:107.
+Источник: services/backend/src/calendar.ts:112.
 
 ### Сообщение
 
 Локальные поручения недоступны в режиме разработчика.
 
-Источник: services/backend/src/calendar.ts:111.
+Источник: services/backend/src/calendar.ts:116.
 
 ### Сообщение
 
 Заказчик или проект не найден.
 
-Источник: services/backend/src/calendar.ts:129.
+Источник: services/backend/src/calendar.ts:134.
 
 ### Сообщение
 
 Выбранный разработчик больше недоступен.
 
-Источник: services/backend/src/calendar.ts:138.
+Источник: services/backend/src/calendar.ts:143.
 
 ### Сообщение
 
 Напоминание не найдено.
 
-Источник: services/backend/src/calendar.ts:166.
+Источник: services/backend/src/calendar.ts:171.
 
 ### Сообщение
 
 Некорректная дата итерации.
 
-Источник: services/backend/src/calendar.ts:254.
+Источник: services/backend/src/calendar.ts:277.
 
 ### Сообщение
 
 У напоминания нет итерации за выбранную дату.
 
-Источник: services/backend/src/calendar.ts:256.
+Источник: services/backend/src/calendar.ts:279.
 
 ### Сообщение
 
 Отпуск уже закончился. Новый период задайте в настройках разработчика.
 
-Источник: services/backend/src/calendar.ts:282.
+Источник: services/backend/src/calendar.ts:305.

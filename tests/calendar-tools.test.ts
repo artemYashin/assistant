@@ -364,3 +364,40 @@ test("assistant toggles visibility without completing or losing reminder fields"
   assert.equal(searchCalendar(store, {}).reminders[0].notificationsHidden, true);
   assert.equal(changes, 2);
 });
+
+test("assistant can change PAT warning and visibility but not complete or delete its generated reminder", async (t) => {
+  const { azurePatReminderId } = await import("../services/backend/src/azure-pat-reminder.js");
+  const store = fixture(t);
+  store.setSecret("azure.pat", "private");
+  store.set("settings", {
+    ...store.settings(),
+    azurePatExpiresOn: "2026-11-10",
+    calendarNotifications: { ...store.settings().calendarNotifications, reminderLeadMinutes: 5 },
+  });
+  const events: any[] = [];
+  const tools = calendarTools(
+    store,
+    () => {},
+    (event) => events.push(event),
+  );
+  const warning: any = tools.find((t) => t.name === "update_calendar_warning");
+  const visibility: any = tools.find((t) => t.name === "update_calendar_visibility");
+  assert.equal(
+    searchCalendar(store, { ids: [azurePatReminderId] }).reminders[0].effectiveLeadMinutes,
+    10080,
+  );
+  await warning.handler({ id: azurePatReminderId, leadMinutes: 180 });
+  await visibility.handler({ id: azurePatReminderId, notificationsHidden: true });
+  const item = searchCalendar(store, { ids: [azurePatReminderId] }).reminders[0];
+  assert.equal(item.effectiveLeadMinutes, 180);
+  assert.equal(item.notificationsHidden, true);
+  await warning.handler({ id: azurePatReminderId, leadMinutes: null });
+  await visibility.handler({ id: azurePatReminderId, notificationsHidden: false });
+  assert.equal(
+    searchCalendar(store, { ids: [azurePatReminderId] }).reminders[0].effectiveLeadMinutes,
+    10080,
+  );
+  assert.equal(events.length, 4);
+  assert.throws(() => new Calendar(store).complete(azurePatReminderId), /нельзя/);
+  assert.throws(() => new Calendar(store).remove(azurePatReminderId), /нельзя/);
+});

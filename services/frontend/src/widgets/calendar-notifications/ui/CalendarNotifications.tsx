@@ -112,7 +112,6 @@ function ReminderToast({
         aria-label="Закрыть все уведомления"
         title="Закрыть все уведомления"
         onClick={onClose}
-        disabled={items.every((item) => !!item.systemKind)}
       >
         <X size={16} />
       </button>
@@ -183,17 +182,15 @@ function ReminderToast({
                 <Check size={16} />
               </ConfirmButton>
             )}
-            {!item.systemKind && (
-              <button
-                type="button"
-                className="icon-button calendar-toast-dismiss"
-                aria-label={`Закрыть уведомление: ${item.title}`}
-                title="Закрыть это уведомление"
-                onClick={() => onDismiss(notificationKey(item))}
-              >
-                <X size={14} />
-              </button>
-            )}
+            <button
+              type="button"
+              className="icon-button calendar-toast-dismiss"
+              aria-label={`Закрыть уведомление: ${item.title}`}
+              title="Закрыть это уведомление"
+              onClick={() => onDismiss(notificationKey(item))}
+            >
+              <X size={14} />
+            </button>
           </div>
         ))}
       </div>
@@ -209,9 +206,7 @@ export function CalendarNotifications({ settings, pending }: { settings: any; pe
   const panel = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const zone = settings?.syncSchedule?.timeZone || "UTC";
-  const closeToast = useRef(() =>
-    setToasts((items) => items.filter((item) => !!item.systemKind)),
-  ).current;
+  const closeToast = useRef(() => setToasts([])).current;
   const go = useCallback(
     (item: CalendarItem) => {
       panel.current?.close();

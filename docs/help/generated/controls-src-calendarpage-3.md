@@ -9,61 +9,61 @@
 
 Выберите заказчика
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:897.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:898.
 
 ### Элемент
 
 Проект напоминания
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:906.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:907.
 
 ### Элемент
 
 Выберите проект
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:911.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:912.
 
 ### Элемент
 
 Название
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:923.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:924.
 
 ### Элемент
 
 Без времени
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:932.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:933.
 
 ### Элемент
 
 Повторять каждый день
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:972.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:973.
 
 ### Элемент
 
 Описание
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1022.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1023.
 
 ### Элемент
 
 Разработчики · необязательно ( · )
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1033.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1034.
 
 ### Элемент
 
 / Общий список
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1038.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1039.
 
 ### Элемент
 
 Удалённый разработчик · снимите выбор для сохранения
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1065.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1066.
 
 ### Элемент
 
@@ -81,16 +81,16 @@
 
 Вернуть в незавершённые? / Завершить напоминание? · «{…}». {…} {…} Несохранённые изменения формы не применятся. · Вернуть / Завершить · / · Вернуть в незавершённые / Завершить всю серию / Завершить
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1125.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1131.
 
 ### Элемент
 
-Закрыть / Отмена
+Отмена
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1169.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1175.
 
 ### Элемент
 
 Сохранить изменения? / Создать напоминание? · «{…}» · {…} · Сохранить / Создать
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1173.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:1178.

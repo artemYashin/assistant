@@ -135,11 +135,13 @@ export function searchCalendar(store: Store, input: unknown) {
       leadMinutes: item.leadMinutes ?? null,
       effectiveLeadMinutes:
         item.leadMinutes ??
-        (item.vacation
-          ? store.settings().calendarNotifications.vacationLeadMinutes
-          : item.ticket
-            ? store.settings().calendarNotifications.ticketDeadlineLeadMinutes
-            : store.settings().calendarNotifications.reminderLeadMinutes),
+        (item.systemKind === "azure_pat"
+          ? 10080
+          : item.vacation
+            ? store.settings().calendarNotifications.vacationLeadMinutes
+            : item.ticket
+              ? store.settings().calendarNotifications.ticketDeadlineLeadMinutes
+              : store.settings().calendarNotifications.reminderLeadMinutes),
       createdAt: item.createdAt,
       repeatDaily: !!item.repeatDaily,
       repeatWeekdays: item.repeatWeekdays,

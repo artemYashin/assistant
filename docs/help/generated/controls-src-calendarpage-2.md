@@ -105,22 +105,22 @@
 
 Общий
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:863.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:864.
 
 ### Элемент
 
 Заказчик
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:864.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:865.
 
 ### Элемент
 
 Проект
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:865.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:866.
 
 ### Элемент
 
 Заказчик напоминания
 
-Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:893.
+Источник: services/frontend/src/pages/calendar/ui/CalendarPage.tsx:894.

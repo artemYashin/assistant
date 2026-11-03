@@ -822,8 +822,9 @@ export function CalendarPage({
           <div className="calendar-ticket-link">
             <strong>Срок токена Azure DevOps</strong>
             <p>
-              Это обязательное напоминание. Предупреждение начинается за 7 дней; скрытие, завершение
-              и удаление недоступны. Измените дату вместе с токеном в «Настройки → Azure DevOps».
+              Настройте видимость и отдельный срок предупреждения ниже; по умолчанию — за 7 дней.
+              Завершение и удаление недоступны. Измените дату вместе с токеном в «Настройки → Azure
+              DevOps».
             </p>
           </div>
         )}
@@ -1082,39 +1083,44 @@ export function CalendarPage({
             </details>
           )}
         </fieldset>
-        {!currentItem?.systemKind && (
-          <>
-            <label className="calendar-check">
-              <input
-                type="checkbox"
-                checked={draft.notificationsHidden}
-                onChange={(e) => setDraft({ ...draft, notificationsHidden: e.target.checked })}
-              />
-              <span>Не показывать в уведомлениях</span>
-            </label>
-            <label className="calendar-check">
-              <input
-                type="checkbox"
-                checked={draft.calendarHidden}
-                onChange={(e) => setDraft({ ...draft, calendarHidden: e.target.checked })}
-              />
-              <span>Не показывать в календаре</span>
-            </label>
-            {draft.start && (
-              <ReminderLeadFields
-                value={draft.leadMinutes}
-                fallback={
-                  currentItem?.vacation
+        <>
+          <label className="calendar-check">
+            <input
+              type="checkbox"
+              checked={draft.notificationsHidden}
+              onChange={(e) => setDraft({ ...draft, notificationsHidden: e.target.checked })}
+            />
+            <span>Не показывать в уведомлениях</span>
+          </label>
+          <label className="calendar-check">
+            <input
+              type="checkbox"
+              checked={draft.calendarHidden}
+              onChange={(e) => setDraft({ ...draft, calendarHidden: e.target.checked })}
+            />
+            <span>Не показывать в календаре</span>
+          </label>
+          {draft.start && (
+            <ReminderLeadFields
+              value={draft.leadMinutes}
+              defaultLabel={
+                currentItem?.systemKind === "azure_pat"
+                  ? "Использовать стандартный срок (7 дней)"
+                  : undefined
+              }
+              fallback={
+                currentItem?.systemKind === "azure_pat"
+                  ? 10080
+                  : currentItem?.vacation
                     ? settings.calendarNotifications.vacationLeadMinutes
                     : currentItem?.ticket
                       ? settings.calendarNotifications.ticketDeadlineLeadMinutes
                       : settings.calendarNotifications.reminderLeadMinutes
-                }
-                onChange={(leadMinutes) => setDraft({ ...draft, leadMinutes })}
-              />
-            )}
-          </>
-        )}
+              }
+              onChange={(leadMinutes) => setDraft({ ...draft, leadMinutes })}
+            />
+          )}
+        </>
         {currentItem && !currentItem.systemKind && (
           <div className="calendar-editor-management">
             <span className={"calendar-state " + calendarStatus(currentItem, now)}>
@@ -1167,51 +1173,45 @@ export function CalendarPage({
         )}
         <div className="dialog-actions">
           <button className="secondary" onClick={() => dialog.current?.close()}>
-            {currentItem?.systemKind ? "Закрыть" : "Отмена"}
+            Отмена
           </button>
-          {!currentItem?.systemKind && (
-            <ConfirmButton
-              disabled={!validDraft || (!!editing && !currentItem)}
-              className="primary"
-              title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
-              message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
-              confirmLabel={editing ? "Сохранить" : "Создать"}
-              onConfirm={async () => {
-                if (currentItem?.ticket || currentItem?.vacation) {
-                  await mutate(`/calendar/${currentItem.id}/warning`, "PUT", {
-                    notificationsHidden: draft.notificationsHidden,
-                    calendarHidden: draft.calendarHidden,
-                    leadMinutes: draft.leadMinutes,
-                  });
-                  dialog.current?.close();
-                  return;
-                }
-                await mutate(
-                  "/calendar" + (editing ? "/" + editing : ""),
-                  editing ? "PUT" : "POST",
-                  {
-                    notificationsHidden: draft.notificationsHidden,
-                    calendarHidden: draft.calendarHidden,
-                    leadMinutes: draft.leadMinutes,
-                    repeatDaily: draft.repeatDaily,
-                    repeatWeekdays: draft.repeatWeekdays,
-                    title: draft.title,
-                    description: draft.description,
-                    scope: draft.scope,
-                    client: draft.client,
-                    project: draft.project,
-                    start: draft.start ? fromWall(draft.start, zone) : null,
-                    end: draft.end ? fromWall(draft.end, zone) : null,
-                    developerIds: draft.developerIds,
-                  },
-                );
+          <ConfirmButton
+            disabled={!validDraft || (!!editing && !currentItem)}
+            className="primary"
+            title={editing ? "Сохранить изменения?" : "Создать напоминание?"}
+            message={`«${draft.title}» · ${!draft.start ? "Без срока" : draft.start.replace("T", " ") + " · " + zone}`}
+            confirmLabel={editing ? "Сохранить" : "Создать"}
+            onConfirm={async () => {
+              if (currentItem?.ticket || currentItem?.vacation || currentItem?.systemKind) {
+                await mutate(`/calendar/${currentItem.id}/warning`, "PUT", {
+                  notificationsHidden: draft.notificationsHidden,
+                  calendarHidden: draft.calendarHidden,
+                  leadMinutes: draft.leadMinutes,
+                });
                 dialog.current?.close();
-              }}
-            >
-              <Check size={16} />
-              {editing ? "Сохранить" : "Создать"}
-            </ConfirmButton>
-          )}
+                return;
+              }
+              await mutate("/calendar" + (editing ? "/" + editing : ""), editing ? "PUT" : "POST", {
+                notificationsHidden: draft.notificationsHidden,
+                calendarHidden: draft.calendarHidden,
+                leadMinutes: draft.leadMinutes,
+                repeatDaily: draft.repeatDaily,
+                repeatWeekdays: draft.repeatWeekdays,
+                title: draft.title,
+                description: draft.description,
+                scope: draft.scope,
+                client: draft.client,
+                project: draft.project,
+                start: draft.start ? fromWall(draft.start, zone) : null,
+                end: draft.end ? fromWall(draft.end, zone) : null,
+                developerIds: draft.developerIds,
+              });
+              dialog.current?.close();
+            }}
+          >
+            <Check size={16} />
+            {editing ? "Сохранить" : "Создать"}
+          </ConfirmButton>
         </div>
       </dialog>
     </section>

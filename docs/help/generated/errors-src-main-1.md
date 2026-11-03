@@ -69,58 +69,58 @@ error dismissible
 
 Лимит времени ответа, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:372.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:373.
 
 ### Сообщение
 
 От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:373.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:374.
 
 ### Сообщение
 
 llmTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:379.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:380.
 
 ### Сообщение
 
 От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:396.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:397.
 
 ### Сообщение
 
 До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:422.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:423.
 
 ### Сообщение
 
 Лимит времени ответа ревью, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:649.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:650.
 
 ### Сообщение
 
 От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:650.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:651.
 
 ### Сообщение
 
 reviewTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:657.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:658.
 
 ### Сообщение
 
 Лимит токенов ревью по умолчанию
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:661.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:662.
 
 ### Сообщение
 
 От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:674.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:675.

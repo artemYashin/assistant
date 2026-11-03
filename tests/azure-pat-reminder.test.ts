@@ -10,6 +10,7 @@ import { createApp } from "../services/backend/src/app.js";
 import {
   azurePatExpirySchema,
   azurePatReminderId,
+  azurePatPreferenceKey,
 } from "../services/backend/src/azure-pat-reminder.js";
 import { notificationItems } from "../services/backend/src/calendar-notifications.js";
 import { calendarStatus } from "../services/backend/src/calendar-model.js";
@@ -45,8 +46,6 @@ test("PAT reminder warns exactly seven days ahead, survives expiry, and does not
     () => calendar.reopen(item.id),
     () => calendar.remove(item.id),
     () => calendar.completeToday(item.id),
-    () => calendar.setLead(item.id, 0),
-    () => calendar.setVisibility(item.id, { notificationsHidden: true, calendarHidden: true }),
     () => calendar.save({ title: "changed", start: null, end: null }, item.id),
   ])
     assert.throws(mutate, /Напоминание о PAT нельзя/);
@@ -83,6 +82,11 @@ test("settings expiry validates dates and preserves configured expiry for older 
     .set(auth)
     .send({ ...store.settings(), azurePat: "test-secret", azurePatExpiresOn: "2026-11-02" })
     .expect(200);
+  await request(app)
+    .put(`/api/calendar/${azurePatReminderId}/warning`)
+    .set(auth)
+    .send({ leadMinutes: 120, notificationsHidden: true, calendarHidden: true })
+    .expect(200);
   const old: any = { ...store.settings() };
   delete old.azurePatExpiresOn;
   await request(app).put("/api/settings").set(auth).send(old).expect(200);
@@ -112,6 +116,15 @@ test("settings expiry validates dates and preserves configured expiry for older 
   assert.equal(store.secret("azure.pat"), "test-secret");
   const response = await request(app).get("/api/calendar").set(auth).expect(200);
   assert.equal(response.body.items[0].systemKind, "azure_pat");
+  assert.equal(response.body.items[0].leadMinutes, 120);
+  assert.equal(response.body.items[0].notificationsHidden, true);
+  assert.equal(response.body.items[0].calendarHidden, true);
+  await request(app)
+    .put(`/api/calendar/${azurePatReminderId}/warning`)
+    .set(auth)
+    .send({ leadMinutes: 60, notificationsHidden: "invalid" })
+    .expect(400);
+  assert.equal(new Calendar(store).list()[0].leadMinutes, 120);
   assert.ok(!JSON.stringify(response.body).includes("test-secret"));
   for (const value of ["2026-02-30", "abc", "2026-1-2"])
     assert.equal(azurePatExpirySchema.safeParse(value).success, false);
@@ -145,6 +158,83 @@ test("populated installations retain data and configured expiry across restarts 
       assert.equal(list.find((item) => item.id === event.id)!.description, "Preserved");
       assert.equal(store.secret("azure.pat"), "existing");
     }
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("PAT warning preferences are independent, transactional and preserve existing data across upgrades", () => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-pat-preferences-"));
+  let store = new Store(dir);
+  try {
+    store.setSecret("azure.pat", "existing-secret");
+    store.set("settings", {
+      ...store.settings(),
+      azurePatExpiresOn: "2026-11-10",
+      calendarNotifications: { ...store.settings().calendarNotifications, reminderLeadMinutes: 5 },
+      syncSchedule: { ...store.settings().syncSchedule, timeZone: "UTC" },
+    });
+    let calendar = new Calendar(store);
+    const original = calendar.save({ title: "Existing completed", start: null, end: null });
+    calendar.complete(original.id);
+    const oldRows = store.db.prepare("SELECT * FROM calendar_events").all();
+    const pat = () => calendar.list().find((i) => i.id === azurePatReminderId)!;
+    assert.equal(pat().leadMinutes, null);
+    assert.equal(pat().warningStart, "2026-11-03T00:00:00.000Z");
+    calendar.setPreferences(azurePatReminderId, {
+      leadMinutes: 120,
+      notificationsHidden: true,
+      calendarHidden: true,
+    });
+    assert.equal(pat().warningStart, "2026-11-09T22:00:00.000Z");
+    assert.equal(notificationItems([pat()], 999999, new Date("2026-11-11")).length, 0);
+    assert.equal(pat().calendarHidden, true);
+    const before = store.get(azurePatPreferenceKey, {});
+    assert.throws(() =>
+      calendar.setPreferences(azurePatReminderId, {
+        leadMinutes: 60,
+        notificationsHidden: "wrong",
+      }),
+    );
+    assert.deepEqual(store.get(azurePatPreferenceKey, {}), before);
+    const set = store.set.bind(store);
+    store.set = (key: string, value: any) => {
+      if (key === azurePatPreferenceKey && value.notificationsHidden === false)
+        throw new Error("simulated failure");
+      return set(key, value);
+    };
+    assert.throws(() =>
+      calendar.setPreferences(azurePatReminderId, { leadMinutes: 180, notificationsHidden: false }),
+    );
+    store.set = set;
+    assert.deepEqual(store.get(azurePatPreferenceKey, {}), before);
+    store.close();
+    store = new Store(dir);
+    calendar = new Calendar(store);
+    assert.equal(pat().leadMinutes, 120);
+    assert.equal(pat().notificationsHidden, true);
+    assert.deepEqual(store.db.prepare("SELECT * FROM calendar_events").all(), oldRows);
+    calendar.setVisibility(azurePatReminderId, { notificationsHidden: false });
+    assert.equal(pat().calendarHidden, true);
+    assert.equal(notificationItems([pat()], 999999, new Date("2026-11-09T21:59:59Z")).length, 0);
+    assert.equal(notificationItems([pat()], 0, new Date("2026-11-09T22:00:00Z")).length, 1);
+    calendar.setLead(azurePatReminderId, 0);
+    assert.equal(pat().warningStart, pat().start);
+    calendar.setLead(azurePatReminderId, null);
+    assert.equal(pat().warningStart, "2026-11-03T00:00:00.000Z");
+    calendar.setVisibility(azurePatReminderId, { notificationsHidden: true });
+    store.setSecret("azure.pat", "replacement-secret");
+    store.set("settings", { ...store.settings(), azurePatExpiresOn: "2026-12-10" });
+    assert.equal(pat().notificationsHidden, true);
+    assert.equal(pat().calendarHidden, true);
+    assert.equal(pat().warningStart, "2026-12-03T00:00:00.000Z");
+    assert.doesNotMatch(JSON.stringify(pat()), /existing-secret|replacement-secret/);
+    store.set(azurePatPreferenceKey, { leadMinutes: "invalid", notificationsHidden: true });
+    assert.equal(pat().leadMinutes, null);
+    assert.equal(pat().notificationsHidden, true);
+    assert.equal(pat().calendarHidden, false);
+    assert.deepEqual(store.db.prepare("SELECT * FROM calendar_events").all(), oldRows);
   } finally {
     store.close();
     rmSync(dir, { recursive: true, force: true });

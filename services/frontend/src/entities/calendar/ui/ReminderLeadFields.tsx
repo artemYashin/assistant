@@ -3,7 +3,9 @@ export function ReminderLeadFields({
   value,
   fallback,
   onChange,
+  defaultLabel = "Использовать общую настройку",
 }: {
+  defaultLabel?: string;
   value: number | null;
   fallback: number;
   onChange: (value: number | null) => void;
@@ -19,7 +21,7 @@ export function ReminderLeadFields({
           checked={value === null}
           onChange={(e) => onChange(e.target.checked ? null : fallback)}
         />
-        <span>Использовать общую настройку</span>
+        <span>{defaultLabel}</span>
       </label>
       <div className="calendar-lead-fields">
         {["Дней", "Часов", "Минут"].map((label, index) => (

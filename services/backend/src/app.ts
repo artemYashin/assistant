@@ -581,7 +581,7 @@ export function createApp(
     if (old.azurePatExpiresOn && settings.azurePatExpiresOn === "")
       throw new AppError(
         400,
-        "Укажите новую дату истечения PAT. Скрыть напоминание удалением настроенной даты нельзя.",
+        "Укажите новую дату истечения PAT. Чтобы скрыть напоминание, измените его видимость в календаре; удаление настроенной даты недоступно.",
       );
     store.db.transaction(() => {
       store.set("settings", {

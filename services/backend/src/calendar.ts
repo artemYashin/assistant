@@ -1,5 +1,10 @@
 import { hasLocalManagement } from "./work-mode.js";
-import { azurePatReminder, azurePatReminderId } from "./azure-pat-reminder.js";
+import {
+  azurePatReminder,
+  azurePatReminderId,
+  azurePatPreferences,
+  azurePatPreferenceKey,
+} from "./azure-pat-reminder.js";
 import { syncDeveloperVacations, nextVacationDay } from "./developer-vacations.js";
 import { notificationItems } from "./calendar-notifications.js";
 import { z } from "zod";
@@ -88,7 +93,7 @@ export class Calendar {
     if (id === azurePatReminderId)
       throw new AppError(
         400,
-        "Напоминание о PAT нельзя скрыть, завершить или удалить. Обновите токен и дату в Настройки → Azure DevOps.",
+        "Напоминание о PAT нельзя завершить, удалить или изменить его содержимое. Видимость и предупреждение настраиваются отдельно. Обновите токен и дату в Настройки → Azure DevOps.",
       );
   }
   developers() {
@@ -194,13 +199,23 @@ export class Calendar {
     return { id };
   }
   setVisibility(id: string, input: { notificationsHidden?: boolean; calendarHidden?: boolean }) {
-    this.assertEditable(id);
+    if (id !== azurePatReminderId) this.assertEditable(id);
     const values = z
       .object({
         notificationsHidden: z.boolean().optional(),
         calendarHidden: z.boolean().optional(),
       })
       .parse(input);
+    if (id === azurePatReminderId) {
+      if (!azurePatReminder(this.store).length) throw new AppError(404, "Напоминание не найдено.");
+      const preferences = azurePatPreferences(this.store);
+      this.store.set(azurePatPreferenceKey, {
+        ...preferences,
+        notificationsHidden: values.notificationsHidden ?? preferences.notificationsHidden,
+        calendarHidden: values.calendarHidden ?? preferences.calendarHidden,
+      });
+      return { ok: true };
+    }
     const result = this.store.db
       .prepare(
         "UPDATE calendar_events SET notifications_hidden=COALESCE(?,notifications_hidden),calendar_hidden=COALESCE(?,calendar_hidden) WHERE id=?",
@@ -228,8 +243,16 @@ export class Calendar {
     })();
   }
   setLead(id: string, lead: unknown) {
-    this.assertEditable(id);
+    if (id !== azurePatReminderId) this.assertEditable(id);
     const minutes = z.number().int().min(0).max(525600).nullable().parse(lead);
+    if (id === azurePatReminderId) {
+      if (!azurePatReminder(this.store).length) throw new AppError(404, "Напоминание не найдено.");
+      this.store.set(azurePatPreferenceKey, {
+        ...azurePatPreferences(this.store),
+        leadMinutes: minutes,
+      });
+      return { ok: true };
+    }
     if (
       !this.store.db
         .prepare("UPDATE calendar_events SET lead_minutes=? WHERE id=?")

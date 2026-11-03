@@ -45,7 +45,7 @@ export function calendarTools(
     }),
     defineTool("get_calendar_reminder", {
       description:
-        "Read full local reminder fields before editing, including description, leadMinutes and completed daily dates. No mutations; use search first for exact ID. systemKind=azure_pat is a mandatory read-only token-expiry reminder: cannot edit, hide, complete, reopen or delete; direct the user to Settings → Azure DevOps.",
+        "Read full local reminder fields before editing, including description, leadMinutes and completed daily dates. No mutations; use search first for exact ID. systemKind=azure_pat is a generated token-expiry reminder: update_calendar_visibility and update_calendar_warning can change its visibility and advance warning. Cannot edit its content/date, complete, reopen or delete; change token/date in Settings → Azure DevOps.",
       parameters: z.object({ id: z.string().uuid() }).strict(),
       handler: async ({ id }) => {
         assertActive();
@@ -56,7 +56,7 @@ export function calendarTools(
     }),
     defineTool("change_calendar_reminders", {
       description:
-        "Immediately complete, reopen or delete one or many reminders on explicit user request, without confirmation dialogs. FIRST search_calendar_reminders and collect all pages before mutating a filtered result (otherwise pagination can skip records). Pass exact IDs and resolve ambiguity. target=reminder for ordinary, ticket deadlines and developer vacations; occurrence for one daily date (day YYYY-MM-DD, omit for today); series for whole daily series. An explicit request to complete ALL reminders includes entire daily series; otherwise clarify ambiguous daily scope. Exclude mandatory systemKind=azure_pat reminders from changes; explain that the token expiry must be updated in Settings → Azure DevOps. Entire batch is atomic: any invalid entry rolls back all changes. Completion never changes Azure ticket state or local deadline. For action=delete, ticket deadline and developer vacation reminders are COMPLETED instead of deleted: preserve the local deadline and vacation dates. Completing a vacation reminder only silences notifications; dates and developer availability do not change. Report deleted and completed counts separately. Delete only whole reminders/series, not an individual occurrence (complete it instead). Return accurate affected count and report failures.",
+        "Immediately complete, reopen or delete one or many reminders on explicit user request, without confirmation dialogs. FIRST search_calendar_reminders and collect all pages before mutating a filtered result (otherwise pagination can skip records). Pass exact IDs and resolve ambiguity. target=reminder for ordinary, ticket deadlines and developer vacations; occurrence for one daily date (day YYYY-MM-DD, omit for today); series for whole daily series. An explicit request to complete ALL reminders includes entire daily series; otherwise clarify ambiguous daily scope. Exclude generated systemKind=azure_pat reminders from completion/reopening/deletion; explain that the token expiry must be updated in Settings → Azure DevOps. Entire batch is atomic: any invalid entry rolls back all changes. Completion never changes Azure ticket state or local deadline. For action=delete, ticket deadline and developer vacation reminders are COMPLETED instead of deleted: preserve the local deadline and vacation dates. Completing a vacation reminder only silences notifications; dates and developer availability do not change. Report deleted and completed counts separately. Delete only whole reminders/series, not an individual occurrence (complete it instead). Return accurate affected count and report failures.",
       parameters: z
         .object({
           action: z.enum(["complete", "reopen", "delete"]),
@@ -140,7 +140,7 @@ export function calendarTools(
     }),
     defineTool("update_calendar_visibility", {
       description:
-        "On explicit user request hide or show any reminder, ticket deadline or developer vacation independently in notifications or the calendar grid. Search exact ID first. Hidden entries remain in reminders and are not completed or deleted. Omitted flags are preserved. systemKind=azure_pat reminders cannot be hidden; direct the user to Settings → Azure DevOps. No confirmation popup.",
+        "On explicit user request hide or show any reminder, ticket deadline or developer vacation independently in notifications or the calendar grid. Search exact ID first. Hidden entries remain in reminders and are not completed or deleted. Omitted flags are preserved. systemKind=azure_pat reminders can also be hidden or shown; their generated content and expiry stay unchanged. No confirmation popup.",
       parameters: z
         .object({
           id: z.string().uuid(),
@@ -157,7 +157,7 @@ export function calendarTools(
     }),
     defineTool("update_calendar_warning", {
       description:
-        "Immediately change an existing reminder's individual advance warning on explicit user request, including ticket deadlines and daily series. Search for exact ID first. leadMinutes=null restores global default; 0 means at start/deadline. No confirmation popup. Does not change deadline, completion or Azure.",
+        "Immediately change an existing reminder's individual advance warning on explicit user request, including ticket deadlines, daily series and systemKind=azure_pat. Search for exact ID first. leadMinutes=null restores global default for ordinary reminders, but restores the separate fixed 7-day default for Azure PAT expiry; 0 means at start/deadline. No confirmation popup. Does not change deadline, completion or Azure.",
       parameters: z
         .object({
           id: z.string().uuid(),
