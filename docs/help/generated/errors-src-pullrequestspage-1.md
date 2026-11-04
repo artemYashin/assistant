@@ -21,28 +21,28 @@
 
 Этот PR не найден в локальной базе.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:517.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:534.
 
 ### Сообщение
 
 Pull request станет черновиком. Текущее автоматическое ревью будет остановлено.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:912.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:929.
 
 ### Сообщение
 
 PR #{…}: {…}. Будет установлен статус Abandoned. Ветка не удаляется, изменения не сливаются. Текущее автоматическое ревью будет остановлено.
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:923.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:940.
 
 ### Сообщение
 
 источник больше недоступен
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:970.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:987.
 
 ### Сообщение
 
 Не загружен: проверьте доступ, существование и проект тикета
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:981.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:998.

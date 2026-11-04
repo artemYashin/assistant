@@ -49,78 +49,78 @@ PR или подключение изменились. Обновите спис
 
 ### Сообщение
 
-Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.
+Проект Azure изменён в настройках этого проекта: сохраните репозиторий заново. Старые ревью сохранены.
 
-Источник: services/backend/src/pull-requests.ts:1120.
+Источник: services/backend/src/pull-requests.ts:1121.
 
 ### Сообщение
 
 URL Azure изменён: настройте мониторинг для нового подключения
 
-Источник: services/backend/src/pull-requests.ts:1125.
+Источник: services/backend/src/pull-requests.ts:1126.
 
 ### Сообщение
 
 Указан адрес корпоративного прокси MCAS. Для Azure REST API проверьте исходный адрес организации, например https://dev.azure.com/организация, и доступ к нему по правилам вашей компании.
 
-Источник: services/backend/src/pull-requests.ts:1159.
+Источник: services/backend/src/pull-requests.ts:1160.
 
 ### Сообщение
 
 Запрос: {…}.
 
-Источник: services/backend/src/pull-requests.ts:1161.
+Источник: services/backend/src/pull-requests.ts:1162.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).
 
-Источник: services/backend/src/pull-requests.ts:1167.
+Источник: services/backend/src/pull-requests.ts:1168.
 
 ### Сообщение
 
 Azure не разрешил доступ к pull request (HTTP {…}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.
 
-Источник: services/backend/src/pull-requests.ts:1169.
+Источник: services/backend/src/pull-requests.ts:1170.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.
 
-Источник: services/backend/src/pull-requests.ts:1170.
+Источник: services/backend/src/pull-requests.ts:1171.
 
 ### Сообщение
 
 Azure PR: пустой ответ
 
-Источник: services/backend/src/pull-requests.ts:1173.
+Источник: services/backend/src/pull-requests.ts:1174.
 
 ### Сообщение
 
 Ответ Azure больше 2 МБ; данные не загружены
 
-Источник: services/backend/src/pull-requests.ts:1184.
+Источник: services/backend/src/pull-requests.ts:1185.
 
 ### Сообщение
 
 Project ID missing
 
-Источник: services/backend/src/pull-requests.ts:1212.
+Источник: services/backend/src/pull-requests.ts:1213.
 
 ### Сообщение
 
 Too many policy evaluations
 
-Источник: services/backend/src/pull-requests.ts:1216.
+Источник: services/backend/src/pull-requests.ts:1217.
 
 ### Сообщение
 
 Invalid policy response
 
-Источник: services/backend/src/pull-requests.ts:1225.
+Источник: services/backend/src/pull-requests.ts:1226.
 
 ### Сообщение
 
 Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.
 
-Источник: services/backend/src/pull-requests.ts:1232.
+Источник: services/backend/src/pull-requests.ts:1233.

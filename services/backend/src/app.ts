@@ -2105,14 +2105,33 @@ export function createApp(
     }
   }
   app.post("/api/sync", async (_req, res) => res.json(await sync()));
-  app.post("/api/pr/sync", async (_req, res) => {
+  app.post("/api/pr/sync", async (req, res) => {
+    const input = z
+      .object({ client: text.optional(), project: text.optional() })
+      .strict()
+      .parse(req.body || {});
+    const context =
+      input.client === undefined && input.project === undefined
+        ? contextSchema.parse(store.settings())
+        : contextSchema.parse(input);
+    const monitorIds = new Set(
+      pullRequests
+        .monitors()
+        .filter(
+          (m) =>
+            m.enabled &&
+            (!context.client || m.client === context.client) &&
+            (!context.project || m.project === context.project),
+        )
+        .map((m) => m.id),
+    );
     if (syncing || syncingPrs) throw new AppError(409, "Синхронизация уже выполняется");
     syncingPrs = true;
     try {
-      await pullRequests.sync();
+      for (const id of monitorIds) await pullRequests.sync(id);
       const errors = pullRequests
         .monitors()
-        .filter((m) => m.enabled && m.error)
+        .filter((m) => monitorIds.has(m.id) && m.enabled && m.error)
         .map((m) => `${m.azure_project}: ${m.error}`);
       if (errors.length) throw new AppError(502, errors.join("; "));
       res.json({ ok: true });

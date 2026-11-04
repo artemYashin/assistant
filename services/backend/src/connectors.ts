@@ -1594,8 +1594,12 @@ export class Connectors {
     return { body, type, name: attachment.name };
   }
   // Read-only Azure batch API (POST is its read protocol); persistence is local SQLite only.
-  async importPrTickets(ids: number[]) {
-    const s = this.store.settings(),
+  async importPrTickets(ids: number[], context?: Context) {
+    const owner = context || {
+      client: this.store.settings().client,
+      project: this.store.settings().project,
+    };
+    const s = { ...this.store.settings(owner), ...owner },
       pat = this.store.secret("azure.pat");
     const missing = [...new Set(ids)].filter(
       (id) =>
@@ -1618,7 +1622,10 @@ export class Connectors {
         s,
         pat,
       );
-      if (this.store.source() !== this.store.source(s) || this.store.secret("azure.pat") !== pat)
+      if (
+        this.store.source(this.store.settings(owner)) !== this.store.source(s) ||
+        this.store.secret("azure.pat") !== pat
+      )
         throw new AppError(409, "Подключение Azure изменилось во время импорта");
       if (!Array.isArray(result.value))
         throw new AppError(502, "Azure вернул неверный список тикетов");

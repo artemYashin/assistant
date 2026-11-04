@@ -329,6 +329,12 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
   });
   const query = new URLSearchParams(target || context).toString();
   const previousQuery = useRef<string | null>(null);
+  const actionScope = useRef(0);
+  useEffect(() => {
+    actionScope.current += 1;
+    setBusy(false);
+    setError("");
+  }, [context.client, context.project]);
   useEffect(() => {
     if (!targetKey) {
       focused.current = "";
@@ -365,6 +371,9 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
     // accordion state survive a review launch. Clear only on scope changes.
     if (previousQuery.current !== query) {
       previousQuery.current = query;
+      actionScope.current += 1;
+      setBusy(false);
+      setError("");
       setLoaded(false);
       setPrs([]);
     }
@@ -379,15 +388,16 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
     };
   }, [query, version, completedItems, readOnly]);
   async function run(fn: () => Promise<any>) {
+    const scope = actionScope.current;
     setBusy(true);
     setError("");
     try {
       await fn();
-      setVersion((v) => v + 1);
+      if (scope === actionScope.current) setVersion((v) => v + 1);
     } catch (e: any) {
-      setError(e.message);
+      if (scope === actionScope.current) setError(e.message);
     } finally {
-      setBusy(false);
+      if (scope === actionScope.current) setBusy(false);
     }
   }
   async function changePrState(pr: any, action: "abandon" | "draft" | "publish") {
@@ -496,7 +506,14 @@ export function PullRequestsPage({ context, settings, completedItems, onComplete
               <button
                 className="secondary"
                 disabled={busy}
-                onClick={() => void run(() => api("/pr/sync", "POST", {}))}
+                onClick={() =>
+                  void run(() =>
+                    api("/pr/sync", "POST", {
+                      client: context.client || "",
+                      project: context.project || "",
+                    }),
+                  )
+                }
               >
                 <RefreshCw size={15} aria-hidden="true" />
                 Синхронизировать PR

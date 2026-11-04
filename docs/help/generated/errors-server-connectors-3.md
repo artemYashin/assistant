@@ -105,22 +105,22 @@ Azure не вернул связанные тикеты
 
 В описаниях PR более 500 новых тикетов: сузьте выборку PR.
 
-Источник: services/backend/src/connectors.ts:1609.
+Источник: services/backend/src/connectors.ts:1613.
 
 ### Сообщение
 
 Подключение Azure изменилось во время импорта
 
-Источник: services/backend/src/connectors.ts:1622.
+Источник: services/backend/src/connectors.ts:1629.
 
 ### Сообщение
 
 Azure вернул неверный список тикетов
 
-Источник: services/backend/src/connectors.ts:1624.
+Источник: services/backend/src/connectors.ts:1631.
 
 ### Сообщение
 
 Подключение Azure изменилось. Повторите поиск.
 
-Источник: services/backend/src/connectors.ts:1641.
+Источник: services/backend/src/connectors.ts:1648.

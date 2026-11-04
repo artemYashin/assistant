@@ -45,82 +45,82 @@
 
 Синхронизировать PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:496.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:506.
 
 ### Элемент
 
 ＋ Создать PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:504.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:521.
 
 ### Элемент
 
 Показать все PR текущего проекта
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:519.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:536.
 
 ### Элемент
 
 Сбросить фильтры
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:541.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:558.
 
 ### Элемент
 
 Тип PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:552.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:569.
 
 ### Элемент
 
 Все PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:559.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:576.
 
 ### Элемент
 
 Черновики
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:560.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:577.
 
 ### Элемент
 
 Не черновики
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:561.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:578.
 
 ### Элемент
 
 Готовность ревью
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:564.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:581.
 
 ### Элемент
 
 Все состояния
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:571.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:588.
 
 ### Элемент
 
 Ревью готово
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:572.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:589.
 
 ### Элемент
 
 Ревью не готово
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:573.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:590.
 
 ### Элемент
 
 Сортировка PR
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:576.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:593.
 
 ### Элемент
 
 Созданы: сначала новые
 
-Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:582.
+Источник: services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx:599.

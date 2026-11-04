@@ -33,64 +33,64 @@ sync.error
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:2128.
+Источник: services/backend/src/app.ts:2147.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:2130.
+Источник: services/backend/src/app.ts:2149.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:2147.
+Источник: services/backend/src/app.ts:2166.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:2156.
+Источник: services/backend/src/app.ts:2175.
 
 ### Сообщение
 
 Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.
 
-Источник: services/backend/src/app.ts:2157.
+Источник: services/backend/src/app.ts:2176.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/app.ts:2172.
+Источник: services/backend/src/app.ts:2191.
 
 ### Сообщение
 
 Не удалось распознать запись. Проверьте логи voice-контейнера.
 
-Источник: services/backend/src/app.ts:2175.
+Источник: services/backend/src/app.ts:2194.
 
 ### Сообщение
 
 Маршрут не найден
 
-Источник: services/backend/src/app.ts:2183.
+Источник: services/backend/src/app.ts:2202.
 
 ### Сообщение
 
 Request failed:
 
-Источник: services/backend/src/app.ts:2195.
+Источник: services/backend/src/app.ts:2214.
 
 ### Сообщение
 
 UnknownError
 
-Источник: services/backend/src/app.ts:2195.
+Источник: services/backend/src/app.ts:2214.
 
 ### Сообщение
 
 Внутренняя ошибка. Проверьте настройки и повторите запрос.
 
-Источник: services/backend/src/app.ts:2197.
+Источник: services/backend/src/app.ts:2216.

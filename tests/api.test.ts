@@ -116,13 +116,18 @@ test("ticket and PR sync buttons use independent synchronization routes", async 
     rmSync(dir, { recursive: true, force: true });
   });
   const { app, connectors, pullRequests } = createApp(store);
+  store.db
+    .prepare(
+      "INSERT INTO pr_projects(id,client,project,source,azure_project,mode,enabled,repository) VALUES (?,?,?,?,?,?,?,?)",
+    )
+    .run("sync-monitor", "Customer", "Project", "https://ado.test/Org", "Azure", "all", 1, "Repo");
   const calls: string[] = [];
   connectors.syncTickets = async (importMine) => {
     calls.push(`tickets:${importMine}`);
     return { count: 0 };
   };
-  pullRequests.sync = async () => {
-    calls.push("prs");
+  pullRequests.sync = async (monitor) => {
+    calls.push(`prs:${monitor}`);
   };
   const headers = {
     Host: "localhost:43871",
@@ -140,7 +145,7 @@ test("ticket and PR sync buttons use independent synchronization routes", async 
     "X-CSRF-Token": setup.body.csrf,
   };
   await request(app).post("/api/pr/sync").set(auth).send({}).expect(200);
-  assert.deepEqual(calls, ["prs"]);
+  assert.deepEqual(calls, ["prs:sync-monitor"]);
   await request(app).post("/api/tickets/import").set(auth).send({}).expect(200);
-  assert.deepEqual(calls, ["prs", "tickets:true"]);
+  assert.deepEqual(calls, ["prs:sync-monitor", "tickets:true"]);
 });

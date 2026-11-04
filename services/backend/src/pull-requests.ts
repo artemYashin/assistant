@@ -1116,16 +1116,17 @@ export class PullRequests {
       if (!preview.pat) throw new AppError(400, "Укажите PAT Azure с разрешением Code: Read");
       return { pat: preview.pat, version: settings.azureVersion };
     }
-    if (this.store.settings().azureProject !== m.azure_project)
+    const settings = this.store.settings({ client: m.client, project: m.project });
+    if (settings.azureProject !== m.azure_project)
       throw new AppError(
         400,
-        "Проект Azure изменён в общих настройках: сохраните репозиторий заново. Старые ревью сохранены.",
+        "Проект Azure изменён в настройках этого проекта: сохраните репозиторий заново. Старые ревью сохранены.",
       );
-    if (azureBase(this.store.settings().azureUrl) !== m.source)
+    if (azureBase(settings.azureUrl) !== m.source)
       throw new AppError(400, "URL Azure изменён: настройте мониторинг для нового подключения");
     const pat = this.store.secret("azure.pat");
     if (!pat) throw new AppError(400, "Укажите PAT Azure с разрешением Code: Read");
-    return { pat, version: this.store.settings().azureVersion };
+    return { pat, version: settings.azureVersion };
   }
   private async get(
     m: Monitor,
@@ -1300,7 +1301,8 @@ export class PullRequests {
           currentMonitor.repository !== m.repository
         )
           continue;
-        this.credentials(m);
+        if (this.credentials(m).pat !== credentials.pat)
+          throw new AppError(409, "Подключение Azure изменилось во время синхронизации PR");
         // Commit only a complete scan; a failed page must not hide existing PRs.
         this.store.db.transaction(() => {
           this.store.db.prepare("UPDATE pull_requests SET in_scope=0 WHERE monitor=?").run(m.id);
@@ -1358,6 +1360,7 @@ export class PullRequests {
                   ),
               ),
             ),
+            { client: m.client, project: m.project },
           );
         } catch (e) {
           ticketError =
