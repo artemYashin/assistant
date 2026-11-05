@@ -1,5 +1,4 @@
 import { StatusBadge } from "../../entities/ticket/index.js";
-import { NumberInput } from "../../shared/ui/number-input/index.js";
 import { useChatToggleShortcut as useAppShortcut } from "../../features/voice-input/index.js";
 import { Fragment, useCallback, useLayoutEffect } from "react";
 import { analysisChatReadyEvent } from "../../entities/chat/index.js";
@@ -375,11 +374,26 @@ export function TicketLookupDialog({
                       onSubmit={async (event) => {
                         event.preventDefault();
                         if (busy) return;
+                        const ticketId = id.trim();
+                        if (
+                          !/^\d+$/.test(ticketId) ||
+                          !Number.isSafeInteger(Number(ticketId)) ||
+                          Number(ticketId) < 1
+                        ) {
+                          setError(
+                            "Введите номер тикета: целое положительное число без букв и символов.",
+                          );
+                          input.current?.focus();
+                          return;
+                        }
                         const current = ++request.current;
+                        setId(ticketId);
                         setBusy(true);
                         setError("");
                         try {
-                          const result = await api(`/tickets/${encodeURIComponent(id)}/details`);
+                          const result = await api(
+                            `/tickets/${encodeURIComponent(ticketId)}/details`,
+                          );
                           if (current === request.current) {
                             source.current = result.source;
                             setTicketType(result.fields?.["System.WorkItemType"] || "");
@@ -394,14 +408,15 @@ export function TicketLookupDialog({
                     >
                       <label>
                         Номер тикета
-                        <NumberInput
+                        <input
                           ref={input}
-                          min={1}
-                          step={1}
-                          required
+                          type="text"
                           value={id}
                           disabled={busy}
-                          onChange={(e) => setId(e.target.value)}
+                          onChange={(e) => {
+                            setId(e.target.value);
+                            setError("");
+                          }}
                         />
                       </label>
                       <button className="secondary" disabled={busy}>
