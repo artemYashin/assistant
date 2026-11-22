@@ -7,6 +7,12 @@
 
 ### Элемент
 
+Открыть авторизацию
+
+Источник: services/frontend/src/pages/settings/ui/LoginCode.tsx:12.
+
+### Элемент
+
 Свернуть панель чата · Свернуть чат
 
 Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:709.

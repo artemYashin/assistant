@@ -1,3 +1,4 @@
+import { useOpenaiModels } from "../../../entities/llm/index.js";
 import { CalendarDateField } from "../../../entities/calendar/index.js";
 import { NumberInput } from "../../../shared/ui/number-input/index.js";
 import { CalendarSettings } from "../../../features/configure-calendar/index.js";
@@ -28,6 +29,8 @@ import { LoginCode } from "./LoginCode.js";
 export function Settings({ settings, context, run, busy }: any) {
   const [settingsTab, setSettingsTab] = useState("workspace");
   const settingsTabId = useId();
+  const catalogId = useId();
+  const catalog = useOpenaiModels();
   const settingsTabs = [
     { id: "workspace", label: "Рабочее пространство", icon: Settings2 },
     { id: "copilot", label: "Copilot", icon: Github },
@@ -70,7 +73,11 @@ export function Settings({ settings, context, run, busy }: any) {
       active = false;
     };
   }, [settings.githubConnected, githubFlow?.status]);
-  const set = (key: string, value: any) => setForm((f: any) => ({ ...f, [key]: value }));
+  const set = (key: string, value: any) => {
+    if (["openaiBaseUrl", "openaiWireApi", "openaiApiKey", "clearOpenaiApiKey"].includes(key))
+      catalog.reset();
+    setForm((f: any) => ({ ...f, [key]: value }));
+  };
   async function save() {
     const {
       githubConnected,
@@ -90,6 +97,14 @@ export function Settings({ settings, context, run, busy }: any) {
       client: context.client,
       project: context.project,
     });
+    if (
+      form.openaiApiKey ||
+      form.clearOpenaiApiKey ||
+      form.openaiBaseUrl !== settings.openaiBaseUrl ||
+      form.openaiWireApi !== settings.openaiWireApi
+    ) {
+      window.dispatchEvent(new Event("orbit-openai-catalog-invalidated"));
+    }
     setForm((current: any) => ({
       ...current,
       azurePat: "",
@@ -311,6 +326,13 @@ export function Settings({ settings, context, run, busy }: any) {
             GitHub Copilot используется по умолчанию. Провайдеры чата и PR-ревью выбираются
             независимо; автоматического переключения при ошибке нет.
           </p>
+          <datalist id={catalogId}>
+            {catalog.models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name || model.id}
+              </option>
+            ))}
+          </datalist>
           <div className="settings-group">
             <h3>Назначение моделей</h3>
             <div className="form-grid">
@@ -338,6 +360,7 @@ export function Settings({ settings, context, run, busy }: any) {
                         hint="Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений."
                       >
                         <input
+                          list={catalogId}
                           value={form[modelKey] || ""}
                           onChange={(event) => set(modelKey, event.target.value)}
                           autoComplete="off"
@@ -385,6 +408,7 @@ export function Settings({ settings, context, run, busy }: any) {
             >
               <input
                 type="url"
+                disabled={!!busy}
                 value={form.openaiBaseUrl || ""}
                 onChange={(event) => set("openaiBaseUrl", event.target.value)}
                 placeholder="https://api.openai.com/v1"
@@ -393,6 +417,7 @@ export function Settings({ settings, context, run, busy }: any) {
             </Field>
             <Field label="Формат API">
               <select
+                disabled={!!busy}
                 value={form.openaiWireApi || "completions"}
                 onChange={(event) => set("openaiWireApi", event.target.value)}
               >
@@ -408,7 +433,7 @@ export function Settings({ settings, context, run, busy }: any) {
                 type="password"
                 autoComplete="new-password"
                 value={form.openaiApiKey || ""}
-                disabled={form.clearOpenaiApiKey}
+                disabled={!!busy || form.clearOpenaiApiKey}
                 onChange={(event) => set("openaiApiKey", event.target.value)}
                 placeholder={
                   settings.openaiApiKeySet
@@ -420,6 +445,7 @@ export function Settings({ settings, context, run, busy }: any) {
             <label className="checkbox">
               <input
                 type="checkbox"
+                disabled={!!busy}
                 checked={!!form.clearOpenaiApiKey}
                 onChange={(event) => {
                   set("clearOpenaiApiKey", event.target.checked);
@@ -428,6 +454,28 @@ export function Settings({ settings, context, run, busy }: any) {
               />
               Удалить сохранённый ключ API при сохранении
             </label>
+            <div className="card-actions">
+              <button
+                type="button"
+                className="secondary"
+                disabled={!!busy || catalog.loading}
+                onClick={() =>
+                  run("openai-models", async () => {
+                    await save();
+                    await catalog.load();
+                  })
+                }
+              >
+                {catalog.loading ? "Загружаю список…" : "Сохранить и загрузить модели"}
+              </button>
+            </div>
+            <p className="muted">
+              Сначала сохраняются изменения всех вкладок, затем запрашивается список моделей
+              указанного API. Выбирать внешний провайдер заранее не нужно. В полях моделей чата и
+              PR-ревью можно выбрать подсказку из списка или ввести любое имя вручную. Список не
+              подтверждает поддержку инструментов и изображений.
+            </p>
+            {catalog.message && <p role="status">{catalog.message}</p>}
           </div>
         </section>
         <section

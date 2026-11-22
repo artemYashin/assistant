@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useOpenaiModels } from "../model/useOpenaiModels.js";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { SingleSelect } from "../../../shared/ui/single-select/index.js";
 import { api } from "../../../shared/api/http/index.js";
 import { useLatestCallback } from "../../../shared/lib/latest-callback/index.js";
@@ -21,6 +22,9 @@ export function ModelOverride({
   disabled?: boolean;
   purpose?: "chat" | "review";
 }) {
+  const catalog = useOpenaiModels();
+  const catalogId = useId();
+  const resetCatalog = catalog.reset;
   const [connection, setConnection] = useState<ModelConnection | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -77,6 +81,7 @@ export function ModelOverride({
       );
       if (settingsSignature.current === signature) return;
       change("");
+      resetCatalog();
       setConnection(null);
       settingsSignature.current = signature;
       void load();
@@ -86,22 +91,44 @@ export function ModelOverride({
       pending.current?.abort();
       window.removeEventListener("orbit-llm-settings-changed", refresh);
     };
-  }, [load, purpose, change]);
+  }, [load, purpose, change, resetCatalog]);
   return (
     <div className="model-override" data-provider={connection?.provider}>
       {connection?.provider === "openai" ? (
-        <label>
-          <span className="multi-select-label">Модель</span>
-          <input
-            aria-label="Модель внешнего API для этого запроса"
-            title={`Модель внешнего API. Пустое поле — из настроек: ${connection.model}`}
-            placeholder={connection.model || "Из настроек"}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={disabled || loading}
-            autoComplete="off"
-          />
-        </label>
+        <>
+          <label>
+            <span className="multi-select-label">Модель</span>
+            <input
+              aria-label="Модель внешнего API для этого запроса"
+              title={`Модель внешнего API. Пустое поле — из настроек: ${connection.model}`}
+              placeholder={connection.model || "Из настроек"}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              disabled={disabled || loading}
+              autoComplete="off"
+              list={catalogId}
+            />
+          </label>
+          <datalist id={catalogId}>
+            {catalog.models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name || model.id}
+              </option>
+            ))}
+          </datalist>
+          <button
+            type="button"
+            className="text-button"
+            disabled={disabled || catalog.loading}
+            onClick={() => void catalog.load()}
+          >
+            {catalog.loading ? "Загружаю список…" : "Загрузить модели"}
+          </button>
+          <small>
+            Из сохранённого подключения. Можно выбрать подсказку или ввести любое имя модели.
+          </small>
+          {catalog.message && <small role="status">{catalog.message}</small>}
+        </>
       ) : (
         <SingleSelect
           label="Модель"

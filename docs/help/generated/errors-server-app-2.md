@@ -33,94 +33,94 @@
 
 Запись памяти не найдена
 
-Источник: services/backend/src/app.ts:707.
+Источник: services/backend/src/app.ts:711.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем удалите чат.
 
-Источник: services/backend/src/app.ts:777.
+Источник: services/backend/src/app.ts:781.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем уберите тикет из контекста.
 
-Источник: services/backend/src/app.ts:784.
+Источник: services/backend/src/app.ts:788.
 
 ### Сообщение
 
 Дождитесь завершения ответа или остановите его, затем очистите историю.
 
-Источник: services/backend/src/app.ts:810.
+Источник: services/backend/src/app.ts:814.
 
 ### Сообщение
 
 Не удалось принять вложение. Максимальный размер файла — 10 МБ.
 
-Источник: services/backend/src/app.ts:883.
+Источник: services/backend/src/app.ts:887.
 
 ### Сообщение
 
 Выберите файл.
 
-Источник: services/backend/src/app.ts:891.
+Источник: services/backend/src/app.ts:895.
 
 ### Сообщение
 
 Этот запрос уже завершён. Обновите отчёт использования LLM.
 
-Источник: services/backend/src/app.ts:921.
+Источник: services/backend/src/app.ts:925.
 
 ### Сообщение
 
 Проект изменился. Отправьте сообщение заново в нужном проекте.
 
-Источник: services/backend/src/app.ts:969.
+Источник: services/backend/src/app.ts:973.
 
 ### Сообщение
 
 Ассистент ещё отвечает на предыдущий запрос
 
-Источник: services/backend/src/app.ts:971.
+Источник: services/backend/src/app.ts:975.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте деталку заново.
 
-Источник: services/backend/src/app.ts:973.
+Источник: services/backend/src/app.ts:977.
 
 ### Сообщение
 
 Подключение Azure изменилось. Выберите тикеты заново.
 
-Источник: services/backend/src/app.ts:975.
+Источник: services/backend/src/app.ts:979.
 
 ### Сообщение
 
 Не удалось завершить ответ ассистента
 
-Источник: services/backend/src/app.ts:1056.
+Источник: services/backend/src/app.ts:1060.
 
 ### Сообщение
 
 Предложение не найдено
 
-Источник: services/backend/src/app.ts:1078.
+Источник: services/backend/src/app.ts:1082.
 
 ### Сообщение
 
 Выберите проект
 
-Источник: services/backend/src/app.ts:1131.
+Источник: services/backend/src/app.ts:1135.
 
 ### Сообщение
 
 Подключение изменилось; откройте настройки заново
 
-Источник: services/backend/src/app.ts:1133.
+Источник: services/backend/src/app.ts:1137.
 
 ### Сообщение
 
 Статусы не должны повторяться без учёта регистра
 
-Источник: services/backend/src/app.ts:1136.
+Источник: services/backend/src/app.ts:1140.

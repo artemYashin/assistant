@@ -9,88 +9,88 @@
 
 Синхронизация уже выполняется
 
-Источник: services/backend/src/app.ts:2091.
+Источник: services/backend/src/app.ts:2095.
 
 ### Сообщение
 
 Ошибка синхронизации Azure DevOps
 
-Источник: services/backend/src/app.ts:2106.
+Источник: services/backend/src/app.ts:2110.
 
 ### Сообщение
 
 sync.error
 
-Источник: services/backend/src/app.ts:2134.
+Источник: services/backend/src/app.ts:2138.
 
 ### Сообщение
 
 Ошибка синхронизации
 
-Источник: services/backend/src/app.ts:2139.
+Источник: services/backend/src/app.ts:2143.
 
 ### Сообщение
 
 Нет аудиозаписи
 
-Источник: services/backend/src/app.ts:2191.
+Источник: services/backend/src/app.ts:2195.
 
 ### Сообщение
 
 Нужен аудиофайл
 
-Источник: services/backend/src/app.ts:2193.
+Источник: services/backend/src/app.ts:2197.
 
 ### Сообщение
 
 Распознавание недоступно. Запустите voice-контейнер; первая загрузка модели может занять несколько минут.
 
-Источник: services/backend/src/app.ts:2210.
+Источник: services/backend/src/app.ts:2214.
 
 ### Сообщение
 
 Не удалось загрузить голосовую модель. Проверьте доступ voice-контейнера к Hugging Face, VPN, сертификаты и права на /models.
 
-Источник: services/backend/src/app.ts:2219.
+Источник: services/backend/src/app.ts:2223.
 
 ### Сообщение
 
 Ошибка обработки аудио голосовой моделью. Причина записана в логах voice.
 
-Источник: services/backend/src/app.ts:2220.
+Источник: services/backend/src/app.ts:2224.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/app.ts:2235.
+Источник: services/backend/src/app.ts:2239.
 
 ### Сообщение
 
 Не удалось распознать запись. Проверьте логи voice-контейнера.
 
-Источник: services/backend/src/app.ts:2238.
+Источник: services/backend/src/app.ts:2242.
 
 ### Сообщение
 
 Маршрут не найден
 
-Источник: services/backend/src/app.ts:2246.
+Источник: services/backend/src/app.ts:2250.
 
 ### Сообщение
 
 Request failed:
 
-Источник: services/backend/src/app.ts:2258.
+Источник: services/backend/src/app.ts:2262.
 
 ### Сообщение
 
 UnknownError
 
-Источник: services/backend/src/app.ts:2258.
+Источник: services/backend/src/app.ts:2262.
 
 ### Сообщение
 
 Внутренняя ошибка. Проверьте настройки и повторите запрос.
 
-Источник: services/backend/src/app.ts:2260.
+Источник: services/backend/src/app.ts:2264.

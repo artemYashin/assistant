@@ -16,3 +16,39 @@
 Подключение модели изменилось. Верните прежний провайдер и адрес API для продолжения или создайте новый чат / запустите новое ревью. История сохранена.
 
 Источник: services/backend/src/llm-provider.ts:70.
+
+### Сообщение
+
+Укажите адрес OpenAI-совместимого API в настройках.
+
+Источник: services/backend/src/llm-provider.ts:80.
+
+### Сообщение
+
+Model catalogue unavailable
+
+Источник: services/backend/src/llm-provider.ts:97.
+
+### Сообщение
+
+Model catalogue too large
+
+Источник: services/backend/src/llm-provider.ts:99.
+
+### Сообщение
+
+Invalid model catalogue
+
+Источник: services/backend/src/llm-provider.ts:117.
+
+### Сообщение
+
+Не удалось загрузить список моделей. Проверьте адрес API, ключ и поддержку /models. Название модели можно ввести вручную.
+
+Источник: services/backend/src/llm-provider.ts:130.
+
+### Сообщение
+
+Подключение API изменилось. Загрузите список моделей заново.
+
+Источник: services/backend/src/llm-provider.ts:143.

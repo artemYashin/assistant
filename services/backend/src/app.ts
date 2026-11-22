@@ -1,4 +1,4 @@
-import { llmReady, validOpenaiUrl } from "./llm-provider.js";
+import { llmReady, loadOpenaiModels, validOpenaiUrl } from "./llm-provider.js";
 import { TicketCreate } from "./ticket-create.js";
 import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
@@ -643,6 +643,10 @@ export function createApp(
   });
   app.post("/api/connect/github", async (_req, res) => res.json(await auth.startGitHub()));
   app.post("/api/connect/github/poll", async (_req, res) => res.json(await auth.pollGitHub()));
+  app.get("/api/llm/openai-models", async (req, res) => {
+    z.object({}).strict().parse(req.query);
+    res.json(await loadOpenaiModels(store));
+  });
   app.get("/api/llm/models", async (req, res) => {
     const purpose = z.enum(["chat", "review"]).default("chat").parse(req.query.purpose);
     res.json(await agent.providerModels(purpose));

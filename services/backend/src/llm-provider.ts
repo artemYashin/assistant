@@ -72,3 +72,74 @@ export function assertLlmBinding(saved: string | undefined, current: string) {
       "Подключение модели изменилось. Верните прежний провайдер и адрес API для продолжения или создайте новый чат / запустите новое ревью. История сохранена.",
     );
 }
+
+export async function loadOpenaiModels(store: Store) {
+  const settings = store.settings();
+  const baseUrl = settings.openaiBaseUrl.trim().replace(/\/+$/, "");
+  if (!validOpenaiUrl(baseUrl))
+    throw new AppError(400, "Укажите адрес OpenAI-совместимого API в настройках.");
+  const apiKey = store.secret("openai.apiKey");
+  const snapshot = JSON.stringify([settings.openaiBaseUrl, settings.openaiWireApi, apiKey]);
+  const connectionId = llmSelection(
+    { ...settings, assistantProvider: "openai" },
+    "chat",
+  ).connectionId;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  const maxBytes = 1024 * 1024;
+  let models: { id: string; name: string }[];
+  try {
+    const response = await fetch(`${baseUrl}/models`, {
+      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+      redirect: "error",
+      signal: controller.signal,
+    });
+    if (!response.ok || !response.body) throw new Error("Model catalogue unavailable");
+    if (Number(response.headers.get("content-length")) > maxBytes)
+      throw new Error("Model catalogue too large");
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > maxBytes) throw new Error("Model catalogue too large");
+        chunks.push(value);
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+    const body: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    if (!body || typeof body !== "object" || !("data" in body) || !Array.isArray(body.data))
+      throw new Error("Invalid model catalogue");
+    models = [];
+    const seen = new Set<string>();
+    for (const item of body.data) {
+      if (!item || typeof item !== "object" || typeof item.id !== "string") continue;
+      const id = item.id.trim();
+      if (!id || id.length > 200 || seen.has(id)) continue;
+      seen.add(id);
+      const name = typeof item.name === "string" ? item.name.trim().slice(0, 200) : "";
+      models.push({ id, name: name || id });
+      if (models.length === 5000) break;
+    }
+  } catch {
+    throw new AppError(
+      502,
+      "Не удалось загрузить список моделей. Проверьте адрес API, ключ и поддержку /models. Название модели можно ввести вручную.",
+    );
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+  const current = store.settings();
+  if (
+    snapshot !==
+    JSON.stringify([current.openaiBaseUrl, current.openaiWireApi, store.secret("openai.apiKey")])
+  )
+    throw new AppError(409, "Подключение API изменилось. Загрузите список моделей заново.");
+  return { models, connectionId };
+}

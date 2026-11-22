@@ -9,118 +9,118 @@
 
 Выбрать
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:197.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:212.
 
 ### Элемент
 
 Войти через GitHub
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:229.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:244.
 
 ### Элемент
 
 Проверить и загрузить модели
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:242.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:257.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше. · По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:267.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:282.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:272.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:287.
 
 ### Элемент
 
 По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:278.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:293.
 
 ### Элемент
 
 — сохранена, доступность не подтверждена
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:282.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:297.
 
 ### Элемент
 
 Провайдер чата / Провайдер PR-ревью · GitHub Copilot OpenAI-совместимый API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:322.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:344.
 
 ### Элемент
 
 GitHub Copilot · OpenAI-совместимый API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:323.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:345.
 
 ### Элемент
 
 GitHub Copilot
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:327.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:349.
 
 ### Элемент
 
 OpenAI-совместимый API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:328.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:350.
 
 ### Элемент
 
 Модель внешнего API для чата / Модель внешнего API для PR-ревью · Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:332.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:354.
 
 ### Элемент
 
 Сохранить и проверить · чат / PR-ревью
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:349.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:372.
 
 ### Элемент
 
 Адрес API · Базовый адрес совместимого API, например https://api.openai.com/v1. Для локального сервиса укажите адрес, доступный серверу Orbit.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:382.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:405.
 
 ### Элемент
 
 https://api.openai.com/v1
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:386.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:409.
 
 ### Элемент
 
 Формат API · Chat Completions Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:394.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:418.
 
 ### Элемент
 
 Chat Completions · Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:395.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:419.
 
 ### Элемент
 
 Chat Completions
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:399.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:424.
 
 ### Элемент
 
 Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:400.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:425.
 
 ### Элемент
 
 Ключ API · Пустое поле сохраняет текущий ключ. Ключ не возвращается в браузер. Для сервиса без авторизации ключ не нужен.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:403.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:428.

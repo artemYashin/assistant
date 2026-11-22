@@ -9,4 +9,4 @@
 
 Не удалось загрузить модели. Повторите загрузку.
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:49.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:53.
