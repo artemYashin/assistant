@@ -41,6 +41,12 @@ export const defaults = {
   voiceNewPress: "double",
   voiceCurrentKey: "KeyM",
   voiceNewKey: "KeyN",
+  assistantProvider: "copilot" as "copilot" | "openai",
+  reviewProvider: "copilot" as "copilot" | "openai",
+  openaiBaseUrl: "",
+  openaiWireApi: "completions" as "completions" | "responses",
+  openaiModel: "",
+  openaiReviewModel: "",
   model: "",
   reviewModel: "",
   azureUrl: "",
@@ -1200,8 +1206,8 @@ export class Store {
         .run(id, context.client, context.project);
       this.clearHistory(context, id); // Preserve global usage accounting.
       this.db
-        .prepare("DELETE FROM kv WHERE key IN (?,?)")
-        .run(`chat.runtime:${id}`, `chat.context:${id}`);
+        .prepare("DELETE FROM kv WHERE key IN (?,?,?)")
+        .run(`chat.runtime:${id}`, `chat.context:${id}`, `chat.provider:${id}`);
       this.db
         .prepare("DELETE FROM chat_sessions WHERE id=? AND client=? AND project=?")
         .run(id, context.client, context.project);
@@ -1288,6 +1294,7 @@ export class Store {
     return this.db.transaction(() => {
       this.db.prepare("DELETE FROM chat_files WHERE session_id=?").run(session.id);
       this.set(`chat.runtime:${session.id}`, null);
+      this.set(`chat.provider:${session.id}`, null);
       this.set(`chat.context:${session.id}`, null);
       const result = this.db
         .prepare("DELETE FROM conversations WHERE session_id=? AND client=? AND project=?")

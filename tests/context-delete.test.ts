@@ -70,6 +70,7 @@ function seed(store: Store, client: string, project: string, id: string) {
     .run(id, client, project);
   store.db.prepare("INSERT INTO ticket_developers VALUES ('shared',1,?)").run(id);
   store.set(`chat.runtime:${chat.id}`, { sessionId: id });
+  store.set(`chat.provider:${chat.id}`, "openai:synthetic");
   store.set(`review.requests:${id}`, [id]);
   store.set(`code.snapshot:${id}:main`, { sha: "hash" });
   store.set(`pr.source:${JSON.stringify([id, "repo", 1])}`, {});
@@ -82,7 +83,7 @@ function seed(store: Store, client: string, project: string, id: string) {
 test("project deletion is transactional and isolates other projects and shared tickets", (t) => {
   const store = fixture(t),
     chat = seed(store, "A", "One", "one");
-  seed(store, "A", "Two", "two");
+  const otherChat = seed(store, "A", "Two", "two");
   seed(store, "B", "One", "other");
   store.set("settings", { ...store.rawSettings(), client: "A", project: "One" });
   store.db
@@ -125,6 +126,8 @@ test("project deletion is transactional and isolates other projects and shared t
   );
   assert.ok(store.db.prepare("SELECT 1 FROM tickets WHERE source='shared'").get());
   assert.equal(store.get(`chat.runtime:${chat}`, null), null);
+  assert.equal(store.get(`chat.provider:${chat}`, null), null);
+  assert.equal(store.get(`chat.provider:${otherChat}`, null), "openai:synthetic");
   assert.equal(store.get("code.snapshot:one:main", null), null);
   assert.equal(store.azureBinding({ client: "A", project: "One" }), null);
   assert.deepEqual(store.db.pragma("foreign_key_check"), []);

@@ -65,7 +65,12 @@ export function deleteContext(store: Store, context: Context, confirmation: stri
         .run(id);
     }
     const exactKeys = new Set([
-      ...chats.flatMap((id) => [`chat.active:${id}`, `chat.runtime:${id}`, `chat.context:${id}`]),
+      ...chats.flatMap((id) => [
+        `chat.active:${id}`,
+        `chat.runtime:${id}`,
+        `chat.context:${id}`,
+        `chat.provider:${id}`,
+      ]),
       ...reviews.flatMap((id) => [
         `review.requests:${id}`,
         `chat.runtime:review:${id}`,

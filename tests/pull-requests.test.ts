@@ -619,6 +619,7 @@ test("review options persist and disable questions without fetching tickets", as
   const row = store.db.prepare("SELECT options FROM pr_reviews WHERE id=?").get(id) as any;
   assert.deepEqual(JSON.parse(row.options), {
     model: store.settings().reviewModel || store.settings().model,
+    connectionId: "copilot",
     reviewerComment: "",
     questionFrequency: "none",
     readTickets: false,

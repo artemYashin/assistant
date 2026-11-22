@@ -1,3 +1,4 @@
+import { llmReady, validOpenaiUrl } from "./llm-provider.js";
 import { TicketCreate } from "./ticket-create.js";
 import { TicketPullRequests } from "./ticket-pull-requests.js";
 import { ChatRuns } from "./chat-runs.js";
@@ -76,6 +77,22 @@ const settingsSchema = z
     voiceNewPress: z.enum(["single", "double"]).default("double"),
     voiceCurrentKey: z.string().max(80).regex(voiceBindingPattern).default("KeyM"),
     voiceNewKey: z.string().max(80).regex(voiceBindingPattern).default("KeyN"),
+    assistantProvider: z.enum(["copilot", "openai"]).optional(),
+    reviewProvider: z.enum(["copilot", "openai"]).optional(),
+    openaiBaseUrl: z
+      .string()
+      .trim()
+      .max(2000)
+      .refine(
+        (value) => !value || validOpenaiUrl(value),
+        "Укажите HTTP(S) адрес API без логина, пароля, параметров и фрагмента.",
+      )
+      .optional(),
+    openaiWireApi: z.enum(["completions", "responses"]).optional(),
+    openaiModel: text.optional(),
+    openaiReviewModel: text.optional(),
+    openaiApiKey: z.string().trim().max(10000).optional(),
+    clearOpenaiApiKey: z.boolean().optional(),
     model: text,
     reviewModel: text.default(""),
     azureUrl: z.string().trim().max(1000),
@@ -540,6 +557,9 @@ export function createApp(
     res.json({
       ...store.settings(),
       githubConnected: !!store.secret("github.token"),
+      openaiApiKeySet: !!store.secret("openai.apiKey"),
+      assistantConnected: llmReady(store, "chat"),
+      reviewConnected: llmReady(store, "review"),
       azurePatSet: !!store.secret("azure.pat"),
     }),
   );
@@ -553,12 +573,17 @@ export function createApp(
       kanbanFilterColumnsByStatus: _kanbanFilter,
       kanbanHideEmptyColumns: _kanbanEmpty,
       githubConnected: _githubConnected,
+      openaiApiKeySet: _openaiApiKeySet,
+      assistantConnected: _assistantConnected,
+      reviewConnected: _reviewConnected,
       azurePatSet: _azurePatSet,
       ...editable
     } = req.body ?? {};
     const parsed = settingsSchema.parse(editable);
     const {
       azurePat,
+      openaiApiKey,
+      clearOpenaiApiKey,
       prDailyLimit: _retiredPrDailyLimit,
       azureImportAssignees: _projectImportAssignees,
       ...settings
@@ -586,6 +611,12 @@ export function createApp(
     store.db.transaction(() => {
       store.set("settings", {
         ...settings,
+        assistantProvider: settings.assistantProvider ?? old.assistantProvider,
+        reviewProvider: settings.reviewProvider ?? old.reviewProvider,
+        openaiBaseUrl: settings.openaiBaseUrl ?? old.openaiBaseUrl,
+        openaiWireApi: settings.openaiWireApi ?? old.openaiWireApi,
+        openaiModel: settings.openaiModel ?? old.openaiModel,
+        openaiReviewModel: settings.openaiReviewModel ?? old.openaiReviewModel,
         workMode: settings.workMode ?? old.workMode,
         ticketClickAction: settings.ticketClickAction ?? old.ticketClickAction,
         syncSeconds: store.rawSettings().syncSeconds,
@@ -603,6 +634,8 @@ export function createApp(
         client: old.client,
         project: old.project,
       });
+      if (clearOpenaiApiKey) store.deleteSecret("openai.apiKey");
+      if (openaiApiKey?.trim()) store.setSecret("openai.apiKey", openaiApiKey.trim());
       if (azurePat?.trim()) store.setSecret("azure.pat", azurePat.trim());
     })();
     store.audit("settings.updated", "Настройки сохранены");
@@ -610,6 +643,17 @@ export function createApp(
   });
   app.post("/api/connect/github", async (_req, res) => res.json(await auth.startGitHub()));
   app.post("/api/connect/github/poll", async (_req, res) => res.json(await auth.pollGitHub()));
+  app.get("/api/llm/models", async (req, res) => {
+    const purpose = z.enum(["chat", "review"]).default("chat").parse(req.query.purpose);
+    res.json(await agent.providerModels(purpose));
+  });
+  app.post("/api/llm/test", async (req, res) => {
+    const { purpose } = z
+      .object({ purpose: z.enum(["chat", "review"]) })
+      .strict()
+      .parse(req.body);
+    res.json(await agent.testProvider(purpose));
+  });
   app.get("/api/copilot/models", async (_req, res) => res.json(await agent.models()));
   app.get("/api/overview", (req, res) => {
     const context = contextSchema.parse(req.query);

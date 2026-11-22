@@ -31,6 +31,7 @@ export function Settings({ settings, context, run, busy }: any) {
   const settingsTabs = [
     { id: "workspace", label: "Рабочее пространство", icon: Settings2 },
     { id: "copilot", label: "Copilot", icon: Github },
+    { id: "providers", label: "Провайдеры AI", icon: Sparkles },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
     { id: "hotkeys", label: "Горячие клавиши", icon: Command },
@@ -38,7 +39,12 @@ export function Settings({ settings, context, run, busy }: any) {
     { id: "memory", label: "Память", icon: BookOpen },
     { id: "calendar", label: "Календарь", icon: CalendarDays },
   ];
-  const [form, setForm] = useState<any>({ ...settings, azurePat: "" }),
+  const [form, setForm] = useState<any>({
+      ...settings,
+      azurePat: "",
+      openaiApiKey: "",
+      clearOpenaiApiKey: false,
+    }),
     [githubFlow, setGithubFlow] = useState<any>(null),
     [models, setModels] = useState<any[]>([]),
     [modelsLoading, setModelsLoading] = useState(false),
@@ -69,6 +75,9 @@ export function Settings({ settings, context, run, busy }: any) {
     const {
       githubConnected,
       azurePatSet,
+      openaiApiKeySet,
+      assistantConnected,
+      reviewConnected,
       kanbanStateOrder,
       kanbanGroups,
       kanbanHiddenStates,
@@ -81,7 +90,13 @@ export function Settings({ settings, context, run, busy }: any) {
       client: context.client,
       project: context.project,
     });
-    set("azurePat", "");
+    setForm((current: any) => ({
+      ...current,
+      azurePat: "",
+      openaiApiKey: "",
+      clearOpenaiApiKey: false,
+    }));
+    window.dispatchEvent(new Event("orbit-settings-saved"));
     window.dispatchEvent(new Event("orbit-calendar-changed"));
   }
   useEffect(() => {
@@ -277,6 +292,142 @@ export function Settings({ settings, context, run, busy }: any) {
                 </Field>
               ))}
             </div>
+          </div>
+        </section>
+        <section
+          className="panel settings-card"
+          role="tabpanel"
+          id={`${settingsTabId}-providers-panel`}
+          aria-labelledby={`${settingsTabId}-providers`}
+          hidden={settingsTab !== "providers"}
+        >
+          <div className="section-heading">
+            <h2>
+              <Sparkles size={22} />
+              Провайдеры AI
+            </h2>
+          </div>
+          <p className="muted">
+            GitHub Copilot используется по умолчанию. Провайдеры чата и PR-ревью выбираются
+            независимо; автоматического переключения при ошибке нет.
+          </p>
+          <div className="settings-group">
+            <h3>Назначение моделей</h3>
+            <div className="form-grid">
+              {(["chat", "review"] as const).map((purpose) => {
+                const providerKey = purpose === "chat" ? "assistantProvider" : "reviewProvider";
+                const modelKey = purpose === "chat" ? "openaiModel" : "openaiReviewModel";
+                return (
+                  <div key={purpose}>
+                    <Field label={purpose === "chat" ? "Провайдер чата" : "Провайдер PR-ревью"}>
+                      <select
+                        value={form[providerKey] || "copilot"}
+                        onChange={(event) => set(providerKey, event.target.value)}
+                      >
+                        <option value="copilot">GitHub Copilot</option>
+                        <option value="openai">OpenAI-совместимый API</option>
+                      </select>
+                    </Field>
+                    {form[providerKey] === "openai" ? (
+                      <Field
+                        label={
+                          purpose === "chat"
+                            ? "Модель внешнего API для чата"
+                            : "Модель внешнего API для PR-ревью"
+                        }
+                        hint="Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений."
+                      >
+                        <input
+                          value={form[modelKey] || ""}
+                          onChange={(event) => set(modelKey, event.target.value)}
+                          autoComplete="off"
+                        />
+                      </Field>
+                    ) : (
+                      <p className="muted">Модель Copilot задаётся на вкладке «Copilot».</p>
+                    )}
+                    <button
+                      className="secondary"
+                      disabled={!!busy}
+                      onClick={() =>
+                        run(
+                          `test-${purpose}`,
+                          async () => {
+                            await save();
+                            await api("/llm/test", "POST", { purpose });
+                          },
+                          "Подключение проверено: модель ответила",
+                        )
+                      }
+                    >
+                      Сохранить и проверить {purpose === "chat" ? "чат" : "PR-ревью"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="muted">
+              Проверка сначала сохраняет изменения всех вкладок, затем отправляет короткий тестовый
+              запрос без истории и данных проекта. Провайдер может взимать плату. Успешный ответ не
+              гарантирует поддержку всех инструментов и изображений.
+            </p>
+          </div>
+          <div className="settings-group">
+            <h3>OpenAI-совместимый API (необязательно)</h3>
+            <p className="muted">
+              Одно подключение для выбранных выше задач. История, сообщения, вложения и результаты
+              инструментов этих задач передаются указанному провайдеру. При смене провайдера или
+              адреса для существующей беседы создайте новый чат; прежняя история сохранится.
+            </p>
+            <Field
+              label="Адрес API"
+              hint="Базовый адрес совместимого API, например https://api.openai.com/v1. Для локального сервиса укажите адрес, доступный серверу Orbit."
+            >
+              <input
+                type="url"
+                value={form.openaiBaseUrl || ""}
+                onChange={(event) => set("openaiBaseUrl", event.target.value)}
+                placeholder="https://api.openai.com/v1"
+                autoComplete="off"
+              />
+            </Field>
+            <Field label="Формат API">
+              <select
+                value={form.openaiWireApi || "completions"}
+                onChange={(event) => set("openaiWireApi", event.target.value)}
+              >
+                <option value="completions">Chat Completions</option>
+                <option value="responses">Responses</option>
+              </select>
+            </Field>
+            <Field
+              label="Ключ API"
+              hint="Пустое поле сохраняет текущий ключ. Ключ не возвращается в браузер. Для сервиса без авторизации ключ не нужен."
+            >
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={form.openaiApiKey || ""}
+                disabled={form.clearOpenaiApiKey}
+                onChange={(event) => set("openaiApiKey", event.target.value)}
+                placeholder={
+                  settings.openaiApiKeySet
+                    ? "Ключ сохранён · введите новый для замены"
+                    : "Введите ключ API"
+                }
+              />
+            </Field>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={!!form.clearOpenaiApiKey}
+                onChange={(event) => {
+                  set("clearOpenaiApiKey", event.target.checked);
+                  if (event.target.checked) set("openaiApiKey", "");
+                }}
+              />
+              Удалить сохранённый ключ API при сохранении
+            </label>
           </div>
         </section>
         <section

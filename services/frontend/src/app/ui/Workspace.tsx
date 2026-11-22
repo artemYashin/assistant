@@ -95,7 +95,7 @@ export function Workspace() {
               voiceNewPress={settings?.voiceNewPress}
               voiceCurrentKey={settings?.voiceCurrentKey}
               voiceNewKey={settings?.voiceNewKey}
-              connected={settings?.githubConnected}
+              connected={settings?.assistantConnected ?? settings?.githubConnected}
               azureSource={
                 settings?.azureUrl
                   ? `${settings.azureUrl.replace(/\/$/, "")}|${settings.azureProject}`

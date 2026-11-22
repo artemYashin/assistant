@@ -124,7 +124,7 @@ export function PrReviewDialog({
         <fieldset className="review-settings-block">
           <legend>Параметры ревью</legend>
           <div className="review-settings-row">
-            <ModelOverride value={model} onChange={setModel} disabled={busy} />
+            <ModelOverride purpose="review" value={model} onChange={setModel} disabled={busy} />
             <SingleSelect
               label="Частота вопросов"
               value={frequency}

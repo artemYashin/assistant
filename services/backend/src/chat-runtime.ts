@@ -1,9 +1,11 @@
+import { assertLlmBinding } from "./llm-provider.js";
 import type { CopilotClient, SessionConfig } from "@github/copilot-sdk";
 import { AppError, type Store } from "./store.js";
 
 export type ChatRuntimeState = {
   sessionId: string;
   source: string;
+  connectionId?: string;
   lastSequence: number;
   memoryHash?: string;
   attachmentHash?: string;
@@ -16,8 +18,10 @@ export async function openChatRuntime(
   store: Store,
   chatId: string,
   source: string,
+  connectionId = "copilot",
 ) {
   const saved = store.get<ChatRuntimeState | null>(chatRuntimeKey(chatId), null);
+  if (saved) assertLlmBinding(saved.connectionId, connectionId);
   // Native transcript persistence is distinct from cross-session search, which stays disabled.
   const options = { ...config, enableSessionStore: false, infiniteSessions: { enabled: false } };
   if (saved?.source === source) {
@@ -40,7 +44,12 @@ export async function openChatRuntime(
     }
   }
   const session = await client.createSession({ ...options, name: `Orbit ${chatId}` });
-  const state: ChatRuntimeState = { sessionId: session.sessionId, source, lastSequence: 0 };
+  const state: ChatRuntimeState = {
+    sessionId: session.sessionId,
+    source,
+    connectionId,
+    lastSequence: 0,
+  };
   if (state.sessionId) store.set(chatRuntimeKey(chatId), state);
   return { session, resumed: false, state };
 }

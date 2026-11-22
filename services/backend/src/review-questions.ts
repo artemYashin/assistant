@@ -17,6 +17,7 @@ export const reviewQuestionsSchema = z.object({
 export type ReviewQuestion = z.infer<typeof reviewQuestionsSchema>["questions"][number];
 export const reviewOptionsSchema = z
   .object({
+    connectionId: z.string().max(100).optional(),
     model: z.string().trim().max(200).default(""),
     questionFrequency: z.enum(["none", "medium", "high"]).default("medium"),
     readTickets: z.boolean().default(true),
@@ -55,6 +56,7 @@ Before each additional search/read, identify the unresolved question internally 
 At every depth, review all supplied changes, including changes in supporting files; depth controls additional repository exploration, not diff coverage. Reuse code and tool results already present in this review session. Do not reread the same unchanged file range unless earlier output was incomplete or a specific missing detail requires it. Prefer focused searches and line ranges; widen or read a whole file only when needed to understand the relevant behavior. Stop exploring once sufficient evidence supports the finding or resolves the concern. Token and tool-call limits remain independent hard limits.`;
 }
 export type ReviewActions = {
+  connectionId?: string;
   pullRequest?: UsagePullRequest;
   reviewId?: string;
   readCode?: boolean;

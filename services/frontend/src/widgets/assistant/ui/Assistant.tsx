@@ -1,3 +1,4 @@
+import "./Assistant.css";
 import { useLatestCallback } from "../../../shared/lib/latest-callback/index.js";
 import { useImageAttachmentQueue } from "../../../features/attach-chat-image/index.js";
 import {
@@ -693,7 +694,7 @@ export function Assistant({
           <small className="assistant-chat-title" title={sessionTitle}>
             <span
               className={`dot ${connected ? "" : "offline"}`}
-              title={connected ? "Copilot подключён" : "Нет подключения"}
+              title={connected ? "Провайдер чата настроен" : "Нет подключения"}
             />
             {sessionTitle}
           </small>
@@ -819,7 +820,7 @@ export function Assistant({
             </div>
             {!connected && (
               <button className="connect-link" onClick={onSettings}>
-                Подключить GitHub Copilot <ArrowUpRight size={15} />
+                Настроить подключение AI <ArrowUpRight size={15} />
               </button>
             )}
           </div>

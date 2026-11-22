@@ -103,6 +103,7 @@ export function useWorkspace() {
       .then((s) => {
         if (!live) return;
         setSettings(s);
+        window.dispatchEvent(new CustomEvent("orbit-llm-settings-changed", { detail: s }));
         if (!initialized.current) {
           setContext({ client: s.client, project: s.project });
           initialized.current = true;
@@ -133,6 +134,11 @@ export function useWorkspace() {
       clearInterval(id);
     };
   }, [reload, refresh, invalidateLoadGeneration]);
+  useEffect(() => {
+    const refreshSettings = () => setRefresh((value) => value + 1);
+    window.addEventListener("orbit-settings-saved", refreshSettings);
+    return () => window.removeEventListener("orbit-settings-saved", refreshSettings);
+  }, []);
   const run = useCallback(async (key: string, fn: () => Promise<any>, message = "") => {
     setBusy(key);
     setError("");

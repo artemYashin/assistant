@@ -7,6 +7,6 @@
 
 ### Сообщение
 
-Не удалось загрузить модели. Откройте список ещё раз.
+Не удалось загрузить модели. Повторите загрузку.
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:26.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:49.

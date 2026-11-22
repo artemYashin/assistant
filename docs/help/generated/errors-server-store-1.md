@@ -9,94 +9,94 @@
 
 Invalid master.key
 
-Источник: services/backend/src/store.ts:90.
+Источник: services/backend/src/store.ts:96.
 
 ### Сообщение
 
 CREATE TABLE pr_review_runs (id TEXT PRIMARY KEY, monitor TEXT NOT NULL, repo TEXT NOT NULL, number INTEGER NOT NULL, head TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL, summary TEXT, coverage TEXT, error TEXT, usage_id TEXT, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, options TEXT NOT NULL DEFAULT '{}'); INSERT INTO pr_review_runs SELECT id,monitor,repo,number,head,target,status,summary,coverage,error,usage_id,created_at,started_at,finished_at,options FROM pr_reviews ORDER BY rowid; DROP TABLE pr_reviews; ALTER TABLE pr_review_runs RENAME TO pr_reviews; CREATE INDEX pr_review_version ON pr_reviews(monitor,repo,number,head,target);
 
-Источник: services/backend/src/store.ts:168.
+Источник: services/backend/src/store.ts:174.
 
 ### Сообщение
 
 fetch_timeout_seconds
 
-Источник: services/backend/src/store.ts:434.
+Источник: services/backend/src/store.ts:440.
 
 ### Сообщение
 
 ticket_error
 
-Источник: services/backend/src/store.ts:442.
+Источник: services/backend/src/store.ts:448.
 
 ### Сообщение
 
 Укажите заказчика
 
-Источник: services/backend/src/store.ts:697.
+Источник: services/backend/src/store.ts:703.
 
 ### Сообщение
 
 Укажите название длиной до 200 символов
 
-Источник: services/backend/src/store.ts:706.
+Источник: services/backend/src/store.ts:712.
 
 ### Сообщение
 
 Заказчик или проект не найден
 
-Источник: services/backend/src/store.ts:713.
+Источник: services/backend/src/store.ts:719.
 
 ### Сообщение
 
 Такое название уже используется
 
-Источник: services/backend/src/store.ts:720.
+Источник: services/backend/src/store.ts:726.
 
 ### Сообщение
 
 Для этого названия уже существуют настройки
 
-Источник: services/backend/src/store.ts:780.
+Источник: services/backend/src/store.ts:786.
 
 ### Сообщение
 
 Запись памяти недоступна в текущем контексте
 
-Источник: services/backend/src/store.ts:837.
+Источник: services/backend/src/store.ts:843.
 
 ### Сообщение
 
 Неверная запись памяти
 
-Источник: services/backend/src/store.ts:849.
+Источник: services/backend/src/store.ts:855.
 
 ### Сообщение
 
 Выберите заказчика
 
-Источник: services/backend/src/store.ts:850.
+Источник: services/backend/src/store.ts:856.
 
 ### Сообщение
 
 Выберите проект
 
-Источник: services/backend/src/store.ts:852.
+Источник: services/backend/src/store.ts:858.
 
 ### Сообщение
 
 Подключение изменилось. Обновите корзину.
 
-Источник: services/backend/src/store.ts:1050.
+Источник: services/backend/src/store.ts:1056.
 
 ### Сообщение
 
 Тикет отсутствует в корзине или срок хранения истёк
 
-Источник: services/backend/src/store.ts:1056.
+Источник: services/backend/src/store.ts:1062.
 
 ### Сообщение
 
 Чат не найден в текущем контексте.
 
-Источник: services/backend/src/store.ts:1117.
+Источник: services/backend/src/store.ts:1123.

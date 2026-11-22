@@ -9,118 +9,118 @@
 
 Разработчик не найден в этом проекте
 
-Источник: services/backend/src/app.ts:1120.
+Источник: services/backend/src/app.ts:1164.
 
 ### Сообщение
 
 Подключение изменилось
 
-Источник: services/backend/src/app.ts:1183.
+Источник: services/backend/src/app.ts:1227.
 
 ### Сообщение
 
 Подключение изменилось. Обновите карточку тикета.
 
-Источник: services/backend/src/app.ts:1216.
+Источник: services/backend/src/app.ts:1260.
 
 ### Сообщение
 
 Подключение изменилось. Откройте редактор заново.
 
-Источник: services/backend/src/app.ts:1230.
+Источник: services/backend/src/app.ts:1274.
 
 ### Сообщение
 
 Один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: services/backend/src/app.ts:1322.
+Источник: services/backend/src/app.ts:1366.
 
 ### Сообщение
 
 Выберите изображение.
 
-Источник: services/backend/src/app.ts:1333.
+Источник: services/backend/src/app.ts:1377.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: services/backend/src/app.ts:1349.
+Источник: services/backend/src/app.ts:1393.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите форму.
 
-Источник: services/backend/src/app.ts:1358.
+Источник: services/backend/src/app.ts:1402.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте выбор исполнителя заново.
 
-Источник: services/backend/src/app.ts:1382.
+Источник: services/backend/src/app.ts:1426.
 
 ### Сообщение
 
 Подключение Azure изменилось. Обновите карточку перед удалением.
 
-Источник: services/backend/src/app.ts:1403.
+Источник: services/backend/src/app.ts:1447.
 
 ### Сообщение
 
 Назначение из Azure больше не поддерживается. Выберите разработчиков из локального списка проекта.
 
-Источник: services/backend/src/app.ts:1407.
+Источник: services/backend/src/app.ts:1451.
 
 ### Сообщение
 
 Не удалось принять изображение: один файл PNG, JPEG, GIF или WebP до 10 МБ.
 
-Источник: services/backend/src/app.ts:1499.
+Источник: services/backend/src/app.ts:1543.
 
 ### Сообщение
 
 Подключение Azure изменилось: загрузите тикет заново
 
-Источник: services/backend/src/app.ts:1540.
+Источник: services/backend/src/app.ts:1584.
 
 ### Сообщение
 
 Вложение не найдено в тикете
 
-Источник: services/backend/src/app.ts:1549.
+Источник: services/backend/src/app.ts:1593.
 
 ### Сообщение
 
 Операция кода не завершена. Проверьте подключение и повторите запрос.
 
-Источник: services/backend/src/app.ts:1627.
+Источник: services/backend/src/app.ts:1671.
 
 ### Сообщение
 
 Прикрепите не больше 10 изображений по 10 МБ.
 
-Источник: services/backend/src/app.ts:1669.
+Источник: services/backend/src/app.ts:1713.
 
 ### Сообщение
 
 Некорректные данные формы PR.
 
-Источник: services/backend/src/app.ts:1678.
+Источник: services/backend/src/app.ts:1722.
 
 ### Сообщение
 
 Проверьте поля формы
 
-Источник: services/backend/src/app.ts:1691.
+Источник: services/backend/src/app.ts:1735.
 
 ### Сообщение
 
 Не удалось обновить список PR. Повторите синхронизацию.
 
-Источник: services/backend/src/app.ts:1708.
+Источник: services/backend/src/app.ts:1752.
 
 ### Сообщение
 
 Проект мониторинга не найден
 
-Источник: services/backend/src/app.ts:1742.
+Источник: services/backend/src/app.ts:1786.

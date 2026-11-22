@@ -1,3 +1,4 @@
+import { assertLlmBinding, llmConfig, llmReady, llmSelection } from "./llm-provider.js";
 import type { ChatProgress } from "./chat-stream.js";
 import { ReviewProgress } from "./review-progress.js";
 import { countPrCommits, countPrFiles } from "./pr-counts.js";
@@ -2157,7 +2158,9 @@ export class PullRequests {
       maxToolCalls: options?.maxToolCalls ?? this.store.settings().reviewMaxToolCalls,
       maxTokens: options?.maxTokens ?? this.store.settings().reviewMaxTokens,
     });
-    reviewOptions.model ||= this.store.settings().reviewModel || this.store.settings().model;
+    const selection = llmConfig(this.store, "review", reviewOptions.model);
+    reviewOptions.model = selection.model;
+    reviewOptions.connectionId = selection.connectionId;
     const m = this.monitors().find((m) => m.id === monitor);
     const p = this.store.db
       .prepare("SELECT * FROM pull_requests WHERE monitor=? AND repo=? AND number=?")
@@ -2168,7 +2171,8 @@ export class PullRequests {
         "Синхронизируйте активный PR выбранного репозитория; черновики не ревьюятся",
       );
     this.credentials(m);
-    if (!this.store.secret("github.token")) throw new AppError(400, "Подключите GitHub Copilot");
+    if (selection.provider === "copilot" && !this.store.secret("github.token"))
+      throw new AppError(400, "Подключите GitHub Copilot в настройках");
     const old = this.store.db
       .prepare(
         "SELECT * FROM pr_reviews WHERE monitor=? AND repo=? AND number=? AND head=? AND target=? ORDER BY rowid DESC LIMIT 1",
@@ -2220,7 +2224,7 @@ export class PullRequests {
   }
   async reviewNext() {
     if (this.stopped) return;
-    if (this.working || !this.store.secret("github.token")) return;
+    if (this.working) return;
     const modelPaused = !!this.agent.active();
     const job = this.store.db
       .prepare(
@@ -2244,6 +2248,16 @@ export class PullRequests {
         maxToolCalls: savedOptions.maxToolCalls ?? this.store.settings().reviewMaxToolCalls,
         maxTokens: savedOptions.maxTokens ?? this.store.settings().reviewMaxTokens,
       });
+      assertLlmBinding(
+        options.connectionId,
+        llmSelection(this.store.settings(), "review").connectionId,
+      );
+      if (!llmReady(this.store, "review") && !options.model) return;
+      if (
+        llmSelection(this.store.settings(), "review").provider === "copilot" &&
+        !this.store.secret("github.token")
+      )
+        return;
       // Record the effective budget for legacy queued jobs before any model call.
       this.store.db
         .prepare(
@@ -2477,6 +2491,7 @@ export class PullRequests {
                   })),
                 }
               : undefined,
+          connectionId: options.connectionId || "copilot",
           questionFrequency: options.questionFrequency,
           memoryScopes: options.memoryScopes,
           reviewId: job.id,

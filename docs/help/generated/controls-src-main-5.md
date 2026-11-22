@@ -7,120 +7,120 @@
 
 ### Элемент
 
+Выбрать
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:197.
+
+### Элемент
+
 Войти через GitHub
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:214.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:229.
 
 ### Элемент
 
 Проверить и загрузить модели
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:227.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:242.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше. · По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:252.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:267.
 
 ### Элемент
 
 Модель чата / Модель PR-ревью · По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:257.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:272.
 
 ### Элемент
 
 По умолчанию в Copilot / Та же, что для чата
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:263.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:278.
 
 ### Элемент
 
 — сохранена, доступность не подтверждена
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:267.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:282.
 
 ### Элемент
 
-Personal Access Token · Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер.
+Провайдер чата / Провайдер PR-ревью · GitHub Copilot OpenAI-совместимый API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:315.
-
-### Элемент
-
-Ключ сохранён · введите новый для замены / Вставьте PAT
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:319.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:322.
 
 ### Элемент
 
-Инструкции ассистенту · Предпочтения дополняют системные правила. Сохранение памяти требует подтверждения в разделе «Подтверждения».
+GitHub Copilot · OpenAI-совместимый API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:360.
-
-### Элемент
-
-Лимит времени ответа, секунд · От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime.
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:372.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:323.
 
 ### Элемент
 
-Максимум вызовов инструментов на запрос · Прерывает повторяющиеся циклы чтения данных или создания черновиков.
+GitHub Copilot
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:383.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:327.
 
 ### Элемент
 
-Порог входных + выходных токенов чата на запрос · От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
+OpenAI-совместимый API
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:328.
+
+### Элемент
+
+Модель внешнего API для чата / Модель внешнего API для PR-ревью · Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений.
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:332.
+
+### Элемент
+
+Сохранить и проверить · чат / PR-ревью
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:349.
+
+### Элемент
+
+Адрес API · Базовый адрес совместимого API, например https://api.openai.com/v1. Для локального сервиса укажите адрес, доступный серверу Orbit.
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:382.
+
+### Элемент
+
+https://api.openai.com/v1
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:386.
+
+### Элемент
+
+Формат API · Chat Completions Responses
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:394.
+
+### Элемент
+
+Chat Completions · Responses
 
 Источник: services/frontend/src/pages/settings/ui/Settings.tsx:395.
 
 ### Элемент
 
-Разрешить ассистенту читать и искать код репозитория
+Chat Completions
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:409.
-
-### Элемент
-
-Ожидание подготовки Git, секунд · До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:421.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:399.
 
 ### Элемент
 
-Режим нажатия
+Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:467.
-
-### Элемент
-
-Одинарное нажатие
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:473.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:400.
 
 ### Элемент
 
-Двойное нажатие
+Ключ API · Пустое поле сохраняет текущий ключ. Ключ не возвращается в браузер. Для сервиса без авторизации ключ не нужен.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:474.
-
-### Элемент
-
-Лимит времени ответа ревью, секунд · От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:649.
-
-### Элемент
-
-Лимит токенов ревью по умолчанию · Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:661.
-
-### Элемент
-
-Максимум вызовов инструментов на ревью · От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:673.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:403.

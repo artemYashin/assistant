@@ -9,7 +9,7 @@
 
 Страница не найдена
 
-Источник: services/frontend/src/app/model/useWorkspace.ts:175.
+Источник: services/frontend/src/app/model/useWorkspace.ts:181.
 
 ### Сообщение
 
@@ -57,70 +57,70 @@ error dismissible
 
 Не подключён
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:199.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:214.
 
 ### Сообщение
 
 Не настроен
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:304.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:455.
 
 ### Сообщение
 
 Лимит времени ответа, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:373.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:524.
 
 ### Сообщение
 
 От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:374.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:525.
 
 ### Сообщение
 
 llmTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:380.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:531.
 
 ### Сообщение
 
 От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:397.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:548.
 
 ### Сообщение
 
 До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:423.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:574.
 
 ### Сообщение
 
 Лимит времени ответа ревью, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:650.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:801.
 
 ### Сообщение
 
 От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:651.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:802.
 
 ### Сообщение
 
 reviewTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:658.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:809.
 
 ### Сообщение
 
 Лимит токенов ревью по умолчанию
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:662.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:813.
 
 ### Сообщение
 
 От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:675.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:826.

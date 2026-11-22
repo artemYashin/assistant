@@ -1,3 +1,4 @@
+import { assertLlmBinding, llmConfig, llmSelection, type LlmPurpose } from "./llm-provider.js";
 import { withChatCodeGuidance } from "./chat-code-guidance.js";
 import { memoryWritingGuide } from "./memory-policy.js";
 import { modeTools } from "./work-mode-tools.js";
@@ -333,12 +334,13 @@ export class Agent {
     private clientFactory?: () => CopilotClient,
     private connectors?: Connectors,
   ) {}
-  private client() {
+  private client(provider: "copilot" | "openai" = "copilot") {
     if (this.clientFactory) return this.clientFactory();
-    const token = this.store.secret("github.token");
-    if (!token) throw new AppError(400, "Подключите GitHub Copilot в настройках");
+    const token = provider === "copilot" ? this.store.secret("github.token") : undefined;
+    if (provider === "copilot" && !token)
+      throw new AppError(400, "Подключите GitHub Copilot в настройках");
     return new CopilotClient({
-      gitHubToken: token,
+      ...(token ? { gitHubToken: token } : {}),
       useLoggedInUser: false,
       mode: "empty",
       baseDirectory: join(this.store.dir, "copilot"),
@@ -405,6 +407,69 @@ export class Agent {
       await client.stop();
     }
   }
+  async providerModels(purpose: LlmPurpose) {
+    const selection = llmSelection(this.store.settings(), purpose);
+    return {
+      ...selection,
+      models:
+        selection.provider === "copilot"
+          ? await this.models()
+          : selection.model
+            ? [{ id: selection.model, name: selection.model }]
+            : [],
+    };
+  }
+  async testProvider(purpose: LlmPurpose) {
+    const selection = llmConfig(this.store, purpose);
+    const client = this.client(selection.provider);
+    let expired = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const work = async () => {
+      await client.start();
+      if (expired) return;
+      const session = await client.createSession({
+        model: selection.model || undefined,
+        provider: selection.config,
+        availableTools: [],
+        tools: [],
+        excludedTools: ["*"],
+        onPermissionRequest: async () => ({ kind: "denied-by-rules", rules: [] }),
+        enableConfigDiscovery: false,
+        enableSkills: false,
+        enableSessionStore: false,
+        infiniteSessions: { enabled: false },
+        systemMessage: { mode: "replace", content: "Reply briefly to the connection test." },
+      });
+      if (expired) return;
+      const response = await session.sendAndWait(
+        { prompt: "Reply with OK. This is a connection test." },
+        30000,
+      );
+      if (!response?.data.content?.trim()) throw new Error("Empty test response");
+    };
+    try {
+      await Promise.race([
+        work(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            expired = true;
+            reject(new Error("Connection test timed out"));
+          }, 30000);
+        }),
+      ]);
+      return { ok: true };
+    } catch {
+      throw new AppError(
+        502,
+        "Не удалось проверить подключение модели. Проверьте адрес API, ключ, модель и доступность провайдера.",
+      );
+    } finally {
+      expired = true;
+      clearTimeout(timer);
+      const stopped = await within(client.stop(), 5000);
+      if (!stopped) await within(client.forceStop(), 3000);
+    }
+  }
   async chat(
     prompt: string,
     context: Context,
@@ -454,11 +519,24 @@ export class Agent {
       createHash("sha256").update(JSON.stringify(value)).digest("hex");
     const deepRead = deepReadConsent(prompt, historySnapshot);
     const readPrompt = !review && deepRead.confirmed ? deepRead.request : prompt;
-    const client = this.client();
-    const ledger = new UsageLedger(this.store);
     const settings = this.store.settings();
-    const model =
-      modelOverride?.trim() || (review ? settings.reviewModel || settings.model : settings.model);
+    const selection = llmConfig(this.store, review ? "review" : "chat", modelOverride);
+    if (reviewActions?.connectionId)
+      assertLlmBinding(reviewActions.connectionId, selection.connectionId);
+    if (conversationId) {
+      const saved = this.store.get<ChatRuntimeState | null>(chatRuntimeKey(conversationId), null);
+      const binding = this.store.get<string | undefined>(
+        `chat.provider:${conversationId}`,
+        undefined,
+      );
+      if (saved || historySnapshot.length)
+        assertLlmBinding(binding || saved?.connectionId, selection.connectionId);
+    }
+    const client = this.client(selection.provider);
+    // Local consent replies also belong to the selected connection, even before a native session exists.
+    if (conversationId) this.store.set(`chat.provider:${conversationId}`, selection.connectionId);
+    const ledger = new UsageLedger(this.store);
+    const model = selection.model;
     const id = ledger.begin(
       model,
       context,
@@ -904,7 +982,11 @@ export class Agent {
         clientStarted = true;
         await client.start();
         assertActive();
-        if (files.some((file) => file.kind === "image") && model) {
+        if (
+          selection.provider === "copilot" &&
+          files.some((file) => file.kind === "image") &&
+          model
+        ) {
           const selected = (await client.listModels()).find((item) => item.id === model);
           if (selected?.capabilities?.supports?.vision === false)
             throw new AppError(
@@ -956,6 +1038,7 @@ export class Agent {
                     async (image, url) => {
                       if (!session) throw new AppError(409, "Сессия чата ещё не готова.");
                       if (
+                        selection.provider === "copilot" &&
                         model &&
                         (await client.listModels()).find((item) => item.id === model)?.capabilities
                           ?.supports?.vision === false
@@ -1320,6 +1403,7 @@ export class Agent {
             };
           }
         }
+        if (selection.config) config.provider = selection.config;
         if (model) config.model = model;
         else delete config.model;
         if (review) {
@@ -1443,6 +1527,7 @@ export class Agent {
             this.store,
             conversationId,
             this.store.source(settings) + (hasLocalManagement(settings) ? "" : "|mode=developer"),
+            selection.connectionId,
           );
           session = runtime.session;
           runtimeState = runtime.state;
@@ -1462,6 +1547,7 @@ export class Agent {
               branch: repositoryBranch,
               model,
             }),
+            selection.connectionId,
           );
           session = runtime.session;
           resumedRuntime = runtime.resumed;
@@ -1634,7 +1720,7 @@ The user has selected ${selectedTicketIds.length} tickets in the table. Read the
         stopReason ||
         (error instanceof AppError
           ? error.message
-          : "Ошибка Copilot. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.");
+          : "Ошибка провайдера модели. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.");
       if (!review && timeline.length)
         timeline = updateChatTimeline(timeline, {
           stage: "text",

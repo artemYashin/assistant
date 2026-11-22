@@ -9,118 +9,118 @@
 
 Укажите Git-репозиторий в меню «Заказчики и проекты» → «Репозиторий» и сохраните настройки.
 
-Источник: services/backend/src/pull-requests.ts:698.
+Источник: services/backend/src/pull-requests.ts:699.
 
 ### Сообщение
 
 PR или подключение изменились. Обновите список.
 
-Источник: services/backend/src/pull-requests.ts:967.
+Источник: services/backend/src/pull-requests.ts:968.
 
 ### Сообщение
 
 Тикет удалён из списка. Сначала восстановите его или добавьте по номеру.
 
-Источник: services/backend/src/pull-requests.ts:990.
+Источник: services/backend/src/pull-requests.ts:991.
 
 ### Сообщение
 
 Изображение не найдено в описании PR
 
-Источник: services/backend/src/pull-requests.ts:1051.
+Источник: services/backend/src/pull-requests.ts:1052.
 
 ### Сообщение
 
 Это не вложение Azure текущего подключения
 
-Источник: services/backend/src/pull-requests.ts:1100.
+Источник: services/backend/src/pull-requests.ts:1101.
 
 ### Сообщение
 
 Подключение Azure изменилось. Откройте PR заново.
 
-Источник: services/backend/src/pull-requests.ts:1115.
+Источник: services/backend/src/pull-requests.ts:1116.
 
 ### Сообщение
 
 Укажите PAT Azure с разрешением Code: Read
 
-Источник: services/backend/src/pull-requests.ts:1116.
+Источник: services/backend/src/pull-requests.ts:1117.
 
 ### Сообщение
 
 Проект Azure изменён в настройках этого проекта: сохраните репозиторий заново. Старые ревью сохранены.
 
-Источник: services/backend/src/pull-requests.ts:1121.
+Источник: services/backend/src/pull-requests.ts:1122.
 
 ### Сообщение
 
 URL Azure изменён: настройте мониторинг для нового подключения
 
-Источник: services/backend/src/pull-requests.ts:1126.
+Источник: services/backend/src/pull-requests.ts:1127.
 
 ### Сообщение
 
 Указан адрес корпоративного прокси MCAS. Для Azure REST API проверьте исходный адрес организации, например https://dev.azure.com/организация, и доступ к нему по правилам вашей компании.
 
-Источник: services/backend/src/pull-requests.ts:1160.
+Источник: services/backend/src/pull-requests.ts:1161.
 
 ### Сообщение
 
 Запрос: {…}.
 
-Источник: services/backend/src/pull-requests.ts:1162.
+Источник: services/backend/src/pull-requests.ts:1163.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Откройте «Заказчики и проекты», выберите нужного заказчика и проект, затем в разделе «Репозиторий» проверьте имя или ID Git-репозитория. Если поле пустое — заполните его и сохраните настройки. Также проверьте URL организации/коллекции и проект в разделе «Подключение Azure». Если настройки верны, проверьте версию API и доступ PAT к репозиторию (Code: Read).
 
-Источник: services/backend/src/pull-requests.ts:1168.
+Источник: services/backend/src/pull-requests.ts:1169.
 
 ### Сообщение
 
 Azure не разрешил доступ к pull request (HTTP {…}). В настройках → «Azure DevOps» проверьте PAT: срок действия, разрешение Code: Read и доступ к нужному репозиторию.
 
-Источник: services/backend/src/pull-requests.ts:1170.
+Источник: services/backend/src/pull-requests.ts:1171.
 
 ### Сообщение
 
 Не удалось загрузить данные pull request из Azure (HTTP {…}). Повторите синхронизацию позже; если ошибка сохраняется, проверьте доступность сервера Azure.
 
-Источник: services/backend/src/pull-requests.ts:1171.
+Источник: services/backend/src/pull-requests.ts:1172.
 
 ### Сообщение
 
 Azure PR: пустой ответ
 
-Источник: services/backend/src/pull-requests.ts:1174.
+Источник: services/backend/src/pull-requests.ts:1175.
 
 ### Сообщение
 
 Ответ Azure больше 2 МБ; данные не загружены
 
-Источник: services/backend/src/pull-requests.ts:1185.
+Источник: services/backend/src/pull-requests.ts:1186.
 
 ### Сообщение
 
 Project ID missing
 
-Источник: services/backend/src/pull-requests.ts:1213.
+Источник: services/backend/src/pull-requests.ts:1214.
 
 ### Сообщение
 
 Too many policy evaluations
 
-Источник: services/backend/src/pull-requests.ts:1217.
+Источник: services/backend/src/pull-requests.ts:1218.
 
 ### Сообщение
 
 Invalid policy response
 
-Источник: services/backend/src/pull-requests.ts:1226.
+Источник: services/backend/src/pull-requests.ts:1227.
 
 ### Сообщение
 
 Не удалось загрузить проверки Azure. Проверьте доступ к политикам проекта и повторите синхронизацию.
 
-Источник: services/backend/src/pull-requests.ts:1233.
+Источник: services/backend/src/pull-requests.ts:1234.
