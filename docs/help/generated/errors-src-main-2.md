@@ -21,16 +21,16 @@
 
 Дождитесь завершения текущего ответа или записи голоса, затем начните анализ.
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:311.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:310.
 
 ### Сообщение
 
 Контекст проекта изменился. Чат сохранён в истории исходного проекта.
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:332.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:331.
 
 ### Сообщение
 
 Последний отчёт SDK · {…} · {…}. Заполненность контекста, включая сообщения, инструкции и инструменты; не лимит подписки. После смены модели обновится по новому отчёту.
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:735.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:734.

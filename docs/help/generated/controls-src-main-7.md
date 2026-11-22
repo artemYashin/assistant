@@ -9,70 +9,70 @@
 
 Загрузка… / Показать более ранние сообщения
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:782.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:781.
 
 ### Элемент
 
 / /
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:808.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:807.
 
 ### Элемент
 
 Настроить подключение AI
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:822.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:821.
 
 ### Элемент
 
 предлож. ждут подтверждения
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:882.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:881.
 
 ### Элемент
 
 Не прикреплять тикет к сообщению · Убрать прикреплённый тикет. Переписка сохранится.
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:903.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:902.
 
 ### Элемент
 
 Убрать прикреплённое предложение
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:961.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:960.
 
 ### Элемент
 
 Сообщение ассистенту · Голосовой ввод… / Спросите или попросите запомнить…
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:978.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:977.
 
 ### Элемент
 
 Очистить текст сообщения
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:994.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:993.
 
 ### Элемент
 
 Очистить историю чата · Очистить историю текущего чата · Очистить чат
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1021.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1020.
 
 ### Элемент
 
 Остановить ответ · Стоп
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1044.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1043.
 
 ### Элемент
 
 Отправить ассистенту
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1064.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1063.
 
 ### Элемент
 
 Очищаю… / Очистить чат
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1129.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:1128.

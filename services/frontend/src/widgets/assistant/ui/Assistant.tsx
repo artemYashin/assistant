@@ -1,4 +1,3 @@
-import "./Assistant.css";
 import { useLatestCallback } from "../../../shared/lib/latest-callback/index.js";
 import { useImageAttachmentQueue } from "../../../features/attach-chat-image/index.js";
 import {

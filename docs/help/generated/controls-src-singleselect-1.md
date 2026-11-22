@@ -7,12 +7,18 @@
 
 ### Элемент
 
-Поиск: {…} · Найти…
+Поиск: {…} · Найти или ввести имя модели… / Найти…
 
-Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:123.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:131.
 
 ### Элемент
 
 /
 
-Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:142.
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:150.
+
+### Элемент
+
+Использовать « »
+
+Источник: services/frontend/src/shared/ui/single-select/SingleSelect.tsx:166.

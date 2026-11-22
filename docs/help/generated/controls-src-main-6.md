@@ -123,4 +123,4 @@ English
 
 Свернуть панель чата · Свернуть чат
 
-Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:709.
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:708.

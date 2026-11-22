@@ -9,28 +9,34 @@
 
 Модель
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:99.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:101.
 
 ### Элемент
 
 Модель внешнего API для этого запроса · Модель внешнего API. Пустое поле — из настроек: {…}
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:101.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:103.
 
 ### Элемент
 
 Загружаю список… / Загрузить модели
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:119.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:121.
+
+### Элемент
+
+Модель · /
+
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:135.
 
 ### Элемент
 
 Из настроек
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:142.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:150.
 
 ### Элемент
 
 Повторить
 
-Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:154.
+Источник: services/frontend/src/entities/llm/ui/ModelOverride.tsx:160.

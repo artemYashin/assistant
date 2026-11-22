@@ -92,9 +92,11 @@ export function ModelOverride({
       window.removeEventListener("orbit-llm-settings-changed", refresh);
     };
   }, [load, purpose, change, resetCatalog]);
+  const external = connection?.provider === "openai";
+  const models = external && catalog.models.length ? catalog.models : connection?.models || [];
   return (
     <div className="model-override" data-provider={connection?.provider}>
-      {connection?.provider === "openai" ? (
+      {external && purpose === "review" ? (
         <>
           <label>
             <span className="multi-select-label">Модель</span>
@@ -135,19 +137,23 @@ export function ModelOverride({
           value={value}
           onChange={onChange}
           disabled={disabled || loading || !connection}
+          allowCustom={external}
+          loading={external && catalog.loading}
+          message={external && !catalog.models.length ? catalog.message : undefined}
+          onOpen={() => {
+            if (external) void catalog.load();
+          }}
           onSearch={() => {
             if (!connection && !pending.current) void load();
           }}
           options={[
             { value: "", label: "Из настроек" },
-            ...(value && !connection?.models.some((m) => m.id === value)
-              ? [{ value, label: value }]
-              : []),
-            ...(connection?.models || []).map((m) => ({ value: m.id, label: m.name || m.id })),
+            ...(value && !models.some((m) => m.id === value) ? [{ value, label: value }] : []),
+            ...models.map((m) => ({ value: m.id, label: m.name || m.id })),
           ]}
         />
       )}
-      {loading && <small role="status">Загружаю модели…</small>}
+      {loading && purpose === "review" && <small role="status">Загружаю модели…</small>}
       {error && (
         <small role="status">
           {error}{" "}

@@ -23,6 +23,8 @@ export function SingleSelect({
   onOpen,
   renderOption,
   floating = false,
+  allowCustom = false,
+  message,
 }: {
   label: string;
   value: string;
@@ -35,6 +37,8 @@ export function SingleSelect({
   loadingLabel?: string;
   renderOption?: (option: { value: string; label: string }) => ReactNode;
   floating?: boolean;
+  allowCustom?: boolean;
+  message?: string;
   onOpen?: () => void;
   onSearch?: (query: string) => void;
 }) {
@@ -104,9 +108,13 @@ export function SingleSelect({
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
-  const visible = options.filter((o) =>
-    o.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  const visible = options.filter(
+    (o) =>
+      o.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()) ||
+      (allowCustom && o.value.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())),
   );
+  const customValue = allowCustom ? query.trim() : "";
+  const canCreate = Boolean(customValue && !options.some((o) => o.value === customValue));
   const dropdown = open ? (
     <div
       ref={panel}
@@ -123,7 +131,7 @@ export function SingleSelect({
           <input
             ref={search}
             aria-label={`Поиск: ${label}`}
-            placeholder="Найти…"
+            placeholder={allowCustom ? "Найти или ввести имя модели…" : "Найти…"}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -154,7 +162,27 @@ export function SingleSelect({
             {value === o.value && <Check size={16} aria-hidden="true" />}
           </button>
         ))}
-        {!loading && !visible.length && <p className="multi-select-empty">Ничего не найдено</p>}
+        {canCreate && (
+          <button
+            type="button"
+            className="single-select-option"
+            onClick={() => {
+              setOpen(false);
+              trigger.current?.focus({ preventScroll: true });
+              onChange(customValue);
+            }}
+          >
+            <span>Использовать «{customValue}»</span>
+          </button>
+        )}
+        {!loading && !visible.length && !canCreate && (
+          <p className="multi-select-empty">Ничего не найдено</p>
+        )}
+        {message && (
+          <p className="multi-select-empty" role="status">
+            {message}
+          </p>
+        )}
       </div>
     </div>
   ) : null;
