@@ -33,7 +33,6 @@ export function Settings({ settings, context, run, busy }: any) {
   const catalog = useOpenaiModels();
   const settingsTabs = [
     { id: "workspace", label: "Рабочее пространство", icon: Settings2 },
-    { id: "copilot", label: "Copilot", icon: Github },
     { id: "providers", label: "Провайдеры AI", icon: Sparkles },
     { id: "azure", label: "Azure DevOps", icon: Ticket },
     { id: "ai", label: "AI Assistant", icon: Sparkles },
@@ -216,21 +215,134 @@ export function Settings({ settings, context, run, busy }: any) {
         <section
           className="panel settings-card"
           role="tabpanel"
-          id={`${settingsTabId}-copilot-panel`}
-          aria-labelledby={`${settingsTabId}-copilot`}
-          hidden={settingsTab !== "copilot"}
+          id={`${settingsTabId}-providers-panel`}
+          aria-labelledby={`${settingsTabId}-providers`}
+          hidden={settingsTab !== "providers"}
         >
           <div className="section-heading">
             <h2>
-              <Github size={22} />
-              GitHub Copilot
+              <Sparkles size={22} />
+              Провайдеры AI
             </h2>
-            <Badge tone={settings.githubConnected ? "green" : "muted"}>
-              {settings.githubConnected ? "Вход выполнен" : "Не подключён"}
-            </Badge>
+          </div>
+          <p className="muted">
+            GitHub Copilot используется по умолчанию. Провайдеры чата и PR-ревью выбираются
+            независимо; автоматического переключения при ошибке нет.
+          </p>
+          <datalist id={catalogId}>
+            {catalog.models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name || model.id}
+              </option>
+            ))}
+          </datalist>
+          <div className="settings-group">
+            <h3>Назначение моделей</h3>
+            <div className="form-grid">
+              {(["chat", "review"] as const).map((purpose) => {
+                const providerKey = purpose === "chat" ? "assistantProvider" : "reviewProvider";
+                const modelKey = purpose === "chat" ? "openaiModel" : "openaiReviewModel";
+                const copilotModelKey = purpose === "chat" ? "model" : "reviewModel";
+                return (
+                  <div key={purpose}>
+                    <Field label={purpose === "chat" ? "Провайдер чата" : "Провайдер PR-ревью"}>
+                      <select
+                        value={form[providerKey] || "copilot"}
+                        onChange={(event) => set(providerKey, event.target.value)}
+                      >
+                        <option value="copilot">GitHub Copilot</option>
+                        <option value="openai">OpenAI-совместимый API</option>
+                      </select>
+                    </Field>
+                    {form[providerKey] === "openai" ? (
+                      <Field
+                        label={
+                          purpose === "chat"
+                            ? "Модель внешнего API для чата"
+                            : "Модель внешнего API для PR-ревью"
+                        }
+                        hint="Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений."
+                      >
+                        <input
+                          list={catalogId}
+                          value={form[modelKey] || ""}
+                          onChange={(event) => set(modelKey, event.target.value)}
+                          autoComplete="off"
+                        />
+                      </Field>
+                    ) : (
+                      <Field
+                        label={
+                          purpose === "chat" ? "Модель чата Copilot" : "Модель PR-ревью Copilot"
+                        }
+                        hint="Список загружается после входа в GitHub. Обновить его можно в блоке «GitHub Copilot» ниже. Сохраните настройки для применения."
+                      >
+                        <select
+                          value={form[copilotModelKey] || ""}
+                          onChange={(event) => set(copilotModelKey, event.target.value)}
+                          disabled={modelsLoading}
+                        >
+                          <option value="">
+                            {purpose === "chat"
+                              ? "По умолчанию в Copilot"
+                              : "Та же, что для чата Copilot"}
+                          </option>
+                          {form[copilotModelKey] &&
+                            !models.some((model) => model.id === form[copilotModelKey]) && (
+                              <option value={form[copilotModelKey]} disabled>
+                                {form[copilotModelKey]} — сохранена, доступность не подтверждена
+                              </option>
+                            )}
+                          {models.map((model: any) => (
+                            <option key={model.id} value={model.id}>
+                              {model.name || model.id}
+                            </option>
+                          ))}
+                        </select>
+                        {purpose === "review" && form.assistantProvider === "openai" && (
+                          <small>
+                            Пустое значение использует сохранённую модель чата Copilot, а не модель
+                            внешнего API.
+                          </small>
+                        )}
+                      </Field>
+                    )}
+                    <button
+                      className="secondary"
+                      disabled={!!busy}
+                      onClick={() =>
+                        run(
+                          `test-${purpose}`,
+                          async () => {
+                            await save();
+                            await api("/llm/test", "POST", { purpose });
+                          },
+                          "Подключение проверено: модель ответила",
+                        )
+                      }
+                    >
+                      Сохранить и проверить {purpose === "chat" ? "чат" : "PR-ревью"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="muted">
+              Проверка сначала сохраняет изменения всех вкладок, затем отправляет короткий тестовый
+              запрос без истории и данных проекта. Провайдер может взимать плату. Успешный ответ не
+              гарантирует поддержку всех инструментов и изображений.
+            </p>
           </div>
           <div className="settings-group">
-            <h3>Подключение</h3>
+            <div className="section-heading">
+              <h3>
+                <Github size={18} />
+                GitHub Copilot
+              </h3>
+              <Badge tone={settings.githubConnected ? "green" : "muted"}>
+                {settings.githubConnected ? "Вход выполнен" : "Не подключён"}
+              </Badge>
+            </div>
             <p>
               Модель работает через официальный Copilot SDK с вашей подпиской. Доступ зависит от
               политики вашей организации.
@@ -274,126 +386,6 @@ export function Settings({ settings, context, run, busy }: any) {
             </div>
             <LoginCode flow={githubFlow} />
             {modelsLoading && <p role="status">Загружаем доступные модели…</p>}
-          </div>
-          <div className="settings-group">
-            <h3>Модели</h3>
-            <div className="form-grid settings-model-grid">
-              {(["model", "reviewModel"] as const).map((key) => (
-                <Field
-                  key={key}
-                  label={key === "model" ? "Модель чата" : "Модель PR-ревью"}
-                  hint="Выберите доступную модель и сохраните настройки. Список загружается после входа; его можно обновить кнопкой выше."
-                >
-                  <select
-                    value={form[key] || ""}
-                    onChange={(e) => set(key, e.target.value)}
-                    aria-label={key === "model" ? "Модель чата" : "Модель PR-ревью"}
-                    disabled={modelsLoading}
-                  >
-                    <option value="">
-                      {key === "model" ? "По умолчанию в Copilot" : "Та же, что для чата"}
-                    </option>
-                    {form[key] && !models.some((m) => m.id === form[key]) && (
-                      <option value={form[key]} disabled>
-                        {form[key]} — сохранена, доступность не подтверждена
-                      </option>
-                    )}
-                    {models.map((m: any) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name || m.id}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section
-          className="panel settings-card"
-          role="tabpanel"
-          id={`${settingsTabId}-providers-panel`}
-          aria-labelledby={`${settingsTabId}-providers`}
-          hidden={settingsTab !== "providers"}
-        >
-          <div className="section-heading">
-            <h2>
-              <Sparkles size={22} />
-              Провайдеры AI
-            </h2>
-          </div>
-          <p className="muted">
-            GitHub Copilot используется по умолчанию. Провайдеры чата и PR-ревью выбираются
-            независимо; автоматического переключения при ошибке нет.
-          </p>
-          <datalist id={catalogId}>
-            {catalog.models.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name || model.id}
-              </option>
-            ))}
-          </datalist>
-          <div className="settings-group">
-            <h3>Назначение моделей</h3>
-            <div className="form-grid">
-              {(["chat", "review"] as const).map((purpose) => {
-                const providerKey = purpose === "chat" ? "assistantProvider" : "reviewProvider";
-                const modelKey = purpose === "chat" ? "openaiModel" : "openaiReviewModel";
-                return (
-                  <div key={purpose}>
-                    <Field label={purpose === "chat" ? "Провайдер чата" : "Провайдер PR-ревью"}>
-                      <select
-                        value={form[providerKey] || "copilot"}
-                        onChange={(event) => set(providerKey, event.target.value)}
-                      >
-                        <option value="copilot">GitHub Copilot</option>
-                        <option value="openai">OpenAI-совместимый API</option>
-                      </select>
-                    </Field>
-                    {form[providerKey] === "openai" ? (
-                      <Field
-                        label={
-                          purpose === "chat"
-                            ? "Модель внешнего API для чата"
-                            : "Модель внешнего API для PR-ревью"
-                        }
-                        hint="Укажите точный идентификатор модели с поддержкой вызова инструментов. Для изображений нужна поддержка изображений."
-                      >
-                        <input
-                          list={catalogId}
-                          value={form[modelKey] || ""}
-                          onChange={(event) => set(modelKey, event.target.value)}
-                          autoComplete="off"
-                        />
-                      </Field>
-                    ) : (
-                      <p className="muted">Модель Copilot задаётся на вкладке «Copilot».</p>
-                    )}
-                    <button
-                      className="secondary"
-                      disabled={!!busy}
-                      onClick={() =>
-                        run(
-                          `test-${purpose}`,
-                          async () => {
-                            await save();
-                            await api("/llm/test", "POST", { purpose });
-                          },
-                          "Подключение проверено: модель ответила",
-                        )
-                      }
-                    >
-                      Сохранить и проверить {purpose === "chat" ? "чат" : "PR-ревью"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="muted">
-              Проверка сначала сохраняет изменения всех вкладок, затем отправляет короткий тестовый
-              запрос без истории и данных проекта. Провайдер может взимать плату. Успешный ответ не
-              гарантирует поддержку всех инструментов и изображений.
-            </p>
           </div>
           <div className="settings-group">
             <h3>OpenAI-совместимый API (необязательно)</h3>

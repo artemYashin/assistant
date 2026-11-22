@@ -289,7 +289,7 @@
     "services/frontend/src/pages/pull-requests/ui/PullRequestsPage.tsx": "d0c9f0c2b9e8085c06a52c25060a77dadb08c5317f2aaf6d8179325350fa6b20",
     "services/frontend/src/pages/settings/index.ts": "6c0c064c31c9e76ca0d454a483295aff5441fb022e54d6f9b9b8057bf28c8db8",
     "services/frontend/src/pages/settings/ui/LoginCode.tsx": "b53f7582ef9c5a0081f69d3463e881eb34feb1ae0a451e450bfde66d7919cdb1",
-    "services/frontend/src/pages/settings/ui/Settings.tsx": "0a19da9ba544beeaa5dea1ca1e420f81b864980683c09ff9f09f280ffc683039",
+    "services/frontend/src/pages/settings/ui/Settings.tsx": "941298a5f824f695e89f34dd03b273ee2dd84edc7a4ecc5301be68ce7ce97ae4",
     "services/frontend/src/pages/tickets/index.ts": "dc5f056ec9520cdea471838405c5a154a70e1d10aae86962aa89a936c8d7be3a",
     "services/frontend/src/pages/tickets/model/kanban.ts": "a6ec32f9af6670d3f30cd03c758ca314f53bc4107445a74ceb6d554a6511d14c",
     "services/frontend/src/pages/tickets/ui/BulkTicketTrash.tsx": "6466634754b421ad51fecae5dfc9d2b3752851550400095aed1c0aa74d119af8",

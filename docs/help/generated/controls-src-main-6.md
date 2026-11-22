@@ -7,120 +7,120 @@
 
 ### Элемент
 
-Ключ сохранён · введите новый для замены / Введите ключ API
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:432.
-
-### Элемент
-
-Удалить сохранённый ключ API при сохранении
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:445.
-
-### Элемент
-
 Загружаю список… / Сохранить и загрузить модели
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:458.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:450.
 
 ### Элемент
 
 Personal Access Token · Пустое поле сохраняет текущий ключ. Токен не возвращается в браузер.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:514.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:506.
 
 ### Элемент
 
 Ключ сохранён · введите новый для замены / Вставьте PAT
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:518.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:510.
 
 ### Элемент
 
 Инструкции ассистенту · Предпочтения дополняют системные правила. Сохранение памяти требует подтверждения в разделе «Подтверждения».
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:559.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:551.
 
 ### Элемент
 
 Лимит времени ответа, секунд · От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:571.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:563.
 
 ### Элемент
 
 Максимум вызовов инструментов на запрос · Прерывает повторяющиеся циклы чтения данных или создания черновиков.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:582.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:574.
 
 ### Элемент
 
 Порог входных + выходных токенов чата на запрос · От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:594.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:586.
 
 ### Элемент
 
 Разрешить ассистенту читать и искать код репозитория
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:608.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:600.
 
 ### Элемент
 
 Ожидание подготовки Git, секунд · До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:620.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:612.
 
 ### Элемент
 
 Режим нажатия
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:666.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:658.
 
 ### Элемент
 
 Одинарное нажатие
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:672.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:664.
 
 ### Элемент
 
 Двойное нажатие
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:673.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:665.
 
 ### Элемент
 
 Лимит времени ответа ревью, секунд · От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:848.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:840.
 
 ### Элемент
 
 Лимит токенов ревью по умолчанию · Отдельный бюджет входных + выходных токенов на всё ревью, включая продолжения. Используется автоматически и подставляется в форму запуска, где его можно изменить. Остановка по отчётам SDK, возможен перерасход за последний вызов.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:860.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:852.
 
 ### Элемент
 
 Максимум вызовов инструментов на ревью · От 1 до 1 000, по умолчанию 30. Общий лимит на всё ревью, включая продолжения после ответов. Не зависит от лимита чата. Для продолжения после достижения лимита увеличьте это значение.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:872.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:864.
 
 ### Элемент
 
 Предпочтительный язык памяти · Ассистент будет использовать этот язык для новых предложений. Существующие записи не переводятся; язык ответов в чате не меняется.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:901.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:893.
 
 ### Элемент
 
 English
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:905.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:897.
 
 ### Элемент
 
 Сохранить настройки
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:920.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:912.
+
+### Элемент
+
+Открыть авторизацию
+
+Источник: services/frontend/src/pages/settings/ui/LoginCode.tsx:12.
+
+### Элемент
+
+Свернуть панель чата · Свернуть чат
+
+Источник: services/frontend/src/widgets/assistant/ui/Assistant.tsx:709.
