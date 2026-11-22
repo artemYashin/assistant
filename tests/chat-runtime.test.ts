@@ -67,6 +67,61 @@ test("chat runtime resumes the same transcript with current tools, without compa
   assert.equal(store.get(chatRuntimeKey(chat.id), null), null);
 });
 
+test("chat switches connections on the existing transcript and preserves legacy runtime metadata", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "orbit-runtime-switch-")),
+    store = new Store(dir);
+  t.after(() => {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const original = {
+    sessionId: "populated-transcript",
+    source: "source",
+    lastSequence: 42,
+    memoryHash: "existing-memory",
+    attachmentHash: "existing-attachment",
+  };
+  store.set(chatRuntimeKey("chat"), original);
+  const resumed: any[] = [];
+  const client: any = {
+    createSession: async () => {
+      throw Error("Switching providers must not replace the transcript");
+    },
+    resumeSession: async (id: string, config: any) => {
+      assert.equal(id, original.sessionId);
+      resumed.push(config);
+      return { sessionId: id };
+    },
+  };
+  for (const [connectionId, provider] of [
+    ["external-a", { type: "openai", baseUrl: "http://localhost:1234/v1" }],
+    ["external-b", { type: "openai", baseUrl: "http://localhost:5678/v1", wireApi: "responses" }],
+    ["copilot", undefined],
+  ] as const) {
+    const config: any = provider ? { model: "current-model", provider } : {};
+    const runtime = await openChatRuntime(client, config, store, "chat", "source", connectionId, {
+      allowConnectionChange: true,
+    });
+    assert.equal(runtime.resumed, true);
+    assert.deepEqual(runtime.state, { ...original, connectionId });
+    assert.deepEqual(store.get(chatRuntimeKey("chat"), null), runtime.state);
+    assert.deepEqual(resumed.at(-1).provider, provider);
+    assert.equal(resumed.at(-1).model, provider ? "current-model" : "auto");
+    assert.equal(resumed.at(-1).continuePendingWork, false);
+  }
+  const beforeFailure = store.get(chatRuntimeKey("chat"), null);
+  client.resumeSession = async () => {
+    throw Error("Provider unavailable");
+  };
+  await assert.rejects(
+    openChatRuntime(client, {} as any, store, "chat", "source", "external-c", {
+      allowConnectionChange: true,
+    }),
+    /Provider unavailable/,
+  );
+  assert.deepEqual(store.get(chatRuntimeKey("chat"), null), beforeFailure);
+});
+
 test("missing or unavailable SDK transcripts never silently discard context", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "orbit-runtime-errors-")),
     store = new Store(dir);
@@ -96,7 +151,7 @@ test("missing or unavailable SDK transcripts never silently discard context", as
   assert.equal(creates, 0);
 });
 
-test("agent continuation avoids replaying prior messages and keeps new app-only messages", async (t) => {
+test("agent continuation across providers avoids replaying prior messages and keeps new app-only messages", async (t) => {
   const { Agent } = await import("../services/backend/src/agent.js");
   const dir = mkdtempSync(join(tmpdir(), "orbit-agent-runtime-")),
     store = new Store(dir);
@@ -137,6 +192,12 @@ test("agent continuation avoids replaying prior messages and keeps new app-only 
   const agent = new Agent(store, () => client);
   await agent.chat("Hello", context, false, undefined, chat.id);
   store.say("assistant", "App-only notice", context, [], chat.id);
+  store.set("settings", {
+    ...store.settings(),
+    assistantProvider: "openai",
+    openaiBaseUrl: "http://localhost:1234/v1",
+    openaiModel: "external-model",
+  });
   await agent.chat("Continue", context, false, undefined, chat.id);
   assert.equal(creates, 1);
   assert.equal(resumes, 1);
@@ -144,10 +205,15 @@ test("agent continuation avoids replaying prior messages and keeps new app-only 
   assert.doesNotMatch(prompts[1], /Legacy context|First response|Hello/);
   assert.match(prompts[1], /App-only notice/);
   assert.match(prompts[1], /Continue/);
+  store.set("settings", { ...store.settings(), assistantProvider: "copilot" });
+  await agent.chat("Back to Copilot", context, false, undefined, chat.id);
+  assert.equal(creates, 1);
+  assert.equal(resumes, 2);
+  assert.doesNotMatch(prompts[2], /Legacy context|App-only notice|Continue/);
   store.clearHistory(context, chat.id);
   await agent.chat("Fresh", context, false, undefined, chat.id);
   assert.equal(creates, 2);
-  assert.doesNotMatch(prompts[2], /Legacy context|First response|App-only notice/);
+  assert.doesNotMatch(prompts[3], /Legacy context|First response|App-only notice/);
 });
 
 test("context occupancy is separate from cumulative usage, scoped and cleared with the chat", async (t) => {

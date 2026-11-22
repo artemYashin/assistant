@@ -120,7 +120,7 @@ test("provider settings preserve populated legacy installs, independent choices 
   }
 });
 
-test("runtime connection changes refuse continuation without overwriting original transcript and key rotation preserves it", async (t) => {
+test("review runtime connection changes refuse continuation without overwriting original transcript and key rotation preserves it", async (t) => {
   const store = fixture(t);
   external(store);
   const original = { sessionId: "old", source: "source", lastSequence: 42 };
@@ -288,25 +288,36 @@ test("queued reviews bind their connection and reject a changed provider before 
   assert.match(row().error, /Подключение модели изменилось/);
 });
 
-test("populated legacy chat without native runtime cannot leak its transcript to a newly selected external provider", async (t) => {
+test("populated legacy chat continues with an external provider and preserves its history", async (t) => {
   const store = fixture(t);
   const context = { client: "", project: "" };
   const chat = store.createChat(context);
-  store.say("user", "Existing confidential synthetic history", context, [], chat.id);
+  store.say("user", "Existing synthetic history", context, [], chat.id);
   external(store);
-  let called = false;
-  const agent = new Agent(store, () => {
-    called = true;
-    throw Error("Must not create client");
-  });
-  const history = store.history(context, chat.id);
-  await assert.rejects(
-    agent.chat("Continue", context, false, undefined, chat.id),
-    /Подключение модели изменилось/,
-  );
-  assert.equal(called, false);
-  assert.deepEqual(store.history(context, chat.id), history);
-  assert.equal(store.get(chatRuntimeKey(chat.id), null), null);
+  const prompts: string[] = [];
+  const client: any = {
+    start: async () => {},
+    stop: async () => {},
+    createSession: async (config: any) => {
+      assert.equal(config.provider.baseUrl, "http://localhost:1234/v1");
+      return {
+        sessionId: "external-legacy",
+        on: () => {},
+        sendAndWait: async ({ prompt }: any) => {
+          prompts.push(prompt);
+          return { data: { content: "Continued response" } };
+        },
+        disconnect: async () => {},
+        abort: async () => {},
+      };
+    },
+  };
+  const agent = new Agent(store, () => client);
+  await agent.chat("Continue", context, false, undefined, chat.id);
+  assert.match(prompts[0], /Existing synthetic history/);
+  assert.match(prompts[0], /Continue/);
+  assert.equal((store.history(context, chat.id)[0] as any).body, "Existing synthetic history");
+  assert.equal(store.get<any>(chatRuntimeKey(chat.id), null).sessionId, "external-legacy");
 });
 
 test("Copilot remains default and a missing token still prevents real client creation", async (t) => {

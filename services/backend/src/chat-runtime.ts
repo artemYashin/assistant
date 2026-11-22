@@ -19,18 +19,27 @@ export async function openChatRuntime(
   chatId: string,
   source: string,
   connectionId = "copilot",
+  { allowConnectionChange = false }: { allowConnectionChange?: boolean } = {},
 ) {
   const saved = store.get<ChatRuntimeState | null>(chatRuntimeKey(chatId), null);
-  if (saved) assertLlmBinding(saved.connectionId, connectionId);
+  if (saved && !allowConnectionChange) assertLlmBinding(saved.connectionId, connectionId);
   // Native transcript persistence is distinct from cross-session search, which stays disabled.
   const options = { ...config, enableSessionStore: false, infiniteSessions: { enabled: false } };
   if (saved?.source === source) {
     try {
       const session = await client.resumeSession(saved.sessionId, {
         ...options,
+        // An omitted model on resume keeps the previous model, which may belong to the external API.
+        ...(connectionId === "copilot" &&
+        (saved.connectionId || "copilot") !== connectionId &&
+        !config.model
+          ? { model: "auto" }
+          : {}),
         continuePendingWork: false,
       });
-      return { session, resumed: true, state: saved };
+      const state = { ...saved, connectionId };
+      store.set(chatRuntimeKey(chatId), state);
+      return { session, resumed: true, state };
     } catch (error) {
       // Do not turn authentication, connection or corrupt-transcript failures into silent context loss.
       if (

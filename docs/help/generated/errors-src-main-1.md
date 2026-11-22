@@ -63,64 +63,64 @@ orbit-openai-catalog-invalidated
 
 Не подключён
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:343.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:322.
 
 ### Сообщение
 
 Не настроен
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:495.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:475.
 
 ### Сообщение
 
 Лимит времени ответа, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:564.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:544.
 
 ### Сообщение
 
 От 15 до 600 секунд, по умолчанию 300. При превышении приложение отменяет запрос и завершает runtime.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:565.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:545.
 
 ### Сообщение
 
 llmTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:571.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:551.
 
 ### Сообщение
 
 От 1 000 до 1 000 000. Проверяется после получения отчёта SDK; возможен перерасход за уже выполненный вызов. Это не жёсткий платёжный лимит.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:588.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:568.
 
 ### Сообщение
 
 До 120 секунд, по умолчанию 20. Если загрузка уже идёт, ассистент подождёт её завершения. 0 — не ждать. Учитывается общий лимит времени ответа ассистента.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:614.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:594.
 
 ### Сообщение
 
 Лимит времени ответа ревью, секунд
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:841.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:821.
 
 ### Сообщение
 
 От 15 до 86 400 секунд, по умолчанию 600. На один запрос к модели, включая запуск Copilot и инструменты; при продолжении после уточнений отсчёт начинается заново. Подготовка Git и сбор diff не входят. Не зависит от лимита чата.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:842.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:822.
 
 ### Сообщение
 
 reviewTimeoutSeconds
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:849.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:829.
 
 ### Сообщение
 
 Лимит токенов ревью по умолчанию
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:853.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:833.

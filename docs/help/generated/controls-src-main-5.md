@@ -55,72 +55,72 @@ OpenAI-совместимый API
 
 ### Элемент
 
-Сохранить и проверить · чат / PR-ревью
-
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:310.
-
-### Элемент
-
 Войти через GitHub
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:356.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:335.
 
 ### Элемент
 
 Проверить и загрузить модели
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:369.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:348.
 
 ### Элемент
 
 Адрес API · Базовый адрес совместимого API, например https://api.openai.com/v1. Для локального сервиса укажите адрес, доступный серверу Orbit.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:397.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:377.
 
 ### Элемент
 
 https://api.openai.com/v1
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:401.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:381.
 
 ### Элемент
 
 Формат API · Chat Completions Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:410.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:390.
 
 ### Элемент
 
 Chat Completions · Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:411.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:391.
 
 ### Элемент
 
 Chat Completions
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:416.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:396.
 
 ### Элемент
 
 Responses
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:417.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:397.
 
 ### Элемент
 
 Ключ API · Пустое поле сохраняет текущий ключ. Ключ не возвращается в браузер. Для сервиса без авторизации ключ не нужен.
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:420.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:400.
 
 ### Элемент
 
 Ключ сохранён · введите новый для замены / Введите ключ API
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:424.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:404.
 
 ### Элемент
 
 Удалить сохранённый ключ API при сохранении
 
-Источник: services/frontend/src/pages/settings/ui/Settings.tsx:437.
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:417.
+
+### Элемент
+
+Загружаю список… / Сохранить и загрузить модели
+
+Источник: services/frontend/src/pages/settings/ui/Settings.tsx:430.

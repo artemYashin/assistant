@@ -9,88 +9,88 @@
 
 Закрытие деталки требует подключённого интерфейса чата
 
-Источник: services/backend/src/agent.ts:1103.
+Источник: services/backend/src/agent.ts:1094.
 
 ### Сообщение
 
 Открытие деталки требует подключённого интерфейса чата
 
-Источник: services/backend/src/agent.ts:1129.
+Источник: services/backend/src/agent.ts:1120.
 
 ### Сообщение
 
 Тикет #{…} отсутствует локально; сначала согласуйте его запрос в Azure
 
-Источник: services/backend/src/agent.ts:1177.
+Источник: services/backend/src/agent.ts:1168.
 
 ### Сообщение
 
 Azure не вернул статусы тикета #{…}
 
-Источник: services/backend/src/agent.ts:1190.
+Источник: services/backend/src/agent.ts:1181.
 
 ### Сообщение
 
 Не удалось определить статус
 
-Источник: services/backend/src/agent.ts:1204.
+Источник: services/backend/src/agent.ts:1195.
 
 ### Сообщение
 
 Сначала покажите план через request_azure_ticket_lookup и дождитесь выбора: только сведения или запросить и добавить
 
-Источник: services/backend/src/agent.ts:1227.
+Источник: services/backend/src/agent.ts:1218.
 
 ### Сообщение
 
 Чтение описаний более 30 разных локальных тикетов за один запрос может потратить много токенов. Спросите пользователя, продолжить ли чтение; обычного согласия достаточно.
 
-Источник: services/backend/src/agent.ts:1333.
+Источник: services/backend/src/agent.ts:1324.
 
 ### Сообщение
 
 Тикет отсутствует в локальном списке
 
-Источник: services/backend/src/agent.ts:1399.
+Источник: services/backend/src/agent.ts:1390.
 
 ### Сообщение
 
 Запись не входит в выбранные разделы памяти ревью.
 
-Источник: services/backend/src/agent.ts:1416.
+Источник: services/backend/src/agent.ts:1407.
 
 ### Сообщение
 
 Session is not ready
 
-Источник: services/backend/src/agent.ts:1452.
+Источник: services/backend/src/agent.ts:1443.
 
 ### Сообщение
 
 Не удалось сохранить отчёт расхода; запрос остановлен.
 
-Источник: services/backend/src/agent.ts:1597.
+Источник: services/backend/src/agent.ts:1589.
 
 ### Сообщение
 
 Не удалось получить данные
 
-Источник: services/backend/src/agent.ts:1646.
+Источник: services/backend/src/agent.ts:1638.
 
 ### Сообщение
 
 Запрос обработан. Проверьте память и ожидающие подтверждения.
 
-Источник: services/backend/src/agent.ts:1685.
+Источник: services/backend/src/agent.ts:1677.
 
 ### Сообщение
 
 Ошибка провайдера модели. Проверьте настройки и журнал использования. Изменения памяти, статусов тикетов и черновики могли сохраниться.
 
-Источник: services/backend/src/agent.ts:1723.
+Источник: services/backend/src/agent.ts:1715.
 
 ### Сообщение
 
 /
 
-Источник: services/backend/src/agent.ts:1755.
+Источник: services/backend/src/agent.ts:1747.

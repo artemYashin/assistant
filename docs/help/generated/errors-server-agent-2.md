@@ -9,118 +9,118 @@
 
 Без подтверждения можно глубоко читать только один указанный локальный тикет
 
-Источник: services/backend/src/agent.ts:682.
+Источник: services/backend/src/agent.ts:673.
 
 ### Сообщение
 
 Чтение Azure недоступно
 
-Источник: services/backend/src/agent.ts:686.
+Источник: services/backend/src/agent.ts:677.
 
 ### Сообщение
 
 Подключение Azure изменилось во время запроса
 
-Источник: services/backend/src/agent.ts:688.
+Источник: services/backend/src/agent.ts:679.
 
 ### Сообщение
 
 Тикет #{…} отсутствует в локальной базе. Azure не запрашивался. Спросите пользователя: только запросить сведения или запросить и добавить в локальный список.
 
-Источник: services/backend/src/agent.ts:720.
+Источник: services/backend/src/agent.ts:711.
 
 ### Сообщение
 
 Не удалось восстановить просьбу о смене статуса из сообщения и подтверждения.
 
-Источник: services/backend/src/agent.ts:772.
+Источник: services/backend/src/agent.ts:763.
 
 ### Сообщение
 
 Номер отсутствует в подтверждённом плане и результатах инструментов текущего запроса. Проверьте список одним list_tickets с ids.
 
-Источник: services/backend/src/agent.ts:774.
+Источник: services/backend/src/agent.ts:765.
 
 ### Сообщение
 
 Во время ревью изменение статусов недоступно.
 
-Источник: services/backend/src/agent.ts:778.
+Источник: services/backend/src/agent.ts:769.
 
 ### Сообщение
 
 Нужна явная команда сменить статус этого тикета. [{…}] {…} Запрос записи в Azure не отправлялся.
 
-Источник: services/backend/src/agent.ts:784.
+Источник: services/backend/src/agent.ts:775.
 
 ### Сообщение
 
 Azure недоступен
 
-Источник: services/backend/src/agent.ts:792.
+Источник: services/backend/src/agent.ts:783.
 
 ### Сообщение
 
 Одна смена статуса на тикет за запрос. Для следующего перехода отправьте новую команду.
 
-Источник: services/backend/src/agent.ts:800.
+Источник: services/backend/src/agent.ts:791.
 
 ### Сообщение
 
 Подключение Azure изменилось
 
-Источник: services/backend/src/agent.ts:811.
+Источник: services/backend/src/agent.ts:802.
 
 ### Сообщение
 
 Одна смена статуса на тикет за запрос
 
-Источник: services/backend/src/agent.ts:856.
+Источник: services/backend/src/agent.ts:847.
 
 ### Сообщение
 
 Во время ревью изменение локального трекера недоступно
 
-Источник: services/backend/src/agent.ts:906.
+Источник: services/backend/src/agent.ts:897.
 
 ### Сообщение
 
 Одно изменение локального списка на тикет за запрос. Отправьте следующую команду отдельно.
 
-Источник: services/backend/src/agent.ts:911.
+Источник: services/backend/src/agent.ts:902.
 
 ### Сообщение
 
 Выбранная модель не поддерживает изображения. Выберите модель с поддержкой vision; вложения сохранены.
 
-Источник: services/backend/src/agent.ts:992.
+Источник: services/backend/src/agent.ts:983.
 
 ### Сообщение
 
 Выбранная модель принимает до {…} изображений за запрос. Уберите лишние изображения или выберите другую модель.
 
-Источник: services/backend/src/agent.ts:998.
+Источник: services/backend/src/agent.ts:989.
 
 ### Сообщение
 
 Достигнут лимит вызовов инструментов на ревью. Для нового запуска увеличьте «Максимум инструментов на ревью» в окне запуска. Значение по умолчанию задаётся в настройках Code Review.
 
-Источник: services/backend/src/agent.ts:1012.
+Источник: services/backend/src/agent.ts:1003.
 
 ### Сообщение
 
 Достигнут лимит вызовов инструментов.
 
-Источник: services/backend/src/agent.ts:1013.
+Источник: services/backend/src/agent.ts:1004.
 
 ### Сообщение
 
 Сессия чата ещё не готова.
 
-Источник: services/backend/src/agent.ts:1039.
+Источник: services/backend/src/agent.ts:1030.
 
 ### Сообщение
 
 Выбранная модель не поддерживает изображения.
 
-Источник: services/backend/src/agent.ts:1046.
+Источник: services/backend/src/agent.ts:1037.

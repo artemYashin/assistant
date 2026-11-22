@@ -523,15 +523,6 @@ export class Agent {
     const selection = llmConfig(this.store, review ? "review" : "chat", modelOverride);
     if (reviewActions?.connectionId)
       assertLlmBinding(reviewActions.connectionId, selection.connectionId);
-    if (conversationId) {
-      const saved = this.store.get<ChatRuntimeState | null>(chatRuntimeKey(conversationId), null);
-      const binding = this.store.get<string | undefined>(
-        `chat.provider:${conversationId}`,
-        undefined,
-      );
-      if (saved || historySnapshot.length)
-        assertLlmBinding(binding || saved?.connectionId, selection.connectionId);
-    }
     const client = this.client(selection.provider);
     // Local consent replies also belong to the selected connection, even before a native session exists.
     if (conversationId) this.store.set(`chat.provider:${conversationId}`, selection.connectionId);
@@ -1528,6 +1519,7 @@ export class Agent {
             conversationId,
             this.store.source(settings) + (hasLocalManagement(settings) ? "" : "|mode=developer"),
             selection.connectionId,
+            { allowConnectionChange: true },
           );
           session = runtime.session;
           runtimeState = runtime.state;
